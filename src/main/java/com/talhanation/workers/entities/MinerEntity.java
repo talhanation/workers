@@ -26,8 +26,6 @@ public class MinerEntity extends AbstractWorkerEntity {
 
     }
 
-
-
     //ATTRIBUTES
     public static AttributeModifierMap.MutableAttribute setAttributes() {
         return createMobAttributes()
