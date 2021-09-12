@@ -1,14 +1,17 @@
 package com.talhanation.workers.entities;
 
+import com.talhanation.workers.entities.ai.WorkerFollowOwnerGoal;
+import com.talhanation.workers.entities.ai.WorkerMineTunnelGoal;
 import net.minecraft.entity.*;
 import net.minecraft.entity.ai.attributes.AttributeModifier;
 import net.minecraft.entity.ai.attributes.Attributes;
-import net.minecraft.entity.monster.*;
+import net.minecraft.entity.ai.goal.LookAtGoal;
+import net.minecraft.entity.ai.goal.PanicGoal;
+import net.minecraft.entity.ai.goal.SwimGoal;
+import net.minecraft.entity.ai.goal.WaterAvoidingRandomWalkingGoal;
 import net.minecraft.entity.passive.TameableEntity;
-import net.minecraft.entity.passive.horse.AbstractHorseEntity;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.entity.projectile.AbstractArrowEntity;
-import net.minecraft.inventory.EquipmentSlotType;
 import net.minecraft.item.*;
 import net.minecraft.nbt.CompoundNBT;
 import net.minecraft.network.datasync.DataParameter;
@@ -18,32 +21,26 @@ import net.minecraft.particles.IParticleData;
 import net.minecraft.particles.ParticleTypes;
 import net.minecraft.util.*;
 import net.minecraft.util.math.BlockPos;
-import net.minecraft.util.math.MathHelper;
 import net.minecraft.util.text.StringTextComponent;
 import net.minecraft.world.DifficultyInstance;
 import net.minecraft.world.IServerWorld;
 import net.minecraft.world.World;
-import net.minecraft.world.server.ServerWorld;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
 
 import javax.annotation.Nullable;
-import java.util.Objects;
 import java.util.Optional;
-import java.util.UUID;
 
 public abstract class AbstractWorkerEntity extends TameableEntity {
-    private static final DataParameter<Optional<BlockPos>> HOLD_POS = EntityDataManager.defineId(AbstractWorkerEntity.class, DataSerializers.OPTIONAL_BLOCK_POS);
-    private static final DataParameter<Optional<BlockPos>> MOVE_POS = EntityDataManager.defineId(AbstractWorkerEntity.class, DataSerializers.OPTIONAL_BLOCK_POS);
-    private static final DataParameter<Boolean> MOVE = EntityDataManager.defineId(AbstractWorkerEntity.class, DataSerializers.BOOLEAN);
+    private static final DataParameter<Optional<BlockPos>> START_POS = EntityDataManager.defineId(AbstractWorkerEntity.class, DataSerializers.OPTIONAL_BLOCK_POS);
+    private static final DataParameter<Optional<BlockPos>> DEST_POS = EntityDataManager.defineId(AbstractWorkerEntity.class, DataSerializers.OPTIONAL_BLOCK_POS);
+    private static final DataParameter<Boolean> FOLLOW = EntityDataManager.defineId(AbstractWorkerEntity.class, DataSerializers.BOOLEAN);
     private static final DataParameter<Integer> STATE = EntityDataManager.defineId(AbstractWorkerEntity.class, DataSerializers.INT);
-
-    private UUID persistentAngerTarget;
 
     public AbstractWorkerEntity(EntityType<? extends TameableEntity> entityType, World world) {
         super(entityType, world);
         this.setOwned(false);
-        this.xpReward = 6;
+        this.xpReward = 2;
     }
 
     ///////////////////////////////////TICK/////////////////////////////////////////
@@ -90,29 +87,86 @@ public abstract class AbstractWorkerEntity extends TameableEntity {
     ////////////////////////////////////REGISTER////////////////////////////////////
 
     protected void registerGoals() {
+        this.goalSelector.addGoal(1, new SwimGoal(this));
+        this.goalSelector.addGoal(2, new WorkerFollowOwnerGoal(this, 1.2D, 9.0F, 3.0F));
+        this.goalSelector.addGoal(2, new PanicGoal(this, 1.3D));
+
+        this.goalSelector.addGoal(2, new WorkerMineTunnelGoal(this, 0.5, 16D));
+        this.goalSelector.addGoal(10, new WaterAvoidingRandomWalkingGoal(this, 1.0D, 0F));
+        this.goalSelector.addGoal(10, new LookAtGoal(this, LivingEntity.class, 8.0F));
 
     }
 
     protected void defineSynchedData() {
         super.defineSynchedData();
         this.entityData.define(STATE, 0);
-        this.entityData.define(HOLD_POS, Optional.empty());
-        this.entityData.define(MOVE_POS, Optional.empty());
-        this.entityData.define(MOVE, true);
+        this.entityData.define(FOLLOW, false);
+        this.entityData.define(START_POS, Optional.empty());
+        this.entityData.define(DEST_POS, Optional.empty());
     }
 
     public void addAdditionalSaveData(CompoundNBT nbt) {
         super.addAdditionalSaveData(nbt);
+        nbt.putBoolean("Follow", this.getFollow());
+
+        this.getStartPos().ifPresent((pos) -> {
+            nbt.putInt("StartPosX", pos.getX());
+            nbt.putInt("StartPosY", pos.getY());
+            nbt.putInt("StartPosZ", pos.getZ());
+        });
+
+        this.getDestPos().ifPresent((pos) -> {
+            nbt.putInt("DestPosX", pos.getX());
+            nbt.putInt("DestPosY", pos.getY());
+            nbt.putInt("DestPosZ", pos.getZ());
+        });
     }
 
-    public void readAdditionalSaveData(CompoundNBT p_70037_1_) {
-        super.readAdditionalSaveData(p_70037_1_);
+    public void readAdditionalSaveData(CompoundNBT nbt) {
+        super.readAdditionalSaveData(nbt);
+        if (nbt.contains("Follow", 1)) {
+            this.setFollow(nbt.getBoolean("Follow"));
+        }
+        if (nbt.contains("StartPosX", 99) &&
+                nbt.contains("StartPosY", 99) &&
+                nbt.contains("StartPosZ", 99)) {
+            BlockPos blockpos = new BlockPos(
+                    nbt.getInt("StartPosX"),
+                    nbt.getInt("StartPosY"),
+                    nbt.getInt("StartPosZ"));
+            this.setStartPos(blockpos);
+        }
+
+        if (nbt.contains("DestPosX", 99) &&
+                nbt.contains("DestPosY", 99) &&
+                nbt.contains("DestPosZ", 99)) {
+            BlockPos blockpos = new BlockPos(
+                    nbt.getInt("DestPosX"),
+                    nbt.getInt("DestPosY"),
+                    nbt.getInt("DestPosZ"));
+            this.setDestPos(blockpos);
+        }
+
     }
+
 
     ////////////////////////////////////GET////////////////////////////////////
 
-    public int getState() {
-        return entityData.get(STATE);
+    public Optional<BlockPos> getDestPos(){
+        return this.entityData.get(DEST_POS);
+    }
+
+
+    public Optional<BlockPos> getStartPos(){
+        return this.entityData.get(START_POS);
+    }
+
+    public boolean getFollow(){
+        return this.entityData.get(FOLLOW);
+    }
+
+    public int getState(){
+        return this.entityData.get(STATE);
     }
 
     public SoundEvent getHurtSound(DamageSource ds) {
@@ -137,32 +191,20 @@ public abstract class AbstractWorkerEntity extends TameableEntity {
         return this.isInSittingPose() ? 20 : super.getMaxHeadXRot();
     }
 
-    public int getMaxSpawnClusterSize() {
-        return 8;
-    }
-
-
-    @Nullable
-    public UUID getPersistentAngerTarget() {
-        return this.persistentAngerTarget;
-    }
-
-    @Nullable
-    public BlockPos getHoldPos(){
-        return entityData.get(HOLD_POS).orElse(null);
-    }
-
-    @Nullable
-    public BlockPos getMovePos(){
-        return entityData.get(MOVE_POS).orElse(null);
-    }
-
-    public boolean getMove() {
-        return entityData.get(MOVE);
-    }
-
 
     ////////////////////////////////////SET////////////////////////////////////
+
+    public void setDestPos(BlockPos pos){
+        this.entityData.set(DEST_POS, Optional.of(pos));
+    }
+
+    public void setStartPos(BlockPos pos){
+        this.entityData.set(START_POS, Optional.of(pos));
+    }
+
+    public void setFollow(boolean bool){
+        this.entityData.set(FOLLOW, bool);
+    }
 
     public void setState(int state) {
         switch (state){
@@ -175,15 +217,6 @@ public abstract class AbstractWorkerEntity extends TameableEntity {
                 break;
         }
         entityData.set(STATE, state);
-    }
-
-
-    public void setMovePos(BlockPos holdPos){
-        entityData.set(MOVE_POS, Optional.of(holdPos));
-    }
-
-    public void setMove(boolean bool) {
-        entityData.set(MOVE, bool);
     }
 
     public void setOwned(boolean owned) {
@@ -206,11 +239,19 @@ public abstract class AbstractWorkerEntity extends TameableEntity {
             if (this.isTame() && player.getUUID().equals(this.getOwnerUUID())) {
 
                 if (player.isCrouching()) {
-                    int state = this.getState();
+                    BlockPos playerPos = player.blockPosition();
+                    BlockPos destPos = new BlockPos(playerPos.getX() + 8, playerPos.getY(), playerPos.getZ());
 
+                    this.setStartPos(playerPos);
+                    this.setDestPos(destPos);
+                    player.sendMessage(new StringTextComponent("Started"), player.getUUID());
                 }
                 if(!player.isCrouching()) {
-
+                    setFollow(!getFollow());
+                    if (getFollow())
+                    player.sendMessage(new StringTextComponent("I will follow you!"), player.getUUID());
+                    else
+                        player.sendMessage(new StringTextComponent("I will not follow you!"), player.getUUID());
                 }
 
             } else if (item == Items.EMERALD && !this.isTame() && playerHasEnoughEmeralds(player)) {
@@ -238,21 +279,8 @@ public abstract class AbstractWorkerEntity extends TameableEntity {
                     player.sendMessage(new StringTextComponent("You need " + workerCosts() + " Emeralds to recruit me!"), player.getUUID());
             }
             else if (!this.isTame() && item != Items.EMERALD ) {
-                int i = this.random.nextInt(5);
-                switch (i) {
-                    case 0:
-                        player.sendMessage(new StringTextComponent("I am a " + workerName() + ". I'm here to keep things safe in these areas."), player.getUUID());
-                        break;
-                    case 1:
-                        player.sendMessage(new StringTextComponent("Stay Safe, I'm here to protect you."), player.getUUID());
-                        break;
-                    case 2:
-                        player.sendMessage(new StringTextComponent("Everyone needs a " + workerName() + " like me, to have peace in these Lands."), player.getUUID());
-                        break;
-                        default:
-                        player.sendMessage(new StringTextComponent("I am a " + workerName() + " defending these areas from Monsters!"), player.getUUID());
-                        break;
-                }
+                        player.sendMessage(new StringTextComponent("I am a " + workerName()), player.getUUID());
+
             }
             return super.mobInteract(player, hand);
         }

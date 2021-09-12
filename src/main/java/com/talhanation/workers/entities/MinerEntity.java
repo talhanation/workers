@@ -3,12 +3,14 @@ package com.talhanation.workers.entities;
 
 import net.minecraft.block.Block;
 import net.minecraft.block.BlockState;
+import net.minecraft.block.Blocks;
 import net.minecraft.entity.AgeableEntity;
 import net.minecraft.entity.EntityType;
 import net.minecraft.entity.ILivingEntityData;
 import net.minecraft.entity.SpawnReason;
 import net.minecraft.entity.ai.attributes.AttributeModifierMap;
 import net.minecraft.entity.ai.attributes.Attributes;
+import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.inventory.EquipmentSlotType;
 import net.minecraft.item.ItemStack;
 import net.minecraft.item.Items;
@@ -17,6 +19,7 @@ import net.minecraft.network.datasync.DataParameter;
 import net.minecraft.network.datasync.DataSerializers;
 import net.minecraft.network.datasync.EntityDataManager;
 import net.minecraft.pathfinding.GroundPathNavigator;
+import net.minecraft.util.Direction;
 import net.minecraft.util.SoundCategory;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.world.DifficultyInstance;
@@ -132,41 +135,83 @@ public class MinerEntity extends AbstractWorkerEntity {
 
     @Override
     public void tick() {
-        if (!this.dead && ForgeEventFactory.getMobGriefingEvent(this.level, this)) {
+        if (!this.dead && ForgeEventFactory.getMobGriefingEvent(this.level, this) && !getFollow()) {
             boolean flag = false;
 
-            BlockPos blockpos = this.getOnPos().north();
-            BlockState blockstate = this.level.getBlockState(blockpos);
-            Block block = blockstate.getBlock();
+                BlockPos blockpos = this.getOnPos().relative(this.getDirection()).above();
+                BlockPos blockpos2 = blockpos.above();
+                BlockState blockstate = this.level.getBlockState(blockpos);
+                Block block = blockstate.getBlock();
 
-            BlockState blockstate2 = this.level.getBlockState(blockpos.above());
-            Block block2 = blockstate2.getBlock();
+                BlockState blockstate2 = this.level.getBlockState(blockpos.above());
+                Block block2 = blockstate2.getBlock();
 
+                if (block != Blocks.AIR) {
 
-            if (this.getCurrentTimeBreak() % 5 == 4) {
-               level.playLocalSound(blockpos.getX(), blockpos.getY(), blockpos.getZ(), blockstate.getSoundType().getHitSound(), SoundCategory.BLOCKS, 1F, 0.75F, false);
+                    if (this.getCurrentTimeBreak() % 5 == 4) {
+                        level.playLocalSound(blockpos.getX(), blockpos.getY(), blockpos.getZ(), blockstate.getSoundType().getHitSound(), SoundCategory.BLOCKS, 1F, 0.75F, false);
+                    }
+
+                    //set max destroy speed
+                    int bp = (int) (blockstate.getDestroySpeed(this.level, blockpos) * 100);
+                    this.setBreakingTime(bp);
+
+                    //increase current
+                    this.setCurrentTimeBreak(this.getCurrentTimeBreak() + (int) (1 * (this.getUseItem().getDestroySpeed(blockstate))));
+                    float f = (float) this.getCurrentTimeBreak() / (float) this.getBreakingTime();
+
+                    int i = (int) (f * 10);
+
+                    if (i != this.getPreviousTimeBreak()) {
+                        this.level.destroyBlockProgress(1, blockpos, i);
+                        this.setPreviousTimeBreak(i);
+                    }
+
+                    if (this.getCurrentTimeBreak() >= this.getBreakingTime()) {
+                        flag = this.level.destroyBlock(blockpos, true, this) || flag;
+                        this.setCurrentTimeBreak(-1);
+                        this.setBreakingTime(0);
+                    }
+                    if (this.getRandom().nextInt(5) == 0) {
+                        if (!this.swinging) {
+                            this.swing(this.getUsedItemHand());
+                        }
+                    }
+                }
+            else  if(block2 != Blocks.AIR) {
+
+                if (this.getCurrentTimeBreak() % 5 == 4) {
+                    level.playLocalSound(blockpos2.getX(), blockpos2.getY(), blockpos2.getZ(), blockstate2.getSoundType().getHitSound(), SoundCategory.BLOCKS, 1F, 0.75F, false);
+                }
+
+                //set max destroy speed
+                int bp = (int) (blockstate2.getDestroySpeed(this.level, blockpos2.above()) * 100);
+                this.setBreakingTime(bp);
+
+                //increase current
+                this.setCurrentTimeBreak(this.getCurrentTimeBreak() + (int) (1 * (this.getUseItem().getDestroySpeed(blockstate2))));
+                float f = (float) this.getCurrentTimeBreak() / (float) this.getBreakingTime();
+
+                int i = (int) (f * 10);
+
+                if (i != this.getPreviousTimeBreak()) {
+                    this.level.destroyBlockProgress(1, blockpos2, i);
+                    this.setPreviousTimeBreak(i);
+                }
+
+                if (this.getCurrentTimeBreak() >= this.getBreakingTime()) {
+                    flag = this.level.destroyBlock(blockpos2, true, this) || flag;
+                    this.setCurrentTimeBreak(-1);
+                    this.setBreakingTime(0);
+                }
+                if (this.getRandom().nextInt(5) == 0) {
+                    if (!this.swinging) {
+                        this.swing(this.getUsedItemHand());
+                    }
+                }
+
             }
 
-            //set max destroy speed
-            int bp = (int) (blockstate.getDestroySpeed(this.level, blockpos) * 100);
-            this.setBreakingTime(bp);
-
-            //increase current
-            this.setCurrentTimeBreak(this.getCurrentTimeBreak() + (int) (1 * (this.getUseItem().getDestroySpeed(blockstate))));
-            float f = (float) this.getCurrentTimeBreak() / (float) this.getBreakingTime();
-
-            int i = (int) (f * 10);
-
-            if (i != this.getPreviousTimeBreak()) {
-                this.level.destroyBlockProgress(1, blockpos, i);
-                this.setPreviousTimeBreak(i);
-            }
-
-            if (this.getCurrentTimeBreak() >= this.getBreakingTime()) {
-                flag = this.level.destroyBlock(blockpos, true, this) || flag;
-                this.setCurrentTimeBreak(-1);
-                this.setBreakingTime(0);
-            }
             super.tick();
         }
 
