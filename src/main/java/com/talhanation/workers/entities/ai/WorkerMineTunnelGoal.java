@@ -15,6 +15,7 @@ public class WorkerMineTunnelGoal extends Goal {
     private final AbstractWorkerEntity worker;
     private final double speedModifier;
     private final double within;
+    private int blocks;
 
     public WorkerMineTunnelGoal(AbstractWorkerEntity worker, double v, double within) {
         this.worker = worker;
@@ -45,8 +46,16 @@ public class WorkerMineTunnelGoal extends Goal {
         Optional<BlockPos> StartPos = this.worker.getStartPos();
 
         DestPos.ifPresent(blockPos -> this.worker.getNavigation().moveTo(blockPos.getX(), blockPos.getY(), blockPos.getZ(), this.speedModifier));
-
         this.worker.getAttribute(Attributes.MOVEMENT_SPEED).setBaseValue(0.1D);
+        if (worker.getNavigation().isDone()){
+            blocks++;
+            worker.setStartPos(destPos);
+            BlockPos newdestPos = new BlockPos(worker.getX() + 1, worker.getY(), worker.getZ());
+            worker.setDestPos(newdestPos);
 
+        }
+        if (blocks == 8){
+
+        }
     }
 }

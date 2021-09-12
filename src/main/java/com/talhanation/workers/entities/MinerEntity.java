@@ -138,7 +138,7 @@ public class MinerEntity extends AbstractWorkerEntity {
         if (!this.dead && ForgeEventFactory.getMobGriefingEvent(this.level, this) && !getFollow()) {
             boolean flag = false;
 
-                BlockPos blockpos = this.getOnPos().relative(this.getDirection()).above();
+                BlockPos blockpos = this.getOnPos().relative(Direction.EAST).above();
                 BlockPos blockpos2 = blockpos.above();
                 BlockState blockstate = this.level.getBlockState(blockpos);
                 Block block = blockstate.getBlock();

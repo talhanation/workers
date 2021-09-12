@@ -194,6 +194,7 @@ public abstract class AbstractWorkerEntity extends TameableEntity {
 
     ////////////////////////////////////SET////////////////////////////////////
 
+
     public void setDestPos(BlockPos pos){
         this.entityData.set(DEST_POS, Optional.of(pos));
     }
@@ -240,7 +241,7 @@ public abstract class AbstractWorkerEntity extends TameableEntity {
 
                 if (player.isCrouching()) {
                     BlockPos playerPos = player.blockPosition();
-                    BlockPos destPos = new BlockPos(playerPos.getX() + 8, playerPos.getY(), playerPos.getZ());
+                    BlockPos destPos = new BlockPos(playerPos.getX() + 1, playerPos.getY(), playerPos.getZ());
 
                     this.setStartPos(playerPos);
                     this.setDestPos(destPos);
