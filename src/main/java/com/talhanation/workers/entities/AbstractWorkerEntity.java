@@ -1,7 +1,6 @@
 package com.talhanation.workers.entities;
 
 import com.talhanation.workers.entities.ai.WorkerFollowOwnerGoal;
-import com.talhanation.workers.entities.ai.WorkerMineTunnelGoal;
 import net.minecraft.entity.*;
 import net.minecraft.entity.ai.attributes.AttributeModifier;
 import net.minecraft.entity.ai.attributes.Attributes;
@@ -91,7 +90,6 @@ public abstract class AbstractWorkerEntity extends TameableEntity {
         this.goalSelector.addGoal(2, new WorkerFollowOwnerGoal(this, 1.2D, 9.0F, 3.0F));
         this.goalSelector.addGoal(2, new PanicGoal(this, 1.3D));
 
-        this.goalSelector.addGoal(2, new WorkerMineTunnelGoal(this, 0.5, 16D));
         this.goalSelector.addGoal(10, new WaterAvoidingRandomWalkingGoal(this, 1.0D, 0F));
         this.goalSelector.addGoal(10, new LookAtGoal(this, LivingEntity.class, 8.0F));
 
@@ -277,7 +275,7 @@ public abstract class AbstractWorkerEntity extends TameableEntity {
                 return ActionResultType.SUCCESS;
             }
             else if (item == Items.EMERALD  && !this.isTame() && !playerHasEnoughEmeralds(player)) {
-                    player.sendMessage(new StringTextComponent("You need " + workerCosts() + " Emeralds to recruit me!"), player.getUUID());
+                    player.sendMessage(new StringTextComponent("You need " + workerCosts() + " Emeralds to hire me!"), player.getUUID());
             }
             else if (!this.isTame() && item != Items.EMERALD ) {
                         player.sendMessage(new StringTextComponent("I am a " + workerName()), player.getUUID());
