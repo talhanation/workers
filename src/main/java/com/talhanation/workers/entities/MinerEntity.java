@@ -11,8 +11,6 @@ import net.minecraft.entity.ILivingEntityData;
 import net.minecraft.entity.SpawnReason;
 import net.minecraft.entity.ai.attributes.AttributeModifierMap;
 import net.minecraft.entity.ai.attributes.Attributes;
-import net.minecraft.entity.ai.goal.PanicGoal;
-import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.inventory.EquipmentSlotType;
 import net.minecraft.item.ItemStack;
 import net.minecraft.item.Items;
@@ -31,19 +29,20 @@ import net.minecraft.world.server.ServerWorld;
 import net.minecraftforge.event.ForgeEventFactory;
 
 import javax.annotation.Nullable;
-import java.util.Optional;
 
 public class MinerEntity extends AbstractWorkerEntity {
 
     private static final DataParameter<Integer> breakingTime = EntityDataManager.defineId(MinerEntity.class, DataSerializers.INT);
     private static final DataParameter<Integer> currentTimeBreak = EntityDataManager.defineId(MinerEntity.class, DataSerializers.INT);
     private static final DataParameter<Integer> previousTimeBreak = EntityDataManager.defineId(MinerEntity.class, DataSerializers.INT);
+    private static final DataParameter<Boolean> NEXT_STEP = EntityDataManager.defineId(MinerEntity.class, DataSerializers.BOOLEAN);
 
     protected void defineSynchedData() {
         super.defineSynchedData();
         this.entityData.define(breakingTime, 0);
         this.entityData.define(currentTimeBreak, -1);
         this.entityData.define(previousTimeBreak, -1);
+        this.entityData.define(NEXT_STEP, false);
     }
 
     public MinerEntity(EntityType<? extends AbstractWorkerEntity> entityType, World world) {
@@ -130,6 +129,7 @@ public class MinerEntity extends AbstractWorkerEntity {
         compound.putInt("breakTime", this.getBreakingTime());
         compound.putInt("currentTimeBreak", this.getCurrentTimeBreak());
         compound.putInt("previousTimeBreak", this.getPreviousTimeBreak());
+        compound.putBoolean("canNextStep", this.getNextStep());
     }
 
     public void readAdditionalSaveData(CompoundNBT compound) {
@@ -137,6 +137,7 @@ public class MinerEntity extends AbstractWorkerEntity {
         this.setBreakingTime(compound.getInt("breakTime"));
         this.setCurrentTimeBreak(compound.getInt("currentTimeBreak"));
         this.setPreviousTimeBreak(compound.getInt("previousTimeBreak"));
+        this.setNextStep(compound.getBoolean("canNextStep"));
     }
 
     public Direction getMineDirectrion() {
@@ -174,10 +175,11 @@ public class MinerEntity extends AbstractWorkerEntity {
                     this.setPreviousTimeBreak(i);
                 }
 
-                if (this.getCurrentTimeBreak() >= this.getBreakingTime()) {
-                    flag = this.level.destroyBlock(blockPos, true, this) || flag;
+                if (this.getCurrentTimeBreak() == this.getBreakingTime()) {
+                    this.level.destroyBlock(blockPos, true, this);
                     this.setCurrentTimeBreak(-1);
                     this.setBreakingTime(0);
+                    this.setNextStep(false);
                 }
                 if (this.getRandom().nextInt(5) == 0) {
                     if (!this.swinging) {
@@ -205,10 +207,11 @@ public class MinerEntity extends AbstractWorkerEntity {
                     this.setPreviousTimeBreak(i);
                 }
 
-                if (this.getCurrentTimeBreak() >= this.getBreakingTime()) {
-                    flag = this.level.destroyBlock(blockpos2, true, this) || flag;
+                if (this.getCurrentTimeBreak() == this.getBreakingTime()) {
+                    this.level.destroyBlock(blockpos2, true, this);
                     this.setCurrentTimeBreak(-1);
                     this.setBreakingTime(0);
+                    this.setNextStep(true);
                 }
                 if (this.getRandom().nextInt(5) == 0) {
                     if (!this.swinging) {
@@ -220,5 +223,11 @@ public class MinerEntity extends AbstractWorkerEntity {
         }
 
     }
+    public void setNextStep(boolean bool){
+        entityData.set(NEXT_STEP, bool);
+    }
 
+    public boolean getNextStep(){
+        return entityData.get(NEXT_STEP);
+    }
 }

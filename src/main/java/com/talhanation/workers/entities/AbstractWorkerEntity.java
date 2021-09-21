@@ -132,7 +132,7 @@ public abstract class AbstractWorkerEntity extends TameableEntity {
                     nbt.getInt("StartPosX"),
                     nbt.getInt("StartPosY"),
                     nbt.getInt("StartPosZ"));
-            this.setStartPos(blockpos);
+            this.setStartPos(Optional.of(blockpos));
         }
 
         if (nbt.contains("DestPosX", 99) &&
@@ -197,8 +197,8 @@ public abstract class AbstractWorkerEntity extends TameableEntity {
         this.entityData.set(DEST_POS, Optional.of(pos));
     }
 
-    public void setStartPos(BlockPos pos){
-        this.entityData.set(START_POS, Optional.of(pos));
+    public void setStartPos(Optional<BlockPos> pos){
+        this.entityData.set(START_POS, pos);
     }
 
     public void setFollow(boolean bool){
@@ -241,7 +241,7 @@ public abstract class AbstractWorkerEntity extends TameableEntity {
                     BlockPos playerPos = player.blockPosition();
                     BlockPos destPos = new BlockPos(playerPos.getX() + 1, playerPos.getY(), playerPos.getZ());
 
-                    this.setStartPos(playerPos);
+                    this.setStartPos(Optional.of(playerPos));
                     this.setDestPos(destPos);
                     player.sendMessage(new StringTextComponent("Started"), player.getUUID());
                 }
@@ -358,7 +358,5 @@ public abstract class AbstractWorkerEntity extends TameableEntity {
         }
 
     }
-
-
 
 }
