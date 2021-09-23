@@ -2,6 +2,7 @@ package com.talhanation.workers.network;
 
 import com.talhanation.workers.CommandEvents;
 import com.talhanation.workers.entities.AbstractWorkerEntity;
+import com.talhanation.workers.entities.MinerEntity;
 import net.minecraft.network.PacketBuffer;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.fml.network.NetworkEvent;
@@ -26,8 +27,8 @@ public class MessageStartPos implements Message<MessageStartPos> {
     }
 
     public void executeServerSide(NetworkEvent.Context context) {
-        List<AbstractWorkerEntity> list = Objects.requireNonNull(context.getSender()).level.getEntitiesOfClass(AbstractWorkerEntity.class, context.getSender().getBoundingBox().inflate(40.0D));
-        for (AbstractWorkerEntity workers : list) {
+        List<MinerEntity> list = Objects.requireNonNull(context.getSender()).level.getEntitiesOfClass(MinerEntity.class, context.getSender().getBoundingBox().inflate(40.0D));
+        for (MinerEntity workers : list) {
                 CommandEvents.onCKeyPressed(this.player, workers);
         }
     }

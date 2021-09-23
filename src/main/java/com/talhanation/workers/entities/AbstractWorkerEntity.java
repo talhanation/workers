@@ -1,13 +1,8 @@
 package com.talhanation.workers.entities;
 
-import com.talhanation.workers.entities.ai.WorkerFollowOwnerGoal;
 import net.minecraft.entity.*;
 import net.minecraft.entity.ai.attributes.AttributeModifier;
 import net.minecraft.entity.ai.attributes.Attributes;
-import net.minecraft.entity.ai.goal.LookAtGoal;
-import net.minecraft.entity.ai.goal.PanicGoal;
-import net.minecraft.entity.ai.goal.SwimGoal;
-import net.minecraft.entity.ai.goal.WaterAvoidingRandomWalkingGoal;
 import net.minecraft.entity.passive.TameableEntity;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.entity.projectile.AbstractArrowEntity;
@@ -34,7 +29,7 @@ public abstract class AbstractWorkerEntity extends TameableEntity {
     private static final DataParameter<Optional<BlockPos>> START_POS = EntityDataManager.defineId(AbstractWorkerEntity.class, DataSerializers.OPTIONAL_BLOCK_POS);
     private static final DataParameter<Optional<BlockPos>> DEST_POS = EntityDataManager.defineId(AbstractWorkerEntity.class, DataSerializers.OPTIONAL_BLOCK_POS);
     private static final DataParameter<Boolean> FOLLOW = EntityDataManager.defineId(AbstractWorkerEntity.class, DataSerializers.BOOLEAN);
-    private static final DataParameter<Integer> STATE = EntityDataManager.defineId(AbstractWorkerEntity.class, DataSerializers.INT);
+    private static final DataParameter<Boolean> IS_WORKING = EntityDataManager.defineId(AbstractWorkerEntity.class, DataSerializers.BOOLEAN);
 
     public AbstractWorkerEntity(EntityType<? extends TameableEntity> entityType, World world) {
         super(entityType, world);
@@ -71,6 +66,7 @@ public abstract class AbstractWorkerEntity extends TameableEntity {
     @Nullable
     public ILivingEntityData finalizeSpawn(IServerWorld world, DifficultyInstance diff, SpawnReason reason, @Nullable ILivingEntityData spawnData, @Nullable CompoundNBT nbt) {
         setRandomSpawnBonus();
+        canPickUpLoot();
         return spawnData;
     }
     public void setRandomSpawnBonus(){
@@ -85,19 +81,10 @@ public abstract class AbstractWorkerEntity extends TameableEntity {
 
     ////////////////////////////////////REGISTER////////////////////////////////////
 
-    protected void registerGoals() {
-        this.goalSelector.addGoal(1, new SwimGoal(this));
-        this.goalSelector.addGoal(2, new WorkerFollowOwnerGoal(this, 1.2D, 9.0F, 3.0F));
-        this.goalSelector.addGoal(2, new PanicGoal(this, 1.3D));
-
-        this.goalSelector.addGoal(10, new WaterAvoidingRandomWalkingGoal(this, 1.0D, 0F));
-        this.goalSelector.addGoal(10, new LookAtGoal(this, LivingEntity.class, 8.0F));
-
-    }
 
     protected void defineSynchedData() {
         super.defineSynchedData();
-        this.entityData.define(STATE, 0);
+        this.entityData.define(IS_WORKING, false);
         this.entityData.define(FOLLOW, false);
         this.entityData.define(START_POS, Optional.empty());
         this.entityData.define(DEST_POS, Optional.empty());
@@ -106,6 +93,7 @@ public abstract class AbstractWorkerEntity extends TameableEntity {
     public void addAdditionalSaveData(CompoundNBT nbt) {
         super.addAdditionalSaveData(nbt);
         nbt.putBoolean("Follow", this.getFollow());
+        nbt.putBoolean("isWorking", this.getIsWorking());
 
         this.getStartPos().ifPresent((pos) -> {
             nbt.putInt("StartPosX", pos.getX());
@@ -125,6 +113,11 @@ public abstract class AbstractWorkerEntity extends TameableEntity {
         if (nbt.contains("Follow", 1)) {
             this.setFollow(nbt.getBoolean("Follow"));
         }
+
+        if (nbt.contains("isWorking", 1)) {
+            this.setIsWorking(nbt.getBoolean("isWorking"));
+        }
+
         if (nbt.contains("StartPosX", 99) &&
                 nbt.contains("StartPosY", 99) &&
                 nbt.contains("StartPosZ", 99)) {
@@ -163,8 +156,8 @@ public abstract class AbstractWorkerEntity extends TameableEntity {
         return this.entityData.get(FOLLOW);
     }
 
-    public int getState(){
-        return this.entityData.get(STATE);
+    public boolean getIsWorking(){
+        return this.entityData.get(IS_WORKING);
     }
 
     public SoundEvent getHurtSound(DamageSource ds) {
@@ -203,19 +196,26 @@ public abstract class AbstractWorkerEntity extends TameableEntity {
 
     public void setFollow(boolean bool){
         this.entityData.set(FOLLOW, bool);
+
+        LivingEntity owner = this.getOwner();
+
+        if (bool) {
+            owner.sendMessage(new StringTextComponent("I will follow you!"), owner.getUUID());
+        }
+        else
+            owner.sendMessage(new StringTextComponent("I will not follow you!"), owner.getUUID());
     }
 
-    public void setState(int state) {
-        switch (state){
-            case 0:
-                setTarget(null);//wird nur 1x aufgerufen
-                break;
-            case 1:
-                break;
-            case 2:
-                break;
+    public void setIsWorking(boolean bool) {
+        entityData.set(IS_WORKING, bool);
+
+        LivingEntity owner = this.getOwner();
+
+        if (bool) {
+            owner.sendMessage(new StringTextComponent("Im working now!"), owner.getUUID());
         }
-        entityData.set(STATE, state);
+        else
+            owner.sendMessage(new StringTextComponent("I stopped working now!"), owner.getUUID());
     }
 
     public void setOwned(boolean owned) {
@@ -238,19 +238,11 @@ public abstract class AbstractWorkerEntity extends TameableEntity {
             if (this.isTame() && player.getUUID().equals(this.getOwnerUUID())) {
 
                 if (player.isCrouching()) {
-                    BlockPos playerPos = player.blockPosition();
-                    BlockPos destPos = new BlockPos(playerPos.getX() + 1, playerPos.getY(), playerPos.getZ());
-
-                    this.setStartPos(Optional.of(playerPos));
-                    this.setDestPos(destPos);
-                    player.sendMessage(new StringTextComponent("Started"), player.getUUID());
+                    //openInventory();
                 }
                 if(!player.isCrouching()) {
                     setFollow(!getFollow());
-                    if (getFollow())
-                    player.sendMessage(new StringTextComponent("I will follow you!"), player.getUUID());
-                    else
-                        player.sendMessage(new StringTextComponent("I will not follow you!"), player.getUUID());
+                    return ActionResultType.SUCCESS;
                 }
 
             } else if (item == Items.EMERALD && !this.isTame() && playerHasEnoughEmeralds(player)) {
@@ -258,6 +250,7 @@ public abstract class AbstractWorkerEntity extends TameableEntity {
                     if (!player.isCreative()) {
                         itemstack.shrink(workerCosts());
                     }
+                    return ActionResultType.SUCCESS;
                 }
 
                 if (!net.minecraftforge.event.ForgeEventFactory.onAnimalTame(this, player)) {
@@ -265,7 +258,7 @@ public abstract class AbstractWorkerEntity extends TameableEntity {
                     this.navigation.stop();
                     this.setTarget(null);
                     this.setOrderedToSit(false);
-                    this.setState(0);
+                    this.setIsWorking(false);
                     this.level.broadcastEntityEvent(this, (byte)7);
                     return ActionResultType.SUCCESS;
                 } else {
@@ -333,6 +326,8 @@ public abstract class AbstractWorkerEntity extends TameableEntity {
     public boolean isOwnedByThisPlayer(AbstractWorkerEntity recruit, PlayerEntity player){
         return  (recruit.getOwnerUUID() == player.getUUID());
     }
+
+
 
     @Override
     public boolean canBeLeashed(PlayerEntity player) {

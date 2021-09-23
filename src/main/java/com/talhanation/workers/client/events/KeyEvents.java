@@ -20,11 +20,9 @@ public class KeyEvents {
         if (clientPlayerEntity == null)
             return;
 
-        if (Main.R_KEY.isDown()) {
+        if (Main.C_KEY.isDown()) {
             Main.SIMPLE_CHANNEL.sendToServer(new MessageStartPos(clientPlayerEntity.getUUID()));
         }
-
-
 
     }
 

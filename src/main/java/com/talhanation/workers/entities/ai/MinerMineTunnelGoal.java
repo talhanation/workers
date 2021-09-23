@@ -6,9 +6,7 @@ import net.minecraft.block.BlockState;
 import net.minecraft.block.Blocks;
 import net.minecraft.entity.ai.attributes.Attributes;
 import net.minecraft.entity.ai.goal.Goal;
-
-import net.minecraft.entity.ai.goal.Goal;
-import net.minecraft.util.Hand;
+import net.minecraft.util.Direction;
 import net.minecraft.util.math.BlockPos;
 
 import java.util.EnumSet;
@@ -19,7 +17,7 @@ public class MinerMineTunnelGoal extends Goal {
     private final double speedModifier;
     private final double within;
     private BlockPos minePos;
-    private int blocks = 1;
+    private int blocks = 0;
 
     public MinerMineTunnelGoal(MinerEntity miner, double v, double within) {
         this.miner = miner;
@@ -27,15 +25,14 @@ public class MinerMineTunnelGoal extends Goal {
         this.within = within;
         this.setFlags(EnumSet.of(Goal.Flag.MOVE));
     }
+
     public boolean canUse() {
         if (!this.miner.getStartPos().isPresent()) {
             return false;
         }
         if (this.miner.getFollow()) {
             return false;
-        }
-
-        else if (this.miner.getDestPos().get().closerThan(miner.position(), within) && !this.miner.getFollow())
+        } else if (this.miner.getStartPos().get().closerThan(miner.position(), within) && !this.miner.getFollow())
             return true;
 
         else
@@ -49,28 +46,43 @@ public class MinerMineTunnelGoal extends Goal {
     @Override
     public void start() {
         super.start();
-        //miner.setNextStep(true);
     }
 
     public void tick() {
         if (!miner.getFollow()) {
-            this.minePos = new BlockPos(miner.getStartPos().get().getX() + blocks, miner.getStartPos().get().getY(), miner.getStartPos().get().getZ());
+            if (miner.getMineDirectrion().equals(Direction.EAST)) {
+
+                this.minePos = new BlockPos(miner.getStartPos().get().getX() + blocks, miner.getStartPos().get().getY(), miner.getStartPos().get().getZ());
+            } else if (miner.getMineDirectrion().equals(Direction.WEST)) {
+                this.minePos = new BlockPos(miner.getStartPos().get().getX() - blocks, miner.getStartPos().get().getY(), miner.getStartPos().get().getZ());
+            } else if (miner.getMineDirectrion().equals(Direction.NORTH)) {
+                this.minePos = new BlockPos(miner.getStartPos().get().getX(), miner.getStartPos().get().getY(), miner.getStartPos().get().getZ() - blocks);
+            } else if (miner.getMineDirectrion().equals(Direction.SOUTH)) {
+                this.minePos = new BlockPos(miner.getStartPos().get().getX(), miner.getStartPos().get().getY(), miner.getStartPos().get().getZ() + blocks);
+            }
+
             this.miner.getNavigation().moveTo(minePos.getX(), minePos.getY(), minePos.getZ(), this.speedModifier);
             BlockState blockstate = miner.level.getBlockState(minePos);
             Block block1 = blockstate.getBlock();
             BlockState blockstate2 = miner.level.getBlockState(minePos.above());
             Block block2 = blockstate2.getBlock();
 
-            this.miner.getAttribute(Attributes.MOVEMENT_SPEED).setBaseValue(0.4D);
+            this.miner.getAttribute(Attributes.MOVEMENT_SPEED).setBaseValue(0.3D);
+            //erst mienen wenn nah genug
             this.miner.mineBlock(this.minePos);
+            //miner.getOwner().sendMessage(new StringTextComponent("" + blocks + ""), miner.getOwner().getUUID());
 
             if (block1 == Blocks.AIR && block2 == Blocks.AIR) {
+
                 blocks++;
             }
-        }
 
-        if (miner.getFollow()){
-            miner.setStartPos(Optional.empty());
+            if (blocks == 9){
+                miner.setIsWorking(false);
+                miner.setStartPos(Optional.empty());
+                blocks = 0;
+            }
+
         }
     }
 }

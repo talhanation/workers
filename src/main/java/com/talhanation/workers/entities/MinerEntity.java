@@ -2,15 +2,17 @@ package com.talhanation.workers.entities;
 
 
 import com.talhanation.workers.entities.ai.MinerMineTunnelGoal;
+import com.talhanation.workers.entities.ai.WorkerFollowOwnerGoal;
 import net.minecraft.block.Block;
 import net.minecraft.block.BlockState;
 import net.minecraft.block.Blocks;
-import net.minecraft.entity.AgeableEntity;
-import net.minecraft.entity.EntityType;
-import net.minecraft.entity.ILivingEntityData;
-import net.minecraft.entity.SpawnReason;
+import net.minecraft.entity.*;
 import net.minecraft.entity.ai.attributes.AttributeModifierMap;
 import net.minecraft.entity.ai.attributes.Attributes;
+import net.minecraft.entity.ai.goal.LookAtGoal;
+import net.minecraft.entity.ai.goal.PanicGoal;
+import net.minecraft.entity.ai.goal.SwimGoal;
+import net.minecraft.entity.ai.goal.WaterAvoidingRandomWalkingGoal;
 import net.minecraft.inventory.EquipmentSlotType;
 import net.minecraft.item.ItemStack;
 import net.minecraft.item.Items;
@@ -36,6 +38,8 @@ public class MinerEntity extends AbstractWorkerEntity {
     private static final DataParameter<Integer> currentTimeBreak = EntityDataManager.defineId(MinerEntity.class, DataSerializers.INT);
     private static final DataParameter<Integer> previousTimeBreak = EntityDataManager.defineId(MinerEntity.class, DataSerializers.INT);
     private static final DataParameter<Boolean> NEXT_STEP = EntityDataManager.defineId(MinerEntity.class, DataSerializers.BOOLEAN);
+    private static final DataParameter<Direction> DIRECTION = EntityDataManager.defineId(MinerEntity.class, DataSerializers.DIRECTION);
+
 
     protected void defineSynchedData() {
         super.defineSynchedData();
@@ -43,6 +47,7 @@ public class MinerEntity extends AbstractWorkerEntity {
         this.entityData.define(currentTimeBreak, -1);
         this.entityData.define(previousTimeBreak, -1);
         this.entityData.define(NEXT_STEP, false);
+        this.entityData.define(DIRECTION, Direction.NORTH);
     }
 
     public MinerEntity(EntityType<? extends AbstractWorkerEntity> entityType, World world) {
@@ -57,11 +62,17 @@ public class MinerEntity extends AbstractWorkerEntity {
                 .add(Attributes.MOVEMENT_SPEED, 0.3D)
                 .add(Attributes.ATTACK_DAMAGE, 1.0D)
                 .add(Attributes.FOLLOW_RANGE, 32.0D);
-
     }
 
     protected void registerGoals() {
+        this.goalSelector.addGoal(1, new SwimGoal(this));
         this.goalSelector.addGoal(2, new MinerMineTunnelGoal(this, 0.5D, 10D));
+        this.goalSelector.addGoal(2, new WorkerFollowOwnerGoal(this, 1.2D, 9.0F, 3.0F));
+        this.goalSelector.addGoal(2, new PanicGoal(this, 1.3D));
+
+        this.goalSelector.addGoal(10, new WaterAvoidingRandomWalkingGoal(this, 1.0D, 0F));
+        this.goalSelector.addGoal(10, new LookAtGoal(this, LivingEntity.class, 8.0F));
+
     }
 
     @Nullable
@@ -140,8 +151,12 @@ public class MinerEntity extends AbstractWorkerEntity {
         this.setNextStep(compound.getBoolean("canNextStep"));
     }
 
+    public void setMineDirectrion(Direction dir) {
+        entityData.set(DIRECTION, dir);
+    }
+
     public Direction getMineDirectrion() {
-        return Direction.EAST;
+        return entityData.get(DIRECTION);
     }
 
     public void mineBlock(BlockPos blockPos){
