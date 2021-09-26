@@ -37,7 +37,6 @@ public class MinerEntity extends AbstractWorkerEntity {
     private static final DataParameter<Integer> breakingTime = EntityDataManager.defineId(MinerEntity.class, DataSerializers.INT);
     private static final DataParameter<Integer> currentTimeBreak = EntityDataManager.defineId(MinerEntity.class, DataSerializers.INT);
     private static final DataParameter<Integer> previousTimeBreak = EntityDataManager.defineId(MinerEntity.class, DataSerializers.INT);
-    private static final DataParameter<Boolean> NEXT_STEP = EntityDataManager.defineId(MinerEntity.class, DataSerializers.BOOLEAN);
     private static final DataParameter<Direction> DIRECTION = EntityDataManager.defineId(MinerEntity.class, DataSerializers.DIRECTION);
 
 
@@ -46,7 +45,6 @@ public class MinerEntity extends AbstractWorkerEntity {
         this.entityData.define(breakingTime, 0);
         this.entityData.define(currentTimeBreak, -1);
         this.entityData.define(previousTimeBreak, -1);
-        this.entityData.define(NEXT_STEP, false);
         this.entityData.define(DIRECTION, Direction.NORTH);
     }
 
@@ -140,7 +138,6 @@ public class MinerEntity extends AbstractWorkerEntity {
         compound.putInt("breakTime", this.getBreakingTime());
         compound.putInt("currentTimeBreak", this.getCurrentTimeBreak());
         compound.putInt("previousTimeBreak", this.getPreviousTimeBreak());
-        compound.putBoolean("canNextStep", this.getNextStep());
     }
 
     public void readAdditionalSaveData(CompoundNBT compound) {
@@ -148,7 +145,6 @@ public class MinerEntity extends AbstractWorkerEntity {
         this.setBreakingTime(compound.getInt("breakTime"));
         this.setCurrentTimeBreak(compound.getInt("currentTimeBreak"));
         this.setPreviousTimeBreak(compound.getInt("previousTimeBreak"));
-        this.setNextStep(compound.getBoolean("canNextStep"));
     }
 
     public void setMineDirectrion(Direction dir) {
@@ -194,7 +190,6 @@ public class MinerEntity extends AbstractWorkerEntity {
                     this.level.destroyBlock(blockPos, true, this);
                     this.setCurrentTimeBreak(-1);
                     this.setBreakingTime(0);
-                    this.setNextStep(false);
                 }
                 if (this.getRandom().nextInt(5) == 0) {
                     if (!this.swinging) {
@@ -226,7 +221,6 @@ public class MinerEntity extends AbstractWorkerEntity {
                     this.level.destroyBlock(blockpos2, true, this);
                     this.setCurrentTimeBreak(-1);
                     this.setBreakingTime(0);
-                    this.setNextStep(true);
                 }
                 if (this.getRandom().nextInt(5) == 0) {
                     if (!this.swinging) {
@@ -237,12 +231,5 @@ public class MinerEntity extends AbstractWorkerEntity {
             }
         }
 
-    }
-    public void setNextStep(boolean bool){
-        entityData.set(NEXT_STEP, bool);
-    }
-
-    public boolean getNextStep(){
-        return entityData.get(NEXT_STEP);
     }
 }
