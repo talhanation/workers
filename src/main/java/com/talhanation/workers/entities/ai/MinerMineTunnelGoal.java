@@ -61,7 +61,14 @@ public class MinerMineTunnelGoal extends Goal {
                 this.minePos = new BlockPos(miner.getStartPos().get().getX(), miner.getStartPos().get().getY(), miner.getStartPos().get().getZ() + blocks);
             }
 
+
             this.miner.getNavigation().moveTo(minePos.getX(), minePos.getY(), minePos.getZ(), this.speedModifier);
+
+            if (minePos.closerThan(miner.position(), 2.5)){
+                miner.getNavigation().stop();
+                this.miner.getLookControl().setLookAt(minePos.getX(), minePos.getY(), minePos.getZ(), 10.0F, (float) this.miner.getMaxHeadXRot());
+            }
+
             BlockState blockstate = miner.level.getBlockState(minePos);
             Block block1 = blockstate.getBlock();
             BlockState blockstate2 = miner.level.getBlockState(minePos.above());
@@ -69,7 +76,7 @@ public class MinerMineTunnelGoal extends Goal {
 
             this.miner.getAttribute(Attributes.MOVEMENT_SPEED).setBaseValue(0.3D);
             //erst mienen wenn nah genug
-            this.miner.mineBlock(this.minePos);
+            if (minePos.closerThan(miner.position(), 5)) this.miner.mineBlock(this.minePos);
             //miner.getOwner().sendMessage(new StringTextComponent("" + blocks + ""), miner.getOwner().getUUID());
 
             if (block1 == Blocks.AIR && block2 == Blocks.AIR) {
