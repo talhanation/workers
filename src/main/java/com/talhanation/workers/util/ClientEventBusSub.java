@@ -16,6 +16,7 @@ public class ClientEventBusSub {
     @SubscribeEvent
     public static void clientsetup(FMLClientSetupEvent event){
         RenderingRegistry.registerEntityRenderingHandler(ModEntityTypes.MINER.get(), WorkersRenderer::new );
+        RenderingRegistry.registerEntityRenderingHandler(ModEntityTypes.LUMBERJACK.get(), WorkersRenderer::new );
     }
 
 }

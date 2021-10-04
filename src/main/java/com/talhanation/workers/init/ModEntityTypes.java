@@ -1,6 +1,7 @@
 package com.talhanation.workers.init;
 
 import com.talhanation.workers.Main;
+import com.talhanation.workers.entities.LumberjackEntity;
 import com.talhanation.workers.entities.MinerEntity;
 import net.minecraft.entity.EntityClassification;
 import net.minecraft.entity.EntityType;
@@ -22,8 +23,8 @@ public class ModEntityTypes {
                     .setShouldReceiveVelocityUpdates(true)
                     .build(new ResourceLocation(Main.MOD_ID, "miner").toString()));
 
-    public static final RegistryObject<EntityType<MinerEntity>> LUMBERJACK = ENTITY_TYPES.register("lumberjack",
-            () -> EntityType.Builder.of(MinerEntity::new, EntityClassification.CREATURE)
+    public static final RegistryObject<EntityType<LumberjackEntity>> LUMBERJACK = ENTITY_TYPES.register("lumberjack",
+            () -> EntityType.Builder.of(LumberjackEntity::new, EntityClassification.CREATURE)
                     .sized(0.6F, 1.95F)
                     .canSpawnFarFromPlayer()
                     .setTrackingRange(32)

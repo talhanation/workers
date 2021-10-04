@@ -17,7 +17,7 @@ import java.util.UUID;
 
 public class CommandEvents {
 
-    public static void onCKeyPressed(UUID player_uuid, MinerEntity worker) {
+    public static void onCKeyPressed(UUID player_uuid, AbstractWorkerEntity worker) {
 
         Minecraft minecraft = Minecraft.getInstance();
         LivingEntity owner = worker.getOwner();
@@ -27,7 +27,7 @@ public class CommandEvents {
 
             if (owner != null){
                 Direction playerDirection = owner.getDirection();
-                worker.setMineDirectrion(playerDirection);
+                //worker.setMineDirectrion(playerDirection);
             }
 
             RayTraceResult rayTraceResult = minecraft.hitResult;
@@ -38,7 +38,7 @@ public class CommandEvents {
                     worker.setStartPos(Optional.of(blockpos));
                     worker.setFollow(false);
                     worker.setIsWorking(true);
-                    worker.getOwner().sendMessage(new StringTextComponent(worker.getMineDirectrion().getSerializedName()), worker.getOwner().getUUID());
+                    //worker.getOwner().sendMessage(new StringTextComponent(worker.getMineDirectrion().getSerializedName()), worker.getOwner().getUUID());
                 }
             }
         }

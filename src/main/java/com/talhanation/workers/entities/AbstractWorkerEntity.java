@@ -25,13 +25,18 @@ import net.minecraftforge.api.distmarker.OnlyIn;
 import javax.annotation.Nullable;
 import java.util.Optional;
 
-public abstract class AbstractWorkerEntity extends TameableEntity {
+public abstract class AbstractWorkerEntity extends AbstractInventoryEntity {
     private static final DataParameter<Optional<BlockPos>> START_POS = EntityDataManager.defineId(AbstractWorkerEntity.class, DataSerializers.OPTIONAL_BLOCK_POS);
     private static final DataParameter<Optional<BlockPos>> DEST_POS = EntityDataManager.defineId(AbstractWorkerEntity.class, DataSerializers.OPTIONAL_BLOCK_POS);
     private static final DataParameter<Boolean> FOLLOW = EntityDataManager.defineId(AbstractWorkerEntity.class, DataSerializers.BOOLEAN);
     private static final DataParameter<Boolean> IS_WORKING = EntityDataManager.defineId(AbstractWorkerEntity.class, DataSerializers.BOOLEAN);
+    private static final DataParameter<Integer> breakingTime = EntityDataManager.defineId(MinerEntity.class, DataSerializers.INT);
+    private static final DataParameter<Integer> currentTimeBreak = EntityDataManager.defineId(MinerEntity.class, DataSerializers.INT);
+    private static final DataParameter<Integer> previousTimeBreak = EntityDataManager.defineId(MinerEntity.class, DataSerializers.INT);
 
-    public AbstractWorkerEntity(EntityType<? extends TameableEntity> entityType, World world) {
+
+
+    public AbstractWorkerEntity(EntityType<? extends AbstractInventoryEntity> entityType, World world) {
         super(entityType, world);
         this.setOwned(false);
         this.xpReward = 2;
@@ -88,12 +93,18 @@ public abstract class AbstractWorkerEntity extends TameableEntity {
         this.entityData.define(FOLLOW, false);
         this.entityData.define(START_POS, Optional.empty());
         this.entityData.define(DEST_POS, Optional.empty());
+        this.entityData.define(breakingTime, 0);
+        this.entityData.define(currentTimeBreak, -1);
+        this.entityData.define(previousTimeBreak, -1);
     }
 
     public void addAdditionalSaveData(CompoundNBT nbt) {
         super.addAdditionalSaveData(nbt);
         nbt.putBoolean("Follow", this.getFollow());
         nbt.putBoolean("isWorking", this.getIsWorking());
+        nbt.putInt("breakTime", this.getBreakingTime());
+        nbt.putInt("currentTimeBreak", this.getCurrentTimeBreak());
+        nbt.putInt("previousTimeBreak", this.getPreviousTimeBreak());
 
         this.getStartPos().ifPresent((pos) -> {
             nbt.putInt("StartPosX", pos.getX());
@@ -110,13 +121,12 @@ public abstract class AbstractWorkerEntity extends TameableEntity {
 
     public void readAdditionalSaveData(CompoundNBT nbt) {
         super.readAdditionalSaveData(nbt);
-        if (nbt.contains("Follow", 1)) {
-            this.setFollow(nbt.getBoolean("Follow"));
-        }
+        this.setFollow(nbt.getBoolean("Follow"));
+        this.setBreakingTime(nbt.getInt("breakTime"));
+        this.setCurrentTimeBreak(nbt.getInt("currentTimeBreak"));
+        this.setPreviousTimeBreak(nbt.getInt("previousTimeBreak"));
+        this.setIsWorking(nbt.getBoolean("isWorking"));
 
-        if (nbt.contains("isWorking", 1)) {
-            this.setIsWorking(nbt.getBoolean("isWorking"));
-        }
 
         if (nbt.contains("StartPosX", 99) &&
                 nbt.contains("StartPosY", 99) &&
@@ -143,6 +153,22 @@ public abstract class AbstractWorkerEntity extends TameableEntity {
 
     ////////////////////////////////////GET////////////////////////////////////
 
+    public int getCurrentTimeBreak() {
+        return this.entityData.get(currentTimeBreak);
+    }
+
+    public int getPreviousTimeBreak() {
+        return this.entityData.get(previousTimeBreak);
+    }
+
+    public int getBreakingTime() {
+        return this.entityData.get(breakingTime);
+    }
+
+    public BlockPos getWorkerOnPos(){
+        return this.getOnPos();
+    }
+
     public Optional<BlockPos> getDestPos(){
         return this.entityData.get(DEST_POS);
     }
@@ -161,8 +187,6 @@ public abstract class AbstractWorkerEntity extends TameableEntity {
     }
 
     public SoundEvent getHurtSound(DamageSource ds) {
-        if (this.isBlocking())
-            return SoundEvents.SHIELD_BLOCK;
         return SoundEvents.VILLAGER_HURT;
     }
 
@@ -185,6 +209,17 @@ public abstract class AbstractWorkerEntity extends TameableEntity {
 
     ////////////////////////////////////SET////////////////////////////////////
 
+    public void setPreviousTimeBreak(int value) {
+        this.entityData.set(previousTimeBreak, value);
+    }
+
+    public void setCurrentTimeBreak(int value) {
+        this.entityData.set(currentTimeBreak, value);
+    }
+
+    public void setBreakingTime(int value) {
+        this.entityData.set(breakingTime, value);
+    }
 
     public void setDestPos(BlockPos pos){
         this.entityData.set(DEST_POS, Optional.of(pos));
@@ -228,57 +263,9 @@ public abstract class AbstractWorkerEntity extends TameableEntity {
 
     ////////////////////////////////////ON FUNCTIONS////////////////////////////////////
 
-    public ActionResultType mobInteract(PlayerEntity player, Hand hand) {
-        ItemStack itemstack = player.getItemInHand(hand);
-        Item item = itemstack.getItem();
-        if (this.level.isClientSide) {
-            boolean flag = this.isOwnedBy(player) || this.isTame() || isInSittingPose() || item == Items.BONE && !this.isTame();
-            return flag ? ActionResultType.CONSUME : ActionResultType.PASS;
-        } else {
-            if (this.isTame() && player.getUUID().equals(this.getOwnerUUID())) {
 
-                if (player.isCrouching()) {
-                    //openInventory();
-                }
-                if(!player.isCrouching()) {
-                    setFollow(!getFollow());
-                    return ActionResultType.SUCCESS;
-                }
 
-            } else if (item == Items.EMERALD && !this.isTame() && playerHasEnoughEmeralds(player)) {
-                if (!player.abilities.instabuild) {
-                    if (!player.isCreative()) {
-                        itemstack.shrink(workerCosts());
-                    }
-                    return ActionResultType.SUCCESS;
-                }
-
-                if (!net.minecraftforge.event.ForgeEventFactory.onAnimalTame(this, player)) {
-                    this.tame(player);
-                    this.navigation.stop();
-                    this.setTarget(null);
-                    this.setOrderedToSit(false);
-                    this.setIsWorking(false);
-                    this.level.broadcastEntityEvent(this, (byte)7);
-                    return ActionResultType.SUCCESS;
-                } else {
-                    this.level.broadcastEntityEvent(this, (byte)6);
-                }
-
-                return ActionResultType.SUCCESS;
-            }
-            else if (item == Items.EMERALD  && !this.isTame() && !playerHasEnoughEmeralds(player)) {
-                    player.sendMessage(new StringTextComponent("You need " + workerCosts() + " Emeralds to hire me!"), player.getUUID());
-            }
-            else if (!this.isTame() && item != Items.EMERALD ) {
-                        player.sendMessage(new StringTextComponent("I am a " + workerName()), player.getUUID());
-
-            }
-            return super.mobInteract(player, hand);
-        }
-    }
-
-    private boolean playerHasEnoughEmeralds(PlayerEntity player) {
+    boolean playerHasEnoughEmeralds(PlayerEntity player) {
         int recruitCosts = this.workerCosts();
         int emeraldCount = player.getItemInHand(Hand.MAIN_HAND).getCount();
         if (emeraldCount >= recruitCosts){
@@ -318,6 +305,7 @@ public abstract class AbstractWorkerEntity extends TameableEntity {
 
     public void die(DamageSource dmg) {
         super.die(dmg);
+
     }
 
 

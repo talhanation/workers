@@ -27,8 +27,8 @@ public class MessageStartPos implements Message<MessageStartPos> {
     }
 
     public void executeServerSide(NetworkEvent.Context context) {
-        List<MinerEntity> list = Objects.requireNonNull(context.getSender()).level.getEntitiesOfClass(MinerEntity.class, context.getSender().getBoundingBox().inflate(40.0D));
-        for (MinerEntity workers : list) {
+        List<AbstractWorkerEntity> list = Objects.requireNonNull(context.getSender()).level.getEntitiesOfClass(AbstractWorkerEntity.class, context.getSender().getBoundingBox().inflate(8.0D));
+        for (AbstractWorkerEntity workers : list) {
                 CommandEvents.onCKeyPressed(this.player, workers);
         }
     }

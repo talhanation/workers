@@ -1,19 +1,16 @@
 package com.talhanation.workers.entities;
 
-
-import com.talhanation.workers.entities.ai.MinerMineTunnelGoal;
+import com.talhanation.workers.entities.ai.MinerMine3x3TunnelGoal;
 import com.talhanation.workers.entities.ai.WorkerFollowOwnerGoal;
-import net.minecraft.block.Block;
-import net.minecraft.block.BlockState;
-import net.minecraft.block.Blocks;
 import net.minecraft.entity.*;
 import net.minecraft.entity.ai.attributes.AttributeModifierMap;
 import net.minecraft.entity.ai.attributes.Attributes;
-import net.minecraft.entity.ai.goal.LookAtGoal;
-import net.minecraft.entity.ai.goal.PanicGoal;
-import net.minecraft.entity.ai.goal.SwimGoal;
-import net.minecraft.entity.ai.goal.WaterAvoidingRandomWalkingGoal;
+import net.minecraft.entity.ai.goal.*;
+import net.minecraft.entity.item.ItemEntity;
+import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.inventory.EquipmentSlotType;
+import net.minecraft.inventory.Inventory;
+import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
 import net.minecraft.item.Items;
 import net.minecraft.nbt.CompoundNBT;
@@ -21,30 +18,33 @@ import net.minecraft.network.datasync.DataParameter;
 import net.minecraft.network.datasync.DataSerializers;
 import net.minecraft.network.datasync.EntityDataManager;
 import net.minecraft.pathfinding.GroundPathNavigator;
+import net.minecraft.util.ActionResultType;
 import net.minecraft.util.Direction;
-import net.minecraft.util.SoundCategory;
-import net.minecraft.util.math.BlockPos;
+import net.minecraft.util.Hand;
+import net.minecraft.util.text.StringTextComponent;
 import net.minecraft.world.DifficultyInstance;
 import net.minecraft.world.IServerWorld;
 import net.minecraft.world.World;
 import net.minecraft.world.server.ServerWorld;
-import net.minecraftforge.event.ForgeEventFactory;
 
 import javax.annotation.Nullable;
 
+
 public class MinerEntity extends AbstractWorkerEntity {
 
-    private static final DataParameter<Integer> breakingTime = EntityDataManager.defineId(MinerEntity.class, DataSerializers.INT);
-    private static final DataParameter<Integer> currentTimeBreak = EntityDataManager.defineId(MinerEntity.class, DataSerializers.INT);
-    private static final DataParameter<Integer> previousTimeBreak = EntityDataManager.defineId(MinerEntity.class, DataSerializers.INT);
     private static final DataParameter<Direction> DIRECTION = EntityDataManager.defineId(MinerEntity.class, DataSerializers.DIRECTION);
+    private static final DataParameter<Integer> MINE_TYPE = EntityDataManager.defineId(MinerEntity.class, DataSerializers.INT);
 
+    /*
+    MINE TYPES:
+    0 = nothing
+    1 = 1x1 Tunel
+    2 = 3x3 Tunel
+    3 = 8x8 Pit
+     */
 
     protected void defineSynchedData() {
         super.defineSynchedData();
-        this.entityData.define(breakingTime, 0);
-        this.entityData.define(currentTimeBreak, -1);
-        this.entityData.define(previousTimeBreak, -1);
         this.entityData.define(DIRECTION, Direction.NORTH);
     }
 
@@ -64,7 +64,9 @@ public class MinerEntity extends AbstractWorkerEntity {
 
     protected void registerGoals() {
         this.goalSelector.addGoal(1, new SwimGoal(this));
-        this.goalSelector.addGoal(2, new MinerMineTunnelGoal(this, 0.5D, 10D));
+        //this.goalSelector.addGoal(2, new MinerMineTunnelGoal(this, 0.5D, 10D));
+        //this.goalSelector.addGoal(1, new WorkerMoveToBlockPosGoal(this, 1,16,4));
+        this.goalSelector.addGoal(2, new MinerMine3x3TunnelGoal(this, 0.5D, 10D));
         this.goalSelector.addGoal(2, new WorkerFollowOwnerGoal(this, 1.2D, 9.0F, 3.0F));
         this.goalSelector.addGoal(2, new PanicGoal(this, 1.3D));
 
@@ -83,6 +85,47 @@ public class MinerEntity extends AbstractWorkerEntity {
         this.setCanPickUpLoot(true);
         return ilivingentitydata;
     }
+
+    protected void pickUpItem(ItemEntity itemEntity) {
+        ItemStack itemstack = itemEntity.getItem();
+        if (this.wantsToPickUp(itemstack)) {
+            Inventory inventory = this.getInventory();
+            boolean flag = inventory.canAddItem(itemstack);
+            if (!flag) {
+                return;
+            }
+
+            this.onItemPickup(itemEntity);
+            this.take(itemEntity, itemstack.getCount());
+            ItemStack itemstack1 = inventory.addItem(itemstack);
+            if (itemstack1.isEmpty()) {
+                itemEntity.remove();
+            } else {
+                itemstack.setCount(itemstack1.getCount());
+            }
+        }
+
+    }
+    public boolean wantsToPickUp(ItemStack itemStack) {
+        Item item = itemStack.getItem();
+        if (item == Items.COAL) return true;
+        if (item == Items.IRON_ORE) return true;
+        if (item == Items.EMERALD) return true;
+        if (item == Items.STONE) return true;
+        if (item == Items.COBBLESTONE) return true;
+        if (item == Items.ANDESITE) return true;
+        if (item == Items.GRANITE) return true;
+        if (item == Items.SAND) return true;
+        if (item == Items.SANDSTONE) return true;
+        if (item == Items.RED_SAND) return true;
+        if (item == Items.REDSTONE) return true;
+        if (item == Items.DIRT) return true;
+        if (item == Items.DIORITE) return true;
+        if (item == Items.COARSE_DIRT) return true;
+
+        else return false;
+    }
+
     @Override
     public void setEquipment() {
         int i = this.random.nextInt(9);
@@ -109,42 +152,15 @@ public class MinerEntity extends AbstractWorkerEntity {
         return "Miner";
     }
 
-    public int getBreakingTime() {
-        return this.entityData.get(breakingTime);
+
+    public void addAdditionalSaveData(CompoundNBT nbt) {
+        super.addAdditionalSaveData(nbt);
+        nbt.putInt("MineType", this.getMineType());
     }
 
-    public void setBreakingTime(int value) {
-        this.entityData.set(breakingTime, value);
-    }
-
-    public int getCurrentTimeBreak() {
-        return this.entityData.get(currentTimeBreak);
-    }
-
-    public void setCurrentTimeBreak(int value) {
-        this.entityData.set(currentTimeBreak, value);
-    }
-
-    public int getPreviousTimeBreak() {
-        return this.entityData.get(previousTimeBreak);
-    }
-
-    public void setPreviousTimeBreak(int value) {
-        this.entityData.set(previousTimeBreak, value);
-    }
-
-    public void addAdditionalSaveData(CompoundNBT compound) {
-        super.addAdditionalSaveData(compound);
-        compound.putInt("breakTime", this.getBreakingTime());
-        compound.putInt("currentTimeBreak", this.getCurrentTimeBreak());
-        compound.putInt("previousTimeBreak", this.getPreviousTimeBreak());
-    }
-
-    public void readAdditionalSaveData(CompoundNBT compound) {
-        super.readAdditionalSaveData(compound);
-        this.setBreakingTime(compound.getInt("breakTime"));
-        this.setCurrentTimeBreak(compound.getInt("currentTimeBreak"));
-        this.setPreviousTimeBreak(compound.getInt("previousTimeBreak"));
+    public void readAdditionalSaveData(CompoundNBT nbt) {
+        super.readAdditionalSaveData(nbt);
+        this.setMineType(nbt.getInt("MineType"));
     }
 
     public void setMineDirectrion(Direction dir) {
@@ -155,81 +171,62 @@ public class MinerEntity extends AbstractWorkerEntity {
         return entityData.get(DIRECTION);
     }
 
-    public void mineBlock(BlockPos blockPos){
-        if (!this.dead && ForgeEventFactory.getMobGriefingEvent(this.level, this) && !getFollow()) {
-            boolean flag = false;
-            BlockPos blockpos2 = blockPos.above();
-            BlockState blockstate = this.level.getBlockState(blockPos);
-            Block block = blockstate.getBlock();
+    public void setMineType(int x){
+        entityData.set(MINE_TYPE, x);
+    }
 
-            BlockState blockstate2 = this.level.getBlockState(blockPos.above());
-            Block block2 = blockstate2.getBlock();
+    public int getMineType(){
+       return entityData.get(MINE_TYPE);
+    }
 
-            if (block != Blocks.AIR) {
+    public ActionResultType mobInteract(PlayerEntity player, Hand hand) {
+        ItemStack itemstack = player.getItemInHand(hand);
+        Item item = itemstack.getItem();
+        if (this.level.isClientSide) {
+            boolean flag = this.isOwnedBy(player) || this.isTame() || isInSittingPose() || item == Items.BONE && !this.isTame();
+            return flag ? ActionResultType.CONSUME : ActionResultType.PASS;
+        } else {
+            if (this.isTame() && player.getUUID().equals(this.getOwnerUUID())) {
 
-                if (this.getCurrentTimeBreak() % 5 == 4) {
-                    level.playLocalSound(blockPos.getX(), blockPos.getY(), blockPos.getZ(), blockstate.getSoundType().getHitSound(), SoundCategory.BLOCKS, 1F, 0.75F, false);
+                if (player.isCrouching()) {
+                    //openInventory();
+
+                }
+                if(!player.isCrouching()) {
+                    setFollow(!getFollow());
+                    return ActionResultType.SUCCESS;
                 }
 
-                //set max destroy speed
-                int bp = (int) (blockstate.getDestroySpeed(this.level, blockPos) * 100);
-                this.setBreakingTime(bp);
-
-                //increase current
-                this.setCurrentTimeBreak(this.getCurrentTimeBreak() + (int) (1 * (this.getUseItem().getDestroySpeed(blockstate))));
-                float f = (float) this.getCurrentTimeBreak() / (float) this.getBreakingTime();
-
-                int i = (int) (f * 10);
-
-                if (i != this.getPreviousTimeBreak()) {
-                    this.level.destroyBlockProgress(1, blockPos, i);
-                    this.setPreviousTimeBreak(i);
-                }
-
-                if (this.getCurrentTimeBreak() == this.getBreakingTime()) {
-                    this.level.destroyBlock(blockPos, true, this);
-                    this.setCurrentTimeBreak(-1);
-                    this.setBreakingTime(0);
-                }
-                if (this.getRandom().nextInt(5) == 0) {
-                    if (!this.swinging) {
-                        this.swing(this.getUsedItemHand());
+            } else if (item == Items.EMERALD && !this.isTame() && playerHasEnoughEmeralds(player)) {
+                if (!player.abilities.instabuild) {
+                    if (!player.isCreative()) {
+                        itemstack.shrink(workerCosts());
                     }
-                }
-            } else if (block2 != Blocks.AIR) {
-
-                if (this.getCurrentTimeBreak() % 5 == 4) {
-                    level.playLocalSound(blockpos2.getX(), blockpos2.getY(), blockpos2.getZ(), blockstate2.getSoundType().getHitSound(), SoundCategory.BLOCKS, 1F, 0.75F, false);
+                    return ActionResultType.SUCCESS;
                 }
 
-                //set max destroy speed
-                int bp = (int) (blockstate2.getDestroySpeed(this.level, blockpos2.above()) * 100);
-                this.setBreakingTime(bp);
-
-                //increase current
-                this.setCurrentTimeBreak(this.getCurrentTimeBreak() + (int) (1 * (this.getUseItem().getDestroySpeed(blockstate2))));
-                float f = (float) this.getCurrentTimeBreak() / (float) this.getBreakingTime();
-
-                int i = (int) (f * 10);
-
-                if (i != this.getPreviousTimeBreak()) {
-                    this.level.destroyBlockProgress(1, blockpos2, i);
-                    this.setPreviousTimeBreak(i);
+                if (!net.minecraftforge.event.ForgeEventFactory.onAnimalTame(this, player)) {
+                    this.tame(player);
+                    this.navigation.stop();
+                    this.setTarget(null);
+                    this.setOrderedToSit(false);
+                    this.setIsWorking(false);
+                    this.level.broadcastEntityEvent(this, (byte)7);
+                    return ActionResultType.SUCCESS;
+                } else {
+                    this.level.broadcastEntityEvent(this, (byte)6);
                 }
 
-                if (this.getCurrentTimeBreak() == this.getBreakingTime()) {
-                    this.level.destroyBlock(blockpos2, true, this);
-                    this.setCurrentTimeBreak(-1);
-                    this.setBreakingTime(0);
-                }
-                if (this.getRandom().nextInt(5) == 0) {
-                    if (!this.swinging) {
-                        this.swing(this.getUsedItemHand());
-                    }
-                }
+                return ActionResultType.SUCCESS;
+            }
+            else if (item == Items.EMERALD  && !this.isTame() && !playerHasEnoughEmeralds(player)) {
+                player.sendMessage(new StringTextComponent("You need " + workerCosts() + " Emeralds to hire me!"), player.getUUID());
+            }
+            else if (!this.isTame() && item != Items.EMERALD ) {
+                player.sendMessage(new StringTextComponent("I am a " + workerName()), player.getUUID());
 
             }
+            return super.mobInteract(player, hand);
         }
-
     }
 }

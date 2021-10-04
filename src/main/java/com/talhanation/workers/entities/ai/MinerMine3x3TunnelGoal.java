@@ -14,15 +14,16 @@ import net.minecraftforge.event.ForgeEventFactory;
 import java.util.EnumSet;
 import java.util.Optional;
 
-public class MinerMineTunnelGoal extends Goal {
+public class MinerMine3x3TunnelGoal extends Goal {
     private final MinerEntity miner;
     private final double speedModifier;
     private final double within;
     private BlockPos minePos;
     private BlockPos standPos;
-    private int blocks = 0;
+    private int blocks;
+    private int side;
 
-    public MinerMineTunnelGoal(MinerEntity miner, double v, double within) {
+    public MinerMine3x3TunnelGoal(MinerEntity miner, double v, double within) {
         this.miner = miner;
         this.speedModifier = v;
         this.within = within;
@@ -35,7 +36,9 @@ public class MinerMineTunnelGoal extends Goal {
         }
         if (this.miner.getFollow()) {
             return false;
-        } else if (this.miner.getStartPos().get().closerThan(miner.position(), within) && !this.miner.getFollow() && miner.getMineType() == 1)
+       //} else if (this.miner.getStartPos().get().closerThan(miner.position(), within) && !this.miner.getFollow() && miner.getMineType() == 2)
+            } else if (this.miner.getStartPos().get().closerThan(miner.position(), within) && !this.miner.getFollow())
+
             return true;
 
         else
@@ -49,34 +52,42 @@ public class MinerMineTunnelGoal extends Goal {
     @Override
     public void start() {
         super.start();
-        blocks = 0;
+
     }
+
+    @Override
+    public void stop() {
+        super.stop();
+        restetCounts();
+    }
+
+
 
     public void tick() {
         if (miner.getFollow() || !miner.getIsWorking()){
-            blocks = 0;
+            restetCounts();
         }
 
         if (!miner.getFollow()) {
             if (miner.getMineDirectrion().equals(Direction.EAST)) {
-                this.minePos = new BlockPos(miner.getStartPos().get().getX() + blocks, miner.getStartPos().get().getY(), miner.getStartPos().get().getZ());
+                this.minePos = new BlockPos(miner.getStartPos().get().getX() + blocks, miner.getStartPos().get().getY(), miner.getStartPos().get().getZ() - side);
                 this.standPos = new BlockPos(minePos.getX() + 2, minePos.getY(), minePos.getZ());
 
             } else if (miner.getMineDirectrion().equals(Direction.WEST)) {
-                this.minePos = new BlockPos(miner.getStartPos().get().getX() - blocks, miner.getStartPos().get().getY(), miner.getStartPos().get().getZ());
+                this.minePos = new BlockPos(miner.getStartPos().get().getX() - blocks, miner.getStartPos().get().getY(), miner.getStartPos().get().getZ() + side);
                 this.standPos = new BlockPos(minePos.getX() - 2, minePos.getY(), minePos.getZ());
 
             } else if (miner.getMineDirectrion().equals(Direction.NORTH)) {
-                this.minePos = new BlockPos(miner.getStartPos().get().getX(), miner.getStartPos().get().getY(), miner.getStartPos().get().getZ() - blocks);
+                this.minePos = new BlockPos(miner.getStartPos().get().getX() - side, miner.getStartPos().get().getY(), miner.getStartPos().get().getZ() - blocks);
                 this.standPos = new BlockPos(minePos.getX(), minePos.getY(), minePos.getZ() - 2);
 
             } else if (miner.getMineDirectrion().equals(Direction.SOUTH)) {
-                this.minePos = new BlockPos(miner.getStartPos().get().getX(), miner.getStartPos().get().getY(), miner.getStartPos().get().getZ() + blocks);
+                this.minePos = new BlockPos(miner.getStartPos().get().getX() + side, miner.getStartPos().get().getY(), miner.getStartPos().get().getZ() + blocks);
                 this.standPos = new BlockPos(minePos.getX(), minePos.getY(), minePos.getZ() + 2);
             }
 
-            if (!minePos.closerThan(miner.position(), 4)){
-                this.miner.getNavigation().moveTo(standPos.getX(), standPos.getY(), standPos.getZ(),1);
+            if (!minePos.closerThan(miner.position(), 2)){
+                this.miner.getNavigation().moveTo(minePos.getX(), minePos.getY(), minePos.getZ(),1);
             }
 
 
@@ -88,15 +99,16 @@ public class MinerMineTunnelGoal extends Goal {
             Block block1 = blockstate.getBlock();
             BlockState blockstate2 = miner.level.getBlockState(minePos.above());
             Block block2 = blockstate2.getBlock();
+            BlockState blockstate3 = miner.level.getBlockState(minePos.above().above());
+            Block block3 = blockstate3.getBlock();
 
             this.miner.getAttribute(Attributes.MOVEMENT_SPEED).setBaseValue(0.3D);
             //erst mienen wenn nah genug
             if (minePos.closerThan(miner.position(), 6)) this.mineBlock(this.minePos);
             //miner.getOwner().sendMessage(new StringTextComponent("" + blocks + ""), miner.getOwner().getUUID());
 
-            if (block1 == Blocks.AIR && block2 == Blocks.AIR) {
-
-                blocks++;
+            if (block1 == Blocks.AIR && block2 == Blocks.AIR && block3 == Blocks.AIR) {
+                side++;
             }
 
             if (blocks == 9){
@@ -105,18 +117,27 @@ public class MinerMineTunnelGoal extends Goal {
                 blocks = 0;
             }
 
+            if (side == 3){
+                side = 0;
+                blocks++;
+            }
+
         }
     }
 
     private void mineBlock(BlockPos blockPos){
         if (this.miner.isAlive() && ForgeEventFactory.getMobGriefingEvent(this.miner.level, this.miner) && !miner.getFollow()) {
-            boolean flag = false;
             BlockPos blockpos2 = blockPos.above();
+            BlockPos blockpos3 = blockPos.above().above();
             BlockState blockstate = this.miner.level.getBlockState(blockPos);
             Block block = blockstate.getBlock();
 
             BlockState blockstate2 = this.miner.level.getBlockState(blockPos.above());
             Block block2 = blockstate2.getBlock();
+
+            BlockState blockstate3 = this.miner.level.getBlockState(blockPos.above(2));
+            Block block3 = blockstate3.getBlock();
+
 
             if (block != Blocks.AIR) {
 
@@ -181,8 +202,45 @@ public class MinerMineTunnelGoal extends Goal {
                     }
                 }
 
+            }else if (block3 != Blocks.AIR) {
+
+                if (this.miner.getCurrentTimeBreak() % 5 == 4) {
+                    miner.level.playLocalSound(blockpos3.getX(), blockpos3.getY(), blockpos3.getZ(), blockstate3.getSoundType().getHitSound(), SoundCategory.BLOCKS, 1F, 0.75F, false);
+                }
+
+                //set max destroy speed
+                int bp = (int) (blockstate3.getDestroySpeed(this.miner.level, blockpos2.above()) * 100);
+                this.miner.setBreakingTime(bp);
+
+                //increase current
+                this.miner.setCurrentTimeBreak(this.miner.getCurrentTimeBreak() + (int) (1 * (this.miner.getUseItem().getDestroySpeed(blockstate3))));
+                float f = (float) this.miner.getCurrentTimeBreak() / (float) this.miner.getBreakingTime();
+
+                int i = (int) (f * 10);
+
+                if (i != this.miner.getPreviousTimeBreak()) {
+                    this.miner.level.destroyBlockProgress(1, blockpos3, i);
+                    this.miner.setPreviousTimeBreak(i);
+                }
+
+                if (this.miner.getCurrentTimeBreak() == this.miner.getBreakingTime()) {
+                    this.miner.level.destroyBlock(blockpos3, true, this.miner);
+                    this.miner.setCurrentTimeBreak(-1);
+                    this.miner.setBreakingTime(0);
+                }
+                if (this.miner.getRandom().nextInt(5) == 0) {
+                    if (!this.miner.swinging) {
+                        this.miner.swing(this.miner.getUsedItemHand());
+                    }
+                }
             }
         }
 
     }
+
+    public void restetCounts(){
+        blocks = 0;
+        side = 0;
+    }
+
 }
