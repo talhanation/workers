@@ -3,6 +3,7 @@ package com.talhanation.workers.init;
 import com.talhanation.workers.Main;
 import com.talhanation.workers.entities.LumberjackEntity;
 import com.talhanation.workers.entities.MinerEntity;
+import com.talhanation.workers.entities.ShepherdEntity;
 import net.minecraft.entity.EntityClassification;
 import net.minecraft.entity.EntityType;
 import net.minecraft.util.ResourceLocation;
@@ -30,4 +31,12 @@ public class ModEntityTypes {
                     .setTrackingRange(32)
                     .setShouldReceiveVelocityUpdates(true)
                     .build(new ResourceLocation(Main.MOD_ID, "lumberjack").toString()));
+
+    public static final RegistryObject<EntityType<ShepherdEntity>> SHEPHERD = ENTITY_TYPES.register("shepherd",
+            () -> EntityType.Builder.of(ShepherdEntity::new, EntityClassification.CREATURE)
+                    .sized(0.6F, 1.95F)
+                    .canSpawnFarFromPlayer()
+                    .setTrackingRange(32)
+                    .setShouldReceiveVelocityUpdates(true)
+                    .build(new ResourceLocation(Main.MOD_ID, "shepherd").toString()));
 }

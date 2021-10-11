@@ -2,11 +2,18 @@ package com.talhanation.workers.entities;
 
 import com.google.common.collect.ImmutableSet;
 import com.talhanation.workers.entities.ai.*;
-import net.minecraft.entity.*;
+import net.minecraft.entity.AgeableEntity;
+import net.minecraft.entity.EntityType;
+import net.minecraft.entity.ILivingEntityData;
+import net.minecraft.entity.SpawnReason;
 import net.minecraft.entity.ai.attributes.AttributeModifierMap;
 import net.minecraft.entity.ai.attributes.Attributes;
-import net.minecraft.entity.ai.goal.*;
+import net.minecraft.entity.ai.goal.LookAtGoal;
+import net.minecraft.entity.ai.goal.LookRandomlyGoal;
+import net.minecraft.entity.ai.goal.SwimGoal;
+import net.minecraft.entity.ai.goal.WaterAvoidingRandomWalkingGoal;
 import net.minecraft.entity.item.ItemEntity;
+import net.minecraft.entity.passive.SheepEntity;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.inventory.EquipmentSlotType;
 import net.minecraft.inventory.Inventory;
@@ -27,38 +34,34 @@ import javax.annotation.Nullable;
 import java.util.Set;
 import java.util.function.Predicate;
 
-public class LumberjackEntity extends AbstractWorkerEntity{
+public class ShepherdEntity extends AbstractWorkerEntity{
 
     private final Predicate<ItemEntity> ALLOWED_ITEMS = (item) -> {
         return !item.hasPickUpDelay() && item.isAlive() && this.wantsToPickUp(item.getItem());
     };
 
     private static final Set<Item> WANTED_ITEMS = ImmutableSet.of(
-            Items.OAK_LOG,
-            Items.OAK_WOOD,
-            Items.OAK_SAPLING,
-            Items.BIRCH_LOG,
-            Items.BIRCH_WOOD,
-            Items.BIRCH_SAPLING,
-            Items.SPRUCE_LOG,
-            Items.SPRUCE_WOOD,
-            Items.SPRUCE_SAPLING,
-            Items.ACACIA_LOG,
-            Items.ACACIA_WOOD,
-            Items.ACACIA_SAPLING,
-            Items.JUNGLE_LOG,
-            Items.JUNGLE_WOOD,
-            Items.JUNGLE_SAPLING,
-            Items.DARK_OAK_LOG,
-            Items.DARK_OAK_WOOD,
-            Items.DARK_OAK_SAPLING
+            Items.BLACK_WOOL,
+            Items.WHITE_WOOL,
+            Items.RED_WOOL,
+            Items.BLUE_WOOL,
+            Items.ORANGE_WOOL,
+            Items.GREEN_WOOL,
+            Items.LIGHT_BLUE_WOOL,
+            Items.GRAY_WOOL,
+            Items.LIGHT_GRAY_WOOL,
+            Items.BROWN_WOOL,
+            Items.CYAN_WOOL,
+            Items.MAGENTA_WOOL,
+            Items.YELLOW_WOOL,
+            Items.PINK_WOOL,
+            Items.LIME_WOOL,
+            Items.MUTTON
     );
 
-    public LumberjackEntity(EntityType<? extends AbstractWorkerEntity> entityType, World world) {
+    public ShepherdEntity(EntityType<? extends AbstractWorkerEntity> entityType, World world) {
         super(entityType, world);
     }
-
-
 
     @Override
     public void tick() {
@@ -67,12 +70,12 @@ public class LumberjackEntity extends AbstractWorkerEntity{
 
     @Override
     public int workerCosts() {
-        return 8;
+        return 12;
     }
 
     @Override
     public String workerName() {
-        return "Lumberjack";
+        return "Shepherd";
     }
 
     //ATTRIBUTES
@@ -87,16 +90,14 @@ public class LumberjackEntity extends AbstractWorkerEntity{
     @Override
     protected void registerGoals() {
         this.goalSelector.addGoal(1, new SwimGoal(this));
-        this.goalSelector.addGoal(2, new WorkerPickupWantedItemGoal(this, ALLOWED_ITEMS));
+        this.goalSelector.addGoal(4, new WorkerPickupWantedItemGoal(this, ALLOWED_ITEMS));
         this.goalSelector.addGoal(2, new WorkerFollowOwnerGoal(this, 1.2D, 7.F, 4.0F));
-        this.goalSelector.addGoal(3, new LumberjackAI(this, 1, 16));
-        this.goalSelector.addGoal(5, new LookAtGoal(this, PlayerEntity.class, 8.0F));
-        this.goalSelector.addGoal(6, new LookRandomlyGoal(this));
+        this.goalSelector.addGoal(3, new SheerSheepGoal<>(this, SheepEntity.class, false));
+        this.goalSelector.addGoal(3, new SloughterAnimalGoal<>(this, SheepEntity.class, false));
+        this.goalSelector.addGoal(3, new BreedAnimalGoal(this, SheepEntity.class, false));
+        this.goalSelector.addGoal(4, new LookAtGoal(this, PlayerEntity.class, 8.0F));
+        this.goalSelector.addGoal(5, new LookRandomlyGoal(this));
         this.goalSelector.addGoal(6, new WaterAvoidingRandomWalkingGoal(this, 1.0D, 0F));
-
-
-        //this.targetSelector.addGoal(1, new (this));
-
     }
 
     @Nullable
@@ -147,11 +148,8 @@ public class LumberjackEntity extends AbstractWorkerEntity{
     @Override
     public void setEquipment() {
         int i = this.random.nextInt(9);
-        if (i == 0) {
-            this.setItemSlot(EquipmentSlotType.MAINHAND, new ItemStack(Items.STONE_AXE));
-        }else{
-            this.setItemSlot(EquipmentSlotType.MAINHAND, new ItemStack(Items.WOODEN_AXE));
-        }
+        this.setItemSlot(EquipmentSlotType.MAINHAND, new ItemStack(Items.SHEARS));
+        this.setItemSlot(EquipmentSlotType.OFFHAND, new ItemStack(Items.WOODEN_HOE));
     }
 
     public ActionResultType mobInteract(PlayerEntity player, Hand hand) {

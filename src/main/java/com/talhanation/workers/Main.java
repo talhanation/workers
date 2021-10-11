@@ -77,6 +77,7 @@ public class Main {
         DeferredWorkQueue.runLater(() -> {
             GlobalEntityTypeAttributes.put(ModEntityTypes.MINER.get(), MinerEntity.setAttributes().build());
             GlobalEntityTypeAttributes.put(ModEntityTypes.LUMBERJACK.get(), LumberjackEntity.setAttributes().build());
+            GlobalEntityTypeAttributes.put(ModEntityTypes.SHEPHERD.get(), LumberjackEntity.setAttributes().build());
 
         });
     }

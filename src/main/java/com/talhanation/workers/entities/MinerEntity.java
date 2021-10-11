@@ -1,7 +1,9 @@
 package com.talhanation.workers.entities;
 
+import com.google.common.collect.ImmutableSet;
 import com.talhanation.workers.entities.ai.MinerMine3x3TunnelGoal;
 import com.talhanation.workers.entities.ai.WorkerFollowOwnerGoal;
+import com.talhanation.workers.entities.ai.WorkerPickupWantedItemGoal;
 import net.minecraft.entity.*;
 import net.minecraft.entity.ai.attributes.AttributeModifierMap;
 import net.minecraft.entity.ai.attributes.Attributes;
@@ -28,9 +30,15 @@ import net.minecraft.world.World;
 import net.minecraft.world.server.ServerWorld;
 
 import javax.annotation.Nullable;
+import java.util.Set;
+import java.util.function.Predicate;
 
 
 public class MinerEntity extends AbstractWorkerEntity {
+
+    private final Predicate<ItemEntity> ALLOWED_ITEMS = (item) -> {
+        return !item.hasPickUpDelay() && item.isAlive() && this.wantsToPickUp(item.getItem());
+    };
 
     private static final DataParameter<Direction> DIRECTION = EntityDataManager.defineId(MinerEntity.class, DataSerializers.DIRECTION);
     private static final DataParameter<Integer> MINE_TYPE = EntityDataManager.defineId(MinerEntity.class, DataSerializers.INT);
@@ -42,6 +50,23 @@ public class MinerEntity extends AbstractWorkerEntity {
     2 = 3x3 Tunel
     3 = 8x8 Pit
      */
+
+    private static final Set<Item> WANTED_ITEMS = ImmutableSet.of(
+        Items.COAL,
+        Items.IRON_ORE,
+        Items.EMERALD,
+        Items.STONE,
+        Items.COBBLESTONE,
+        Items.ANDESITE,
+        Items.GRANITE,
+        Items.SAND,
+        Items.SANDSTONE,
+        Items.RED_SAND,
+        Items.REDSTONE,
+        Items.DIRT,
+        Items.DIORITE,
+        Items.COARSE_DIRT
+    );
 
     protected void defineSynchedData() {
         super.defineSynchedData();
@@ -64,6 +89,7 @@ public class MinerEntity extends AbstractWorkerEntity {
 
     protected void registerGoals() {
         this.goalSelector.addGoal(1, new SwimGoal(this));
+        this.goalSelector.addGoal(2, new WorkerPickupWantedItemGoal(this, ALLOWED_ITEMS));
         //this.goalSelector.addGoal(2, new MinerMineTunnelGoal(this, 0.5D, 10D));
         //this.goalSelector.addGoal(1, new WorkerMoveToBlockPosGoal(this, 1,16,4));
         this.goalSelector.addGoal(2, new MinerMine3x3TunnelGoal(this, 0.5D, 10D));
@@ -106,24 +132,11 @@ public class MinerEntity extends AbstractWorkerEntity {
         }
 
     }
+
+    @Override
     public boolean wantsToPickUp(ItemStack itemStack) {
         Item item = itemStack.getItem();
-        if (item == Items.COAL) return true;
-        if (item == Items.IRON_ORE) return true;
-        if (item == Items.EMERALD) return true;
-        if (item == Items.STONE) return true;
-        if (item == Items.COBBLESTONE) return true;
-        if (item == Items.ANDESITE) return true;
-        if (item == Items.GRANITE) return true;
-        if (item == Items.SAND) return true;
-        if (item == Items.SANDSTONE) return true;
-        if (item == Items.RED_SAND) return true;
-        if (item == Items.REDSTONE) return true;
-        if (item == Items.DIRT) return true;
-        if (item == Items.DIORITE) return true;
-        if (item == Items.COARSE_DIRT) return true;
-
-        else return false;
+        return (WANTED_ITEMS.contains(item));
     }
 
     @Override

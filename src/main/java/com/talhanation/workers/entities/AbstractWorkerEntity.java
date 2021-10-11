@@ -3,6 +3,7 @@ package com.talhanation.workers.entities;
 import net.minecraft.entity.*;
 import net.minecraft.entity.ai.attributes.AttributeModifier;
 import net.minecraft.entity.ai.attributes.Attributes;
+import net.minecraft.entity.item.ItemEntity;
 import net.minecraft.entity.passive.TameableEntity;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.entity.projectile.AbstractArrowEntity;
@@ -23,7 +24,9 @@ import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
 
 import javax.annotation.Nullable;
+import java.util.List;
 import java.util.Optional;
+import java.util.function.Predicate;
 
 public abstract class AbstractWorkerEntity extends AbstractInventoryEntity {
     private static final DataParameter<Optional<BlockPos>> START_POS = EntityDataManager.defineId(AbstractWorkerEntity.class, DataSerializers.OPTIONAL_BLOCK_POS);
@@ -58,6 +61,7 @@ public abstract class AbstractWorkerEntity extends AbstractInventoryEntity {
         updateSwingTime();
         updateSwimming();
     }
+
 
     public void rideTick() {
         super.rideTick();

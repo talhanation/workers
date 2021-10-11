@@ -103,7 +103,7 @@ public class MinerMine3x3TunnelGoal extends Goal {
             Block block3 = blockstate3.getBlock();
 
             this.miner.getAttribute(Attributes.MOVEMENT_SPEED).setBaseValue(0.3D);
-            //erst mienen wenn nah genug
+
             if (minePos.closerThan(miner.position(), 6)) this.mineBlock(this.minePos);
             //miner.getOwner().sendMessage(new StringTextComponent("" + blocks + ""), miner.getOwner().getUUID());
 
