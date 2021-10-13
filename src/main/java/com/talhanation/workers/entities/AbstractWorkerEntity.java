@@ -346,4 +346,13 @@ public abstract class AbstractWorkerEntity extends AbstractInventoryEntity {
 
     }
 
+    @OnlyIn(Dist.CLIENT)
+    public void workerSwingArm(){
+        if (this.getRandom().nextInt(5) == 0) {
+            if (!this.swinging) {
+                this.swing(this.getUsedItemHand());
+            }
+        }
+    }
+
 }

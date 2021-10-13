@@ -2,6 +2,8 @@ package com.talhanation.workers.entities;
 
 import com.google.common.collect.ImmutableSet;
 import com.talhanation.workers.entities.ai.*;
+import net.minecraft.block.Block;
+import net.minecraft.block.Blocks;
 import net.minecraft.entity.*;
 import net.minecraft.entity.ai.attributes.AttributeModifierMap;
 import net.minecraft.entity.ai.attributes.Attributes;
@@ -33,32 +35,34 @@ public class LumberjackEntity extends AbstractWorkerEntity{
         return !item.hasPickUpDelay() && item.isAlive() && this.wantsToPickUp(item.getItem());
     };
 
-    private static final Set<Item> WANTED_ITEMS = ImmutableSet.of(
+    public static final Set<Item> WANTED_SAPLINGS = ImmutableSet.of(
+            Items.OAK_SAPLING,
+            Items.BIRCH_SAPLING,
+            Items.SPRUCE_SAPLING,
+            Items.ACACIA_SAPLING,
+            Items.JUNGLE_SAPLING,
+            Items.DARK_OAK_SAPLING
+    );
+
+    public static final Set<Item> WANTED_ITEMS = ImmutableSet.of(
             Items.OAK_LOG,
             Items.OAK_WOOD,
-            Items.OAK_SAPLING,
             Items.BIRCH_LOG,
             Items.BIRCH_WOOD,
-            Items.BIRCH_SAPLING,
             Items.SPRUCE_LOG,
             Items.SPRUCE_WOOD,
-            Items.SPRUCE_SAPLING,
             Items.ACACIA_LOG,
             Items.ACACIA_WOOD,
-            Items.ACACIA_SAPLING,
             Items.JUNGLE_LOG,
             Items.JUNGLE_WOOD,
-            Items.JUNGLE_SAPLING,
             Items.DARK_OAK_LOG,
             Items.DARK_OAK_WOOD,
-            Items.DARK_OAK_SAPLING
+            Items.STICK
     );
 
     public LumberjackEntity(EntityType<? extends AbstractWorkerEntity> entityType, World world) {
         super(entityType, world);
     }
-
-
 
     @Override
     public void tick() {
@@ -89,7 +93,7 @@ public class LumberjackEntity extends AbstractWorkerEntity{
         this.goalSelector.addGoal(1, new SwimGoal(this));
         this.goalSelector.addGoal(2, new WorkerPickupWantedItemGoal(this, ALLOWED_ITEMS));
         this.goalSelector.addGoal(2, new WorkerFollowOwnerGoal(this, 1.2D, 7.F, 4.0F));
-        this.goalSelector.addGoal(3, new LumberjackAI(this, 1, 16));
+        this.goalSelector.addGoal(3, new LumberjackAI(this));
         this.goalSelector.addGoal(5, new LookAtGoal(this, PlayerEntity.class, 8.0F));
         this.goalSelector.addGoal(6, new LookRandomlyGoal(this));
         this.goalSelector.addGoal(6, new WaterAvoidingRandomWalkingGoal(this, 1.0D, 0F));
@@ -141,7 +145,7 @@ public class LumberjackEntity extends AbstractWorkerEntity{
     @Override
     public boolean wantsToPickUp(ItemStack itemStack) {
         Item item = itemStack.getItem();
-        return (WANTED_ITEMS.contains(item));
+        return (WANTED_ITEMS.contains(item) || WANTED_SAPLINGS.contains(item));
     }
 
     @Override

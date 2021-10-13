@@ -6,7 +6,8 @@ import net.minecraft.entity.passive.AnimalEntity;
 import net.minecraft.util.math.AxisAlignedBB;
 
 
-public class BreedAnimalGoal extends Goal {
+public class BreedAnimalGoal {
+/*        extends Goal {
 
     public AbstractWorkerEntity worker;
     public AnimalEntity animal;
@@ -53,4 +54,6 @@ public class BreedAnimalGoal extends Goal {
         }
     }
 
+
+ */
 }
