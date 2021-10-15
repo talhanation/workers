@@ -35,9 +35,11 @@ public class Main {
     public static SimpleChannel SIMPLE_CHANNEL;
     public static VillagerProfession MINER;
     public static VillagerProfession LUMBERJACK;
+    public static VillagerProfession FARMER;
     public static VillagerProfession FISCHER;
     public static PointOfInterestType POI_MINER;
     public static PointOfInterestType POI_LUMBERJACK;
+    public static PointOfInterestType POI_FARMER;
     public static PointOfInterestType POI_FISCHER;
     public static KeyBinding R_KEY;
     public static KeyBinding X_KEY;
@@ -78,6 +80,7 @@ public class Main {
             GlobalEntityTypeAttributes.put(ModEntityTypes.MINER.get(), MinerEntity.setAttributes().build());
             GlobalEntityTypeAttributes.put(ModEntityTypes.LUMBERJACK.get(), LumberjackEntity.setAttributes().build());
             GlobalEntityTypeAttributes.put(ModEntityTypes.SHEPHERD.get(), LumberjackEntity.setAttributes().build());
+            GlobalEntityTypeAttributes.put(ModEntityTypes.FARMER.get(), LumberjackEntity.setAttributes().build());
 
         });
     }

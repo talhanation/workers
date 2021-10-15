@@ -391,9 +391,11 @@ public class LumberjackAI extends Goal {
         List<ItemStack> items = new ArrayList();
         for (int i = 0; i < inventory.getContainerSize(); i++) {
             ItemStack stack = inventory.getItem(i);
+            /*
             if (chestLooter.shouldLootItem(stack)) {
                 items.add(stack);
             }
+             */
         }
     }
 }

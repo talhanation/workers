@@ -1,6 +1,7 @@
 package com.talhanation.workers.init;
 
 import com.talhanation.workers.Main;
+import com.talhanation.workers.entities.FarmerEntity;
 import com.talhanation.workers.entities.LumberjackEntity;
 import com.talhanation.workers.entities.MinerEntity;
 import com.talhanation.workers.entities.ShepherdEntity;
@@ -39,4 +40,12 @@ public class ModEntityTypes {
                     .setTrackingRange(32)
                     .setShouldReceiveVelocityUpdates(true)
                     .build(new ResourceLocation(Main.MOD_ID, "shepherd").toString()));
+
+    public static final RegistryObject<EntityType<FarmerEntity>> FARMER = ENTITY_TYPES.register("farmer",
+            () -> EntityType.Builder.of(FarmerEntity::new, EntityClassification.CREATURE)
+                    .sized(0.6F, 1.95F)
+                    .canSpawnFarFromPlayer()
+                    .setTrackingRange(32)
+                    .setShouldReceiveVelocityUpdates(true)
+                    .build(new ResourceLocation(Main.MOD_ID, "farmer").toString()));
 }

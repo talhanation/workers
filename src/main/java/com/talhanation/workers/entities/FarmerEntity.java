@@ -1,11 +1,19 @@
 package com.talhanation.workers.entities;
 
 import com.google.common.collect.ImmutableSet;
-import com.talhanation.workers.entities.ai.*;
-import net.minecraft.entity.*;
+import com.talhanation.workers.entities.ai.FarmerAI;
+import com.talhanation.workers.entities.ai.WorkerFollowOwnerGoal;
+import com.talhanation.workers.entities.ai.WorkerPickupWantedItemGoal;
+import net.minecraft.entity.AgeableEntity;
+import net.minecraft.entity.EntityType;
+import net.minecraft.entity.ILivingEntityData;
+import net.minecraft.entity.SpawnReason;
 import net.minecraft.entity.ai.attributes.AttributeModifierMap;
 import net.minecraft.entity.ai.attributes.Attributes;
-import net.minecraft.entity.ai.goal.*;
+import net.minecraft.entity.ai.goal.LookAtGoal;
+import net.minecraft.entity.ai.goal.LookRandomlyGoal;
+import net.minecraft.entity.ai.goal.SwimGoal;
+import net.minecraft.entity.ai.goal.WaterAvoidingRandomWalkingGoal;
 import net.minecraft.entity.item.ItemEntity;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.inventory.EquipmentSlotType;
@@ -27,38 +35,29 @@ import javax.annotation.Nullable;
 import java.util.Set;
 import java.util.function.Predicate;
 
-public class LumberjackEntity extends AbstractWorkerEntity{
+public class FarmerEntity extends AbstractWorkerEntity{
 
     private final Predicate<ItemEntity> ALLOWED_ITEMS = (item) -> {
         return !item.hasPickUpDelay() && item.isAlive() && this.wantsToPickUp(item.getItem());
     };
 
-    public static final Set<Item> WANTED_SAPLINGS = ImmutableSet.of(
-            Items.OAK_SAPLING,
-            Items.BIRCH_SAPLING,
-            Items.SPRUCE_SAPLING,
-            Items.ACACIA_SAPLING,
-            Items.JUNGLE_SAPLING,
-            Items.DARK_OAK_SAPLING
+    public static final Set<Item> WANTED_SEEDS = ImmutableSet.of(
+            Items.WHEAT_SEEDS,
+            Items.MELON_SEEDS,
+            Items.POTATO,
+            Items.BEETROOT_SEEDS,
+            Items.CARROT
     );
 
     public static final Set<Item> WANTED_ITEMS = ImmutableSet.of(
-            Items.OAK_LOG,
-            Items.OAK_WOOD,
-            Items.BIRCH_LOG,
-            Items.BIRCH_WOOD,
-            Items.SPRUCE_LOG,
-            Items.SPRUCE_WOOD,
-            Items.ACACIA_LOG,
-            Items.ACACIA_WOOD,
-            Items.JUNGLE_LOG,
-            Items.JUNGLE_WOOD,
-            Items.DARK_OAK_LOG,
-            Items.DARK_OAK_WOOD,
-            Items.STICK
+            Items.WHEAT,
+            Items.MELON_SLICE,
+            Items.POTATO,
+            Items.BEETROOT,
+            Items.CARROT
     );
 
-    public LumberjackEntity(EntityType<? extends AbstractWorkerEntity> entityType, World world) {
+    public FarmerEntity(EntityType<? extends AbstractWorkerEntity> entityType, World world) {
         super(entityType, world);
     }
 
@@ -69,12 +68,12 @@ public class LumberjackEntity extends AbstractWorkerEntity{
 
     @Override
     public int workerCosts() {
-        return 8;
+        return 7;
     }
 
     @Override
     public String workerName() {
-        return "Lumberjack";
+        return "Farmer";
     }
 
     //ATTRIBUTES
@@ -91,7 +90,7 @@ public class LumberjackEntity extends AbstractWorkerEntity{
         this.goalSelector.addGoal(1, new SwimGoal(this));
         this.goalSelector.addGoal(2, new WorkerPickupWantedItemGoal(this, ALLOWED_ITEMS));
         this.goalSelector.addGoal(2, new WorkerFollowOwnerGoal(this, 1.2D, 7.F, 4.0F));
-        this.goalSelector.addGoal(3, new LumberjackAI(this));
+        this.goalSelector.addGoal(3, new FarmerAI(this));
         this.goalSelector.addGoal(5, new LookAtGoal(this, PlayerEntity.class, 8.0F));
         this.goalSelector.addGoal(6, new LookRandomlyGoal(this));
         this.goalSelector.addGoal(6, new WaterAvoidingRandomWalkingGoal(this, 1.0D, 0F));
@@ -143,16 +142,16 @@ public class LumberjackEntity extends AbstractWorkerEntity{
     @Override
     public boolean wantsToPickUp(ItemStack itemStack) {
         Item item = itemStack.getItem();
-        return (WANTED_ITEMS.contains(item) || WANTED_SAPLINGS.contains(item));
+        return (WANTED_ITEMS.contains(item) || WANTED_SEEDS.contains(item));
     }
 
     @Override
     public void setEquipment() {
         int i = this.random.nextInt(9);
         if (i == 0) {
-            this.setItemSlot(EquipmentSlotType.MAINHAND, new ItemStack(Items.STONE_AXE));
+            this.setItemSlot(EquipmentSlotType.MAINHAND, new ItemStack(Items.STONE_HOE));
         }else{
-            this.setItemSlot(EquipmentSlotType.MAINHAND, new ItemStack(Items.WOODEN_AXE));
+            this.setItemSlot(EquipmentSlotType.MAINHAND, new ItemStack(Items.WOODEN_HOE));
         }
     }
 
