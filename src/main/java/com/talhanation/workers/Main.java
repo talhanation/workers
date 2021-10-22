@@ -2,8 +2,7 @@ package com.talhanation.workers;
 
 import com.google.common.collect.ImmutableSet;
 import com.talhanation.workers.client.events.*;
-import com.talhanation.workers.entities.LumberjackEntity;
-import com.talhanation.workers.entities.MinerEntity;
+import com.talhanation.workers.entities.*;
 import com.talhanation.workers.init.ModBlocks;
 import com.talhanation.workers.init.ModEntityTypes;
 import com.talhanation.workers.init.ModItems;
@@ -79,9 +78,9 @@ public class Main {
         DeferredWorkQueue.runLater(() -> {
             GlobalEntityTypeAttributes.put(ModEntityTypes.MINER.get(), MinerEntity.setAttributes().build());
             GlobalEntityTypeAttributes.put(ModEntityTypes.LUMBERJACK.get(), LumberjackEntity.setAttributes().build());
-            GlobalEntityTypeAttributes.put(ModEntityTypes.SHEPHERD.get(), LumberjackEntity.setAttributes().build());
-            GlobalEntityTypeAttributes.put(ModEntityTypes.FARMER.get(), LumberjackEntity.setAttributes().build());
-
+            GlobalEntityTypeAttributes.put(ModEntityTypes.SHEPHERD.get(), ShepherdEntity.setAttributes().build());
+            GlobalEntityTypeAttributes.put(ModEntityTypes.FARMER.get(), FarmerEntity.setAttributes().build());
+            GlobalEntityTypeAttributes.put(ModEntityTypes.FISHERMAN.get(), FishermanEntity.setAttributes().build());
         });
     }
 

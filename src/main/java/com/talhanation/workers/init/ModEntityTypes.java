@@ -1,10 +1,7 @@
 package com.talhanation.workers.init;
 
 import com.talhanation.workers.Main;
-import com.talhanation.workers.entities.FarmerEntity;
-import com.talhanation.workers.entities.LumberjackEntity;
-import com.talhanation.workers.entities.MinerEntity;
-import com.talhanation.workers.entities.ShepherdEntity;
+import com.talhanation.workers.entities.*;
 import net.minecraft.entity.EntityClassification;
 import net.minecraft.entity.EntityType;
 import net.minecraft.util.ResourceLocation;
@@ -48,4 +45,12 @@ public class ModEntityTypes {
                     .setTrackingRange(32)
                     .setShouldReceiveVelocityUpdates(true)
                     .build(new ResourceLocation(Main.MOD_ID, "farmer").toString()));
+
+    public static final RegistryObject<EntityType<FishermanEntity>> FISHERMAN = ENTITY_TYPES.register("fisherman",
+            () -> EntityType.Builder.of(FishermanEntity::new, EntityClassification.CREATURE)
+                    .sized(0.6F, 1.95F)
+                    .canSpawnFarFromPlayer()
+                    .setTrackingRange(32)
+                    .setShouldReceiveVelocityUpdates(true)
+                    .build(new ResourceLocation(Main.MOD_ID, "fisherman").toString()));
 }

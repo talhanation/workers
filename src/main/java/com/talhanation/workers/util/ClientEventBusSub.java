@@ -18,6 +18,8 @@ public class ClientEventBusSub {
         RenderingRegistry.registerEntityRenderingHandler(ModEntityTypes.MINER.get(), WorkersRenderer::new );
         RenderingRegistry.registerEntityRenderingHandler(ModEntityTypes.LUMBERJACK.get(), WorkersRenderer::new );
         RenderingRegistry.registerEntityRenderingHandler(ModEntityTypes.SHEPHERD.get(), WorkersRenderer::new );
+        RenderingRegistry.registerEntityRenderingHandler(ModEntityTypes.FARMER.get(), WorkersRenderer::new );
+        RenderingRegistry.registerEntityRenderingHandler(ModEntityTypes.FISHERMAN.get(), WorkersRenderer::new );
     }
 
 }
