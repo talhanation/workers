@@ -12,11 +12,10 @@ import java.util.function.Predicate;
 public class WorkerPickupWantedItemGoal extends Goal{
 
     AbstractWorkerEntity worker;
-    Predicate<ItemEntity> allowedItems;
 
-    public WorkerPickupWantedItemGoal(AbstractWorkerEntity worker, Predicate<ItemEntity> allowedItems) {
+    public WorkerPickupWantedItemGoal(AbstractWorkerEntity worker) {
         this.worker = worker;
-        this.allowedItems = allowedItems;
+
     }
 
     @Override
@@ -26,7 +25,7 @@ public class WorkerPickupWantedItemGoal extends Goal{
 
     @Override
     public void tick() {
-        List<ItemEntity> list = worker.level.getEntitiesOfClass(ItemEntity.class, worker.getBoundingBox().inflate(16.0D, 8.0D, 16.0D), allowedItems);
+        List<ItemEntity> list = worker.level.getEntitiesOfClass(ItemEntity.class, worker.getBoundingBox().inflate(16.0D, 8.0D, 16.0D), worker.getAllowedItems());
         if (!list.isEmpty()) {
             worker.getNavigation().moveTo(list.get(0), 1.15F);
         }

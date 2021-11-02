@@ -355,4 +355,5 @@ public abstract class AbstractWorkerEntity extends AbstractInventoryEntity {
         }
     }
 
+    public abstract Predicate<ItemEntity> getAllowedItems();
 }

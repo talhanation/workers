@@ -24,14 +24,14 @@ import net.minecraft.world.World;
 import net.minecraft.world.server.ServerWorld;
 
 import javax.annotation.Nullable;
+import java.util.List;
 import java.util.Set;
 import java.util.function.Predicate;
 
 public class LumberjackEntity extends AbstractWorkerEntity{
 
-    private final Predicate<ItemEntity> ALLOWED_ITEMS = (item) -> {
-        return !item.hasPickUpDelay() && item.isAlive() && this.wantsToPickUp(item.getItem());
-    };
+    public final Predicate<ItemEntity> ALLOWED_ITEMS = (item) ->
+            (!item.hasPickUpDelay() && item.isAlive() && this.wantsToPickUp(item.getItem()));
 
     public static final Set<Item> WANTED_SAPLINGS = ImmutableSet.of(
             Items.OAK_SAPLING,
@@ -62,6 +62,10 @@ public class LumberjackEntity extends AbstractWorkerEntity{
         super(entityType, world);
     }
 
+    public Predicate<ItemEntity> getAllowedItems(){
+        return ALLOWED_ITEMS;
+    }
+
     @Override
     public void tick() {
         super.tick();
@@ -89,7 +93,7 @@ public class LumberjackEntity extends AbstractWorkerEntity{
     @Override
     protected void registerGoals() {
         this.goalSelector.addGoal(1, new SwimGoal(this));
-        this.goalSelector.addGoal(2, new WorkerPickupWantedItemGoal(this, ALLOWED_ITEMS));
+        this.goalSelector.addGoal(2, new WorkerPickupWantedItemGoal(this));
         this.goalSelector.addGoal(2, new WorkerFollowOwnerGoal(this, 1.2D, 7.F, 4.0F));
         this.goalSelector.addGoal(3, new LumberjackAI(this));
         this.goalSelector.addGoal(5, new LookAtGoal(this, PlayerEntity.class, 8.0F));

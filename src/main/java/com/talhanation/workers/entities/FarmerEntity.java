@@ -76,6 +76,11 @@ public class FarmerEntity extends AbstractWorkerEntity{
         return "Farmer";
     }
 
+    @Override
+    public Predicate<ItemEntity> getAllowedItems(){
+        return ALLOWED_ITEMS;
+    }
+
     //ATTRIBUTES
     public static AttributeModifierMap.MutableAttribute setAttributes() {
         return createMobAttributes()
@@ -88,7 +93,7 @@ public class FarmerEntity extends AbstractWorkerEntity{
     @Override
     protected void registerGoals() {
         this.goalSelector.addGoal(1, new SwimGoal(this));
-        this.goalSelector.addGoal(2, new WorkerPickupWantedItemGoal(this, ALLOWED_ITEMS));
+        this.goalSelector.addGoal(2, new WorkerPickupWantedItemGoal(this));
         this.goalSelector.addGoal(2, new WorkerFollowOwnerGoal(this, 1.2D, 7.F, 4.0F));
         this.goalSelector.addGoal(3, new FarmerAI(this));
         this.goalSelector.addGoal(5, new LookAtGoal(this, PlayerEntity.class, 8.0F));

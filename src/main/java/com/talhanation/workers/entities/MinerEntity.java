@@ -89,7 +89,7 @@ public class MinerEntity extends AbstractWorkerEntity {
 
     protected void registerGoals() {
         this.goalSelector.addGoal(1, new SwimGoal(this));
-        this.goalSelector.addGoal(2, new WorkerPickupWantedItemGoal(this, ALLOWED_ITEMS));
+        this.goalSelector.addGoal(2, new WorkerPickupWantedItemGoal(this));
         //this.goalSelector.addGoal(2, new MinerMineTunnelGoal(this, 0.5D, 10D));
         //this.goalSelector.addGoal(1, new WorkerMoveToBlockPosGoal(this, 1,16,4));
         this.goalSelector.addGoal(2, new MinerMine3x3TunnelGoal(this, 0.5D, 10D));
@@ -163,6 +163,11 @@ public class MinerEntity extends AbstractWorkerEntity {
     @Override
     public String workerName() {
         return "Miner";
+    }
+
+    @Override
+    public Predicate<ItemEntity> getAllowedItems(){
+        return ALLOWED_ITEMS;
     }
 
 
