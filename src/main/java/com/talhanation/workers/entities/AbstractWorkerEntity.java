@@ -237,7 +237,7 @@ public abstract class AbstractWorkerEntity extends AbstractInventoryEntity {
         this.entityData.set(FOLLOW, bool);
 
         LivingEntity owner = this.getOwner();
-
+        if (owner != null)
         if (bool) {
             owner.sendMessage(new StringTextComponent("I will follow you!"), owner.getUUID());
         }
@@ -250,6 +250,8 @@ public abstract class AbstractWorkerEntity extends AbstractInventoryEntity {
 
         LivingEntity owner = this.getOwner();
 
+
+        if (owner != null)
         if (bool) {
             owner.sendMessage(new StringTextComponent("Im working now!"), owner.getUUID());
         }
