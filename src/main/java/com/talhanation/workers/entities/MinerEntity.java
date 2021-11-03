@@ -36,9 +36,7 @@ import java.util.function.Predicate;
 
 public class MinerEntity extends AbstractWorkerEntity {
 
-    private final Predicate<ItemEntity> ALLOWED_ITEMS = (item) -> {
-        return !item.hasPickUpDelay() && item.isAlive() && this.wantsToPickUp(item.getItem());
-    };
+    private final Predicate<ItemEntity> ALLOWED_ITEMS = (item) -> !item.hasPickUpDelay() && item.isAlive() && this.wantsToPickUp(item.getItem());
 
     private static final DataParameter<Direction> DIRECTION = EntityDataManager.defineId(MinerEntity.class, DataSerializers.DIRECTION);
     private static final DataParameter<Integer> MINE_TYPE = EntityDataManager.defineId(MinerEntity.class, DataSerializers.INT);

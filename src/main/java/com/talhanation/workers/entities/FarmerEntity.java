@@ -37,9 +37,7 @@ import java.util.function.Predicate;
 
 public class FarmerEntity extends AbstractWorkerEntity{
 
-    private final Predicate<ItemEntity> ALLOWED_ITEMS = (item) -> {
-        return !item.hasPickUpDelay() && item.isAlive() && this.wantsToPickUp(item.getItem());
-    };
+    private final Predicate<ItemEntity> ALLOWED_ITEMS = (item) -> !item.hasPickUpDelay() && item.isAlive() && this.wantsToPickUp(item.getItem());
 
     public static final Set<Item> WANTED_SEEDS = ImmutableSet.of(
             Items.WHEAT_SEEDS,
