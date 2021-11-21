@@ -1,17 +1,23 @@
 package com.talhanation.workers;
 
 import com.google.common.collect.ImmutableSet;
-import com.talhanation.workers.client.events.*;
+import com.talhanation.workers.client.events.KeyEvents;
+import com.talhanation.workers.client.gui.WorkerInventoryScreen;
 import com.talhanation.workers.entities.*;
 import com.talhanation.workers.init.ModBlocks;
 import com.talhanation.workers.init.ModEntityTypes;
 import com.talhanation.workers.init.ModItems;
+import com.talhanation.workers.network.MessageOpenGui;
 import com.talhanation.workers.network.MessageStartPos;
+import de.maxhenkel.corelib.ClientRegistry;
 import net.minecraft.client.settings.KeyBinding;
 import net.minecraft.entity.ai.attributes.GlobalEntityTypeAttributes;
 import net.minecraft.entity.merchant.villager.VillagerProfession;
+import net.minecraft.entity.player.PlayerEntity;
+import net.minecraft.inventory.container.ContainerType;
 import net.minecraft.util.ResourceLocation;
 import net.minecraft.util.SoundEvents;
+import net.minecraft.util.math.AxisAlignedBB;
 import net.minecraft.village.PointOfInterestType;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
@@ -25,8 +31,12 @@ import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.fml.event.lifecycle.FMLClientSetupEvent;
 import net.minecraftforge.fml.event.lifecycle.FMLCommonSetupEvent;
 import net.minecraftforge.fml.javafmlmod.FMLJavaModLoadingContext;
+import net.minecraftforge.fml.network.IContainerFactory;
 import net.minecraftforge.fml.network.NetworkRegistry;
 import net.minecraftforge.fml.network.simple.SimpleChannel;
+
+import javax.annotation.Nullable;
+import java.util.UUID;
 
 @Mod(Main.MOD_ID)
 public class Main {
@@ -45,6 +55,7 @@ public class Main {
     public static KeyBinding C_KEY;
     public static KeyBinding Y_KEY;
     public static KeyBinding V_KEY;
+    public static ContainerType<WorkerInventoryContainer> WORKER_CONTAINER_TYPE;
 
     public Main() {
         //ModLoadingContext.get().registerConfig(ModConfig.Type.COMMON, workersModConfig.CONFIG);
@@ -54,6 +65,7 @@ public class Main {
         modEventBus.addListener(this::setup);
         modEventBus.addGenericListener(PointOfInterestType.class, this::registerPointsOfInterest);
         modEventBus.addGenericListener(VillagerProfession.class, this::registerVillagerProfessions);
+        modEventBus.addGenericListener(ContainerType.class, this::registerContainers);
         ModBlocks.BLOCKS.register(modEventBus);
         //ModSounds.SOUNDS.register(modEventBus);
         ModItems.ITEMS.register(modEventBus);
@@ -72,6 +84,10 @@ public class Main {
 
         SIMPLE_CHANNEL.registerMessage(0, MessageStartPos.class, MessageStartPos::toBytes,
                 buf -> (new MessageStartPos()).fromBytes(buf),
+                (msg, fun) -> msg.executeServerSide(fun.get()));
+
+        SIMPLE_CHANNEL.registerMessage(1, MessageOpenGui.class, MessageOpenGui::toBytes,
+                buf -> (new MessageOpenGui()).fromBytes(buf),
                 (msg, fun) -> msg.executeServerSide(fun.get()));
 
 
@@ -95,6 +111,8 @@ public class Main {
         C_KEY = ClientRegistry.registerKeyBinding("key.c_key", "category.workers", 67);
         Y_KEY = ClientRegistry.registerKeyBinding("key.y_key", "category.workers", 90);
         V_KEY = ClientRegistry.registerKeyBinding("key.v_key", "category.workers", 86);
+
+        ClientRegistry.registerScreen(Main.WORKER_CONTAINER_TYPE, WorkerInventoryScreen::new);
     }
 
     @SubscribeEvent
@@ -121,5 +139,25 @@ public class Main {
 
         event.getRegistry().register(MINER);
         event.getRegistry().register(LUMBERJACK);
+    }
+
+    @SubscribeEvent
+    public void registerContainers(RegistryEvent.Register<ContainerType<?>> event) {
+        WORKER_CONTAINER_TYPE = new ContainerType<>((IContainerFactory<WorkerInventoryContainer>) (windowId, inv, data) -> {
+            AbstractWorkerEntity rec = getRecruitByUUID(inv.player, data.readUUID());
+            if (rec == null) {
+                return null;
+            }
+            return new WorkerInventoryContainer(windowId, rec, inv);
+        });
+        WORKER_CONTAINER_TYPE.setRegistryName(new ResourceLocation(Main.MOD_ID, "recruit_container"));
+        event.getRegistry().register(WORKER_CONTAINER_TYPE);
+
+    }
+
+    @Nullable
+    public static AbstractWorkerEntity getRecruitByUUID(PlayerEntity player, UUID uuid) {
+        double distance = 10D;
+        return player.level.getEntitiesOfClass(AbstractWorkerEntity.class, new AxisAlignedBB(player.getX() - distance, player.getY() - distance, player.getZ() - distance, player.getX() + distance, player.getY() + distance, player.getZ() + distance), entity -> entity.getUUID().equals(uuid)).stream().findAny().orElse(null);
     }
 }

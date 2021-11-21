@@ -269,8 +269,6 @@ public abstract class AbstractWorkerEntity extends AbstractInventoryEntity {
 
     ////////////////////////////////////ON FUNCTIONS////////////////////////////////////
 
-
-
     boolean playerHasEnoughEmeralds(PlayerEntity player) {
         int recruitCosts = this.workerCosts();
         int emeraldCount = player.getItemInHand(Hand.MAIN_HAND).getCount();
@@ -358,4 +356,5 @@ public abstract class AbstractWorkerEntity extends AbstractInventoryEntity {
     }
 
     public abstract Predicate<ItemEntity> getAllowedItems();
+    //public abstract void openGUI(PlayerEntity player);
 }

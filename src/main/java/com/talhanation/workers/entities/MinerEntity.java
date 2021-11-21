@@ -1,17 +1,24 @@
 package com.talhanation.workers.entities;
 
 import com.google.common.collect.ImmutableSet;
+import com.talhanation.workers.Main;
+import com.talhanation.workers.WorkerInventoryContainer;
 import com.talhanation.workers.entities.ai.MinerMine3x3TunnelGoal;
 import com.talhanation.workers.entities.ai.WorkerFollowOwnerGoal;
 import com.talhanation.workers.entities.ai.WorkerPickupWantedItemGoal;
+import com.talhanation.workers.network.MessageOpenGui;
 import net.minecraft.entity.*;
 import net.minecraft.entity.ai.attributes.AttributeModifierMap;
 import net.minecraft.entity.ai.attributes.Attributes;
 import net.minecraft.entity.ai.goal.*;
 import net.minecraft.entity.item.ItemEntity;
 import net.minecraft.entity.player.PlayerEntity;
+import net.minecraft.entity.player.PlayerInventory;
+import net.minecraft.entity.player.ServerPlayerEntity;
 import net.minecraft.inventory.EquipmentSlotType;
 import net.minecraft.inventory.Inventory;
+import net.minecraft.inventory.container.Container;
+import net.minecraft.inventory.container.INamedContainerProvider;
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
 import net.minecraft.item.Items;
@@ -23,11 +30,13 @@ import net.minecraft.pathfinding.GroundPathNavigator;
 import net.minecraft.util.ActionResultType;
 import net.minecraft.util.Direction;
 import net.minecraft.util.Hand;
+import net.minecraft.util.text.ITextComponent;
 import net.minecraft.util.text.StringTextComponent;
 import net.minecraft.world.DifficultyInstance;
 import net.minecraft.world.IServerWorld;
 import net.minecraft.world.World;
 import net.minecraft.world.server.ServerWorld;
+import net.minecraftforge.fml.network.NetworkHooks;
 
 import javax.annotation.Nullable;
 import java.util.Set;
@@ -205,7 +214,7 @@ public class MinerEntity extends AbstractWorkerEntity {
             if (this.isTame() && player.getUUID().equals(this.getOwnerUUID())) {
 
                 if (player.isCrouching()) {
-                    //openInventory();
+                    openGUI(player);
 
                 }
                 if(!player.isCrouching()) {
@@ -243,6 +252,27 @@ public class MinerEntity extends AbstractWorkerEntity {
 
             }
             return super.mobInteract(player, hand);
+        }
+    }
+
+    public void openGUI(PlayerEntity player) {
+        this.navigation.stop();
+
+        if (player instanceof ServerPlayerEntity) {
+            NetworkHooks.openGui((ServerPlayerEntity) player, new INamedContainerProvider() {
+                @Override
+                public ITextComponent getDisplayName() {
+                    return getName();
+                }
+
+                @Nullable
+                @Override
+                public Container createMenu(int i, PlayerInventory playerInventory, PlayerEntity playerEntity) {
+                    return new WorkerInventoryContainer(i, MinerEntity.this, playerInventory);
+                }
+            }, packetBuffer -> {packetBuffer.writeUUID(getUUID());});
+        } else {
+            Main.SIMPLE_CHANNEL.sendToServer(new MessageOpenGui(player, this.getUUID()));
         }
     }
 }
