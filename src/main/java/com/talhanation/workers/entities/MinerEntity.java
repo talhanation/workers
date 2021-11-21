@@ -78,6 +78,7 @@ public class MinerEntity extends AbstractWorkerEntity {
     protected void defineSynchedData() {
         super.defineSynchedData();
         this.entityData.define(DIRECTION, Direction.NORTH);
+        this.entityData.define(MINE_TYPE, 0);
     }
 
     public MinerEntity(EntityType<? extends AbstractWorkerEntity> entityType, World world) {

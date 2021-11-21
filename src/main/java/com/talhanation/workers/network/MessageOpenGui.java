@@ -14,16 +14,16 @@ import java.util.UUID;
 public class MessageOpenGui implements Message<MessageOpenGui> {
 
     private UUID uuid;
-    private UUID recruit;
+    private UUID worker;
 
 
     public MessageOpenGui() {
         this.uuid = new UUID(0, 0);
     }
 
-    public MessageOpenGui(PlayerEntity player, UUID recruit) {
+    public MessageOpenGui(PlayerEntity player, UUID worker) {
         this.uuid = player.getUUID();
-        this.recruit = recruit;
+        this.worker = worker;
     }
 
     @Override
@@ -41,24 +41,24 @@ public class MessageOpenGui implements Message<MessageOpenGui> {
         player.level.getEntitiesOfClass(MinerEntity.class, player.getBoundingBox()
                 .inflate(16.0D), v -> v
                 .getUUID()
-                .equals(this.recruit))
+                .equals(this.worker))
                 .stream()
                 .filter(Entity::isAlive)
                 .findAny()
-                .ifPresent(recruit -> recruit.openGUI(player));
+                .ifPresent(worker -> worker.openGUI(player));
     }
 
     @Override
     public MessageOpenGui fromBytes(PacketBuffer buf) {
         this.uuid = buf.readUUID();
-        this.recruit = buf.readUUID();
+        this.worker = buf.readUUID();
         return this;
     }
 
     @Override
     public void toBytes(PacketBuffer buf) {
         buf.writeUUID(uuid);
-        buf.writeUUID(recruit);
+        buf.writeUUID(worker);
     }
 
 }

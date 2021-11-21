@@ -70,7 +70,7 @@ public class LumberjackAI extends Goal {
 
     public void tick() {
         breakLeaves();
-        debugAxisPos();
+        //debugAxisPos();
 
         if (chop) {
             if (lumber.getFollow() || !lumber.getIsWorking()) {
@@ -380,9 +380,11 @@ public class LumberjackAI extends Goal {
     }
 
     private void debugAxisPos(){
-        lumber.getOwner().sendMessage(new StringTextComponent("x: " + x + ""), lumber.getOwner().getUUID());
-        lumber.getOwner().sendMessage(new StringTextComponent("y: " + y + ""), lumber.getOwner().getUUID());
-        lumber.getOwner().sendMessage(new StringTextComponent("z: " + z + ""), lumber.getOwner().getUUID());
+        if (lumber.getOwner() != null) {
+            lumber.getOwner().sendMessage(new StringTextComponent("x: " + x + ""), lumber.getOwner().getUUID());
+            lumber.getOwner().sendMessage(new StringTextComponent("y: " + y + ""), lumber.getOwner().getUUID());
+            lumber.getOwner().sendMessage(new StringTextComponent("z: " + z + ""), lumber.getOwner().getUUID());
+        }
     }
 
 

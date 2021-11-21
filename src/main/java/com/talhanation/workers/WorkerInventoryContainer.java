@@ -9,8 +9,6 @@ import net.minecraft.inventory.container.Slot;
 
 public class WorkerInventoryContainer extends ContainerBase {
 
-
-
     private final IInventory workerInventory;
     private final AbstractWorkerEntity worker;
 
@@ -25,13 +23,13 @@ public class WorkerInventoryContainer extends ContainerBase {
 
     @Override
     public int getInvOffset() {
-        return 82;
+        return 0;
     }
 
     public void addWorkerInventorySlots() {
-        for (int k = 0; k < 3; ++k) {
+        for (int k = 0; k < 2; ++k) {
             for (int l = 0; l < 9; ++l) {
-                this.addSlot(new Slot(workerInventory, l + k * 9, 2 * 18 + 82 + l * 18,  18 + k * 18));
+                this.addSlot(new Slot(workerInventory, l + k * 9, 8 + l * 18,  18 + k * 18));
             }
         }
     }
