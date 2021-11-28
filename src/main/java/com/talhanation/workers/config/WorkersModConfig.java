@@ -8,7 +8,7 @@ import net.minecraftforge.fml.common.Mod;
 import java.nio.file.Path;
 
 @Mod.EventBusSubscriber
-public class RecruitsModConfig {
+public class WorkersModConfig {
 
     private static final ForgeConfigSpec.Builder BUILDER = new ForgeConfigSpec.Builder();
     public static ForgeConfigSpec CONFIG;

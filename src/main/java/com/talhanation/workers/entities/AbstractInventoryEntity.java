@@ -53,7 +53,7 @@ public abstract class AbstractInventoryEntity extends TameableEntity {
 
     public void readAdditionalSaveData(CompoundNBT nbt) {
         super.readAdditionalSaveData(nbt);
-        ListNBT list = nbt.getList("Inventory", 30);
+        ListNBT list = nbt.getList("Inventory", 10);
         for (int i = 0; i < list.size(); ++i) {
             CompoundNBT compoundnbt = list.getCompound(i);
             int j = compoundnbt.getByte("Slot") & 255;

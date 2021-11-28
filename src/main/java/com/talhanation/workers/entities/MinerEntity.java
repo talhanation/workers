@@ -49,7 +49,7 @@ public class MinerEntity extends AbstractWorkerEntity {
 
     private static final DataParameter<Direction> DIRECTION = EntityDataManager.defineId(MinerEntity.class, DataSerializers.DIRECTION);
     private static final DataParameter<Integer> MINE_TYPE = EntityDataManager.defineId(MinerEntity.class, DataSerializers.INT);
-
+    private static final DataParameter<Integer> DEPTH = EntityDataManager.defineId(MinerEntity.class, DataSerializers.INT);
     /*
     MINE TYPES:
     0 = nothing
@@ -79,6 +79,7 @@ public class MinerEntity extends AbstractWorkerEntity {
         super.defineSynchedData();
         this.entityData.define(DIRECTION, Direction.NORTH);
         this.entityData.define(MINE_TYPE, 0);
+        this.entityData.define(DEPTH, 16);
     }
 
     public MinerEntity(EntityType<? extends AbstractWorkerEntity> entityType, World world) {
