@@ -33,6 +33,7 @@ public abstract class AbstractWorkerEntity extends AbstractInventoryEntity {
     private static final DataParameter<Optional<BlockPos>> DEST_POS = EntityDataManager.defineId(AbstractWorkerEntity.class, DataSerializers.OPTIONAL_BLOCK_POS);
     private static final DataParameter<Boolean> FOLLOW = EntityDataManager.defineId(AbstractWorkerEntity.class, DataSerializers.BOOLEAN);
     private static final DataParameter<Boolean> IS_WORKING = EntityDataManager.defineId(AbstractWorkerEntity.class, DataSerializers.BOOLEAN);
+    private static final DataParameter<Boolean> IS_PICKING_UP = EntityDataManager.defineId(AbstractWorkerEntity.class, DataSerializers.BOOLEAN);
     private static final DataParameter<Integer> breakingTime = EntityDataManager.defineId(MinerEntity.class, DataSerializers.INT);
     private static final DataParameter<Integer> currentTimeBreak = EntityDataManager.defineId(MinerEntity.class, DataSerializers.INT);
     private static final DataParameter<Integer> previousTimeBreak = EntityDataManager.defineId(MinerEntity.class, DataSerializers.INT);
@@ -47,7 +48,7 @@ public abstract class AbstractWorkerEntity extends AbstractInventoryEntity {
 
     ///////////////////////////////////TICK/////////////////////////////////////////
 
-    public double getMyRidingOffset() {
+    public double getMyRidingOffset(){
         return -0.35D;
     }
 
@@ -94,6 +95,7 @@ public abstract class AbstractWorkerEntity extends AbstractInventoryEntity {
     protected void defineSynchedData() {
         super.defineSynchedData();
         this.entityData.define(IS_WORKING, false);
+        this.entityData.define(IS_PICKING_UP, false);
         this.entityData.define(FOLLOW, false);
         this.entityData.define(START_POS, Optional.empty());
         this.entityData.define(DEST_POS, Optional.empty());
@@ -106,6 +108,7 @@ public abstract class AbstractWorkerEntity extends AbstractInventoryEntity {
         super.addAdditionalSaveData(nbt);
         nbt.putBoolean("Follow", this.getFollow());
         nbt.putBoolean("isWorking", this.getIsWorking());
+        nbt.putBoolean("isPickingUp", this.getIsPickingUp());
         nbt.putInt("breakTime", this.getBreakingTime());
         nbt.putInt("currentTimeBreak", this.getCurrentTimeBreak());
         nbt.putInt("previousTimeBreak", this.getPreviousTimeBreak());
@@ -127,6 +130,7 @@ public abstract class AbstractWorkerEntity extends AbstractInventoryEntity {
         super.readAdditionalSaveData(nbt);
         this.setFollow(nbt.getBoolean("Follow"));
         this.setBreakingTime(nbt.getInt("breakTime"));
+        this.setIsPickingUp(nbt.getBoolean("isPickingUp"));
         this.setCurrentTimeBreak(nbt.getInt("currentTimeBreak"));
         this.setPreviousTimeBreak(nbt.getInt("previousTimeBreak"));
         this.setIsWorking(nbt.getBoolean("isWorking"));
@@ -188,6 +192,10 @@ public abstract class AbstractWorkerEntity extends AbstractInventoryEntity {
 
     public boolean getIsWorking(){
         return this.entityData.get(IS_WORKING);
+    }
+
+    public boolean getIsPickingUp(){
+        return this.entityData.get(IS_PICKING_UP);
     }
 
     public SoundEvent getHurtSound(DamageSource ds) {
@@ -257,6 +265,10 @@ public abstract class AbstractWorkerEntity extends AbstractInventoryEntity {
         }
         else
             owner.sendMessage(new StringTextComponent("I stopped working now!"), owner.getUUID());
+    }
+
+    public void setIsPickingUp(boolean bool) {
+        entityData.set(IS_PICKING_UP, bool);
     }
 
     public void setOwned(boolean owned) {

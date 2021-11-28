@@ -1,6 +1,7 @@
 package com.talhanation.workers.client.gui;
 
 import com.mojang.blaze3d.matrix.MatrixStack;
+import com.mojang.blaze3d.systems.RenderSystem;
 import com.talhanation.workers.Main;
 import com.talhanation.workers.WorkerInventoryContainer;
 import com.talhanation.workers.entities.AbstractWorkerEntity;
@@ -35,5 +36,10 @@ public class WorkerInventoryScreen extends ScreenBase<WorkerInventoryContainer> 
     @Override
     public boolean isPauseScreen() {
         return false;
+    }
+
+    protected void renderBg(MatrixStack matrixStack, float partialTicks, int mouseX, int mouseY) {
+        super.renderBg(matrixStack, partialTicks, mouseX, mouseY);
+        RenderSystem.color4f(1.0F, 1.0F, 1.0F, 1.0F);
     }
 }

@@ -3,9 +3,7 @@ package com.talhanation.workers.entities;
 import com.google.common.collect.ImmutableSet;
 import com.talhanation.workers.Main;
 import com.talhanation.workers.WorkerInventoryContainer;
-import com.talhanation.workers.entities.ai.MinerMine3x3TunnelGoal;
-import com.talhanation.workers.entities.ai.WorkerFollowOwnerGoal;
-import com.talhanation.workers.entities.ai.WorkerPickupWantedItemGoal;
+import com.talhanation.workers.entities.ai.*;
 import com.talhanation.workers.network.MessageOpenGui;
 import net.minecraft.entity.*;
 import net.minecraft.entity.ai.attributes.AttributeModifierMap;
@@ -39,6 +37,7 @@ import net.minecraft.world.server.ServerWorld;
 import net.minecraftforge.fml.network.NetworkHooks;
 
 import javax.annotation.Nullable;
+import java.util.Optional;
 import java.util.Set;
 import java.util.function.Predicate;
 
@@ -99,10 +98,11 @@ public class MinerEntity extends AbstractWorkerEntity {
     protected void registerGoals() {
         this.goalSelector.addGoal(1, new SwimGoal(this));
         this.goalSelector.addGoal(2, new WorkerPickupWantedItemGoal(this));
-        //this.goalSelector.addGoal(2, new MinerMineTunnelGoal(this, 0.5D, 10D));
+        this.goalSelector.addGoal(2, new MinerMineTunnelGoal(this, 0.5D, 10D));
         //this.goalSelector.addGoal(1, new WorkerMoveToBlockPosGoal(this, 1,16,4));
         this.goalSelector.addGoal(2, new MinerMine3x3TunnelGoal(this, 0.5D, 10D));
-        this.goalSelector.addGoal(2, new WorkerFollowOwnerGoal(this, 1.2D, 9.0F, 3.0F));
+        this.goalSelector.addGoal(2, new MinerMine8x8PitGoal(this, 0.5D, 10D));
+        this.goalSelector.addGoal(2, new WorkerFollowOwnerGoal(this, 1.2D, 6.0F, 3.0F));
         this.goalSelector.addGoal(2, new PanicGoal(this, 1.3D));
 
         this.goalSelector.addGoal(10, new WaterAvoidingRandomWalkingGoal(this, 1.0D, 0F));
@@ -183,11 +183,13 @@ public class MinerEntity extends AbstractWorkerEntity {
     public void addAdditionalSaveData(CompoundNBT nbt) {
         super.addAdditionalSaveData(nbt);
         nbt.putInt("MineType", this.getMineType());
+        nbt.putInt("Depth", this.getMineDepth());
     }
 
     public void readAdditionalSaveData(CompoundNBT nbt) {
         super.readAdditionalSaveData(nbt);
         this.setMineType(nbt.getInt("MineType"));
+        this.setMineDepth(nbt.getInt("Depth"));
     }
 
     public void setMineDirectrion(Direction dir) {
@@ -199,11 +201,20 @@ public class MinerEntity extends AbstractWorkerEntity {
     }
 
     public void setMineType(int x){
+        this.setStartPos(Optional.empty());
         entityData.set(MINE_TYPE, x);
     }
 
     public int getMineType(){
        return entityData.get(MINE_TYPE);
+    }
+
+    public void setMineDepth(int x){
+        entityData.set(DEPTH, x);
+    }
+
+    public int getMineDepth(){
+        return entityData.get(DEPTH);
     }
 
     public ActionResultType mobInteract(PlayerEntity player, Hand hand) {
@@ -258,8 +269,6 @@ public class MinerEntity extends AbstractWorkerEntity {
     }
 
     public void openGUI(PlayerEntity player) {
-        this.navigation.stop();
-
         if (player instanceof ServerPlayerEntity) {
             NetworkHooks.openGui((ServerPlayerEntity) player, new INamedContainerProvider() {
                 @Override

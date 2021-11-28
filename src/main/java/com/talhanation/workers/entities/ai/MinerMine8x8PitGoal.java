@@ -6,23 +6,34 @@ import net.minecraft.block.BlockState;
 import net.minecraft.block.Blocks;
 import net.minecraft.entity.ai.attributes.Attributes;
 import net.minecraft.entity.ai.goal.Goal;
+import net.minecraft.inventory.Inventory;
+import net.minecraft.item.Item;
+import net.minecraft.item.ItemStack;
+import net.minecraft.item.Items;
 import net.minecraft.util.Direction;
 import net.minecraft.util.SoundCategory;
+import net.minecraft.util.SoundEvents;
 import net.minecraft.util.math.BlockPos;
+import net.minecraft.util.text.StringTextComponent;
 import net.minecraftforge.event.ForgeEventFactory;
 
 import java.util.EnumSet;
 import java.util.Optional;
+import java.util.Set;
 
-public class MinerMineTunnelGoal extends Goal {
+import static com.talhanation.workers.entities.FarmerEntity.WANTED_SEEDS;
+
+public class MinerMine8x8PitGoal extends Goal {
     private final MinerEntity miner;
     private final double speedModifier;
     private final double within;
     private BlockPos minePos;
     private BlockPos standPos;
-    private int blocks = 0;
+    private int blocks;
+    private int side;
+    private int depth;
 
-    public MinerMineTunnelGoal(MinerEntity miner, double v, double within) {
+    public MinerMine8x8PitGoal(MinerEntity miner, double v, double within) {
         this.miner = miner;
         this.speedModifier = v;
         this.within = within;
@@ -35,8 +46,11 @@ public class MinerMineTunnelGoal extends Goal {
         }
         if (this.miner.getFollow()) {
             return false;
-        } else if (this.miner.getStartPos().get().closerThan(miner.position(), within) && !this.miner.getFollow() && miner.getMineType() == 1)
+
+        } else if (this.miner.getStartPos().get().closerThan(miner.position(), within) && !this.miner.getFollow() && miner.getMineType() == 3)
+
             return true;
+
         else
             return false;
     }
@@ -48,36 +62,41 @@ public class MinerMineTunnelGoal extends Goal {
     @Override
     public void start() {
         super.start();
-        blocks = 0;
+
+    }
+
+    @Override
+    public void stop() {
+        super.stop();
+        restetCounts();
     }
 
     public void tick() {
         if (miner.getFollow() || !miner.getIsWorking()){
-            blocks = 0;
+            restetCounts();
         }
 
         if (!miner.getFollow()) {
             if (miner.getMineDirectrion().equals(Direction.EAST)) {
-                this.minePos = new BlockPos(miner.getStartPos().get().getX() + blocks, miner.getStartPos().get().getY(), miner.getStartPos().get().getZ());
+                this.minePos = new BlockPos(miner.getStartPos().get().getX() + blocks, miner.getStartPos().get().getY() - depth, miner.getStartPos().get().getZ() - side);
                 this.standPos = new BlockPos(minePos.getX() + 2, minePos.getY(), minePos.getZ());
 
             } else if (miner.getMineDirectrion().equals(Direction.WEST)) {
-                this.minePos = new BlockPos(miner.getStartPos().get().getX() - blocks, miner.getStartPos().get().getY(), miner.getStartPos().get().getZ());
+                this.minePos = new BlockPos(miner.getStartPos().get().getX() - blocks, miner.getStartPos().get().getY() - depth, miner.getStartPos().get().getZ() + side);
                 this.standPos = new BlockPos(minePos.getX() - 2, minePos.getY(), minePos.getZ());
 
             } else if (miner.getMineDirectrion().equals(Direction.NORTH)) {
-                this.minePos = new BlockPos(miner.getStartPos().get().getX(), miner.getStartPos().get().getY(), miner.getStartPos().get().getZ() - blocks);
+                this.minePos = new BlockPos(miner.getStartPos().get().getX() - side, miner.getStartPos().get().getY() - depth, miner.getStartPos().get().getZ() - blocks);
                 this.standPos = new BlockPos(minePos.getX(), minePos.getY(), minePos.getZ() - 2);
 
             } else if (miner.getMineDirectrion().equals(Direction.SOUTH)) {
-                this.minePos = new BlockPos(miner.getStartPos().get().getX(), miner.getStartPos().get().getY(), miner.getStartPos().get().getZ() + blocks);
+                this.minePos = new BlockPos(miner.getStartPos().get().getX() + side, miner.getStartPos().get().getY() - depth, miner.getStartPos().get().getZ() + blocks);
                 this.standPos = new BlockPos(minePos.getX(), minePos.getY(), minePos.getZ() + 2);
             }
 
-            if (!minePos.closerThan(miner.position(), 4)){
-                this.miner.getNavigation().moveTo(standPos.getX(), standPos.getY(), standPos.getZ(),1);
+            if (!minePos.closerThan(miner.position(), 2) && !miner.getIsPickingUp()){
+                this.miner.getNavigation().moveTo(minePos.getX(), minePos.getY(), minePos.getZ(),1);
             }
-
 
             if (minePos.closerThan(miner.position(), 4)){
                 this.miner.getLookControl().setLookAt(minePos.getX(), minePos.getY() + 1, minePos.getZ(), 10.0F, (float) this.miner.getMaxHeadXRot());
@@ -85,39 +104,48 @@ public class MinerMineTunnelGoal extends Goal {
 
             BlockState blockstate = miner.level.getBlockState(minePos);
             Block block1 = blockstate.getBlock();
+            /*
             BlockState blockstate2 = miner.level.getBlockState(minePos.above());
             Block block2 = blockstate2.getBlock();
-
+             */
             this.miner.getAttribute(Attributes.MOVEMENT_SPEED).setBaseValue(0.3D);
             //erst mienen wenn nah genug
             if (minePos.closerThan(miner.position(), 6)) this.mineBlock(this.minePos);
-            //miner.getOwner().sendMessage(new StringTextComponent("" + blocks + ""), miner.getOwner().getUUID());
+            if (miner.getOwner() !=null)
+            miner.getOwner().sendMessage(new StringTextComponent("Blocks: " + blocks +"   Side: " + side + "   Depth: " + depth), miner.getOwner().getUUID());
 
-            if (block1 == Blocks.AIR && block2 == Blocks.AIR) {
-
+            if (block1 == Blocks.AIR || block1 == Blocks.OAK_PLANKS) {
                 blocks++;
+                if (block1 != Blocks.OAK_PLANKS) placePlanks();
+
             }
 
-            if (blocks == 9){
-                miner.setIsWorking(false);
-                miner.setStartPos(Optional.empty());
+            if (blocks == 8) {
                 blocks = 0;
+                side++;
+                this.miner.setIsPickingUp(true);
             }
+
+            if (side == 8){
+                side = 0;
+                depth++;
+            }
+
+            if (depth == 8){
+                miner.setStartPos(Optional.empty());
+                miner.setIsWorking(false);
+            }
+
 
         }
     }
 
     private void mineBlock(BlockPos blockPos){
         if (this.miner.isAlive() && ForgeEventFactory.getMobGriefingEvent(this.miner.level, this.miner) && !miner.getFollow()) {
-            boolean flag = false;
-            BlockPos blockpos2 = blockPos.above();
             BlockState blockstate = this.miner.level.getBlockState(blockPos);
             Block block = blockstate.getBlock();
 
-            BlockState blockstate2 = this.miner.level.getBlockState(blockPos.above());
-            Block block2 = blockstate2.getBlock();
-
-            if (block != Blocks.AIR) {
+            if (block != Blocks.AIR && block != Blocks.OAK_PLANKS) {
 
                 if (miner.getCurrentTimeBreak() % 5 == 4) {
                     miner.level.playLocalSound(blockPos.getX(), blockPos.getY(), blockPos.getZ(), blockstate.getSoundType().getHitSound(), SoundCategory.BLOCKS, 1F, 0.75F, false);
@@ -148,40 +176,35 @@ public class MinerMineTunnelGoal extends Goal {
                         this.miner.swing(this.miner.getUsedItemHand());
                     }
                 }
-            } else if (block2 != Blocks.AIR) {
-
-                if (this.miner.getCurrentTimeBreak() % 5 == 4) {
-                    miner.level.playLocalSound(blockpos2.getX(), blockpos2.getY(), blockpos2.getZ(), blockstate2.getSoundType().getHitSound(), SoundCategory.BLOCKS, 1F, 0.75F, false);
-                }
-
-                //set max destroy speed
-                int bp = (int) (blockstate2.getDestroySpeed(this.miner.level, blockpos2.above()) * 100);
-                this.miner.setBreakingTime(bp);
-
-                //increase current
-                this.miner.setCurrentTimeBreak(this.miner.getCurrentTimeBreak() + (int) (1 * (this.miner.getUseItem().getDestroySpeed(blockstate2))));
-                float f = (float) this.miner.getCurrentTimeBreak() / (float) this.miner.getBreakingTime();
-
-                int i = (int) (f * 10);
-
-                if (i != this.miner.getPreviousTimeBreak()) {
-                    this.miner.level.destroyBlockProgress(1, blockpos2, i);
-                    this.miner.setPreviousTimeBreak(i);
-                }
-
-                if (this.miner.getCurrentTimeBreak() == this.miner.getBreakingTime()) {
-                    this.miner.level.destroyBlock(blockpos2, true, this.miner);
-                    this.miner.setCurrentTimeBreak(-1);
-                    this.miner.setBreakingTime(0);
-                }
-                if (this.miner.getRandom().nextInt(5) == 0) {
-                    if (!this.miner.swinging) {
-                        this.miner.swing(this.miner.getUsedItemHand());
-                    }
-                }
-
             }
         }
 
+    }
+
+    public void restetCounts(){
+        blocks = 0;
+        side = 0;
+        depth = 0;
+    }
+
+    public boolean shouldPlacePlanks(){
+        if (side == 0) {
+            if (blocks == depth) return true;
+
+        }
+        return false;
+    }
+
+    public void placePlanks(){
+        if (shouldPlacePlanks() && hasPlanksInInv()){
+            miner.level.setBlock(this.minePos, Blocks.OAK_PLANKS.defaultBlockState(), 3);
+            miner.level.playSound(null, (double) this.minePos.getX(), (double) this.minePos.getY(), (double) this.minePos.getZ(), SoundEvents.WOOD_PLACE, SoundCategory.BLOCKS, 1.0F, 1.0F);
+
+        }
+    }
+
+    private boolean hasPlanksInInv(){
+        Inventory inventory = miner.getInventory();
+        return true;
     }
 }

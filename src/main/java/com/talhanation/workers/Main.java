@@ -2,11 +2,13 @@ package com.talhanation.workers;
 
 import com.google.common.collect.ImmutableSet;
 import com.talhanation.workers.client.events.KeyEvents;
+import com.talhanation.workers.client.gui.MinerInventoryScreen;
 import com.talhanation.workers.client.gui.WorkerInventoryScreen;
 import com.talhanation.workers.entities.*;
 import com.talhanation.workers.init.ModBlocks;
 import com.talhanation.workers.init.ModEntityTypes;
 import com.talhanation.workers.init.ModItems;
+import com.talhanation.workers.network.MessageMineType;
 import com.talhanation.workers.network.MessageOpenGui;
 import com.talhanation.workers.network.MessageStartPos;
 import de.maxhenkel.corelib.ClientRegistry;
@@ -90,6 +92,10 @@ public class Main {
                 buf -> (new MessageOpenGui()).fromBytes(buf),
                 (msg, fun) -> msg.executeServerSide(fun.get()));
 
+        SIMPLE_CHANNEL.registerMessage(2, MessageMineType.class, MessageMineType::toBytes,
+                buf -> (new MessageMineType()).fromBytes(buf),
+                (msg, fun) -> msg.executeServerSide(fun.get()));
+
 
         DeferredWorkQueue.runLater(() -> {
             GlobalEntityTypeAttributes.put(ModEntityTypes.MINER.get(), MinerEntity.setAttributes().build());
@@ -112,7 +118,7 @@ public class Main {
         Y_KEY = ClientRegistry.registerKeyBinding("key.y_key", "category.workers", 90);
         V_KEY = ClientRegistry.registerKeyBinding("key.v_key", "category.workers", 86);
 
-        ClientRegistry.registerScreen(Main.WORKER_CONTAINER_TYPE, WorkerInventoryScreen::new);
+        ClientRegistry.registerScreen(Main.WORKER_CONTAINER_TYPE, MinerInventoryScreen::new);
     }
 
     @SubscribeEvent

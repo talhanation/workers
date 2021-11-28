@@ -25,10 +25,14 @@ public class WorkerPickupWantedItemGoal extends Goal{
 
     @Override
     public void tick() {
-        List<ItemEntity> list = worker.level.getEntitiesOfClass(ItemEntity.class, worker.getBoundingBox().inflate(16.0D, 8.0D, 16.0D), worker.getAllowedItems());
-        if (!list.isEmpty()) {
-            worker.getNavigation().moveTo(list.get(0), 1.15F);
+        if (worker.getIsPickingUp()) {
+            List<ItemEntity> list = worker.level.getEntitiesOfClass(ItemEntity.class, worker.getBoundingBox().inflate(16.0D, 4.0D, 16.0D), worker.getAllowedItems());
+            if (!list.isEmpty()) {
+                worker.getNavigation().moveTo(list.get(0), 1.15F);
+            }
+            else this.worker.setIsPickingUp(false);
         }
+
     }
 }
 

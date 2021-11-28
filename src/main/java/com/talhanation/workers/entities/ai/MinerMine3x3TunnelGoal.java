@@ -36,8 +36,7 @@ public class MinerMine3x3TunnelGoal extends Goal {
         }
         if (this.miner.getFollow()) {
             return false;
-       //} else if (this.miner.getStartPos().get().closerThan(miner.position(), within) && !this.miner.getFollow() && miner.getMineType() == 2)
-            } else if (this.miner.getStartPos().get().closerThan(miner.position(), within) && !this.miner.getFollow())
+       } else if (this.miner.getStartPos().get().closerThan(miner.position(), within) && !this.miner.getFollow() && miner.getMineType() == 2)
 
             return true;
 
