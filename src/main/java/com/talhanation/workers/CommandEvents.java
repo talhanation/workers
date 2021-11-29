@@ -3,13 +3,11 @@ package com.talhanation.workers;
 import com.talhanation.workers.entities.AbstractWorkerEntity;
 import com.talhanation.workers.entities.MinerEntity;
 import net.minecraft.client.Minecraft;
-import net.minecraft.entity.Entity;
 import net.minecraft.entity.LivingEntity;
 import net.minecraft.util.Direction;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.BlockRayTraceResult;
 import net.minecraft.util.math.RayTraceResult;
-import net.minecraft.util.text.StringTextComponent;
 
 import java.util.Objects;
 import java.util.Optional;
@@ -21,13 +19,13 @@ public class CommandEvents {
 
         Minecraft minecraft = Minecraft.getInstance();
         LivingEntity owner = worker.getOwner();
+        MinerEntity miner = (MinerEntity) worker;
 
         if (worker.isTame() &&  Objects.equals(worker.getOwnerUUID(), player_uuid)) {
-            boolean tame = worker.isTame();
 
             if (owner != null){
                 Direction playerDirection = owner.getDirection();
-                //worker.setMineDirectrion(playerDirection);
+                miner.setMineDirectrion(playerDirection);
             }
 
             RayTraceResult rayTraceResult = minecraft.hitResult;
