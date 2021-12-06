@@ -144,11 +144,10 @@ public class MinerMine3x3TunnelGoal extends Goal {
                     miner.level.playLocalSound(blockPos.getX(), blockPos.getY(), blockPos.getZ(), blockstate.getSoundType().getHitSound(), SoundCategory.BLOCKS, 1F, 0.75F, false);
                 }
 
-                //set max destroy speed
+
                 int bp = (int) (blockstate.getDestroySpeed(this.miner.level, blockPos) * 100);
                 this.miner.setBreakingTime(bp);
 
-                //increase current
                 this.miner.setCurrentTimeBreak(this.miner.getCurrentTimeBreak() + (int) (1 * (this.miner.getUseItem().getDestroySpeed(blockstate))));
                 float f = (float) this.miner.getCurrentTimeBreak() / (float) this.miner.getBreakingTime();
 
@@ -164,6 +163,7 @@ public class MinerMine3x3TunnelGoal extends Goal {
                     this.miner.setCurrentTimeBreak(-1);
                     this.miner.setBreakingTime(0);
                 }
+                miner.changeTool(blockstate);
                 if (this.miner.getRandom().nextInt(5) == 0) {
                     if (!this.miner.swinging) {
                         this.miner.swing(this.miner.getUsedItemHand());
@@ -195,6 +195,7 @@ public class MinerMine3x3TunnelGoal extends Goal {
                     this.miner.setCurrentTimeBreak(-1);
                     this.miner.setBreakingTime(0);
                 }
+                miner.changeTool(blockstate2);
                 if (this.miner.getRandom().nextInt(5) == 0) {
                     if (!this.miner.swinging) {
                         this.miner.swing(this.miner.getUsedItemHand());
@@ -227,6 +228,7 @@ public class MinerMine3x3TunnelGoal extends Goal {
                     this.miner.setCurrentTimeBreak(-1);
                     this.miner.setBreakingTime(0);
                 }
+                miner.changeTool(blockstate3);
                 if (this.miner.getRandom().nextInt(5) == 0) {
                     if (!this.miner.swinging) {
                         this.miner.swing(this.miner.getUsedItemHand());
@@ -234,7 +236,6 @@ public class MinerMine3x3TunnelGoal extends Goal {
                 }
             }
         }
-
     }
 
     public void restetCounts(){

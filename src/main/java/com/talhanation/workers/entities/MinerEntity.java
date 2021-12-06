@@ -5,9 +5,12 @@ import com.talhanation.workers.Main;
 import com.talhanation.workers.WorkerInventoryContainer;
 import com.talhanation.workers.entities.ai.*;
 import com.talhanation.workers.network.MessageOpenGui;
+import net.minecraft.block.Block;
+import net.minecraft.block.BlockState;
 import net.minecraft.entity.*;
 import net.minecraft.entity.ai.attributes.AttributeModifierMap;
 import net.minecraft.entity.ai.attributes.Attributes;
+import net.minecraft.entity.ai.brain.task.SleepAtHomeTask;
 import net.minecraft.entity.ai.goal.*;
 import net.minecraft.entity.item.ItemEntity;
 import net.minecraft.entity.player.PlayerEntity;
@@ -28,12 +31,14 @@ import net.minecraft.pathfinding.GroundPathNavigator;
 import net.minecraft.util.ActionResultType;
 import net.minecraft.util.Direction;
 import net.minecraft.util.Hand;
+import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.text.ITextComponent;
 import net.minecraft.util.text.StringTextComponent;
 import net.minecraft.world.DifficultyInstance;
 import net.minecraft.world.IServerWorld;
 import net.minecraft.world.World;
 import net.minecraft.world.server.ServerWorld;
+import net.minecraftforge.common.ToolType;
 import net.minecraftforge.fml.network.NetworkHooks;
 
 import javax.annotation.Nullable;
@@ -99,11 +104,10 @@ public class MinerEntity extends AbstractWorkerEntity {
         this.goalSelector.addGoal(1, new SwimGoal(this));
         this.goalSelector.addGoal(2, new WorkerPickupWantedItemGoal(this));
         this.goalSelector.addGoal(2, new MinerMineTunnelGoal(this, 0.5D, 10D));
-        //this.goalSelector.addGoal(1, new WorkerMoveToBlockPosGoal(this, 1,16,4));
         this.goalSelector.addGoal(2, new MinerMine3x3TunnelGoal(this, 0.5D, 10D));
-        this.goalSelector.addGoal(2, new MinerMine8x8PitGoal(this, 0.5D, 10D));
+        this.goalSelector.addGoal(2, new MinerMine8x8PitGoal(this, 0.5D, 15D));
         this.goalSelector.addGoal(2, new WorkerFollowOwnerGoal(this, 1.2D, 6.0F, 3.0F));
-        this.goalSelector.addGoal(2, new PanicGoal(this, 1.3D));
+        this.goalSelector.addGoal(1, new PanicGoal(this, 1.3D));
 
         this.goalSelector.addGoal(10, new WaterAvoidingRandomWalkingGoal(this, 1.0D, 0F));
         this.goalSelector.addGoal(10, new LookAtGoal(this, LivingEntity.class, 8.0F));
@@ -150,12 +154,7 @@ public class MinerEntity extends AbstractWorkerEntity {
 
     @Override
     public void setEquipment() {
-        int i = this.random.nextInt(9);
-        if (i == 0) {
-            this.setItemSlot(EquipmentSlotType.MAINHAND, new ItemStack(Items.STONE_PICKAXE));
-        }else{
-            this.setItemSlot(EquipmentSlotType.MAINHAND, new ItemStack(Items.WOODEN_PICKAXE));
-        }
+        this.setItemSlot(EquipmentSlotType.MAINHAND, new ItemStack(Items.STONE_PICKAXE));
     }
 
     @Nullable
@@ -172,6 +171,10 @@ public class MinerEntity extends AbstractWorkerEntity {
     @Override
     public String workerName() {
         return "Miner";
+    }
+
+    public int getMaxMineDepth(){
+        return 16;
     }
 
     @Override
@@ -215,6 +218,20 @@ public class MinerEntity extends AbstractWorkerEntity {
 
     public int getMineDepth(){
         return entityData.get(DEPTH);
+    }
+
+    public void changeTool(BlockState blockState) {
+        ToolType toolType = blockState.getHarvestTool();
+        if (toolType != null){
+            if (toolType == ToolType.SHOVEL){
+                this.setItemSlot(EquipmentSlotType.MAINHAND, new ItemStack(Items.STONE_SHOVEL));
+            }
+            else if (toolType == ToolType.PICKAXE){
+                this.setItemSlot(EquipmentSlotType.MAINHAND, new ItemStack(Items.STONE_PICKAXE));
+            }
+            else
+                this.setItemSlot(EquipmentSlotType.MAINHAND, new ItemStack(ItemStack.EMPTY.getItem()));
+        }
     }
 
     public ActionResultType mobInteract(PlayerEntity player, Hand hand) {

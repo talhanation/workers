@@ -13,7 +13,7 @@ import net.minecraft.util.text.StringTextComponent;
 
 public class MinerInventoryScreen extends WorkerInventoryScreen{
 
-    private MinerEntity miner;
+    private final MinerEntity miner;
     private int mineType;
     private int mineDepth;
 
@@ -28,7 +28,7 @@ public class MinerInventoryScreen extends WorkerInventoryScreen{
     protected void init(){
         super.init();
         //MINETYPE
-        addButton(new Button(leftPos + 77, topPos + 55, 8, 12, new StringTextComponent("<"), button -> {
+        addButton(new Button(leftPos + 90, topPos + 60, 8, 12, new StringTextComponent("<"), button -> {
             this.mineType = miner.getMineType();
             if (this.mineType != 0) {
                 this.mineType--;
@@ -36,7 +36,7 @@ public class MinerInventoryScreen extends WorkerInventoryScreen{
             }
         }));
 
-        addButton(new Button(leftPos + 77 + 85, topPos + 55, 8, 12, new StringTextComponent(">"), button -> {
+        addButton(new Button(leftPos + 90 + 70, topPos + 60, 8, 12, new StringTextComponent(">"), button -> {
             this.mineType = miner.getMineType();
             if (this.mineType != 3) {
                 this.mineType++;
@@ -45,9 +45,9 @@ public class MinerInventoryScreen extends WorkerInventoryScreen{
         }));
 
         //MINEDEPTH
-        addButton(new Button(leftPos + 33, topPos + 55, 8, 12, new StringTextComponent("<"), button -> {
+        addButton(new Button(leftPos + 10, topPos + 60, 8, 12, new StringTextComponent("<"), button -> {
             if (miner.getMineType() != 3){
-                this.mineDepth = miner.getMineType();
+                this.mineDepth = miner.getMineDepth();
                 if (this.mineDepth != 0) {
                     this.mineDepth--;
                     Main.SIMPLE_CHANNEL.sendToServer(new MessageMineDepth(this.mineDepth, miner.getUUID()));
@@ -55,10 +55,10 @@ public class MinerInventoryScreen extends WorkerInventoryScreen{
             }
         }));
 
-        addButton(new Button(leftPos + 77 + 44, topPos + 55, 8, 12, new StringTextComponent(">"), button -> {
+        addButton(new Button(leftPos + 10 + 30, topPos + 60, 8, 12, new StringTextComponent(">"), button -> {
             if (miner.getMineType() != 3) {
                 this.mineDepth = miner.getMineDepth();
-                if (this.mineDepth != 16) {
+                if (this.mineDepth != miner.getMaxMineDepth()) {
                     this.mineDepth++;
                     Main.SIMPLE_CHANNEL.sendToServer(new MessageMineDepth(this.mineDepth, miner.getUUID()));
                 }
@@ -70,16 +70,17 @@ public class MinerInventoryScreen extends WorkerInventoryScreen{
     @Override
     protected void renderLabels(MatrixStack matrixStack, int mouseX, int mouseY) {
         super.renderLabels(matrixStack, mouseX, mouseY);
-        int k = 79;//rechst links
-        int l = 19;//höhe
+        int k = 79;//right left
+        int l = 19;//hight
 
         String depth;
 
         if (miner.getMineType() != 3){
             depth = String.valueOf(miner.getMineDepth());
         }
-        else depth = "";
-        font.draw(matrixStack, depth, k + 15, l + 20 + 0, fontColor);
+        else depth = "-";
+        font.draw(matrixStack, "Depth:", k - 70, l + 35, fontColor);
+        font.draw(matrixStack, depth, k - 55, l + 45, fontColor);
 
         String type;
         switch (miner.getMineType()){
@@ -99,7 +100,8 @@ public class MinerInventoryScreen extends WorkerInventoryScreen{
                 type = "8x8 Pit";
                 break;
         }
-        font.draw(matrixStack, type, k + 15, l + 40 + 0, fontColor);
+        font.draw(matrixStack, "Mine-Mode:", k + 25, l + 35, fontColor);
+        font.draw(matrixStack, type, k + 25, l + 45, fontColor);
     }
 
 

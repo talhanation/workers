@@ -239,6 +239,7 @@ public abstract class AbstractWorkerEntity extends AbstractInventoryEntity {
 
     public void setStartPos(Optional<BlockPos> pos){
         this.entityData.set(START_POS, pos);
+
     }
 
     public void setFollow(boolean bool){
