@@ -1,0 +1,12 @@
+{
+  "parent": "minecraft:block/cube",
+  "textures": {
+    "particle": "workers:block/lumberjack_table_side",
+    "north": "workers:block/lumberjack_table_side",
+    "south": "workers:block/lumberjack_table_side",
+    "east": "workers:block/lumberjack_table_side",
+    "west": "workers:block/lumberjack_table_side",
+    "up": "workers:block/lumberjack_table_top",
+    "down": "workers:block/lumberjack_table_bottom"
+  }
+}

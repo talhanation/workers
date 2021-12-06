@@ -1,8 +1,9 @@
 package com.talhanation.workers;
 
-
-
+import com.talhanation.workers.entities.LumberjackEntity;
+import com.talhanation.workers.entities.MinerEntity;
 import com.talhanation.workers.init.ModBlocks;
+import com.talhanation.workers.init.ModEntityTypes;
 import net.minecraft.block.Block;
 import net.minecraft.entity.*;
 import net.minecraft.entity.merchant.villager.VillagerEntity;
@@ -35,11 +36,15 @@ public class VillagerEvents {
                 createMiner(villager);
             }
 
+            if (profession == Main.LUMBERJACK) {
+                createLumber(villager);
+            }
+
         }
 
     }
+
     private static void createMiner(LivingEntity entity){
-        /*
         MinerEntity miner = ModEntityTypes.MINER.get().create(entity.level);
         VillagerEntity villager = (VillagerEntity) entity;
         miner.copyPosition(villager);
@@ -47,13 +52,21 @@ public class VillagerEvents {
         miner.setDropEquipment();
         miner.setRandomSpawnBonus();
         miner.setPersistenceRequired();
-        miner.setCanPickUpLoot(true);
-        miner.setGroup(1);
         villager.remove();
         villager.level.addFreshEntity(miner);
-        */
     }
 
+    private static void createLumber(LivingEntity entity){
+        LumberjackEntity lumberjack = ModEntityTypes.LUMBERJACK.get().create(entity.level);
+        VillagerEntity villager = (VillagerEntity) entity;
+        lumberjack.copyPosition(villager);
+        lumberjack.setEquipment();
+        lumberjack.setDropEquipment();
+        lumberjack.setRandomSpawnBonus();
+        lumberjack.setPersistenceRequired();
+        villager.remove();
+        villager.level.addFreshEntity(lumberjack);
+    }
 
 
 
@@ -61,13 +74,13 @@ public class VillagerEvents {
     public void villagerTrades(VillagerTradesEvent event) {
 
         if (event.getType() == VillagerProfession.MASON) {
-            VillagerTrades.ITrade block_trade = new Trade(Items.EMERALD, 10, ModBlocks.MINER_BLOCK.get(), 1, 4, 10);
+            VillagerTrades.ITrade block_trade = new Trade(Items.EMERALD, 30, ModBlocks.MINER_BLOCK.get(), 1, 4, 10);
             List list = event.getTrades().get(2);
             list.add(block_trade);
             event.getTrades().put(2, list);
         }
         if (event.getType() == VillagerProfession.FARMER) {
-            VillagerTrades.ITrade block_trade = new Trade(Items.EMERALD, 3, ModBlocks.LUMBERJACK_BLOCK.get(), 1, 4, 10);
+            VillagerTrades.ITrade block_trade = new Trade(Items.EMERALD, 15, ModBlocks.LUMBERJACK_BLOCK.get(), 1, 4, 10);
             List list = event.getTrades().get(2);
             list.add(block_trade);
             event.getTrades().put(2, list);

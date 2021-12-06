@@ -1,15 +1,22 @@
 package com.talhanation.workers.entities;
 
 import com.google.common.collect.ImmutableSet;
+import com.talhanation.workers.Main;
+import com.talhanation.workers.WorkerInventoryContainer;
 import com.talhanation.workers.entities.ai.*;
+import com.talhanation.workers.network.MessageOpenGuiWorker;
 import net.minecraft.entity.*;
 import net.minecraft.entity.ai.attributes.AttributeModifierMap;
 import net.minecraft.entity.ai.attributes.Attributes;
 import net.minecraft.entity.ai.goal.*;
 import net.minecraft.entity.item.ItemEntity;
 import net.minecraft.entity.player.PlayerEntity;
+import net.minecraft.entity.player.PlayerInventory;
+import net.minecraft.entity.player.ServerPlayerEntity;
 import net.minecraft.inventory.EquipmentSlotType;
 import net.minecraft.inventory.Inventory;
+import net.minecraft.inventory.container.Container;
+import net.minecraft.inventory.container.INamedContainerProvider;
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
 import net.minecraft.item.Items;
@@ -17,14 +24,15 @@ import net.minecraft.nbt.CompoundNBT;
 import net.minecraft.pathfinding.GroundPathNavigator;
 import net.minecraft.util.ActionResultType;
 import net.minecraft.util.Hand;
+import net.minecraft.util.text.ITextComponent;
 import net.minecraft.util.text.StringTextComponent;
 import net.minecraft.world.DifficultyInstance;
 import net.minecraft.world.IServerWorld;
 import net.minecraft.world.World;
 import net.minecraft.world.server.ServerWorld;
+import net.minecraftforge.fml.network.NetworkHooks;
 
 import javax.annotation.Nullable;
-import java.util.List;
 import java.util.Set;
 import java.util.function.Predicate;
 
@@ -97,8 +105,11 @@ public class LumberjackEntity extends AbstractWorkerEntity{
         this.goalSelector.addGoal(2, new WorkerFollowOwnerGoal(this, 1.2D, 7.F, 4.0F));
         this.goalSelector.addGoal(3, new LumberjackAI(this));
         this.goalSelector.addGoal(5, new LookAtGoal(this, PlayerEntity.class, 8.0F));
-        this.goalSelector.addGoal(6, new LookRandomlyGoal(this));
-        this.goalSelector.addGoal(6, new WaterAvoidingRandomWalkingGoal(this, 1.0D, 0F));
+
+        this.goalSelector.addGoal(1, new PanicGoal(this, 1.3D));
+
+        this.goalSelector.addGoal(10, new WaterAvoidingRandomWalkingGoal(this, 1.0D, 0F));
+        this.goalSelector.addGoal(10, new LookAtGoal(this, LivingEntity.class, 8.0F));
 
 
         //this.targetSelector.addGoal(1, new (this));
@@ -152,12 +163,7 @@ public class LumberjackEntity extends AbstractWorkerEntity{
 
     @Override
     public void setEquipment() {
-        int i = this.random.nextInt(9);
-        if (i == 0) {
             this.setItemSlot(EquipmentSlotType.MAINHAND, new ItemStack(Items.STONE_AXE));
-        }else{
-            this.setItemSlot(EquipmentSlotType.MAINHAND, new ItemStack(Items.WOODEN_AXE));
-        }
     }
 
     public ActionResultType mobInteract(PlayerEntity player, Hand hand) {
@@ -170,8 +176,7 @@ public class LumberjackEntity extends AbstractWorkerEntity{
             if (this.isTame() && player.getUUID().equals(this.getOwnerUUID())) {
 
                 if (player.isCrouching()) {
-                    this.setIsWorking(true);
-                    //this.setStartPos(java.util.Optional.of(this.getOnPos()));
+                    openGUI(player);
 
                 }
                 if(!player.isCrouching()) {
@@ -201,6 +206,25 @@ public class LumberjackEntity extends AbstractWorkerEntity{
 
             }
             return super.mobInteract(player, hand);
+        }
+    }
+
+    public void openGUI(PlayerEntity player) {
+        if (player instanceof ServerPlayerEntity) {
+            NetworkHooks.openGui((ServerPlayerEntity) player, new INamedContainerProvider() {
+                @Override
+                public ITextComponent getDisplayName() {
+                    return getName();
+                }
+
+                @Nullable
+                @Override
+                public Container createMenu(int i, PlayerInventory playerInventory, PlayerEntity playerEntity) {
+                    return new WorkerInventoryContainer(i, LumberjackEntity.this, playerInventory);
+                }
+            }, packetBuffer -> {packetBuffer.writeUUID(getUUID());});
+        } else {
+            Main.SIMPLE_CHANNEL.sendToServer(new MessageOpenGuiWorker(player, this.getUUID()));
         }
     }
 }

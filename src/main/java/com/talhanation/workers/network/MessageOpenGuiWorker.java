@@ -1,7 +1,6 @@
 package com.talhanation.workers.network;
 
-import com.talhanation.workers.entities.AbstractWorkerEntity;
-import com.talhanation.workers.entities.MinerEntity;
+import com.talhanation.workers.entities.LumberjackEntity;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.entity.player.ServerPlayerEntity;
@@ -11,17 +10,17 @@ import net.minecraftforge.fml.network.NetworkEvent;
 
 import java.util.UUID;
 
-public class MessageOpenGui implements Message<MessageOpenGui> {
+public class MessageOpenGuiWorker implements Message<MessageOpenGuiWorker> {
 
     private UUID uuid;
     private UUID worker;
 
 
-    public MessageOpenGui() {
+    public MessageOpenGuiWorker() {
         this.uuid = new UUID(0, 0);
     }
 
-    public MessageOpenGui(PlayerEntity player, UUID worker) {
+    public MessageOpenGuiWorker(PlayerEntity player, UUID worker) {
         this.uuid = player.getUUID();
         this.worker = worker;
     }
@@ -38,7 +37,7 @@ public class MessageOpenGui implements Message<MessageOpenGui> {
         }
 
         ServerPlayerEntity player = context.getSender();
-        player.level.getEntitiesOfClass(MinerEntity.class, player.getBoundingBox()
+        player.level.getEntitiesOfClass(LumberjackEntity.class, player.getBoundingBox()
                 .inflate(16.0D), v -> v
                 .getUUID()
                 .equals(this.worker))
@@ -49,7 +48,7 @@ public class MessageOpenGui implements Message<MessageOpenGui> {
     }
 
     @Override
-    public MessageOpenGui fromBytes(PacketBuffer buf) {
+    public MessageOpenGuiWorker fromBytes(PacketBuffer buf) {
         this.uuid = buf.readUUID();
         this.worker = buf.readUUID();
         return this;

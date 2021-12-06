@@ -40,12 +40,9 @@ public class LumberjackAI extends Goal {
     }
 
     public boolean canUse() {
-        if (!this.lumber.getStartPos().isPresent()) {
-            return false;
-        }
         if (this.lumber.getFollow()) {
             return false;
-        } else if (lumber.getIsWorking() && !this.lumber.getFollow())
+        } else if (this.lumber.getStartPos().isPresent() && !this.lumber.getFollow())
             return true;
 
         else

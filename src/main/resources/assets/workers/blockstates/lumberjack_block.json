@@ -1,0 +1,7 @@
+{
+  "variants": {
+    "": {
+      "model": "workers:block/lumberjack_block"
+    }
+  }
+}

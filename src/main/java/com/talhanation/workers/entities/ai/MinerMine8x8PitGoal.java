@@ -7,21 +7,14 @@ import net.minecraft.block.Blocks;
 import net.minecraft.entity.ai.attributes.Attributes;
 import net.minecraft.entity.ai.goal.Goal;
 import net.minecraft.inventory.Inventory;
-import net.minecraft.item.Item;
-import net.minecraft.item.ItemStack;
-import net.minecraft.item.Items;
 import net.minecraft.util.Direction;
 import net.minecraft.util.SoundCategory;
 import net.minecraft.util.SoundEvents;
 import net.minecraft.util.math.BlockPos;
-import net.minecraft.util.text.StringTextComponent;
 import net.minecraftforge.event.ForgeEventFactory;
 
 import java.util.EnumSet;
 import java.util.Optional;
-import java.util.Set;
-
-import static com.talhanation.workers.entities.FarmerEntity.WANTED_SEEDS;
 
 public class MinerMine8x8PitGoal extends Goal {
     private final MinerEntity miner;
@@ -111,8 +104,8 @@ public class MinerMine8x8PitGoal extends Goal {
             this.miner.getAttribute(Attributes.MOVEMENT_SPEED).setBaseValue(0.3D);
             //erst mienen wenn nah genug
             if (minePos.closerThan(miner.position(), 6)) this.mineBlock(this.minePos);
-            if (miner.getOwner() !=null)
-            miner.getOwner().sendMessage(new StringTextComponent("Blocks: " + blocks +"   Side: " + side + "   Depth: " + depth), miner.getOwner().getUUID());
+            //if (miner.getOwner() !=null)
+            //miner.getOwner().sendMessage(new StringTextComponent("Blocks: " + blocks +"   Side: " + side + "   Depth: " + depth), miner.getOwner().getUUID());
 
             if (block1 == Blocks.AIR || block1 == Blocks.OAK_PLANKS) {
                 blocks++;

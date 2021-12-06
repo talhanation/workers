@@ -8,10 +8,7 @@ import com.talhanation.workers.entities.*;
 import com.talhanation.workers.init.ModBlocks;
 import com.talhanation.workers.init.ModEntityTypes;
 import com.talhanation.workers.init.ModItems;
-import com.talhanation.workers.network.MessageMineDepth;
-import com.talhanation.workers.network.MessageMineType;
-import com.talhanation.workers.network.MessageOpenGui;
-import com.talhanation.workers.network.MessageStartPos;
+import com.talhanation.workers.network.*;
 import de.maxhenkel.corelib.ClientRegistry;
 import net.minecraft.client.settings.KeyBinding;
 import net.minecraft.entity.ai.attributes.GlobalEntityTypeAttributes;
@@ -58,6 +55,7 @@ public class Main {
     public static KeyBinding C_KEY;
     public static KeyBinding Y_KEY;
     public static KeyBinding V_KEY;
+    public static ContainerType<WorkerInventoryContainer> MINER_CONTAINER_TYPE;
     public static ContainerType<WorkerInventoryContainer> WORKER_CONTAINER_TYPE;
 
     public Main() {
@@ -89,8 +87,8 @@ public class Main {
                 buf -> (new MessageStartPos()).fromBytes(buf),
                 (msg, fun) -> msg.executeServerSide(fun.get()));
 
-        SIMPLE_CHANNEL.registerMessage(1, MessageOpenGui.class, MessageOpenGui::toBytes,
-                buf -> (new MessageOpenGui()).fromBytes(buf),
+        SIMPLE_CHANNEL.registerMessage(1, MessageOpenGuiMiner.class, MessageOpenGuiMiner::toBytes,
+                buf -> (new MessageOpenGuiMiner()).fromBytes(buf),
                 (msg, fun) -> msg.executeServerSide(fun.get()));
 
         SIMPLE_CHANNEL.registerMessage(2, MessageMineType.class, MessageMineType::toBytes,
@@ -101,6 +99,9 @@ public class Main {
                 buf -> (new MessageMineDepth()).fromBytes(buf),
                 (msg, fun) -> msg.executeServerSide(fun.get()));
 
+        SIMPLE_CHANNEL.registerMessage(4, MessageOpenGuiWorker.class, MessageOpenGuiWorker::toBytes,
+                buf -> (new MessageOpenGuiWorker()).fromBytes(buf),
+                (msg, fun) -> msg.executeServerSide(fun.get()));
 
 
         DeferredWorkQueue.runLater(() -> {
@@ -124,7 +125,8 @@ public class Main {
         Y_KEY = ClientRegistry.registerKeyBinding("key.y_key", "category.workers", 90);
         V_KEY = ClientRegistry.registerKeyBinding("key.v_key", "category.workers", 86);
 
-        ClientRegistry.registerScreen(Main.WORKER_CONTAINER_TYPE, MinerInventoryScreen::new);
+        ClientRegistry.registerScreen(Main.MINER_CONTAINER_TYPE, MinerInventoryScreen::new);
+        ClientRegistry.registerScreen(Main.WORKER_CONTAINER_TYPE, WorkerInventoryScreen::new);
     }
 
     @SubscribeEvent
@@ -155,14 +157,25 @@ public class Main {
 
     @SubscribeEvent
     public void registerContainers(RegistryEvent.Register<ContainerType<?>> event) {
-        WORKER_CONTAINER_TYPE = new ContainerType<>((IContainerFactory<WorkerInventoryContainer>) (windowId, inv, data) -> {
-            AbstractWorkerEntity rec = getRecruitByUUID(inv.player, data.readUUID());
+        MINER_CONTAINER_TYPE = new ContainerType<>((IContainerFactory<WorkerInventoryContainer>) (windowId, inv, data) -> {
+            MinerEntity rec = (MinerEntity) getRecruitByUUID(inv.player, data.readUUID());
             if (rec == null) {
                 return null;
             }
             return new WorkerInventoryContainer(windowId, rec, inv);
         });
-        WORKER_CONTAINER_TYPE.setRegistryName(new ResourceLocation(Main.MOD_ID, "recruit_container"));
+        WORKER_CONTAINER_TYPE = new ContainerType<>((IContainerFactory<WorkerInventoryContainer>) (windowId, inv, data) -> {
+            LumberjackEntity rec = (LumberjackEntity) getRecruitByUUID(inv.player, data.readUUID());
+            if (rec == null) {
+                return null;
+            }
+            return new WorkerInventoryContainer(windowId, rec, inv);
+        });
+
+        MINER_CONTAINER_TYPE.setRegistryName(new ResourceLocation(Main.MOD_ID, "miner_container"));
+        event.getRegistry().register(MINER_CONTAINER_TYPE);
+
+        WORKER_CONTAINER_TYPE.setRegistryName(new ResourceLocation(Main.MOD_ID, "lumberjack_container"));
         event.getRegistry().register(WORKER_CONTAINER_TYPE);
 
     }

@@ -2,15 +2,14 @@ package com.talhanation.workers.entities;
 
 import com.google.common.collect.ImmutableSet;
 import com.talhanation.workers.Main;
+import com.talhanation.workers.MinerInventoryContainer;
 import com.talhanation.workers.WorkerInventoryContainer;
 import com.talhanation.workers.entities.ai.*;
-import com.talhanation.workers.network.MessageOpenGui;
-import net.minecraft.block.Block;
+import com.talhanation.workers.network.MessageOpenGuiMiner;
 import net.minecraft.block.BlockState;
 import net.minecraft.entity.*;
 import net.minecraft.entity.ai.attributes.AttributeModifierMap;
 import net.minecraft.entity.ai.attributes.Attributes;
-import net.minecraft.entity.ai.brain.task.SleepAtHomeTask;
 import net.minecraft.entity.ai.goal.*;
 import net.minecraft.entity.item.ItemEntity;
 import net.minecraft.entity.player.PlayerEntity;
@@ -31,7 +30,6 @@ import net.minecraft.pathfinding.GroundPathNavigator;
 import net.minecraft.util.ActionResultType;
 import net.minecraft.util.Direction;
 import net.minecraft.util.Hand;
-import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.text.ITextComponent;
 import net.minecraft.util.text.StringTextComponent;
 import net.minecraft.world.DifficultyInstance;
@@ -296,11 +294,11 @@ public class MinerEntity extends AbstractWorkerEntity {
                 @Nullable
                 @Override
                 public Container createMenu(int i, PlayerInventory playerInventory, PlayerEntity playerEntity) {
-                    return new WorkerInventoryContainer(i, MinerEntity.this, playerInventory);
+                    return new MinerInventoryContainer(i, MinerEntity.this, playerInventory);
                 }
             }, packetBuffer -> {packetBuffer.writeUUID(getUUID());});
         } else {
-            Main.SIMPLE_CHANNEL.sendToServer(new MessageOpenGui(player, this.getUUID()));
+            Main.SIMPLE_CHANNEL.sendToServer(new MessageOpenGuiMiner(player, this.getUUID()));
         }
     }
 }
