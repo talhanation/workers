@@ -4,6 +4,7 @@ import com.mojang.blaze3d.matrix.MatrixStack;
 import com.talhanation.workers.Main;
 import com.talhanation.workers.WorkerInventoryContainer;
 import com.talhanation.workers.entities.MinerEntity;
+import com.talhanation.workers.network.MessageMineDepth;
 import com.talhanation.workers.network.MessageMineType;
 import net.minecraft.client.gui.widget.button.Button;
 import net.minecraft.entity.player.PlayerInventory;
@@ -14,6 +15,7 @@ public class MinerInventoryScreen extends WorkerInventoryScreen{
 
     private MinerEntity miner;
     private int mineType;
+    private int mineDepth;
 
     private static final int fontColor = 4210752;
 
@@ -25,7 +27,7 @@ public class MinerInventoryScreen extends WorkerInventoryScreen{
     @Override
     protected void init(){
         super.init();
-        //GROUP
+        //MINETYPE
         addButton(new Button(leftPos + 77, topPos + 55, 8, 12, new StringTextComponent("<"), button -> {
             this.mineType = miner.getMineType();
             if (this.mineType != 0) {
@@ -41,6 +43,27 @@ public class MinerInventoryScreen extends WorkerInventoryScreen{
                 Main.SIMPLE_CHANNEL.sendToServer(new MessageMineType(this.mineType, miner.getUUID()));
             }
         }));
+
+        //MINEDEPTH
+        addButton(new Button(leftPos + 33, topPos + 55, 8, 12, new StringTextComponent("<"), button -> {
+            if (miner.getMineType() != 3){
+                this.mineDepth = miner.getMineType();
+                if (this.mineDepth != 0) {
+                    this.mineDepth--;
+                    Main.SIMPLE_CHANNEL.sendToServer(new MessageMineDepth(this.mineDepth, miner.getUUID()));
+                }
+            }
+        }));
+
+        addButton(new Button(leftPos + 77 + 44, topPos + 55, 8, 12, new StringTextComponent(">"), button -> {
+            if (miner.getMineType() != 3) {
+                this.mineDepth = miner.getMineDepth();
+                if (this.mineDepth != 16) {
+                    this.mineDepth++;
+                    Main.SIMPLE_CHANNEL.sendToServer(new MessageMineDepth(this.mineDepth, miner.getUUID()));
+                }
+            }
+        }));
     }
 
 
@@ -50,6 +73,13 @@ public class MinerInventoryScreen extends WorkerInventoryScreen{
         int k = 79;//rechst links
         int l = 19;//höhe
 
+        String depth;
+
+        if (miner.getMineType() != 3){
+            depth = String.valueOf(miner.getMineDepth());
+        }
+        else depth = "";
+        font.draw(matrixStack, depth, k + 15, l + 20 + 0, fontColor);
 
         String type;
         switch (miner.getMineType()){

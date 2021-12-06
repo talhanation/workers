@@ -110,7 +110,7 @@ public class MinerMine3x3TunnelGoal extends Goal {
                 side++;
             }
 
-            if (blocks == 9){
+            if (blocks == miner.getMineDepth()){
                 miner.setIsWorking(false);
                 miner.setStartPos(Optional.empty());
                 blocks = 0;

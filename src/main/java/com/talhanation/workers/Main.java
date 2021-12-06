@@ -8,6 +8,7 @@ import com.talhanation.workers.entities.*;
 import com.talhanation.workers.init.ModBlocks;
 import com.talhanation.workers.init.ModEntityTypes;
 import com.talhanation.workers.init.ModItems;
+import com.talhanation.workers.network.MessageMineDepth;
 import com.talhanation.workers.network.MessageMineType;
 import com.talhanation.workers.network.MessageOpenGui;
 import com.talhanation.workers.network.MessageStartPos;
@@ -95,6 +96,11 @@ public class Main {
         SIMPLE_CHANNEL.registerMessage(2, MessageMineType.class, MessageMineType::toBytes,
                 buf -> (new MessageMineType()).fromBytes(buf),
                 (msg, fun) -> msg.executeServerSide(fun.get()));
+
+        SIMPLE_CHANNEL.registerMessage(3, MessageMineDepth.class, MessageMineDepth::toBytes,
+                buf -> (new MessageMineDepth()).fromBytes(buf),
+                (msg, fun) -> msg.executeServerSide(fun.get()));
+
 
 
         DeferredWorkQueue.runLater(() -> {

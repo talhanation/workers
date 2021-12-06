@@ -98,7 +98,7 @@ public class MinerMineTunnelGoal extends Goal {
                 blocks++;
             }
 
-            if (blocks == 9){
+            if (blocks == miner.getMineDepth()){
                 miner.setIsWorking(false);
                 miner.setStartPos(Optional.empty());
                 blocks = 0;
