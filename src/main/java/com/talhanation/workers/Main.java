@@ -119,11 +119,11 @@ public class Main {
 
         MinecraftForge.EVENT_BUS.register(new KeyEvents());
 
-        R_KEY = ClientRegistry.registerKeyBinding("key.r_key", "category.workers", 82);
-        X_KEY = ClientRegistry.registerKeyBinding("key.x_key", "category.workers", 88);
+        //R_KEY = ClientRegistry.registerKeyBinding("key.r_key", "category.workers", 82);
+        //X_KEY = ClientRegistry.registerKeyBinding("key.x_key", "category.workers", 88);
         C_KEY = ClientRegistry.registerKeyBinding("key.c_key", "category.workers", 67);
-        Y_KEY = ClientRegistry.registerKeyBinding("key.y_key", "category.workers", 90);
-        V_KEY = ClientRegistry.registerKeyBinding("key.v_key", "category.workers", 86);
+        //Y_KEY = ClientRegistry.registerKeyBinding("key.y_key", "category.workers", 90);
+        //V_KEY = ClientRegistry.registerKeyBinding("key.v_key", "category.workers", 86);
 
         ClientRegistry.registerScreen(Main.MINER_CONTAINER_TYPE, MinerInventoryScreen::new);
         ClientRegistry.registerScreen(Main.WORKER_CONTAINER_TYPE, WorkerInventoryScreen::new);

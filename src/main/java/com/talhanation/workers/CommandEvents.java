@@ -19,13 +19,16 @@ public class CommandEvents {
 
         Minecraft minecraft = Minecraft.getInstance();
         LivingEntity owner = worker.getOwner();
-        MinerEntity miner = (MinerEntity) worker;
+
 
         if (worker.isTame() &&  Objects.equals(worker.getOwnerUUID(), player_uuid)) {
 
             if (owner != null){
-                Direction playerDirection = owner.getDirection();
-                miner.setMineDirectrion(playerDirection);
+                if (worker instanceof MinerEntity){
+                    Direction playerDirection = owner.getDirection();
+                    MinerEntity miner = (MinerEntity) worker;
+                    miner.setMineDirectrion(playerDirection);
+                }
             }
 
             RayTraceResult rayTraceResult = minecraft.hitResult;
