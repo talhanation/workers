@@ -232,57 +232,6 @@ public class MinerEntity extends AbstractWorkerEntity {
         }
     }
 
-    public ActionResultType mobInteract(PlayerEntity player, Hand hand) {
-        ItemStack itemstack = player.getItemInHand(hand);
-        Item item = itemstack.getItem();
-        if (this.level.isClientSide) {
-            boolean flag = this.isOwnedBy(player) || this.isTame() || isInSittingPose() || item == Items.BONE && !this.isTame();
-            return flag ? ActionResultType.CONSUME : ActionResultType.PASS;
-        } else {
-            if (this.isTame() && player.getUUID().equals(this.getOwnerUUID())) {
-
-                if (player.isCrouching()) {
-                    openGUI(player);
-
-                }
-                if(!player.isCrouching()) {
-                    setFollow(!getFollow());
-                    return ActionResultType.SUCCESS;
-                }
-
-            } else if (item == Items.EMERALD && !this.isTame() && playerHasEnoughEmeralds(player)) {
-                if (!player.abilities.instabuild) {
-                    if (!player.isCreative()) {
-                        itemstack.shrink(workerCosts());
-                    }
-                    return ActionResultType.SUCCESS;
-                }
-
-                if (!net.minecraftforge.event.ForgeEventFactory.onAnimalTame(this, player)) {
-                    this.tame(player);
-                    this.navigation.stop();
-                    this.setTarget(null);
-                    this.setOrderedToSit(false);
-                    this.setIsWorking(false);
-                    this.level.broadcastEntityEvent(this, (byte)7);
-                    return ActionResultType.SUCCESS;
-                } else {
-                    this.level.broadcastEntityEvent(this, (byte)6);
-                }
-
-                return ActionResultType.SUCCESS;
-            }
-            else if (item == Items.EMERALD  && !this.isTame() && !playerHasEnoughEmeralds(player)) {
-                player.sendMessage(new StringTextComponent("You need " + workerCosts() + " Emeralds to hire me!"), player.getUUID());
-            }
-            else if (!this.isTame() && item != Items.EMERALD ) {
-                player.sendMessage(new StringTextComponent("I am a " + workerName()), player.getUUID());
-
-            }
-            return super.mobInteract(player, hand);
-        }
-    }
-
     public void openGUI(PlayerEntity player) {
         if (player instanceof ServerPlayerEntity) {
             NetworkHooks.openGui((ServerPlayerEntity) player, new INamedContainerProvider() {
@@ -290,7 +239,6 @@ public class MinerEntity extends AbstractWorkerEntity {
                 public ITextComponent getDisplayName() {
                     return getName();
                 }
-
                 @Nullable
                 @Override
                 public Container createMenu(int i, PlayerInventory playerInventory, PlayerEntity playerEntity) {

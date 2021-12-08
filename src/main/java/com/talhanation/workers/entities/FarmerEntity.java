@@ -79,6 +79,11 @@ public class FarmerEntity extends AbstractWorkerEntity{
         return ALLOWED_ITEMS;
     }
 
+    @Override
+    public void openGUI(PlayerEntity player) {
+
+    }
+
     //ATTRIBUTES
     public static AttributeModifierMap.MutableAttribute setAttributes() {
         return createMobAttributes()
