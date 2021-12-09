@@ -3,7 +3,6 @@ package com.talhanation.workers.entities;
 import com.google.common.collect.ImmutableSet;
 import com.talhanation.workers.Main;
 import com.talhanation.workers.MinerInventoryContainer;
-import com.talhanation.workers.WorkerInventoryContainer;
 import com.talhanation.workers.entities.ai.*;
 import com.talhanation.workers.network.MessageOpenGuiMiner;
 import net.minecraft.block.BlockState;
@@ -172,7 +171,7 @@ public class MinerEntity extends AbstractWorkerEntity {
     }
 
     public int getMaxMineDepth(){
-        return 16;
+        return 32;
     }
 
     @Override

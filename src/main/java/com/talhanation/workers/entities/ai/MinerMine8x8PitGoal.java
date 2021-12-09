@@ -128,8 +128,6 @@ public class MinerMine8x8PitGoal extends Goal {
                 miner.setStartPos(Optional.empty());
                 miner.setIsWorking(false);
             }
-
-
         }
     }
 

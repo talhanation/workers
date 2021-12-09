@@ -118,6 +118,7 @@ public class MinerMine3x3TunnelGoal extends Goal {
 
             if (side == 3){
                 side = 0;
+                this.miner.setIsPickingUp(true);
                 blocks++;
             }
 

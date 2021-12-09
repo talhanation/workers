@@ -13,6 +13,7 @@ import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
 import net.minecraft.item.Items;
 import net.minecraft.item.MerchantOffer;
+import net.minecraft.pathfinding.GroundPathNavigator;
 import net.minecraft.util.IItemProvider;
 import net.minecraftforge.event.entity.living.LivingEvent;
 import net.minecraftforge.event.village.VillagerTradesEvent;
@@ -52,6 +53,7 @@ public class VillagerEvents {
         miner.setDropEquipment();
         miner.setRandomSpawnBonus();
         miner.setPersistenceRequired();
+        miner.setCanPickUpLoot(true);
         villager.remove();
         villager.level.addFreshEntity(miner);
     }
@@ -60,6 +62,7 @@ public class VillagerEvents {
         LumberjackEntity lumberjack = ModEntityTypes.LUMBERJACK.get().create(entity.level);
         VillagerEntity villager = (VillagerEntity) entity;
         lumberjack.copyPosition(villager);
+        lumberjack.setCanPickUpLoot(true);
         lumberjack.setEquipment();
         lumberjack.setDropEquipment();
         lumberjack.setRandomSpawnBonus();
