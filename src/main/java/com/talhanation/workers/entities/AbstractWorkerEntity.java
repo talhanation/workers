@@ -4,7 +4,6 @@ import net.minecraft.entity.*;
 import net.minecraft.entity.ai.attributes.AttributeModifier;
 import net.minecraft.entity.ai.attributes.Attributes;
 import net.minecraft.entity.item.ItemEntity;
-import net.minecraft.entity.passive.TameableEntity;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.entity.projectile.AbstractArrowEntity;
 import net.minecraft.item.*;
@@ -24,7 +23,6 @@ import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
 
 import javax.annotation.Nullable;
-import java.util.List;
 import java.util.Optional;
 import java.util.function.Predicate;
 
@@ -55,6 +53,14 @@ public abstract class AbstractWorkerEntity extends AbstractInventoryEntity {
     @Override
     public void aiStep() {
         super.aiStep();
+        this.level.getProfiler().push("looting");
+        if (!this.level.isClientSide && this.canPickUpLoot() && this.isAlive() && !this.dead && net.minecraftforge.event.ForgeEventFactory.getMobGriefingEvent(this.level, this)) {
+            for(ItemEntity itementity : this.level.getEntitiesOfClass(ItemEntity.class, this.getBoundingBox().inflate(2.5D, 2.5D, 2.5D))) {
+                if (!itementity.removed && !itementity.getItem().isEmpty() && !itementity.hasPickUpDelay() && this.wantsToPickUp(itementity.getItem())) {
+                    this.pickUpItem(itementity);
+                }
+            }
+        }
     }
 
     public void tick() {
@@ -359,7 +365,6 @@ public abstract class AbstractWorkerEntity extends AbstractInventoryEntity {
 
     }
 
-    @OnlyIn(Dist.CLIENT)
     public void workerSwingArm(){
         if (this.getRandom().nextInt(5) == 0) {
             if (!this.swinging) {
@@ -411,7 +416,5 @@ public abstract class AbstractWorkerEntity extends AbstractInventoryEntity {
     }
 
     public abstract Predicate<ItemEntity> getAllowedItems();
-    //public abstract void openGUI(PlayerEntity player);
-
     public abstract void openGUI(PlayerEntity player);
 }

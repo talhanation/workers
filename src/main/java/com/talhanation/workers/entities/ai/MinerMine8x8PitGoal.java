@@ -70,19 +70,19 @@ public class MinerMine8x8PitGoal extends Goal {
         }
 
         if (!miner.getFollow()) {
-            if (miner.getMineDirectrion().equals(Direction.EAST)) {
+            if (miner.getMineDirection().equals(Direction.EAST)) {
                 this.minePos = new BlockPos(miner.getStartPos().get().getX() + blocks, miner.getStartPos().get().getY() - depth, miner.getStartPos().get().getZ() - side);
                 this.standPos = new BlockPos(minePos.getX() + 2, minePos.getY(), minePos.getZ());
 
-            } else if (miner.getMineDirectrion().equals(Direction.WEST)) {
+            } else if (miner.getMineDirection().equals(Direction.WEST)) {
                 this.minePos = new BlockPos(miner.getStartPos().get().getX() - blocks, miner.getStartPos().get().getY() - depth, miner.getStartPos().get().getZ() + side);
                 this.standPos = new BlockPos(minePos.getX() - 2, minePos.getY(), minePos.getZ());
 
-            } else if (miner.getMineDirectrion().equals(Direction.NORTH)) {
+            } else if (miner.getMineDirection().equals(Direction.NORTH)) {
                 this.minePos = new BlockPos(miner.getStartPos().get().getX() - side, miner.getStartPos().get().getY() - depth, miner.getStartPos().get().getZ() - blocks);
                 this.standPos = new BlockPos(minePos.getX(), minePos.getY(), minePos.getZ() - 2);
 
-            } else if (miner.getMineDirectrion().equals(Direction.SOUTH)) {
+            } else if (miner.getMineDirection().equals(Direction.SOUTH)) {
                 this.minePos = new BlockPos(miner.getStartPos().get().getX() + side, miner.getStartPos().get().getY() - depth, miner.getStartPos().get().getZ() + blocks);
                 this.standPos = new BlockPos(minePos.getX(), minePos.getY(), minePos.getZ() + 2);
             }

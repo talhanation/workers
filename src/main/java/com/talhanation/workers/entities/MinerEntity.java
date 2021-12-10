@@ -26,11 +26,8 @@ import net.minecraft.network.datasync.DataParameter;
 import net.minecraft.network.datasync.DataSerializers;
 import net.minecraft.network.datasync.EntityDataManager;
 import net.minecraft.pathfinding.GroundPathNavigator;
-import net.minecraft.util.ActionResultType;
 import net.minecraft.util.Direction;
-import net.minecraft.util.Hand;
 import net.minecraft.util.text.ITextComponent;
-import net.minecraft.util.text.StringTextComponent;
 import net.minecraft.world.DifficultyInstance;
 import net.minecraft.world.IServerWorld;
 import net.minecraft.world.World;
@@ -108,7 +105,6 @@ public class MinerEntity extends AbstractWorkerEntity {
 
         this.goalSelector.addGoal(10, new WaterAvoidingRandomWalkingGoal(this, 1.0D, 0F));
         this.goalSelector.addGoal(10, new LookAtGoal(this, LivingEntity.class, 8.0F));
-
     }
 
     @Nullable
@@ -192,11 +188,11 @@ public class MinerEntity extends AbstractWorkerEntity {
         this.setMineDepth(nbt.getInt("Depth"));
     }
 
-    public void setMineDirectrion(Direction dir) {
+    public void setMineDirection(Direction dir) {
         entityData.set(DIRECTION, dir);
     }
 
-    public Direction getMineDirectrion() {
+    public Direction getMineDirection() {
         return entityData.get(DIRECTION);
     }
 

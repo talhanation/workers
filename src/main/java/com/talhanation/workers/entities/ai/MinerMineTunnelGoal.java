@@ -11,6 +11,7 @@ import net.minecraft.util.SoundCategory;
 import net.minecraft.util.math.BlockPos;
 import net.minecraftforge.event.ForgeEventFactory;
 
+import java.util.ArrayList;
 import java.util.EnumSet;
 import java.util.Optional;
 
@@ -21,6 +22,7 @@ public class MinerMineTunnelGoal extends Goal {
     private BlockPos minePos;
     private BlockPos standPos;
     private int blocks = 0;
+    private ArrayList<Blocks> IGNORING_BLOCKS;
 
     public MinerMineTunnelGoal(MinerEntity miner, double v, double within) {
         this.miner = miner;
@@ -57,19 +59,19 @@ public class MinerMineTunnelGoal extends Goal {
         }
 
         if (!miner.getFollow()) {
-            if (miner.getMineDirectrion().equals(Direction.EAST)) {
+            if (miner.getMineDirection().equals(Direction.EAST)) {
                 this.minePos = new BlockPos(miner.getStartPos().get().getX() + blocks, miner.getStartPos().get().getY(), miner.getStartPos().get().getZ());
                 this.standPos = new BlockPos(minePos.getX() + 2, minePos.getY(), minePos.getZ());
 
-            } else if (miner.getMineDirectrion().equals(Direction.WEST)) {
+            } else if (miner.getMineDirection().equals(Direction.WEST)) {
                 this.minePos = new BlockPos(miner.getStartPos().get().getX() - blocks, miner.getStartPos().get().getY(), miner.getStartPos().get().getZ());
                 this.standPos = new BlockPos(minePos.getX() - 2, minePos.getY(), minePos.getZ());
 
-            } else if (miner.getMineDirectrion().equals(Direction.NORTH)) {
+            } else if (miner.getMineDirection().equals(Direction.NORTH)) {
                 this.minePos = new BlockPos(miner.getStartPos().get().getX(), miner.getStartPos().get().getY(), miner.getStartPos().get().getZ() - blocks);
                 this.standPos = new BlockPos(minePos.getX(), minePos.getY(), minePos.getZ() - 2);
 
-            } else if (miner.getMineDirectrion().equals(Direction.SOUTH)) {
+            } else if (miner.getMineDirection().equals(Direction.SOUTH)) {
                 this.minePos = new BlockPos(miner.getStartPos().get().getX(), miner.getStartPos().get().getY(), miner.getStartPos().get().getZ() + blocks);
                 this.standPos = new BlockPos(minePos.getX(), minePos.getY(), minePos.getZ() + 2);
             }

@@ -254,7 +254,6 @@ public class LumberjackAI extends Goal {
                         if (blockstate.getBlock() instanceof LeavesBlock) {
                             this.lumber.level.destroyBlock(pos, true, this.lumber);
                             hasBroken = true;
-                            this.lumber.workerSwingArm();
                         }
 
                     }
@@ -264,6 +263,7 @@ public class LumberjackAI extends Goal {
 
         if (hasBroken) {
             this.lumber.level.playSound(null, this.lumber.getX(), this.lumber.getY(), this.lumber.getZ(), SoundEvents.GRASS_BREAK, SoundCategory.BLOCKS, 1F, 0.9F + 0.2F);
+            this.lumber.workerSwingArm();
         }
     }
 

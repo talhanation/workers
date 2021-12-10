@@ -20,7 +20,7 @@ public class CommandEvents {
                 if (worker instanceof MinerEntity) {
                     Direction playerDirection = owner.getDirection();
                     MinerEntity miner = (MinerEntity) worker;
-                    miner.setMineDirectrion(playerDirection);
+                    miner.setMineDirection(playerDirection);
                 }
             }
             worker.setStartPos(Optional.of(blockpos));
