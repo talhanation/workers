@@ -38,7 +38,7 @@ public class MinerInventoryScreen extends WorkerInventoryScreen{
 
         addButton(new Button(leftPos + 90 + 70, topPos + 60, 8, 12, new StringTextComponent(">"), button -> {
             this.mineType = miner.getMineType();
-            if (this.mineType != 3) {
+            if (this.mineType != 4) {
                 this.mineType++;
                 Main.SIMPLE_CHANNEL.sendToServer(new MessageMineType(this.mineType, miner.getUUID()));
             }
@@ -75,10 +75,10 @@ public class MinerInventoryScreen extends WorkerInventoryScreen{
 
         String depth;
 
-        if (miner.getMineType() != 3){
-            depth = String.valueOf(miner.getMineDepth());
+        if (miner.getMineType() == 3 || miner.getMineType() == 4){
+            depth = "-";
         }
-        else depth = "-";
+        else depth = String.valueOf(miner.getMineDepth());
         font.draw(matrixStack, "Depth:", k - 70, l + 35, fontColor);
         font.draw(matrixStack, depth, k - 55, l + 45, fontColor);
 
@@ -97,7 +97,10 @@ public class MinerInventoryScreen extends WorkerInventoryScreen{
                 type = "3x3 Tunnel";
                 break;
             case 3:
-                type = "8x8 Pit";
+                type = "8x8x8 Pit";
+                break;
+            case 4:
+                type = "8x8x1 Flat";
                 break;
         }
         font.draw(matrixStack, "Mine-Mode:", k + 25, l + 35, fontColor);

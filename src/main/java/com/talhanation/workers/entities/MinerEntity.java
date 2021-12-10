@@ -53,7 +53,8 @@ public class MinerEntity extends AbstractWorkerEntity {
     0 = nothing
     1 = 1x1 Tunel
     2 = 3x3 Tunel
-    3 = 8x8 Pit
+    3 = 8x8x8 Pit
+    4 = 8x8x1 flat
      */
 
     private static final Set<Item> WANTED_ITEMS = ImmutableSet.of(
@@ -100,6 +101,7 @@ public class MinerEntity extends AbstractWorkerEntity {
         this.goalSelector.addGoal(2, new MinerMineTunnelGoal(this, 0.5D, 10D));
         this.goalSelector.addGoal(2, new MinerMine3x3TunnelGoal(this, 0.5D, 10D));
         this.goalSelector.addGoal(2, new MinerMine8x8PitGoal(this, 0.5D, 15D));
+        this.goalSelector.addGoal(2, new MinerMine8x8x1FlatGoal(this, 0.5D, 15D));
         this.goalSelector.addGoal(2, new WorkerFollowOwnerGoal(this, 1.2D, 6.0F, 3.0F));
         this.goalSelector.addGoal(1, new PanicGoal(this, 1.3D));
 

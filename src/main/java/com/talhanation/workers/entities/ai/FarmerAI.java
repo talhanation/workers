@@ -120,7 +120,7 @@ public class FarmerAI extends Goal {
 
             if (plant == Blocks.AIR && (plantPosBlock == Blocks.GRASS_BLOCK || plantPosBlock == Blocks.PODZOL || plantPosBlock == Blocks.DIRT) && plantPos.closerThan(farmer.position(), 9)) {
                 this.farmer.getLookControl().setLookAt(plantPos.getX(), plantPos.getY() + 1, plantPos.getZ(), 10.0F, (float) this.farmer.getMaxHeadXRot());
-                plantSaplingFromInv();
+                //plantSaplingFromInv();
                 this.farmer.level.playSound(null, this.farmer.getX(), this.farmer.getY(), this.farmer.getZ(), SoundEvents.GRASS_PLACE, SoundCategory.BLOCKS, 1F, 0.9F + 0.2F);
                 this.farmer.workerSwingArm();
             }
@@ -142,7 +142,7 @@ public class FarmerAI extends Goal {
     }
 
 
-    private void plantSaplingFromInv() {
+    private void plantSeedsFromInv() {
         if (hasSeedInInv()) {
             Inventory inventory = farmer.getInventory();
 
@@ -190,20 +190,6 @@ public class FarmerAI extends Goal {
     }
 
     private void calculatePlantArea(){
-        if (y == 5) {
-            y = -2;
-            x = x + 3 + farmer.getRandom().nextInt(3);
-        }
-
-        if (x >= 9) {
-            x = -9;
-            z = z + 3 + farmer.getRandom().nextInt(3);
-        }
-        if (z >= 9) {
-            z = -9;
-            this.plant = true;
-            this.innen = true;
-        }
 
     }
 
