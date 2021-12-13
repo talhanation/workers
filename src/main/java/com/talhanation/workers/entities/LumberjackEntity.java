@@ -5,6 +5,8 @@ import com.talhanation.workers.Main;
 import com.talhanation.workers.WorkerInventoryContainer;
 import com.talhanation.workers.entities.ai.*;
 import com.talhanation.workers.network.MessageOpenGuiWorker;
+import net.minecraft.block.Block;
+import net.minecraft.block.Blocks;
 import net.minecraft.entity.*;
 import net.minecraft.entity.ai.attributes.AttributeModifierMap;
 import net.minecraft.entity.ai.attributes.Attributes;
@@ -41,6 +43,9 @@ public class LumberjackEntity extends AbstractWorkerEntity{
     public final Predicate<ItemEntity> ALLOWED_ITEMS = (item) ->
             (!item.hasPickUpDelay() && item.isAlive() && this.wantsToPickUp(item.getItem()));
 
+    public final Predicate<Block> ALLOWED_BLOCKS = (item) ->
+            (this.wantsToBreak(item.getBlock()));
+
     public static final Set<Item> WANTED_SAPLINGS = ImmutableSet.of(
             Items.OAK_SAPLING,
             Items.BIRCH_SAPLING,
@@ -63,7 +68,47 @@ public class LumberjackEntity extends AbstractWorkerEntity{
             Items.JUNGLE_WOOD,
             Items.DARK_OAK_LOG,
             Items.DARK_OAK_WOOD,
-            Items.STICK
+            Items.STRIPPED_OAK_LOG,
+            Items.STRIPPED_OAK_WOOD,
+            Items.STRIPPED_BIRCH_LOG,
+            Items.STRIPPED_BIRCH_WOOD,
+            Items.STRIPPED_SPRUCE_LOG,
+            Items.STRIPPED_SPRUCE_WOOD,
+            Items.STRIPPED_ACACIA_LOG,
+            Items.STRIPPED_ACACIA_WOOD,
+            Items.STRIPPED_JUNGLE_LOG,
+            Items.STRIPPED_JUNGLE_WOOD,
+            Items.STRIPPED_DARK_OAK_LOG,
+            Items.STRIPPED_DARK_OAK_WOOD,
+            Items.STICK,
+            Items.APPLE
+    );
+
+    public static final Set<Block> WANTED_BLOCKS = ImmutableSet.of(
+            Blocks.ACACIA_LOG,
+            Blocks.ACACIA_WOOD,
+            Blocks.BIRCH_LOG,
+            Blocks.BIRCH_WOOD,
+            Blocks.DARK_OAK_LOG,
+            Blocks.DARK_OAK_WOOD,
+            Blocks.JUNGLE_LOG,
+            Blocks.JUNGLE_WOOD,
+            Blocks.OAK_LOG,
+            Blocks.OAK_WOOD,
+            Blocks.SPRUCE_LOG,
+            Blocks.SPRUCE_WOOD,
+            Blocks.STRIPPED_ACACIA_LOG,
+            Blocks.STRIPPED_ACACIA_WOOD,
+            Blocks.STRIPPED_BIRCH_LOG,
+            Blocks.STRIPPED_BIRCH_WOOD,
+            Blocks.STRIPPED_DARK_OAK_LOG,
+            Blocks.STRIPPED_DARK_OAK_WOOD,
+            Blocks.STRIPPED_JUNGLE_LOG,
+            Blocks.STRIPPED_JUNGLE_WOOD,
+            Blocks.STRIPPED_OAK_LOG,
+            Blocks.STRIPPED_OAK_WOOD,
+            Blocks.STRIPPED_SPRUCE_LOG,
+            Blocks.STRIPPED_SPRUCE_WOOD
     );
 
     public LumberjackEntity(EntityType<? extends AbstractWorkerEntity> entityType, World world) {
@@ -159,6 +204,11 @@ public class LumberjackEntity extends AbstractWorkerEntity{
     public boolean wantsToPickUp(ItemStack itemStack) {
         Item item = itemStack.getItem();
         return (WANTED_ITEMS.contains(item) || WANTED_SAPLINGS.contains(item));
+    }
+
+    public boolean wantsToBreak(Block block) {
+        Block block1 = block.getBlock();
+        return (WANTED_BLOCKS.contains(block1));
     }
 
     @Override

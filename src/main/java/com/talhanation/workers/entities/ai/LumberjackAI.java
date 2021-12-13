@@ -92,6 +92,7 @@ public class LumberjackAI extends Goal {
                 this.mineBlock(minePos);
                 this.lumber.getLookControl().setLookAt(minePos.getX(), minePos.getY() + 1, minePos.getZ(), 10.0F, (float) this.lumber.getMaxHeadXRot());
             }
+            else lumber.resetWorkerParameters();
             calculateChopArea(blockmat);
         }
 
@@ -345,8 +346,7 @@ public class LumberjackAI extends Goal {
             BlockState blockstate = this.lumber.level.getBlockState(blockPos);
             Block block = blockstate.getBlock();
 
-            if (block == Blocks.OAK_LOG || block == Blocks.SPRUCE_LOG) {
-
+            if (lumber.wantsToBreak(block)){
                 if (lumber.getCurrentTimeBreak() % 5 == 4) {
                     lumber.level.playLocalSound(blockPos.getX(), blockPos.getY(), blockPos.getZ(), blockstate.getSoundType().getHitSound(), SoundCategory.BLOCKS, 1F, 0.75F, false);
                 }

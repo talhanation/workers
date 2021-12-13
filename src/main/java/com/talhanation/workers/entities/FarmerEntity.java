@@ -163,47 +163,4 @@ public class FarmerEntity extends AbstractWorkerEntity{
         }
     }
 
-    public ActionResultType mobInteract(PlayerEntity player, Hand hand) {
-        ItemStack itemstack = player.getItemInHand(hand);
-        Item item = itemstack.getItem();
-        if (this.level.isClientSide) {
-            boolean flag = this.isOwnedBy(player) || this.isTame() || isInSittingPose() || item == Items.BONE && !this.isTame();
-            return flag ? ActionResultType.CONSUME : ActionResultType.PASS;
-        } else {
-            if (this.isTame() && player.getUUID().equals(this.getOwnerUUID())) {
-
-                if (player.isCrouching()) {
-                    this.setIsWorking(true);
-                    //this.setStartPos(java.util.Optional.of(this.getOnPos()));
-
-                }
-                if(!player.isCrouching()) {
-                    setFollow(!getFollow());
-                    return ActionResultType.SUCCESS;
-                }
-
-            } else if (item == Items.EMERALD && !this.isTame() && playerHasEnoughEmeralds(player)) {
-                if (!player.abilities.instabuild) {
-                    if (!player.isCreative()) {
-                        itemstack.shrink(workerCosts());
-                    }
-                    return ActionResultType.SUCCESS;
-                }
-                this.tame(player);
-                this.navigation.stop();
-                this.setTarget(null);
-                this.setOrderedToSit(false);
-                this.setIsWorking(false);
-                return ActionResultType.SUCCESS;
-            }
-            else if (item == Items.EMERALD  && !this.isTame() && !playerHasEnoughEmeralds(player)) {
-                player.sendMessage(new StringTextComponent("You need " + workerCosts() + " Emeralds to hire me!"), player.getUUID());
-            }
-            else if (!this.isTame() && item != Items.EMERALD ) {
-                player.sendMessage(new StringTextComponent("I am a " + workerName()), player.getUUID());
-
-            }
-            return super.mobInteract(player, hand);
-        }
-    }
 }
