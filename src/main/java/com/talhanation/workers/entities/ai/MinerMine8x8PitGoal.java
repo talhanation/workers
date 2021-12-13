@@ -55,7 +55,7 @@ public class MinerMine8x8PitGoal extends Goal {
     @Override
     public void start() {
         super.start();
-
+        miner.resetWorkerParameters();
     }
 
     @Override

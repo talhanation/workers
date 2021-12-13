@@ -51,6 +51,7 @@ public class MinerMine3x3TunnelGoal extends Goal {
     @Override
     public void start() {
         super.start();
+        miner.resetWorkerParameters();
 
     }
 
@@ -126,6 +127,7 @@ public class MinerMine3x3TunnelGoal extends Goal {
     }
 
     private void mineBlock(BlockPos blockPos){
+
         if (this.miner.isAlive() && ForgeEventFactory.getMobGriefingEvent(this.miner.level, this.miner) && !miner.getFollow()) {
             BlockPos blockpos2 = blockPos.above();
             BlockPos blockpos3 = blockPos.above().above();

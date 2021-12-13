@@ -50,6 +50,7 @@ public class MinerMineTunnelGoal extends Goal {
     @Override
     public void start() {
         super.start();
+        miner.resetWorkerParameters();
         blocks = 0;
     }
 
