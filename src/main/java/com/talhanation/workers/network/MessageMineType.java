@@ -30,8 +30,10 @@ public class MessageMineType implements Message<MessageMineType> {
         List<MinerEntity> list = Objects.requireNonNull(context.getSender()).level.getEntitiesOfClass(MinerEntity.class, context.getSender().getBoundingBox().inflate(16.0D));
         for (MinerEntity recruits : list){
 
-            if (recruits.getUUID().equals(this.uuid))
+            if (recruits.getUUID().equals(this.uuid)) {
                 recruits.setMineType(this.mineType);
+                recruits.resetWorkerParameters();
+            }
         }
 
     }

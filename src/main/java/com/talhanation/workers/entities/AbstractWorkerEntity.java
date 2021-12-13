@@ -334,6 +334,12 @@ public abstract class AbstractWorkerEntity extends AbstractInventoryEntity {
 
     ////////////////////////////////////OTHER FUNCTIONS////////////////////////////////////
 
+    public void resetWorkerParameters(){
+        this.setBreakingTime(0);
+        this.setCurrentTimeBreak(-1);
+        this.setPreviousTimeBreak(-1);
+    }
+
     public boolean isOwnedByThisPlayer(AbstractWorkerEntity recruit, PlayerEntity player){
         return  (recruit.getOwnerUUID() == player.getUUID());
     }
