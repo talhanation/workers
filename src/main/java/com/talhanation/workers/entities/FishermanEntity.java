@@ -2,6 +2,7 @@ package com.talhanation.workers.entities;
 
 import com.google.common.collect.ImmutableSet;
 import com.talhanation.workers.entities.ai.FishermanAI;
+import com.talhanation.workers.entities.ai.WorkerFindWaterAI;
 import com.talhanation.workers.entities.ai.WorkerFollowOwnerGoal;
 import com.talhanation.workers.entities.ai.WorkerPickupWantedItemGoal;
 import net.minecraft.entity.AgeableEntity;
@@ -89,7 +90,8 @@ public class FishermanEntity extends AbstractWorkerEntity{
         this.goalSelector.addGoal(1, new SwimGoal(this));
         this.goalSelector.addGoal(2, new WorkerPickupWantedItemGoal(this));
         this.goalSelector.addGoal(2, new WorkerFollowOwnerGoal(this, 1.2D, 7.F, 4.0F));
-        this.goalSelector.addGoal(3, new FishermanAI(this));
+        this.goalSelector.addGoal(3, new WorkerFindWaterAI(this));
+        this.goalSelector.addGoal(4, new FishermanAI(this));
         this.goalSelector.addGoal(5, new LookAtGoal(this, PlayerEntity.class, 8.0F));
         this.goalSelector.addGoal(6, new LookRandomlyGoal(this));
         this.goalSelector.addGoal(6, new WaterAvoidingRandomWalkingGoal(this, 1.0D, 0F));
@@ -118,26 +120,6 @@ public class FishermanEntity extends AbstractWorkerEntity{
         return ilivingentitydata;
     }
 
-    protected void pickUpItem(ItemEntity itemEntity) {
-        ItemStack itemstack = itemEntity.getItem();
-        if (this.wantsToPickUp(itemstack)) {
-            Inventory inventory = this.getInventory();
-            boolean flag = inventory.canAddItem(itemstack);
-            if (!flag) {
-                return;
-            }
-
-            this.onItemPickup(itemEntity);
-            this.take(itemEntity, itemstack.getCount());
-            ItemStack itemstack1 = inventory.addItem(itemstack);
-            if (itemstack1.isEmpty()) {
-                itemEntity.remove();
-            } else {
-                itemstack.setCount(itemstack1.getCount());
-            }
-        }
-
-    }
     @Override
     public boolean wantsToPickUp(ItemStack itemStack) {
         Item item = itemStack.getItem();
@@ -149,47 +131,5 @@ public class FishermanEntity extends AbstractWorkerEntity{
         this.setItemSlot(EquipmentSlotType.MAINHAND, new ItemStack(Items.FISHING_ROD));
     }
 
-    public ActionResultType mobInteract(PlayerEntity player, Hand hand) {
-        ItemStack itemstack = player.getItemInHand(hand);
-        Item item = itemstack.getItem();
-        if (this.level.isClientSide) {
-            boolean flag = this.isOwnedBy(player) || this.isTame() || isInSittingPose() || item == Items.BONE && !this.isTame();
-            return flag ? ActionResultType.CONSUME : ActionResultType.PASS;
-        } else {
-            if (this.isTame() && player.getUUID().equals(this.getOwnerUUID())) {
 
-                if (player.isCrouching()) {
-                    this.setIsWorking(true);
-                    //this.setStartPos(java.util.Optional.of(this.getOnPos()));
-
-                }
-                if(!player.isCrouching()) {
-                    setFollow(!getFollow());
-                    return ActionResultType.SUCCESS;
-                }
-
-            } else if (item == Items.EMERALD && !this.isTame() && playerHasEnoughEmeralds(player)) {
-                if (!player.abilities.instabuild) {
-                    if (!player.isCreative()) {
-                        itemstack.shrink(workerCosts());
-                    }
-                    return ActionResultType.SUCCESS;
-                }
-                this.tame(player);
-                this.navigation.stop();
-                this.setTarget(null);
-                this.setOrderedToSit(false);
-                this.setIsWorking(false);
-                return ActionResultType.SUCCESS;
-            }
-            else if (item == Items.EMERALD  && !this.isTame() && !playerHasEnoughEmeralds(player)) {
-                player.sendMessage(new StringTextComponent("You need " + workerCosts() + " Emeralds to hire me!"), player.getUUID());
-            }
-            else if (!this.isTame() && item != Items.EMERALD ) {
-                player.sendMessage(new StringTextComponent("I am a " + workerName()), player.getUUID());
-
-            }
-            return super.mobInteract(player, hand);
-        }
-    }
 }
