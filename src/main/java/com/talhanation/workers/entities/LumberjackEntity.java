@@ -149,11 +149,14 @@ public class LumberjackEntity extends AbstractWorkerEntity{
         this.goalSelector.addGoal(2, new WorkerPickupWantedItemGoal(this));
         this.goalSelector.addGoal(2, new WorkerFollowOwnerGoal(this, 1.2D, 7.F, 4.0F));
         this.goalSelector.addGoal(3, new LumberjackAI(this));
-        this.goalSelector.addGoal(5, new LookAtGoal(this, PlayerEntity.class, 8.0F));
 
         this.goalSelector.addGoal(1, new PanicGoal(this, 1.3D));
 
+        this.goalSelector.addGoal(9, new ReturnToVillageGoal(this, 0.6D, false));
+        this.goalSelector.addGoal(10, new PatrolVillageGoal(this, 0.6D));
         this.goalSelector.addGoal(10, new WaterAvoidingRandomWalkingGoal(this, 1.0D, 0F));
+        this.goalSelector.addGoal(11, new LookAtGoal(this, PlayerEntity.class, 8.0F));
+        this.goalSelector.addGoal(12, new LookRandomlyGoal(this));
         this.goalSelector.addGoal(10, new LookAtGoal(this, LivingEntity.class, 8.0F));
 
 

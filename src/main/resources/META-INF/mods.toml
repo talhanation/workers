@@ -8,7 +8,7 @@ loaderVersion="[34,)" #mandatory This is typically bumped every Minecraft versio
 
 modId="workers"
 
-version="1.2.0"
+version="1.2.1"
 
 displayName="Workers Mod"
 updateJSONURL="https://github.com/talhanation/workers/blob/main/update.json"

@@ -52,7 +52,6 @@ public class MinerMine3x3TunnelGoal extends Goal {
     public void start() {
         super.start();
         miner.resetWorkerParameters();
-
     }
 
     @Override
@@ -60,8 +59,6 @@ public class MinerMine3x3TunnelGoal extends Goal {
         super.stop();
         restetCounts();
     }
-
-
 
     public void tick() {
         if (miner.getFollow() || !miner.getIsWorking()){
@@ -107,7 +104,7 @@ public class MinerMine3x3TunnelGoal extends Goal {
             if (minePos.closerThan(miner.position(), 6)) this.mineBlock(this.minePos);
             //miner.getOwner().sendMessage(new StringTextComponent("" + blocks + ""), miner.getOwner().getUUID());
 
-            if (block1 == Blocks.AIR && block2 == Blocks.AIR && block3 == Blocks.AIR) {
+            if (MinerEntity.IGNORING_BLOCKS.contains(block1) && MinerEntity.IGNORING_BLOCKS.contains(block2) && MinerEntity.IGNORING_BLOCKS.contains(block3)) {
                 side++;
             }
 
@@ -141,7 +138,7 @@ public class MinerMine3x3TunnelGoal extends Goal {
             Block block3 = blockstate3.getBlock();
 
 
-            if (block != Blocks.AIR) {
+            if (MinerEntity.IGNORING_BLOCKS.contains(block)) {
 
                 if (miner.getCurrentTimeBreak() % 5 == 4) {
                     miner.level.playLocalSound(blockPos.getX(), blockPos.getY(), blockPos.getZ(), blockstate.getSoundType().getHitSound(), SoundCategory.BLOCKS, 1F, 0.75F, false);
@@ -172,7 +169,7 @@ public class MinerMine3x3TunnelGoal extends Goal {
                         this.miner.swing(this.miner.getUsedItemHand());
                     }
                 }
-            } else if (block2 != Blocks.AIR) {
+            } else if (MinerEntity.IGNORING_BLOCKS.contains(block2)) {
 
                 if (this.miner.getCurrentTimeBreak() % 5 == 4) {
                     miner.level.playLocalSound(blockpos2.getX(), blockpos2.getY(), blockpos2.getZ(), blockstate2.getSoundType().getHitSound(), SoundCategory.BLOCKS, 1F, 0.75F, false);
@@ -205,7 +202,7 @@ public class MinerMine3x3TunnelGoal extends Goal {
                     }
                 }
 
-            }else if (block3 != Blocks.AIR) {
+            }else if (MinerEntity.IGNORING_BLOCKS.contains(block3)) {
 
                 if (this.miner.getCurrentTimeBreak() % 5 == 4) {
                     miner.level.playLocalSound(blockpos3.getX(), blockpos3.getY(), blockpos3.getZ(), blockstate3.getSoundType().getHitSound(), SoundCategory.BLOCKS, 1F, 0.75F, false);

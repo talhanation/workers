@@ -5,7 +5,9 @@ import com.talhanation.workers.Main;
 import com.talhanation.workers.MinerInventoryContainer;
 import com.talhanation.workers.entities.ai.*;
 import com.talhanation.workers.network.MessageOpenGuiMiner;
+import net.minecraft.block.Block;
 import net.minecraft.block.BlockState;
+import net.minecraft.block.Blocks;
 import net.minecraft.entity.*;
 import net.minecraft.entity.ai.attributes.AttributeModifierMap;
 import net.minecraft.entity.ai.attributes.Attributes;
@@ -77,6 +79,31 @@ public class MinerEntity extends AbstractWorkerEntity {
         Items.COARSE_DIRT
     );
 
+    public static final Set<Block> IGNORING_BLOCKS = ImmutableSet.of(
+            Blocks.CAVE_AIR,
+            Blocks.AIR,
+            Blocks.TORCH,
+            Blocks.REDSTONE_WIRE,
+            Blocks.CAMPFIRE,
+            Blocks.CAKE,
+            Blocks.ACACIA_SIGN,
+            Blocks.SPRUCE_SIGN,
+            Blocks.BIRCH_SIGN,
+            Blocks.DARK_OAK_SIGN,
+            Blocks.JUNGLE_SIGN,
+            Blocks.OAK_SIGN,
+            Blocks.ACACIA_WALL_SIGN,
+            Blocks.SPRUCE_WALL_SIGN,
+            Blocks.BIRCH_WALL_SIGN,
+            Blocks.DARK_OAK_WALL_SIGN,
+            Blocks.JUNGLE_WALL_SIGN,
+            Blocks.OAK_WALL_SIGN,
+            Blocks.SOUL_LANTERN,
+            Blocks.LANTERN,
+            Blocks.DETECTOR_RAIL,
+            Blocks.RAIL
+    );
+
     protected void defineSynchedData() {
         super.defineSynchedData();
         this.entityData.define(DIRECTION, Direction.NORTH);
@@ -106,9 +133,14 @@ public class MinerEntity extends AbstractWorkerEntity {
         this.goalSelector.addGoal(2, new MinerMine8x8PitGoal(this, 0.5D, 15D));
         this.goalSelector.addGoal(2, new MinerMine8x8x1FlatGoal(this, 0.5D, 15D));
         this.goalSelector.addGoal(2, new WorkerFollowOwnerGoal(this, 1.2D, 6.0F, 3.0F));
+
         this.goalSelector.addGoal(1, new PanicGoal(this, 1.3D));
 
+        this.goalSelector.addGoal(9, new ReturnToVillageGoal(this, 0.6D, false));
+        this.goalSelector.addGoal(10, new PatrolVillageGoal(this, 0.6D));
         this.goalSelector.addGoal(10, new WaterAvoidingRandomWalkingGoal(this, 1.0D, 0F));
+        this.goalSelector.addGoal(11, new LookAtGoal(this, PlayerEntity.class, 8.0F));
+        this.goalSelector.addGoal(12, new LookRandomlyGoal(this));
         this.goalSelector.addGoal(10, new LookAtGoal(this, LivingEntity.class, 8.0F));
     }
 

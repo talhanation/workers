@@ -6,10 +6,8 @@ import net.minecraft.block.BlockState;
 import net.minecraft.block.Blocks;
 import net.minecraft.entity.ai.attributes.Attributes;
 import net.minecraft.entity.ai.goal.Goal;
-import net.minecraft.inventory.Inventory;
 import net.minecraft.util.Direction;
 import net.minecraft.util.SoundCategory;
-import net.minecraft.util.SoundEvents;
 import net.minecraft.util.math.BlockPos;
 import net.minecraftforge.event.ForgeEventFactory;
 
@@ -96,17 +94,12 @@ public class MinerMine8x8x1FlatGoal extends Goal {
 
             BlockState blockstate = miner.level.getBlockState(minePos);
             Block block1 = blockstate.getBlock();
-            /*
-            BlockState blockstate2 = miner.level.getBlockState(minePos.above());
-            Block block2 = blockstate2.getBlock();
-             */
+
             this.miner.getAttribute(Attributes.MOVEMENT_SPEED).setBaseValue(0.3D);
             //erst mienen wenn nah genug
             if (minePos.closerThan(miner.position(), 6)) this.mineBlock(this.minePos);
-            //if (miner.getOwner() !=null)
-            //miner.getOwner().sendMessage(new StringTextComponent("Blocks: " + blocks +"   Side: " + side + "   Depth: " + depth), miner.getOwner().getUUID());
 
-            if (block1 == Blocks.AIR || block1 == Blocks.OAK_PLANKS) {
+            if (MinerEntity.IGNORING_BLOCKS.contains(block1)) {
                 blocks++;
             }
 
@@ -128,7 +121,7 @@ public class MinerMine8x8x1FlatGoal extends Goal {
             BlockState blockstate = this.miner.level.getBlockState(blockPos);
             Block block = blockstate.getBlock();
 
-            if (block != Blocks.AIR && block != Blocks.OAK_PLANKS) {
+            if (MinerEntity.IGNORING_BLOCKS.contains(block)) {
 
                 if (miner.getCurrentTimeBreak() % 5 == 4) {
                     miner.level.playLocalSound(blockPos.getX(), blockPos.getY(), blockPos.getZ(), blockstate.getSoundType().getHitSound(), SoundCategory.BLOCKS, 1F, 0.75F, false);
