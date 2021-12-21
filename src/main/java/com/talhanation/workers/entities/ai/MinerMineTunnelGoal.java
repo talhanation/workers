@@ -96,7 +96,7 @@ public class MinerMineTunnelGoal extends Goal {
             if (minePos.closerThan(miner.position(), 6)) this.mineBlock(this.minePos);
             //miner.getOwner().sendMessage(new StringTextComponent("" + blocks + ""), miner.getOwner().getUUID());
 
-            if (MinerEntity.IGNORING_BLOCKS.contains(block1) && MinerEntity.IGNORING_BLOCKS.contains(block2)) {
+            if (!MinerEntity.IGNORING_BLOCKS.contains(block1) && !MinerEntity.IGNORING_BLOCKS.contains(block2)) {
 
                 blocks++;
             }
@@ -120,7 +120,7 @@ public class MinerMineTunnelGoal extends Goal {
             BlockState blockstate2 = this.miner.level.getBlockState(blockPos.above());
             Block block2 = blockstate2.getBlock();
 
-            if (MinerEntity.IGNORING_BLOCKS.contains(block)) {
+            if (!MinerEntity.IGNORING_BLOCKS.contains(block)) {
 
                 if (miner.getCurrentTimeBreak() % 5 == 4) {
                     miner.level.playLocalSound(blockPos.getX(), blockPos.getY(), blockPos.getZ(), blockstate.getSoundType().getHitSound(), SoundCategory.BLOCKS, 1F, 0.75F, false);
@@ -151,7 +151,7 @@ public class MinerMineTunnelGoal extends Goal {
                         this.miner.swing(this.miner.getUsedItemHand());
                     }
                 }
-            } else if (MinerEntity.IGNORING_BLOCKS.contains(block2)) {
+            } else if (!MinerEntity.IGNORING_BLOCKS.contains(block2)) {
 
                 if (this.miner.getCurrentTimeBreak() % 5 == 4) {
                     miner.level.playLocalSound(blockpos2.getX(), blockpos2.getY(), blockpos2.getZ(), blockstate2.getSoundType().getHitSound(), SoundCategory.BLOCKS, 1F, 0.75F, false);

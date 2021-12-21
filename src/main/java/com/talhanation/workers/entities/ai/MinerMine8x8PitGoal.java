@@ -107,7 +107,7 @@ public class MinerMine8x8PitGoal extends Goal {
             //if (miner.getOwner() !=null)
             //miner.getOwner().sendMessage(new StringTextComponent("Blocks: " + blocks +"   Side: " + side + "   Depth: " + depth), miner.getOwner().getUUID());
 
-            if (MinerEntity.IGNORING_BLOCKS.contains(block1) || block1 == Blocks.OAK_PLANKS) {
+            if (!MinerEntity.IGNORING_BLOCKS.contains(block1) || block1 == Blocks.OAK_PLANKS) {
                 blocks++;
                 if (block1 != Blocks.OAK_PLANKS) placePlanks();
 
@@ -136,7 +136,7 @@ public class MinerMine8x8PitGoal extends Goal {
             BlockState blockstate = this.miner.level.getBlockState(blockPos);
             Block block = blockstate.getBlock();
 
-            if (MinerEntity.IGNORING_BLOCKS.contains(block) && block != Blocks.OAK_PLANKS) {
+            if (!MinerEntity.IGNORING_BLOCKS.contains(block) && block != Blocks.OAK_PLANKS) {
 
                 if (miner.getCurrentTimeBreak() % 5 == 4) {
                     miner.level.playLocalSound(blockPos.getX(), blockPos.getY(), blockPos.getZ(), blockstate.getSoundType().getHitSound(), SoundCategory.BLOCKS, 1F, 0.75F, false);
