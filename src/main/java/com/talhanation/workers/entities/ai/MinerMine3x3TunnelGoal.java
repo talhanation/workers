@@ -104,7 +104,7 @@ public class MinerMine3x3TunnelGoal extends Goal {
             if (minePos.closerThan(miner.position(), 6)) this.mineBlock(this.minePos);
             //miner.getOwner().sendMessage(new StringTextComponent("" + blocks + ""), miner.getOwner().getUUID());
 
-            if (!MinerEntity.IGNORING_BLOCKS.contains(block1) && !MinerEntity.IGNORING_BLOCKS.contains(block2) && !MinerEntity.IGNORING_BLOCKS.contains(block3)) {
+            if (miner.shouldIgnorBlock(block1)&& miner.shouldIgnorBlock(block2) && miner.shouldIgnorBlock(block3)) {
                 side++;
             }
 
@@ -138,7 +138,7 @@ public class MinerMine3x3TunnelGoal extends Goal {
             Block block3 = blockstate3.getBlock();
 
 
-            if (!MinerEntity.IGNORING_BLOCKS.contains(block)) {
+            if (!miner.shouldIgnorBlock(block)) {
 
                 if (miner.getCurrentTimeBreak() % 5 == 4) {
                     miner.level.playLocalSound(blockPos.getX(), blockPos.getY(), blockPos.getZ(), blockstate.getSoundType().getHitSound(), SoundCategory.BLOCKS, 1F, 0.75F, false);
@@ -169,7 +169,7 @@ public class MinerMine3x3TunnelGoal extends Goal {
                         this.miner.swing(this.miner.getUsedItemHand());
                     }
                 }
-            } else if (!MinerEntity.IGNORING_BLOCKS.contains(block2)) {
+            } else if (!miner.shouldIgnorBlock(block2)) {
 
                 if (this.miner.getCurrentTimeBreak() % 5 == 4) {
                     miner.level.playLocalSound(blockpos2.getX(), blockpos2.getY(), blockpos2.getZ(), blockstate2.getSoundType().getHitSound(), SoundCategory.BLOCKS, 1F, 0.75F, false);
@@ -202,7 +202,7 @@ public class MinerMine3x3TunnelGoal extends Goal {
                     }
                 }
 
-            }else if (!MinerEntity.IGNORING_BLOCKS.contains(block3)) {
+            }else if ((!miner.shouldIgnorBlock(block3))) {
 
                 if (this.miner.getCurrentTimeBreak() % 5 == 4) {
                     miner.level.playLocalSound(blockpos3.getX(), blockpos3.getY(), blockpos3.getZ(), blockstate3.getSoundType().getHitSound(), SoundCategory.BLOCKS, 1F, 0.75F, false);

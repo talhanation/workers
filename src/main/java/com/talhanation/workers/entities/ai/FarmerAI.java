@@ -34,6 +34,8 @@ public class FarmerAI extends Goal {
     private int y;
     private int x;
     private int z;
+    private int blocks;
+    private int side;
 
     public FarmerAI(FarmerEntity farmer) {
         this.farmer = farmer;
@@ -64,23 +66,16 @@ public class FarmerAI extends Goal {
 
         plant = true;
         harvest = false;
-        innen = true;
         x = -3;
         z = -3;
     }
 
     public void tick() {
 
-
         if (harvest) {
             if (farmer.getFollow() || !farmer.getIsWorking()) {
-                if (innen) {
-                    x = -1;
-                    z = -1;
-                } else {
-                    x = -5;
-                    z = -5;
-                }
+                x = -5;
+                z = -5;
             }
 
             this.breakPos = new BlockPos(farmer.getStartPos().get().getX() + x, farmer.getStartPos().get().getY() + y, farmer.getStartPos().get().getZ() + z);
@@ -101,10 +96,10 @@ public class FarmerAI extends Goal {
         if (plant && hasSeedInInv()) {
 
             if (farmer.getFollow() || !farmer.getIsWorking()) {
-                    x = -5;
-                    z = -5;
-                }
+                x = -5;
+                z = -5;
             }
+
 
             this.plantPos = new BlockPos(this.startPos.getX() + x, this.startPos.getY() + y, this.startPos.getZ() + z);
             BlockState blockstate = farmer.level.getBlockState(plantPos);
@@ -119,19 +114,18 @@ public class FarmerAI extends Goal {
                 //plantSaplingFromInv();
                 this.farmer.level.playSound(null, this.farmer.getX(), this.farmer.getY(), this.farmer.getZ(), SoundEvents.GRASS_PLACE, SoundCategory.BLOCKS, 1F, 0.9F + 0.2F);
                 this.farmer.workerSwingArm();
-            }
-            else
+            } else
                 y++;
 
             if (blocks == 8) {
                 blocks = 0;
                 side++;
-                this.miner.setIsPickingUp(true);
+                this.farmer.setIsPickingUp(true);
             }
 
-            if (side == 8){
-                miner.setStartPos(Optional.empty());
-                miner.setIsWorking(false);
+            if (side == 8) {
+                farmer.setStartPos(Optional.empty());
+                farmer.setIsWorking(false);
             }
         }
 
@@ -141,7 +135,7 @@ public class FarmerAI extends Goal {
         }
     }
 
-    private boolean hasSeedInInv(){
+    private boolean hasSeedInInv() {
         Inventory inventory = farmer.getInventory();
         return inventory.hasAnyOf(WANTED_SEEDS);
     }
@@ -156,41 +150,46 @@ public class FarmerAI extends Goal {
                 boolean flag = false;
                 if (!itemstack.isEmpty()) {
                     if (itemstack.getItem() == Items.WHEAT_SEEDS) {
-                        farmer.level.setBlock(this.plantPos, Blocks.SPRUCE_SAPLING.defaultBlockState(), 3);
+                        farmer.level.setBlock(this.plantPos, Blocks.WHEAT.defaultBlockState(), 3);
                         flag = true;
 
                     } else if (itemstack.getItem() == Items.BEETROOT_SEEDS) {
-                        this.farmer.level.setBlock(plantPos, Blocks.OAK_SAPLING.defaultBlockState(),3);
+                        this.farmer.level.setBlock(plantPos, Blocks.BEETROOTS.defaultBlockState(), 3);
                         flag = true;
 
                     } else if (itemstack.getItem() == Items.CARROT) {
-                        this.farmer.level.setBlock(plantPos, Blocks.BIRCH_SAPLING.defaultBlockState(), 3);
+                        this.farmer.level.setBlock(plantPos, Blocks.CARROTS.defaultBlockState(), 3);
                         flag = true;
 
-                }
-
-                if (flag) {
-                    farmer.level.playSound(null, (double) this.plantPos.getX(), (double) this.plantPos.getY(), (double) this.plantPos.getZ(), SoundEvents.GRASS_PLACE, SoundCategory.BLOCKS, 1.0F, 1.0F);
-                    itemstack.shrink(1);
-                    if (itemstack.isEmpty()) {
-                        inventory.setItem(i, ItemStack.EMPTY);
                     }
-                    break;
+                    else if (itemstack.getItem() == Items.POTATO) {
+                        this.farmer.level.setBlock(plantPos, Blocks.POTATOES.defaultBlockState(), 3);
+                        flag = true;
+
+                    }
+
+                    if (flag) {
+                        farmer.level.playSound(null, (double) this.plantPos.getX(), (double) this.plantPos.getY(), (double) this.plantPos.getZ(), SoundEvents.GRASS_PLACE, SoundCategory.BLOCKS, 1.0F, 1.0F);
+                        itemstack.shrink(1);
+                        if (itemstack.isEmpty()) {
+                            inventory.setItem(i, ItemStack.EMPTY);
+                        }
+                        break;
+                    }
                 }
             }
-
         }
     }
 
-    private void calculatePlantArea(){
+    private void calculatePlantArea() {
 
     }
 
-    private void calculateHarvestArea(Material blockmat){
+    private void calculateHarvestArea(Material blockmat) {
 
     }
 
-    private void breakBlock(BlockPos blockPos){
+    private void breakBlock(BlockPos blockPos) {
         if (this.farmer.isAlive() && ForgeEventFactory.getMobGriefingEvent(this.farmer.level, this.farmer) && !farmer.getFollow()) {
 
             BlockState blockstate = this.farmer.level.getBlockState(blockPos);
@@ -227,12 +226,11 @@ public class FarmerAI extends Goal {
         }
     }
 
-    private void debugAxisPos(){
+    private void debugAxisPos() {
         farmer.getOwner().sendMessage(new StringTextComponent("x: " + x + ""), farmer.getOwner().getUUID());
         farmer.getOwner().sendMessage(new StringTextComponent("y: " + y + ""), farmer.getOwner().getUUID());
         farmer.getOwner().sendMessage(new StringTextComponent("z: " + z + ""), farmer.getOwner().getUUID());
     }
-
 }
 
 

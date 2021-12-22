@@ -99,7 +99,7 @@ public class MinerMine8x8x1FlatGoal extends Goal {
             //erst mienen wenn nah genug
             if (minePos.closerThan(miner.position(), 6)) this.mineBlock(this.minePos);
 
-            if (!MinerEntity.IGNORING_BLOCKS.contains(block1)) {
+            if (miner.shouldIgnorBlock(block1)) {
                 blocks++;
             }
 
@@ -121,7 +121,7 @@ public class MinerMine8x8x1FlatGoal extends Goal {
             BlockState blockstate = this.miner.level.getBlockState(blockPos);
             Block block = blockstate.getBlock();
 
-            if (!MinerEntity.IGNORING_BLOCKS.contains(block)) {
+            if (!miner.shouldIgnorBlock(block)) {
 
                 if (miner.getCurrentTimeBreak() % 5 == 4) {
                     miner.level.playLocalSound(blockPos.getX(), blockPos.getY(), blockPos.getZ(), blockstate.getSoundType().getHitSound(), SoundCategory.BLOCKS, 1F, 0.75F, false);

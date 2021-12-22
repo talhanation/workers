@@ -64,12 +64,11 @@ public class FishermanAI extends Goal {
         LootContext.Builder lootcontext$builder = new LootContext.Builder((ServerWorld) this.fisherman.level);
         lootcontext$builder.withLuck((float) luck);
 
-        LootParameterSet.Builder lootparameterset$builder = new LootParameterSet.Builder();
         LootTable loottable = fisherman.level.getServer().getLootTables().get(LootTables.FISHING);
         List<ItemStack> list = loottable.getRandomItems(lootcontext$builder.create(LootParameterSets.FISHING));
 
         for(ItemStack itemstack : list) {
-            ItemEntity itementity = new ItemEntity(fisherman.level, fisherman.getX(), fisherman.getY(), fisherman.getZ(), itemstack);
+            ItemEntity itementity = new ItemEntity(fisherman.level, fisherman.getX(), fisherman.getY() + 2, fisherman.getZ(), itemstack);
             fisherman.level.addFreshEntity(itementity);
         }
     }
@@ -93,9 +92,10 @@ public class FishermanAI extends Goal {
             }
 
             if (throwTimer == 0) {
-                //fisherman.playSound(SoundEvents.FISHING_BOBBER_THROW, 1, 0.5F);
+                fisherman.playSound(SoundEvents.FISHING_BOBBER_THROW, 1, 0.5F);
                 throwTimer = 20;
-                //fisherman.level.addFreshEntity(new FishingBobberEntity((PlayerEntity) this.fisherman.getOwner(), this.fisherman.level, 0, 0));
+                if (fisherman.getOwner() != null)
+                fisherman.level.addFreshEntity(new FishingBobberEntity((PlayerEntity) this.fisherman.getOwner(), this.fisherman.level, 0, 0));
             }
 
         }else {

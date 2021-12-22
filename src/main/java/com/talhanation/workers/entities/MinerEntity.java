@@ -83,6 +83,8 @@ public class MinerEntity extends AbstractWorkerEntity {
             Blocks.CAVE_AIR,
             Blocks.AIR,
             Blocks.TORCH,
+            Blocks.WALL_TORCH,
+            Blocks.SOUL_WALL_TORCH,
             Blocks.REDSTONE_WIRE,
             Blocks.CAMPFIRE,
             Blocks.CAKE,
@@ -182,9 +184,8 @@ public class MinerEntity extends AbstractWorkerEntity {
         return (WANTED_ITEMS.contains(item));
     }
 
-    public boolean wantsToIgnor(Block block) {
-        Block block1 = block.getBlock();
-        return (IGNORING_BLOCKS.contains(block1));
+    public boolean shouldIgnorBlock(Block block) {
+        return (IGNORING_BLOCKS.contains(block));
     }
 
     @Override
