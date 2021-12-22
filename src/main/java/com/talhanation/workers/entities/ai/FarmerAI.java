@@ -20,6 +20,7 @@ import net.minecraftforge.event.ForgeEventFactory;
 import java.util.ArrayList;
 import java.util.EnumSet;
 import java.util.List;
+import java.util.Optional;
 
 import static com.talhanation.workers.entities.FarmerEntity.WANTED_SEEDS;
 
@@ -28,7 +29,6 @@ public class FarmerAI extends Goal {
     private BlockPos breakPos;
     private BlockPos plantPos;
     private BlockPos startPos;
-    private boolean innen;
     private boolean plant;
     private boolean harvest;
     private int y;
@@ -70,7 +70,7 @@ public class FarmerAI extends Goal {
     }
 
     public void tick() {
-        debugAxisPos();
+
 
         if (harvest) {
             if (farmer.getFollow() || !farmer.getIsWorking()) {
@@ -101,10 +101,6 @@ public class FarmerAI extends Goal {
         if (plant && hasSeedInInv()) {
 
             if (farmer.getFollow() || !farmer.getIsWorking()) {
-                if (innen) {
-                    x = -1;
-                    z = -1;
-                } else {
                     x = -5;
                     z = -5;
                 }
@@ -127,7 +123,16 @@ public class FarmerAI extends Goal {
             else
                 y++;
 
-            calculatePlantArea();
+            if (blocks == 8) {
+                blocks = 0;
+                side++;
+                this.miner.setIsPickingUp(true);
+            }
+
+            if (side == 8){
+                miner.setStartPos(Optional.empty());
+                miner.setIsWorking(false);
+            }
         }
 
         if (plant && !hasSeedInInv()) {
@@ -150,30 +155,18 @@ public class FarmerAI extends Goal {
                 ItemStack itemstack = inventory.getItem(i);
                 boolean flag = false;
                 if (!itemstack.isEmpty()) {
-                    if (itemstack.getItem() == Items.SPRUCE_SAPLING) {
+                    if (itemstack.getItem() == Items.WHEAT_SEEDS) {
                         farmer.level.setBlock(this.plantPos, Blocks.SPRUCE_SAPLING.defaultBlockState(), 3);
                         flag = true;
 
-                    } else if (itemstack.getItem() == Items.OAK_SAPLING) {
+                    } else if (itemstack.getItem() == Items.BEETROOT_SEEDS) {
                         this.farmer.level.setBlock(plantPos, Blocks.OAK_SAPLING.defaultBlockState(),3);
                         flag = true;
 
-                    } else if (itemstack.getItem() == Items.DARK_OAK_SAPLING) {
-                        this.farmer.level.setBlock(plantPos, Blocks.DARK_OAK_SAPLING.defaultBlockState(),3);
-                        flag = true;
-
-                    } else if (itemstack.getItem() == Items.BIRCH_SAPLING) {
+                    } else if (itemstack.getItem() == Items.CARROT) {
                         this.farmer.level.setBlock(plantPos, Blocks.BIRCH_SAPLING.defaultBlockState(), 3);
                         flag = true;
 
-                    } else if (itemstack.getItem() == Items.SPRUCE_SAPLING) {
-                        this.farmer.level.setBlock(plantPos, Blocks.SPRUCE_SAPLING.defaultBlockState(), 3);
-                        flag = true;
-
-                    } else if (itemstack.getItem() == Items.JUNGLE_SAPLING) {
-                        this.farmer.level.setBlock(plantPos, Blocks.JUNGLE_SAPLING.defaultBlockState(), 3);
-                        flag = true;
-                    }
                 }
 
                 if (flag) {
@@ -194,37 +187,7 @@ public class FarmerAI extends Goal {
     }
 
     private void calculateHarvestArea(Material blockmat){
-        if (blockmat != Material.WOOD) {
-            y++;
-        }
 
-        if (y == 9) {
-            y = -2;
-            x++;
-        }
-
-        if (innen){
-            if (x == 3) {
-                x = -3;
-                z++;
-            }
-            if (z == 3) {
-                x = -9;
-                z = -9;
-                this.innen = false;
-            }
-        }
-        else {
-            if (x == 9) {
-                x = -9;
-                z++;
-            }
-            if (z == 9) {
-                z = -9;
-                this.plant = true;
-                this.innen = true;
-            }
-        }
     }
 
     private void breakBlock(BlockPos blockPos){
