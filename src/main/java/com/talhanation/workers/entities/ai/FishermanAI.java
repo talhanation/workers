@@ -13,6 +13,7 @@ import net.minecraft.item.ItemStack;
 import net.minecraft.loot.*;
 import net.minecraft.stats.Stats;
 import net.minecraft.tags.ItemTags;
+import net.minecraft.util.Hand;
 import net.minecraft.util.SoundEvents;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.world.server.ServerWorld;
@@ -61,15 +62,17 @@ public class FishermanAI extends Goal {
     public void spawnFishingLoot() {
         this.fishingTimer = 400 + fisherman.getRandom().nextInt(500);
         double luck = 0.1D;
-        LootContext.Builder lootcontext$builder = new LootContext.Builder((ServerWorld) this.fisherman.level);
-        lootcontext$builder.withLuck((float) luck);
+        LootContext.Builder lootcontext$builder = (new LootContext.Builder((ServerWorld)fisherman.level))
+                .withParameter(LootParameters.ORIGIN, fisherman.position())
+                .withParameter(LootParameters.TOOL, this.fisherman.getItemInHand(Hand.MAIN_HAND))
+                .withLuck((float) luck);
 
-        LootTable loottable = fisherman.level.getServer().getLootTables().get(LootTables.FISHING);
-        List<ItemStack> list = loottable.getRandomItems(lootcontext$builder.create(LootParameterSets.FISHING));
+        LootTable loottable = fisherman.getServer().getLootTables().get(LootTables.FISHING);
+        List<ItemStack> list = loottable.getRandomItems(lootcontext$builder.create(LootParameterSets.FISHING)); // .create throws null
 
-        for(ItemStack itemstack : list) {
-            ItemEntity itementity = new ItemEntity(fisherman.level, fisherman.getX(), fisherman.getY() + 2, fisherman.getZ(), itemstack);
-            fisherman.level.addFreshEntity(itementity);
+        for (ItemStack itemstack : list) {
+            ItemEntity itementity = new ItemEntity(fisherman.level, fisherman.getX(), fisherman.getY(), fisherman.getZ(), itemstack);
+            fisherman.getInventory().addItem(itemstack);
         }
     }
 
@@ -94,8 +97,8 @@ public class FishermanAI extends Goal {
             if (throwTimer == 0) {
                 fisherman.playSound(SoundEvents.FISHING_BOBBER_THROW, 1, 0.5F);
                 throwTimer = 20;
-                if (fisherman.getOwner() != null)
-                fisherman.level.addFreshEntity(new FishingBobberEntity((PlayerEntity) this.fisherman.getOwner(), this.fisherman.level, 0, 0));
+                //if (fisherman.getOwner() != null)
+                //fisherman.level.addFreshEntity(new FishingBobberEntity((PlayerEntity) this.fisherman.getOwner(), this.fisherman.level, 0, 0)); // need fishbobber for worker
             }
 
         }else {
@@ -107,7 +110,7 @@ public class FishermanAI extends Goal {
                 fishingTimer--;
             }
             if (fishingTimer == 0) {
-                spawnFishingLoot();
+                spawnFishingLoot(); // crash because of null
                 fisherman.playSound(SoundEvents.FISHING_BOBBER_SPLASH, 1, 1);
             }
         }

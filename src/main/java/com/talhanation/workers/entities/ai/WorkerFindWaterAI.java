@@ -1,7 +1,7 @@
 package com.talhanation.workers.entities.ai;
 import com.talhanation.workers.entities.AbstractWorkerEntity;
-import net.minecraft.entity.CreatureEntity;
 import net.minecraft.entity.ai.goal.Goal;
+import net.minecraft.item.FishingRodItem;
 import net.minecraft.tags.FluidTags;
 import net.minecraft.util.math.BlockPos;
 
@@ -9,53 +9,46 @@ import java.util.EnumSet;
 import java.util.Random;
 
 public class WorkerFindWaterAI extends Goal {
-    private final AbstractWorkerEntity creature;
+    private final AbstractWorkerEntity worker;
     private BlockPos targetPos;
-    private int executionChance = 30;
 
-    public WorkerFindWaterAI(AbstractWorkerEntity creature) {
-        this.creature = creature;
+    public WorkerFindWaterAI(AbstractWorkerEntity worker) {
+        this.worker = worker;
         this.setFlags(EnumSet.of(Flag.MOVE, Flag.LOOK));
     }
 
     public boolean canUse() {
-        if (this.creature.isOnGround() && !this.creature.level.getFluidState(this.creature.getWorkerOnPos()).is(FluidTags.WATER)){
+        if (this.worker.isOnGround() && ! worker.getFollow()){
 
-            targetPos = generateTarget();
+            targetPos = findBlockWater();
+
             return targetPos != null;
         }
         return false;
     }
 
-    public void start() {
-        if(targetPos != null){
-            this.creature.getNavigation().moveTo(targetPos.getX(), targetPos.getY(), targetPos.getZ(), 1D);
-        }
-    }
 
     public void tick() {
         if(targetPos != null){
-            this.creature.getNavigation().moveTo(targetPos.getX(), targetPos.getY(), targetPos.getZ(), 1D);
+            this.worker.getNavigation().moveTo(targetPos.getX(), targetPos.getY(), targetPos.getZ(), 1D);
         }
     }
 
     @Override
     public boolean canContinueToUse() {
-
-        return !this.creature.getNavigation().isDone() && targetPos != null && !this.creature.level.getFluidState(this.creature.getWorkerOnPos()).is(FluidTags.WATER);
-
+        return !targetPos.closerThan(worker.position(), 5);
     }
 
-    public BlockPos generateTarget() {
+    public BlockPos findBlockWater() {
         BlockPos blockpos = null;
         Random random = new Random();
         int range = 14;
         for(int i = 0; i < 15; i++){
-            BlockPos blockpos1 = this.creature.getWorkerOnPos().offset(random.nextInt(range) - range/2, 3, random.nextInt(range) - range/2);
-            while(this.creature.level.isEmptyBlock(blockpos1) && blockpos1.getY() > 1){
+            BlockPos blockpos1 = this.worker.getWorkerOnPos().offset(random.nextInt(range) - range/2, 3, random.nextInt(range) - range/2);
+            while(this.worker.level.isEmptyBlock(blockpos1) && blockpos1.getY() > 1){
                 blockpos1 = blockpos1.below();
             }
-            if(this.creature.level.getFluidState(blockpos1).is(FluidTags.WATER)){
+            if(this.worker.level.getFluidState(blockpos1).is(FluidTags.WATER)){
                 blockpos = blockpos1;
             }
         }

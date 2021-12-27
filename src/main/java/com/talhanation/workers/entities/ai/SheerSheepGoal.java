@@ -60,7 +60,7 @@ public class SheerSheepGoal<T extends SheepEntity> extends TargetGoal {
 
         }
         if (this.target != null){
-            this.worker.getNavigation().moveTo(this.target, 0.85);
+            this.worker.getNavigation().moveTo(this.target, 1);
 
             if (target.closerThan(this.worker, 3)){
                 sheerSheep(this.target);
