@@ -127,7 +127,7 @@ public class MinerMine8x8x1FlatGoal extends Goal {
                     miner.level.playLocalSound(blockPos.getX(), blockPos.getY(), blockPos.getZ(), blockstate.getSoundType().getHitSound(), SoundCategory.BLOCKS, 1F, 0.75F, false);
                 }
 
-                int bp = (int) (blockstate.getDestroySpeed(this.miner.level, blockPos) * 175);
+                int bp = (int) (blockstate.getDestroySpeed(this.miner.level, blockPos) * 10);
                 this.miner.setBreakingTime(bp);
 
                 this.miner.setCurrentTimeBreak(this.miner.getCurrentTimeBreak() + (int) (1 * (this.miner.getUseItem().getDestroySpeed(blockstate))));

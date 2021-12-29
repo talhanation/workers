@@ -18,7 +18,7 @@ public class WorkerFindWaterAI extends Goal {
     }
 
     public boolean canUse() {
-        if (this.worker.isOnGround() && ! worker.getFollow()){
+        if (this.worker.isOnGround() && ! worker.getFollow() && worker.getIsWorking()){
 
             targetPos = findBlockWater();
 

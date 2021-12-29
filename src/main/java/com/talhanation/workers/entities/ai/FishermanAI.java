@@ -98,7 +98,7 @@ public class FishermanAI extends Goal {
                 fisherman.playSound(SoundEvents.FISHING_BOBBER_THROW, 1, 0.5F);
                 throwTimer = 20;
                 //if (fisherman.getOwner() != null)
-                //fisherman.level.addFreshEntity(new FishingBobberEntity((PlayerEntity) this.fisherman.getOwner(), this.fisherman.level, 0, 0)); // need fishbobber for worker
+                fisherman.level.addFreshEntity(new FishingBobberEntity((PlayerEntity) this.fisherman.getOwner(), this.fisherman.level, 0, 0)); // need fishbobber for worker
             }
 
         }else {
