@@ -45,16 +45,12 @@ public class Main {
     public static VillagerProfession MINER;
     public static VillagerProfession LUMBERJACK;
     public static VillagerProfession FARMER;
-    public static VillagerProfession FISCHER;
+    public static VillagerProfession FISHER;
     public static PointOfInterestType POI_MINER;
     public static PointOfInterestType POI_LUMBERJACK;
     public static PointOfInterestType POI_FARMER;
-    public static PointOfInterestType POI_FISCHER;
-    public static KeyBinding R_KEY;
-    public static KeyBinding X_KEY;
+    public static PointOfInterestType POI_FISHER;
     public static KeyBinding C_KEY;
-    public static KeyBinding Y_KEY;
-    public static KeyBinding V_KEY;
     public static ContainerType<WorkerInventoryContainer> MINER_CONTAINER_TYPE;
     public static ContainerType<WorkerInventoryContainer> WORKER_CONTAINER_TYPE;
 
@@ -103,6 +99,10 @@ public class Main {
                 buf -> (new MessageOpenGuiWorker()).fromBytes(buf),
                 (msg, fun) -> msg.executeServerSide(fun.get()));
 
+        SIMPLE_CHANNEL.registerMessage(5, MessageCampPos.class, MessageCampPos::toBytes,
+                buf -> (new MessageCampPos()).fromBytes(buf),
+                (msg, fun) -> msg.executeServerSide(fun.get()));
+
 
         DeferredWorkQueue.runLater(() -> {
             GlobalEntityTypeAttributes.put(ModEntityTypes.MINER.get(), MinerEntity.setAttributes().build());
@@ -119,11 +119,7 @@ public class Main {
 
         MinecraftForge.EVENT_BUS.register(new KeyEvents());
 
-        //R_KEY = ClientRegistry.registerKeyBinding("key.r_key", "category.workers", 82);
-        //X_KEY = ClientRegistry.registerKeyBinding("key.x_key", "category.workers", 88);
         C_KEY = ClientRegistry.registerKeyBinding("key.c_key", "category.workers", 67);
-        //Y_KEY = ClientRegistry.registerKeyBinding("key.y_key", "category.workers", 90);
-        //V_KEY = ClientRegistry.registerKeyBinding("key.v_key", "category.workers", 86);
 
         ClientRegistry.registerScreen(Main.MINER_CONTAINER_TYPE, MinerInventoryScreen::new);
         ClientRegistry.registerScreen(Main.WORKER_CONTAINER_TYPE, WorkerInventoryScreen::new);
@@ -135,11 +131,12 @@ public class Main {
         POI_MINER.setRegistryName(Main.MOD_ID, "poi_miner");
         POI_LUMBERJACK = new PointOfInterestType("poi_lumberjack", PointOfInterestType.getBlockStates(ModBlocks.LUMBERJACK_BLOCK.get()), 1, 1);
         POI_LUMBERJACK.setRegistryName(Main.MOD_ID, "poi_lumberjack");
-
+        POI_FISHER = new PointOfInterestType("poi_fisher", PointOfInterestType.getBlockStates(ModBlocks.FISHER_BLOCK.get()), 1, 1);
+        POI_FISHER.setRegistryName(Main.MOD_ID, "poi_fisher");
 
         event.getRegistry().register(POI_MINER);
         event.getRegistry().register(POI_LUMBERJACK);
-
+        event.getRegistry().register(POI_FISHER);
     }
 
     @SubscribeEvent
@@ -148,11 +145,14 @@ public class Main {
         MINER.setRegistryName(Main.MOD_ID, "miner");
         LUMBERJACK = new VillagerProfession("lumberjack", POI_LUMBERJACK, ImmutableSet.of(), ImmutableSet.of(), SoundEvents.VILLAGER_CELEBRATE);
         LUMBERJACK.setRegistryName(Main.MOD_ID, "lumberjack");
+        FISHER = new VillagerProfession("fisher", POI_FISHER, ImmutableSet.of(), ImmutableSet.of(), SoundEvents.VILLAGER_CELEBRATE);
+        FISHER.setRegistryName(Main.MOD_ID, "fisher");
 
 
 
         event.getRegistry().register(MINER);
         event.getRegistry().register(LUMBERJACK);
+        event.getRegistry().register(FISHER);
     }
 
     @SubscribeEvent
@@ -165,7 +165,7 @@ public class Main {
             return new WorkerInventoryContainer(windowId, rec, inv);
         });
         WORKER_CONTAINER_TYPE = new ContainerType<>((IContainerFactory<WorkerInventoryContainer>) (windowId, inv, data) -> {
-            LumberjackEntity rec = (LumberjackEntity) getRecruitByUUID(inv.player, data.readUUID());
+            AbstractWorkerEntity rec = getRecruitByUUID(inv.player, data.readUUID());
             if (rec == null) {
                 return null;
             }
@@ -175,7 +175,7 @@ public class Main {
         MINER_CONTAINER_TYPE.setRegistryName(new ResourceLocation(Main.MOD_ID, "miner_container"));
         event.getRegistry().register(MINER_CONTAINER_TYPE);
 
-        WORKER_CONTAINER_TYPE.setRegistryName(new ResourceLocation(Main.MOD_ID, "lumberjack_container"));
+        WORKER_CONTAINER_TYPE.setRegistryName(new ResourceLocation(Main.MOD_ID, "worker_container"));
         event.getRegistry().register(WORKER_CONTAINER_TYPE);
 
     }

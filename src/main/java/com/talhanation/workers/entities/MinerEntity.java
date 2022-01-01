@@ -30,6 +30,7 @@ import net.minecraft.network.datasync.EntityDataManager;
 import net.minecraft.pathfinding.GroundPathNavigator;
 import net.minecraft.util.Direction;
 import net.minecraft.util.text.ITextComponent;
+import net.minecraft.util.text.StringTextComponent;
 import net.minecraft.world.DifficultyInstance;
 import net.minecraft.world.IServerWorld;
 import net.minecraft.world.World;
@@ -128,6 +129,7 @@ public class MinerEntity extends AbstractWorkerEntity {
     }
 
     protected void registerGoals() {
+        super.registerGoals();
         this.goalSelector.addGoal(1, new SwimGoal(this));
         this.goalSelector.addGoal(2, new WorkerPickupWantedItemGoal(this));
         this.goalSelector.addGoal(2, new MinerMineTunnelGoal(this, 0.5D, 10D));
@@ -286,5 +288,22 @@ public class MinerEntity extends AbstractWorkerEntity {
         } else {
             Main.SIMPLE_CHANNEL.sendToServer(new MessageOpenGuiMiner(player, this.getUUID()));
         }
+    }
+
+    @Override
+    public void setIsWorking(boolean bool) {
+        if (this.getMineType() == 0) bool = false;
+
+        entityData.set(IS_WORKING, bool);
+
+        LivingEntity owner = this.getOwner();
+        if (owner != null)
+            if (bool) {
+                owner.sendMessage(new StringTextComponent("Im working now!"), owner.getUUID());
+            }
+            else
+                owner.sendMessage(new StringTextComponent("I stopped working now!"), owner.getUUID());
+
+
     }
 }

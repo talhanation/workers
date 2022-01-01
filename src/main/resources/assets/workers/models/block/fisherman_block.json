@@ -1,0 +1,12 @@
+{
+  "parent": "minecraft:block/cube",
+  "textures": {
+    "particle": "workers:block/fisherman_table_side",
+    "north": "workers:block/fisherman_table_side",
+    "south": "workers:block/fisherman_table_side",
+    "east": "workers:block/fisherman_table_side",
+    "west": "workers:block/fisherman_table_side",
+    "up": "workers:block/fisherman_table_top",
+    "down": "workers:block/fisherman_table_bottom"
+  }
+}

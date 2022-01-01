@@ -2,6 +2,8 @@ package com.talhanation.workers.util;
 
 
 import com.talhanation.workers.Main;
+import com.talhanation.workers.client.render.FishermanRenderer;
+import com.talhanation.workers.client.render.MinerRenderer;
 import com.talhanation.workers.client.render.WorkersRenderer;
 import com.talhanation.workers.init.ModEntityTypes;
 import net.minecraftforge.api.distmarker.Dist;
@@ -15,11 +17,11 @@ public class ClientEventBusSub {
 
     @SubscribeEvent
     public static void clientsetup(FMLClientSetupEvent event){
-        RenderingRegistry.registerEntityRenderingHandler(ModEntityTypes.MINER.get(), WorkersRenderer::new );
+        RenderingRegistry.registerEntityRenderingHandler(ModEntityTypes.MINER.get(), MinerRenderer::new );
         RenderingRegistry.registerEntityRenderingHandler(ModEntityTypes.LUMBERJACK.get(), WorkersRenderer::new );
         RenderingRegistry.registerEntityRenderingHandler(ModEntityTypes.SHEPHERD.get(), WorkersRenderer::new );
         RenderingRegistry.registerEntityRenderingHandler(ModEntityTypes.FARMER.get(), WorkersRenderer::new );
-        RenderingRegistry.registerEntityRenderingHandler(ModEntityTypes.FISHERMAN.get(), WorkersRenderer::new );
+        RenderingRegistry.registerEntityRenderingHandler(ModEntityTypes.FISHERMAN.get(), FishermanRenderer::new );
     }
 
 }

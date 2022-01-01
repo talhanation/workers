@@ -1,8 +1,10 @@
 package com.talhanation.workers.entities;
 
+import com.talhanation.workers.entities.ai.WorkerMoveToCampGoal;
 import net.minecraft.entity.*;
 import net.minecraft.entity.ai.attributes.AttributeModifier;
 import net.minecraft.entity.ai.attributes.Attributes;
+import net.minecraft.entity.ai.goal.LookAtGoal;
 import net.minecraft.entity.item.ItemEntity;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.entity.projectile.AbstractArrowEntity;
@@ -29,12 +31,14 @@ import java.util.function.Predicate;
 public abstract class AbstractWorkerEntity extends AbstractInventoryEntity {
     private static final DataParameter<Optional<BlockPos>> START_POS = EntityDataManager.defineId(AbstractWorkerEntity.class, DataSerializers.OPTIONAL_BLOCK_POS);
     private static final DataParameter<Optional<BlockPos>> DEST_POS = EntityDataManager.defineId(AbstractWorkerEntity.class, DataSerializers.OPTIONAL_BLOCK_POS);
+    private static final DataParameter<Optional<BlockPos>> CAMP = EntityDataManager.defineId(AbstractWorkerEntity.class, DataSerializers.OPTIONAL_BLOCK_POS);
     private static final DataParameter<Boolean> FOLLOW = EntityDataManager.defineId(AbstractWorkerEntity.class, DataSerializers.BOOLEAN);
-    private static final DataParameter<Boolean> IS_WORKING = EntityDataManager.defineId(AbstractWorkerEntity.class, DataSerializers.BOOLEAN);
+    public static final DataParameter<Boolean> IS_WORKING = EntityDataManager.defineId(AbstractWorkerEntity.class, DataSerializers.BOOLEAN);
     private static final DataParameter<Boolean> IS_PICKING_UP = EntityDataManager.defineId(AbstractWorkerEntity.class, DataSerializers.BOOLEAN);
     private static final DataParameter<Integer> breakingTime = EntityDataManager.defineId(MinerEntity.class, DataSerializers.INT);
     private static final DataParameter<Integer> currentTimeBreak = EntityDataManager.defineId(MinerEntity.class, DataSerializers.INT);
     private static final DataParameter<Integer> previousTimeBreak = EntityDataManager.defineId(MinerEntity.class, DataSerializers.INT);
+
 
 
 
@@ -43,6 +47,12 @@ public abstract class AbstractWorkerEntity extends AbstractInventoryEntity {
         this.setOwned(false);
         this.xpReward = 2;
     }
+
+    @Override
+    protected void registerGoals() {
+        this.goalSelector.addGoal(1, new WorkerMoveToCampGoal(this, 6.0F));
+    }
+
 
     ///////////////////////////////////TICK/////////////////////////////////////////
 
@@ -100,14 +110,16 @@ public abstract class AbstractWorkerEntity extends AbstractInventoryEntity {
 
     protected void defineSynchedData() {
         super.defineSynchedData();
+        this.entityData.define(CAMP, Optional.empty());
+        this.entityData.define(START_POS, Optional.empty());
+        this.entityData.define(DEST_POS, Optional.empty());
         this.entityData.define(IS_WORKING, false);
         this.entityData.define(IS_PICKING_UP, false);
         this.entityData.define(FOLLOW, false);
-        this.entityData.define(START_POS, Optional.empty());
-        this.entityData.define(DEST_POS, Optional.empty());
         this.entityData.define(breakingTime, 0);
         this.entityData.define(currentTimeBreak, -1);
         this.entityData.define(previousTimeBreak, -1);
+
     }
 
     public void addAdditionalSaveData(CompoundNBT nbt) {
@@ -130,6 +142,12 @@ public abstract class AbstractWorkerEntity extends AbstractInventoryEntity {
             nbt.putInt("DestPosY", pos.getY());
             nbt.putInt("DestPosZ", pos.getZ());
         });
+
+        if(this.getCampPos() != null){
+            nbt.putInt("CampPosX", this.getCampPos().getX());
+            nbt.putInt("CampPosY", this.getCampPos().getY());
+            nbt.putInt("CampPosZ", this.getCampPos().getZ());
+        }
     }
 
     public void readAdditionalSaveData(CompoundNBT nbt) {
@@ -162,10 +180,24 @@ public abstract class AbstractWorkerEntity extends AbstractInventoryEntity {
             this.setDestPos(blockpos);
         }
 
+        if (nbt.contains("CampPosX", 99) &&
+                nbt.contains("CampPosY", 99) &&
+                nbt.contains("CampPosZ", 99)) {
+            BlockPos blockpos = new BlockPos(
+                    nbt.getInt("CampPosX"),
+                    nbt.getInt("CampPosY"),
+                    nbt.getInt("CampPosZ"));
+            this.setCampPos(Optional.of(blockpos));
+        }
+
     }
 
 
     ////////////////////////////////////GET////////////////////////////////////
+
+    public BlockPos getCampPos(){
+        return this.entityData.get(CAMP).orElse(null);
+    }
 
     public int getCurrentTimeBreak() {
         return this.entityData.get(currentTimeBreak);
@@ -226,6 +258,12 @@ public abstract class AbstractWorkerEntity extends AbstractInventoryEntity {
 
 
     ////////////////////////////////////SET////////////////////////////////////
+
+    public void setCampPos(Optional<BlockPos> pos){
+        LivingEntity owner = this.getOwner();
+        this.entityData.set(CAMP, pos);
+        owner.sendMessage(new StringTextComponent("I will camp here."), owner.getUUID());
+    }
 
     public void setPreviousTimeBreak(int value) {
         this.entityData.set(previousTimeBreak, value);
@@ -343,8 +381,6 @@ public abstract class AbstractWorkerEntity extends AbstractInventoryEntity {
     public boolean isOwnedByThisPlayer(AbstractWorkerEntity recruit, PlayerEntity player){
         return  (recruit.getOwnerUUID() == player.getUUID());
     }
-
-
 
     @Override
     public boolean canBeLeashed(PlayerEntity player) {

@@ -5,10 +5,15 @@ import com.mojang.blaze3d.systems.RenderSystem;
 import com.talhanation.workers.Main;
 import com.talhanation.workers.WorkerInventoryContainer;
 import com.talhanation.workers.entities.AbstractWorkerEntity;
+import com.talhanation.workers.network.MessageCampPos;
+import com.talhanation.workers.network.MessageMineType;
 import de.maxhenkel.corelib.inventory.ScreenBase;
+import net.minecraft.client.gui.widget.button.Button;
+import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.entity.player.PlayerInventory;
 import net.minecraft.util.ResourceLocation;
 import net.minecraft.util.text.ITextComponent;
+import net.minecraft.util.text.StringTextComponent;
 
 public class WorkerInventoryScreen extends ScreenBase<WorkerInventoryContainer> {
 
@@ -24,6 +29,15 @@ public class WorkerInventoryScreen extends ScreenBase<WorkerInventoryContainer> 
 
         imageWidth = 176;
         imageHeight = 222;
+    }
+
+    @Override
+    protected void init() {
+        super.init();
+        //CAMP POS
+        addButton(new Button(leftPos + 60, topPos + 60, 12, 12, new StringTextComponent("CAMP"), button -> {
+                Main.SIMPLE_CHANNEL.sendToServer(new MessageCampPos(worker.getUUID(), worker.getWorkerOnPos()));
+        }));
     }
 
     @Override

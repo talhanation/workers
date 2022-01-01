@@ -1,5 +1,6 @@
 package com.talhanation.workers;
 
+import com.talhanation.workers.entities.FishermanEntity;
 import com.talhanation.workers.entities.LumberjackEntity;
 import com.talhanation.workers.entities.MinerEntity;
 import com.talhanation.workers.init.ModBlocks;
@@ -41,6 +42,10 @@ public class VillagerEvents {
                 createLumber(villager);
             }
 
+            if (profession == Main.FISHER) {
+                createFisher(villager);
+            }
+
         }
 
     }
@@ -71,6 +76,18 @@ public class VillagerEvents {
         villager.level.addFreshEntity(lumberjack);
     }
 
+    private static void createFisher(LivingEntity entity){
+        FishermanEntity fisher = ModEntityTypes.FISHERMAN.get().create(entity.level);
+        VillagerEntity villager = (VillagerEntity) entity;
+        fisher.copyPosition(villager);
+        fisher.setCanPickUpLoot(true);
+        fisher.setEquipment();
+        fisher.setDropEquipment();
+        fisher.setRandomSpawnBonus();
+        fisher.setPersistenceRequired();
+        villager.remove();
+        villager.level.addFreshEntity(fisher);
+    }
 
 
     @SubscribeEvent
@@ -84,6 +101,13 @@ public class VillagerEvents {
         }
         if (event.getType() == VillagerProfession.FARMER) {
             VillagerTrades.ITrade block_trade = new Trade(Items.EMERALD, 15, ModBlocks.LUMBERJACK_BLOCK.get(), 1, 4, 10);
+            List list = event.getTrades().get(2);
+            list.add(block_trade);
+            event.getTrades().put(2, list);
+        }
+
+        if (event.getType() == VillagerProfession.FISHERMAN) {
+            VillagerTrades.ITrade block_trade = new Trade(Items.EMERALD, 25, ModBlocks.FISHER_BLOCK.get(), 1, 4, 10);
             List list = event.getTrades().get(2);
             list.add(block_trade);
             event.getTrades().put(2, list);

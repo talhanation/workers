@@ -18,4 +18,6 @@ public class ModBlocks {
     public static final RegistryObject<Block> LUMBERJACK_BLOCK = BLOCKS.register("lumberjack_block",
             () -> new Block(AbstractBlock.Properties.copy(Blocks.FLETCHING_TABLE)));
 
+    public static final RegistryObject<Block> FISHER_BLOCK = BLOCKS.register("fisherman_block",
+            () -> new Block(AbstractBlock.Properties.copy(Blocks.FLETCHING_TABLE)));
 }

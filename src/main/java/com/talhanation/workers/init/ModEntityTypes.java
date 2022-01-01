@@ -53,4 +53,13 @@ public class ModEntityTypes {
                     .setTrackingRange(32)
                     .setShouldReceiveVelocityUpdates(true)
                     .build(new ResourceLocation(Main.MOD_ID, "fisherman").toString()));
+    /*
+    public static final RegistryObject<EntityType<FishermansFishingBobberEntity>> FISHING_BOBBER = ENTITY_TYPES.register("bobber",
+            () -> EntityType.Builder.of(FishermansFishingBobberEntity::new, EntityClassification.MISC)
+                    .sized(0.1F, 0.1F)
+                    .canSpawnFarFromPlayer()
+                    .setTrackingRange(32)
+                    .setShouldReceiveVelocityUpdates(true)
+                    .build(new ResourceLocation(Main.MOD_ID, "bobber").toString()));
+    */
 }
