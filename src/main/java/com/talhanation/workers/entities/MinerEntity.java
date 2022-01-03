@@ -212,7 +212,7 @@ public class MinerEntity extends AbstractWorkerEntity {
     }
 
     public int getMaxMineDepth(){
-        return 32;
+        return 16;
     }
 
     @Override

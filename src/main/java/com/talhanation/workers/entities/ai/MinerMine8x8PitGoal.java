@@ -94,19 +94,11 @@ public class MinerMine8x8PitGoal extends Goal {
             if (minePos.closerThan(miner.position(), 4)){
                 this.miner.getLookControl().setLookAt(minePos.getX(), minePos.getY() + 1, minePos.getZ(), 10.0F, (float) this.miner.getMaxHeadXRot());
             }
-
             BlockState blockstate = miner.level.getBlockState(minePos);
             Block block1 = blockstate.getBlock();
-            /*
-            BlockState blockstate2 = miner.level.getBlockState(minePos.above());
-            Block block2 = blockstate2.getBlock();
-             */
             this.miner.getAttribute(Attributes.MOVEMENT_SPEED).setBaseValue(0.3D);
             //erst mienen wenn nah genug
             if (minePos.closerThan(miner.position(), 6)) this.mineBlock(this.minePos);
-            //if (miner.getOwner() !=null)
-            //miner.getOwner().sendMessage(new StringTextComponent("Blocks: " + blocks +"   Side: " + side + "   Depth: " + depth), miner.getOwner().getUUID());
-
             if (miner.shouldIgnorBlock(block1) || block1 == Blocks.OAK_PLANKS) {
                 blocks++;
                 if (block1 != Blocks.OAK_PLANKS) placePlanks();
