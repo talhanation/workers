@@ -19,7 +19,6 @@ public class MinerMine8x8x1FlatGoal extends Goal {
     private final double speedModifier;
     private final double within;
     private BlockPos minePos;
-    private BlockPos standPos;
     private int blocks;
     private int side;
 
@@ -69,19 +68,15 @@ public class MinerMine8x8x1FlatGoal extends Goal {
         if (!miner.getFollow()) {
             if (miner.getMineDirection().equals(Direction.EAST)) {
                 this.minePos = new BlockPos(miner.getStartPos().get().getX() + blocks, miner.getStartPos().get().getY(), miner.getStartPos().get().getZ() - side);
-                this.standPos = new BlockPos(minePos.getX() + 2, minePos.getY(), minePos.getZ());
 
             } else if (miner.getMineDirection().equals(Direction.WEST)) {
                 this.minePos = new BlockPos(miner.getStartPos().get().getX() - blocks, miner.getStartPos().get().getY(), miner.getStartPos().get().getZ() + side);
-                this.standPos = new BlockPos(minePos.getX() - 2, minePos.getY(), minePos.getZ());
 
             } else if (miner.getMineDirection().equals(Direction.NORTH)) {
                 this.minePos = new BlockPos(miner.getStartPos().get().getX() - side, miner.getStartPos().get().getY(), miner.getStartPos().get().getZ() - blocks);
-                this.standPos = new BlockPos(minePos.getX(), minePos.getY(), minePos.getZ() - 2);
 
             } else if (miner.getMineDirection().equals(Direction.SOUTH)) {
                 this.minePos = new BlockPos(miner.getStartPos().get().getX() + side, miner.getStartPos().get().getY(), miner.getStartPos().get().getZ() + blocks);
-                this.standPos = new BlockPos(minePos.getX(), minePos.getY(), minePos.getZ() + 2);
             }
 
             if (!minePos.closerThan(miner.position(), 2) && !miner.getIsPickingUp()){

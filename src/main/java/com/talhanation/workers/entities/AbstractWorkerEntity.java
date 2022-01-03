@@ -262,7 +262,7 @@ public abstract class AbstractWorkerEntity extends AbstractInventoryEntity {
     public void setCampPos(Optional<BlockPos> pos){
         LivingEntity owner = this.getOwner();
         this.entityData.set(CAMP, pos);
-        owner.sendMessage(new StringTextComponent("I will camp here."), owner.getUUID());
+        if (owner != null) owner.sendMessage(new StringTextComponent("I will camp here."), owner.getUUID());
     }
 
     public void setPreviousTimeBreak(int value) {
