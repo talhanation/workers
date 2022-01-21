@@ -13,6 +13,7 @@ import net.minecraft.util.SoundEvents;
 import net.minecraft.util.math.AxisAlignedBB;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.text.StringTextComponent;
+import net.minecraftforge.common.util.FakePlayer;
 import net.minecraftforge.event.ForgeEventFactory;
 
 import java.util.ArrayList;
@@ -65,8 +66,12 @@ public class FarmerCropAI extends Goal {
     }
 
     public void tick() {
+        if (z > 9 || x > 9) {
+            restetCounts();
+        }
+
         if(farmer.getOwner() != null) {
-            debugAxisPos();
+            //debugAxisPos();
         }
         /*
         state:
@@ -87,44 +92,42 @@ public class FarmerCropAI extends Goal {
                 BlockState blockstatehoe = farmer.level.getBlockState(workPos);
                 Block block = blockstatehoe.getBlock();
 
-
-                if (block != Blocks.AIR && block != Blocks.FARMLAND) {
+                if (block != Blocks.FARMLAND) {
                     this.farmer.getNavigation().moveTo(workPos.getX(), workPos.getY(), workPos.getZ(), 0.85);
-                }
+                } else
+                    x++;
 
                 if (this.workPos.closerThan(farmer.position(), 2.5)) {
                     this.prepareFarmLand(this.workPos);
                     this.farmer.workerSwingArm();
                     this.farmer.getLookControl().setLookAt(workPos.getX(), workPos.getY() + 1, workPos.getZ(), 10.0F, (float) this.farmer.getMaxHeadXRot());
 
-
-
                     if (block != Blocks.AIR || block == Blocks.FARMLAND) {
                         x++;
                     }
                 }
 
-                if (x == 9) {
+                if (x >= 9) {
                     x = 0;
                     z++;
                 }
 
-                if (z == 9) {
+                if (z >= 9) {
                     state = 1;
                     restetCounts();
                 }
 
             break;
-
             case 1://plant
-
-                if (hasSeedInInv()) {
+                if (this.hasSeedInInv()) {
                     BlockState farmlandBlockState = this.farmer.level.getBlockState(workPos);
                     BlockState cropBlockState = this.farmer.level.getBlockState(plantPos);
 
                     Block farmlandPos = farmlandBlockState.getBlock();
                     Block cropPos = cropBlockState.getBlock();
-                    if (cropPos == Blocks.AIR) this.farmer.getNavigation().moveTo(plantPos.getX(), plantPos.getY(), plantPos.getZ(), 0.85);
+                    if (cropPos == Blocks.AIR) {
+                        this.farmer.getNavigation().moveTo(plantPos.getX(), plantPos.getY(), plantPos.getZ(), 0.85);
+                    } else x++;
 
                     if (plantPos.closerThan(farmer.position(), 3)) {
                         if (cropPos == Blocks.AIR && farmlandPos == Blocks.FARMLAND) { //
@@ -132,45 +135,53 @@ public class FarmerCropAI extends Goal {
 
                             this.plantSeedsFromInv();
                             this.farmer.workerSwingArm();
-                        } else x++;
+                        } else
+                            x++;
                     }
 
-                    if (x == 9) {
+
+                    if (x >= 9) {
                         x = 0;
                         z++;
                     }
 
-                    if (z == 9 || !this.hasSeedInInv()) {
+                    if (z >= 9) {
                         restetCounts();
                         state = 2;
                     }
                 }
+                else
+                    state = 2;
             break;
 
             case 2://harvest
 
-                BlockState cropBlockState = this.farmer.level.getBlockState(plantPos);
-                Block cropPos = cropBlockState.getBlock();
+                BlockState cropBlockState1 = this.farmer.level.getBlockState(plantPos);
+                Block cropPos1 = cropBlockState1.getBlock();
 
 
-                if (cropPos instanceof CropsBlock) {
-                    CropsBlock crop = (CropsBlock) cropPos;
+                if (cropPos1 instanceof CropsBlock) {
+                    CropsBlock crop = (CropsBlock) cropPos1;
 
-                    if (crop.isMaxAge(cropBlockState)) {
+                    if (crop.isMaxAge(cropBlockState1)) {
                         this.farmer.getNavigation().moveTo(plantPos.getX(), plantPos.getY(), plantPos.getZ(), 0.85);
-                        if (plantPos.closerThan(farmer.position(), 3)) {
-                            this.farmer.getLookControl().setLookAt(plantPos.getX(), plantPos.getY() + 1, plantPos.getZ(), 10.0F, (float) this.farmer.getMaxHeadXRot());
-                            this.farmer.level.destroyBlock(plantPos, true, this.farmer);
-                        }
-                    } else x++;
-                } else x++;
 
-                if (x == 9) {
+                        if (plantPos.closerThan(farmer.position(), 3)) {
+                            mineBlock(plantPos);
+                            this.farmer.getLookControl().setLookAt(plantPos.getX(), plantPos.getY() + 1, plantPos.getZ(), 10.0F, (float) this.farmer.getMaxHeadXRot());
+                        }
+
+                    }
+                    else x++;
+                }
+                else x++;
+
+                if (x >= 9) {
                     x = 0;
                     z++;
                 }
 
-                if (z == 9) {
+                if (z >= 9) {
                     restetCounts();
                     state = 0;
                 }
@@ -179,12 +190,8 @@ public class FarmerCropAI extends Goal {
     }
 
     private boolean hasSeedInInv() {
-        /*
         Inventory inventory = farmer.getInventory();
         return inventory.hasAnyOf(WANTED_SEEDS);
-
-         */
-        return true;
     }
 
 
@@ -225,10 +232,10 @@ public class FarmerCropAI extends Goal {
 
     }
 
-
     private void prepareFarmLand(BlockPos blockPos) {
         BlockState blockstatehoe = farmer.level.getBlockState(blockPos);
         Block block = blockstatehoe.getBlock();
+
 
         if (block == Blocks.GRASS_BLOCK || block == Blocks.PODZOL || block == Blocks.DIRT){
             if (x == 4 && z == 4) {
@@ -242,16 +249,18 @@ public class FarmerCropAI extends Goal {
 
     }
 
-    private void breakBlock(BlockPos blockPos) {
+    private void mineBlock(BlockPos blockPos){
+
         if (this.farmer.isAlive() && ForgeEventFactory.getMobGriefingEvent(this.farmer.level, this.farmer) && !farmer.getFollow()) {
             BlockState blockstate = this.farmer.level.getBlockState(blockPos);
             Block block = blockstate.getBlock();
 
-            if (!farmer.isCropBlock(block)) {
+            if (block != Blocks.AIR) {
 
                 if (farmer.getCurrentTimeBreak() % 5 == 4) {
                     farmer.level.playLocalSound(blockPos.getX(), blockPos.getY(), blockPos.getZ(), blockstate.getSoundType().getHitSound(), SoundCategory.BLOCKS, 1F, 0.75F, false);
                 }
+
 
                 int bp = (int) (blockstate.getDestroySpeed(this.farmer.level, blockPos) * 10);
                 this.farmer.setBreakingTime(bp);
@@ -267,11 +276,11 @@ public class FarmerCropAI extends Goal {
                 }
 
                 if (this.farmer.getCurrentTimeBreak() == this.farmer.getBreakingTime()) {
-
+                    this.farmer.level.destroyBlock(blockPos, true, this.farmer);
                     this.farmer.setCurrentTimeBreak(-1);
                     this.farmer.setBreakingTime(0);
                 }
-
+                //farmer.changeTool(blockstate);
                 if (this.farmer.getRandom().nextInt(5) == 0) {
                     if (!this.farmer.swinging) {
                         this.farmer.swing(this.farmer.getUsedItemHand());

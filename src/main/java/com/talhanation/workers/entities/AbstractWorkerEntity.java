@@ -4,7 +4,6 @@ import com.talhanation.workers.entities.ai.WorkerMoveToCampGoal;
 import net.minecraft.entity.*;
 import net.minecraft.entity.ai.attributes.AttributeModifier;
 import net.minecraft.entity.ai.attributes.Attributes;
-import net.minecraft.entity.ai.goal.LookAtGoal;
 import net.minecraft.entity.item.ItemEntity;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.entity.projectile.AbstractArrowEntity;
@@ -33,7 +32,7 @@ public abstract class AbstractWorkerEntity extends AbstractInventoryEntity {
     private static final DataParameter<Optional<BlockPos>> DEST_POS = EntityDataManager.defineId(AbstractWorkerEntity.class, DataSerializers.OPTIONAL_BLOCK_POS);
     private static final DataParameter<Optional<BlockPos>> CAMP = EntityDataManager.defineId(AbstractWorkerEntity.class, DataSerializers.OPTIONAL_BLOCK_POS);
     private static final DataParameter<Boolean> FOLLOW = EntityDataManager.defineId(AbstractWorkerEntity.class, DataSerializers.BOOLEAN);
-    public static final DataParameter<Boolean> IS_WORKING = EntityDataManager.defineId(AbstractWorkerEntity.class, DataSerializers.BOOLEAN);
+    public  static final DataParameter<Boolean> IS_WORKING = EntityDataManager.defineId(AbstractWorkerEntity.class, DataSerializers.BOOLEAN);
     private static final DataParameter<Boolean> IS_PICKING_UP = EntityDataManager.defineId(AbstractWorkerEntity.class, DataSerializers.BOOLEAN);
     private static final DataParameter<Integer> breakingTime = EntityDataManager.defineId(MinerEntity.class, DataSerializers.INT);
     private static final DataParameter<Integer> currentTimeBreak = EntityDataManager.defineId(MinerEntity.class, DataSerializers.INT);

@@ -184,7 +184,7 @@ public class LumberjackAI extends Goal {
     }
 
     private void calculatePlantArea(){
-        if (y == 5) {
+        if (y >= 5) {
             y = -2;
             x = x + 3 + lumber.getRandom().nextInt(3);
         }
@@ -206,28 +206,28 @@ public class LumberjackAI extends Goal {
             y++;
         }
 
-        if (y == 9) {
+        if (y >= 9) {
             y = -2;
             x++;
         }
 
         if (innen){
-            if (x == 3) {
+            if (x >= 3) {
                 x = -3;
                 z++;
             }
-            if (z == 3) {
+            if (z >= 3) {
                 x = -9;
                 z = -9;
                 this.innen = false;
             }
         }
         else {
-            if (x == 9) {
+            if (x >= 9) {
                 x = -9;
                 z++;
             }
-            if (z == 9) {
+            if (z >= 9) {
                 z = -9;
                 this.plant = true;
                 this.innen = true;

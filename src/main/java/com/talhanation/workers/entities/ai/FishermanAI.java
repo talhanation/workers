@@ -1,9 +1,7 @@
 package com.talhanation.workers.entities.ai;
 
 import com.talhanation.workers.entities.FishermanEntity;
-import com.talhanation.workers.entities.FishermansFishingBobberEntity;
 import net.minecraft.entity.ai.goal.Goal;
-import net.minecraft.entity.projectile.FishingBobberEntity;
 import net.minecraft.item.ItemStack;
 import net.minecraft.loot.*;
 import net.minecraft.tags.FluidTags;
@@ -45,11 +43,11 @@ public class FishermanAI extends Goal {
 
     public void resetTask() {
         fisherman.getNavigation().stop();
-        this.fishingTimer = fisherman.getRandom().nextInt(500);
+        this.fishingTimer = fisherman.getRandom().nextInt(600);
     }
 
     public void spawnFishingLoot() {
-        this.fishingTimer = 400 + fisherman.getRandom().nextInt(500);
+        this.fishingTimer = 500 + fisherman.getRandom().nextInt(2000);
         double luck = 0.1D;
         LootContext.Builder lootcontext$builder = (new LootContext.Builder((ServerWorld)fisherman.level))
                 .withParameter(LootParameters.ORIGIN, fisherman.position())
