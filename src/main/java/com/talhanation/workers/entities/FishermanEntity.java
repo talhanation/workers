@@ -66,13 +66,13 @@ public class FishermanEntity extends AbstractWorkerEntity{
     }
 
     @Override
-    public int workerCosts() {
-        return 25;
+    protected boolean shouldLoadChunk() {
+        return true;
     }
 
     @Override
-    public String workerName() {
-        return "Fisherman";
+    public int workerCosts() {
+        return 25;
     }
 
     @Override
@@ -119,6 +119,7 @@ public class FishermanEntity extends AbstractWorkerEntity{
         this.setDropEquipment();
         this.getNavigation().setCanFloat(true);
         this.setCanPickUpLoot(true);
+        this.setCustomName(new StringTextComponent("Fisherman"));
         return ilivingentitydata;
     }
 

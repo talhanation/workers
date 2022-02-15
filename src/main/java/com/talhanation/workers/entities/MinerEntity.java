@@ -156,6 +156,7 @@ public class MinerEntity extends AbstractWorkerEntity {
         this.setEquipment();
         this.setDropEquipment();
         this.setCanPickUpLoot(true);
+        this.setCustomName(new StringTextComponent("Miner"));
         return ilivingentitydata;
     }
 
@@ -206,11 +207,6 @@ public class MinerEntity extends AbstractWorkerEntity {
         return 10;
     }
 
-    @Override
-    public String workerName() {
-        return "Miner";
-    }
-
     public int getMaxMineDepth(){
         return 16;
     }
@@ -231,6 +227,11 @@ public class MinerEntity extends AbstractWorkerEntity {
         super.readAdditionalSaveData(nbt);
         this.setMineType(nbt.getInt("MineType"));
         this.setMineDepth(nbt.getInt("Depth"));
+    }
+
+    @Override
+    protected boolean shouldLoadChunk() {
+        return true;
     }
 
     public void setMineDirection(Direction dir) {

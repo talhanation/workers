@@ -27,7 +27,7 @@ import javax.annotation.Nullable;
 import java.util.Optional;
 import java.util.function.Predicate;
 
-public abstract class AbstractWorkerEntity extends AbstractInventoryEntity {
+public abstract class AbstractWorkerEntity extends AbstractChunkLoaderEntity {
     private static final DataParameter<Optional<BlockPos>> START_POS = EntityDataManager.defineId(AbstractWorkerEntity.class, DataSerializers.OPTIONAL_BLOCK_POS);
     private static final DataParameter<Optional<BlockPos>> DEST_POS = EntityDataManager.defineId(AbstractWorkerEntity.class, DataSerializers.OPTIONAL_BLOCK_POS);
     private static final DataParameter<Optional<BlockPos>> CAMP = EntityDataManager.defineId(AbstractWorkerEntity.class, DataSerializers.OPTIONAL_BLOCK_POS);
@@ -38,10 +38,7 @@ public abstract class AbstractWorkerEntity extends AbstractInventoryEntity {
     private static final DataParameter<Integer> currentTimeBreak = EntityDataManager.defineId(MinerEntity.class, DataSerializers.INT);
     private static final DataParameter<Integer> previousTimeBreak = EntityDataManager.defineId(MinerEntity.class, DataSerializers.INT);
 
-
-
-
-    public AbstractWorkerEntity(EntityType<? extends AbstractInventoryEntity> entityType, World world) {
+    public AbstractWorkerEntity(EntityType<? extends AbstractWorkerEntity> entityType, World world) {
         super(entityType, world);
         this.setOwned(false);
         this.xpReward = 2;
@@ -261,7 +258,7 @@ public abstract class AbstractWorkerEntity extends AbstractInventoryEntity {
     public void setCampPos(Optional<BlockPos> pos){
         LivingEntity owner = this.getOwner();
         this.entityData.set(CAMP, pos);
-        if (owner != null) owner.sendMessage(new StringTextComponent("I will camp here."), owner.getUUID());
+        if (owner != null) owner.sendMessage(new StringTextComponent(this.getName().getString() + ": I will camp here."), owner.getUUID());
     }
 
     public void setPreviousTimeBreak(int value) {
@@ -291,10 +288,10 @@ public abstract class AbstractWorkerEntity extends AbstractInventoryEntity {
         LivingEntity owner = this.getOwner();
         if (owner != null)
         if (bool) {
-            owner.sendMessage(new StringTextComponent("I will follow you!"), owner.getUUID());
+            owner.sendMessage(new StringTextComponent(this.getName().getString() + ": I will follow you!"), owner.getUUID());
         }
         else
-            owner.sendMessage(new StringTextComponent("I will not follow you!"), owner.getUUID());
+            owner.sendMessage(new StringTextComponent(this.getName().getString() + ": I will not follow you!"), owner.getUUID());
     }
 
     public void setIsWorking(boolean bool) {
@@ -305,10 +302,10 @@ public abstract class AbstractWorkerEntity extends AbstractInventoryEntity {
 
         if (owner != null)
         if (bool) {
-            owner.sendMessage(new StringTextComponent("Im working now!"), owner.getUUID());
+            owner.sendMessage(new StringTextComponent(this.getName().getString() + ": Im working now!"), owner.getUUID());
         }
         else
-            owner.sendMessage(new StringTextComponent("I stopped working now!"), owner.getUUID());
+            owner.sendMessage(new StringTextComponent(this.getName().getString() + ": Work is done!"), owner.getUUID());
     }
 
     public void setIsPickingUp(boolean bool) {
@@ -387,8 +384,6 @@ public abstract class AbstractWorkerEntity extends AbstractInventoryEntity {
     }
     public abstract int workerCosts() ;
 
-    public abstract String workerName();
-
     @Override
     @OnlyIn(Dist.CLIENT)
     protected void spawnTamingParticles(boolean p_70908_1_) {
@@ -446,10 +441,10 @@ public abstract class AbstractWorkerEntity extends AbstractInventoryEntity {
                 return ActionResultType.SUCCESS;
             }
             else if (item == Items.EMERALD  && !this.isTame() && !playerHasEnoughEmeralds(player)) {
-                player.sendMessage(new StringTextComponent("You need " + workerCosts() + " Emeralds to hire me!"), player.getUUID());
+                player.sendMessage(new StringTextComponent("" + this.getName().getString() + ": You need " + workerCosts() + " Emeralds to hire me!"), player.getUUID());
             }
             else if (!this.isTame() && item != Items.EMERALD ) {
-                player.sendMessage(new StringTextComponent("I am a " + workerName()), player.getUUID());
+                player.sendMessage(new StringTextComponent("I am a " + this.getName().getString()), player.getUUID());
 
             }
             return super.mobInteract(player, hand);

@@ -125,13 +125,13 @@ public class LumberjackEntity extends AbstractWorkerEntity{
     }
 
     @Override
-    public int workerCosts() {
-        return 8;
+    protected boolean shouldLoadChunk() {
+        return true;
     }
 
     @Override
-    public String workerName() {
-        return "Lumberjack";
+    public int workerCosts() {
+        return 8;
     }
 
     //ATTRIBUTES
@@ -181,6 +181,7 @@ public class LumberjackEntity extends AbstractWorkerEntity{
         this.setDropEquipment();
         this.getNavigation().setCanFloat(true);
         this.setCanPickUpLoot(true);
+        this.setCustomName(new StringTextComponent("Lumberjack"));
         return ilivingentitydata;
     }
 

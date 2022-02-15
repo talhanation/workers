@@ -30,6 +30,7 @@ import net.minecraft.network.datasync.DataSerializers;
 import net.minecraft.network.datasync.EntityDataManager;
 import net.minecraft.pathfinding.GroundPathNavigator;
 import net.minecraft.util.text.ITextComponent;
+import net.minecraft.util.text.StringTextComponent;
 import net.minecraft.world.DifficultyInstance;
 import net.minecraft.world.IServerWorld;
 import net.minecraft.world.World;
@@ -75,13 +76,13 @@ public class ShepherdEntity extends AbstractWorkerEntity{
     }
 
     @Override
-    public int workerCosts() {
-        return 12;
+    protected boolean shouldLoadChunk() {
+        return true;
     }
 
     @Override
-    public String workerName() {
-        return "Shepherd";
+    public int workerCosts() {
+        return 12;
     }
 
     @Override
@@ -129,6 +130,7 @@ public class ShepherdEntity extends AbstractWorkerEntity{
         this.setDropEquipment();
         this.getNavigation().setCanFloat(true);
         this.setCanPickUpLoot(true);
+        this.setCustomName(new StringTextComponent("Shepherd"));
         return ilivingentitydata;
     }
 
