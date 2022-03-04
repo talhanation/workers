@@ -2,7 +2,7 @@ package com.talhanation.workers.entities;
 
 import com.google.common.collect.ImmutableSet;
 import com.talhanation.workers.Main;
-import com.talhanation.workers.WorkerInventoryContainer;
+import com.talhanation.workers.inventory.WorkerInventoryContainer;
 import com.talhanation.workers.entities.ai.FarmerCropAI;
 import com.talhanation.workers.entities.ai.WorkerFollowOwnerGoal;
 import com.talhanation.workers.entities.ai.WorkerPickupWantedItemGoal;

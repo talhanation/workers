@@ -2,7 +2,7 @@ package com.talhanation.workers.entities;
 
 import com.google.common.collect.ImmutableSet;
 import com.talhanation.workers.Main;
-import com.talhanation.workers.MinerInventoryContainer;
+import com.talhanation.workers.inventory.MinerInventoryContainer;
 import com.talhanation.workers.entities.ai.*;
 import com.talhanation.workers.network.MessageOpenGuiMiner;
 import net.minecraft.block.Block;

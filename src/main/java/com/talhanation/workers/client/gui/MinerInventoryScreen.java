@@ -2,7 +2,7 @@ package com.talhanation.workers.client.gui;
 
 import com.mojang.blaze3d.matrix.MatrixStack;
 import com.talhanation.workers.Main;
-import com.talhanation.workers.WorkerInventoryContainer;
+import com.talhanation.workers.inventory.WorkerInventoryContainer;
 import com.talhanation.workers.entities.MinerEntity;
 import com.talhanation.workers.network.MessageMineDepth;
 import com.talhanation.workers.network.MessageMineType;

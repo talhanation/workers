@@ -8,6 +8,7 @@ import com.talhanation.workers.entities.*;
 import com.talhanation.workers.init.ModBlocks;
 import com.talhanation.workers.init.ModEntityTypes;
 import com.talhanation.workers.init.ModItems;
+import com.talhanation.workers.inventory.WorkerInventoryContainer;
 import com.talhanation.workers.network.*;
 import de.maxhenkel.corelib.ClientRegistry;
 import net.minecraft.client.settings.KeyBinding;

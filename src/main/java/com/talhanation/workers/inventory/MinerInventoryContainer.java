@@ -1,19 +1,20 @@
-package com.talhanation.workers;
+package com.talhanation.workers.inventory;
 
-import com.talhanation.workers.entities.AbstractWorkerEntity;
+import com.talhanation.workers.Main;
+import com.talhanation.workers.entities.MinerEntity;
 import de.maxhenkel.corelib.inventory.ContainerBase;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.entity.player.PlayerInventory;
 import net.minecraft.inventory.IInventory;
 import net.minecraft.inventory.container.Slot;
 
-public class WorkerInventoryContainer extends ContainerBase {
+public class MinerInventoryContainer extends ContainerBase {
 
     private final IInventory workerInventory;
-    private final AbstractWorkerEntity worker;
+    private final MinerEntity worker;
 
-    public WorkerInventoryContainer(int id, AbstractWorkerEntity worker, PlayerInventory playerInventory) {
-        super(Main.WORKER_CONTAINER_TYPE, id, playerInventory, worker.getInventory());
+    public MinerInventoryContainer(int id, MinerEntity worker, PlayerInventory playerInventory) {
+        super(Main.MINER_CONTAINER_TYPE, id, playerInventory, worker.getInventory());
         this.worker = worker;
         this.workerInventory = worker.getInventory();
 
@@ -34,7 +35,7 @@ public class WorkerInventoryContainer extends ContainerBase {
         }
     }
 
-    public AbstractWorkerEntity getWorker() {
+    public MinerEntity getMiner() {
         return worker;
     }
 

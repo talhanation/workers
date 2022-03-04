@@ -1,10 +1,7 @@
 package com.talhanation.workers.entities;
 
-import com.google.common.collect.ImmutableSet;
 import com.talhanation.workers.Main;
 import com.talhanation.workers.inventory.WorkerInventoryContainer;
-import com.talhanation.workers.entities.ai.FishermanAI;
-import com.talhanation.workers.entities.ai.WorkerFindWaterAI;
 import com.talhanation.workers.entities.ai.WorkerFollowOwnerGoal;
 import com.talhanation.workers.entities.ai.WorkerPickupWantedItemGoal;
 import com.talhanation.workers.network.MessageOpenGuiWorker;
@@ -14,18 +11,15 @@ import net.minecraft.entity.ILivingEntityData;
 import net.minecraft.entity.SpawnReason;
 import net.minecraft.entity.ai.attributes.AttributeModifierMap;
 import net.minecraft.entity.ai.attributes.Attributes;
-import net.minecraft.entity.ai.goal.LookAtGoal;
-import net.minecraft.entity.ai.goal.LookRandomlyGoal;
-import net.minecraft.entity.ai.goal.SwimGoal;
-import net.minecraft.entity.ai.goal.WaterAvoidingRandomWalkingGoal;
+import net.minecraft.entity.ai.goal.*;
 import net.minecraft.entity.item.ItemEntity;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.entity.player.PlayerInventory;
 import net.minecraft.entity.player.ServerPlayerEntity;
 import net.minecraft.inventory.EquipmentSlotType;
+import net.minecraft.inventory.Inventory;
 import net.minecraft.inventory.container.Container;
 import net.minecraft.inventory.container.INamedContainerProvider;
-import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
 import net.minecraft.item.Items;
 import net.minecraft.nbt.CompoundNBT;
@@ -39,21 +33,13 @@ import net.minecraft.world.server.ServerWorld;
 import net.minecraftforge.fml.network.NetworkHooks;
 
 import javax.annotation.Nullable;
-import java.util.Set;
 import java.util.function.Predicate;
 
-public class FishermanEntity extends AbstractWorkerEntity{
+public class MerchantEntity extends AbstractWorkerEntity{
 
-    private final Predicate<ItemEntity> ALLOWED_ITEMS = (item) -> !item.hasPickUpDelay() && item.isAlive() && this.wantsToPickUp(item.getItem());
 
-    public static final Set<Item> WANTED_ITEMS = ImmutableSet.of(
-            Items.COD,
-            Items.SALMON,
-            Items.PUFFERFISH,
-            Items.TROPICAL_FISH
-    );
 
-    public FishermanEntity(EntityType<? extends AbstractWorkerEntity> entityType, World world) {
+    public MerchantEntity(EntityType<? extends AbstractWorkerEntity> entityType, World world) {
         super(entityType, world);
     }
 
@@ -64,24 +50,44 @@ public class FishermanEntity extends AbstractWorkerEntity{
 
     @Override
     protected boolean shouldLoadChunk() {
-        return true;
+        return false;
     }
 
     @Override
     public int workerCosts() {
-        return 25;
+        return 50;
     }
 
     @Override
-    public Predicate<ItemEntity> getAllowedItems(){
-        return ALLOWED_ITEMS;
+    public Predicate<ItemEntity> getAllowedItems() {
+        return null;
     }
 
+
+    @Override
+    public void openGUI(PlayerEntity player) {
+        if (player instanceof ServerPlayerEntity) {
+            NetworkHooks.openGui((ServerPlayerEntity) player, new INamedContainerProvider() {
+                @Override
+                public ITextComponent getDisplayName() {
+                    return getName();
+                }
+
+                @Nullable
+                @Override
+                public Container createMenu(int i, PlayerInventory playerInventory, PlayerEntity playerEntity) {
+                    return new WorkerInventoryContainer(i, MerchantEntity.this, playerInventory);
+                }
+            }, packetBuffer -> {packetBuffer.writeUUID(getUUID());});
+        } else {
+            Main.SIMPLE_CHANNEL.sendToServer(new MessageOpenGuiWorker(player, this.getUUID()));
+        }
+    }
 
     //ATTRIBUTES
     public static AttributeModifierMap.MutableAttribute setAttributes() {
         return createMobAttributes()
-                .add(Attributes.MAX_HEALTH, 20.0D)
+                .add(Attributes.MAX_HEALTH, 50.0D)
                 .add(Attributes.MOVEMENT_SPEED, 0.3D)
                 .add(Attributes.ATTACK_DAMAGE, 1.0D)
                 .add(Attributes.FOLLOW_RANGE, 32.0D);
@@ -93,11 +99,14 @@ public class FishermanEntity extends AbstractWorkerEntity{
         this.goalSelector.addGoal(1, new SwimGoal(this));
         this.goalSelector.addGoal(2, new WorkerPickupWantedItemGoal(this));
         this.goalSelector.addGoal(2, new WorkerFollowOwnerGoal(this, 1.2D, 7.F, 4.0F));
-        this.goalSelector.addGoal(3, new WorkerFindWaterAI(this));
-        this.goalSelector.addGoal(4, new FishermanAI(this));
+        this.goalSelector.addGoal(3, new PanicGoal(this,2D));
         this.goalSelector.addGoal(5, new LookAtGoal(this, PlayerEntity.class, 8.0F));
         this.goalSelector.addGoal(6, new LookRandomlyGoal(this));
         this.goalSelector.addGoal(6, new WaterAvoidingRandomWalkingGoal(this, 1.0D, 0F));
+
+
+        //this.targetSelector.addGoal(1, new (this));
+
     }
 
     @Nullable
@@ -116,39 +125,42 @@ public class FishermanEntity extends AbstractWorkerEntity{
         this.setDropEquipment();
         this.getNavigation().setCanFloat(true);
         this.setCanPickUpLoot(true);
-        this.setCustomName(new StringTextComponent("Fisherman"));
+        this.setCustomName(new StringTextComponent("Merchant"));
         return ilivingentitydata;
     }
 
-    @Override
-    public boolean wantsToPickUp(ItemStack itemStack) {
-        Item item = itemStack.getItem();
-        return (WANTED_ITEMS.contains(item));
+    protected void pickUpItem(ItemEntity itemEntity) {
+        ItemStack itemstack = itemEntity.getItem();
+        if (this.wantsToPickUp(itemstack)) {
+            Inventory inventory = this.getInventory();
+            boolean flag = inventory.canAddItem(itemstack);
+            if (!flag) {
+                return;
+            }
+
+            this.onItemPickup(itemEntity);
+            this.take(itemEntity, itemstack.getCount());
+            ItemStack itemstack1 = inventory.addItem(itemstack);
+            if (itemstack1.isEmpty()) {
+                itemEntity.remove();
+            } else {
+                itemstack.setCount(itemstack1.getCount());
+            }
+        }
+
     }
 
     @Override
     public void setEquipment() {
-        this.setItemSlot(EquipmentSlotType.MAINHAND, new ItemStack(Items.FISHING_ROD));
-    }
-
-    @Override
-    public void openGUI(PlayerEntity player) {
-        if (player instanceof ServerPlayerEntity) {
-            NetworkHooks.openGui((ServerPlayerEntity) player, new INamedContainerProvider() {
-                @Override
-                public ITextComponent getDisplayName() {
-                    return getName();
-                }
-
-                @Nullable
-                @Override
-                public Container createMenu(int i, PlayerInventory playerInventory, PlayerEntity playerEntity) {
-                    return new WorkerInventoryContainer(i, FishermanEntity.this, playerInventory);
-                }
-            }, packetBuffer -> {packetBuffer.writeUUID(getUUID());});
-        } else {
-            Main.SIMPLE_CHANNEL.sendToServer(new MessageOpenGuiWorker(player, this.getUUID()));
+        int i = this.random.nextInt(9);
+        if (i == 0) {
+            this.setItemSlot(EquipmentSlotType.MAINHAND, new ItemStack(Items.BOOK));
+        }else{
+            this.setItemSlot(EquipmentSlotType.MAINHAND, new ItemStack(Items.PAPER));
         }
     }
+
+
+
 
 }
