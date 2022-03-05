@@ -91,6 +91,7 @@ public class MerchantEntity extends AbstractWorkerEntity{
                 }
 
             }
+            else if (item == Items.EMERALD && !this.isTame() && playerHasEnoughEmeralds(player)) {
                 if (!player.abilities.instabuild) {
                     if (!player.isCreative()) {
                         itemstack.shrink(workerCosts());
