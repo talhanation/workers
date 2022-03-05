@@ -33,32 +33,28 @@ public class MerchantTradeScreen extends ScreenBase<MerchantTradeContainer> {
         super.init();
         //CAMP POS
 
-        addButton(new Button(leftPos + 10, topPos + 7 + 15*0, 24, 12, new StringTextComponent("Trade"), button -> {
+        addButton(new Button(leftPos + 110, topPos + 20 + 18 * 0, 48, 12, new StringTextComponent("Trade"), button -> {
             Main.SIMPLE_CHANNEL.sendToServer(new MessageTradeButton(merchant.getUUID(), playerInventory.player.getUUID(), 0));
         }));
 
-        addButton(new Button(leftPos + 10, topPos + 7 + 15*1, 24, 12, new StringTextComponent("Trade"), button -> {
+        addButton(new Button(leftPos + 110, topPos + 20 + 18 * 1, 48, 12, new StringTextComponent("Trade"), button -> {
             Main.SIMPLE_CHANNEL.sendToServer(new MessageTradeButton(merchant.getUUID(), playerInventory.player.getUUID(), 1));
         }));
 
-
-        addButton(new Button(leftPos + 10, topPos + 7 + 15*2, 24, 12, new StringTextComponent("Trade"), button -> {
+        addButton(new Button(leftPos + 110, topPos + 20 + 18 * 2, 48, 12, new StringTextComponent("Trade"), button -> {
             Main.SIMPLE_CHANNEL.sendToServer(new MessageTradeButton(merchant.getUUID(), playerInventory.player.getUUID(), 2));
         }));
 
-
-        addButton(new Button(leftPos + 10, topPos + 7 + 15*3, 24, 12, new StringTextComponent("Trade"), button -> {
+        addButton(new Button(leftPos + 110, topPos + 20 + 18 * 3, 48, 12, new StringTextComponent("Trade"), button -> {
             Main.SIMPLE_CHANNEL.sendToServer(new MessageTradeButton(merchant.getUUID(), playerInventory.player.getUUID(), 3));
         }));
-
-
     }
 
     @Override
     protected void renderLabels(MatrixStack matrixStack, int mouseX, int mouseY) {
         super.renderLabels(matrixStack, mouseX, mouseY);
         font.draw(matrixStack, merchant.getDisplayName().getVisualOrderText(), 8, 6, FONT_COLOR);
-        font.draw(matrixStack, playerInventory.getDisplayName().getVisualOrderText(), 8, imageHeight - 152 + 3, FONT_COLOR);
+        font.draw(matrixStack, playerInventory.getDisplayName().getVisualOrderText(), 8, imageHeight - 152 + 25, FONT_COLOR);
     }
 
     @Override

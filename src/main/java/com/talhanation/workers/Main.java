@@ -2,12 +2,15 @@ package com.talhanation.workers;
 
 import com.google.common.collect.ImmutableSet;
 import com.talhanation.workers.client.events.KeyEvents;
+import com.talhanation.workers.client.gui.MerchantTradeScreen;
+import com.talhanation.workers.client.gui.MessageTradeButton;
 import com.talhanation.workers.client.gui.MinerInventoryScreen;
 import com.talhanation.workers.client.gui.WorkerInventoryScreen;
 import com.talhanation.workers.entities.*;
 import com.talhanation.workers.init.ModBlocks;
 import com.talhanation.workers.init.ModEntityTypes;
 import com.talhanation.workers.init.ModItems;
+import com.talhanation.workers.inventory.MerchantTradeContainer;
 import com.talhanation.workers.inventory.WorkerInventoryContainer;
 import com.talhanation.workers.network.*;
 import de.maxhenkel.corelib.ClientRegistry;
@@ -54,6 +57,7 @@ public class Main {
     public static KeyBinding C_KEY;
     public static ContainerType<WorkerInventoryContainer> MINER_CONTAINER_TYPE;
     public static ContainerType<WorkerInventoryContainer> WORKER_CONTAINER_TYPE;
+    public static ContainerType<MerchantTradeContainer> MERCHANT_CONTAINER_TYPE;
 
     public Main() {
         //ModLoadingContext.get().registerConfig(ModConfig.Type.COMMON, workersModConfig.CONFIG);
@@ -104,6 +108,15 @@ public class Main {
                 buf -> (new MessageCampPos()).fromBytes(buf),
                 (msg, fun) -> msg.executeServerSide(fun.get()));
 
+        SIMPLE_CHANNEL.registerMessage(6, MessageOpenGuiMerchant.class, MessageOpenGuiMerchant::toBytes,
+                buf -> (new MessageOpenGuiMerchant()).fromBytes(buf),
+                (msg, fun) -> msg.executeServerSide(fun.get()));
+
+        SIMPLE_CHANNEL.registerMessage(7, MessageTradeButton.class, MessageTradeButton::toBytes,
+                buf -> (new MessageTradeButton()).fromBytes(buf),
+                (msg, fun) -> msg.executeServerSide(fun.get()));
+
+
 
         DeferredWorkQueue.runLater(() -> {
             GlobalEntityTypeAttributes.put(ModEntityTypes.MINER.get(), MinerEntity.setAttributes().build());
@@ -111,6 +124,7 @@ public class Main {
             GlobalEntityTypeAttributes.put(ModEntityTypes.SHEPHERD.get(), ShepherdEntity.setAttributes().build());
             GlobalEntityTypeAttributes.put(ModEntityTypes.FARMER.get(), FarmerEntity.setAttributes().build());
             GlobalEntityTypeAttributes.put(ModEntityTypes.FISHERMAN.get(), FishermanEntity.setAttributes().build());
+            GlobalEntityTypeAttributes.put(ModEntityTypes.MERCHANT.get(), FishermanEntity.setAttributes().build());
         });
     }
 
@@ -124,6 +138,7 @@ public class Main {
 
         ClientRegistry.registerScreen(Main.MINER_CONTAINER_TYPE, MinerInventoryScreen::new);
         ClientRegistry.registerScreen(Main.WORKER_CONTAINER_TYPE, WorkerInventoryScreen::new);
+        ClientRegistry.registerScreen(Main.MERCHANT_CONTAINER_TYPE, MerchantTradeScreen::new);
     }
 
     @SubscribeEvent
@@ -172,6 +187,13 @@ public class Main {
             }
             return new WorkerInventoryContainer(windowId, rec, inv);
         });
+        MERCHANT_CONTAINER_TYPE = new ContainerType<>((IContainerFactory<MerchantTradeContainer>) (windowId, inv, data) -> {
+            MerchantEntity rec = (MerchantEntity) getRecruitByUUID(inv.player, data.readUUID());
+            if (rec == null) {
+                return null;
+            }
+            return new MerchantTradeContainer(windowId, rec, inv);
+        });
 
         MINER_CONTAINER_TYPE.setRegistryName(new ResourceLocation(Main.MOD_ID, "miner_container"));
         event.getRegistry().register(MINER_CONTAINER_TYPE);
@@ -179,6 +201,8 @@ public class Main {
         WORKER_CONTAINER_TYPE.setRegistryName(new ResourceLocation(Main.MOD_ID, "worker_container"));
         event.getRegistry().register(WORKER_CONTAINER_TYPE);
 
+        MERCHANT_CONTAINER_TYPE.setRegistryName(new ResourceLocation(Main.MOD_ID, "merchant_container"));
+        event.getRegistry().register(MERCHANT_CONTAINER_TYPE);
     }
 
     @Nullable

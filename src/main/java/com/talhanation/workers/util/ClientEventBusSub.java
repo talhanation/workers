@@ -16,12 +16,12 @@ import net.minecraftforge.fml.event.lifecycle.FMLClientSetupEvent;
 public class ClientEventBusSub {
 
     @SubscribeEvent
-    public static void clientsetup(FMLClientSetupEvent event){
+    public static void clientSetup(FMLClientSetupEvent event){
         RenderingRegistry.registerEntityRenderingHandler(ModEntityTypes.MINER.get(), MinerRenderer::new );
         RenderingRegistry.registerEntityRenderingHandler(ModEntityTypes.LUMBERJACK.get(), WorkersRenderer::new );
         RenderingRegistry.registerEntityRenderingHandler(ModEntityTypes.SHEPHERD.get(), WorkersRenderer::new );
         RenderingRegistry.registerEntityRenderingHandler(ModEntityTypes.FARMER.get(), WorkersRenderer::new );
         RenderingRegistry.registerEntityRenderingHandler(ModEntityTypes.FISHERMAN.get(), FishermanRenderer::new );
+        RenderingRegistry.registerEntityRenderingHandler(ModEntityTypes.MERCHANT.get(), WorkersRenderer::new );
     }
-
 }

@@ -6,11 +6,11 @@ import net.minecraft.nbt.CompoundNBT;
 
 import java.util.function.Supplier;
 
-public class RecruitSpawnEgg extends SpawnEggItem {
+public class WorkersSpawnEgg extends SpawnEggItem {
 
     private Supplier<EntityType<?>> entityType;
 
-    public RecruitSpawnEgg(Supplier<EntityType<?>> entityType, int primaryColor, int secondaryColor, Properties properties){
+    public WorkersSpawnEgg(Supplier<EntityType<?>> entityType, int primaryColor, int secondaryColor, Properties properties){
         super(null, primaryColor, secondaryColor, properties);
         this.entityType = entityType;
     }
