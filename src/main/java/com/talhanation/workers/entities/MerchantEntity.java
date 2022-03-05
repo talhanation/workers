@@ -112,9 +112,8 @@ public class MerchantEntity extends AbstractWorkerEntity{
             }
 
             else if (this.isTame() && player.getUUID() != this.getOwnerUUID()) {
-                if (getOwner() != null) player.sendMessage(new StringTextComponent("" + this.getName().getString() + ": I am a the Merchant of " + this.getOwner().getDisplayName().getString() + "!"), player.getUUID());
-                if (player.isCrouching()) {
-
+                if (getOwner() != null) player.sendMessage(new StringTextComponent("" + this.getName().getString() + ": Hello, I am a the merchant of " + this.getOwner().getDisplayName().getString() + "!"), player.getUUID());
+                if (!player.isCrouching()) {
                     openTradeGUI(player);
                 }
             }

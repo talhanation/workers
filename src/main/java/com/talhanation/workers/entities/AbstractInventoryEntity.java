@@ -72,7 +72,6 @@ public abstract class AbstractInventoryEntity extends TameableEntity {
 
     ////////////////////////////////////SET////////////////////////////////////
 
-
     public boolean setSlot(int slot, ItemStack itemStack) {
         if (super.setSlot(slot, itemStack)) {
             return true;
