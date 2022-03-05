@@ -5,6 +5,7 @@ import com.talhanation.workers.entities.MerchantEntity;
 import com.talhanation.workers.entities.MinerEntity;
 import net.minecraft.entity.LivingEntity;
 import net.minecraft.entity.player.PlayerEntity;
+import net.minecraft.entity.player.PlayerInventory;
 import net.minecraft.inventory.IInventory;
 import net.minecraft.inventory.Inventory;
 import net.minecraft.item.Item;
@@ -105,15 +106,19 @@ public class CommandEvents {
     public static void handleMerchantTrade(PlayerEntity player, MerchantEntity merchant, int tradeID){
         int[] PRICE_SLOT = new int[]{0,2,4,6};
         int[] TRADE_SLOT = new int[]{1,3,5,7};
-        IInventory playerInv = player.inventory;
-        IInventory merchantInv = merchant.getInventory();//supply and money
-        IInventory merchantTradeInv = merchant.getTradeInventory();//trade interface
 
-        ItemStack moneyItemStack = merchantTradeInv.getItem(PRICE_SLOT[tradeID]);
-        Item emerald = moneyItemStack.getItem();//
-        int emeraldCount = moneyItemStack.getCount();
+        PlayerInventory playerInv = player.inventory;
+        Inventory merchantInv = merchant.getInventory();//supply and money
+        Inventory merchantTradeInv = merchant.getTradeInventory();//trade interface
+
         int playerEmeralds = 0;
         int merchantEmeralds = 0;
+        int playerTradeItem = 0;
+        int merchantTradeItem = 0;
+
+        ItemStack emeraldItemStack = merchantTradeInv.getItem(PRICE_SLOT[tradeID]);
+        Item emerald = emeraldItemStack.getItem();//
+        int sollPrice = emeraldItemStack.getCount();
 
         ItemStack tradeItemStack = merchantTradeInv.getItem(TRADE_SLOT[tradeID]);
         Item tradeItem = tradeItemStack.getItem();
@@ -121,22 +126,82 @@ public class CommandEvents {
 
         //checkPlayerMoney
         for (int i = 0; i < playerInv.getContainerSize(); i++){
-            ItemStack itemStackInInv = playerInv.getItem(i);
-            if (itemStackInInv == moneyItemStack){
-                playerEmeralds = playerEmeralds + itemStackInInv.getCount();
-
+            ItemStack itemStackInSlot = playerInv.getItem(i);
+            Item itemInSlot = itemStackInSlot.getItem();
+            if (itemInSlot == emerald){
+                playerEmeralds = playerEmeralds + itemStackInSlot.getCount();
             }
         }
         player.sendMessage(new StringTextComponent("PlayerEmeralds: " + playerEmeralds), player.getUUID());
 
         //checkMerchantMoney
         for (int i = 0; i < merchantInv.getContainerSize(); i++){
-            ItemStack itemStackInInv = merchantInv.getItem(i);
-            if (itemStackInInv == moneyItemStack){
-                merchantEmeralds = merchantEmeralds + itemStackInInv.getCount();
-
+            ItemStack itemStackInSlot = merchantInv.getItem(i);
+            Item itemInSlot = itemStackInSlot.getItem();
+            if (itemInSlot == emerald){
+                merchantEmeralds = merchantEmeralds + itemStackInSlot.getCount();
             }
         }
         player.sendMessage(new StringTextComponent("MerchantEmeralds: " + merchantEmeralds), player.getUUID());
+
+
+        //checkPlayerTradeGood
+        for (int i = 0; i < playerInv.getContainerSize(); i++){
+            ItemStack itemStackInSlot = playerInv.getItem(i);
+            Item itemInSlot = itemStackInSlot.getItem();
+            if (itemInSlot == tradeItem){
+                playerTradeItem = playerTradeItem + itemStackInSlot.getCount();
+            }
+        }
+        player.sendMessage(new StringTextComponent("PlayerTradeItem: " + playerTradeItem), player.getUUID());
+
+        //checkMerchantTradeGood
+        for (int i = 0; i < merchantInv.getContainerSize(); i++){
+            ItemStack itemStackInSlot = merchantInv.getItem(i);
+            Item itemInSlot = itemStackInSlot.getItem();
+            if (itemInSlot == tradeItem){
+                merchantTradeItem = merchantTradeItem + itemStackInSlot.getCount();
+            }
+        }
+        player.sendMessage(new StringTextComponent("MerchantTradeItem: " + merchantTradeItem), player.getUUID());
+
+
+
+        //if can add auf beiden seiten
+        if (playerEmeralds >= sollPrice){
+            playerEmeralds = playerEmeralds - sollPrice;
+
+            merchantEmeralds = merchantEmeralds + sollPrice;
+
+
+            //remove playerEmeralds
+            for (int i = 0; i < playerInv.getContainerSize(); i++){
+                ItemStack itemStackInSlot = playerInv.getItem(i);
+                Item itemInSlot = itemStackInSlot.getItem();
+                if (itemInSlot == emerald){
+                    playerInv.removeItemNoUpdate(i);
+                }
+            }
+
+
+            //add emeralds to merchantInventory
+            ItemStack emeraldsKar = emeraldItemStack.copy();
+            emeraldsKar.setCount(sollPrice);//später merchantEmeralds wenn ich alle s löschen tu
+            merchantInv.addItem(emeraldsKar);
+
+            //add  leftEmeralds to playerInventory
+            ItemStack emeraldsLeft = emeraldItemStack.copy();
+            emeraldsLeft.setCount(playerEmeralds);//später merchantEmeralds wenn ich alle s löschen tu
+            playerInv.add(emeraldsLeft);
+
+            player.sendMessage(new StringTextComponent("###########################"), player.getUUID());
+            player.sendMessage(new StringTextComponent("Soll Price: " + sollPrice), player.getUUID());
+            player.sendMessage(new StringTextComponent("###########################"), player.getUUID());
+            player.sendMessage(new StringTextComponent("MerchantEmeralds: " + merchantEmeralds), player.getUUID());
+            player.sendMessage(new StringTextComponent("PlayerEmeralds: " + playerEmeralds), player.getUUID());
+        }
+        if (playerEmeralds < sollPrice){
+            player.sendMessage(new StringTextComponent("" + merchant.getName().getString() + ": Sorry, you dont have enough items i need."), player.getUUID());
+        }
     }
 }
