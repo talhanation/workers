@@ -2,14 +2,12 @@ package com.talhanation.workers;
 
 import com.google.common.collect.ImmutableSet;
 import com.talhanation.workers.client.events.KeyEvents;
-import com.talhanation.workers.client.gui.MerchantTradeScreen;
-import com.talhanation.workers.client.gui.MessageTradeButton;
-import com.talhanation.workers.client.gui.MinerInventoryScreen;
-import com.talhanation.workers.client.gui.WorkerInventoryScreen;
+import com.talhanation.workers.client.gui.*;
 import com.talhanation.workers.entities.*;
 import com.talhanation.workers.init.ModBlocks;
 import com.talhanation.workers.init.ModEntityTypes;
 import com.talhanation.workers.init.ModItems;
+import com.talhanation.workers.inventory.MerchantInventoryContainer;
 import com.talhanation.workers.inventory.MerchantTradeContainer;
 import com.talhanation.workers.inventory.WorkerInventoryContainer;
 import com.talhanation.workers.network.*;
@@ -58,6 +56,7 @@ public class Main {
     public static ContainerType<WorkerInventoryContainer> MINER_CONTAINER_TYPE;
     public static ContainerType<WorkerInventoryContainer> WORKER_CONTAINER_TYPE;
     public static ContainerType<MerchantTradeContainer> MERCHANT_CONTAINER_TYPE;
+    public static ContainerType<MerchantInventoryContainer> MERCHANT_OWNER_CONTAINER_TYPE;
 
     public Main() {
         //ModLoadingContext.get().registerConfig(ModConfig.Type.COMMON, workersModConfig.CONFIG);
@@ -139,6 +138,7 @@ public class Main {
         ClientRegistry.registerScreen(Main.MINER_CONTAINER_TYPE, MinerInventoryScreen::new);
         ClientRegistry.registerScreen(Main.WORKER_CONTAINER_TYPE, WorkerInventoryScreen::new);
         ClientRegistry.registerScreen(Main.MERCHANT_CONTAINER_TYPE, MerchantTradeScreen::new);
+        ClientRegistry.registerScreen(Main.MERCHANT_OWNER_CONTAINER_TYPE, MerchantOwnerScreen::new);
     }
 
     @SubscribeEvent
@@ -194,6 +194,14 @@ public class Main {
             }
             return new MerchantTradeContainer(windowId, rec, inv);
         });
+        MERCHANT_OWNER_CONTAINER_TYPE = new ContainerType<>((IContainerFactory<MerchantInventoryContainer>) (windowId, inv, data) -> {
+            MerchantEntity rec = (MerchantEntity) getRecruitByUUID(inv.player, data.readUUID());
+            if (rec == null) {
+                return null;
+            }
+            return new MerchantInventoryContainer(windowId, rec, inv);
+        });
+
 
         MINER_CONTAINER_TYPE.setRegistryName(new ResourceLocation(Main.MOD_ID, "miner_container"));
         event.getRegistry().register(MINER_CONTAINER_TYPE);
@@ -203,6 +211,9 @@ public class Main {
 
         MERCHANT_CONTAINER_TYPE.setRegistryName(new ResourceLocation(Main.MOD_ID, "merchant_container"));
         event.getRegistry().register(MERCHANT_CONTAINER_TYPE);
+
+        MERCHANT_OWNER_CONTAINER_TYPE.setRegistryName(new ResourceLocation(Main.MOD_ID, "merchant_owner_container"));
+        event.getRegistry().register(MERCHANT_OWNER_CONTAINER_TYPE);
     }
 
     @Nullable

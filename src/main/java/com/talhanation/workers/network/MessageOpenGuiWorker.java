@@ -1,6 +1,6 @@
 package com.talhanation.workers.network;
 
-import com.talhanation.workers.entities.LumberjackEntity;
+import com.talhanation.workers.entities.AbstractWorkerEntity;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.entity.player.ServerPlayerEntity;
@@ -37,7 +37,7 @@ public class MessageOpenGuiWorker implements Message<MessageOpenGuiWorker> {
         }
 
         ServerPlayerEntity player = context.getSender();
-        player.level.getEntitiesOfClass(LumberjackEntity.class, player.getBoundingBox()
+        player.level.getEntitiesOfClass(AbstractWorkerEntity.class, player.getBoundingBox()
                 .inflate(16.0D), v -> v
                 .getUUID()
                 .equals(this.worker))

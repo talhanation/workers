@@ -10,9 +10,10 @@ import net.minecraft.inventory.IInventory;
 import net.minecraft.inventory.container.Slot;
 import net.minecraft.item.ItemStack;
 
-public class MerchantTradeContainer extends ContainerBase {
+public class MerchantInventoryContainer extends ContainerBase {
 
     private final IInventory workerInventory;
+    private final IInventory workerTradeInventory;
     private final MerchantEntity merchant;
     private final PlayerEntity player;
 
@@ -24,33 +25,43 @@ public class MerchantTradeContainer extends ContainerBase {
             1,3,5,7
     };
 
-    public MerchantTradeContainer(int id, MerchantEntity merchant, PlayerInventory playerInventory) {
-        super(Main.MERCHANT_CONTAINER_TYPE, id, playerInventory, merchant.getInventory());
+    public MerchantInventoryContainer(int id, MerchantEntity merchant, PlayerInventory playerInventory) {
+        super(Main.MERCHANT_OWNER_CONTAINER_TYPE, id, playerInventory, merchant.getInventory());
         this.merchant = merchant;
-        this.workerInventory = merchant.getTradeInventory();
+        this.workerTradeInventory = merchant.getTradeInventory();
+        this.workerInventory = merchant.getInventory();
         this.player = playerInventory.player;
 
         addWorkerTradeSlots();
         addWorkerPriceSlots();
         addPlayerInventorySlots();
+        addWorkerInventorySlots();
     }
 
     @Override
     public int getInvOffset() {
-        return 25;
+        return 56;
+    }
+
+    public void addWorkerInventorySlots() {
+        for (int k = 0; k < 2; ++k) {
+            for (int l = 0; l < 9; ++l) {
+                this.addSlot(new Slot(workerInventory, l + k * 9, 8 + l * 18,  3 + 18 * 5 + k * 18));
+            }
+        }
     }
 
     public void addWorkerPriceSlots() {
         for (int k = 0; k < 4; ++k) {
-            this.addSlot(new Slot(workerInventory, PRICE_ID[k], 8 + 18,  18 + k * 18) {
+            this.addSlot(new Slot(workerTradeInventory, PRICE_ID[k], 27 + 8 + 18,  18 - 2 + k * 18) {
                 @Override
                 public boolean mayPlace(ItemStack itemStack) {
-                    return false;
+                    return true;
                 }
 
                 @Override
                 public boolean mayPickup(PlayerEntity player) {
-                    return false;
+                    return true;
                 }
             });
         }
@@ -58,15 +69,15 @@ public class MerchantTradeContainer extends ContainerBase {
 
     public void addWorkerTradeSlots() {
         for (int k = 0; k < 4; ++k) {
-            this.addSlot(new Slot(workerInventory, TRADE_ID[k], 8 + 18*4,  18 + k * 18) {
+            this.addSlot(new Slot(workerTradeInventory, TRADE_ID[k], 27+ 8 + 18*4,  18 - 2 + k * 18) {
                 @Override
                 public boolean mayPlace(ItemStack itemStack) {
-                    return false;
+                    return true;
                 }
 
                 @Override
                 public boolean mayPickup(PlayerEntity player) {
-                    return false;
+                    return true;
                 }
             });
         }

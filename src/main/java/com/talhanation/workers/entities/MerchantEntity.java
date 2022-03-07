@@ -1,16 +1,13 @@
 package com.talhanation.workers.entities;
 
 import com.talhanation.workers.Main;
+import com.talhanation.workers.inventory.MerchantInventoryContainer;
 import com.talhanation.workers.inventory.MerchantTradeContainer;
-import com.talhanation.workers.inventory.WorkerInventoryContainer;
 import com.talhanation.workers.entities.ai.WorkerFollowOwnerGoal;
 import com.talhanation.workers.entities.ai.WorkerPickupWantedItemGoal;
 import com.talhanation.workers.network.MessageOpenGuiMerchant;
 import com.talhanation.workers.network.MessageOpenGuiWorker;
-import net.minecraft.entity.AgeableEntity;
-import net.minecraft.entity.EntityType;
-import net.minecraft.entity.ILivingEntityData;
-import net.minecraft.entity.SpawnReason;
+import net.minecraft.entity.*;
 import net.minecraft.entity.ai.attributes.AttributeModifierMap;
 import net.minecraft.entity.ai.attributes.Attributes;
 import net.minecraft.entity.ai.goal.*;
@@ -82,6 +79,7 @@ public class MerchantEntity extends AbstractWorkerEntity{
             if (this.isTame() && player.getUUID().equals(this.getOwnerUUID())) {
                 if (player.isCrouching()) {
                     openGUI(player);
+                    return ActionResultType.SUCCESS;
                 }
 
                 if(!player.isCrouching()) {
@@ -106,15 +104,18 @@ public class MerchantEntity extends AbstractWorkerEntity{
             }
             else if (item == Items.EMERALD  && !this.isTame() && !playerHasEnoughEmeralds(player)) {
                 player.sendMessage(new StringTextComponent("" + this.getName().getString() + ": You need " + workerCosts() + " Emeralds to hire me!"), player.getUUID());
+                return ActionResultType.SUCCESS;
             }
             else if (!this.isTame() && item != Items.EMERALD ) {
                 player.sendMessage(new StringTextComponent("I am a " + this.getName().getString()), player.getUUID());
+                return ActionResultType.SUCCESS;
             }
 
             else if (this.isTame() && player.getUUID() != this.getOwnerUUID()) {
                 if (getOwner() != null) player.sendMessage(new StringTextComponent("" + this.getName().getString() + ": Hello, I am a the merchant of " + this.getOwner().getDisplayName().getString() + "!"), player.getUUID());
                 if (!player.isCrouching()) {
                     openTradeGUI(player);
+                    return ActionResultType.SUCCESS;
                 }
             }
             return ActionResultType.PASS;
@@ -152,7 +153,7 @@ public class MerchantEntity extends AbstractWorkerEntity{
                 @Nullable
                 @Override
                 public Container createMenu(int i, PlayerInventory playerInventory, PlayerEntity playerEntity) {
-                    return new WorkerInventoryContainer(i, MerchantEntity.this, playerInventory);
+                    return new MerchantInventoryContainer(i, MerchantEntity.this, playerInventory);
                 }
             }, packetBuffer -> {packetBuffer.writeUUID(getUUID());});
         } else {
@@ -163,7 +164,7 @@ public class MerchantEntity extends AbstractWorkerEntity{
     //ATTRIBUTES
     public static AttributeModifierMap.MutableAttribute setAttributes() {
         return createMobAttributes()
-                .add(Attributes.MAX_HEALTH, 50.0D)
+                .add(Attributes.MAX_HEALTH, 100.0D)
                 .add(Attributes.MOVEMENT_SPEED, 0.3D)
                 .add(Attributes.ATTACK_DAMAGE, 1.0D)
                 .add(Attributes.FOLLOW_RANGE, 32.0D);
@@ -178,7 +179,7 @@ public class MerchantEntity extends AbstractWorkerEntity{
         this.goalSelector.addGoal(3, new PanicGoal(this,2D));
         this.goalSelector.addGoal(5, new LookAtGoal(this, PlayerEntity.class, 8.0F));
         this.goalSelector.addGoal(6, new LookRandomlyGoal(this));
-        this.goalSelector.addGoal(6, new WaterAvoidingRandomWalkingGoal(this, 1.0D, 0F));
+        //this.goalSelector.addGoal(6, new WaterAvoidingRandomWalkingGoal(this, 1.0D, 0F));
 
 
         //this.targetSelector.addGoal(1, new (this));
@@ -273,4 +274,14 @@ public class MerchantEntity extends AbstractWorkerEntity{
             InventoryHelper.dropItemStack(this.level, getX(), getY(), getZ(), this.tradeInventory.getItem(i));
     }
 
+    @Override
+    public boolean hurt(DamageSource dmg, float amt) {
+        Entity entity =  dmg.getEntity();
+        String name = "";
+        if (entity != null) {
+             name = entity.getName().getString();
+        }
+
+        return super.hurt(dmg, amt);
+    }
 }

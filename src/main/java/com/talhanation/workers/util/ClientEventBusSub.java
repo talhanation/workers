@@ -3,6 +3,7 @@ package com.talhanation.workers.util;
 
 import com.talhanation.workers.Main;
 import com.talhanation.workers.client.render.FishermanRenderer;
+import com.talhanation.workers.client.render.MerchantRenderer;
 import com.talhanation.workers.client.render.MinerRenderer;
 import com.talhanation.workers.client.render.WorkersRenderer;
 import com.talhanation.workers.init.ModEntityTypes;
@@ -22,6 +23,7 @@ public class ClientEventBusSub {
         RenderingRegistry.registerEntityRenderingHandler(ModEntityTypes.SHEPHERD.get(), WorkersRenderer::new );
         RenderingRegistry.registerEntityRenderingHandler(ModEntityTypes.FARMER.get(), WorkersRenderer::new );
         RenderingRegistry.registerEntityRenderingHandler(ModEntityTypes.FISHERMAN.get(), FishermanRenderer::new );
-        RenderingRegistry.registerEntityRenderingHandler(ModEntityTypes.MERCHANT.get(), WorkersRenderer::new );
+        RenderingRegistry.registerEntityRenderingHandler(ModEntityTypes.MERCHANT.get(), MerchantRenderer::new );
+
     }
 }
