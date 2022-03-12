@@ -32,8 +32,8 @@ public class WorkerInventoryScreen extends ScreenBase<WorkerInventoryContainer> 
     @Override
     protected void init() {
         super.init();
-        //CAMP POS
-        addButton(new Button(leftPos + 60, topPos + 60, 12, 12, new StringTextComponent("CAMP"), button -> {
+        //HOME POS
+        addButton(new Button(leftPos + 60, topPos + 60, 12, 12, new StringTextComponent("Home"), button -> {
                 Main.SIMPLE_CHANNEL.sendToServer(new MessageCampPos(worker.getUUID(), worker.getWorkerOnPos()));
         }));
     }

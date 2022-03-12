@@ -7,9 +7,7 @@ import com.talhanation.workers.entities.*;
 import com.talhanation.workers.init.ModBlocks;
 import com.talhanation.workers.init.ModEntityTypes;
 import com.talhanation.workers.init.ModItems;
-import com.talhanation.workers.inventory.MerchantInventoryContainer;
-import com.talhanation.workers.inventory.MerchantTradeContainer;
-import com.talhanation.workers.inventory.WorkerInventoryContainer;
+import com.talhanation.workers.inventory.*;
 import com.talhanation.workers.network.*;
 import de.maxhenkel.corelib.ClientRegistry;
 import net.minecraft.client.settings.KeyBinding;
@@ -54,6 +52,7 @@ public class Main {
     public static PointOfInterestType POI_FISHER;
     public static KeyBinding C_KEY;
     public static ContainerType<WorkerInventoryContainer> MINER_CONTAINER_TYPE;
+    public static ContainerType<WorkerInventoryContainer> SHEPHERD_CONTAINER_TYPE;
     public static ContainerType<WorkerInventoryContainer> WORKER_CONTAINER_TYPE;
     public static ContainerType<MerchantTradeContainer> MERCHANT_CONTAINER_TYPE;
     public static ContainerType<MerchantInventoryContainer> MERCHANT_OWNER_CONTAINER_TYPE;
@@ -115,6 +114,13 @@ public class Main {
                 buf -> (new MessageTradeButton()).fromBytes(buf),
                 (msg, fun) -> msg.executeServerSide(fun.get()));
 
+        SIMPLE_CHANNEL.registerMessage(8, MessageOpenGuiShepherd.class, MessageOpenGuiShepherd::toBytes,
+                buf -> (new MessageOpenGuiShepherd()).fromBytes(buf),
+                (msg, fun) -> msg.executeServerSide(fun.get()));
+
+        SIMPLE_CHANNEL.registerMessage(9, MessageSheepCount.class, MessageSheepCount::toBytes,
+                buf -> (new MessageSheepCount()).fromBytes(buf),
+                (msg, fun) -> msg.executeServerSide(fun.get()));
 
 
         DeferredWorkQueue.runLater(() -> {
@@ -139,6 +145,7 @@ public class Main {
         ClientRegistry.registerScreen(Main.WORKER_CONTAINER_TYPE, WorkerInventoryScreen::new);
         ClientRegistry.registerScreen(Main.MERCHANT_CONTAINER_TYPE, MerchantTradeScreen::new);
         ClientRegistry.registerScreen(Main.MERCHANT_OWNER_CONTAINER_TYPE, MerchantOwnerScreen::new);
+        ClientRegistry.registerScreen(Main.SHEPHERD_CONTAINER_TYPE, ShepherdInventoryScreen::new);
     }
 
     @SubscribeEvent
@@ -201,6 +208,13 @@ public class Main {
             }
             return new MerchantInventoryContainer(windowId, rec, inv);
         });
+        SHEPHERD_CONTAINER_TYPE = new ContainerType<>((IContainerFactory<WorkerInventoryContainer>) (windowId, inv, data) -> {
+            ShepherdEntity rec = (ShepherdEntity) getRecruitByUUID(inv.player, data.readUUID());
+            if (rec == null) {
+                return null;
+            }
+            return new WorkerInventoryContainer(windowId, rec, inv);
+        });
 
 
         MINER_CONTAINER_TYPE.setRegistryName(new ResourceLocation(Main.MOD_ID, "miner_container"));
@@ -214,6 +228,9 @@ public class Main {
 
         MERCHANT_OWNER_CONTAINER_TYPE.setRegistryName(new ResourceLocation(Main.MOD_ID, "merchant_owner_container"));
         event.getRegistry().register(MERCHANT_OWNER_CONTAINER_TYPE);
+
+        SHEPHERD_CONTAINER_TYPE.setRegistryName(new ResourceLocation(Main.MOD_ID, "shepherd_container"));
+        event.getRegistry().register(SHEPHERD_CONTAINER_TYPE);
     }
 
     @Nullable

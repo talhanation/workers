@@ -2,8 +2,11 @@ package com.talhanation.workers.entities;
 
 import com.google.common.collect.ImmutableSet;
 import com.talhanation.workers.Main;
+import com.talhanation.workers.client.gui.ShepherdInventoryScreen;
+import com.talhanation.workers.inventory.ShepherdInventoryContainer;
 import com.talhanation.workers.inventory.WorkerInventoryContainer;
 import com.talhanation.workers.entities.ai.*;
+import com.talhanation.workers.network.MessageOpenGuiShepherd;
 import com.talhanation.workers.network.MessageOpenGuiWorker;
 import net.minecraft.entity.AgeableEntity;
 import net.minecraft.entity.EntityType;
@@ -24,7 +27,11 @@ import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
 import net.minecraft.item.Items;
 import net.minecraft.nbt.CompoundNBT;
+import net.minecraft.network.datasync.DataParameter;
+import net.minecraft.network.datasync.DataSerializers;
+import net.minecraft.network.datasync.EntityDataManager;
 import net.minecraft.pathfinding.GroundPathNavigator;
+import net.minecraft.util.Direction;
 import net.minecraft.util.text.ITextComponent;
 import net.minecraft.util.text.StringTextComponent;
 import net.minecraft.world.DifficultyInstance;
@@ -38,6 +45,7 @@ import java.util.Set;
 import java.util.function.Predicate;
 
 public class ShepherdEntity extends AbstractWorkerEntity{
+    private static final DataParameter<Integer> MAX_SHEEPS = EntityDataManager.defineId(MinerEntity.class, DataSerializers.INT);
 
     private final Predicate<ItemEntity> ALLOWED_ITEMS = (item) -> {
         return !item.hasPickUpDelay() && item.isAlive() && this.wantsToPickUp(item.getItem());
@@ -64,6 +72,21 @@ public class ShepherdEntity extends AbstractWorkerEntity{
 
     public ShepherdEntity(EntityType<? extends AbstractWorkerEntity> entityType, World world) {
         super(entityType, world);
+    }
+
+    protected void defineSynchedData() {
+        super.defineSynchedData();
+        this.entityData.define(MAX_SHEEPS, 8);
+    }
+
+    public void addAdditionalSaveData(CompoundNBT nbt) {
+        super.addAdditionalSaveData(nbt);
+        nbt.putInt("MaxSheep", this.getMaxSheepCount());
+    }
+
+    public void readAdditionalSaveData(CompoundNBT nbt) {
+        super.readAdditionalSaveData(nbt);
+        this.setMaxSheepCount(nbt.getInt("MaxSheep"));
     }
 
     @Override
@@ -163,6 +186,15 @@ public class ShepherdEntity extends AbstractWorkerEntity{
         this.setItemSlot(EquipmentSlotType.OFFHAND, new ItemStack(Items.WOODEN_HOE));
     }
 
+    public void setMaxSheepCount(int x){
+        this.entityData.set(MAX_SHEEPS, x);
+    }
+
+    public int getMaxSheepCount(){
+        return entityData.get(MAX_SHEEPS);
+    }
+
+
     @Override
     public void openGUI(PlayerEntity player) {
         if (player instanceof ServerPlayerEntity) {
@@ -175,11 +207,11 @@ public class ShepherdEntity extends AbstractWorkerEntity{
                 @Nullable
                 @Override
                 public Container createMenu(int i, PlayerInventory playerInventory, PlayerEntity playerEntity) {
-                    return new WorkerInventoryContainer(i, ShepherdEntity.this, playerInventory);
+                    return new ShepherdInventoryContainer(i, ShepherdEntity.this, playerInventory);
                 }
             }, packetBuffer -> {packetBuffer.writeUUID(getUUID());});
         } else {
-            Main.SIMPLE_CHANNEL.sendToServer(new MessageOpenGuiWorker(player, this.getUUID()));
+            Main.SIMPLE_CHANNEL.sendToServer(new MessageOpenGuiShepherd(player, this.getUUID()));
         }
     }
 }
