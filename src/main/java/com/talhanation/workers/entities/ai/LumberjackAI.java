@@ -1,12 +1,14 @@
 package com.talhanation.workers.entities.ai;
 
 import com.talhanation.workers.entities.LumberjackEntity;
-import net.minecraft.block.*;
+import net.minecraft.block.Block;
+import net.minecraft.block.BlockState;
+import net.minecraft.block.Blocks;
+import net.minecraft.block.LeavesBlock;
 import net.minecraft.block.material.Material;
 import net.minecraft.entity.ai.goal.Goal;
-import net.minecraft.inventory.Inventory;
-import net.minecraft.item.ItemStack;
-import net.minecraft.item.Items;
+import net.minecraft.tags.FluidTags;
+import net.minecraft.tags.ITag;
 import net.minecraft.util.SoundCategory;
 import net.minecraft.util.SoundEvents;
 import net.minecraft.util.math.AxisAlignedBB;
@@ -14,16 +16,15 @@ import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.text.StringTextComponent;
 import net.minecraftforge.event.ForgeEventFactory;
 
-import java.util.*;
-
-import static com.talhanation.workers.entities.LumberjackEntity.WANTED_SAPLINGS;
+import java.util.EnumSet;
+import java.util.Objects;
+import java.util.Random;
 
 public class LumberjackAI extends Goal {
     private final LumberjackEntity lumber;
-    private BlockPos minePos;
+    private BlockPos chopPos;
     private BlockPos plantPos;
     private BlockPos startPos;
-    private boolean innen;
     private boolean plant;
     private boolean chop;
     private int y;
@@ -54,185 +55,52 @@ public class LumberjackAI extends Goal {
         super.start();
         this.startPos = new BlockPos(lumber.getStartPos().get().getX(), lumber.getStartPos().get().getY(), lumber.getStartPos().get().getZ());
 
-        plant = true;
-        chop = false;
-        innen = true;
+        plant = false;//muss true sein später
+        chop = true;//muss false sein später
         x = -3;
         z = -3;
     }
 
+
     public void tick() {
         breakLeaves();
-        //debugAxisPos();
 
-        if (chop) {
-            if (lumber.getFollow() || !lumber.getIsWorking()) {
-                if (innen) {
-                    x = -3;
-                    z = -3;
-                } else {
-                    x = -9;
-                    z = -9;
-                }
-            }
+        if (plant){
+            //plant
 
-            this.minePos = new BlockPos(lumber.getStartPos().get().getX() + x, lumber.getStartPos().get().getY() + y, lumber.getStartPos().get().getZ() + z);
-
-            BlockState blockstate = lumber.level.getBlockState(minePos);
-            Material blockmat = blockstate.getMaterial();
-            if (blockmat == Material.WOOD) {
-                this.lumber.getNavigation().moveTo(minePos.getX(), minePos.getY(), minePos.getZ(), 0.5);
-            }
-
-            if (blockmat == Material.WOOD && minePos.closerThan(lumber.position(), 9)) {
-                this.mineBlock(minePos);
-                this.lumber.getLookControl().setLookAt(minePos.getX(), minePos.getY() + 1, minePos.getZ(), 10.0F, (float) this.lumber.getMaxHeadXRot());
-            }
-            else lumber.resetWorkerParameters();
-            calculateChopArea(blockmat);
-        }
-
-        if (plant && hasPlantInInv()) {
-
-            if (lumber.getFollow() || !lumber.getIsWorking()) {
-                if (innen) {
-                    x = -3;
-                    z = -3;
-                } else {
-                    x = -9;
-                    z = -9;
-                }
-            }
-
-            this.plantPos = new BlockPos(this.startPos.getX() + x, this.startPos.getY() + y, this.startPos.getZ() + z);
-            BlockState blockstate = lumber.level.getBlockState(plantPos);
-            BlockState blockstate2 = this.lumber.level.getBlockState(plantPos.below());
-            Block plant = blockstate.getBlock();
-            Block plantPosBlock = blockstate2.getBlock();
-
-            this.lumber.getNavigation().moveTo(plantPos.getX(), plantPos.getY(), plantPos.getZ(), 0.65);
-
-            if (plant == Blocks.AIR && (plantPosBlock == Blocks.GRASS_BLOCK || plantPosBlock == Blocks.PODZOL || plantPosBlock == Blocks.DIRT) && plantPos.closerThan(lumber.position(), 9)) {
-                this.lumber.getLookControl().setLookAt(plantPos.getX(), plantPos.getY() + 1, plantPos.getZ(), 10.0F, (float) this.lumber.getMaxHeadXRot());
-                plantSaplingFromInv();
-                this.lumber.level.playSound(null, this.lumber.getX(), this.lumber.getY(), this.lumber.getZ(), SoundEvents.GRASS_PLACE, SoundCategory.BLOCKS, 1F, 0.9F + 0.2F);
-                this.lumber.workerSwingArm();
-            }
-            else
-                y++;
-
-            calculatePlantArea();
-        }
-
-        if (plant && !hasPlantInInv()) {
-            plant = false;
             chop = true;
+            plant = false;
         }
-    }
 
-    private boolean hasPlantInInv(){
-        Inventory inventory = lumber.getInventory();
-        return inventory.hasAnyOf(WANTED_SAPLINGS);
-    }
-
-
-    private void plantSaplingFromInv() {
-        if (hasPlantInInv()) {
-            Inventory inventory = lumber.getInventory();
-
-            for (int i = 0; i < inventory.getContainerSize(); ++i) {
-                ItemStack itemstack = inventory.getItem(i);
-                boolean flag = false;
-                if (!itemstack.isEmpty()) {
-                    if (itemstack.getItem() == Items.SPRUCE_SAPLING) {
-                        lumber.level.setBlock(this.plantPos, Blocks.SPRUCE_SAPLING.defaultBlockState(), 3);
-                        flag = true;
-
-                    } else if (itemstack.getItem() == Items.OAK_SAPLING) {
-                        this.lumber.level.setBlock(plantPos, Blocks.OAK_SAPLING.defaultBlockState(),3);
-                        flag = true;
-
-                    } else if (itemstack.getItem() == Items.DARK_OAK_SAPLING) {
-                        this.lumber.level.setBlock(plantPos, Blocks.DARK_OAK_SAPLING.defaultBlockState(),3);
-                        flag = true;
-
-                    } else if (itemstack.getItem() == Items.BIRCH_SAPLING) {
-                        this.lumber.level.setBlock(plantPos, Blocks.BIRCH_SAPLING.defaultBlockState(), 3);
-                        flag = true;
-
-                    } else if (itemstack.getItem() == Items.SPRUCE_SAPLING) {
-                        this.lumber.level.setBlock(plantPos, Blocks.SPRUCE_SAPLING.defaultBlockState(), 3);
-                        flag = true;
-
-                    } else if (itemstack.getItem() == Items.JUNGLE_SAPLING) {
-                        this.lumber.level.setBlock(plantPos, Blocks.JUNGLE_SAPLING.defaultBlockState(), 3);
-                        flag = true;
-                    }
+        if (chop){
+            //is near wood
+            //
+            if (isNearWood()){
+                if (chopPos != null) {
+                    this.lumber.getNavigation().moveTo(chopPos.getX(), chopPos.getY(), chopPos.getZ(), 0.75);
+                    this.lumber.getLookControl().setLookAt(chopPos.getX(), chopPos.getY() + 1, chopPos.getZ(), 10.0F, (float) this.lumber.getMaxHeadXRot());
                 }
 
-                if (flag) {
-                    lumber.level.playSound(null, (double) this.plantPos.getX(), (double) this.plantPos.getY(), (double) this.plantPos.getZ(), SoundEvents.GRASS_PLACE, SoundCategory.BLOCKS, 1.0F, 1.0F);
-                    itemstack.shrink(1);
-                    if (itemstack.isEmpty()) {
-                        inventory.setItem(i, ItemStack.EMPTY);
+                if (chopPos != null && chopPos.closerThan(lumber.position(), 9)) {
+                    this.mineBlock(chopPos);
+
+                    for(int i = 0; i < 32; i++){
+                        if (isAboveWood(chopPos)){
+                            mineBlock(chopPos);
+                        }
                     }
-                    break;
                 }
             }
 
-        }
-    }
 
-    private void calculatePlantArea(){
-        if (y >= 5) {
-            y = -2;
-            x = x + 3 + lumber.getRandom().nextInt(3);
+
+            //chop = false;
+            //plant = true;
         }
 
-        if (x >= 9) {
-            x = -9;
-            z = z + 3 + lumber.getRandom().nextInt(3);
-        }
-        if (z >= 9) {
-            z = -9;
-            this.plant = true;
-            this.innen = true;
-        }
 
-    }
 
-    private void calculateChopArea(Material blockmat){
-        if (blockmat != Material.WOOD) {
-            y++;
-        }
 
-        if (y >= 9) {
-            y = -2;
-            x++;
-        }
-
-        if (innen){
-            if (x >= 3) {
-                x = -3;
-                z++;
-            }
-            if (z >= 3) {
-                x = -9;
-                z = -9;
-                this.innen = false;
-            }
-        }
-        else {
-            if (x >= 9) {
-                x = -9;
-                z++;
-            }
-            if (z >= 9) {
-                z = -9;
-                this.plant = true;
-                this.innen = true;
-            }
-        }
     }
 
     private void breakLeaves() {
@@ -264,77 +132,42 @@ public class LumberjackAI extends Goal {
         }
     }
 
-
-    /*
-    public void checkForWood(){
-        BlockPos woodPos = new BlockPos(standPos.getX() + blocks -8, standPos.getY() + 1, standPos.getZ() -8 + side);
-
-        BlockState blockstate = lumber.level.getBlockState(minePos);
-        Material blockstateMaterial = blockstate.getMaterial();
-
-        if (blockstateMaterial != Material.WOOD) {
-            blocks++;
-        }
-        else this.minePos = woodPos;
-
-        if (blocks == 16){
-            blocks = 0;
-            side++;
-        }
-
-        if (side == 16){
-            side = 0;
-            blocks++;
-        }
-    }
-
-    private void chopWood(BlockPos blockPos){
-        if (this.lumber.isAlive() && ForgeEventFactory.getMobGriefingEvent(this.lumber.level, this.lumber) && !lumber.getFollow()) {
-            BlockPos blockpos2 = blockPos.above();
-            BlockPos blockpos3 = blockPos.above().above();
-            BlockState blockstate = this.lumber.level.getBlockState(blockPos);
-            BlockState blockstate2 = this.lumber.level.getBlockState(blockPos.above());
-            BlockState blockstate3 = this.lumber.level.getBlockState(blockPos.above(2));
-
-            Material material1 = blockstate.getMaterial();
-            Material material2 = blockstate2.getMaterial();
-            Material material3 = blockstate3.getMaterial();
-
-            if (material1 == Material.WOOD) {
-
-                if (lumber.getCurrentTimeBreak() % 5 == 4) {
-                    lumber.level.playLocalSound(blockPos.getX(), blockPos.getY(), blockPos.getZ(), blockstate.getSoundType().getHitSound(), SoundCategory.BLOCKS, 1F, 0.75F, false);
+    public boolean isNearWood() {
+        int range = 9;
+        for(int j = 0; j < range; j++) {
+            for (int i = 0; i < range; i++) {
+                if (lumber.getOwner() != null)
+                    lumber.getOwner().sendMessage(new StringTextComponent("Range: " + range), lumber.getOwnerUUID());
+                //BlockPos blockpos1 = this.lumber.getWorkerOnPos().offset(random.nextInt(range) - range / 2, 1, random.nextInt(range) - range / 2);
+                /*
+                while(this.lumber.level.isEmptyBlock(blockpos1)){
+                    blockpos1 = blockpos1.above();
                 }
+                 */
+                //lumber.level.setBlock(blockpos1, Blocks.REDSTONE_BLOCK.defaultBlockState(), 3);
 
-                //set max destroy speed
-                int bp = (int) (blockstate.getDestroySpeed(this.lumber.level, blockPos) * 100);
-                this.lumber.setBreakingTime(bp);
-
-                //increase current
-                this.lumber.setCurrentTimeBreak(this.lumber.getCurrentTimeBreak() + (int) (1 * (this.lumber.getUseItem().getDestroySpeed(blockstate))));
-                float f = (float) this.lumber.getCurrentTimeBreak() / (float) this.lumber.getBreakingTime();
-
-                int i = (int) (f * 10);
-
-                if (i != this.lumber.getPreviousTimeBreak()) {
-                    this.lumber.level.destroyBlockProgress(1, blockPos, i);
-                    this.lumber.setPreviousTimeBreak(i);
-                }
-
-                if (this.lumber.getCurrentTimeBreak() == this.lumber.getBreakingTime()) {
-                    this.lumber.level.destroyBlock(blockPos, true, this.lumber);
-                    this.lumber.setCurrentTimeBreak(-1);
-                    this.lumber.setBreakingTime(0);
-                }
-                if (this.lumber.getRandom().nextInt(5) == 0) {
-                    if (!this.lumber.swinging) {
-                        this.lumber.swing(this.lumber.getUsedItemHand());
-                    }
+                BlockPos blockpos1 = this.lumber.getWorkerOnPos().offset(j - range/2, lumber.getY(), i - range/2);
+                BlockState blockState = this.lumber.level.getBlockState(blockpos1);
+                Block block = blockState.getBlock();
+                if (block == Blocks.OAK_LOG) {
+                    this.chopPos = blockpos1;
+                    if (lumber.getOwner() != null)
+                        lumber.getOwner().sendMessage(new StringTextComponent("found wood"), Objects.requireNonNull(lumber.getOwnerUUID()));
+                    return true;
                 }
             }
         }
+        return false;
     }
-    */
+
+    private boolean isAboveWood(BlockPos chopPos) {
+        chopPos = chopPos.above();
+        if(this.lumber.level.getBlockState(chopPos).is(Blocks.OAK_WOOD)){
+            this.chopPos = chopPos;
+            return true;
+        }
+        return false;
+    }
 
     private void mineBlock(BlockPos blockPos){
         if (this.lumber.isAlive() && ForgeEventFactory.getMobGriefingEvent(this.lumber.level, this.lumber) && !lumber.getFollow()) {
@@ -371,28 +204,4 @@ public class LumberjackAI extends Goal {
             }
         }
     }
-
-    private void debugAxisPos(){
-        if (lumber.getOwner() != null) {
-            lumber.getOwner().sendMessage(new StringTextComponent("x: " + x + ""), lumber.getOwner().getUUID());
-            lumber.getOwner().sendMessage(new StringTextComponent("y: " + y + ""), lumber.getOwner().getUUID());
-            lumber.getOwner().sendMessage(new StringTextComponent("z: " + z + ""), lumber.getOwner().getUUID());
-        }
-    }
-
-
-    public void palceGoodsFromInventory() {
-        Inventory inventory = lumber.getInventory();
-        List<ItemStack> items = new ArrayList();
-        for (int i = 0; i < inventory.getContainerSize(); i++) {
-            ItemStack stack = inventory.getItem(i);
-            /*
-            if (chestLooter.shouldLootItem(stack)) {
-                items.add(stack);
-            }
-             */
-        }
-    }
 }
-
-
