@@ -28,8 +28,6 @@ public class LumberjackAI extends Goal {
     private boolean plant;
     private boolean chop;
     private int y;
-    private int x;
-    private int z;
 
     public LumberjackAI(LumberjackEntity lumber) {
         this.lumber = lumber;
@@ -54,11 +52,10 @@ public class LumberjackAI extends Goal {
     public void start() {
         super.start();
         this.startPos = new BlockPos(lumber.getStartPos().get().getX(), lumber.getStartPos().get().getY(), lumber.getStartPos().get().getZ());
-
+        lumber.resetWorkerParameters();
         plant = false;//muss true sein später
         chop = true;//muss false sein später
-        x = -3;
-        z = -3;
+        y = 0;
     }
 
 
@@ -73,26 +70,16 @@ public class LumberjackAI extends Goal {
         }
 
         if (chop){
-            //is near wood
-            //
-            if (isNearWood()){
-                if (chopPos != null) {
-                    this.lumber.getNavigation().moveTo(chopPos.getX(), chopPos.getY(), chopPos.getZ(), 0.75);
-                    this.lumber.getLookControl().setLookAt(chopPos.getX(), chopPos.getY() + 1, chopPos.getZ(), 10.0F, (float) this.lumber.getMaxHeadXRot());
-                }
 
-                if (chopPos != null && chopPos.closerThan(lumber.position(), 9)) {
+            this.chopPos = getWoodPos();
+            if (chopPos != null) {
+                this.lumber.getNavigation().moveTo(chopPos.getX(), chopPos.getY(), chopPos.getZ(), 0.75);
+                this.lumber.getLookControl().setLookAt(chopPos.getX(), chopPos.getY() + 1, chopPos.getZ(), 10.0F, (float) this.lumber.getMaxHeadXRot());
+
+                if (chopPos.closerThan(lumber.position(), 9)) {
                     this.mineBlock(chopPos);
-
-                    for(int i = 0; i < 32; i++){
-                        if (isAboveWood(chopPos)){
-                            mineBlock(chopPos);
-                        }
-                    }
                 }
             }
-
-
 
             //chop = false;
             //plant = true;
@@ -132,44 +119,51 @@ public class LumberjackAI extends Goal {
         }
     }
 
-    public boolean isNearWood() {
-        int range = 9;
-        for(int j = 0; j < range; j++) {
-            for (int i = 0; i < range; i++) {
-                if (lumber.getOwner() != null)
-                    lumber.getOwner().sendMessage(new StringTextComponent("Range: " + range), lumber.getOwnerUUID());
-                //BlockPos blockpos1 = this.lumber.getWorkerOnPos().offset(random.nextInt(range) - range / 2, 1, random.nextInt(range) - range / 2);
-                /*
-                while(this.lumber.level.isEmptyBlock(blockpos1)){
-                    blockpos1 = blockpos1.above();
-                }
-                 */
-                //lumber.level.setBlock(blockpos1, Blocks.REDSTONE_BLOCK.defaultBlockState(), 3);
+    public BlockPos getWoodPos() {
+        int range = 1;
 
-                BlockPos blockpos1 = this.lumber.getWorkerOnPos().offset(j - range/2, lumber.getY(), i - range/2);
-                BlockState blockState = this.lumber.level.getBlockState(blockpos1);
-                Block block = blockState.getBlock();
-                if (block == Blocks.OAK_LOG) {
-                    this.chopPos = blockpos1;
-                    if (lumber.getOwner() != null)
-                        lumber.getOwner().sendMessage(new StringTextComponent("found wood"), Objects.requireNonNull(lumber.getOwnerUUID()));
-                    return true;
+        for (int j = 0; j < range; j++){
+            for (int i = 0; i < range; i++){
+                for(int k = 0; k < 6; k++){
+                    BlockPos blockpos1 = this.lumber.getStartPos().get().offset(j - range / 2F, k, i - range / 2F);
+                    BlockState blockState = this.lumber.level.getBlockState(blockpos1);
+                    Block block = blockState.getBlock();
+                    if (block == Blocks.OAK_LOG) {
+                        this.chopPos = blockpos1;
+
+                        return blockpos1;
+                    }
                 }
             }
+            if (range <= 16) range++;
         }
-        return false;
+
+        return null;
     }
 
-    private boolean isAboveWood(BlockPos chopPos) {
-        chopPos = chopPos.above();
-        if(this.lumber.level.getBlockState(chopPos).is(Blocks.OAK_WOOD)){
-            this.chopPos = chopPos;
-            return true;
+    public BlockPos getPlantPos() {
+        int range = 1;
+
+        for (int j = 0; j < range; j++){
+            for (int i = 0; i < range; i++){
+                for(int k = 0; k < 6; k++){
+                    BlockPos blockpos1 = this.lumber.getStartPos().get().offset(j - range / 2F, k, i - range / 2F);
+                    BlockState blockState = this.lumber.level.getBlockState(blockpos1);
+                    Block block = blockState.getBlock();
+                    if (block == Blocks.OAK_LOG) {
+                        this.chopPos = blockpos1;
+
+                        return blockpos1;
+                    }
+                }
+            }
+            if (range <= 16) range++;
         }
-        return false;
+
+        return null;
     }
 
-    private void mineBlock(BlockPos blockPos){
+    private boolean mineBlock(BlockPos blockPos){
         if (this.lumber.isAlive() && ForgeEventFactory.getMobGriefingEvent(this.lumber.level, this.lumber) && !lumber.getFollow()) {
 
             BlockState blockstate = this.lumber.level.getBlockState(blockPos);
@@ -199,9 +193,11 @@ public class LumberjackAI extends Goal {
                     this.lumber.level.destroyBlock(blockPos, true, this.lumber);
                     this.lumber.setCurrentTimeBreak(-1);
                     this.lumber.setBreakingTime(0);
+                    return true;
                 }
                 this.lumber.workerSwingArm();
             }
         }
+        return false;
     }
 }
