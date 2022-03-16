@@ -5,29 +5,27 @@ import net.minecraft.block.Block;
 import net.minecraft.block.BlockState;
 import net.minecraft.block.Blocks;
 import net.minecraft.block.LeavesBlock;
-import net.minecraft.block.material.Material;
 import net.minecraft.entity.ai.goal.Goal;
-import net.minecraft.tags.FluidTags;
-import net.minecraft.tags.ITag;
+import net.minecraft.inventory.Inventory;
+import net.minecraft.item.ItemStack;
+import net.minecraft.item.Items;
 import net.minecraft.util.SoundCategory;
 import net.minecraft.util.SoundEvents;
 import net.minecraft.util.math.AxisAlignedBB;
 import net.minecraft.util.math.BlockPos;
-import net.minecraft.util.text.StringTextComponent;
 import net.minecraftforge.event.ForgeEventFactory;
 
 import java.util.EnumSet;
-import java.util.Objects;
 import java.util.Random;
+
+import static com.talhanation.workers.entities.LumberjackEntity.WANTED_SAPLINGS;
 
 public class LumberjackAI extends Goal {
     private final LumberjackEntity lumber;
     private BlockPos chopPos;
     private BlockPos plantPos;
-    private BlockPos startPos;
     private boolean plant;
     private boolean chop;
-    private int y;
 
     public LumberjackAI(LumberjackEntity lumber) {
         this.lumber = lumber;
@@ -51,26 +49,31 @@ public class LumberjackAI extends Goal {
     @Override
     public void start() {
         super.start();
-        this.startPos = new BlockPos(lumber.getStartPos().get().getX(), lumber.getStartPos().get().getY(), lumber.getStartPos().get().getZ());
         lumber.resetWorkerParameters();
         plant = false;//muss true sein später
         chop = true;//muss false sein später
-        y = 0;
     }
-
 
     public void tick() {
         breakLeaves();
 
-        if (plant){
-            //plant
+        if (plant && hasPlantInInv()){
+            this.plantPos = getPlantPos();
+            if(plantPos != null){
+                this.lumber.getNavigation().moveTo(plantPos.getX(), plantPos.getY(), plantPos.getZ(), 0.75);
+                this.lumber.getLookControl().setLookAt(plantPos.getX(), plantPos.getY() + 1, plantPos.getZ(), 10.0F, (float) this.lumber.getMaxHeadXRot());
 
-            chop = true;
+                if (plantPos.closerThan(lumber.position(), 9)) {
+                    this.plantSaplingFromInv(plantPos);
+                }
+            }
+        }
+        else {
             plant = false;
+            chop = true;
         }
 
         if (chop){
-
             this.chopPos = getWoodPos();
             if (chopPos != null) {
                 this.lumber.getNavigation().moveTo(chopPos.getX(), chopPos.getY(), chopPos.getZ(), 0.75);
@@ -78,16 +81,17 @@ public class LumberjackAI extends Goal {
 
                 if (chopPos.closerThan(lumber.position(), 9)) {
                     this.mineBlock(chopPos);
+
+                    if(lumber.level.getBlockState(chopPos.below()).is(Blocks.DIRT) && this.lumber.level.isEmptyBlock(chopPos)){
+                        plantSaplingFromInv(chopPos);
+                    }
                 }
             }
-
-            //chop = false;
-            //plant = true;
+            else {
+                chop = true;
+                plant = false;
+            }
         }
-
-
-
-
     }
 
     private void breakLeaves() {
@@ -124,7 +128,7 @@ public class LumberjackAI extends Goal {
 
         for (int j = 0; j < range; j++){
             for (int i = 0; i < range; i++){
-                for(int k = 0; k < 6; k++){
+                for(int k = 0; k < 8; k++){
                     BlockPos blockpos1 = this.lumber.getStartPos().get().offset(j - range / 2F, k, i - range / 2F);
                     BlockState blockState = this.lumber.level.getBlockState(blockpos1);
                     Block block = blockState.getBlock();
@@ -143,24 +147,69 @@ public class LumberjackAI extends Goal {
 
     public BlockPos getPlantPos() {
         int range = 1;
-
+        Random random = new Random();
         for (int j = 0; j < range; j++){
-            for (int i = 0; i < range; i++){
-                for(int k = 0; k < 6; k++){
-                    BlockPos blockpos1 = this.lumber.getStartPos().get().offset(j - range / 2F, k, i - range / 2F);
-                    BlockState blockState = this.lumber.level.getBlockState(blockpos1);
-                    Block block = blockState.getBlock();
-                    if (block == Blocks.OAK_LOG) {
-                        this.chopPos = blockpos1;
+            BlockPos blockPos = this.lumber.getStartPos().get().offset(random.nextInt(10) - range/2F, 1,  random.nextInt(10)- range / 2F);
 
-                        return blockpos1;
-                    }
-                }
+            if(this.lumber.level.isEmptyBlock(blockPos) && lumber.level.getBlockState(blockPos.below()).is(Blocks.GRASS_BLOCK)){
+                return blockPos;
             }
             if (range <= 16) range++;
-        }
-
+            }
         return null;
+    }
+
+    private boolean hasPlantInInv(){
+        Inventory inventory = lumber.getInventory();
+        return inventory.hasAnyOf(WANTED_SAPLINGS);
+    }
+
+
+    private void plantSaplingFromInv(BlockPos blockPos) {
+        if (hasPlantInInv()) {
+            Inventory inventory = lumber.getInventory();
+
+            for (int i = 0; i < inventory.getContainerSize(); ++i) {
+                ItemStack itemstack = inventory.getItem(i);
+                boolean flag = false;
+                if (!itemstack.isEmpty()) {
+                    if (itemstack.getItem() == Items.SPRUCE_SAPLING) {
+                        lumber.level.setBlock(blockPos, Blocks.SPRUCE_SAPLING.defaultBlockState(), 3);
+                        flag = true;
+
+                    } else if (itemstack.getItem() == Items.OAK_SAPLING) {
+                        this.lumber.level.setBlock(blockPos, Blocks.OAK_SAPLING.defaultBlockState(),3);
+                        flag = true;
+
+                    } else if (itemstack.getItem() == Items.DARK_OAK_SAPLING) {
+                        this.lumber.level.setBlock(blockPos, Blocks.DARK_OAK_SAPLING.defaultBlockState(),3);
+                        flag = true;
+
+                    } else if (itemstack.getItem() == Items.BIRCH_SAPLING) {
+                        this.lumber.level.setBlock(blockPos, Blocks.BIRCH_SAPLING.defaultBlockState(), 3);
+                        flag = true;
+
+                    } else if (itemstack.getItem() == Items.SPRUCE_SAPLING) {
+                        this.lumber.level.setBlock(blockPos, Blocks.SPRUCE_SAPLING.defaultBlockState(), 3);
+                        flag = true;
+
+                    } else if (itemstack.getItem() == Items.JUNGLE_SAPLING) {
+                        this.lumber.level.setBlock(blockPos, Blocks.JUNGLE_SAPLING.defaultBlockState(), 3);
+                        flag = true;
+                    }
+                }
+
+                if (flag) {
+                    lumber.level.playSound(null, (double) blockPos.getX(), (double) blockPos.getY(), (double) blockPos.getZ(), SoundEvents.GRASS_PLACE, SoundCategory.BLOCKS, 1.0F, 1.0F);
+                    itemstack.shrink(1);
+                    if (itemstack.isEmpty()) {
+                        inventory.setItem(i, ItemStack.EMPTY);
+                    }
+                    break;
+                }
+            }
+
+        }
     }
 
     private boolean mineBlock(BlockPos blockPos){
