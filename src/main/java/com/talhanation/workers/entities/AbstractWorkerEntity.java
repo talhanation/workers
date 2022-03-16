@@ -5,6 +5,7 @@ import net.minecraft.entity.*;
 import net.minecraft.entity.ai.attributes.AttributeModifier;
 import net.minecraft.entity.ai.attributes.Attributes;
 import net.minecraft.entity.item.ItemEntity;
+import net.minecraft.entity.passive.WolfEntity;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.entity.projectile.AbstractArrowEntity;
 import net.minecraft.item.*;
@@ -73,6 +74,14 @@ public abstract class AbstractWorkerEntity extends AbstractChunkLoaderEntity {
         super.tick();
         updateSwingTime();
         updateSwimming();
+
+        LivingEntity attacker = this.getLastHurtByMob();
+        if(this.isTame() && attacker != null){
+            LivingEntity owner = this.getOwner();
+            if (owner!= null && owner != attacker) {
+                owner.sendMessage(new StringTextComponent(this.getName().getString() + " is getting attacked by " + attacker.getName().getString()), owner.getUUID());
+            }
+        }
     }
 
 
@@ -341,11 +350,11 @@ public abstract class AbstractWorkerEntity extends AbstractChunkLoaderEntity {
             return false;
         } else {
             Entity entity = dmg.getEntity();
+
             this.setOrderedToSit(false);
             if (entity != null && !(entity instanceof PlayerEntity) && !(entity instanceof AbstractArrowEntity)) {
                 amt = (amt + 1.0F) / 2.0F;
             }
-
             return super.hurt(dmg, amt);
         }
     }
