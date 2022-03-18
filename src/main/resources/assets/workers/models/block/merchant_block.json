@@ -1,0 +1,12 @@
+{
+  "parent": "minecraft:block/cube",
+  "textures": {
+    "particle": "workers:block/merchant_table_side",
+    "north": "workers:block/merchant_table_side",
+    "south": "workers:block/merchant_table_side",
+    "east": "workers:block/merchant_table_side",
+    "west": "workers:block/merchant_table_side",
+    "up": "workers:block/merchant_table_top",
+    "down": "workers:block/merchant_table_bottom"
+  }
+}

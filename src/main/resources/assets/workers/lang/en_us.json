@@ -2,12 +2,21 @@
   "entity.workers.miner": "Miner",
   "entity.workers.lumberjack": "Lumberjack",
   "entity.workers.fisherman": "Fisherman",
+  "entity.workers.shepherd": "Shepherd",
+  "entity.workers.merchant": "Merchant",
+  "entity.workers.farmer": "Farmer",
 
   "item.workers.miner_spawn_egg": "Miner Spawn Egg",
+  "item.workers.farmer_spawn_egg": "Farmer Spawn Egg",
+  "item.workers.shepherd_spawn_egg": "Shepherd Spawn Egg",
+  "item.workers.merchant_spawn_egg": "Merchant Spawn Egg",
   "item.workers.lumberjack_spawn_egg": "Lumberjack Spawn Egg",
   "item.workers.fisherman_spawn_egg": "Fisherman Spawn Egg",
 
   "block.workers.miner_block": "Miner's Table",
+  "block.workers.farmer_block": "Farmer's Table",
   "block.workers.lumberjack_block": "Lumberjack's Table",
-  "block.workers.fisherman_block": "Fisherman's Table"
+  "block.workers.fisherman_block": "Fisherman's Table",
+  "block.workers.shepherd_block": "Shepherd's Table",
+  "block.workers.merchant_block": "Merchant's Table"
 }

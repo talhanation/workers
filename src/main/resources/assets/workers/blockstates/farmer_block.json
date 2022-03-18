@@ -1,0 +1,7 @@
+{
+  "variants": {
+    "": {
+      "model": "workers:block/farmer_block"
+    }
+  }
+}

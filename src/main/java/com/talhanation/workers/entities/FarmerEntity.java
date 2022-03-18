@@ -154,12 +154,21 @@ public class FarmerEntity extends AbstractWorkerEntity{
         ILivingEntityData ilivingentitydata = super.finalizeSpawn(world, difficultyInstance, reason, data, nbt);
         ((GroundPathNavigator)this.getNavigation()).setCanOpenDoors(true);
         this.populateDefaultEquipmentEnchantments(difficultyInstance);
-        this.setEquipment();
-        this.setDropEquipment();
-        this.getNavigation().setCanFloat(true);
-        this.setCanPickUpLoot(true);
-        this.setCustomName(new StringTextComponent("Farmer"));
+
+        this.initSpawn();
+
         return ilivingentitydata;
+    }
+
+    @Override
+    public void initSpawn() {
+        this.setCustomName(new StringTextComponent("Farmer"));
+        this.setEquipment();
+        this.getNavigation().setCanFloat(true);
+        this.setDropEquipment();
+        this.setRandomSpawnBonus();
+        this.setPersistenceRequired();
+        this.setCanPickUpLoot(true);
     }
 
     protected void pickUpItem(ItemEntity itemEntity) {
@@ -195,8 +204,8 @@ public class FarmerEntity extends AbstractWorkerEntity{
 
     @Override
     public void setEquipment() {
-        int i = this.random.nextInt(9);
-        if (i == 0) {
+        int i = this.random.nextInt(2);
+        if (i == 1) {
             this.setItemSlot(EquipmentSlotType.MAINHAND, new ItemStack(Items.STONE_HOE));
         }else{
             this.setItemSlot(EquipmentSlotType.MAINHAND, new ItemStack(Items.WOODEN_HOE));

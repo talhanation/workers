@@ -38,6 +38,8 @@ public abstract class AbstractWorkerEntity extends AbstractChunkLoaderEntity {
     private static final DataParameter<Integer> breakingTime = EntityDataManager.defineId(MinerEntity.class, DataSerializers.INT);
     private static final DataParameter<Integer> currentTimeBreak = EntityDataManager.defineId(MinerEntity.class, DataSerializers.INT);
     private static final DataParameter<Integer> previousTimeBreak = EntityDataManager.defineId(MinerEntity.class, DataSerializers.INT);
+    int hurtTimeStamp = 0;
+
 
     public AbstractWorkerEntity(EntityType<? extends AbstractWorkerEntity> entityType, World world) {
         super(entityType, world);
@@ -74,14 +76,7 @@ public abstract class AbstractWorkerEntity extends AbstractChunkLoaderEntity {
         super.tick();
         updateSwingTime();
         updateSwimming();
-
-        LivingEntity attacker = this.getLastHurtByMob();
-        if(this.isTame() && attacker != null){
-            LivingEntity owner = this.getOwner();
-            if (owner!= null && owner != attacker) {
-                owner.sendMessage(new StringTextComponent(this.getName().getString() + " is getting attacked by " + attacker.getName().getString()), owner.getUUID());
-            }
-        }
+        if(hurtTimeStamp > 0) hurtTimeStamp--;
     }
 
 
@@ -350,11 +345,20 @@ public abstract class AbstractWorkerEntity extends AbstractChunkLoaderEntity {
             return false;
         } else {
             Entity entity = dmg.getEntity();
-
             this.setOrderedToSit(false);
             if (entity != null && !(entity instanceof PlayerEntity) && !(entity instanceof AbstractArrowEntity)) {
                 amt = (amt + 1.0F) / 2.0F;
             }
+
+            LivingEntity attacker = this.getLastHurtByMob();
+            if(this.isTame() && attacker != null && hurtTimeStamp <= 0){
+                LivingEntity owner = this.getOwner();
+                if (owner!= null && owner != attacker) {
+                    owner.sendMessage(new StringTextComponent(this.getName().getString() + " is getting attacked by " + attacker.getName().getString()), owner.getUUID());
+                    hurtTimeStamp = 80;
+                }
+            }
+
             return super.hurt(dmg, amt);
         }
     }
@@ -462,4 +466,5 @@ public abstract class AbstractWorkerEntity extends AbstractChunkLoaderEntity {
 
     public abstract Predicate<ItemEntity> getAllowedItems();
     public abstract void openGUI(PlayerEntity player);
+    public abstract void initSpawn();
 }

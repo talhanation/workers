@@ -86,7 +86,6 @@ public abstract class AbstractInventoryEntity extends TameableEntity {
         }
     }
 
-
     ////////////////////////////////////OTHER FUNCTIONS////////////////////////////////////
 
     public void die(DamageSource dmg) {
@@ -94,8 +93,4 @@ public abstract class AbstractInventoryEntity extends TameableEntity {
         for (int i = 0; i < this.inventory.getContainerSize(); i++)
         InventoryHelper.dropItemStack(this.level, getX(), getY(), getZ(), this.inventory.getItem(i));
     }
-
-
-
-
 }

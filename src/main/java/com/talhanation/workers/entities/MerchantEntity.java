@@ -4,7 +4,6 @@ import com.talhanation.workers.Main;
 import com.talhanation.workers.inventory.MerchantInventoryContainer;
 import com.talhanation.workers.inventory.MerchantTradeContainer;
 import com.talhanation.workers.entities.ai.WorkerFollowOwnerGoal;
-import com.talhanation.workers.entities.ai.WorkerPickupWantedItemGoal;
 import com.talhanation.workers.network.MessageOpenGuiMerchant;
 import com.talhanation.workers.network.MessageOpenGuiWorker;
 import net.minecraft.entity.*;
@@ -83,8 +82,7 @@ public class MerchantEntity extends AbstractWorkerEntity{
                 }
 
                 if(!player.isCrouching()) {
-                    openTradeGUI(player);//test zweck
-                    //setFollow(!getFollow());
+                    setFollow(!getFollow());
                     return ActionResultType.SUCCESS;
                 }
 
@@ -116,7 +114,9 @@ public class MerchantEntity extends AbstractWorkerEntity{
                 if (!player.isCrouching()) {
                     openTradeGUI(player);
                     return ActionResultType.SUCCESS;
-                }
+                } else
+                if (getOwner() != null) player.sendMessage(new StringTextComponent("" + this.getName().getString() + ": Hello, I am a the merchant of " + this.getOwner().getDisplayName().getString() + "!"), player.getUUID());
+
             }
             return ActionResultType.PASS;
         }
@@ -174,7 +174,7 @@ public class MerchantEntity extends AbstractWorkerEntity{
     protected void registerGoals() {
         super.registerGoals();
         this.goalSelector.addGoal(1, new SwimGoal(this));
-        this.goalSelector.addGoal(2, new WorkerPickupWantedItemGoal(this));
+        //this.goalSelector.addGoal(2, new WorkerPickupWantedItemGoal(this));
         this.goalSelector.addGoal(2, new WorkerFollowOwnerGoal(this, 1.2D, 7.F, 4.0F));
         this.goalSelector.addGoal(3, new PanicGoal(this,2D));
         this.goalSelector.addGoal(5, new LookAtGoal(this, PlayerEntity.class, 8.0F));
@@ -198,12 +198,23 @@ public class MerchantEntity extends AbstractWorkerEntity{
         ILivingEntityData ilivingentitydata = super.finalizeSpawn(world, difficultyInstance, reason, data, nbt);
         ((GroundPathNavigator)this.getNavigation()).setCanOpenDoors(true);
         this.populateDefaultEquipmentEnchantments(difficultyInstance);
-        this.setEquipment();
-        this.setDropEquipment();
-        this.getNavigation().setCanFloat(true);
-        this.setCanPickUpLoot(true);
-        this.setCustomName(new StringTextComponent("Merchant"));
+
+        this.initSpawn();
+
         return ilivingentitydata;
+    }
+
+    @Override
+    public void initSpawn() {
+        this.setCustomName(new StringTextComponent("Merchant"));
+        this.setEquipment();
+        this.getNavigation().setCanFloat(true);
+        this.setDropEquipment();
+        this.setRandomSpawnBonus();
+        this.setPersistenceRequired();
+        this.setCanPickUpLoot(true);
+
+        this.heal(100);
     }
 
     protected void pickUpItem(ItemEntity itemEntity) {

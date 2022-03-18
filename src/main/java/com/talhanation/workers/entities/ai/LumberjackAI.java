@@ -5,6 +5,7 @@ import net.minecraft.block.Block;
 import net.minecraft.block.BlockState;
 import net.minecraft.block.Blocks;
 import net.minecraft.block.LeavesBlock;
+import net.minecraft.block.material.Material;
 import net.minecraft.entity.ai.goal.Goal;
 import net.minecraft.inventory.Inventory;
 import net.minecraft.item.ItemStack;
@@ -60,7 +61,7 @@ public class LumberjackAI extends Goal {
         if (plant && hasPlantInInv()){
             this.plantPos = getPlantPos();
             if(plantPos != null){
-                this.lumber.getNavigation().moveTo(plantPos.getX(), plantPos.getY(), plantPos.getZ(), 0.75);
+                this.lumber.getNavigation().moveTo(plantPos.getX(), plantPos.getY(), plantPos.getZ(), 1);
                 this.lumber.getLookControl().setLookAt(plantPos.getX(), plantPos.getY() + 1, plantPos.getZ(), 10.0F, (float) this.lumber.getMaxHeadXRot());
 
                 if (plantPos.closerThan(lumber.position(), 9)) {
@@ -76,7 +77,7 @@ public class LumberjackAI extends Goal {
         if (chop){
             this.chopPos = getWoodPos();
             if (chopPos != null) {
-                this.lumber.getNavigation().moveTo(chopPos.getX(), chopPos.getY(), chopPos.getZ(), 0.75);
+                this.lumber.getNavigation().moveTo(chopPos.getX(), chopPos.getY(), chopPos.getZ(), 1);
                 this.lumber.getLookControl().setLookAt(chopPos.getX(), chopPos.getY() + 1, chopPos.getZ(), 10.0F, (float) this.lumber.getMaxHeadXRot());
 
                 if (chopPos.closerThan(lumber.position(), 9)) {
@@ -124,38 +125,36 @@ public class LumberjackAI extends Goal {
     }
 
     public BlockPos getWoodPos() {
-        int range = 1;
+        int range = 16;
 
         for (int j = 0; j < range; j++){
             for (int i = 0; i < range; i++){
                 for(int k = 0; k < 8; k++){
-                    BlockPos blockpos1 = this.lumber.getStartPos().get().offset(j - range / 2F, k, i - range / 2F);
-                    BlockState blockState = this.lumber.level.getBlockState(blockpos1);
-                    Block block = blockState.getBlock();
-                    if (block == Blocks.OAK_LOG) {
-                        this.chopPos = blockpos1;
+                    BlockPos blockPos = this.lumber.getStartPos().get().offset(j - range / 2F, k, i - range / 2F);
+                   //this.lumber.level.setBlock(blockPos, Blocks.COBWEB.defaultBlockState(), 3);
+                    BlockState blockState = this.lumber.level.getBlockState(blockPos);
 
-                        return blockpos1;
+                    Material blockStateMaterial = blockState.getMaterial();
+                    if (blockStateMaterial == Material.WOOD) {
+                         return blockPos;
                     }
                 }
             }
-            if (range <= 16) range++;
         }
-
         return null;
     }
 
     public BlockPos getPlantPos() {
-        int range = 1;
+        int range = 16;
         Random random = new Random();
-        for (int j = 0; j < range; j++){
-            BlockPos blockPos = this.lumber.getStartPos().get().offset(random.nextInt(10) - range/2F, 1,  random.nextInt(10)- range / 2F);
+        for (int j = 0; j < range; j++) {
+            BlockPos blockPos = this.lumber.getStartPos().get().offset(random.nextInt(10) - range / 2F, 1, random.nextInt(10) - range / 2F);
 
-            if(this.lumber.level.isEmptyBlock(blockPos) && lumber.level.getBlockState(blockPos.below()).is(Blocks.GRASS_BLOCK)){
+
+            if (this.lumber.level.isEmptyBlock(blockPos) && lumber.level.getBlockState(blockPos.below()).is(Blocks.GRASS_BLOCK)) {
                 return blockPos;
             }
-            if (range <= 16) range++;
-            }
+        }
         return null;
     }
 
@@ -224,7 +223,7 @@ public class LumberjackAI extends Goal {
                 }
 
                 //set max destroy speed
-                int bp = (int) (blockstate.getDestroySpeed(this.lumber.level, blockPos) * 100);
+                int bp = (int) (blockstate.getDestroySpeed(this.lumber.level, blockPos) * 30);
                 this.lumber.setBreakingTime(bp);
 
                 //increase current

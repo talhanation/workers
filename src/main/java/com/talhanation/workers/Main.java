@@ -45,10 +45,14 @@ public class Main {
     public static VillagerProfession MINER;
     public static VillagerProfession LUMBERJACK;
     public static VillagerProfession FARMER;
+    public static VillagerProfession MERCHANT;
+    public static VillagerProfession SHEPHERD;
     public static VillagerProfession FISHER;
     public static PointOfInterestType POI_MINER;
     public static PointOfInterestType POI_LUMBERJACK;
     public static PointOfInterestType POI_FARMER;
+    public static PointOfInterestType POI_MERCHANT;
+    public static PointOfInterestType POI_SHEPHERD;
     public static PointOfInterestType POI_FISHER;
     public static KeyBinding C_KEY;
     public static ContainerType<WorkerInventoryContainer> MINER_CONTAINER_TYPE;
@@ -156,10 +160,19 @@ public class Main {
         POI_LUMBERJACK.setRegistryName(Main.MOD_ID, "poi_lumberjack");
         POI_FISHER = new PointOfInterestType("poi_fisher", PointOfInterestType.getBlockStates(ModBlocks.FISHER_BLOCK.get()), 1, 1);
         POI_FISHER.setRegistryName(Main.MOD_ID, "poi_fisher");
+        POI_FARMER = new PointOfInterestType("poi_farmer", PointOfInterestType.getBlockStates(ModBlocks.FARMER_BLOCK.get()), 1, 1);
+        POI_FARMER.setRegistryName(Main.MOD_ID, "poi_farmer");
+        POI_MERCHANT = new PointOfInterestType("poi_merchant", PointOfInterestType.getBlockStates(ModBlocks.MERCHANT_BLOCK.get()), 1, 1);
+        POI_MERCHANT.setRegistryName(Main.MOD_ID, "poi_merchant");
+        POI_SHEPHERD = new PointOfInterestType("poi_shepherd", PointOfInterestType.getBlockStates(ModBlocks.SHEPHERD_BLOCK.get()), 1, 1);
+        POI_SHEPHERD.setRegistryName(Main.MOD_ID, "poi_shepherd");
 
         event.getRegistry().register(POI_MINER);
         event.getRegistry().register(POI_LUMBERJACK);
         event.getRegistry().register(POI_FISHER);
+        event.getRegistry().register(POI_FARMER);
+        event.getRegistry().register(POI_MERCHANT);
+        event.getRegistry().register(POI_SHEPHERD);
     }
 
     @SubscribeEvent
@@ -170,12 +183,19 @@ public class Main {
         LUMBERJACK.setRegistryName(Main.MOD_ID, "lumberjack");
         FISHER = new VillagerProfession("fisher", POI_FISHER, ImmutableSet.of(), ImmutableSet.of(), SoundEvents.VILLAGER_CELEBRATE);
         FISHER.setRegistryName(Main.MOD_ID, "fisher");
-
-
+        SHEPHERD = new VillagerProfession("shepherd", POI_SHEPHERD, ImmutableSet.of(), ImmutableSet.of(), SoundEvents.VILLAGER_CELEBRATE);
+        SHEPHERD.setRegistryName(Main.MOD_ID, "shepherd");
+        FARMER = new VillagerProfession("farmer", POI_FARMER, ImmutableSet.of(), ImmutableSet.of(), SoundEvents.VILLAGER_CELEBRATE);
+        FARMER.setRegistryName(Main.MOD_ID, "farmer");
+        MERCHANT = new VillagerProfession("merchant", POI_MERCHANT, ImmutableSet.of(), ImmutableSet.of(), SoundEvents.VILLAGER_CELEBRATE);
+        MERCHANT.setRegistryName(Main.MOD_ID, "merchant");
 
         event.getRegistry().register(MINER);
         event.getRegistry().register(LUMBERJACK);
         event.getRegistry().register(FISHER);
+        event.getRegistry().register(MERCHANT);
+        event.getRegistry().register(FARMER);
+        event.getRegistry().register(SHEPHERD);
     }
 
     @SubscribeEvent
@@ -239,3 +259,4 @@ public class Main {
         return player.level.getEntitiesOfClass(AbstractWorkerEntity.class, new AxisAlignedBB(player.getX() - distance, player.getY() - distance, player.getZ() - distance, player.getX() + distance, player.getY() + distance, player.getZ() + distance), entity -> entity.getUUID().equals(uuid)).stream().findAny().orElse(null);
     }
 }
+//

@@ -153,11 +153,21 @@ public class MinerEntity extends AbstractWorkerEntity {
         ILivingEntityData ilivingentitydata = super.finalizeSpawn(world, difficultyInstance, reason, data, nbt);
         ((GroundPathNavigator)this.getNavigation()).setCanOpenDoors(true);
         this.populateDefaultEquipmentEnchantments(difficultyInstance);
-        this.setEquipment();
-        this.setDropEquipment();
-        this.setCanPickUpLoot(true);
-        this.setCustomName(new StringTextComponent("Miner"));
+
+        this.initSpawn();
+
         return ilivingentitydata;
+    }
+
+    @Override
+    public void initSpawn() {
+        this.setCustomName(new StringTextComponent("Miner"));
+        this.setEquipment();
+        this.getNavigation().setCanFloat(true);
+        this.setDropEquipment();
+        this.setRandomSpawnBonus();
+        this.setPersistenceRequired();
+        this.setCanPickUpLoot(true);
     }
 
     protected void pickUpItem(ItemEntity itemEntity) {

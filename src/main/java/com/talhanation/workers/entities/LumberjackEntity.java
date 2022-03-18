@@ -175,12 +175,21 @@ public class LumberjackEntity extends AbstractWorkerEntity{
         ILivingEntityData ilivingentitydata = super.finalizeSpawn(world, difficultyInstance, reason, data, nbt);
         ((GroundPathNavigator)this.getNavigation()).setCanOpenDoors(true);
         this.populateDefaultEquipmentEnchantments(difficultyInstance);
-        this.setEquipment();
-        this.setDropEquipment();
-        this.getNavigation().setCanFloat(true);
-        this.setCanPickUpLoot(true);
-        this.setCustomName(new StringTextComponent("Lumberjack"));
+
+        this.initSpawn();
+
         return ilivingentitydata;
+    }
+
+    @Override
+    public void initSpawn() {
+        this.setCustomName(new StringTextComponent("Lumberjack"));
+        this.setEquipment();
+        this.getNavigation().setCanFloat(true);
+        this.setDropEquipment();
+        this.setRandomSpawnBonus();
+        this.setPersistenceRequired();
+        this.setCanPickUpLoot(true);
     }
 
     protected void pickUpItem(ItemEntity itemEntity) {
