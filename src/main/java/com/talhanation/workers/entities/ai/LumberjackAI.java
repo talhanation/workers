@@ -24,9 +24,6 @@ import static com.talhanation.workers.entities.LumberjackEntity.WANTED_SAPLINGS;
 public class LumberjackAI extends Goal {
     private final LumberjackEntity lumber;
     private BlockPos chopPos;
-    private BlockPos plantPos;
-    private boolean plant;
-    private boolean chop;
 
     public LumberjackAI(LumberjackEntity lumber) {
         this.lumber = lumber;
@@ -51,46 +48,22 @@ public class LumberjackAI extends Goal {
     public void start() {
         super.start();
         lumber.resetWorkerParameters();
-        plant = false;//muss true sein später
-        chop = true;//muss false sein später
     }
 
     public void tick() {
         breakLeaves();
 
-        if (plant && hasPlantInInv()){
-            this.plantPos = getPlantPos();
-            if(plantPos != null){
-                this.lumber.getNavigation().moveTo(plantPos.getX(), plantPos.getY(), plantPos.getZ(), 1);
-                this.lumber.getLookControl().setLookAt(plantPos.getX(), plantPos.getY() + 1, plantPos.getZ(), 10.0F, (float) this.lumber.getMaxHeadXRot());
+        this.chopPos = getWoodPos();
+        if (chopPos != null) {
+            this.lumber.getNavigation().moveTo(chopPos.getX(), chopPos.getY(), chopPos.getZ(), 1);
+            this.lumber.getLookControl().setLookAt(chopPos.getX(), chopPos.getY() + 1, chopPos.getZ(), 10.0F, (float) this.lumber.getMaxHeadXRot());
 
-                if (plantPos.closerThan(lumber.position(), 9)) {
-                    this.plantSaplingFromInv(plantPos);
+            if (chopPos.closerThan(lumber.position(), 9)) {
+                this.mineBlock(chopPos);
+
+                if(lumber.level.getBlockState(chopPos.below()).is(Blocks.DIRT) && this.lumber.level.isEmptyBlock(chopPos)){
+                    plantSaplingFromInv(chopPos);
                 }
-            }
-        }
-        else {
-            plant = false;
-            chop = true;
-        }
-
-        if (chop){
-            this.chopPos = getWoodPos();
-            if (chopPos != null) {
-                this.lumber.getNavigation().moveTo(chopPos.getX(), chopPos.getY(), chopPos.getZ(), 1);
-                this.lumber.getLookControl().setLookAt(chopPos.getX(), chopPos.getY() + 1, chopPos.getZ(), 10.0F, (float) this.lumber.getMaxHeadXRot());
-
-                if (chopPos.closerThan(lumber.position(), 9)) {
-                    this.mineBlock(chopPos);
-
-                    if(lumber.level.getBlockState(chopPos.below()).is(Blocks.DIRT) && this.lumber.level.isEmptyBlock(chopPos)){
-                        plantSaplingFromInv(chopPos);
-                    }
-                }
-            }
-            else {
-                chop = true;
-                plant = false;
             }
         }
     }
