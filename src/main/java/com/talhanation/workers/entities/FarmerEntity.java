@@ -56,7 +56,7 @@ public class FarmerEntity extends AbstractWorkerEntity{
             Items.CARROT
     );
 
-    public static final Set<Item> WANTED_ITEMS = ImmutableSet.of(
+    public final Set<Item> WANTED_ITEMS = ImmutableSet.of(
             Items.WHEAT,
             Items.MELON_SLICE,
             Items.POTATO,
