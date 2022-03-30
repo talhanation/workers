@@ -3,6 +3,10 @@ package com.talhanation.workers.entities.ai;
 import com.talhanation.workers.entities.FarmerEntity;
 import net.minecraft.block.*;
 import net.minecraft.entity.ai.goal.Goal;
+import net.minecraft.fluid.Fluid;
+import net.minecraft.fluid.FluidState;
+import net.minecraft.fluid.Fluids;
+import net.minecraft.inventory.IInventory;
 import net.minecraft.inventory.Inventory;
 import net.minecraft.item.ItemStack;
 import net.minecraft.item.Items;
@@ -18,6 +22,7 @@ import static com.talhanation.workers.entities.FarmerEntity.WANTED_SEEDS;
 public class FarmerCropAI extends Goal {
     private final FarmerEntity farmer;
     private BlockPos workPos;
+    private BlockPos waterPos;
     private int state;
 
     public FarmerCropAI(FarmerEntity farmer) {
@@ -45,6 +50,7 @@ public class FarmerCropAI extends Goal {
     public void start() {
         super.start();
         farmer.resetWorkerParameters();
+        this.waterPos = farmer.getStartPos().get();
     }
 
     @Override
@@ -74,10 +80,9 @@ public class FarmerCropAI extends Goal {
 
                     if (workPos.closerThan(farmer.position(), 2.5)) {
                         this.prepareFarmLand(workPos);
+                        farmer.workerSwingArm();
                     }
                 }
-
-
             break;
             case 1://plant
 
@@ -93,6 +98,17 @@ public class FarmerCropAI extends Goal {
         return inventory.hasAnyOf(WANTED_SEEDS);
     }
 
+    private boolean hasWaterInInv() {
+        Inventory inventory = farmer.getInventory();
+        for (int i = 0; i < inventory.getContainerSize(); ++i) {
+            ItemStack itemstack = inventory.getItem(i);
+
+            if (!itemstack.isEmpty() && itemstack.getItem() == Items.WATER_BUCKET) {
+                return true;
+            }
+        }
+         return false;
+    }
 
     private void plantSeedsFromInv(BlockPos blockPos) {
         Inventory inventory = farmer.getInventory();
@@ -134,6 +150,24 @@ public class FarmerCropAI extends Goal {
     private void prepareFarmLand(BlockPos blockPos) {
         farmer.level.setBlock(blockPos, Blocks.FARMLAND.defaultBlockState(), 3);
         farmer.level.playSound(null, blockPos.getX(), blockPos.getY(), blockPos.getZ(), SoundEvents.HOE_TILL, SoundCategory.BLOCKS, 1.0F, 1.0F);
+        BlockState blockState = this.farmer.level.getBlockState(blockPos.above());
+        Block block = blockState.getBlock();
+
+        if (block instanceof BushBlock || block instanceof AbstractPlantBlock) {
+
+            farmer.level.destroyBlock(blockPos.above(), false);
+            farmer.level.playSound(null, blockPos.getX(), blockPos.getY(), blockPos.getZ(), SoundEvents.GRASS_BREAK, SoundCategory.BLOCKS, 1.0F, 1.0F);
+        }
+
+        if (waterPos != null) {
+            FluidState waterBlockState = this.farmer.level.getFluidState(waterPos);
+
+            if (waterBlockState != Fluids.WATER.defaultFluidState() || waterBlockState != Fluids.FLOWING_WATER.defaultFluidState()){
+                farmer.level.setBlock(waterPos, Blocks.WATER.defaultBlockState(), 3);
+                farmer.level.playSound(null, blockPos.getX(), blockPos.getY(), blockPos.getZ(), SoundEvents.BUCKET_EMPTY, SoundCategory.BLOCKS, 1.0F, 1.0F);
+                this.waterPos = null;
+            }
+        }
     }
 
     private void mineBlock(BlockPos blockPos){
@@ -147,7 +181,6 @@ public class FarmerCropAI extends Goal {
                 if (farmer.getCurrentTimeBreak() % 5 == 4) {
                     farmer.level.playLocalSound(blockPos.getX(), blockPos.getY(), blockPos.getZ(), blockstate.getSoundType().getHitSound(), SoundCategory.BLOCKS, 1F, 0.75F, false);
                 }
-
 
                 int bp = (int) (blockstate.getDestroySpeed(this.farmer.level, blockPos) * 10);
                 this.farmer.setBreakingTime(bp);
@@ -179,11 +212,10 @@ public class FarmerCropAI extends Goal {
 
 
     public BlockPos getHoePos() {
-        int range = 8;
-
-        for (int j = 0; j < range; j++){
-            for (int i = 0; i < range; i++){
-                BlockPos blockPos = this.farmer.getStartPos().get().offset(j - range / 2F, 0, i - range / 2F);
+        //int range = 8;
+        for (int j = 0; j <= 8; j++){
+            for (int i = 0; i <= 8; i++){
+                BlockPos blockPos = this.farmer.getStartPos().get().offset(j - 4, 0, i - 4);
 
                 BlockState blockState = this.farmer.level.getBlockState(blockPos);
 
