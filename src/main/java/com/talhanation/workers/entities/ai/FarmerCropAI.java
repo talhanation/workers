@@ -3,10 +3,8 @@ package com.talhanation.workers.entities.ai;
 import com.talhanation.workers.entities.FarmerEntity;
 import net.minecraft.block.*;
 import net.minecraft.entity.ai.goal.Goal;
-import net.minecraft.fluid.Fluid;
 import net.minecraft.fluid.FluidState;
 import net.minecraft.fluid.Fluids;
-import net.minecraft.inventory.IInventory;
 import net.minecraft.inventory.Inventory;
 import net.minecraft.item.ItemStack;
 import net.minecraft.item.Items;
@@ -64,7 +62,7 @@ public class FarmerCropAI extends Goal {
 
     public void tick() {
 
-        this.debug();
+        //this.debug();
 
         /*
         state:
