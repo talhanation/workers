@@ -5,7 +5,7 @@ import com.talhanation.workers.entities.MerchantEntity;
 import com.talhanation.workers.network.Message;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraftforge.api.distmarker.Dist;
-import net.minecraftforge.fmllegacy.network.NetworkEvent;
+import net.minecraftforge.network.NetworkEvent;
 
 import java.util.List;
 import java.util.Objects;

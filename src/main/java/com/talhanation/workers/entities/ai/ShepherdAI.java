@@ -1,6 +1,7 @@
 package com.talhanation.workers.entities.ai;
 
 import com.talhanation.workers.entities.ShepherdEntity;
+import net.minecraft.core.Vec3i;
 import net.minecraft.world.entity.ai.goal.Goal;
 import net.minecraft.world.entity.animal.Sheep;
 import net.minecraft.world.SimpleContainer;
@@ -108,7 +109,7 @@ public class ShepherdAI extends Goal {
             if (list.size() > shepherd.getMaxSheepCount()) {
                 if (sheep != null) {
                     this.shepherd.getNavigation().moveTo(sheep.getX(), sheep.getY(), sheep.getZ(), 1);
-                    if (sheep.blockPosition().closerThan(shepherd.position(), 1.5)) sheep.kill();
+                    if (sheep.blockPosition().closerThan(shepherd.position()., 1.5)) sheep.kill();
                     shepherd.workerSwingArm();
                 }
             } else {

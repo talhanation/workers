@@ -2,12 +2,11 @@ package com.talhanation.workers.init;
 
 import com.google.common.collect.Lists;
 import com.talhanation.workers.Main;
-import com.talhanation.workers.init.ModEntityTypes;
 import com.talhanation.workers.util.RegistryUtils;
 import net.minecraft.world.item.BlockItem;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.CreativeModeTab;
-import net.minecraftforge.fmllegacy.RegistryObject;
+import net.minecraftforge.registries.RegistryObject;
 import net.minecraftforge.registries.DeferredRegister;
 import net.minecraftforge.registries.ForgeRegistries;
 
