@@ -1,9 +1,9 @@
 package com.talhanation.workers.entities.ai;
+
 import com.talhanation.workers.entities.AbstractWorkerEntity;
-import net.minecraft.entity.ai.goal.Goal;
-import net.minecraft.item.FishingRodItem;
+import net.minecraft.core.BlockPos;
 import net.minecraft.tags.FluidTags;
-import net.minecraft.util.math.BlockPos;
+import net.minecraft.world.entity.ai.goal.Goal;
 
 import java.util.EnumSet;
 import java.util.Random;

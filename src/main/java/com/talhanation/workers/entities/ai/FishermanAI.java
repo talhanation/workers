@@ -1,14 +1,18 @@
 package com.talhanation.workers.entities.ai;
 
 import com.talhanation.workers.entities.FishermanEntity;
-import net.minecraft.entity.ai.goal.Goal;
-import net.minecraft.item.ItemStack;
-import net.minecraft.loot.*;
+import net.minecraft.core.BlockPos;
+import net.minecraft.server.level.ServerLevel;
+import net.minecraft.sounds.SoundEvents;
 import net.minecraft.tags.FluidTags;
-import net.minecraft.util.Hand;
-import net.minecraft.util.SoundEvents;
-import net.minecraft.util.math.BlockPos;
-import net.minecraft.world.server.ServerWorld;
+import net.minecraft.world.InteractionHand;
+import net.minecraft.world.entity.ai.goal.Goal;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.level.storage.loot.BuiltInLootTables;
+import net.minecraft.world.level.storage.loot.LootContext;
+import net.minecraft.world.level.storage.loot.LootTable;
+import net.minecraft.world.level.storage.loot.parameters.LootContextParamSets;
+import net.minecraft.world.level.storage.loot.parameters.LootContextParams;
 
 import java.util.List;
 import java.util.Random;
@@ -49,13 +53,13 @@ public class FishermanAI extends Goal {
     public void spawnFishingLoot() {
         this.fishingTimer = 500 + fisherman.getRandom().nextInt(2000);
         double luck = 0.1D;
-        LootContext.Builder lootcontext$builder = (new LootContext.Builder((ServerWorld)fisherman.level))
-                .withParameter(LootParameters.ORIGIN, fisherman.position())
-                .withParameter(LootParameters.TOOL, this.fisherman.getItemInHand(Hand.MAIN_HAND))
+        LootContext.Builder lootcontext$builder = (new LootContext.Builder((ServerLevel)fisherman.level))
+                .withParameter(LootContextParams.ORIGIN, fisherman.position())
+                .withParameter(LootContextParams.TOOL, this.fisherman.getItemInHand(InteractionHand.MAIN_HAND))
                 .withLuck((float) luck);
 
-        LootTable loottable = fisherman.getServer().getLootTables().get(LootTables.FISHING);
-        List<ItemStack> list = loottable.getRandomItems(lootcontext$builder.create(LootParameterSets.FISHING));
+        LootTable loottable = fisherman.getServer().getLootTables().get(BuiltInLootTables.FISHING);
+        List<ItemStack> list = loottable.getRandomItems(lootcontext$builder.create(LootContextParamSets.FISHING));
 
         for (ItemStack itemstack : list) {
             fisherman.getInventory().addItem(itemstack);

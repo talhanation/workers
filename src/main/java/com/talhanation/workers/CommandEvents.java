@@ -3,15 +3,15 @@ package com.talhanation.workers;
 import com.talhanation.workers.entities.AbstractWorkerEntity;
 import com.talhanation.workers.entities.MerchantEntity;
 import com.talhanation.workers.entities.MinerEntity;
-import net.minecraft.entity.LivingEntity;
-import net.minecraft.entity.player.PlayerEntity;
-import net.minecraft.entity.player.PlayerInventory;
-import net.minecraft.inventory.Inventory;
-import net.minecraft.item.Item;
-import net.minecraft.item.ItemStack;
-import net.minecraft.util.Direction;
-import net.minecraft.util.math.BlockPos;
-import net.minecraft.util.text.StringTextComponent;
+import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.entity.player.Inventory;
+import net.minecraft.world.SimpleContainer;
+import net.minecraft.world.item.Item;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.core.Direction;
+import net.minecraft.core.BlockPos;
+import net.minecraft.network.chat.TextComponent;
 
 import java.util.Objects;
 import java.util.Optional;
@@ -36,13 +36,13 @@ public class CommandEvents {
         }
     }
 
-    public static void handleMerchantTrade(PlayerEntity player, MerchantEntity merchant, int tradeID){
+    public static void handleMerchantTrade(Player player, MerchantEntity merchant, int tradeID){
         int[] PRICE_SLOT = new int[]{0,2,4,6};
         int[] TRADE_SLOT = new int[]{1,3,5,7};
 
-        PlayerInventory playerInv = player.inventory;
-        Inventory merchantInv = merchant.getInventory();//supply and money
-        Inventory merchantTradeInv = merchant.getTradeInventory();//trade interface
+        Inventory playerInv = player.getInventory();
+        SimpleContainer merchantInv = merchant.getInventory();//supply and money
+        SimpleContainer merchantTradeInv = merchant.getTradeInventory();//trade interface
 
         int playerEmeralds = 0;
         int merchantEmeralds = 0;
@@ -178,19 +178,19 @@ public class CommandEvents {
             //player.sendMessage(new StringTextComponent("PlayerEmeralds: " + playerEmeralds), player.getUUID());
         }
         else if (!merchantHasItems){
-            player.sendMessage(new StringTextComponent("" + merchant.getName().getString() + ": Sorry, im out of Stock."), player.getUUID());
+            player.sendMessage(new TextComponent("" + merchant.getName().getString() + ": Sorry, im out of Stock."), player.getUUID());
 
             if (merchant.getOwner() != null)
-                merchant.getOwner().sendMessage(new StringTextComponent("" + merchant.getName().getString() + ": Im out of Stock."), player.getUUID());
+                merchant.getOwner().sendMessage(new TextComponent("" + merchant.getName().getString() + ": Im out of Stock."), player.getUUID());
         }
         else if (!playerCanPay){
-            player.sendMessage(new StringTextComponent("" + merchant.getName().getString() + ": Sorry, you need " + sollPrice + "x " + emerald +  "."), player.getUUID());
+            player.sendMessage(new TextComponent("" + merchant.getName().getString() + ": Sorry, you need " + sollPrice + "x " + emerald +  "."), player.getUUID());
         }
         else if (!canAddItemToInv){
-            player.sendMessage(new StringTextComponent("" + merchant.getName().getString() + ": Sorry, i cant take your Items currently."), player.getUUID());
+            player.sendMessage(new TextComponent("" + merchant.getName().getString() + ": Sorry, i cant take your Items currently."), player.getUUID());
 
             if (merchant.getOwner() != null)
-                merchant.getOwner().sendMessage(new StringTextComponent("" + merchant.getName().getString() + ": My inventory is full, i cant accept new items!"), player.getUUID());
+                merchant.getOwner().sendMessage(new TextComponent("" + merchant.getName().getString() + ": My inventory is full, i cant accept new items!"), player.getUUID());
         }
     }
 }

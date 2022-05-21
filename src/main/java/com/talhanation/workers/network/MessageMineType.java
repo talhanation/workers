@@ -1,9 +1,9 @@
 package com.talhanation.workers.network;
 
 import com.talhanation.workers.entities.MinerEntity;
-import net.minecraft.network.PacketBuffer;
+import net.minecraft.network.FriendlyByteBuf;
 import net.minecraftforge.api.distmarker.Dist;
-import net.minecraftforge.fml.network.NetworkEvent;
+import net.minecraftforge.fmllegacy.network.NetworkEvent;
 
 import java.util.List;
 import java.util.Objects;
@@ -37,13 +37,13 @@ public class MessageMineType implements Message<MessageMineType> {
         }
 
     }
-    public MessageMineType fromBytes(PacketBuffer buf) {
+    public MessageMineType fromBytes(FriendlyByteBuf buf) {
         this.mineType = buf.readInt();
         this.uuid = buf.readUUID();
         return this;
     }
 
-    public void toBytes(PacketBuffer buf) {
+    public void toBytes(FriendlyByteBuf buf) {
         buf.writeInt(mineType);
         buf.writeUUID(uuid);
     }

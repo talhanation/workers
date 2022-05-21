@@ -5,36 +5,45 @@ import com.talhanation.workers.Main;
 import com.talhanation.workers.inventory.WorkerInventoryContainer;
 import com.talhanation.workers.entities.ai.*;
 import com.talhanation.workers.network.MessageOpenGuiWorker;
-import net.minecraft.block.Block;
-import net.minecraft.block.Blocks;
-import net.minecraft.entity.*;
-import net.minecraft.entity.ai.attributes.AttributeModifierMap;
-import net.minecraft.entity.ai.attributes.Attributes;
-import net.minecraft.entity.ai.goal.*;
-import net.minecraft.entity.item.ItemEntity;
-import net.minecraft.entity.player.PlayerEntity;
-import net.minecraft.entity.player.PlayerInventory;
-import net.minecraft.entity.player.ServerPlayerEntity;
-import net.minecraft.inventory.EquipmentSlotType;
-import net.minecraft.inventory.Inventory;
-import net.minecraft.inventory.container.Container;
-import net.minecraft.inventory.container.INamedContainerProvider;
-import net.minecraft.item.Item;
-import net.minecraft.item.ItemStack;
-import net.minecraft.item.Items;
-import net.minecraft.nbt.CompoundNBT;
-import net.minecraft.pathfinding.GroundPathNavigator;
-import net.minecraft.util.text.ITextComponent;
-import net.minecraft.util.text.StringTextComponent;
+import net.minecraft.world.entity.*;
+import net.minecraft.world.level.block.Block;
+import net.minecraft.world.level.block.Blocks;
+import net.minecraft.world.entity.*;
+import net.minecraft.world.entity.ai.attributes.AttributeSupplier;
+import net.minecraft.world.entity.ai.attributes.Attributes;
+import net.minecraft.world.entity.ai.goal.*;
+import net.minecraft.world.entity.item.ItemEntity;
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.entity.player.Inventory;
+import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.world.SimpleContainer;
+import net.minecraft.world.inventory.AbstractContainerMenu;
+import net.minecraft.world.MenuProvider;
+import net.minecraft.world.item.Item;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.Items;
+import net.minecraft.nbt.CompoundTag;
+import net.minecraft.world.entity.ai.navigation.GroundPathNavigation;
+import net.minecraft.network.chat.Component;
+import net.minecraft.network.chat.TextComponent;
 import net.minecraft.world.DifficultyInstance;
-import net.minecraft.world.IServerWorld;
-import net.minecraft.world.World;
-import net.minecraft.world.server.ServerWorld;
-import net.minecraftforge.fml.network.NetworkHooks;
+import net.minecraft.world.level.ServerLevelAccessor;
+import net.minecraft.world.level.Level;
+import net.minecraft.server.level.ServerLevel;
+import net.minecraftforge.fmllegacy.network.NetworkHooks;
 
 import javax.annotation.Nullable;
 import java.util.Set;
 import java.util.function.Predicate;
+
+import net.minecraft.world.entity.AgeableMob;
+import net.minecraft.world.entity.ai.goal.FloatGoal;
+import net.minecraft.world.entity.ai.goal.GolemRandomStrollInVillageGoal;
+import net.minecraft.world.entity.ai.goal.LookAtPlayerGoal;
+import net.minecraft.world.entity.ai.goal.MoveBackToVillageGoal;
+import net.minecraft.world.entity.ai.goal.PanicGoal;
+import net.minecraft.world.entity.ai.goal.RandomLookAroundGoal;
+import net.minecraft.world.entity.ai.goal.WaterAvoidingRandomStrollGoal;
 
 public class LumberjackEntity extends AbstractWorkerEntity{
 
@@ -42,7 +51,7 @@ public class LumberjackEntity extends AbstractWorkerEntity{
             (!item.hasPickUpDelay() && item.isAlive() && this.wantsToPickUp(item.getItem()));
 
     public final Predicate<Block> ALLOWED_BLOCKS = (item) ->
-            (this.wantsToBreak(item.getBlock()));
+            (this.wantsToBreak(item));
 
     public static final Set<Item> WANTED_SAPLINGS = ImmutableSet.of(
             Items.OAK_SAPLING,
@@ -109,7 +118,7 @@ public class LumberjackEntity extends AbstractWorkerEntity{
             Blocks.STRIPPED_SPRUCE_WOOD
     );
 
-    public LumberjackEntity(EntityType<? extends AbstractWorkerEntity> entityType, World world) {
+    public LumberjackEntity(EntityType<? extends AbstractWorkerEntity> entityType, Level world) {
         super(entityType, world);
     }
 
@@ -133,7 +142,7 @@ public class LumberjackEntity extends AbstractWorkerEntity{
     }
 
     //ATTRIBUTES
-    public static AttributeModifierMap.MutableAttribute setAttributes() {
+    public static AttributeSupplier.Builder setAttributes() {
         return createMobAttributes()
                 .add(Attributes.MAX_HEALTH, 20.0D)
                 .add(Attributes.MOVEMENT_SPEED, 0.3D)
@@ -144,19 +153,19 @@ public class LumberjackEntity extends AbstractWorkerEntity{
     @Override
     protected void registerGoals() {
         super.registerGoals();
-        this.goalSelector.addGoal(1, new SwimGoal(this));
+        this.goalSelector.addGoal(1, new FloatGoal(this));
         this.goalSelector.addGoal(2, new WorkerPickupWantedItemGoal(this));
         this.goalSelector.addGoal(2, new WorkerFollowOwnerGoal(this, 1.2D, 7.F, 4.0F));
         this.goalSelector.addGoal(3, new LumberjackAI(this));
 
         this.goalSelector.addGoal(1, new PanicGoal(this, 1.3D));
 
-        this.goalSelector.addGoal(9, new ReturnToVillageGoal(this, 0.6D, false));
-        this.goalSelector.addGoal(10, new PatrolVillageGoal(this, 0.6D));
-        this.goalSelector.addGoal(10, new WaterAvoidingRandomWalkingGoal(this, 1.0D, 0F));
-        this.goalSelector.addGoal(11, new LookAtGoal(this, PlayerEntity.class, 8.0F));
-        this.goalSelector.addGoal(12, new LookRandomlyGoal(this));
-        this.goalSelector.addGoal(10, new LookAtGoal(this, LivingEntity.class, 8.0F));
+        this.goalSelector.addGoal(9, new MoveBackToVillageGoal(this, 0.6D, false));
+        this.goalSelector.addGoal(10, new GolemRandomStrollInVillageGoal(this, 0.6D));
+        this.goalSelector.addGoal(10, new WaterAvoidingRandomStrollGoal(this, 1.0D, 0F));
+        this.goalSelector.addGoal(11, new LookAtPlayerGoal(this, Player.class, 8.0F));
+        this.goalSelector.addGoal(12, new RandomLookAroundGoal(this));
+        this.goalSelector.addGoal(10, new LookAtPlayerGoal(this, LivingEntity.class, 8.0F));
 
 
         //this.targetSelector.addGoal(1, new (this));
@@ -165,15 +174,15 @@ public class LumberjackEntity extends AbstractWorkerEntity{
 
     @Nullable
     @Override
-    public AgeableEntity getBreedOffspring(ServerWorld p_241840_1_, AgeableEntity p_241840_2_) {
+    public AgeableMob getBreedOffspring(ServerLevel p_241840_1_, AgeableMob p_241840_2_) {
         return null;
     }
 
     @Override
     @Nullable
-    public ILivingEntityData finalizeSpawn(IServerWorld world, DifficultyInstance difficultyInstance, SpawnReason reason, @Nullable ILivingEntityData data, @Nullable CompoundNBT nbt) {
-        ILivingEntityData ilivingentitydata = super.finalizeSpawn(world, difficultyInstance, reason, data, nbt);
-        ((GroundPathNavigator)this.getNavigation()).setCanOpenDoors(true);
+    public SpawnGroupData finalizeSpawn(ServerLevelAccessor world, DifficultyInstance difficultyInstance, MobSpawnType reason, @Nullable SpawnGroupData data, @Nullable CompoundTag nbt) {
+        SpawnGroupData ilivingentitydata = super.finalizeSpawn(world, difficultyInstance, reason, data, nbt);
+        ((GroundPathNavigation)this.getNavigation()).setCanOpenDoors(true);
         this.populateDefaultEquipmentEnchantments(difficultyInstance);
 
         this.initSpawn();
@@ -183,7 +192,7 @@ public class LumberjackEntity extends AbstractWorkerEntity{
 
     @Override
     public void initSpawn() {
-        this.setCustomName(new StringTextComponent("Lumberjack"));
+        this.setCustomName(new TextComponent("Lumberjack"));
         this.setEquipment();
         this.getNavigation().setCanFloat(true);
         this.setDropEquipment();
@@ -195,7 +204,7 @@ public class LumberjackEntity extends AbstractWorkerEntity{
     protected void pickUpItem(ItemEntity itemEntity) {
         ItemStack itemstack = itemEntity.getItem();
         if (this.wantsToPickUp(itemstack)) {
-            Inventory inventory = this.getInventory();
+            SimpleContainer inventory = this.getInventory();
             boolean flag = inventory.canAddItem(itemstack);
             if (!flag) {
                 return;
@@ -205,7 +214,7 @@ public class LumberjackEntity extends AbstractWorkerEntity{
             this.take(itemEntity, itemstack.getCount());
             ItemStack itemstack1 = inventory.addItem(itemstack);
             if (itemstack1.isEmpty()) {
-                itemEntity.remove();
+                itemEntity.remove(RemovalReason.DISCARDED);
             } else {
                 itemstack.setCount(itemstack1.getCount());
             }
@@ -219,27 +228,26 @@ public class LumberjackEntity extends AbstractWorkerEntity{
     }
 
     public boolean wantsToBreak(Block block) {
-        Block block1 = block.getBlock();
-        return (WANTED_BLOCKS.contains(block1));
+        return (WANTED_BLOCKS.contains(block));
     }
 
     @Override
     public void setEquipment() {
-            this.setItemSlot(EquipmentSlotType.MAINHAND, new ItemStack(Items.STONE_AXE));
+            this.setItemSlot(EquipmentSlot.MAINHAND, new ItemStack(Items.STONE_AXE));
     }
 
     @Override
-    public void openGUI(PlayerEntity player) {
-        if (player instanceof ServerPlayerEntity) {
-            NetworkHooks.openGui((ServerPlayerEntity) player, new INamedContainerProvider() {
+    public void openGUI(Player player) {
+        if (player instanceof ServerPlayer) {
+            NetworkHooks.openGui((ServerPlayer) player, new MenuProvider() {
                 @Override
-                public ITextComponent getDisplayName() {
+                public Component getDisplayName() {
                     return getName();
                 }
 
                 @Nullable
                 @Override
-                public Container createMenu(int i, PlayerInventory playerInventory, PlayerEntity playerEntity) {
+                public AbstractContainerMenu createMenu(int i, Inventory playerInventory, Player playerEntity) {
                     return new WorkerInventoryContainer(i, LumberjackEntity.this, playerInventory);
                 }
             }, packetBuffer -> {packetBuffer.writeUUID(getUUID());});

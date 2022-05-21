@@ -1,9 +1,9 @@
 package com.talhanation.workers.network;
 
 import com.talhanation.workers.entities.ShepherdEntity;
-import net.minecraft.network.PacketBuffer;
+import net.minecraft.network.FriendlyByteBuf;
 import net.minecraftforge.api.distmarker.Dist;
-import net.minecraftforge.fml.network.NetworkEvent;
+import net.minecraftforge.fmllegacy.network.NetworkEvent;
 
 import java.util.List;
 import java.util.Objects;
@@ -35,13 +35,13 @@ public class MessageSheepCount implements Message<MessageSheepCount> {
         }
 
     }
-    public MessageSheepCount fromBytes(PacketBuffer buf) {
+    public MessageSheepCount fromBytes(FriendlyByteBuf buf) {
         this.sheepCount = buf.readInt();
         this.uuid = buf.readUUID();
         return this;
     }
 
-    public void toBytes(PacketBuffer buf) {
+    public void toBytes(FriendlyByteBuf buf) {
         buf.writeInt(sheepCount);
         buf.writeUUID(uuid);
     }

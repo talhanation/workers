@@ -1,12 +1,12 @@
 package com.talhanation.workers.entities.ai;
 
 import com.talhanation.workers.entities.MinerEntity;
-import net.minecraft.block.Block;
-import net.minecraft.block.BlockState;
-import net.minecraft.entity.ai.goal.Goal;
-import net.minecraft.util.Direction;
-import net.minecraft.util.SoundCategory;
-import net.minecraft.util.math.BlockPos;
+import net.minecraft.world.level.block.Block;
+import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.entity.ai.goal.Goal;
+import net.minecraft.core.Direction;
+import net.minecraft.sounds.SoundSource;
+import net.minecraft.core.BlockPos;
 import net.minecraftforge.event.ForgeEventFactory;
 
 import java.util.EnumSet;
@@ -125,7 +125,7 @@ public class MinerMine3x3TunnelGoal extends Goal {
             if (!miner.shouldIgnorBlock(block)) {
 
                 if (miner.getCurrentTimeBreak() % 5 == 4) {
-                    miner.level.playLocalSound(blockPos.getX(), blockPos.getY(), blockPos.getZ(), blockstate.getSoundType().getHitSound(), SoundCategory.BLOCKS, 1F, 0.75F, false);
+                    miner.level.playLocalSound(blockPos.getX(), blockPos.getY(), blockPos.getZ(), blockstate.getSoundType().getHitSound(), SoundSource.BLOCKS, 1F, 0.75F, false);
                 }
 
 

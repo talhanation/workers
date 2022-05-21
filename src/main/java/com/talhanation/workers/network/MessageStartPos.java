@@ -3,10 +3,10 @@ package com.talhanation.workers.network;
 import com.talhanation.workers.CommandEvents;
 import com.talhanation.workers.entities.AbstractWorkerEntity;
 import com.talhanation.workers.entities.MinerEntity;
-import net.minecraft.network.PacketBuffer;
-import net.minecraft.util.math.BlockPos;
+import net.minecraft.network.FriendlyByteBuf;
+import net.minecraft.core.BlockPos;
 import net.minecraftforge.api.distmarker.Dist;
-import net.minecraftforge.fml.network.NetworkEvent;
+import net.minecraftforge.fmllegacy.network.NetworkEvent;
 
 import java.util.List;
 import java.util.Objects;
@@ -35,13 +35,13 @@ public class MessageStartPos implements Message<MessageStartPos> {
                 CommandEvents.setStartPosWorker(this.player, workers, this.startPos);
         }
     }
-    public MessageStartPos fromBytes(PacketBuffer buf) {
+    public MessageStartPos fromBytes(FriendlyByteBuf buf) {
         this.player = buf.readUUID();
         this.startPos= buf.readBlockPos();
         return this;
     }
 
-    public void toBytes(PacketBuffer buf) {
+    public void toBytes(FriendlyByteBuf buf) {
         buf.writeUUID(this.player);
         buf.writeBlockPos(this.startPos);
     }

@@ -3,16 +3,17 @@ package com.talhanation.workers;
 import com.talhanation.workers.entities.*;
 import com.talhanation.workers.init.ModBlocks;
 import com.talhanation.workers.init.ModEntityTypes;
-import net.minecraft.block.Block;
-import net.minecraft.entity.*;
-import net.minecraft.entity.merchant.villager.VillagerEntity;
-import net.minecraft.entity.merchant.villager.VillagerProfession;
-import net.minecraft.entity.merchant.villager.VillagerTrades;
-import net.minecraft.item.Item;
-import net.minecraft.item.ItemStack;
-import net.minecraft.item.Items;
-import net.minecraft.item.MerchantOffer;
-import net.minecraft.util.IItemProvider;
+import net.minecraft.world.entity.Entity;
+import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.entity.npc.Villager;
+import net.minecraft.world.entity.npc.VillagerProfession;
+import net.minecraft.world.entity.npc.VillagerTrades;
+import net.minecraft.world.item.Item;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.Items;
+import net.minecraft.world.item.trading.MerchantOffer;
+import net.minecraft.world.level.ItemLike;
+import net.minecraft.world.level.block.Block;
 import net.minecraftforge.event.entity.living.LivingEvent;
 import net.minecraftforge.event.village.VillagerTradesEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
@@ -20,14 +21,13 @@ import net.minecraftforge.eventbus.api.SubscribeEvent;
 import java.util.List;
 import java.util.Random;
 
-
 public class VillagerEvents {
 
     @SubscribeEvent
     public void onVillagerLivingUpdate(LivingEvent.LivingUpdateEvent event) {
         Entity entity = event.getEntityLiving();
-        if (entity instanceof VillagerEntity) {
-            VillagerEntity villager = (VillagerEntity) entity;
+        if (entity instanceof Villager) {
+            Villager villager = (Villager) entity;
             VillagerProfession profession = villager.getVillagerData().getProfession();
 
             if (profession == Main.MINER) {
@@ -60,67 +60,67 @@ public class VillagerEvents {
 
     private static void createMiner(LivingEntity entity){
         MinerEntity miner = ModEntityTypes.MINER.get().create(entity.level);
-        VillagerEntity villager = (VillagerEntity) entity;
+        Villager villager = (Villager) entity;
         miner.copyPosition(villager);
 
         miner.initSpawn();
 
-        villager.remove();
+        villager.remove(Entity.RemovalReason.DISCARDED);
         villager.level.addFreshEntity(miner);
     }
 
     private static void createLumber(LivingEntity entity){
         LumberjackEntity lumberjack = ModEntityTypes.LUMBERJACK.get().create(entity.level);
-        VillagerEntity villager = (VillagerEntity) entity;
+        Villager villager = (Villager) entity;
         lumberjack.copyPosition(villager);
 
         lumberjack.initSpawn();
 
-        villager.remove();
+        villager.remove(Entity.RemovalReason.DISCARDED);
         villager.level.addFreshEntity(lumberjack);
     }
 
     private static void createFisher(LivingEntity entity){
         FishermanEntity fisher = ModEntityTypes.FISHERMAN.get().create(entity.level);
-        VillagerEntity villager = (VillagerEntity) entity;
+        Villager villager = (Villager) entity;
         fisher.copyPosition(villager);
 
         fisher.initSpawn();
 
-        villager.remove();
+        villager.remove(Entity.RemovalReason.DISCARDED);
         villager.level.addFreshEntity(fisher);
     }
 
     private static void createMerchant(LivingEntity entity){
         MerchantEntity merchant = ModEntityTypes.MERCHANT.get().create(entity.level);
-        VillagerEntity villager = (VillagerEntity) entity;
+        Villager villager = (Villager) entity;
         merchant.copyPosition(villager);
 
         merchant.initSpawn();
 
-        villager.remove();
+        villager.remove(Entity.RemovalReason.DISCARDED);
         villager.level.addFreshEntity(merchant);
     }
 
     private static void createShepherd(LivingEntity entity){
         ShepherdEntity shepherd = ModEntityTypes.SHEPHERD.get().create(entity.level);
-        VillagerEntity villager = (VillagerEntity) entity;
+        Villager villager = (Villager) entity;
         shepherd.copyPosition(villager);
 
         shepherd.initSpawn();
 
-        villager.remove();
+        villager.remove(Entity.RemovalReason.DISCARDED);
         villager.level.addFreshEntity(shepherd);
     }
 
     private static void createFarmer(LivingEntity entity){
         FarmerEntity farmer = ModEntityTypes.FARMER.get().create(entity.level);
-        VillagerEntity villager = (VillagerEntity) entity;
+        Villager villager = (Villager) entity;
         farmer.copyPosition(villager);
 
         farmer.initSpawn();
 
-        villager.remove();
+        villager.remove(Entity.RemovalReason.DISCARDED);
         villager.level.addFreshEntity(farmer);
     }
 
@@ -133,41 +133,41 @@ public class VillagerEvents {
     public void villagerTrades(VillagerTradesEvent event) {
 
         if (event.getType() == VillagerProfession.MASON) {
-            VillagerTrades.ITrade block_trade = new Trade(Items.EMERALD, 30, ModBlocks.MINER_BLOCK.get(), 1, 4, 20);
+            VillagerTrades.ItemListing block_trade = new Trade(Items.EMERALD, 30, ModBlocks.MINER_BLOCK.get(), 1, 4, 20);
             List list = event.getTrades().get(2);
             list.add(block_trade);
             event.getTrades().put(2, list);
         }
         if (event.getType() == VillagerProfession.FARMER) {
-            VillagerTrades.ITrade block_trade = new Trade(Items.EMERALD, 15, ModBlocks.LUMBERJACK_BLOCK.get(), 1, 4, 20);
+            VillagerTrades.ItemListing block_trade = new Trade(Items.EMERALD, 15, ModBlocks.LUMBERJACK_BLOCK.get(), 1, 4, 20);
             List list = event.getTrades().get(2);
             list.add(block_trade);
             event.getTrades().put(2, list);
         }
 
         if (event.getType() == VillagerProfession.FISHERMAN) {
-            VillagerTrades.ITrade block_trade = new Trade(Items.EMERALD, 25, ModBlocks.FISHER_BLOCK.get(), 1, 4, 20);
+            VillagerTrades.ItemListing block_trade = new Trade(Items.EMERALD, 25, ModBlocks.FISHER_BLOCK.get(), 1, 4, 20);
             List list = event.getTrades().get(2);
             list.add(block_trade);
             event.getTrades().put(2, list);
         }
 
         if (event.getType() == VillagerProfession.BUTCHER) {
-            VillagerTrades.ITrade block_trade = new Trade(Items.EMERALD, 35, ModBlocks.SHEPHERD_BLOCK.get(), 1, 4, 20);
+            VillagerTrades.ItemListing block_trade = new Trade(Items.EMERALD, 35, ModBlocks.SHEPHERD_BLOCK.get(), 1, 4, 20);
             List list = event.getTrades().get(2);
             list.add(block_trade);
             event.getTrades().put(2, list);
         }
 
         if (event.getType() == VillagerProfession.LIBRARIAN) {
-            VillagerTrades.ITrade block_trade = new Trade(Items.EMERALD, 45, ModBlocks.MERCHANT_BLOCK.get(), 1, 4, 20);
+            VillagerTrades.ItemListing block_trade = new Trade(Items.EMERALD, 45, ModBlocks.MERCHANT_BLOCK.get(), 1, 4, 20);
             List list = event.getTrades().get(2);
             list.add(block_trade);
             event.getTrades().put(2, list);
         }
 
         if (event.getType() == VillagerProfession.FARMER) {
-            VillagerTrades.ITrade block_trade = new Trade(Items.EMERALD, 28, ModBlocks.FARMER_BLOCK.get(), 1, 4, 20);
+            VillagerTrades.ItemListing block_trade = new Trade(Items.EMERALD, 28, ModBlocks.FARMER_BLOCK.get(), 1, 4, 20);
             List list = event.getTrades().get(2);
             list.add(block_trade);
             event.getTrades().put(2, list);
@@ -176,12 +176,12 @@ public class VillagerEvents {
     }
 
     static class EmeraldForItemsTrade extends Trade {
-        public EmeraldForItemsTrade(IItemProvider buyingItem, int buyingAmount, int maxUses, int givenExp) {
+        public EmeraldForItemsTrade(ItemLike buyingItem, int buyingAmount, int maxUses, int givenExp) {
             super(buyingItem, buyingAmount, Items.EMERALD, 1, maxUses, givenExp);
         }
     }
 
-    static class Trade implements VillagerTrades.ITrade {
+    static class Trade implements VillagerTrades.ItemListing {
         private final Item buyingItem;
         private final Item sellingItem;
         private final int buyingAmount;
@@ -190,7 +190,7 @@ public class VillagerEvents {
         private final int givenExp;
         private final float priceMultiplier;
 
-        public Trade(IItemProvider buyingItem, int buyingAmount, IItemProvider sellingItem, int sellingAmount, int maxUses, int givenExp) {
+        public Trade(ItemLike buyingItem, int buyingAmount, ItemLike sellingItem, int sellingAmount, int maxUses, int givenExp) {
             this.buyingItem = buyingItem.asItem();
             this.buyingAmount = buyingAmount;
             this.sellingItem = sellingItem.asItem();
@@ -205,7 +205,7 @@ public class VillagerEvents {
         }
     }
 
-    static class ItemsForEmeraldsTrade implements VillagerTrades.ITrade {
+    static class ItemsForEmeraldsTrade implements VillagerTrades.ItemListing {
         private final ItemStack itemStack;
         private final int emeraldCost;
         private final int numberOfItems;

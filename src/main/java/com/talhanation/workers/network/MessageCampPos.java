@@ -2,10 +2,10 @@ package com.talhanation.workers.network;
 
 import com.talhanation.workers.CommandEvents;
 import com.talhanation.workers.entities.AbstractWorkerEntity;
-import net.minecraft.network.PacketBuffer;
-import net.minecraft.util.math.BlockPos;
+import net.minecraft.network.FriendlyByteBuf;
+import net.minecraft.core.BlockPos;
 import net.minecraftforge.api.distmarker.Dist;
-import net.minecraftforge.fml.network.NetworkEvent;
+import net.minecraftforge.fmllegacy.network.NetworkEvent;
 
 import java.util.List;
 import java.util.Objects;
@@ -38,13 +38,13 @@ public class MessageCampPos implements Message<MessageCampPos> {
                 workers.setCampPos(Optional.of(campPos));
         }
     }
-    public MessageCampPos fromBytes(PacketBuffer buf) {
+    public MessageCampPos fromBytes(FriendlyByteBuf buf) {
         this.worker = buf.readUUID();
         this.campPos= buf.readBlockPos();
         return this;
     }
 
-    public void toBytes(PacketBuffer buf) {
+    public void toBytes(FriendlyByteBuf buf) {
         buf.writeUUID(this.worker);
         buf.writeBlockPos(this.campPos);
     }

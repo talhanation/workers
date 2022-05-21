@@ -1,18 +1,20 @@
 package com.talhanation.workers.entities.ai;
 
 import com.talhanation.workers.entities.AbstractWorkerEntity;
-import net.minecraft.entity.ai.goal.Goal;
-import net.minecraft.entity.passive.AnimalEntity;
-import net.minecraft.util.math.AxisAlignedBB;
+import net.minecraft.world.entity.ai.goal.Goal;
+import net.minecraft.world.entity.animal.Animal;
+import net.minecraft.world.phys.AABB;
 
 import java.util.EnumSet;
 import java.util.List;
 import java.util.Objects;
 
-public class SlaughterAnimalGoal<T extends AnimalEntity> extends Goal {
+import net.minecraft.world.entity.ai.goal.Goal.Flag;
+
+public class SlaughterAnimalGoal<T extends Animal> extends Goal {
 
     private final AbstractWorkerEntity worker;
-    private AnimalEntity animal;
+    private Animal animal;
     protected final Class<T> animalClass;
     private final int maxCount;
 
@@ -34,8 +36,8 @@ public class SlaughterAnimalGoal<T extends AnimalEntity> extends Goal {
     public void tick() {
         super.tick();
 
-        List<AnimalEntity> list = Objects.requireNonNull(worker.level.getEntitiesOfClass(animalClass, this.getSearchArea(12)));
-        for (AnimalEntity animals : list){
+        List<T> list = Objects.requireNonNull(worker.level.getEntitiesOfClass(animalClass, this.getSearchArea(12)));
+        for (Animal animals : list){
             if (animals.getClass().equals(this.animalClass) && animals.isAlive() && !animals.isBaby()){
                 this.animal = list.get(0);
             }
@@ -50,7 +52,7 @@ public class SlaughterAnimalGoal<T extends AnimalEntity> extends Goal {
         }
     }
 
-    protected AxisAlignedBB getSearchArea(double area) {
+    protected AABB getSearchArea(double area) {
         return this.worker.getBoundingBox().inflate(area, 8.0D, area);
     }
 

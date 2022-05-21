@@ -2,10 +2,10 @@ package com.talhanation.workers.entities;
 
 import com.mojang.datafixers.util.Pair;
 import com.talhanation.workers.Main;
-import net.minecraft.entity.EntityType;
-import net.minecraft.nbt.CompoundNBT;
-import net.minecraft.world.World;
-import net.minecraft.world.server.ServerWorld;
+import net.minecraft.world.entity.EntityType;
+import net.minecraft.nbt.CompoundTag;
+import net.minecraft.world.level.Level;
+import net.minecraft.server.level.ServerLevel;
 import net.minecraftforge.common.world.ForgeChunkManager;
 
 import java.util.HashSet;
@@ -16,7 +16,7 @@ public abstract class AbstractChunkLoaderEntity extends AbstractInventoryEntity{
 
     private Optional<Pair<Integer, Integer>> loadedChunk = Optional.empty();
 
-    public AbstractChunkLoaderEntity(EntityType<? extends AbstractChunkLoaderEntity> entityType, World world) {
+    public AbstractChunkLoaderEntity(EntityType<? extends AbstractChunkLoaderEntity> entityType, Level world) {
         super(entityType, world);
     }
 
@@ -29,8 +29,8 @@ public abstract class AbstractChunkLoaderEntity extends AbstractInventoryEntity{
 
     public void updateChunkLoading(){
         if (this.shouldLoadChunk() && !this.level.isClientSide) {
-            Pair<Integer, Integer> currentChunk = new Pair<>(this.xChunk, this.zChunk);
-            if (!loadedChunk.isPresent()) {
+            Pair<Integer, Integer> currentChunk = new Pair<>(this.chunkPosition().x, this.chunkPosition().z);
+            if (loadedChunk.isEmpty()) {
                 this.forceChunk(currentChunk);
                 loadedChunk = Optional.of(currentChunk);
 
@@ -54,7 +54,7 @@ public abstract class AbstractChunkLoaderEntity extends AbstractInventoryEntity{
 
     ////////////////////////////////////DATA////////////////////////////////////
 
-    public void addAdditionalSaveData(CompoundNBT nbt) {
+    public void addAdditionalSaveData(CompoundTag nbt) {
         super.addAdditionalSaveData(nbt);
         if(loadedChunk.isPresent()) {
             nbt.putInt("chunkX", loadedChunk.get().getFirst());
@@ -62,7 +62,7 @@ public abstract class AbstractChunkLoaderEntity extends AbstractInventoryEntity{
         }
     }
 
-    public void readAdditionalSaveData(CompoundNBT nbt) {
+    public void readAdditionalSaveData(CompoundTag nbt) {
         super.readAdditionalSaveData(nbt);
         if (nbt.contains("chunkX")) {
             int x = nbt.getInt("chunkX");
@@ -87,18 +87,17 @@ public abstract class AbstractChunkLoaderEntity extends AbstractInventoryEntity{
     ////////////////////////////////////SET////////////////////////////////////
 
     private void forceChunk(Pair<Integer, Integer> chunk) {
-        ForgeChunkManager.forceChunk((ServerWorld) this.level, Main.MOD_ID, this.getUUID(), chunk.getFirst(), chunk.getSecond(), true, true);
+        ForgeChunkManager.forceChunk((ServerLevel) this.level, Main.MOD_ID, this.getUUID(), chunk.getFirst(), chunk.getSecond(), true, true);
     }
 
     private void unForceChunk(Pair<Integer, Integer> chunk) {
-        ForgeChunkManager.forceChunk((ServerWorld) this.level, Main.MOD_ID, this.getUUID(), chunk.getFirst(), chunk.getSecond(), false, true);
+        ForgeChunkManager.forceChunk((ServerLevel) this.level, Main.MOD_ID, this.getUUID(), chunk.getFirst(), chunk.getSecond(), false, true);
     }
 
     protected abstract boolean shouldLoadChunk();
 
-    @Override
     public void remove(){
-        super.remove();
+        super.remove(RemovalReason.DISCARDED);
         if(!this.level.isClientSide) loadedChunk.ifPresent(chunk -> this.getSetOfChunks(chunk).forEach(this::unForceChunk));
     }
 }

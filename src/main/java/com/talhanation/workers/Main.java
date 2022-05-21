@@ -10,15 +10,15 @@ import com.talhanation.workers.init.ModItems;
 import com.talhanation.workers.inventory.*;
 import com.talhanation.workers.network.*;
 import de.maxhenkel.corelib.ClientRegistry;
-import net.minecraft.client.settings.KeyBinding;
-import net.minecraft.entity.ai.attributes.GlobalEntityTypeAttributes;
-import net.minecraft.entity.merchant.villager.VillagerProfession;
-import net.minecraft.entity.player.PlayerEntity;
-import net.minecraft.inventory.container.ContainerType;
-import net.minecraft.util.ResourceLocation;
-import net.minecraft.util.SoundEvents;
-import net.minecraft.util.math.AxisAlignedBB;
-import net.minecraft.village.PointOfInterestType;
+import net.minecraft.client.KeyMapping;
+import net.minecraft.world.entity.ai.attributes.DefaultAttributes;
+import net.minecraft.world.entity.npc.VillagerProfession;
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.inventory.MenuType;
+import net.minecraft.resources.ResourceLocation;
+import net.minecraft.sounds.SoundEvents;
+import net.minecraft.world.phys.AABB;
+import net.minecraft.world.entity.ai.village.poi.PoiType;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
 import net.minecraftforge.common.MinecraftForge;
@@ -31,9 +31,9 @@ import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.fml.event.lifecycle.FMLClientSetupEvent;
 import net.minecraftforge.fml.event.lifecycle.FMLCommonSetupEvent;
 import net.minecraftforge.fml.javafmlmod.FMLJavaModLoadingContext;
-import net.minecraftforge.fml.network.IContainerFactory;
-import net.minecraftforge.fml.network.NetworkRegistry;
-import net.minecraftforge.fml.network.simple.SimpleChannel;
+import net.minecraftforge.fmllegacy.network.IContainerFactory;
+import net.minecraftforge.fmllegacy.network.NetworkRegistry;
+import net.minecraftforge.fmllegacy.network.simple.SimpleChannel;
 
 import javax.annotation.Nullable;
 import java.util.UUID;
@@ -48,18 +48,18 @@ public class Main {
     public static VillagerProfession MERCHANT;
     public static VillagerProfession SHEPHERD;
     public static VillagerProfession FISHER;
-    public static PointOfInterestType POI_MINER;
-    public static PointOfInterestType POI_LUMBERJACK;
-    public static PointOfInterestType POI_FARMER;
-    public static PointOfInterestType POI_MERCHANT;
-    public static PointOfInterestType POI_SHEPHERD;
-    public static PointOfInterestType POI_FISHER;
-    public static KeyBinding C_KEY;
-    public static ContainerType<WorkerInventoryContainer> MINER_CONTAINER_TYPE;
-    public static ContainerType<WorkerInventoryContainer> SHEPHERD_CONTAINER_TYPE;
-    public static ContainerType<WorkerInventoryContainer> WORKER_CONTAINER_TYPE;
-    public static ContainerType<MerchantTradeContainer> MERCHANT_CONTAINER_TYPE;
-    public static ContainerType<MerchantInventoryContainer> MERCHANT_OWNER_CONTAINER_TYPE;
+    public static PoiType POI_MINER;
+    public static PoiType POI_LUMBERJACK;
+    public static PoiType POI_FARMER;
+    public static PoiType POI_MERCHANT;
+    public static PoiType POI_SHEPHERD;
+    public static PoiType POI_FISHER;
+    public static KeyMapping C_KEY;
+    public static MenuType<WorkerInventoryContainer> MINER_CONTAINER_TYPE;
+    public static MenuType<WorkerInventoryContainer> SHEPHERD_CONTAINER_TYPE;
+    public static MenuType<WorkerInventoryContainer> WORKER_CONTAINER_TYPE;
+    public static MenuType<MerchantTradeContainer> MERCHANT_CONTAINER_TYPE;
+    public static MenuType<MerchantInventoryContainer> MERCHANT_OWNER_CONTAINER_TYPE;
 
     public Main() {
         //ModLoadingContext.get().registerConfig(ModConfig.Type.COMMON, workersModConfig.CONFIG);
@@ -67,9 +67,9 @@ public class Main {
 
         final IEventBus modEventBus = FMLJavaModLoadingContext.get().getModEventBus();
         modEventBus.addListener(this::setup);
-        modEventBus.addGenericListener(PointOfInterestType.class, this::registerPointsOfInterest);
+        modEventBus.addGenericListener(PoiType.class, this::registerPointsOfInterest);
         modEventBus.addGenericListener(VillagerProfession.class, this::registerVillagerProfessions);
-        modEventBus.addGenericListener(ContainerType.class, this::registerContainers);
+        modEventBus.addGenericListener(MenuType.class, this::registerContainers);
         ModBlocks.BLOCKS.register(modEventBus);
         //ModSounds.SOUNDS.register(modEventBus);
         ModItems.ITEMS.register(modEventBus);
@@ -127,13 +127,13 @@ public class Main {
                 (msg, fun) -> msg.executeServerSide(fun.get()));
 
 
-        DeferredWorkQueue.runLater(() -> {
-            GlobalEntityTypeAttributes.put(ModEntityTypes.MINER.get(), MinerEntity.setAttributes().build());
-            GlobalEntityTypeAttributes.put(ModEntityTypes.LUMBERJACK.get(), LumberjackEntity.setAttributes().build());
-            GlobalEntityTypeAttributes.put(ModEntityTypes.SHEPHERD.get(), ShepherdEntity.setAttributes().build());
-            GlobalEntityTypeAttributes.put(ModEntityTypes.FARMER.get(), FarmerEntity.setAttributes().build());
-            GlobalEntityTypeAttributes.put(ModEntityTypes.FISHERMAN.get(), FishermanEntity.setAttributes().build());
-            GlobalEntityTypeAttributes.put(ModEntityTypes.MERCHANT.get(), FishermanEntity.setAttributes().build());
+        DeferredWorkQueue.run(() -> {
+            DefaultAttributes.put(ModEntityTypes.MINER.get(), MinerEntity.setAttributes().build());
+            DefaultAttributes.put(ModEntityTypes.LUMBERJACK.get(), LumberjackEntity.setAttributes().build());
+            DefaultAttributes.put(ModEntityTypes.SHEPHERD.get(), ShepherdEntity.setAttributes().build());
+            DefaultAttributes.put(ModEntityTypes.FARMER.get(), FarmerEntity.setAttributes().build());
+            DefaultAttributes.put(ModEntityTypes.FISHERMAN.get(), FishermanEntity.setAttributes().build());
+            DefaultAttributes.put(ModEntityTypes.MERCHANT.get(), FishermanEntity.setAttributes().build());
         });
     }
 
@@ -153,18 +153,18 @@ public class Main {
     }
 
     @SubscribeEvent
-    public void registerPointsOfInterest(RegistryEvent.Register<PointOfInterestType> event) {
-        POI_MINER = new PointOfInterestType("poi_miner", PointOfInterestType.getBlockStates(ModBlocks.MINER_BLOCK.get()), 1, 1);
+    public void registerPointsOfInterest(RegistryEvent.Register<PoiType> event) {
+        POI_MINER = new PoiType("poi_miner", PoiType.getBlockStates(ModBlocks.MINER_BLOCK.get()), 1, 1);
         POI_MINER.setRegistryName(Main.MOD_ID, "poi_miner");
-        POI_LUMBERJACK = new PointOfInterestType("poi_lumberjack", PointOfInterestType.getBlockStates(ModBlocks.LUMBERJACK_BLOCK.get()), 1, 1);
+        POI_LUMBERJACK = new PoiType("poi_lumberjack", PoiType.getBlockStates(ModBlocks.LUMBERJACK_BLOCK.get()), 1, 1);
         POI_LUMBERJACK.setRegistryName(Main.MOD_ID, "poi_lumberjack");
-        POI_FISHER = new PointOfInterestType("poi_fisher", PointOfInterestType.getBlockStates(ModBlocks.FISHER_BLOCK.get()), 1, 1);
+        POI_FISHER = new PoiType("poi_fisher", PoiType.getBlockStates(ModBlocks.FISHER_BLOCK.get()), 1, 1);
         POI_FISHER.setRegistryName(Main.MOD_ID, "poi_fisher");
-        POI_FARMER = new PointOfInterestType("poi_farmer", PointOfInterestType.getBlockStates(ModBlocks.FARMER_BLOCK.get()), 1, 1);
+        POI_FARMER = new PoiType("poi_farmer", PoiType.getBlockStates(ModBlocks.FARMER_BLOCK.get()), 1, 1);
         POI_FARMER.setRegistryName(Main.MOD_ID, "poi_farmer");
-        POI_MERCHANT = new PointOfInterestType("poi_merchant", PointOfInterestType.getBlockStates(ModBlocks.MERCHANT_BLOCK.get()), 1, 1);
+        POI_MERCHANT = new PoiType("poi_merchant", PoiType.getBlockStates(ModBlocks.MERCHANT_BLOCK.get()), 1, 1);
         POI_MERCHANT.setRegistryName(Main.MOD_ID, "poi_merchant");
-        POI_SHEPHERD = new PointOfInterestType("poi_shepherd", PointOfInterestType.getBlockStates(ModBlocks.SHEPHERD_BLOCK.get()), 1, 1);
+        POI_SHEPHERD = new PoiType("poi_shepherd", PoiType.getBlockStates(ModBlocks.SHEPHERD_BLOCK.get()), 1, 1);
         POI_SHEPHERD.setRegistryName(Main.MOD_ID, "poi_shepherd");
 
         event.getRegistry().register(POI_MINER);
@@ -199,36 +199,36 @@ public class Main {
     }
 
     @SubscribeEvent
-    public void registerContainers(RegistryEvent.Register<ContainerType<?>> event) {
-        MINER_CONTAINER_TYPE = new ContainerType<>((IContainerFactory<WorkerInventoryContainer>) (windowId, inv, data) -> {
+    public void registerContainers(RegistryEvent.Register<MenuType<?>> event) {
+        MINER_CONTAINER_TYPE = new MenuType<>((IContainerFactory<WorkerInventoryContainer>) (windowId, inv, data) -> {
             MinerEntity rec = (MinerEntity) getRecruitByUUID(inv.player, data.readUUID());
             if (rec == null) {
                 return null;
             }
             return new WorkerInventoryContainer(windowId, rec, inv);
         });
-        WORKER_CONTAINER_TYPE = new ContainerType<>((IContainerFactory<WorkerInventoryContainer>) (windowId, inv, data) -> {
+        WORKER_CONTAINER_TYPE = new MenuType<>((IContainerFactory<WorkerInventoryContainer>) (windowId, inv, data) -> {
             AbstractWorkerEntity rec = getRecruitByUUID(inv.player, data.readUUID());
             if (rec == null) {
                 return null;
             }
             return new WorkerInventoryContainer(windowId, rec, inv);
         });
-        MERCHANT_CONTAINER_TYPE = new ContainerType<>((IContainerFactory<MerchantTradeContainer>) (windowId, inv, data) -> {
+        MERCHANT_CONTAINER_TYPE = new MenuType<>((IContainerFactory<MerchantTradeContainer>) (windowId, inv, data) -> {
             MerchantEntity rec = (MerchantEntity) getRecruitByUUID(inv.player, data.readUUID());
             if (rec == null) {
                 return null;
             }
             return new MerchantTradeContainer(windowId, rec, inv);
         });
-        MERCHANT_OWNER_CONTAINER_TYPE = new ContainerType<>((IContainerFactory<MerchantInventoryContainer>) (windowId, inv, data) -> {
+        MERCHANT_OWNER_CONTAINER_TYPE = new MenuType<>((IContainerFactory<MerchantInventoryContainer>) (windowId, inv, data) -> {
             MerchantEntity rec = (MerchantEntity) getRecruitByUUID(inv.player, data.readUUID());
             if (rec == null) {
                 return null;
             }
             return new MerchantInventoryContainer(windowId, rec, inv);
         });
-        SHEPHERD_CONTAINER_TYPE = new ContainerType<>((IContainerFactory<WorkerInventoryContainer>) (windowId, inv, data) -> {
+        SHEPHERD_CONTAINER_TYPE = new MenuType<>((IContainerFactory<WorkerInventoryContainer>) (windowId, inv, data) -> {
             ShepherdEntity rec = (ShepherdEntity) getRecruitByUUID(inv.player, data.readUUID());
             if (rec == null) {
                 return null;
@@ -254,9 +254,9 @@ public class Main {
     }
 
     @Nullable
-    public static AbstractWorkerEntity getRecruitByUUID(PlayerEntity player, UUID uuid) {
+    public static AbstractWorkerEntity getRecruitByUUID(Player player, UUID uuid) {
         double distance = 10D;
-        return player.level.getEntitiesOfClass(AbstractWorkerEntity.class, new AxisAlignedBB(player.getX() - distance, player.getY() - distance, player.getZ() - distance, player.getX() + distance, player.getY() + distance, player.getZ() + distance), entity -> entity.getUUID().equals(uuid)).stream().findAny().orElse(null);
+        return player.level.getEntitiesOfClass(AbstractWorkerEntity.class, new AABB(player.getX() - distance, player.getY() - distance, player.getZ() - distance, player.getX() + distance, player.getY() + distance, player.getZ() + distance), entity -> entity.getUUID().equals(uuid)).stream().findAny().orElse(null);
     }
 }
 //

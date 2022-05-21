@@ -1,17 +1,18 @@
 package com.talhanation.workers.entities.ai;
 
 import com.talhanation.workers.entities.FarmerEntity;
-import net.minecraft.block.*;
-import net.minecraft.entity.ai.goal.Goal;
-import net.minecraft.fluid.FluidState;
-import net.minecraft.fluid.Fluids;
-import net.minecraft.inventory.Inventory;
-import net.minecraft.item.ItemStack;
-import net.minecraft.item.Items;
-import net.minecraft.util.SoundCategory;
-import net.minecraft.util.SoundEvents;
-import net.minecraft.util.math.BlockPos;
-import net.minecraft.util.text.StringTextComponent;
+import net.minecraft.core.BlockPos;
+import net.minecraft.network.chat.TextComponent;
+import net.minecraft.sounds.SoundEvents;
+import net.minecraft.sounds.SoundSource;
+import net.minecraft.world.SimpleContainer;
+import net.minecraft.world.entity.ai.goal.Goal;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.Items;
+import net.minecraft.world.level.block.*;
+import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.level.material.FluidState;
+import net.minecraft.world.level.material.Fluids;
 import net.minecraftforge.event.ForgeEventFactory;
 
 import java.util.EnumSet;
@@ -129,24 +130,24 @@ public class FarmerCropAI extends Goal {
 
     private void debug() {
         if(farmer.getOwner() != null) {
-            this.farmer.getOwner().sendMessage(new StringTextComponent("State: " + state), farmer.getOwnerUUID());
-            this.farmer.getOwner().sendMessage(new StringTextComponent("WorkPos: " + workPos), farmer.getOwnerUUID());
-            this.farmer.getOwner().sendMessage(new StringTextComponent("StartPos: " + farmer.getStartPos()), farmer.getOwnerUUID());
+            this.farmer.getOwner().sendMessage(new TextComponent("State: " + state), farmer.getOwnerUUID());
+            this.farmer.getOwner().sendMessage(new TextComponent("WorkPos: " + workPos), farmer.getOwnerUUID());
+            this.farmer.getOwner().sendMessage(new TextComponent("StartPos: " + farmer.getStartPos()), farmer.getOwnerUUID());
         }
     }
 
     private boolean hasSeedInInv() {
-        Inventory inventory = farmer.getInventory();
+        SimpleContainer inventory = farmer.getInventory();
         return inventory.hasAnyOf(WANTED_SEEDS);
     }
 
     private boolean hasSpaceInInv() {
-        Inventory inventory = farmer.getInventory();
+        SimpleContainer inventory = farmer.getInventory();
         return inventory.canAddItem(farmer.WANTED_ITEMS.stream().findAny().get().getDefaultInstance());
     }
 
     private boolean hasWaterInInv() {
-        Inventory inventory = farmer.getInventory();
+        SimpleContainer inventory = farmer.getInventory();
         for (int i = 0; i < inventory.getContainerSize(); ++i) {
             ItemStack itemstack = inventory.getItem(i);
 
@@ -170,7 +171,7 @@ public class FarmerCropAI extends Goal {
     }
 
     private void plantSeedsFromInv(BlockPos blockPos) {
-        Inventory inventory = farmer.getInventory();
+        SimpleContainer inventory = farmer.getInventory();
 
         for (int i = 0; i < inventory.getContainerSize(); ++i) {
             ItemStack itemstack = inventory.getItem(i);
@@ -195,7 +196,7 @@ public class FarmerCropAI extends Goal {
             }
 
             if (flag) {
-                farmer.level.playSound(null, (double) blockPos.getX(), (double) blockPos.getY(), (double) blockPos.getZ(), SoundEvents.GRASS_PLACE, SoundCategory.BLOCKS, 1.0F, 1.0F);
+                farmer.level.playSound(null, (double) blockPos.getX(), (double) blockPos.getY(), (double) blockPos.getZ(), SoundEvents.GRASS_PLACE, SoundSource.BLOCKS, 1.0F, 1.0F);
                 itemstack.shrink(1);
                 if (itemstack.isEmpty()) {
                     inventory.setItem(i, ItemStack.EMPTY);
@@ -208,14 +209,14 @@ public class FarmerCropAI extends Goal {
 
     private void prepareFarmLand(BlockPos blockPos) {
         farmer.level.setBlock(blockPos, Blocks.FARMLAND.defaultBlockState(), 3);
-        farmer.level.playSound(null, blockPos.getX(), blockPos.getY(), blockPos.getZ(), SoundEvents.HOE_TILL, SoundCategory.BLOCKS, 1.0F, 1.0F);
+        farmer.level.playSound(null, blockPos.getX(), blockPos.getY(), blockPos.getZ(), SoundEvents.HOE_TILL, SoundSource.BLOCKS, 1.0F, 1.0F);
         BlockState blockState = this.farmer.level.getBlockState(blockPos.above());
         Block block = blockState.getBlock();
 
-        if (block instanceof BushBlock || block instanceof AbstractPlantBlock) {
+        if (block instanceof BushBlock || block instanceof GrowingPlantBlock) {
 
             farmer.level.destroyBlock(blockPos.above(), false);
-            farmer.level.playSound(null, blockPos.getX(), blockPos.getY(), blockPos.getZ(), SoundEvents.GRASS_BREAK, SoundCategory.BLOCKS, 1.0F, 1.0F);
+            farmer.level.playSound(null, blockPos.getX(), blockPos.getY(), blockPos.getZ(), SoundEvents.GRASS_BREAK, SoundSource.BLOCKS, 1.0F, 1.0F);
         }
 
         if (waterPos != null) {
@@ -223,7 +224,7 @@ public class FarmerCropAI extends Goal {
 
             if (waterBlockState != Fluids.WATER.defaultFluidState() || waterBlockState != Fluids.FLOWING_WATER.defaultFluidState()){
                 farmer.level.setBlock(waterPos, Blocks.WATER.defaultBlockState(), 3);
-                farmer.level.playSound(null, blockPos.getX(), blockPos.getY(), blockPos.getZ(), SoundEvents.BUCKET_EMPTY, SoundCategory.BLOCKS, 1.0F, 1.0F);
+                farmer.level.playSound(null, blockPos.getX(), blockPos.getY(), blockPos.getZ(), SoundEvents.BUCKET_EMPTY, SoundSource.BLOCKS, 1.0F, 1.0F);
                 this.waterPos = null;
             }
         }
@@ -275,8 +276,8 @@ public class FarmerCropAI extends Goal {
 
                 Block block = blockState.getBlock();
                 if (CROP_BLOCKS.contains(block)){
-                    if (block instanceof CropsBlock) {
-                        CropsBlock crop = (CropsBlock) block;
+                    if (block instanceof CropBlock) {
+                        CropBlock crop = (CropBlock) block;
 
                         if (crop.isMaxAge(blockState)) {
                             return blockPos;
@@ -296,7 +297,7 @@ public class FarmerCropAI extends Goal {
 
             if ((block != Blocks.AIR)){
                 if (farmer.getCurrentTimeBreak() % 5 == 4) {
-                    farmer.level.playLocalSound(blockPos.getX(), blockPos.getY(), blockPos.getZ(), blockstate.getSoundType().getHitSound(), SoundCategory.BLOCKS, 1F, 0.75F, false);
+                    farmer.level.playLocalSound(blockPos.getX(), blockPos.getY(), blockPos.getZ(), blockstate.getSoundType().getHitSound(), SoundSource.BLOCKS, 1F, 0.75F, false);
                 }
 
                 //set max destroy speed

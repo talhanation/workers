@@ -3,9 +3,9 @@ package com.talhanation.workers.client.gui;
 import com.talhanation.workers.CommandEvents;
 import com.talhanation.workers.entities.MerchantEntity;
 import com.talhanation.workers.network.Message;
-import net.minecraft.network.PacketBuffer;
+import net.minecraft.network.FriendlyByteBuf;
 import net.minecraftforge.api.distmarker.Dist;
-import net.minecraftforge.fml.network.NetworkEvent;
+import net.minecraftforge.fmllegacy.network.NetworkEvent;
 
 import java.util.List;
 import java.util.Objects;
@@ -47,7 +47,7 @@ public class MessageTradeButton implements Message<MessageTradeButton> {
     }
 
     @Override
-    public MessageTradeButton fromBytes(PacketBuffer buf) {
+    public MessageTradeButton fromBytes(FriendlyByteBuf buf) {
         this.trade = buf.readInt();
         this.uuid = buf.readUUID();
         this.merchant = buf.readUUID();
@@ -55,7 +55,7 @@ public class MessageTradeButton implements Message<MessageTradeButton> {
     }
 
     @Override
-    public void toBytes(PacketBuffer buf) {
+    public void toBytes(FriendlyByteBuf buf) {
         buf.writeInt(trade);
         buf.writeUUID(uuid);
         buf.writeUUID(merchant);

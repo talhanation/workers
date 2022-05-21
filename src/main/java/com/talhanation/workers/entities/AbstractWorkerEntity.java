@@ -1,26 +1,31 @@
 package com.talhanation.workers.entities;
 
 import com.talhanation.workers.entities.ai.WorkerMoveToCampGoal;
-import net.minecraft.entity.*;
-import net.minecraft.entity.ai.attributes.AttributeModifier;
-import net.minecraft.entity.ai.attributes.Attributes;
-import net.minecraft.entity.item.ItemEntity;
-import net.minecraft.entity.passive.WolfEntity;
-import net.minecraft.entity.player.PlayerEntity;
-import net.minecraft.entity.projectile.AbstractArrowEntity;
-import net.minecraft.item.*;
-import net.minecraft.nbt.CompoundNBT;
-import net.minecraft.network.datasync.DataParameter;
-import net.minecraft.network.datasync.DataSerializers;
-import net.minecraft.network.datasync.EntityDataManager;
-import net.minecraft.particles.IParticleData;
-import net.minecraft.particles.ParticleTypes;
-import net.minecraft.util.*;
-import net.minecraft.util.math.BlockPos;
-import net.minecraft.util.text.StringTextComponent;
+import net.minecraft.core.BlockPos;
+import net.minecraft.core.particles.ParticleOptions;
+import net.minecraft.core.particles.ParticleTypes;
+import net.minecraft.nbt.CompoundTag;
+import net.minecraft.network.chat.TextComponent;
+import net.minecraft.network.syncher.EntityDataAccessor;
+import net.minecraft.network.syncher.EntityDataSerializers;
+import net.minecraft.network.syncher.SynchedEntityData;
+import net.minecraft.sounds.SoundEvent;
+import net.minecraft.sounds.SoundEvents;
 import net.minecraft.world.DifficultyInstance;
-import net.minecraft.world.IServerWorld;
-import net.minecraft.world.World;
+import net.minecraft.world.InteractionHand;
+import net.minecraft.world.InteractionResult;
+import net.minecraft.world.damagesource.DamageSource;
+import net.minecraft.world.entity.*;
+import net.minecraft.world.entity.ai.attributes.AttributeModifier;
+import net.minecraft.world.entity.ai.attributes.Attributes;
+import net.minecraft.world.entity.item.ItemEntity;
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.entity.projectile.AbstractArrow;
+import net.minecraft.world.item.Item;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.Items;
+import net.minecraft.world.level.Level;
+import net.minecraft.world.level.ServerLevelAccessor;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
 
@@ -29,19 +34,19 @@ import java.util.Optional;
 import java.util.function.Predicate;
 
 public abstract class AbstractWorkerEntity extends AbstractChunkLoaderEntity {
-    private static final DataParameter<Optional<BlockPos>> START_POS = EntityDataManager.defineId(AbstractWorkerEntity.class, DataSerializers.OPTIONAL_BLOCK_POS);
-    private static final DataParameter<Optional<BlockPos>> DEST_POS = EntityDataManager.defineId(AbstractWorkerEntity.class, DataSerializers.OPTIONAL_BLOCK_POS);
-    private static final DataParameter<Optional<BlockPos>> CAMP = EntityDataManager.defineId(AbstractWorkerEntity.class, DataSerializers.OPTIONAL_BLOCK_POS);
-    private static final DataParameter<Boolean> FOLLOW = EntityDataManager.defineId(AbstractWorkerEntity.class, DataSerializers.BOOLEAN);
-    public  static final DataParameter<Boolean> IS_WORKING = EntityDataManager.defineId(AbstractWorkerEntity.class, DataSerializers.BOOLEAN);
-    private static final DataParameter<Boolean> IS_PICKING_UP = EntityDataManager.defineId(AbstractWorkerEntity.class, DataSerializers.BOOLEAN);
-    private static final DataParameter<Integer> breakingTime = EntityDataManager.defineId(MinerEntity.class, DataSerializers.INT);
-    private static final DataParameter<Integer> currentTimeBreak = EntityDataManager.defineId(MinerEntity.class, DataSerializers.INT);
-    private static final DataParameter<Integer> previousTimeBreak = EntityDataManager.defineId(MinerEntity.class, DataSerializers.INT);
+    private static final EntityDataAccessor<Optional<BlockPos>> START_POS = SynchedEntityData.defineId(AbstractWorkerEntity.class, EntityDataSerializers.OPTIONAL_BLOCK_POS);
+    private static final EntityDataAccessor<Optional<BlockPos>> DEST_POS = SynchedEntityData.defineId(AbstractWorkerEntity.class, EntityDataSerializers.OPTIONAL_BLOCK_POS);
+    private static final EntityDataAccessor<Optional<BlockPos>> CAMP = SynchedEntityData.defineId(AbstractWorkerEntity.class, EntityDataSerializers.OPTIONAL_BLOCK_POS);
+    private static final EntityDataAccessor<Boolean> FOLLOW = SynchedEntityData.defineId(AbstractWorkerEntity.class, EntityDataSerializers.BOOLEAN);
+    public  static final EntityDataAccessor<Boolean> IS_WORKING = SynchedEntityData.defineId(AbstractWorkerEntity.class, EntityDataSerializers.BOOLEAN);
+    private static final EntityDataAccessor<Boolean> IS_PICKING_UP = SynchedEntityData.defineId(AbstractWorkerEntity.class, EntityDataSerializers.BOOLEAN);
+    private static final EntityDataAccessor<Integer> breakingTime = SynchedEntityData.defineId(MinerEntity.class, EntityDataSerializers.INT);
+    private static final EntityDataAccessor<Integer> currentTimeBreak = SynchedEntityData.defineId(MinerEntity.class, EntityDataSerializers.INT);
+    private static final EntityDataAccessor<Integer> previousTimeBreak = SynchedEntityData.defineId(MinerEntity.class, EntityDataSerializers.INT);
     int hurtTimeStamp = 0;
 
 
-    public AbstractWorkerEntity(EntityType<? extends AbstractWorkerEntity> entityType, World world) {
+    public AbstractWorkerEntity(EntityType<? extends AbstractWorkerEntity> entityType, Level world) {
         super(entityType, world);
         this.setOwned(false);
         this.xpReward = 2;
@@ -65,7 +70,7 @@ public abstract class AbstractWorkerEntity extends AbstractChunkLoaderEntity {
         this.level.getProfiler().push("looting");
         if (!this.level.isClientSide && this.canPickUpLoot() && this.isAlive() && !this.dead && net.minecraftforge.event.ForgeEventFactory.getMobGriefingEvent(this.level, this)) {
             for(ItemEntity itementity : this.level.getEntitiesOfClass(ItemEntity.class, this.getBoundingBox().inflate(2.5D, 2.5D, 2.5D))) {
-                if (!itementity.removed && !itementity.getItem().isEmpty() && !itementity.hasPickUpDelay() && this.wantsToPickUp(itementity.getItem())) {
+                if (!itementity.isRemoved() && !itementity.getItem().isEmpty() && !itementity.hasPickUpDelay() && this.wantsToPickUp(itementity.getItem())) {
                     this.pickUpItem(itementity);
                 }
             }
@@ -82,15 +87,15 @@ public abstract class AbstractWorkerEntity extends AbstractChunkLoaderEntity {
 
     public void rideTick() {
         super.rideTick();
-        if (this.getVehicle() instanceof CreatureEntity) {
-            CreatureEntity creatureentity = (CreatureEntity)this.getVehicle();
+        if (this.getVehicle() instanceof PathfinderMob) {
+            PathfinderMob creatureentity = (PathfinderMob)this.getVehicle();
             this.yBodyRot = creatureentity.yBodyRot;
         }
 
     }
 
     @Nullable
-    public ILivingEntityData finalizeSpawn(IServerWorld world, DifficultyInstance diff, SpawnReason reason, @Nullable ILivingEntityData spawnData, @Nullable CompoundNBT nbt) {
+    public SpawnGroupData finalizeSpawn(ServerLevelAccessor world, DifficultyInstance diff, MobSpawnType reason, @Nullable SpawnGroupData spawnData, @Nullable CompoundTag nbt) {
         setRandomSpawnBonus();
         canPickUpLoot();
         return spawnData;
@@ -122,7 +127,7 @@ public abstract class AbstractWorkerEntity extends AbstractChunkLoaderEntity {
 
     }
 
-    public void addAdditionalSaveData(CompoundNBT nbt) {
+    public void addAdditionalSaveData(CompoundTag nbt) {
         super.addAdditionalSaveData(nbt);
         nbt.putBoolean("Follow", this.getFollow());
         nbt.putBoolean("isWorking", this.getIsWorking());
@@ -150,7 +155,7 @@ public abstract class AbstractWorkerEntity extends AbstractChunkLoaderEntity {
         }
     }
 
-    public void readAdditionalSaveData(CompoundNBT nbt) {
+    public void readAdditionalSaveData(CompoundTag nbt) {
         super.readAdditionalSaveData(nbt);
         this.setFollow(nbt.getBoolean("Follow"));
         this.setBreakingTime(nbt.getInt("breakTime"));
@@ -248,7 +253,7 @@ public abstract class AbstractWorkerEntity extends AbstractChunkLoaderEntity {
         return 0.4F;
     }
 
-    protected float getStandingEyeHeight(Pose pos, EntitySize size) {
+    protected float getStandingEyeHeight(Pose pos, EntityDimensions size) {
         return size.height * 0.9F;
     }
 
@@ -262,7 +267,7 @@ public abstract class AbstractWorkerEntity extends AbstractChunkLoaderEntity {
     public void setCampPos(Optional<BlockPos> pos){
         LivingEntity owner = this.getOwner();
         this.entityData.set(CAMP, pos);
-        if (owner != null) owner.sendMessage(new StringTextComponent(this.getName().getString() + ": I will camp here."), owner.getUUID());
+        if (owner != null) owner.sendMessage(new TextComponent(this.getName().getString() + ": I will camp here."), owner.getUUID());
     }
 
     public void setPreviousTimeBreak(int value) {
@@ -292,10 +297,10 @@ public abstract class AbstractWorkerEntity extends AbstractChunkLoaderEntity {
         LivingEntity owner = this.getOwner();
         if (owner != null)
         if (bool) {
-            owner.sendMessage(new StringTextComponent(this.getName().getString() + ": I will follow you!"), owner.getUUID());
+            owner.sendMessage(new TextComponent(this.getName().getString() + ": I will follow you!"), owner.getUUID());
         }
         else
-            owner.sendMessage(new StringTextComponent(this.getName().getString() + ": I will not follow you!"), owner.getUUID());
+            owner.sendMessage(new TextComponent(this.getName().getString() + ": I will not follow you!"), owner.getUUID());
     }
 
     public void setIsWorking(boolean bool) {
@@ -306,10 +311,10 @@ public abstract class AbstractWorkerEntity extends AbstractChunkLoaderEntity {
 
         if (owner != null)
         if (bool) {
-            owner.sendMessage(new StringTextComponent(this.getName().getString() + ": Im working now!"), owner.getUUID());
+            owner.sendMessage(new TextComponent(this.getName().getString() + ": Im working now!"), owner.getUUID());
         }
         else
-            owner.sendMessage(new StringTextComponent(this.getName().getString() + ": Work is done!"), owner.getUUID());
+            owner.sendMessage(new TextComponent(this.getName().getString() + ": Work is done!"), owner.getUUID());
     }
 
     public void setIsPickingUp(boolean bool) {
@@ -326,9 +331,9 @@ public abstract class AbstractWorkerEntity extends AbstractChunkLoaderEntity {
 
     ////////////////////////////////////ON FUNCTIONS////////////////////////////////////
 
-    boolean playerHasEnoughEmeralds(PlayerEntity player) {
+    boolean playerHasEnoughEmeralds(Player player) {
         int recruitCosts = this.workerCosts();
-        int emeraldCount = player.getItemInHand(Hand.MAIN_HAND).getCount();
+        int emeraldCount = player.getItemInHand(InteractionHand.MAIN_HAND).getCount();
         if (emeraldCount >= recruitCosts){
             return true;
         }
@@ -346,7 +351,7 @@ public abstract class AbstractWorkerEntity extends AbstractChunkLoaderEntity {
         } else {
             Entity entity = dmg.getEntity();
             this.setOrderedToSit(false);
-            if (entity != null && !(entity instanceof PlayerEntity) && !(entity instanceof AbstractArrowEntity)) {
+            if (entity != null && !(entity instanceof Player) && !(entity instanceof AbstractArrow)) {
                 amt = (amt + 1.0F) / 2.0F;
             }
 
@@ -354,7 +359,7 @@ public abstract class AbstractWorkerEntity extends AbstractChunkLoaderEntity {
             if(this.isTame() && attacker != null && hurtTimeStamp <= 0){
                 LivingEntity owner = this.getOwner();
                 if (owner!= null && owner != attacker) {
-                    owner.sendMessage(new StringTextComponent(this.getName().getString() + " is getting attacked by " + attacker.getName().getString()), owner.getUUID());
+                    owner.sendMessage(new TextComponent(this.getName().getString() + " is getting attacked by " + attacker.getName().getString()), owner.getUUID());
                     hurtTimeStamp = 80;
                 }
             }
@@ -387,12 +392,12 @@ public abstract class AbstractWorkerEntity extends AbstractChunkLoaderEntity {
         this.setPreviousTimeBreak(-1);
     }
 
-    public boolean isOwnedByThisPlayer(AbstractWorkerEntity recruit, PlayerEntity player){
+    public boolean isOwnedByThisPlayer(AbstractWorkerEntity recruit, Player player){
         return  (recruit.getOwnerUUID() == player.getUUID());
     }
 
     @Override
-    public boolean canBeLeashed(PlayerEntity player) {
+    public boolean canBeLeashed(Player player) {
         return false;
     }
     public abstract int workerCosts() ;
@@ -400,7 +405,7 @@ public abstract class AbstractWorkerEntity extends AbstractChunkLoaderEntity {
     @Override
     @OnlyIn(Dist.CLIENT)
     protected void spawnTamingParticles(boolean p_70908_1_) {
-        IParticleData iparticledata = ParticleTypes.HAPPY_VILLAGER;
+        ParticleOptions iparticledata = ParticleTypes.HAPPY_VILLAGER;
         if (!p_70908_1_) {
             iparticledata = ParticleTypes.SMOKE;
         }
@@ -422,12 +427,12 @@ public abstract class AbstractWorkerEntity extends AbstractChunkLoaderEntity {
         }
     }
 
-    public ActionResultType mobInteract(PlayerEntity player, Hand hand) {
+    public InteractionResult mobInteract(Player player, InteractionHand hand) {
         ItemStack itemstack = player.getItemInHand(hand);
         Item item = itemstack.getItem();
         if (this.level.isClientSide) {
             boolean flag = this.isOwnedBy(player) || this.isTame() || isInSittingPose() || item == Items.BONE && !this.isTame();
-            return flag ? ActionResultType.CONSUME : ActionResultType.PASS;
+            return flag ? InteractionResult.CONSUME : InteractionResult.PASS;
         } else {
             if (this.isTame() && player.getUUID().equals(this.getOwnerUUID())) {
 
@@ -437,11 +442,11 @@ public abstract class AbstractWorkerEntity extends AbstractChunkLoaderEntity {
                 }
                 if(!player.isCrouching()) {
                     setFollow(!getFollow());
-                    return ActionResultType.SUCCESS;
+                    return InteractionResult.SUCCESS;
                 }
 
             } else if (item == Items.EMERALD && !this.isTame() && playerHasEnoughEmeralds(player)) {
-                if (!player.abilities.instabuild) {
+                if (!player.getAbilities().instabuild) {
                     if (!player.isCreative()) {
                         itemstack.shrink(workerCosts());
                     }
@@ -451,13 +456,13 @@ public abstract class AbstractWorkerEntity extends AbstractChunkLoaderEntity {
                 this.setTarget(null);
                 this.setOrderedToSit(false);
                 this.setIsWorking(false);
-                return ActionResultType.SUCCESS;
+                return InteractionResult.SUCCESS;
             }
             else if (item == Items.EMERALD  && !this.isTame() && !playerHasEnoughEmeralds(player)) {
-                player.sendMessage(new StringTextComponent("" + this.getName().getString() + ": You need " + workerCosts() + " Emeralds to hire me!"), player.getUUID());
+                player.sendMessage(new TextComponent("" + this.getName().getString() + ": You need " + workerCosts() + " Emeralds to hire me!"), player.getUUID());
             }
             else if (!this.isTame() && item != Items.EMERALD ) {
-                player.sendMessage(new StringTextComponent("I am a " + this.getName().getString()), player.getUUID());
+                player.sendMessage(new TextComponent("I am a " + this.getName().getString()), player.getUUID());
 
             }
             return super.mobInteract(player, hand);
@@ -465,6 +470,6 @@ public abstract class AbstractWorkerEntity extends AbstractChunkLoaderEntity {
     }
 
     public abstract Predicate<ItemEntity> getAllowedItems();
-    public abstract void openGUI(PlayerEntity player);
+    public abstract void openGUI(Player player);
     public abstract void initSpawn();
 }
