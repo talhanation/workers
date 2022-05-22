@@ -3,17 +3,17 @@ package com.talhanation.workers.inventory;
 import com.talhanation.workers.Main;
 import com.talhanation.workers.entities.AbstractWorkerEntity;
 import de.maxhenkel.corelib.inventory.ContainerBase;
-import net.minecraft.entity.player.PlayerEntity;
-import net.minecraft.entity.player.PlayerInventory;
-import net.minecraft.inventory.IInventory;
-import net.minecraft.inventory.container.Slot;
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.entity.player.Inventory;
+import net.minecraft.world.Container;
+import net.minecraft.world.inventory.Slot;
 
 public class WorkerInventoryContainer extends ContainerBase {
 
-    private final IInventory workerInventory;
+    private final Container workerInventory;
     private final AbstractWorkerEntity worker;
 
-    public WorkerInventoryContainer(int id, AbstractWorkerEntity worker, PlayerInventory playerInventory) {
+    public WorkerInventoryContainer(int id, AbstractWorkerEntity worker, Inventory playerInventory) {
         super(Main.WORKER_CONTAINER_TYPE, id, playerInventory, worker.getInventory());
         this.worker = worker;
         this.workerInventory = worker.getInventory();
@@ -40,12 +40,12 @@ public class WorkerInventoryContainer extends ContainerBase {
     }
 
     @Override
-    public boolean stillValid(PlayerEntity playerIn) {
+    public boolean stillValid(Player playerIn) {
         return this.workerInventory.stillValid(playerIn) && this.worker.isAlive() && this.worker.distanceTo(playerIn) < 8.0F;
     }
 
     @Override
-    public void removed(PlayerEntity playerIn) {
+    public void removed(Player playerIn) {
         super.removed(playerIn);
     }
 }

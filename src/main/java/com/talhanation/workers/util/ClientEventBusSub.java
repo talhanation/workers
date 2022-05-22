@@ -5,22 +5,21 @@ import com.talhanation.workers.Main;
 import com.talhanation.workers.client.render.*;
 import com.talhanation.workers.init.ModEntityTypes;
 import net.minecraftforge.api.distmarker.Dist;
+import net.minecraftforge.client.event.EntityRenderersEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
-import net.minecraftforge.fml.client.registry.RenderingRegistry;
 import net.minecraftforge.fml.common.Mod;
-import net.minecraftforge.fml.event.lifecycle.FMLClientSetupEvent;
 
 @Mod.EventBusSubscriber(modid = Main.MOD_ID, bus = Mod.EventBusSubscriber.Bus.MOD , value = Dist.CLIENT)
 public class ClientEventBusSub {
 
     @SubscribeEvent
-    public static void clientSetup(FMLClientSetupEvent event){
-        RenderingRegistry.registerEntityRenderingHandler(ModEntityTypes.MINER.get(), MinerRenderer::new );
-        RenderingRegistry.registerEntityRenderingHandler(ModEntityTypes.LUMBERJACK.get(), LumberjackRenderer::new );
-        RenderingRegistry.registerEntityRenderingHandler(ModEntityTypes.SHEPHERD.get(), WorkersRenderer::new );
-        RenderingRegistry.registerEntityRenderingHandler(ModEntityTypes.FARMER.get(), WorkersRenderer::new );
-        RenderingRegistry.registerEntityRenderingHandler(ModEntityTypes.FISHERMAN.get(), FishermanRenderer::new );
-        RenderingRegistry.registerEntityRenderingHandler(ModEntityTypes.MERCHANT.get(), MerchantRenderer::new );
+    public static void clientSetup(EntityRenderersEvent.RegisterRenderers event){
+        event.registerEntityRenderer(ModEntityTypes.MINER.get(), MinerRenderer::new);
+        event.registerEntityRenderer(ModEntityTypes.LUMBERJACK.get(), LumberjackRenderer::new );
+        event.registerEntityRenderer(ModEntityTypes.SHEPHERD.get(), WorkersRenderer::new );
+        event.registerEntityRenderer(ModEntityTypes.FARMER.get(), WorkersRenderer::new );
+        event.registerEntityRenderer(ModEntityTypes.FISHERMAN.get(), FishermanRenderer::new );
+        event.registerEntityRenderer(ModEntityTypes.MERCHANT.get(), MerchantRenderer::new );
 
     }
 }

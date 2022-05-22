@@ -4,17 +4,17 @@ import com.talhanation.workers.Main;
 import com.talhanation.workers.entities.AbstractWorkerEntity;
 import com.talhanation.workers.entities.MerchantEntity;
 import de.maxhenkel.corelib.inventory.ContainerBase;
-import net.minecraft.entity.player.PlayerEntity;
-import net.minecraft.entity.player.PlayerInventory;
-import net.minecraft.inventory.IInventory;
-import net.minecraft.inventory.container.Slot;
-import net.minecraft.item.ItemStack;
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.entity.player.Inventory;
+import net.minecraft.world.Container;
+import net.minecraft.world.inventory.Slot;
+import net.minecraft.world.item.ItemStack;
 
 public class MerchantTradeContainer extends ContainerBase {
 
-    private final IInventory workerInventory;
+    private final Container workerInventory;
     private final MerchantEntity merchant;
-    private final PlayerEntity player;
+    private final Player player;
 
     private final int[] PRICE_ID = new int[]{
             0,2,4,6
@@ -24,7 +24,7 @@ public class MerchantTradeContainer extends ContainerBase {
             1,3,5,7
     };
 
-    public MerchantTradeContainer(int id, MerchantEntity merchant, PlayerInventory playerInventory) {
+    public MerchantTradeContainer(int id, MerchantEntity merchant, Inventory playerInventory) {
         super(Main.MERCHANT_CONTAINER_TYPE, id, playerInventory, merchant.getInventory());
         this.merchant = merchant;
         this.workerInventory = merchant.getTradeInventory();
@@ -49,7 +49,7 @@ public class MerchantTradeContainer extends ContainerBase {
                 }
 
                 @Override
-                public boolean mayPickup(PlayerEntity player) {
+                public boolean mayPickup(Player player) {
                     return false;
                 }
             });
@@ -65,7 +65,7 @@ public class MerchantTradeContainer extends ContainerBase {
                 }
 
                 @Override
-                public boolean mayPickup(PlayerEntity player) {
+                public boolean mayPickup(Player player) {
                     return false;
                 }
             });
@@ -77,12 +77,12 @@ public class MerchantTradeContainer extends ContainerBase {
     }
 
     @Override
-    public boolean stillValid(PlayerEntity playerIn) {
+    public boolean stillValid(Player playerIn) {
         return this.workerInventory.stillValid(playerIn) && this.merchant.isAlive() && this.merchant.distanceTo(playerIn) < 8.0F;
     }
 
     @Override
-    public void removed(PlayerEntity playerIn) {
+    public void removed(Player playerIn) {
         super.removed(playerIn);
     }
 }

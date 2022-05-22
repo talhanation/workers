@@ -1,12 +1,12 @@
 package com.talhanation.workers.entities.ai;
 
 import com.talhanation.workers.entities.AbstractWorkerEntity;
-import net.minecraft.entity.ai.goal.Goal;
-import net.minecraft.entity.passive.AnimalEntity;
-import net.minecraft.inventory.Inventory;
-import net.minecraft.item.ItemStack;
-import net.minecraft.item.Items;
-import net.minecraft.util.math.AxisAlignedBB;
+import net.minecraft.world.entity.ai.goal.Goal;
+import net.minecraft.world.entity.animal.Animal;
+import net.minecraft.world.SimpleContainer;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.Items;
+import net.minecraft.world.phys.AABB;
 
 import java.util.List;
 import java.util.Objects;
@@ -15,10 +15,10 @@ import java.util.Random;
 import static com.talhanation.workers.entities.FarmerEntity.WANTED_SEEDS;
 
 
-public class BreedAnimalGoal<T extends AnimalEntity> extends Goal {
+public class BreedAnimalGoal<T extends Animal> extends Goal {
     protected final Class<T> animalClass;
     public AbstractWorkerEntity worker;
-    public AnimalEntity animal;
+    public Animal animal;
     Random random = new Random();
 
     public BreedAnimalGoal(AbstractWorkerEntity worker,Class<T> animalClass) {
@@ -30,14 +30,14 @@ public class BreedAnimalGoal<T extends AnimalEntity> extends Goal {
         return true;
     }
 
-    protected AxisAlignedBB getSearchArea(double area) {
+    protected AABB getSearchArea(double area) {
         return this.worker.getBoundingBox().inflate(area, 8.0D, area);
     }
 
     protected void findAnimal() {
-        List<AnimalEntity> list = Objects.requireNonNull(worker.level.getEntitiesOfClass(animalClass, this.getSearchArea(12)));
-        AnimalEntity closeanimal;
-        for (AnimalEntity animals : list){
+        List<T> list = Objects.requireNonNull(worker.level.getEntitiesOfClass(animalClass, this.getSearchArea(12)));
+        Animal closeanimal;
+        for (Animal animals : list){
             for (int i = 0; i < list.size(); i++) {
                 closeanimal = animals;
 
@@ -72,7 +72,7 @@ public class BreedAnimalGoal<T extends AnimalEntity> extends Goal {
     }
 
     private boolean hasWorkerWheat() {
-        Inventory inventory = worker.getInventory();
+        SimpleContainer inventory = worker.getInventory();
         for(int i = 0; i < inventory.getContainerSize(); i++) {
             ItemStack itemStack = inventory.getItem(i);
             if (itemStack.getItem().equals(Items.WHEAT))

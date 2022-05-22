@@ -1,19 +1,19 @@
 package com.talhanation.workers.entities.ai;
 
 import com.talhanation.workers.entities.LumberjackEntity;
-import net.minecraft.block.Block;
-import net.minecraft.block.BlockState;
-import net.minecraft.block.Blocks;
-import net.minecraft.block.LeavesBlock;
-import net.minecraft.block.material.Material;
-import net.minecraft.entity.ai.goal.Goal;
-import net.minecraft.inventory.Inventory;
-import net.minecraft.item.ItemStack;
-import net.minecraft.item.Items;
-import net.minecraft.util.SoundCategory;
-import net.minecraft.util.SoundEvents;
-import net.minecraft.util.math.AxisAlignedBB;
-import net.minecraft.util.math.BlockPos;
+import net.minecraft.world.level.block.Block;
+import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.level.block.Blocks;
+import net.minecraft.world.level.block.LeavesBlock;
+import net.minecraft.world.level.material.Material;
+import net.minecraft.world.entity.ai.goal.Goal;
+import net.minecraft.world.SimpleContainer;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.Items;
+import net.minecraft.sounds.SoundSource;
+import net.minecraft.sounds.SoundEvents;
+import net.minecraft.world.phys.AABB;
+import net.minecraft.core.BlockPos;
 import net.minecraftforge.event.ForgeEventFactory;
 
 import java.util.EnumSet;
@@ -69,11 +69,11 @@ public class LumberjackAI extends Goal {
     }
 
     private void breakLeaves() {
-        AxisAlignedBB boundingBox = this.lumber.getBoundingBox();
+        AABB boundingBox = this.lumber.getBoundingBox();
         double offset = 0.25D;
         BlockPos start = new BlockPos(boundingBox.minX - offset, boundingBox.minY - offset, boundingBox.minZ - offset);
         BlockPos end = new BlockPos(boundingBox.maxX + offset, boundingBox.maxY + offset, boundingBox.maxZ + offset);
-        BlockPos.Mutable pos = new BlockPos.Mutable();
+        BlockPos.MutableBlockPos pos = new BlockPos.MutableBlockPos();
         boolean hasBroken = false;
         if (this.lumber.level.hasChunksAt(start, end)) {
             for (int i = start.getX(); i <= end.getX(); ++i) {
@@ -92,7 +92,7 @@ public class LumberjackAI extends Goal {
         }
 
         if (hasBroken) {
-            this.lumber.level.playSound(null, this.lumber.getX(), this.lumber.getY(), this.lumber.getZ(), SoundEvents.GRASS_BREAK, SoundCategory.BLOCKS, 1F, 0.9F + 0.2F);
+            this.lumber.level.playSound(null, this.lumber.getX(), this.lumber.getY(), this.lumber.getZ(), SoundEvents.GRASS_BREAK, SoundSource.BLOCKS, 1F, 0.9F + 0.2F);
             this.lumber.workerSwingArm();
         }
     }
@@ -132,14 +132,14 @@ public class LumberjackAI extends Goal {
     }
 
     private boolean hasPlantInInv(){
-        Inventory inventory = lumber.getInventory();
+        SimpleContainer inventory = lumber.getInventory();
         return inventory.hasAnyOf(WANTED_SAPLINGS);
     }
 
 
     private void plantSaplingFromInv(BlockPos blockPos) {
         if (hasPlantInInv()) {
-            Inventory inventory = lumber.getInventory();
+            SimpleContainer inventory = lumber.getInventory();
 
             for (int i = 0; i < inventory.getContainerSize(); ++i) {
                 ItemStack itemstack = inventory.getItem(i);
@@ -172,7 +172,7 @@ public class LumberjackAI extends Goal {
                 }
 
                 if (flag) {
-                    lumber.level.playSound(null, (double) blockPos.getX(), (double) blockPos.getY(), (double) blockPos.getZ(), SoundEvents.GRASS_PLACE, SoundCategory.BLOCKS, 1.0F, 1.0F);
+                    lumber.level.playSound(null, (double) blockPos.getX(), (double) blockPos.getY(), (double) blockPos.getZ(), SoundEvents.GRASS_PLACE, SoundSource.BLOCKS, 1.0F, 1.0F);
                     itemstack.shrink(1);
                     if (itemstack.isEmpty()) {
                         inventory.setItem(i, ItemStack.EMPTY);
@@ -192,7 +192,7 @@ public class LumberjackAI extends Goal {
 
             if (lumber.wantsToBreak(block)){
                 if (lumber.getCurrentTimeBreak() % 5 == 4) {
-                    lumber.level.playLocalSound(blockPos.getX(), blockPos.getY(), blockPos.getZ(), blockstate.getSoundType().getHitSound(), SoundCategory.BLOCKS, 1F, 0.75F, false);
+                    lumber.level.playLocalSound(blockPos.getX(), blockPos.getY(), blockPos.getZ(), blockstate.getSoundType().getHitSound(), SoundSource.BLOCKS, 1F, 0.75F, false);
                 }
 
                 //set max destroy speed

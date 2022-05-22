@@ -1,13 +1,13 @@
 package com.talhanation.workers.entities.ai;
 
 import com.talhanation.workers.entities.AbstractWorkerEntity;
-import net.minecraft.entity.EntityPredicate;
-import net.minecraft.entity.LivingEntity;
-import net.minecraft.entity.ai.goal.Goal;
+import net.minecraft.world.entity.ai.targeting.TargetingConditions;
+import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.entity.ai.goal.Goal;
 import java.util.EnumSet;
 import java.util.function.Predicate;
-import net.minecraft.entity.ai.goal.TargetGoal;
-import net.minecraft.util.math.AxisAlignedBB;
+import net.minecraft.world.entity.ai.goal.target.TargetGoal;
+import net.minecraft.world.phys.AABB;
 import javax.annotation.Nullable;
 
 
@@ -15,7 +15,7 @@ public class MoveToEntityGoal<T extends LivingEntity> extends TargetGoal {
     protected final Class<T> targetType;
     public LivingEntity target;
     public AbstractWorkerEntity worker;
-    public EntityPredicate targetConditions;
+    public TargetingConditions targetConditions;
 
     public MoveToEntityGoal(AbstractWorkerEntity worker, Class<T> target, boolean p_i50313_3_) {
         this(worker, target, p_i50313_3_, false);
@@ -30,7 +30,7 @@ public class MoveToEntityGoal<T extends LivingEntity> extends TargetGoal {
         super(worker, p_i50315_4_, p_i50315_5_);
         this.targetType = target;
         this.setFlags(EnumSet.of(Goal.Flag.TARGET));
-        this.targetConditions = (new EntityPredicate()).range(this.getFollowDistance()).selector(predicate);
+        this.targetConditions = (TargetingConditions.forNonCombat()).range(this.getFollowDistance()).selector(predicate);
     }
 
     public boolean canUse() {
@@ -38,12 +38,12 @@ public class MoveToEntityGoal<T extends LivingEntity> extends TargetGoal {
         return true;
     }
 
-    protected AxisAlignedBB getTargetSearchArea(double area) {
+    protected AABB getTargetSearchArea(double area) {
         return this.mob.getBoundingBox().inflate(area, 8.0D, area);
     }
 
     protected void findTarget() {
-        this.target = this.mob.level.getNearestLoadedEntity(this.targetType, this.targetConditions, this.mob, this.mob.getX(), this.mob.getY(), this.mob.getZ(), this.getTargetSearchArea(this.getFollowDistance()));
+        this.target = this.mob.level.getNearestEntity(this.targetType, this.targetConditions, this.mob, this.mob.getX(), this.mob.getY(), this.mob.getZ(), this.getTargetSearchArea(this.getFollowDistance()));
 
     }
 

@@ -6,44 +6,48 @@ import com.talhanation.workers.inventory.MerchantTradeContainer;
 import com.talhanation.workers.entities.ai.WorkerFollowOwnerGoal;
 import com.talhanation.workers.network.MessageOpenGuiMerchant;
 import com.talhanation.workers.network.MessageOpenGuiWorker;
-import net.minecraft.entity.*;
-import net.minecraft.entity.ai.attributes.AttributeModifierMap;
-import net.minecraft.entity.ai.attributes.Attributes;
-import net.minecraft.entity.ai.goal.*;
-import net.minecraft.entity.item.ItemEntity;
-import net.minecraft.entity.player.PlayerEntity;
-import net.minecraft.entity.player.PlayerInventory;
-import net.minecraft.entity.player.ServerPlayerEntity;
-import net.minecraft.inventory.EquipmentSlotType;
-import net.minecraft.inventory.Inventory;
-import net.minecraft.inventory.InventoryHelper;
-import net.minecraft.inventory.container.Container;
-import net.minecraft.inventory.container.INamedContainerProvider;
-import net.minecraft.item.Item;
-import net.minecraft.item.ItemStack;
-import net.minecraft.item.Items;
-import net.minecraft.nbt.CompoundNBT;
-import net.minecraft.nbt.ListNBT;
-import net.minecraft.pathfinding.GroundPathNavigator;
-import net.minecraft.util.ActionResultType;
-import net.minecraft.util.DamageSource;
-import net.minecraft.util.Hand;
-import net.minecraft.util.text.ITextComponent;
-import net.minecraft.util.text.StringTextComponent;
+import net.minecraft.world.entity.*;
+import net.minecraft.world.entity.ai.attributes.AttributeSupplier;
+import net.minecraft.world.entity.ai.attributes.Attributes;
+import net.minecraft.world.entity.item.ItemEntity;
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.entity.player.Inventory;
+import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.world.SimpleContainer;
+import net.minecraft.world.Containers;
+import net.minecraft.world.inventory.AbstractContainerMenu;
+import net.minecraft.world.MenuProvider;
+import net.minecraft.world.item.Item;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.Items;
+import net.minecraft.nbt.CompoundTag;
+import net.minecraft.nbt.ListTag;
+import net.minecraft.world.entity.ai.navigation.GroundPathNavigation;
+import net.minecraft.world.InteractionResult;
+import net.minecraft.world.damagesource.DamageSource;
+import net.minecraft.world.InteractionHand;
+import net.minecraft.network.chat.Component;
+import net.minecraft.network.chat.TextComponent;
 import net.minecraft.world.DifficultyInstance;
-import net.minecraft.world.IServerWorld;
-import net.minecraft.world.World;
-import net.minecraft.world.server.ServerWorld;
-import net.minecraftforge.fml.network.NetworkHooks;
+import net.minecraft.world.level.ServerLevelAccessor;
+import net.minecraft.world.level.Level;
+import net.minecraft.server.level.ServerLevel;
+import net.minecraftforge.network.NetworkHooks;
 
 import javax.annotation.Nullable;
 import java.util.function.Predicate;
 
+import net.minecraft.world.entity.AgeableMob;
+import net.minecraft.world.entity.ai.goal.FloatGoal;
+import net.minecraft.world.entity.ai.goal.LookAtPlayerGoal;
+import net.minecraft.world.entity.ai.goal.PanicGoal;
+import net.minecraft.world.entity.ai.goal.RandomLookAroundGoal;
+
 public class MerchantEntity extends AbstractWorkerEntity{
 
-    private final Inventory tradeInventory = new Inventory(8);
+    private final SimpleContainer tradeInventory = new SimpleContainer(8);
 
-    public MerchantEntity(EntityType<? extends AbstractWorkerEntity> entityType, World world) {
+    public MerchantEntity(EntityType<? extends AbstractWorkerEntity> entityType, Level world) {
         super(entityType, world);
     }
 
@@ -68,27 +72,27 @@ public class MerchantEntity extends AbstractWorkerEntity{
     }
 
     @Override
-    public ActionResultType mobInteract(PlayerEntity player, Hand hand) {
+    public InteractionResult mobInteract(Player player, InteractionHand hand) {
         ItemStack itemstack = player.getItemInHand(hand);
         Item item = itemstack.getItem();
         if (this.level.isClientSide) {
             boolean flag = this.isOwnedBy(player) || this.isTame() || isInSittingPose();
-            return flag ? ActionResultType.CONSUME : ActionResultType.PASS;
+            return flag ? InteractionResult.CONSUME : InteractionResult.PASS;
         } else {
             if (this.isTame() && player.getUUID().equals(this.getOwnerUUID())) {
                 if (player.isCrouching()) {
                     openGUI(player);
-                    return ActionResultType.SUCCESS;
+                    return InteractionResult.SUCCESS;
                 }
 
                 if(!player.isCrouching()) {
                     setFollow(!getFollow());
-                    return ActionResultType.SUCCESS;
+                    return InteractionResult.SUCCESS;
                 }
 
             }
             else if (item == Items.EMERALD && !this.isTame() && playerHasEnoughEmeralds(player)) {
-                if (!player.abilities.instabuild) {
+                if (!player.getAbilities().instabuild) {
                     if (!player.isCreative()) {
                         itemstack.shrink(workerCosts());
                     }
@@ -98,41 +102,41 @@ public class MerchantEntity extends AbstractWorkerEntity{
                 this.setTarget(null);
                 this.setOrderedToSit(false);
                 this.setIsWorking(false);
-                return ActionResultType.SUCCESS;
+                return InteractionResult.SUCCESS;
             }
             else if (item == Items.EMERALD  && !this.isTame() && !playerHasEnoughEmeralds(player)) {
-                player.sendMessage(new StringTextComponent("" + this.getName().getString() + ": You need " + workerCosts() + " Emeralds to hire me!"), player.getUUID());
-                return ActionResultType.SUCCESS;
+                player.sendMessage(new TextComponent("" + this.getName().getString() + ": You need " + workerCosts() + " Emeralds to hire me!"), player.getUUID());
+                return InteractionResult.SUCCESS;
             }
             else if (!this.isTame() && item != Items.EMERALD ) {
-                player.sendMessage(new StringTextComponent("I am a " + this.getName().getString()), player.getUUID());
-                return ActionResultType.SUCCESS;
+                player.sendMessage(new TextComponent("I am a " + this.getName().getString()), player.getUUID());
+                return InteractionResult.SUCCESS;
             }
 
             else if (this.isTame() && player.getUUID() != this.getOwnerUUID()) {
-                if (getOwner() != null) player.sendMessage(new StringTextComponent("" + this.getName().getString() + ": Hello, I am a the merchant of " + this.getOwner().getDisplayName().getString() + "!"), player.getUUID());
+                if (getOwner() != null) player.sendMessage(new TextComponent("" + this.getName().getString() + ": Hello, I am a the merchant of " + this.getOwner().getDisplayName().getString() + "!"), player.getUUID());
                 if (!player.isCrouching()) {
                     openTradeGUI(player);
-                    return ActionResultType.SUCCESS;
+                    return InteractionResult.SUCCESS;
                 } else
-                if (getOwner() != null) player.sendMessage(new StringTextComponent("" + this.getName().getString() + ": Hello, I am a the merchant of " + this.getOwner().getDisplayName().getString() + "!"), player.getUUID());
+                if (getOwner() != null) player.sendMessage(new TextComponent("" + this.getName().getString() + ": Hello, I am a the merchant of " + this.getOwner().getDisplayName().getString() + "!"), player.getUUID());
 
             }
-            return ActionResultType.PASS;
+            return InteractionResult.PASS;
         }
     }
 
-    public void openTradeGUI(PlayerEntity player) {
-        if (player instanceof ServerPlayerEntity) {
-            NetworkHooks.openGui((ServerPlayerEntity) player, new INamedContainerProvider() {
+    public void openTradeGUI(Player player) {
+        if (player instanceof ServerPlayer) {
+            NetworkHooks.openGui((ServerPlayer) player, new MenuProvider() {
                 @Override
-                public ITextComponent getDisplayName() {
+                public Component getDisplayName() {
                     return getName();
                 }
 
                 @Nullable
                 @Override
-                public Container createMenu(int i, PlayerInventory playerInventory, PlayerEntity playerEntity) {
+                public AbstractContainerMenu createMenu(int i, Inventory playerInventory, Player playerEntity) {
                     return new MerchantTradeContainer(i, MerchantEntity.this, playerInventory);
                 }
             }, packetBuffer -> {packetBuffer.writeUUID(getUUID());});
@@ -142,17 +146,17 @@ public class MerchantEntity extends AbstractWorkerEntity{
     }
 
     @Override
-    public void openGUI(PlayerEntity player) {
-        if (player instanceof ServerPlayerEntity) {
-            NetworkHooks.openGui((ServerPlayerEntity) player, new INamedContainerProvider() {
+    public void openGUI(Player player) {
+        if (player instanceof ServerPlayer) {
+            NetworkHooks.openGui((ServerPlayer) player, new MenuProvider() {
                 @Override
-                public ITextComponent getDisplayName() {
+                public Component getDisplayName() {
                     return getName();
                 }
 
                 @Nullable
                 @Override
-                public Container createMenu(int i, PlayerInventory playerInventory, PlayerEntity playerEntity) {
+                public AbstractContainerMenu createMenu(int i, Inventory playerInventory, Player playerEntity) {
                     return new MerchantInventoryContainer(i, MerchantEntity.this, playerInventory);
                 }
             }, packetBuffer -> {packetBuffer.writeUUID(getUUID());});
@@ -162,7 +166,7 @@ public class MerchantEntity extends AbstractWorkerEntity{
     }
 
     //ATTRIBUTES
-    public static AttributeModifierMap.MutableAttribute setAttributes() {
+    public static AttributeSupplier.Builder setAttributes() {
         return createMobAttributes()
                 .add(Attributes.MAX_HEALTH, 100.0D)
                 .add(Attributes.MOVEMENT_SPEED, 0.3D)
@@ -173,12 +177,12 @@ public class MerchantEntity extends AbstractWorkerEntity{
     @Override
     protected void registerGoals() {
         super.registerGoals();
-        this.goalSelector.addGoal(1, new SwimGoal(this));
+        this.goalSelector.addGoal(1, new FloatGoal(this));
         //this.goalSelector.addGoal(2, new WorkerPickupWantedItemGoal(this));
         this.goalSelector.addGoal(2, new WorkerFollowOwnerGoal(this, 1.2D, 7.F, 4.0F));
         this.goalSelector.addGoal(3, new PanicGoal(this,2D));
-        this.goalSelector.addGoal(5, new LookAtGoal(this, PlayerEntity.class, 8.0F));
-        this.goalSelector.addGoal(6, new LookRandomlyGoal(this));
+        this.goalSelector.addGoal(5, new LookAtPlayerGoal(this, Player.class, 8.0F));
+        this.goalSelector.addGoal(6, new RandomLookAroundGoal(this));
         //this.goalSelector.addGoal(6, new WaterAvoidingRandomWalkingGoal(this, 1.0D, 0F));
 
 
@@ -188,15 +192,15 @@ public class MerchantEntity extends AbstractWorkerEntity{
 
     @Nullable
     @Override
-    public AgeableEntity getBreedOffspring(ServerWorld p_241840_1_, AgeableEntity p_241840_2_) {
+    public AgeableMob getBreedOffspring(ServerLevel p_241840_1_, AgeableMob p_241840_2_) {
         return null;
     }
 
     @Override
     @Nullable
-    public ILivingEntityData finalizeSpawn(IServerWorld world, DifficultyInstance difficultyInstance, SpawnReason reason, @Nullable ILivingEntityData data, @Nullable CompoundNBT nbt) {
-        ILivingEntityData ilivingentitydata = super.finalizeSpawn(world, difficultyInstance, reason, data, nbt);
-        ((GroundPathNavigator)this.getNavigation()).setCanOpenDoors(true);
+    public SpawnGroupData finalizeSpawn(ServerLevelAccessor world, DifficultyInstance difficultyInstance, MobSpawnType reason, @Nullable SpawnGroupData data, @Nullable CompoundTag nbt) {
+        SpawnGroupData ilivingentitydata = super.finalizeSpawn(world, difficultyInstance, reason, data, nbt);
+        ((GroundPathNavigation)this.getNavigation()).setCanOpenDoors(true);
         this.populateDefaultEquipmentEnchantments(difficultyInstance);
 
         this.initSpawn();
@@ -206,7 +210,7 @@ public class MerchantEntity extends AbstractWorkerEntity{
 
     @Override
     public void initSpawn() {
-        this.setCustomName(new StringTextComponent("Merchant"));
+        this.setCustomName(new TextComponent("Merchant"));
         this.setEquipment();
         this.getNavigation().setCanFloat(true);
         this.setDropEquipment();
@@ -220,7 +224,7 @@ public class MerchantEntity extends AbstractWorkerEntity{
     protected void pickUpItem(ItemEntity itemEntity) {
         ItemStack itemstack = itemEntity.getItem();
         if (this.wantsToPickUp(itemstack)) {
-            Inventory inventory = this.getInventory();
+            SimpleContainer inventory = this.getInventory();
             boolean flag = inventory.canAddItem(itemstack);
             if (!flag) {
                 return;
@@ -230,7 +234,7 @@ public class MerchantEntity extends AbstractWorkerEntity{
             this.take(itemEntity, itemstack.getCount());
             ItemStack itemstack1 = inventory.addItem(itemstack);
             if (itemstack1.isEmpty()) {
-                itemEntity.remove();
+                itemEntity.remove(RemovalReason.DISCARDED);
             } else {
                 itemstack.setCount(itemstack1.getCount());
             }
@@ -242,19 +246,19 @@ public class MerchantEntity extends AbstractWorkerEntity{
     public void setEquipment() {
         int i = this.random.nextInt(9);
         if (i == 0) {
-            this.setItemSlot(EquipmentSlotType.MAINHAND, new ItemStack(Items.BOOK));
+            this.setItemSlot(EquipmentSlot.MAINHAND, new ItemStack(Items.BOOK));
         }else{
-            this.setItemSlot(EquipmentSlotType.MAINHAND, new ItemStack(Items.PAPER));
+            this.setItemSlot(EquipmentSlot.MAINHAND, new ItemStack(Items.PAPER));
         }
     }
 
-    public void addAdditionalSaveData(CompoundNBT nbt) {
+    public void addAdditionalSaveData(CompoundTag nbt) {
         super.addAdditionalSaveData(nbt);
-        ListNBT list = new ListNBT();
+        ListTag list = new ListTag();
         for (int i = 0; i < this.tradeInventory.getContainerSize(); ++i) {
             ItemStack itemstack = this.tradeInventory.getItem(i);
             if (!itemstack.isEmpty()) {
-                CompoundNBT compoundnbt = new CompoundNBT();
+                CompoundTag compoundnbt = new CompoundTag();
                 compoundnbt.putByte("TradeSlot", (byte) i);
                 itemstack.save(compoundnbt);
                 list.add(compoundnbt);
@@ -264,25 +268,25 @@ public class MerchantEntity extends AbstractWorkerEntity{
         nbt.put("TradeInventory", list);
     }
 
-    public void readAdditionalSaveData(CompoundNBT nbt) {
+    public void readAdditionalSaveData(CompoundTag nbt) {
         super.readAdditionalSaveData(nbt);
-        ListNBT list = nbt.getList("TradeInventory", 10);
+        ListTag list = nbt.getList("TradeInventory", 10);
         for (int i = 0; i < list.size(); ++i) {
-            CompoundNBT compoundnbt = list.getCompound(i);
+            CompoundTag compoundnbt = list.getCompound(i);
             int j = compoundnbt.getByte("TradeSlot") & 255;
 
             this.tradeInventory.setItem(j, ItemStack.of(compoundnbt));
         }
     }
 
-    public Inventory getTradeInventory() {
+    public SimpleContainer getTradeInventory() {
         return this.tradeInventory;
     }
 
     public void die(DamageSource dmg) {
         super.die(dmg);
         for (int i = 0; i < this.tradeInventory.getContainerSize(); i++)
-            InventoryHelper.dropItemStack(this.level, getX(), getY(), getZ(), this.tradeInventory.getItem(i));
+            Containers.dropItemStack(this.level, getX(), getY(), getZ(), this.tradeInventory.getItem(i));
     }
 
     @Override

@@ -1,20 +1,20 @@
 package com.talhanation.workers.entities.ai;
 
 import com.talhanation.workers.entities.AbstractWorkerEntity;
-import net.minecraft.entity.LivingEntity;
-import net.minecraft.entity.ai.goal.Goal;
-import net.minecraft.pathfinding.PathNavigator;
-import net.minecraft.pathfinding.PathNodeType;
-import net.minecraft.world.IWorldReader;
+import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.entity.ai.goal.Goal;
+import net.minecraft.world.entity.ai.navigation.PathNavigation;
+import net.minecraft.world.level.pathfinder.BlockPathTypes;
+import net.minecraft.world.level.LevelReader;
 
 import java.util.EnumSet;
 
 public class WorkerFollowOwnerGoal extends Goal {
     private final AbstractWorkerEntity workerEntity;
     private LivingEntity owner;
-    private final IWorldReader level;
+    private final LevelReader level;
     private final double speedModifier;
-    private final PathNavigator navigation;
+    private final PathNavigation navigation;
     private int timeToRecalcPath;
     private final float stopDistance;
     private final float startDistance;
@@ -67,14 +67,14 @@ public class WorkerFollowOwnerGoal extends Goal {
 
     public void start() {
         this.timeToRecalcPath = 0;
-        this.oldWaterCost = this.workerEntity.getPathfindingMalus(PathNodeType.WATER);
-        this.workerEntity.setPathfindingMalus(PathNodeType.WATER, 0.0F);
+        this.oldWaterCost = this.workerEntity.getPathfindingMalus(BlockPathTypes.WATER);
+        this.workerEntity.setPathfindingMalus(BlockPathTypes.WATER, 0.0F);
     }
 
     public void stop() {
         this.owner = null;
         this.navigation.stop();
-        this.workerEntity.setPathfindingMalus(PathNodeType.WATER, this.oldWaterCost);
+        this.workerEntity.setPathfindingMalus(BlockPathTypes.WATER, this.oldWaterCost);
     }
 
     public void tick() {

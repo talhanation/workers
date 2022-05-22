@@ -1,8 +1,8 @@
 package com.talhanation.workers.network;
 
-import net.minecraft.network.PacketBuffer;
+import net.minecraft.network.FriendlyByteBuf;
 import net.minecraftforge.api.distmarker.Dist;
-import net.minecraftforge.fml.network.NetworkEvent;
+import net.minecraftforge.network.NetworkEvent;
 
 public interface Message<T extends Message> {
     Dist getExecutingSide();
@@ -11,7 +11,7 @@ public interface Message<T extends Message> {
 
     default void executeClientSide(NetworkEvent.Context context) {}
 
-    T fromBytes(PacketBuffer paramPacketBuffer);
+    T fromBytes(FriendlyByteBuf paramPacketBuffer);
 
-    void toBytes(PacketBuffer paramPacketBuffer);
+    void toBytes(FriendlyByteBuf paramPacketBuffer);
 }

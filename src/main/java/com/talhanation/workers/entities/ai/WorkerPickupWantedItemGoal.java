@@ -2,8 +2,8 @@ package com.talhanation.workers.entities.ai;
 
 
 import com.talhanation.workers.entities.AbstractWorkerEntity;
-import net.minecraft.entity.ai.goal.Goal;
-import net.minecraft.entity.item.ItemEntity;
+import net.minecraft.world.entity.ai.goal.Goal;
+import net.minecraft.world.entity.item.ItemEntity;
 
 import java.util.List;
 import java.util.function.Predicate;
