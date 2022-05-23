@@ -58,7 +58,7 @@ public class LumberjackAI extends Goal {
             this.lumber.getNavigation().moveTo(chopPos.getX(), chopPos.getY(), chopPos.getZ(), 1);
             this.lumber.getLookControl().setLookAt(chopPos.getX(), chopPos.getY() + 1, chopPos.getZ(), 10.0F, (float) this.lumber.getMaxHeadXRot());
 
-            if (chopPos.closerThan(lumber.position(), 9)) {
+            if (chopPos.closerThan(lumber.getOnPos(), 9)) {
                 this.mineBlock(chopPos);
 
                 if(lumber.level.getBlockState(chopPos.below()).is(Blocks.DIRT) && this.lumber.level.isEmptyBlock(chopPos)){

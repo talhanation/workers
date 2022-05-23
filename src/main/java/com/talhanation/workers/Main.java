@@ -11,7 +11,6 @@ import com.talhanation.workers.inventory.*;
 import com.talhanation.workers.network.*;
 import de.maxhenkel.corelib.ClientRegistry;
 import net.minecraft.client.KeyMapping;
-import net.minecraft.world.entity.ai.attributes.DefaultAttributes;
 import net.minecraft.world.entity.npc.VillagerProfession;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.inventory.MenuType;
@@ -25,7 +24,6 @@ import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.event.RegistryEvent;
 import net.minecraftforge.eventbus.api.IEventBus;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
-import net.minecraftforge.fml.DeferredWorkQueue;
 import net.minecraftforge.fml.DistExecutor;
 import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.fml.event.lifecycle.FMLClientSetupEvent;
@@ -126,15 +124,6 @@ public class Main {
                 buf -> (new MessageSheepCount()).fromBytes(buf),
                 (msg, fun) -> msg.executeServerSide(fun.get()));
 
-
-        DeferredWorkQueue.run(() -> {
-            DefaultAttributes.put(ModEntityTypes.MINER.get(), MinerEntity.setAttributes().build());
-            DefaultAttributes.put(ModEntityTypes.LUMBERJACK.get(), LumberjackEntity.setAttributes().build());
-            DefaultAttributes.put(ModEntityTypes.SHEPHERD.get(), ShepherdEntity.setAttributes().build());
-            DefaultAttributes.put(ModEntityTypes.FARMER.get(), FarmerEntity.setAttributes().build());
-            DefaultAttributes.put(ModEntityTypes.FISHERMAN.get(), FishermanEntity.setAttributes().build());
-            DefaultAttributes.put(ModEntityTypes.MERCHANT.get(), FishermanEntity.setAttributes().build());
-        });
     }
 
     @SubscribeEvent

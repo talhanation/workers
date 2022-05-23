@@ -35,7 +35,7 @@ public class MinerMine8x8x1FlatGoal extends Goal {
         if (this.miner.getFollow()) {
             return false;
 
-        } else if (this.miner.getStartPos().get().closerThan(miner.position(), within) && !this.miner.getFollow() && miner.getMineType() == 4)
+        } else if (this.miner.getStartPos().get().closerThan(miner.getOnPos(), within) && !this.miner.getFollow() && miner.getMineType() == 4)
 
             return true;
 
@@ -78,11 +78,11 @@ public class MinerMine8x8x1FlatGoal extends Goal {
                 this.minePos = new BlockPos(miner.getStartPos().get().getX() + side, miner.getStartPos().get().getY(), miner.getStartPos().get().getZ() + blocks);
             }
 
-            if (!minePos.closerThan(miner.position(), 2) && !miner.getIsPickingUp()){
+            if (!minePos.closerThan(miner.getOnPos(), 2) && !miner.getIsPickingUp()){
                 this.miner.getNavigation().moveTo(minePos.getX(), minePos.getY(), minePos.getZ(),1);
             }
 
-            if (minePos.closerThan(miner.position(), 4)){
+            if (minePos.closerThan(miner.getOnPos(), 4)){
                 this.miner.getLookControl().setLookAt(minePos.getX(), minePos.getY() + 1, minePos.getZ(), 10.0F, (float) this.miner.getMaxHeadXRot());
             }
 
@@ -91,7 +91,7 @@ public class MinerMine8x8x1FlatGoal extends Goal {
 
             this.miner.getAttribute(Attributes.MOVEMENT_SPEED).setBaseValue(0.3D);
             //erst mienen wenn nah genug
-            if (minePos.closerThan(miner.position(), 6)) this.mineBlock(this.minePos);
+            if (minePos.closerThan(miner.getOnPos(), 6)) this.mineBlock(this.minePos);
 
             if (miner.shouldIgnorBlock(block1)) {
                 blocks++;

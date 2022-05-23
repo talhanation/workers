@@ -78,7 +78,7 @@ public abstract class AbstractInventoryEntity extends TamableAnimal {
             super.setItemSlot(EquipmentSlot.byTypeAndIndex(EquipmentSlot.Type.ARMOR , slot), itemStack); //UNTESTED!!!
             return true;
         } catch (Exception e) {
-            LOGGER.error(e);
+            //LOGGER.error(e);
         }
 
         int i = slot - 300;

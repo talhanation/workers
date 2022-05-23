@@ -52,6 +52,5 @@ public class WorkerInventoryScreen extends ScreenBase<WorkerInventoryContainer> 
 
     protected void renderBg(PoseStack matrixStack, float partialTicks, int mouseX, int mouseY) {
         super.renderBg(matrixStack, partialTicks, mouseX, mouseY);
-        RenderSystem.color4f(1.0F, 1.0F, 1.0F, 1.0F);
     }
 }

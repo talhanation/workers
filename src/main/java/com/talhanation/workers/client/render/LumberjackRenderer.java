@@ -3,15 +3,16 @@ package com.talhanation.workers.client.render;
 import com.talhanation.workers.Main;
 import com.talhanation.workers.entities.AbstractWorkerEntity;
 import net.minecraft.client.renderer.entity.EntityRenderDispatcher;
+import net.minecraft.client.renderer.entity.EntityRendererProvider;
 import net.minecraft.resources.ResourceLocation;
 
-public class LumberjackRenderer extends AbstractManRenderer<AbstractWorkerEntity>{
+public class LumberjackRenderer extends AbstractWorkersRenderer<AbstractWorkerEntity>{
 
     private static final ResourceLocation[] TEXTURE = {
             new ResourceLocation(Main.MOD_ID,"textures/entity/lumberjack.png"),
     };
 
-    public LumberjackRenderer(EntityRenderDispatcher mgr) {
+    public LumberjackRenderer(EntityRendererProvider.Context mgr) {
         super(mgr);
     }
 

@@ -109,7 +109,7 @@ public class ShepherdAI extends Goal {
             if (list.size() > shepherd.getMaxSheepCount()) {
                 if (sheep != null) {
                     this.shepherd.getNavigation().moveTo(sheep.getX(), sheep.getY(), sheep.getZ(), 1);
-                    if (sheep.blockPosition().closerThan(shepherd.position()., 1.5)) sheep.kill();
+                    if (sheep.blockPosition().closerThan(shepherd.getOnPos(), 1.5)) sheep.kill();
                     shepherd.workerSwingArm();
                 }
             } else {

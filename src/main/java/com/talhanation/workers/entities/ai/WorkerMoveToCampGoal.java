@@ -30,7 +30,7 @@ public class WorkerMoveToCampGoal<T extends LivingEntity> extends Goal {
 
         BlockPos blockpos = this.worker.getCampPos();
         if (this.worker.getCampPos() != null && canUse()) {
-            if (!blockpos.closerThan(worker.position(), within))
+            if (!blockpos.closerThan(worker.getOnPos(), within))
             this.worker.getNavigation().moveTo(blockpos.getX(), blockpos.getY(), blockpos.getZ(), 1);
         }
     }

@@ -81,7 +81,7 @@ public class FarmerCropAI extends Goal {
                     this.farmer.getNavigation().moveTo(workPos.getX(), workPos.getY(), workPos.getZ(), 0.7);
                     this.farmer.getLookControl().setLookAt(workPos.getX(), workPos.getY() + 1, workPos.getZ(), 10.0F, (float) this.farmer.getMaxHeadXRot());
 
-                    if (workPos.closerThan(farmer.position(), 1.75)) {
+                    if (workPos.closerThan(farmer.getOnPos(), 1.75)) {
                         farmer.workerSwingArm();
                         this.prepareFarmLand(workPos);
                     }
@@ -98,7 +98,7 @@ public class FarmerCropAI extends Goal {
                     this.farmer.getNavigation().moveTo(workPos.getX(), workPos.getY(), workPos.getZ(), 0.7);
                     this.farmer.getLookControl().setLookAt(workPos.getX(), workPos.getY(), workPos.getZ(), 10.0F, (float) this.farmer.getMaxHeadXRot());
 
-                    if (workPos.closerThan(farmer.position(), 1.75)) {
+                    if (workPos.closerThan(farmer.getOnPos(), 1.75)) {
                         farmer.workerSwingArm();
                         this.plantSeedsFromInv(workPos);
                     }
@@ -116,7 +116,7 @@ public class FarmerCropAI extends Goal {
                     this.farmer.getNavigation().moveTo(workPos.getX(), workPos.getY(), workPos.getZ(), 0.6);
                     this.farmer.getLookControl().setLookAt(workPos.getX(), workPos.getY(), workPos.getZ(), 10.0F, (float) this.farmer.getMaxHeadXRot());
 
-                    if (workPos.closerThan(farmer.position(), 1.75)) {
+                    if (workPos.closerThan(farmer.getOnPos(), 1.75)) {
                         farmer.workerSwingArm();
                         this.mineBlock(workPos);
                     }

@@ -34,7 +34,7 @@ public class MinerMine3x3TunnelGoal extends Goal {
         }
         if (this.miner.getFollow()) {
             return false;
-       } else if (this.miner.getStartPos().get().closerThan(miner.position(), within) && !this.miner.getFollow() && miner.getMineType() == 2)
+       } else if (this.miner.getStartPos().get().closerThan(miner.getOnPos(), within) && !this.miner.getFollow() && miner.getMineType() == 2)
 
             return true;
 
@@ -77,18 +77,18 @@ public class MinerMine3x3TunnelGoal extends Goal {
                 this.minePos = new BlockPos(miner.getStartPos().get().getX() + z, miner.getStartPos().get().getY() + y, miner.getStartPos().get().getZ() + x);
             }
 
-            if (!minePos.closerThan(miner.position(), 2)){
+            if (!minePos.closerThan(miner.getOnPos(), 2)){
                 this.miner.getNavigation().moveTo(minePos.getX(), minePos.getY(), minePos.getZ(),1);
             }
 
-            if (minePos.closerThan(miner.position(), 4)){
+            if (minePos.closerThan(miner.getOnPos(), 4)){
                 this.miner.getLookControl().setLookAt(minePos.getX(), minePos.getY() + 1, minePos.getZ(), 10.0F, (float) this.miner.getMaxHeadXRot());
             }
 
             BlockState blockstate = miner.level.getBlockState(minePos);
             Block block1 = blockstate.getBlock();
 
-            if (minePos.closerThan(miner.position(), 6)) this.mineBlock(this.minePos);
+            if (minePos.closerThan(miner.getOnPos(), 6)) this.mineBlock(this.minePos);
 
 
             if (miner.shouldIgnorBlock(block1)) {

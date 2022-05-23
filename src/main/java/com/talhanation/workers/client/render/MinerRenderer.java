@@ -7,13 +7,13 @@ import net.minecraft.client.renderer.entity.EntityRenderer;
 import net.minecraft.client.renderer.entity.EntityRendererProvider;
 import net.minecraft.resources.ResourceLocation;
 
-public class MinerRenderer extends AbstractManRenderer<AbstractWorkerEntity> {
+public class MinerRenderer extends AbstractWorkersRenderer<AbstractWorkerEntity> {
 
     private static final ResourceLocation[] TEXTURE = {
             new ResourceLocation(Main.MOD_ID,"textures/entity/miner.png"),
     };
 
-    public MinerRenderer(EntityRenderDispatcher mgr) {
+    public MinerRenderer(EntityRendererProvider.Context mgr) {
         super(mgr);
     }
 

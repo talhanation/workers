@@ -45,7 +45,7 @@ public class SlaughterAnimalGoal<T extends Animal> extends Goal {
             if (list.size() > maxCount){
                 if (animal != null) {
                     this.worker.getNavigation().moveTo(animal.getX(), animal.getY(), animal.getZ(), 1);
-                    if (animal.blockPosition().closerThan(worker.position(), 2)) animal.kill();
+                    if (animal.blockPosition().closerThan(worker.getOnPos(), 2)) animal.kill();
                     worker.workerSwingArm();
                 }
             }

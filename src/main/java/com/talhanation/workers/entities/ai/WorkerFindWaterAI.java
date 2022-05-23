@@ -36,7 +36,7 @@ public class WorkerFindWaterAI extends Goal {
 
     @Override
     public boolean canContinueToUse() {
-        return !targetPos.closerThan(worker.position(), 10);
+        return !targetPos.closerThan(worker.getOnPos(), 10);
     }
 
     public BlockPos findBlockWater() {

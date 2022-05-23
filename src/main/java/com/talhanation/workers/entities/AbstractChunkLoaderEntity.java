@@ -30,7 +30,7 @@ public abstract class AbstractChunkLoaderEntity extends AbstractInventoryEntity{
     public void updateChunkLoading(){
         if (this.shouldLoadChunk() && !this.level.isClientSide) {
             Pair<Integer, Integer> currentChunk = new Pair<>(this.chunkPosition().x, this.chunkPosition().z);
-            if (loadedChunk.isEmpty()) {
+            if (!loadedChunk.isPresent()) {
                 this.forceChunk(currentChunk);
                 loadedChunk = Optional.of(currentChunk);
 

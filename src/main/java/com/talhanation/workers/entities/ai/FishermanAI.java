@@ -70,7 +70,7 @@ public class FishermanAI extends Goal {
     public void tick() {
         if (this.fishingPos != null && this.isNearWater()) {
 
-            if (fishingPos.closerThan(fisherman.position(), 9))
+            if (fishingPos.closerThan(fisherman.getOnPos(), 9))
                 this.fisherman.getLookControl().setLookAt(fishingPos.getX(), fishingPos.getY() + 1, fishingPos.getZ(), 10.0F, (float) this.fisherman.getMaxHeadXRot());
 
             if(isNearWater()){

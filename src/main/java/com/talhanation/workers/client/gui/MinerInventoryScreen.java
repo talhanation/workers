@@ -7,6 +7,7 @@ import com.talhanation.workers.entities.MinerEntity;
 import com.talhanation.workers.network.MessageMineDepth;
 import com.talhanation.workers.network.MessageMineType;
 import net.minecraft.client.gui.components.Button;
+import net.minecraft.network.chat.TranslatableComponent;
 import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.TextComponent;
@@ -79,7 +80,7 @@ public class MinerInventoryScreen extends WorkerInventoryScreen{
             depth = "-";
         }
         else depth = String.valueOf(miner.getMineDepth());
-        font.draw(matrixStack, "Depth:", k - 70, l + 35, fontColor);
+        font.draw(matrixStack, DEPTH +":", k - 70, l + 35, fontColor);
         font.draw(matrixStack, depth, k - 55, l + 45, fontColor);
 
         String type;
@@ -87,25 +88,38 @@ public class MinerInventoryScreen extends WorkerInventoryScreen{
             default:
             case 0:
                 if (miner.getFollow())
-                    type = "Following";
-                else type = "Wandering";
+                    type = FOLLOWING.getString();
+                else type = WANDERING.getString();
                 break;
             case 1:
-                type = "1x1 Tunnel";
+                type = TUNNEL.getString();
                 break;
             case 2:
-                type = "3x3 Tunnel";
+                type = TUNNEL3x3.getString();
                 break;
             case 3:
-                type = "8x8x8 Pit";
+                type = PIT8x8x8.getString();
                 break;
             case 4:
-                type = "8x8x1 Flat";
+                type = FLAT8x8x1.getString();
                 break;
         }
-        font.draw(matrixStack, "Mine-Mode:", k + 25, l + 35, fontColor);
+        font.draw(matrixStack, MINEMODE.getString() + ":", k + 25, l + 35, fontColor);
         font.draw(matrixStack, type, k + 25, l + 45, fontColor);
     }
+
+    private final TranslatableComponent MINEMODE = new TranslatableComponent("gui.workers.miner.mine_mode");
+    private final TranslatableComponent TUNNEL = new TranslatableComponent("gui.workers.miner.tunnel");
+    private final TranslatableComponent TUNNEL3x3 = new TranslatableComponent("gui.workers.miner.tunnel3x3");
+    private final TranslatableComponent PIT8x8x8 = new TranslatableComponent("gui.workers.miner.pit8x8x8");
+    private final TranslatableComponent FLAT8x8x1 = new TranslatableComponent("gui.workers.miner.flat8x8x1");
+    private final TranslatableComponent DEPTH = new TranslatableComponent("gui.workers.miner.depth");
+
+
+
+    private final TranslatableComponent WANDERING = new TranslatableComponent("gui.workers.following");
+    private final TranslatableComponent FOLLOWING = new TranslatableComponent("gui.workers.wandering");
+
 
 
 }

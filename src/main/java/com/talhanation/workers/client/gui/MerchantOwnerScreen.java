@@ -1,17 +1,16 @@
 package com.talhanation.workers.client.gui;
 
 import com.mojang.blaze3d.vertex.PoseStack;
-import com.mojang.blaze3d.systems.RenderSystem;
 import com.talhanation.workers.Main;
 import com.talhanation.workers.entities.MerchantEntity;
 import com.talhanation.workers.inventory.MerchantInventoryContainer;
 import com.talhanation.workers.network.MessageCampPos;
 import de.maxhenkel.corelib.inventory.ScreenBase;
 import net.minecraft.client.gui.components.Button;
+import net.minecraft.network.chat.TranslatableComponent;
 import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.network.chat.Component;
-import net.minecraft.network.chat.TextComponent;
 
 public class MerchantOwnerScreen extends ScreenBase<MerchantInventoryContainer> {
 
@@ -33,7 +32,7 @@ public class MerchantOwnerScreen extends ScreenBase<MerchantInventoryContainer> 
     protected void init() {
         super.init();
         //CAMP POS
-        addRenderableWidget(new Button(leftPos + 140, topPos + 30, 24, 12, new TextComponent("Home"), button -> {
+        addRenderableWidget(new Button(leftPos + 140, topPos + 30, 24, 12, new TranslatableComponent("gui.workers.home"), button -> {
             Main.SIMPLE_CHANNEL.sendToServer(new MessageCampPos(merchant.getUUID(), merchant.getWorkerOnPos()));
         }));
     }
@@ -52,6 +51,5 @@ public class MerchantOwnerScreen extends ScreenBase<MerchantInventoryContainer> 
 
     protected void renderBg(PoseStack matrixStack, float partialTicks, int mouseX, int mouseY) {
         super.renderBg(matrixStack, partialTicks, mouseX, mouseY);
-        RenderSystem.color4f(1.0F, 1.0F, 1.0F, 1.0F);
     }
 }

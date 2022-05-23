@@ -18,5 +18,23 @@
   "block.workers.lumberjack_block": "Lumberjack's Table",
   "block.workers.fisherman_block": "Fisherman's Table",
   "block.workers.shepherd_block": "Shepherd's Table",
-  "block.workers.merchant_block": "Merchant's Table"
+  "block.workers.merchant_block": "Merchant's Table",
+
+
+
+  "gui.workers.home": "Home",
+  "gui.workers.following": "Following",
+  "gui.workers.wandering": "Wandering",
+
+  "gui.workers.miner.mine_mode": "Mine-Mode",
+  "gui.workers.miner.tunnel": "Tunnel",
+  "gui.workers.miner.tunnel3x3": "Tunnel 3x3",
+  "gui.workers.miner.pit8x8x8": "Pit 8x8x8",
+  "gui.workers.miner.flat8x8x1": "Flat 8x8x1",
+  "gui.workers.miner.depth": "Depth",
+
+  "gui.workers.merchant.trade": "Trade",
+
+  "gui.workers.shepherd.max_sheeps": "max. Sheep's"
+
 }

@@ -10,6 +10,7 @@ import com.talhanation.workers.network.MessageMineDepth;
 import com.talhanation.workers.network.MessageOpenGuiShepherd;
 import com.talhanation.workers.network.MessageSheepCount;
 import net.minecraft.client.gui.components.Button;
+import net.minecraft.network.chat.TranslatableComponent;
 import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.TextComponent;
@@ -55,8 +56,11 @@ public class ShepherdInventoryScreen extends WorkerInventoryScreen{
         int l = 19;//hight
 
         String count = String.valueOf(shepherd.getMaxSheepCount());
-        font.draw(matrixStack, "max. Sheep's:", k - 80, l + 35, fontColor);
+        font.draw(matrixStack,MAX_SHEEPS.getString() + "max. Sheep's:", k - 80, l + 35, fontColor);
         font.draw(matrixStack, count, k - 55, l + 45, fontColor);
     }
+
+    private final TranslatableComponent MAX_SHEEPS = new TranslatableComponent("gui.workers.shepherd.max_sheeps");
+
 
 }
