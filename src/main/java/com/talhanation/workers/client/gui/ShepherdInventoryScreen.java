@@ -2,12 +2,8 @@ package com.talhanation.workers.client.gui;
 
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.talhanation.workers.Main;
-import com.talhanation.workers.entities.MinerEntity;
 import com.talhanation.workers.entities.ShepherdEntity;
-import com.talhanation.workers.inventory.ShepherdInventoryContainer;
 import com.talhanation.workers.inventory.WorkerInventoryContainer;
-import com.talhanation.workers.network.MessageMineDepth;
-import com.talhanation.workers.network.MessageOpenGuiShepherd;
 import com.talhanation.workers.network.MessageSheepCount;
 import net.minecraft.client.gui.components.Button;
 import net.minecraft.network.chat.TranslatableComponent;
@@ -56,7 +52,7 @@ public class ShepherdInventoryScreen extends WorkerInventoryScreen{
         int l = 19;//hight
 
         String count = String.valueOf(shepherd.getMaxSheepCount());
-        font.draw(matrixStack,MAX_SHEEPS.getString() + "max. Sheep's:", k - 80, l + 35, fontColor);
+        font.draw(matrixStack,MAX_SHEEPS.getString() + ":", k - 80, l + 35, fontColor);
         font.draw(matrixStack, count, k - 55, l + 45, fontColor);
     }
 

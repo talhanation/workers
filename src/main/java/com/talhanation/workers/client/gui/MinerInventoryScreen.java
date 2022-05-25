@@ -80,7 +80,7 @@ public class MinerInventoryScreen extends WorkerInventoryScreen{
             depth = "-";
         }
         else depth = String.valueOf(miner.getMineDepth());
-        font.draw(matrixStack, DEPTH +":", k - 70, l + 35, fontColor);
+        font.draw(matrixStack, DEPTH.getString() +":", k - 70, l + 35, fontColor);
         font.draw(matrixStack, depth, k - 55, l + 45, fontColor);
 
         String type;

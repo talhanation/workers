@@ -20,6 +20,5 @@ public class ClientEvent {
         event.registerEntityRenderer(ModEntityTypes.FARMER.get(), WorkersRenderer::new );
         event.registerEntityRenderer(ModEntityTypes.FISHERMAN.get(), FishermanRenderer::new );
         event.registerEntityRenderer(ModEntityTypes.MERCHANT.get(), MerchantRenderer::new );
-
     }
 }
