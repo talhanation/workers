@@ -12,12 +12,15 @@ import net.minecraft.client.renderer.entity.MobRenderer;
 import net.minecraft.client.renderer.entity.layers.ArrowLayer;
 import net.minecraft.client.renderer.entity.layers.BeeStingerLayer;
 import net.minecraft.client.renderer.entity.layers.HumanoidArmorLayer;
+import net.minecraft.client.renderer.entity.layers.PlayerItemInHandLayer;
+import net.minecraft.client.renderer.entity.player.PlayerRenderer;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.entity.HumanoidArm;
 import net.minecraft.world.item.CrossbowItem;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
 import net.minecraft.world.item.UseAnim;
+import net.minecraftforge.client.event.RenderPlayerEvent;
 
 public abstract class AbstractWorkersRenderer<Type extends AbstractInventoryEntity> extends MobRenderer<Type, PlayerModel<Type>> {
 
@@ -26,6 +29,7 @@ public abstract class AbstractWorkersRenderer<Type extends AbstractInventoryEnti
         this.addLayer(new HumanoidArmorLayer<>(this, new HumanoidModel(mgr.bakeLayer(ModelLayers.PLAYER_INNER_ARMOR)), new HumanoidModel(mgr.bakeLayer(ModelLayers.PLAYER_OUTER_ARMOR))));
         this.addLayer(new ArrowLayer<>(mgr, this));
         this.addLayer(new BeeStingerLayer<>(this));
+        this.addLayer(new WorkerItemInHandLayer<>(this));
     }
 
     public void render(AbstractInventoryEntity recruit, float p_117789_, float p_117790_, PoseStack p_117791_, MultiBufferSource p_117792_, int p_117793_) {
