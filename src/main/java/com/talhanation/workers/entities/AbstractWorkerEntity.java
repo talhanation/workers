@@ -48,6 +48,7 @@ public abstract class AbstractWorkerEntity extends AbstractChunkLoaderEntity {
     private static final EntityDataAccessor<Boolean> IS_EATING = SynchedEntityData.defineId(AbstractWorkerEntity.class, EntityDataSerializers.BOOLEAN);
 
     int hurtTimeStamp = 0;
+    public ItemStack beforeFoodItem;
 
 
     public AbstractWorkerEntity(EntityType<? extends AbstractWorkerEntity> entityType, Level world) {
@@ -64,6 +65,12 @@ public abstract class AbstractWorkerEntity extends AbstractChunkLoaderEntity {
 
 
     ///////////////////////////////////TICK/////////////////////////////////////////
+
+    private void resetItemInHand() {
+        this.setItemInHand(InteractionHand.OFF_HAND, this.beforeFoodItem);
+        this.getSlot(10).set(this.beforeFoodItem);
+        this.beforeFoodItem = null;
+    }
 
     public double getMyRidingOffset(){
         return -0.35D;
@@ -86,7 +93,12 @@ public abstract class AbstractWorkerEntity extends AbstractChunkLoaderEntity {
         super.tick();
         updateSwingTime();
         updateSwimming();
-        //updateHunger();
+        updateHunger();
+
+        if (this.getIsEating() && !this.isUsingItem()) {
+            if (beforeFoodItem != null) resetItemInHand();
+            setIsEating(false);
+        }
 
         if(hurtTimeStamp > 0) hurtTimeStamp--;
 
@@ -418,8 +430,8 @@ public abstract class AbstractWorkerEntity extends AbstractChunkLoaderEntity {
 
     public void updateHunger(){
         if(getHunger() > 0) {
-            if (getIsWorking()) setHunger((getHunger() - 0.05F));
-            else setHunger((getHunger() - 0.05F));
+            if (getIsWorking()) setHunger((getHunger() - 0.0005F));
+            else setHunger((getHunger() - 0.0001F));
         }
         if (isStarving()) this.setIsWorking(false);
     }
