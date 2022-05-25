@@ -73,7 +73,7 @@ public class EatGoal extends Goal {
             ItemStack itemStackInSlot = inventory.getItem(i);
             Item itemInSlot = itemStackInSlot.getItem();
             if (itemInSlot == item){
-                if(stack)
+                //if(stack)
                 itemStackInSlot.shrink(count);
                 break;
             }
