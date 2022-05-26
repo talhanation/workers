@@ -7,6 +7,10 @@ import net.minecraft.world.entity.ai.goal.Goal;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 
+import java.util.Optional;
+import java.util.concurrent.ScheduledThreadPoolExecutor;
+import java.util.concurrent.TimeUnit;
+
 public class EatGoal extends Goal {
 
     AbstractWorkerEntity worker;
@@ -16,68 +20,44 @@ public class EatGoal extends Goal {
         this.worker = worker;
     }
 
-    public boolean isInterruptable() {
-        return true;
-    }
-    public boolean requiresUpdateEveryTick() {
-        return true;
-    }
     @Override
     public boolean canUse() {
         //if (worker.beforeFoodItem != null) return false;
-        if (hasFoodInInv() && (worker.needsToEat() || !worker.isSaturated())) return true;
-        else
-            return false;
+        return hasFoodInInv() && worker.needsToEat() && !worker.isUsingItem();
     }
 
     @Override
     public boolean canContinueToUse() {
-        return hasFoodInInv() && !worker.isSaturated();
+//        return hasFoodInInv() && !worker.isSaturated() && !worker.isUsingItem(); // This doesnt work
+        return false;
     }
 
     @Override
     public void start() {
-        if (hasFoodInInv()) {
-            SimpleContainer inventory = worker.getInventory();
+        worker.beforeFoodItem = worker.getItemInHand(InteractionHand.OFF_HAND);
+        foodStack = getFoodInInv();
+        worker.setItemInHand(InteractionHand.OFF_HAND, foodStack);
+        worker.startUsingItem(InteractionHand.OFF_HAND);
 
-            worker.beforeFoodItem = worker.getItemInHand(InteractionHand.OFF_HAND);
+        worker.heal(foodStack.getItem().getFoodProperties(foodStack,worker).getSaturationModifier() * 10);
+        worker.setHunger(worker.getHunger() + foodStack.getItem().getFoodProperties(foodStack,worker).getSaturationModifier() * 10);
 
-            worker.setItemInHand(InteractionHand.OFF_HAND, foodStack);
-            worker.startUsingItem(InteractionHand.OFF_HAND);
-
-            worker.heal(foodStack.getItem().getFoodProperties(foodStack,worker).getSaturationModifier() * 10);
-            worker.setHunger(worker.getHunger() + foodStack.getItem().getFoodProperties(foodStack,worker).getSaturationModifier() * 100);
-
-            worker.eat(worker.level, foodStack);
-            shrinkItemInInv(inventory, foodStack.getItem(), 1);
-            inventory.setChanged();
-        }
+//        worker.eat(worker.level, foodStack); // startUsingItem() is doing this already
+//        shrinkItemInInv(foodStack.getItem(), 1); // startUsingItem() is doing this already
     }
 
     private boolean hasFoodInInv(){
-        SimpleContainer inventory = worker.getInventory();
-
-        for(int i = 0; i < inventory.getContainerSize(); i++){
-            ItemStack itemStack = inventory.getItem(i);
-            if (itemStack.isEdible()){
-                this.foodStack = itemStack.copy();
-
-                return true;
-            }
-        }
-        return false;
+        return worker.getInventory().items.stream().anyMatch(ItemStack::isEdible);
     }
 
-    public void shrinkItemInInv(SimpleContainer inventory, Item item, int count){
-        for (int i = 0; i < inventory.getContainerSize(); i++){
-            ItemStack itemStackInSlot = inventory.getItem(i);
-            Item itemInSlot = itemStackInSlot.getItem();
-            if (itemInSlot == item){
-                //if(stack)
-                itemStackInSlot.shrink(count);
-                break;
-            }
-        }
+    private ItemStack getFoodInInv(){
+        Optional<ItemStack> itemStack = worker.getInventory().items.stream().filter(ItemStack::isEdible).findAny();
+        assert itemStack.isPresent();
+        return itemStack.get();
+    }
+
+    public void shrinkItemInInv(Item item, int count){
+        worker.getInventory().items.stream().filter(stack -> stack.getItem() == item).findAny().ifPresentOrElse(stack -> stack.shrink(1), () -> {});
     }
 
     @Override
