@@ -1,23 +1,21 @@
 package com.talhanation.workers.entities.ai;
 
 import com.talhanation.workers.entities.ShepherdEntity;
-import net.minecraft.core.Vec3i;
 import net.minecraft.world.entity.ai.goal.Goal;
 import net.minecraft.world.entity.animal.Sheep;
 import net.minecraft.world.SimpleContainer;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
 import net.minecraft.sounds.SoundSource;
-import net.minecraft.world.phys.AABB;
 
 import java.util.EnumSet;
 import java.util.List;
-import java.util.Objects;
+import java.util.Optional;
 
-import net.minecraft.world.entity.ai.goal.Goal.Flag;
+import static java.util.function.Predicate.not;
 
 public class ShepherdAI extends Goal {
-    private Sheep sheep;
+    private Optional<Sheep> sheep;
     private final ShepherdEntity shepherd;
     private boolean sheering;
     private boolean breeding;
@@ -26,7 +24,6 @@ public class ShepherdAI extends Goal {
 
     public ShepherdAI(ShepherdEntity worker, int coolDown) {
         this.shepherd = worker;
-        //this.coolDown = coolDown;
         this.setFlags(EnumSet.of(Flag.MOVE, Flag.LOOK));
     }
 
@@ -46,24 +43,20 @@ public class ShepherdAI extends Goal {
     @Override
     public void tick() {
         super.tick();
-        if (shepherd.getOwner() != null){
-            //worker.getOwner().sendMessage(new StringTextComponent("sheering= " + sheering), worker.getOwner().getUUID());
-            //worker.getOwner().sendMessage(new StringTextComponent("breeding= " + breeding), worker.getOwner().getUUID());
-            //worker.getOwner().sendMessage(new StringTextComponent("slaughtering= " + slaughtering), worker.getOwner().getUUID());
-        }
+
+
 
 
         if (sheering){
-            findSheepSheering();
-            if (this.sheep != null && sheep.readyForShearing()) {
-                this.shepherd.getNavigation().moveTo(this.sheep, 1);
+            this.sheep = findSheepSheering();
+            if (this.sheep.isPresent() && sheep.get().readyForShearing()) {
+                this.shepherd.getNavigation().moveTo(this.sheep.get(), 1);
 
-                if (sheep.closerThan(this.shepherd, 1.5)) {
-                    sheerSheep(this.sheep);
-                    this.shepherd.getLookControl().setLookAt(sheep.getX(), sheep.getEyeY(), sheep.getZ(), 10.0F, (float) this.shepherd.getMaxHeadXRot());
+                if (sheep.get().closerThan(this.shepherd, 1.5)) {
+                    sheerSheep(this.sheep.get());
+                    this.shepherd.getLookControl().setLookAt(sheep.get().getX(), sheep.get().getEyeY(), sheep.get().getZ(), 10.0F, (float) this.shepherd.getMaxHeadXRot());
                     //timer = 0;
-                    this.sheep = null;
-                    this.findSheepSheering();
+                    this.sheep = Optional.empty();
                 }
             }
             else {
@@ -74,18 +67,18 @@ public class ShepherdAI extends Goal {
         }
 
         if (breeding){
-            findSheepBreeding();
-            if (this.sheep != null ) {
-                int i = sheep.getAge();
+            this.sheep = findSheepBreeding();
+            if (this.sheep.isPresent() ) {
+                int i = sheep.get().getAge();
 
                 if (i == 0 && this.hasWheat()) {
-                    this.shepherd.getNavigation().moveTo(this.sheep, 1);
+                    this.shepherd.getNavigation().moveTo(this.sheep.get(), 1);
 
-                    if (sheep.closerThan(this.shepherd, 1.5)) {
+                    if (sheep.get().closerThan(this.shepherd, 1.5)) {
                         this.consumeWheat();
-                        this.shepherd.getLookControl().setLookAt(sheep.getX(), sheep.getEyeY(), sheep.getZ(), 10.0F, (float) this.shepherd.getMaxHeadXRot());
-                        sheep.setInLove(null);
-                        this.sheep = null;
+                        this.shepherd.getLookControl().setLookAt(sheep.get().getX(), sheep.get().getEyeY(), sheep.get().getZ(), 10.0F, (float) this.shepherd.getMaxHeadXRot());
+                        sheep.get().setInLove(null);
+                        this.sheep = Optional.empty();
                     }
                 }
                 else {
@@ -100,23 +93,26 @@ public class ShepherdAI extends Goal {
 
 
         if (slaughtering) {
-            List<Sheep> list = Objects.requireNonNull(shepherd.level.getEntitiesOfClass(Sheep.class, this.getSearchArea(12)));
-            for (Sheep animals : list) {
-                if (animals.isAlive() && !animals.isBaby()) {
-                    this.sheep = list.get(0);
+
+            List<Sheep> sheeps = findSheepSlaughtering();
+            if (sheeps.size() > shepherd.getMaxSheepCount()) {
+                sheep = sheeps.stream().findFirst();
+
+                if (sheep.isPresent()) {
+                    this.shepherd.getNavigation().moveTo(sheep.get().getX(), sheep.get().getY(), sheep.get().getZ(), 1);
+                    if (sheep.get().getOnPos().closerThan(shepherd.getOnPos(), 1.5)) {
+                        sheep.get().kill();
+                        shepherd.workerSwingArm();
+                    }
                 }
+
             }
-            if (list.size() > shepherd.getMaxSheepCount()) {
-                if (sheep != null) {
-                    this.shepherd.getNavigation().moveTo(sheep.getX(), sheep.getY(), sheep.getZ(), 1);
-                    if (sheep.blockPosition().closerThan(shepherd.getOnPos(), 1.5)) sheep.kill();
-                    shepherd.workerSwingArm();
-                }
-            } else {
+            else {
                 slaughtering = false;
                 sheering = true;
             }
         }
+
     }
 
     private void consumeWheat(){
@@ -136,36 +132,28 @@ public class ShepherdAI extends Goal {
         }
     }
 
-    public void findSheepSheering() {
-        List<Sheep> list = Objects.requireNonNull(shepherd.level.getEntitiesOfClass(Sheep.class, this.getSearchArea(12)));
-        Sheep closeSheep;
-
-        for (Sheep sheeps : list) {
-            for (int i = 0; i < list.size(); i++) {
-                closeSheep = sheeps;
-
-                if (closeSheep != null && closeSheep.readyForShearing()) {
-                    this.sheep = closeSheep;
-                }
-            }
-        }
+    private Optional<Sheep> findSheepSheering() {
+        return  shepherd.level.getEntitiesOfClass(Sheep.class, shepherd.getBoundingBox()
+                .inflate(8D), Sheep::readyForShearing)
+                .stream()
+                .filter(not(Sheep::isBaby))
+                .findAny();
     }
 
-    protected void findSheepBreeding() {
-        List<Sheep> list = Objects.requireNonNull(shepherd.level.getEntitiesOfClass(Sheep.class, this.getSearchArea(12)));
-        Sheep closeanimal;
-        for (Sheep animals : list) {
-            for (int i = 0; i < list.size(); i++) {
-                closeanimal = animals;
-                if (closeanimal != null && closeanimal.canFallInLove() && !closeanimal.isBaby()) {
-                    this.sheep = closeanimal;
-                }
-            }
-        }
+    private Optional<Sheep> findSheepBreeding() {
+        return  shepherd.level.getEntitiesOfClass(Sheep.class, shepherd.getBoundingBox()
+            .inflate(8D), Sheep::canFallInLove)
+            .stream()
+            .filter(not(Sheep::isBaby))
+            .filter(not(Sheep::isInLove))
+            .findAny();
     }
-
-    protected AABB getSearchArea(double area) {
-        return this.shepherd.getBoundingBox().inflate(area, 8.0D, area);
+    private List<Sheep> findSheepSlaughtering() {
+        return  shepherd.level.getEntitiesOfClass(Sheep.class, shepherd.getBoundingBox()
+                        .inflate(8D), Sheep::isAlive)
+                .stream()
+                .filter(not(Sheep::isBaby))
+                .toList();
     }
 
     private boolean hasWheat() {
@@ -178,5 +166,4 @@ public class ShepherdAI extends Goal {
         }
         return false;
     }
-
 }
