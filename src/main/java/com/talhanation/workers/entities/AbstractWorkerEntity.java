@@ -430,22 +430,18 @@ public abstract class AbstractWorkerEntity extends AbstractChunkLoaderEntity {
 
     public void updateHunger(){
         if(getHunger() > 0) {
-            if (getIsWorking()) setHunger((getHunger() - 0.0005F));
-            else setHunger((getHunger() - 0.0001F));
+            if (getIsWorking()) setHunger((getHunger() - 0.005F));
+            else setHunger((getHunger() - 0.001F));
         }
         if (isStarving()) this.setIsWorking(false);
     }
 
     public boolean needsToEat(){
-        return (getHunger() <= 50F);
+        return (getHunger() <= 20F);
     }
 
     public boolean isStarving(){
         return (getHunger() <= 1F);
-    }
-
-    public boolean isSaturated(){
-        return (getHunger() >= 90F);
     }
 
     public void resetWorkerParameters(){
