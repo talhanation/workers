@@ -160,6 +160,7 @@ public abstract class AbstractWorkerEntity extends AbstractChunkLoaderEntity {
         nbt.putInt("breakTime", this.getBreakingTime());
         nbt.putInt("currentTimeBreak", this.getCurrentTimeBreak());
         nbt.putInt("previousTimeBreak", this.getPreviousTimeBreak());
+        nbt.putFloat("Hunger", this.getHunger());
 
         this.getStartPos().ifPresent((pos) -> {
             nbt.putInt("StartPosX", pos.getX());
@@ -188,6 +189,7 @@ public abstract class AbstractWorkerEntity extends AbstractChunkLoaderEntity {
         this.setCurrentTimeBreak(nbt.getInt("currentTimeBreak"));
         this.setPreviousTimeBreak(nbt.getInt("previousTimeBreak"));
         this.setIsWorking(nbt.getBoolean("isWorking"));
+        this.setHunger(nbt.getFloat("Hunger"));
 
         if (nbt.contains("StartPosX", 99) &&
                 nbt.contains("StartPosY", 99) &&
