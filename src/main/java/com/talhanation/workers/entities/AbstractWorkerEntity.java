@@ -101,10 +101,6 @@ public abstract class AbstractWorkerEntity extends AbstractChunkLoaderEntity {
         }
 
         if(hurtTimeStamp > 0) hurtTimeStamp--;
-
-        if(getOwner() != null){
-            getOwner().sendMessage(new TextComponent("Hunger: " + this.getHunger()), this.getOwnerUUID());
-        }
     }
 
 
@@ -339,7 +335,7 @@ public abstract class AbstractWorkerEntity extends AbstractChunkLoaderEntity {
             owner.sendMessage(new TextComponent(this.getName().getString() + ": I will follow you!"), owner.getUUID());
         }
         else
-            owner.sendMessage(new TextComponent(this.getName().getString() + ": I will not follow you!"), owner.getUUID());
+            owner.sendMessage(new TextComponent(this.getName().getString() + ": I will wander here"), owner.getUUID());
     }
 
     public void setIsWorking(boolean bool) {
@@ -347,15 +343,17 @@ public abstract class AbstractWorkerEntity extends AbstractChunkLoaderEntity {
 
         if (owner != null)
         if (!isStarving()) {
-            entityData.set(IS_WORKING, bool);
             if (bool) {
                 owner.sendMessage(new TextComponent(this.getName().getString() + ": Im working now!"), owner.getUUID());
             } else
                 owner.sendMessage(new TextComponent(this.getName().getString() + ": Work is done!"), owner.getUUID());
         }
-        else
+        else if (bool != getIsWorking() && isStarving())
             owner.sendMessage(new TextComponent(this.getName().getString() + ": Im starving! I need something to eat."), owner.getUUID());
+
+        entityData.set(IS_WORKING, bool);
     }
+
 
     public void setIsPickingUp(boolean bool) {
         entityData.set(IS_PICKING_UP, bool);
@@ -435,8 +433,10 @@ public abstract class AbstractWorkerEntity extends AbstractChunkLoaderEntity {
             if (getIsWorking()) setHunger((getHunger() - 0.005F));
             else setHunger((getHunger() - 0.001F));
         }
-        if (isStarving()) this.setIsWorking(false);
+
+        if(isStarving())this.setIsWorking(false);
     }
+
 
     public boolean needsToEat(){
         return (getHunger() <= 20F);
@@ -483,7 +483,6 @@ public abstract class AbstractWorkerEntity extends AbstractChunkLoaderEntity {
         if (this.getRandom().nextInt(5) == 0) {
             if (!this.swinging) {
                 this.swing(this.getUsedItemHand(), true);
-                //this.swing(this.getUsedItemHand());
             }
         }
     }
@@ -502,7 +501,7 @@ public abstract class AbstractWorkerEntity extends AbstractChunkLoaderEntity {
                 }
                 if(!player.isCrouching()) {
                     //setFollow(!getFollow());
-                    setHunger(getHunger() - 20F);
+                    setHunger(getHunger()-20);
                     return InteractionResult.SUCCESS;
                 }
 
