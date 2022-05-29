@@ -8,7 +8,7 @@ loaderVersion="[40,)" #mandatory This is typically bumped every Minecraft versio
 
 modId="workers"
 
-version="1.3.2"
+version="1.4.0"
 
 displayName="Workers Mod"
 updateJSONURL="https://github.com/talhanation/workers/blob/main/update.json"
@@ -21,7 +21,7 @@ credits="talhanation"
 authors="talhanation"
 # The description text for the mod (multi line!) (#mandatory)
 description='''
-This Mod adds Workers into Minecraft.
+This Mod adds hireable Villager Workers into Minecraft.
 '''
 
 
