@@ -86,13 +86,16 @@ public class FarmerCropAI extends Goal {
                         this.prepareFarmLand(workPos);
                     }
                 }
-
                 else
                 state = 1;
             break;
             case 1://plant
-                if (hasSeedInInv())
+                if (hasSeedInInv()){
                     this.workPos = getPlantPos();
+                }
+                else
+                    state = 2;
+
 
                 if (workPos != null) {
                     this.farmer.getNavigation().moveTo(workPos.getX(), workPos.getY(), workPos.getZ(), 0.7);
@@ -103,7 +106,6 @@ public class FarmerCropAI extends Goal {
                         this.plantSeedsFromInv(workPos);
                     }
                 }
-
                 else
                 state = 2;
             break;
@@ -112,16 +114,15 @@ public class FarmerCropAI extends Goal {
                 if (hasSpaceInInv())
                     this.workPos = getHarvestPos();
 
-                if (workPos != null) {
-                    this.farmer.getNavigation().moveTo(workPos.getX(), workPos.getY(), workPos.getZ(), 0.6);
-                    this.farmer.getLookControl().setLookAt(workPos.getX(), workPos.getY(), workPos.getZ(), 10.0F, (float) this.farmer.getMaxHeadXRot());
+                    if (workPos != null) {
+                        this.farmer.getNavigation().moveTo(workPos.getX(), workPos.getY(), workPos.getZ(), 0.6);
+                        this.farmer.getLookControl().setLookAt(workPos.getX(), workPos.getY(), workPos.getZ(), 10.0F, (float) this.farmer.getMaxHeadXRot());
 
-                    if (workPos.closerThan(farmer.getOnPos(), 2.25)) {
-                        farmer.workerSwingArm();
-                        this.mineBlock(workPos);
+                        if (workPos.closerThan(farmer.getOnPos(), 2.25)) {
+                            farmer.workerSwingArm();
+                            this.mineBlock(workPos);
+                        }
                     }
-                }
-
                 else
                 state = 0;
             break;
@@ -235,11 +236,13 @@ public class FarmerCropAI extends Goal {
         for (int j = 0; j <= 8; j++){
             for (int i = 0; i <= 8; i++){
                 BlockPos blockPos = this.farmer.getStartPos().get().offset(j - 4, 0, i - 4);
-
+                BlockPos aboveBlockPos = blockPos.above();
                 BlockState blockState = this.farmer.level.getBlockState(blockPos);
+                BlockState aboveBlockState = this.farmer.level.getBlockState(aboveBlockPos);
 
                 Block block = blockState.getBlock();
-                if (block == Blocks.GRASS_BLOCK || block == Blocks.DIRT) {
+                Block aboveBlock = aboveBlockState.getBlock();
+                if ((block == Blocks.GRASS_BLOCK || block == Blocks.DIRT) && (aboveBlock == Blocks.AIR || aboveBlock instanceof BushBlock || aboveBlock instanceof GrowingPlantBlock)) {
                     return blockPos;
                 }
             }
