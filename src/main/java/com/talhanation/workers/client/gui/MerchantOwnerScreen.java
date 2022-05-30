@@ -7,6 +7,7 @@ import com.talhanation.workers.inventory.MerchantInventoryContainer;
 import com.talhanation.workers.network.MessageCampPos;
 import de.maxhenkel.corelib.inventory.ScreenBase;
 import net.minecraft.client.gui.components.Button;
+import net.minecraft.network.chat.TextComponent;
 import net.minecraft.network.chat.TranslatableComponent;
 import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.resources.ResourceLocation;
@@ -20,7 +21,7 @@ public class MerchantOwnerScreen extends ScreenBase<MerchantInventoryContainer> 
     private final Inventory playerInventory;
 
     public MerchantOwnerScreen(MerchantInventoryContainer container, Inventory playerInventory, Component title) {
-        super(GUI_TEXTURE_3, container, playerInventory, title);
+        super(GUI_TEXTURE_3, container, playerInventory, new TextComponent(""));
         this.merchant = (MerchantEntity) container.getWorker();
         this.playerInventory = playerInventory;
 

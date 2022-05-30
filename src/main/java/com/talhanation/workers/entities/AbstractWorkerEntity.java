@@ -500,8 +500,8 @@ public abstract class AbstractWorkerEntity extends AbstractChunkLoaderEntity {
                     openGUI(player);
                 }
                 if(!player.isCrouching()) {
-                    //setFollow(!getFollow());
-                    setHunger(getHunger()-20);
+                    setFollow(!getFollow());
+                    //setHunger(getHunger()-20);
                     return InteractionResult.SUCCESS;
                 }
 

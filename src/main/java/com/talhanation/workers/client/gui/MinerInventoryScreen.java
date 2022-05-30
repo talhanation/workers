@@ -21,7 +21,7 @@ public class MinerInventoryScreen extends WorkerInventoryScreen{
     private static final int fontColor = 4210752;
 
     public MinerInventoryScreen(WorkerInventoryContainer container, Inventory playerInventory, Component title) {
-        super(container, playerInventory, title);
+        super(container, playerInventory, new TextComponent(""));
         this.miner = (MinerEntity) container.getWorker();
     }
 

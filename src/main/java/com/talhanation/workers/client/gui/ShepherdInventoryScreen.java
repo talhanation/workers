@@ -19,7 +19,7 @@ public class ShepherdInventoryScreen extends WorkerInventoryScreen{
     private static final int fontColor = 4210752;
 
     public ShepherdInventoryScreen(WorkerInventoryContainer container, Inventory playerInventory, Component title) {
-        super(container, playerInventory, title);
+        super(container, playerInventory, new TextComponent(""));
         this.shepherd = (ShepherdEntity) container.getWorker();
     }
 
@@ -52,7 +52,7 @@ public class ShepherdInventoryScreen extends WorkerInventoryScreen{
         int l = 19;//hight
 
         String count = String.valueOf(shepherd.getMaxSheepCount());
-        font.draw(matrixStack,MAX_SHEEPS.getString() + ":", k - 80, l + 35, fontColor);
+        font.draw(matrixStack,MAX_SHEEPS.getString() + ":", k - 60, l + 35, fontColor);
         font.draw(matrixStack, count, k - 55, l + 45, fontColor);
     }
 

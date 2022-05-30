@@ -21,7 +21,7 @@ public class WorkerInventoryScreen extends ScreenBase<WorkerInventoryContainer> 
     private final Inventory playerInventory;
 
     public WorkerInventoryScreen(WorkerInventoryContainer container, Inventory playerInventory, Component title) {
-        super(GUI_TEXTURE_3, container, playerInventory, title);
+        super(GUI_TEXTURE_3, container, playerInventory, new TextComponent(""));
         this.worker = container.getWorker();
         this.playerInventory = playerInventory;
 
