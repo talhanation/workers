@@ -28,14 +28,15 @@ public class EatGoal extends Goal {
 
     @Override
     public void start() {
-        worker.beforeFoodItem = worker.getItemInHand(InteractionHand.OFF_HAND);
+        worker.beforeFoodItem = worker.getItemInHand(InteractionHand.MAIN_HAND);
         foodStack = getFoodInInv();
         worker.setIsEating(true);
-        worker.setItemInHand(InteractionHand.OFF_HAND, foodStack);
-        worker.startUsingItem(InteractionHand.OFF_HAND);
+        worker.setItemInHand(InteractionHand.MAIN_HAND, foodStack);
+        worker.startUsingItem(InteractionHand.MAIN_HAND);
 
         worker.heal(foodStack.getItem().getFoodProperties(foodStack,worker).getSaturationModifier() * 10);
-        worker.setHunger(worker.getHunger() + foodStack.getItem().getFoodProperties(foodStack,worker).getSaturationModifier() * 100);
+        worker.setHunger(worker.getHunger() + foodStack.getItem().getFoodProperties(foodStack,worker).getSaturationModifier() * 25);
+        if(foodStack.getCount() == 1)foodStack.shrink(1);//fix infinite food?
     }
 
     private boolean hasFoodInInv(){

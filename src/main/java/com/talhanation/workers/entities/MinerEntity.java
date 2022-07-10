@@ -300,18 +300,15 @@ public class MinerEntity extends AbstractWorkerEntity {
 
     @Override
     public void setIsWorking(boolean bool) {
-        if (this.getMineType() == 0) bool = false;
+        if (this.getMineType() == 0) {
+            bool = false;
+            entityData.set(IS_WORKING, bool);
+        }
+        else
+            super.setIsWorking(bool);
+    }
 
-        entityData.set(IS_WORKING, bool);
-
-        LivingEntity owner = this.getOwner();
-        if (owner != null)
-            if (bool) {
-                owner.sendMessage(new TextComponent("Im working now!"), owner.getUUID());
-            }
-            else
-                owner.sendMessage(new TextComponent("I stopped working now!"), owner.getUUID());
-
-
+    public void tick(){
+        super.tick();
     }
 }

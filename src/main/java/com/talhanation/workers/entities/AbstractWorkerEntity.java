@@ -67,7 +67,7 @@ public abstract class AbstractWorkerEntity extends AbstractChunkLoaderEntity {
     ///////////////////////////////////TICK/////////////////////////////////////////
 
     private void resetItemInHand() {
-        this.setItemInHand(InteractionHand.OFF_HAND, this.beforeFoodItem);
+        this.setItemInHand(InteractionHand.MAIN_HAND, this.beforeFoodItem);
         this.getSlot(10).set(this.beforeFoodItem);
         this.beforeFoodItem = null;
     }
@@ -370,8 +370,7 @@ public abstract class AbstractWorkerEntity extends AbstractChunkLoaderEntity {
 
     public void setEquipment(){}
 
-
-    ////////////////////////////////////ON FUNCTIONS////////////////////////////////////
+//////////ON FUNCTIONS////////////////////////////////////
 
     boolean playerHasEnoughEmeralds(Player player) {
         int recruitCosts = this.workerCosts();
@@ -430,13 +429,14 @@ public abstract class AbstractWorkerEntity extends AbstractChunkLoaderEntity {
 
     public void updateHunger(){
         if(getHunger() > 0) {
-            if (getIsWorking()) setHunger((getHunger() - 0.005F));
-            else setHunger((getHunger() - 0.001F));
+            if (getIsWorking())
+                setHunger((getHunger() - 0.005F));
+            else
+                setHunger((getHunger() - 0.001F));
         }
 
         if(isStarving())this.setIsWorking(false);
     }
-
 
     public boolean needsToEat(){
         return (getHunger() <= 20F);
