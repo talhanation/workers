@@ -1,0 +1,12 @@
+{
+  "parent": "minecraft:block/cube",
+  "textures": {
+    "particle": "workers:block/cattle_farmer_table_side",
+    "north": "workers:block/cattle_farmer_table_side",
+    "south": "workers:block/cattle_farmer_table_side",
+    "east": "workers:block/cattle_farmer_table_side",
+    "west": "workers:block/cattle_farmer_table_side",
+    "up": "workers:block/cattle_farmer_table_top",
+    "down": "workers:block/cattle_farmer_table_bottom"
+  }
+}

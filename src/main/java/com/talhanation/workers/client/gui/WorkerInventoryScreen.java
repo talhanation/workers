@@ -1,11 +1,10 @@
 package com.talhanation.workers.client.gui;
 
 import com.mojang.blaze3d.vertex.PoseStack;
-import com.mojang.blaze3d.systems.RenderSystem;
 import com.talhanation.workers.Main;
 import com.talhanation.workers.inventory.WorkerInventoryContainer;
 import com.talhanation.workers.entities.AbstractWorkerEntity;
-import com.talhanation.workers.network.MessageCampPos;
+import com.talhanation.workers.network.MessageHomePos;
 import de.maxhenkel.corelib.inventory.ScreenBase;
 import net.minecraft.client.gui.components.Button;
 import net.minecraft.world.entity.player.Inventory;
@@ -34,7 +33,8 @@ public class WorkerInventoryScreen extends ScreenBase<WorkerInventoryContainer> 
         super.init();
         //HOME POS
         addRenderableWidget(new Button(leftPos + 60, topPos + 60, 12, 12, new TextComponent("Home"), button -> {
-                Main.SIMPLE_CHANNEL.sendToServer(new MessageCampPos(worker.getUUID(), worker.getWorkerOnPos()));
+                Main.SIMPLE_CHANNEL.sendToServer(new MessageHomePos(playerInventory.player.getUUID(), worker.getUUID(), worker.getWorkerOnPos()));
+            Main.LOGGER.debug("Screen: " + worker.getWorkerOnPos().toShortString());
         }));
     }
 

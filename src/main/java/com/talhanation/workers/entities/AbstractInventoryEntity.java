@@ -3,6 +3,7 @@ package com.talhanation.workers.entities;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.ListTag;
 import net.minecraft.world.Containers;
+import net.minecraft.world.InteractionHand;
 import net.minecraft.world.SimpleContainer;
 import net.minecraft.world.damagesource.DamageSource;
 import net.minecraft.world.entity.EntityType;
@@ -73,22 +74,6 @@ public abstract class AbstractInventoryEntity extends TamableAnimal {
 
     ////////////////////////////////////SET////////////////////////////////////
 
-    public boolean setSlot(int slot, ItemStack itemStack) {
-        try {
-            super.setItemSlot(EquipmentSlot.byTypeAndIndex(EquipmentSlot.Type.ARMOR , slot), itemStack); //UNTESTED!!!
-            return true;
-        } catch (Exception e) {
-            //LOGGER.error(e);
-        }
-
-        int i = slot - 300;
-        if (i >= 0 && i < this.inventory.getContainerSize()) {
-            this.inventory.setItem(i, itemStack);
-            return true;
-        } else {
-            return false;
-        }
-    }
 
     ////////////////////////////////////OTHER FUNCTIONS////////////////////////////////////
 

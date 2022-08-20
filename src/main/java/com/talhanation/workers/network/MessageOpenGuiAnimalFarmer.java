@@ -1,6 +1,7 @@
 package com.talhanation.workers.network;
 
-import com.talhanation.workers.entities.ShepherdEntity;
+import com.talhanation.workers.entities.AbstractWorkerEntity;
+import de.maxhenkel.corelib.net.Message;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.server.level.ServerPlayer;
@@ -10,17 +11,17 @@ import net.minecraftforge.network.NetworkEvent;
 
 import java.util.UUID;
 
-public class MessageOpenGuiShepherd implements Message<MessageOpenGuiShepherd> {
+public class MessageOpenGuiAnimalFarmer implements Message<MessageOpenGuiAnimalFarmer> {
 
     private UUID uuid;
     private UUID worker;
 
 
-    public MessageOpenGuiShepherd() {
+    public MessageOpenGuiAnimalFarmer() {
         this.uuid = new UUID(0, 0);
     }
 
-    public MessageOpenGuiShepherd(Player player, UUID worker) {
+    public MessageOpenGuiAnimalFarmer(Player player, UUID worker) {
         this.uuid = player.getUUID();
         this.worker = worker;
     }
@@ -37,7 +38,7 @@ public class MessageOpenGuiShepherd implements Message<MessageOpenGuiShepherd> {
         }
 
         ServerPlayer player = context.getSender();
-        player.level.getEntitiesOfClass(ShepherdEntity.class, player.getBoundingBox()
+        player.level.getEntitiesOfClass(AbstractWorkerEntity.class, player.getBoundingBox()
                 .inflate(16.0D), v -> v
                 .getUUID()
                 .equals(this.worker))
@@ -48,7 +49,7 @@ public class MessageOpenGuiShepherd implements Message<MessageOpenGuiShepherd> {
     }
 
     @Override
-    public MessageOpenGuiShepherd fromBytes(FriendlyByteBuf buf) {
+    public MessageOpenGuiAnimalFarmer fromBytes(FriendlyByteBuf buf) {
         this.uuid = buf.readUUID();
         this.worker = buf.readUUID();
         return this;

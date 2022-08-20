@@ -33,7 +33,10 @@ public class FarmerCropAI extends Goal {
     }
 
     public boolean canUse() {
-        if (!this.farmer.getStartPos().isPresent()) {
+        if (this.farmer.getStartPos() == null) {
+            return false;
+        }
+        if (!this.farmer.level.isDay()) {
             return false;
         }
         if (this.farmer.getFollow()) {
@@ -51,8 +54,9 @@ public class FarmerCropAI extends Goal {
     @Override
     public void start() {
         super.start();
+
         farmer.resetWorkerParameters();
-        this.waterPos = farmer.getStartPos().get();
+        this.waterPos = farmer.getStartPos();
     }
 
     @Override
@@ -71,6 +75,10 @@ public class FarmerCropAI extends Goal {
         1 = plant
         2 = harvest
          */
+        if ( workPos != null && !workPos.closerThan(farmer.getOnPos(), 10D) && !farmer.getFollow())
+            this.farmer.getNavigation().moveTo(workPos.getX(), workPos.getY(), workPos.getZ(), 1);
+
+
 
         switch (state) {
             case 0://hoe
@@ -160,9 +168,9 @@ public class FarmerCropAI extends Goal {
     }
 
     private boolean startPosIsWater(){
-        Optional<BlockPos> blockPos = farmer.getStartPos();
-        if (blockPos.isPresent()) {
-            FluidState waterBlockState = this.farmer.level.getFluidState(blockPos.get());
+        BlockPos blockPos = farmer.getStartPos();
+        if (blockPos != null) {
+            FluidState waterBlockState = this.farmer.level.getFluidState(blockPos);
 
             if (waterBlockState == Fluids.WATER.defaultFluidState() || waterBlockState == Fluids.FLOWING_WATER.defaultFluidState()) {
                 return true;
@@ -235,7 +243,7 @@ public class FarmerCropAI extends Goal {
         //int range = 8;
         for (int j = 0; j <= 8; j++){
             for (int i = 0; i <= 8; i++){
-                BlockPos blockPos = this.farmer.getStartPos().get().offset(j - 4, 0, i - 4);
+                BlockPos blockPos = this.farmer.getStartPos().offset(j - 4, 0, i - 4);
                 BlockPos aboveBlockPos = blockPos.above();
                 BlockState blockState = this.farmer.level.getBlockState(blockPos);
                 BlockState aboveBlockState = this.farmer.level.getBlockState(aboveBlockPos);
@@ -254,7 +262,7 @@ public class FarmerCropAI extends Goal {
         //int range = 8;
         for (int j = 0; j <= 8; j++){
             for (int i = 0; i <= 8; i++){
-                BlockPos blockPos = this.farmer.getStartPos().get().offset(j - 4, 0, i - 4);
+                BlockPos blockPos = this.farmer.getStartPos().offset(j - 4, 0, i - 4);
                 BlockPos aboveBlockPos = blockPos.above();
                 BlockState blockState = this.farmer.level.getBlockState(blockPos);
                 BlockState aboveBlockState = this.farmer.level.getBlockState(aboveBlockPos);
@@ -274,7 +282,7 @@ public class FarmerCropAI extends Goal {
         //int range = 8;
         for (int j = 0; j <= 8; j++){
             for (int i = 0; i <= 8; i++){
-                BlockPos blockPos = this.farmer.getStartPos().get().offset(j - 4, 1, i - 4);
+                BlockPos blockPos = this.farmer.getStartPos().offset(j - 4, 1, i - 4);
                 BlockState blockState = this.farmer.level.getBlockState(blockPos);
 
                 Block block = blockState.getBlock();

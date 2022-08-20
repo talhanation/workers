@@ -12,29 +12,23 @@ import net.minecraftforge.event.ForgeEventFactory;
 import java.util.EnumSet;
 import java.util.Optional;
 
-public class MinerMine3x3TunnelGoal extends Goal {
-    private final MinerEntity miner;
-    private final double speedModifier;
+public class MinerMine3x3TunnelGoal extends MinerMineGoal {
     private final double within;
     private BlockPos minePos;
-    private int x;
-    private int y;
-    private int z;
 
     public MinerMine3x3TunnelGoal(MinerEntity miner, double v, double within) {
         this.miner = miner;
-        this.speedModifier = v;
         this.within = within;
         this.setFlags(EnumSet.of(Goal.Flag.MOVE));
     }
 
     public boolean canUse() {
-        if (!this.miner.getStartPos().isPresent()) {
+        if (this.miner.getStartPos() == null) {
             return false;
         }
         if (this.miner.getFollow()) {
             return false;
-       } else if (this.miner.getStartPos().get().closerThan(miner.getOnPos(), within) && !this.miner.getFollow() && miner.getMineType() == 2)
+       } else if (this.miner.getStartPos().closerThan(miner.getOnPos(), within) && !this.miner.getFollow() && miner.getMineType() == 2)
 
             return true;
 
@@ -65,16 +59,16 @@ public class MinerMine3x3TunnelGoal extends Goal {
 
         if (!miner.getFollow()) {
             if (miner.getMineDirection().equals(Direction.EAST)) {
-                this.minePos = new BlockPos(miner.getStartPos().get().getX() + x, miner.getStartPos().get().getY() + y, miner.getStartPos().get().getZ() - z);
+                this.minePos = new BlockPos(miner.getStartPos().getX() + x, miner.getStartPos().getY() + y, miner.getStartPos().getZ() - z);
 
             } else if (miner.getMineDirection().equals(Direction.WEST)) {
-                this.minePos = new BlockPos(miner.getStartPos().get().getX() - x, miner.getStartPos().get().getY() + y, miner.getStartPos().get().getZ() + z);
+                this.minePos = new BlockPos(miner.getStartPos().getX() - x, miner.getStartPos().getY() + y, miner.getStartPos().getZ() + z);
 
             } else if (miner.getMineDirection().equals(Direction.NORTH)) {
-                this.minePos = new BlockPos(miner.getStartPos().get().getX() - z, miner.getStartPos().get().getY() + y, miner.getStartPos().get().getZ() - x);
+                this.minePos = new BlockPos(miner.getStartPos().getX() - z, miner.getStartPos().getY() + y, miner.getStartPos().getZ() - x);
 
             } else if (miner.getMineDirection().equals(Direction.SOUTH)) {
-                this.minePos = new BlockPos(miner.getStartPos().get().getX() + z, miner.getStartPos().get().getY() + y, miner.getStartPos().get().getZ() + x);
+                this.minePos = new BlockPos(miner.getStartPos().getX() + z, miner.getStartPos().getY() + y, miner.getStartPos().getZ() + x);
             }
 
             if (!minePos.closerThan(miner.getOnPos(), 2)){
@@ -108,52 +102,11 @@ public class MinerMine3x3TunnelGoal extends Goal {
 
             if (x == miner.getMineDepth()){
                 miner.setIsWorking(false);
-                miner.setStartPos(Optional.empty());
+                miner.clearStartPos();
                 x = 0;
             }
 
 
-        }
-    }
-
-    private void mineBlock(BlockPos blockPos){
-
-        if (this.miner.isAlive() && ForgeEventFactory.getMobGriefingEvent(this.miner.level, this.miner) && !miner.getFollow()) {
-            BlockState blockstate = this.miner.level.getBlockState(blockPos);
-            Block block = blockstate.getBlock();
-
-            if (!miner.shouldIgnorBlock(block)) {
-
-                if (miner.getCurrentTimeBreak() % 5 == 4) {
-                    miner.level.playLocalSound(blockPos.getX(), blockPos.getY(), blockPos.getZ(), blockstate.getSoundType().getHitSound(), SoundSource.BLOCKS, 1F, 0.75F, false);
-                }
-
-
-                int bp = (int) (blockstate.getDestroySpeed(this.miner.level, blockPos) * 10);
-                this.miner.setBreakingTime(bp);
-
-                this.miner.setCurrentTimeBreak(this.miner.getCurrentTimeBreak() + (int) (1 * (this.miner.getUseItem().getDestroySpeed(blockstate))));
-                float f = (float) this.miner.getCurrentTimeBreak() / (float) this.miner.getBreakingTime();
-
-                int i = (int) (f * 10);
-
-                if (i != this.miner.getPreviousTimeBreak()) {
-                    this.miner.level.destroyBlockProgress(1, blockPos, i);
-                    this.miner.setPreviousTimeBreak(i);
-                }
-
-                if (this.miner.getCurrentTimeBreak() == this.miner.getBreakingTime()) {
-                    this.miner.level.destroyBlock(blockPos, true, this.miner);
-                    this.miner.setCurrentTimeBreak(-1);
-                    this.miner.setBreakingTime(0);
-                }
-                miner.changeTool(blockstate);
-                if (this.miner.getRandom().nextInt(5) == 0) {
-                    if (!this.miner.swinging) {
-                        this.miner.swing(this.miner.getUsedItemHand());
-                    }
-                }
-            }
         }
     }
 

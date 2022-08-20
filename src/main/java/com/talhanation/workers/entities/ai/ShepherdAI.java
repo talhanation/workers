@@ -1,6 +1,7 @@
 package com.talhanation.workers.entities.ai;
 
 import com.talhanation.workers.entities.ShepherdEntity;
+import net.minecraft.core.BlockPos;
 import net.minecraft.world.entity.ai.goal.Goal;
 import net.minecraft.world.entity.animal.Sheep;
 import net.minecraft.world.SimpleContainer;
@@ -11,8 +12,10 @@ import net.minecraft.sounds.SoundSource;
 import java.util.EnumSet;
 import java.util.List;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
-import static java.util.function.Predicate.not;
+import static com.google.common.base.Predicates.not;
+
 
 public class ShepherdAI extends Goal {
     private Optional<Sheep> sheep;
@@ -20,6 +23,7 @@ public class ShepherdAI extends Goal {
     private boolean sheering;
     private boolean breeding;
     private boolean slaughtering;
+    private BlockPos workPos;
 
 
     public ShepherdAI(ShepherdEntity worker, int coolDown) {
@@ -29,12 +33,17 @@ public class ShepherdAI extends Goal {
 
     @Override
     public boolean canUse() {
-        return shepherd.getIsWorking() && !shepherd.getFollow();
+        if (!this.shepherd.level.isDay()) {
+        return false;
+    }
+        else
+          return shepherd.getIsWorking() && !shepherd.getFollow();
     }
 
     @Override
     public void start() {
         super.start();
+        this.workPos = shepherd.getStartPos();
         this.sheering = true;
         this.breeding = false;
         this.slaughtering = false;
@@ -44,9 +53,9 @@ public class ShepherdAI extends Goal {
     public void tick() {
         super.tick();
 
-
-
-
+        if (workPos != null && !workPos.closerThan(shepherd.getOnPos(), 10D) && !shepherd.getFollow())
+            this.shepherd.getNavigation().moveTo(workPos.getX(), workPos.getY(), workPos.getZ(), 1);
+        
         if (sheering){
             this.sheep = findSheepSheering();
             if (this.sheep.isPresent() && sheep.get().readyForShearing()) {
@@ -95,7 +104,7 @@ public class ShepherdAI extends Goal {
         if (slaughtering) {
 
             List<Sheep> sheeps = findSheepSlaughtering();
-            if (sheeps.size() > shepherd.getMaxSheepCount()) {
+            if (sheeps.size() > shepherd.getMaxAnimalCount()) {
                 sheep = sheeps.stream().findFirst();
 
                 if (sheep.isPresent()) {
@@ -153,7 +162,8 @@ public class ShepherdAI extends Goal {
                         .inflate(8D), Sheep::isAlive)
                 .stream()
                 .filter(not(Sheep::isBaby))
-                .toList();
+                .collect(Collectors.toList());
+
     }
 
     private boolean hasWheat() {

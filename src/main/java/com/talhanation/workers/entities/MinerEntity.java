@@ -60,6 +60,7 @@ public class MinerEntity extends AbstractWorkerEntity {
 
     private static final Set<Item> WANTED_ITEMS = ImmutableSet.of(
         Items.COAL,
+        Items.COPPER_ORE,
         Items.IRON_ORE,
         Items.GOLD_ORE,
         Items.DIAMOND,
@@ -75,7 +76,10 @@ public class MinerEntity extends AbstractWorkerEntity {
         Items.REDSTONE,
         Items.DIRT,
         Items.DIORITE,
-        Items.COARSE_DIRT
+        Items.COARSE_DIRT,
+        Items.RAW_COPPER,
+        Items.RAW_IRON,
+        Items.RAW_GOLD
     );
 
     public static final Set<Block> IGNORING_BLOCKS = ImmutableSet.of(
@@ -134,7 +138,6 @@ public class MinerEntity extends AbstractWorkerEntity {
         this.goalSelector.addGoal(2, new MinerMine3x3TunnelGoal(this, 0.5D, 10D));
         this.goalSelector.addGoal(2, new MinerMine8x8PitGoal(this, 0.5D, 15D));
         this.goalSelector.addGoal(2, new MinerMine8x8x1FlatGoal(this, 0.5D, 15D));
-        this.goalSelector.addGoal(2, new WorkerFollowOwnerGoal(this, 1.2D, 6.0F, 3.0F));
 
         this.goalSelector.addGoal(1, new PanicGoal(this, 1.3D));
 
@@ -166,6 +169,11 @@ public class MinerEntity extends AbstractWorkerEntity {
         this.setRandomSpawnBonus();
         this.setPersistenceRequired();
         this.setCanPickUpLoot(true);
+    }
+
+    @Override
+    public boolean shouldDirectNavigation() {
+        return this.getMineType() != 3;
     }
 
     protected void pickUpItem(ItemEntity itemEntity) {
@@ -251,7 +259,7 @@ public class MinerEntity extends AbstractWorkerEntity {
     }
 
     public void setMineType(int x){
-        this.setStartPos(Optional.empty());
+        this.clearStartPos();
         entityData.set(MINE_TYPE, x);
     }
 

@@ -34,7 +34,18 @@
   "gui.workers.miner.depth": "Depth",
 
   "gui.workers.merchant.trade": "Trade",
+  "gui.workers.hire_gui.text.hire": "Hire",
+  "gui.workers.shepherd.max_animals": "max.",
 
-  "gui.workers.shepherd.max_sheeps": "max."
+  "chat.workers.needHome":"I need a home to store items.",
 
+  "chat.workers.needBed":"I need a bed to sleep.",
+  "chat.workers.needChest": "I need a chest to put the items in.",
+  "chat.workers.text.recruited1": "It's a honor for me to work for you.",
+  "chat.workers.text.recruited2": "I am the best for this work.",
+  "chat.workers.text.recruited3": "I work fast and reliable.",
+  "chat.workers.text.hello_owned": "Hello, Im the worker of %s",
+  "chat.workers.text.hello": "Hello, Im a %s",
+
+  "chat.workers.text.hire_costs": "You need %x Emeralds to recruit me!"
 }

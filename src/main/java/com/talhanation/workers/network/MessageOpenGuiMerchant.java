@@ -1,6 +1,7 @@
 package com.talhanation.workers.network;
 
 import com.talhanation.workers.entities.MerchantEntity;
+import de.maxhenkel.corelib.net.Message;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.server.level.ServerPlayer;

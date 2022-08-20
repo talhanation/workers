@@ -34,13 +34,13 @@ public class MinerMine8x8PitGoal extends Goal {
     }
 
     public boolean canUse() {
-        if (!this.miner.getStartPos().isPresent()) {
+        if (this.miner.getStartPos() == null) {
             return false;
         }
         if (this.miner.getFollow()) {
             return false;
 
-        } else if (this.miner.getStartPos().get().closerThan(miner.getOnPos(), within) && !this.miner.getFollow() && miner.getMineType() == 3)
+        } else if (this.miner.getStartPos().closerThan(miner.getOnPos(), within) && !this.miner.getFollow() && miner.getMineType() == 3)
 
             return true;
 
@@ -71,19 +71,19 @@ public class MinerMine8x8PitGoal extends Goal {
 
         if (!miner.getFollow()) {
             if (miner.getMineDirection().equals(Direction.EAST)) {
-                this.minePos = new BlockPos(miner.getStartPos().get().getX() + blocks, miner.getStartPos().get().getY() - depth, miner.getStartPos().get().getZ() - side);
+                this.minePos = new BlockPos(miner.getStartPos().getX() + blocks, miner.getStartPos().getY() - depth, miner.getStartPos().getZ() - side);
                 this.standPos = new BlockPos(minePos.getX() + 2, minePos.getY(), minePos.getZ());
 
             } else if (miner.getMineDirection().equals(Direction.WEST)) {
-                this.minePos = new BlockPos(miner.getStartPos().get().getX() - blocks, miner.getStartPos().get().getY() - depth, miner.getStartPos().get().getZ() + side);
+                this.minePos = new BlockPos(miner.getStartPos().getX() - blocks, miner.getStartPos().getY() - depth, miner.getStartPos().getZ() + side);
                 this.standPos = new BlockPos(minePos.getX() - 2, minePos.getY(), minePos.getZ());
 
             } else if (miner.getMineDirection().equals(Direction.NORTH)) {
-                this.minePos = new BlockPos(miner.getStartPos().get().getX() - side, miner.getStartPos().get().getY() - depth, miner.getStartPos().get().getZ() - blocks);
+                this.minePos = new BlockPos(miner.getStartPos().getX() - side, miner.getStartPos().getY() - depth, miner.getStartPos().getZ() - blocks);
                 this.standPos = new BlockPos(minePos.getX(), minePos.getY(), minePos.getZ() - 2);
 
             } else if (miner.getMineDirection().equals(Direction.SOUTH)) {
-                this.minePos = new BlockPos(miner.getStartPos().get().getX() + side, miner.getStartPos().get().getY() - depth, miner.getStartPos().get().getZ() + blocks);
+                this.minePos = new BlockPos(miner.getStartPos().getX() + side, miner.getStartPos().getY() - depth, miner.getStartPos().getZ() + blocks);
                 this.standPos = new BlockPos(minePos.getX(), minePos.getY(), minePos.getZ() + 2);
             }
 
@@ -117,7 +117,7 @@ public class MinerMine8x8PitGoal extends Goal {
             }
 
             if (depth == 8){
-                miner.setStartPos(Optional.empty());
+                miner.clearStartPos();
                 miner.setIsWorking(false);
             }
         }

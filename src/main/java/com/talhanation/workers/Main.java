@@ -10,6 +10,7 @@ import com.talhanation.workers.init.ModItems;
 import com.talhanation.workers.inventory.*;
 import com.talhanation.workers.network.*;
 import de.maxhenkel.corelib.ClientRegistry;
+import de.maxhenkel.corelib.CommonRegistry;
 import net.minecraft.client.KeyMapping;
 import net.minecraft.world.entity.npc.VillagerProfession;
 import net.minecraft.world.entity.player.Player;
@@ -30,8 +31,9 @@ import net.minecraftforge.fml.event.lifecycle.FMLClientSetupEvent;
 import net.minecraftforge.fml.event.lifecycle.FMLCommonSetupEvent;
 import net.minecraftforge.fml.javafmlmod.FMLJavaModLoadingContext;
 import net.minecraftforge.network.IContainerFactory;
-import net.minecraftforge.network.NetworkRegistry;
 import net.minecraftforge.network.simple.SimpleChannel;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 import javax.annotation.Nullable;
 import java.util.UUID;
@@ -39,6 +41,7 @@ import java.util.UUID;
 @Mod(Main.MOD_ID)
 public class Main {
     public static final String MOD_ID = "workers";
+    public static final Logger LOGGER = LogManager.getLogger(MOD_ID);
     public static SimpleChannel SIMPLE_CHANNEL;
     public static VillagerProfession MINER;
     public static VillagerProfession LUMBERJACK;
@@ -46,15 +49,20 @@ public class Main {
     public static VillagerProfession MERCHANT;
     public static VillagerProfession SHEPHERD;
     public static VillagerProfession FISHER;
+    public static VillagerProfession CATTLE_FARMER;//villagerevents nachtragen
+    public static VillagerProfession CHICKEN_FARMER;//villager events nachtragen
     public static PoiType POI_MINER;
     public static PoiType POI_LUMBERJACK;
     public static PoiType POI_FARMER;
     public static PoiType POI_MERCHANT;
     public static PoiType POI_SHEPHERD;
     public static PoiType POI_FISHER;
+    public static PoiType POI_CATTLE_FARMER;
+    public static PoiType POI_CHICKEN_FARMER;
     public static KeyMapping C_KEY;
+    public static MenuType<WorkerHireContainer> HIRE_CONTAINER_TYPE;
     public static MenuType<WorkerInventoryContainer> MINER_CONTAINER_TYPE;
-    public static MenuType<WorkerInventoryContainer> SHEPHERD_CONTAINER_TYPE;
+    public static MenuType<WorkerInventoryContainer> ANIMAL_FARMER_CONTAINER_TYPE;
     public static MenuType<WorkerInventoryContainer> WORKER_CONTAINER_TYPE;
     public static MenuType<MerchantTradeContainer> MERCHANT_CONTAINER_TYPE;
     public static MenuType<MerchantInventoryContainer> MERCHANT_OWNER_CONTAINER_TYPE;
@@ -81,49 +89,22 @@ public class Main {
         MinecraftForge.EVENT_BUS.register(new VillagerEvents());
         MinecraftForge.EVENT_BUS.register(new CommandEvents());
         MinecraftForge.EVENT_BUS.register(this);
-        SIMPLE_CHANNEL = NetworkRegistry.newSimpleChannel(new ResourceLocation(MOD_ID, "default"), () -> "1.0.0", s -> true, s -> true);
+
+        SIMPLE_CHANNEL = CommonRegistry.registerChannel(Main.MOD_ID, "default");
 
 
-        SIMPLE_CHANNEL.registerMessage(0, MessageStartPos.class, MessageStartPos::toBytes,
-                buf -> (new MessageStartPos()).fromBytes(buf),
-                (msg, fun) -> msg.executeServerSide(fun.get()));
-
-        SIMPLE_CHANNEL.registerMessage(1, MessageOpenGuiMiner.class, MessageOpenGuiMiner::toBytes,
-                buf -> (new MessageOpenGuiMiner()).fromBytes(buf),
-                (msg, fun) -> msg.executeServerSide(fun.get()));
-
-        SIMPLE_CHANNEL.registerMessage(2, MessageMineType.class, MessageMineType::toBytes,
-                buf -> (new MessageMineType()).fromBytes(buf),
-                (msg, fun) -> msg.executeServerSide(fun.get()));
-
-        SIMPLE_CHANNEL.registerMessage(3, MessageMineDepth.class, MessageMineDepth::toBytes,
-                buf -> (new MessageMineDepth()).fromBytes(buf),
-                (msg, fun) -> msg.executeServerSide(fun.get()));
-
-        SIMPLE_CHANNEL.registerMessage(4, MessageOpenGuiWorker.class, MessageOpenGuiWorker::toBytes,
-                buf -> (new MessageOpenGuiWorker()).fromBytes(buf),
-                (msg, fun) -> msg.executeServerSide(fun.get()));
-
-        SIMPLE_CHANNEL.registerMessage(5, MessageCampPos.class, MessageCampPos::toBytes,
-                buf -> (new MessageCampPos()).fromBytes(buf),
-                (msg, fun) -> msg.executeServerSide(fun.get()));
-
-        SIMPLE_CHANNEL.registerMessage(6, MessageOpenGuiMerchant.class, MessageOpenGuiMerchant::toBytes,
-                buf -> (new MessageOpenGuiMerchant()).fromBytes(buf),
-                (msg, fun) -> msg.executeServerSide(fun.get()));
-
-        SIMPLE_CHANNEL.registerMessage(7, MessageTradeButton.class, MessageTradeButton::toBytes,
-                buf -> (new MessageTradeButton()).fromBytes(buf),
-                (msg, fun) -> msg.executeServerSide(fun.get()));
-
-        SIMPLE_CHANNEL.registerMessage(8, MessageOpenGuiShepherd.class, MessageOpenGuiShepherd::toBytes,
-                buf -> (new MessageOpenGuiShepherd()).fromBytes(buf),
-                (msg, fun) -> msg.executeServerSide(fun.get()));
-
-        SIMPLE_CHANNEL.registerMessage(9, MessageSheepCount.class, MessageSheepCount::toBytes,
-                buf -> (new MessageSheepCount()).fromBytes(buf),
-                (msg, fun) -> msg.executeServerSide(fun.get()));
-
+        CommonRegistry.registerMessage(SIMPLE_CHANNEL, 0, MessageStartPos.class);
+        CommonRegistry.registerMessage(SIMPLE_CHANNEL, 1, MessageOpenGuiMiner.class);
+        CommonRegistry.registerMessage(SIMPLE_CHANNEL, 2, MessageMineType.class);
+        CommonRegistry.registerMessage(SIMPLE_CHANNEL, 3, MessageMineDepth.class);
+        CommonRegistry.registerMessage(SIMPLE_CHANNEL, 4, MessageOpenGuiWorker.class);
+        CommonRegistry.registerMessage(SIMPLE_CHANNEL, 5, MessageHomePos.class);
+        CommonRegistry.registerMessage(SIMPLE_CHANNEL, 6, MessageOpenGuiMerchant.class);
+        CommonRegistry.registerMessage(SIMPLE_CHANNEL, 7, MessageTradeButton.class);
+        CommonRegistry.registerMessage(SIMPLE_CHANNEL, 8, MessageOpenGuiAnimalFarmer.class);
+        CommonRegistry.registerMessage(SIMPLE_CHANNEL, 9, MessageAnimalCount.class);
+        CommonRegistry.registerMessage(SIMPLE_CHANNEL, 10, MessageHire.class);
+        CommonRegistry.registerMessage(SIMPLE_CHANNEL, 11, MessageHireGui.class);
     }
 
     @SubscribeEvent
@@ -138,7 +119,8 @@ public class Main {
         ClientRegistry.registerScreen(Main.WORKER_CONTAINER_TYPE, WorkerInventoryScreen::new);
         ClientRegistry.registerScreen(Main.MERCHANT_CONTAINER_TYPE, MerchantTradeScreen::new);
         ClientRegistry.registerScreen(Main.MERCHANT_OWNER_CONTAINER_TYPE, MerchantOwnerScreen::new);
-        ClientRegistry.registerScreen(Main.SHEPHERD_CONTAINER_TYPE, ShepherdInventoryScreen::new);
+        ClientRegistry.registerScreen(Main.ANIMAL_FARMER_CONTAINER_TYPE, AnimalFarmerInventoryScreen::new);
+        ClientRegistry.registerScreen(Main.HIRE_CONTAINER_TYPE, WorkerHireScreen::new);
     }
 
     @SubscribeEvent
@@ -155,13 +137,21 @@ public class Main {
         POI_MERCHANT.setRegistryName(Main.MOD_ID, "poi_merchant");
         POI_SHEPHERD = new PoiType("poi_shepherd", PoiType.getBlockStates(ModBlocks.SHEPHERD_BLOCK.get()), 1, 1);
         POI_SHEPHERD.setRegistryName(Main.MOD_ID, "poi_shepherd");
+        /*
+        POI_CATTLE_FARMER = new PoiType("poi_cattle_farmer", PoiType.getBlockStates(ModBlocks.FARMER_BLOCK.get()), 1, 1);
+        POI_CATTLE_FARMER.setRegistryName(Main.MOD_ID, "poi_cattle_farmer");
+        POI_CHICKEN_FARMER = new PoiType("poi_chicken_farmer", PoiType.getBlockStates(ModBlocks.FARMER_BLOCK.get()), 1, 1);
+        POI_CHICKEN_FARMER.setRegistryName(Main.MOD_ID, "poi_chicken_farmer");
 
+         */
         event.getRegistry().register(POI_MINER);
         event.getRegistry().register(POI_LUMBERJACK);
         event.getRegistry().register(POI_FISHER);
         event.getRegistry().register(POI_FARMER);
         event.getRegistry().register(POI_MERCHANT);
         event.getRegistry().register(POI_SHEPHERD);
+        //event.getRegistry().register(POI_CATTLE_FARMER);
+        //event.getRegistry().register(POI_CHICKEN_FARMER);
     }
 
     @SubscribeEvent
@@ -178,13 +168,20 @@ public class Main {
         FARMER.setRegistryName(Main.MOD_ID, "farmer");
         MERCHANT = new VillagerProfession("merchant", POI_MERCHANT, ImmutableSet.of(), ImmutableSet.of(), SoundEvents.VILLAGER_CELEBRATE);
         MERCHANT.setRegistryName(Main.MOD_ID, "merchant");
-
+    /*
+        CATTLE_FARMER = new VillagerProfession("cattle_farmer", POI_CATTLE_FARMER, ImmutableSet.of(), ImmutableSet.of(), SoundEvents.VILLAGER_CELEBRATE);
+        CATTLE_FARMER.setRegistryName(Main.MOD_ID, "cattle_farmer");
+        CHICKEN_FARMER = new VillagerProfession("chicken_farmer", POI_CHICKEN_FARMER, ImmutableSet.of(), ImmutableSet.of(), SoundEvents.VILLAGER_CELEBRATE);
+        CHICKEN_FARMER.setRegistryName(Main.MOD_ID, "chicken_farmer");
+*/
         event.getRegistry().register(MINER);
         event.getRegistry().register(LUMBERJACK);
         event.getRegistry().register(FISHER);
         event.getRegistry().register(MERCHANT);
         event.getRegistry().register(FARMER);
         event.getRegistry().register(SHEPHERD);
+        //event.getRegistry().register(CATTLE_FARMER);
+        //event.getRegistry().register(CHICKEN_FARMER);
     }
 
     @SubscribeEvent
@@ -217,12 +214,20 @@ public class Main {
             }
             return new MerchantInventoryContainer(windowId, rec, inv);
         });
-        SHEPHERD_CONTAINER_TYPE = new MenuType<>((IContainerFactory<WorkerInventoryContainer>) (windowId, inv, data) -> {
-            ShepherdEntity rec = (ShepherdEntity) getRecruitByUUID(inv.player, data.readUUID());
+        ANIMAL_FARMER_CONTAINER_TYPE = new MenuType<>((IContainerFactory<WorkerInventoryContainer>) (windowId, inv, data) -> {
+            AbstractWorkerEntity rec = getRecruitByUUID(inv.player, data.readUUID());
             if (rec == null) {
                 return null;
             }
             return new WorkerInventoryContainer(windowId, rec, inv);
+        });
+
+        HIRE_CONTAINER_TYPE = new MenuType<>((IContainerFactory<WorkerHireContainer>) (windowId, inv, data) -> {
+            AbstractWorkerEntity rec = getRecruitByUUID(inv.player, data.readUUID());
+            if (rec == null) {
+                return null;
+            }
+            return new WorkerHireContainer(windowId, inv.player, rec, inv);
         });
 
 
@@ -238,8 +243,11 @@ public class Main {
         MERCHANT_OWNER_CONTAINER_TYPE.setRegistryName(new ResourceLocation(Main.MOD_ID, "merchant_owner_container"));
         event.getRegistry().register(MERCHANT_OWNER_CONTAINER_TYPE);
 
-        SHEPHERD_CONTAINER_TYPE.setRegistryName(new ResourceLocation(Main.MOD_ID, "shepherd_container"));
-        event.getRegistry().register(SHEPHERD_CONTAINER_TYPE);
+        ANIMAL_FARMER_CONTAINER_TYPE.setRegistryName(new ResourceLocation(Main.MOD_ID, "animal_farmer_container"));
+        event.getRegistry().register(ANIMAL_FARMER_CONTAINER_TYPE);
+
+        HIRE_CONTAINER_TYPE.setRegistryName(new ResourceLocation(Main.MOD_ID, "hire_container"));
+        event.getRegistry().register(HIRE_CONTAINER_TYPE);
     }
 
     @Nullable

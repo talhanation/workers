@@ -39,7 +39,7 @@ import javax.annotation.Nullable;
 import java.util.Set;
 import java.util.function.Predicate;
 
-public class FishermanEntity extends AbstractWorkerEntity{
+public class FishermanEntity extends AbstractWorkerEntity {
 
     private final Predicate<ItemEntity> ALLOWED_ITEMS = (item) -> !item.hasPickUpDelay() && item.isAlive() && this.wantsToPickUp(item.getItem());
 
@@ -89,7 +89,6 @@ public class FishermanEntity extends AbstractWorkerEntity{
         super.registerGoals();
         this.goalSelector.addGoal(1, new FloatGoal(this));
         this.goalSelector.addGoal(2, new WorkerPickupWantedItemGoal(this));
-        this.goalSelector.addGoal(2, new WorkerFollowOwnerGoal(this, 1.2D, 7.F, 4.0F));
         this.goalSelector.addGoal(3, new WorkerFindWaterAI(this));
         this.goalSelector.addGoal(4, new FishermanAI(this));
         this.goalSelector.addGoal(5, new LookAtPlayerGoal(this, Player.class, 8.0F));
@@ -124,6 +123,11 @@ public class FishermanEntity extends AbstractWorkerEntity{
         this.setRandomSpawnBonus();
         this.setPersistenceRequired();
         this.setCanPickUpLoot(true);
+    }
+
+    @Override
+    public boolean shouldDirectNavigation() {
+        return false;
     }
 
     @Override

@@ -13,7 +13,7 @@ public class WorkersModConfig {
     private static final ForgeConfigSpec.Builder BUILDER = new ForgeConfigSpec.Builder();
     public static ForgeConfigSpec CONFIG;
     public static ForgeConfigSpec.IntValue VERSION;
-    public static final int NEW_VERSION = 1;
+    public static final int NEW_VERSION = 2;
 
 
     public static ForgeConfigSpec.BooleanValue PlayVillagerAmbientSound;
@@ -22,9 +22,9 @@ public class WorkersModConfig {
         VERSION = BUILDER.comment("\n" +"##Version, do not change!##")
                 .defineInRange("Version", 0, 0, Integer.MAX_VALUE);
 
-        BUILDER.comment("Recruits Config:").push("Recruits");
+        BUILDER.comment("Workers Config:").push("Workers");
 
-        PlayVillagerAmbientSound = BUILDER.comment("\n" + "----Should Recruits Make Villager Huh? sound?----" + "\n" +
+        PlayVillagerAmbientSound = BUILDER.comment("\n" + "----Should Workers Make Villager Huh? sound?----" + "\n" +
                 "\t" + "(takes effect after restart)" + "\n" +
                 "\t" + "default: true")
                 .define("PlayVillagerAmbientSound", true);

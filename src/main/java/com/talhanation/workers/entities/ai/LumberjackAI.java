@@ -23,7 +23,7 @@ import static com.talhanation.workers.entities.LumberjackEntity.WANTED_SAPLINGS;
 
 public class LumberjackAI extends Goal {
     private final LumberjackEntity lumber;
-    private BlockPos chopPos;
+    private BlockPos workPos;
 
     public LumberjackAI(LumberjackEntity lumber) {
         this.lumber = lumber;
@@ -33,7 +33,11 @@ public class LumberjackAI extends Goal {
     public boolean canUse() {
         if (this.lumber.getFollow()) {
             return false;
-        } else if (this.lumber.getStartPos().isPresent() && !this.lumber.getFollow())
+        }
+        else if (!this.lumber.level.isDay()) {
+            return false;
+        }
+        else if (this.lumber.getStartPos() != null && !this.lumber.getFollow())
             return true;
 
         else
@@ -47,13 +51,18 @@ public class LumberjackAI extends Goal {
     @Override
     public void start() {
         super.start();
+        this.workPos = lumber.getStartPos();
         lumber.resetWorkerParameters();
     }
 
     public void tick() {
         breakLeaves();
 
-        this.chopPos = getWoodPos();
+        if ( workPos != null && !workPos.closerThan(lumber.getOnPos(), 10D) && !lumber.getFollow())
+            this.lumber.getNavigation().moveTo(workPos.getX(), workPos.getY(), workPos.getZ(), 1);
+
+
+        BlockPos chopPos = getWoodPos();
         if (chopPos != null) {
             this.lumber.getNavigation().moveTo(chopPos.getX(), chopPos.getY(), chopPos.getZ(), 1);
             this.lumber.getLookControl().setLookAt(chopPos.getX(), chopPos.getY() + 1, chopPos.getZ(), 10.0F, (float) this.lumber.getMaxHeadXRot());
@@ -103,7 +112,7 @@ public class LumberjackAI extends Goal {
         for (int j = 0; j < range; j++){
             for (int i = 0; i < range; i++){
                 for(int k = 0; k < 8; k++){
-                    BlockPos blockPos = this.lumber.getStartPos().get().offset(j - range / 2F, k, i - range / 2F);
+                    BlockPos blockPos = this.lumber.getStartPos().offset(j - range / 2F, k, i - range / 2F);
                    //this.lumber.level.setBlock(blockPos, Blocks.COBWEB.defaultBlockState(), 3);
                     BlockState blockState = this.lumber.level.getBlockState(blockPos);
 
@@ -121,7 +130,7 @@ public class LumberjackAI extends Goal {
         int range = 16;
         Random random = new Random();
         for (int j = 0; j < range; j++) {
-            BlockPos blockPos = this.lumber.getStartPos().get().offset(random.nextInt(10) - range / 2F, 1, random.nextInt(10) - range / 2F);
+            BlockPos blockPos = this.lumber.getStartPos().offset(random.nextInt(10) - range / 2F, 1, random.nextInt(10) - range / 2F);
 
 
             if (this.lumber.level.isEmptyBlock(blockPos) && lumber.level.getBlockState(blockPos.below()).is(Blocks.GRASS_BLOCK)) {

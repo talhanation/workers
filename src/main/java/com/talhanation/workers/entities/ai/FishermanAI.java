@@ -22,6 +22,7 @@ public class FishermanAI extends Goal {
     private int fishingTimer = 100;
     private int throwTimer = 0;
     private BlockPos fishingPos = null;
+    private BlockPos workPos;
 
     public FishermanAI(FishermanEntity fishermanEntity) {
         this.fisherman = fishermanEntity;
@@ -31,17 +32,20 @@ public class FishermanAI extends Goal {
     public boolean canUse() {
         if (this.fisherman.getFollow()) {
             return false;
+        }
+        else if (!this.fisherman.level.isDay()) {
+            return false;
+
         } else if (fisherman.getIsWorking() && !this.fisherman.getFollow() && isNearWater())
             return true;
-
         else
             return false;
     }
 
     @Override
     public void start() {
+        this.workPos = fisherman.getStartPos();
         super.start();
-        //this.fishingPos = new BlockPos(fisherman.getStartPos().get().getX(), fisherman.getStartPos().get().getY(), fisherman.getStartPos().get().getZ());
     }
 
 
@@ -68,6 +72,10 @@ public class FishermanAI extends Goal {
 
     @Override
     public void tick() {
+        if ( workPos != null && !workPos.closerThan(fisherman.getOnPos(), 10D) && !fisherman.getFollow())
+            this.fisherman.getNavigation().moveTo(workPos.getX(), workPos.getY(), workPos.getZ(), 1);
+
+
         if (this.fishingPos != null && this.isNearWater()) {
 
             if (fishingPos.closerThan(fisherman.getOnPos(), 9))

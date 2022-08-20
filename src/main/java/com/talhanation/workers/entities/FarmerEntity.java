@@ -128,7 +128,6 @@ public class FarmerEntity extends AbstractWorkerEntity{
         super.registerGoals();
         this.goalSelector.addGoal(1, new FloatGoal(this));
         this.goalSelector.addGoal(2, new WorkerPickupWantedItemGoal(this));
-        this.goalSelector.addGoal(2, new WorkerFollowOwnerGoal(this, 1.2D, 7.F, 4.0F));
         this.goalSelector.addGoal(3, new FarmerCropAI(this));
         this.goalSelector.addGoal(5, new LookAtPlayerGoal(this, Player.class, 8.0F));
         this.goalSelector.addGoal(6, new RandomLookAroundGoal(this));
@@ -207,6 +206,11 @@ public class FarmerEntity extends AbstractWorkerEntity{
         }else{
             this.setItemSlot(EquipmentSlot.MAINHAND, new ItemStack(Items.WOODEN_HOE));
         }
+    }
+
+    @Override
+    public boolean shouldDirectNavigation() {
+        return false;
     }
 
 }

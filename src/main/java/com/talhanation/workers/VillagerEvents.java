@@ -57,7 +57,6 @@ public class VillagerEvents {
         }
 
     }
-
     private static void createMiner(LivingEntity entity){
         MinerEntity miner = ModEntityTypes.MINER.get().create(entity.level);
         Villager villager = (Villager) entity;

@@ -114,12 +114,12 @@ public class MerchantEntity extends AbstractWorkerEntity{
             }
 
             else if (this.isTame() && player.getUUID() != this.getOwnerUUID()) {
-                if (getOwner() != null) player.sendMessage(new TextComponent("" + this.getName().getString() + ": Hello, I am a the merchant of " + this.getOwner().getDisplayName().getString() + "!"), player.getUUID());
+                if (getOwner() != null) player.sendMessage(new TextComponent("" + this.getName().getString() + ": Hello, I am the merchant of " + this.getOwner().getDisplayName().getString() + "!"), player.getUUID());
                 if (!player.isCrouching()) {
                     openTradeGUI(player);
                     return InteractionResult.SUCCESS;
                 } else
-                if (getOwner() != null) player.sendMessage(new TextComponent("" + this.getName().getString() + ": Hello, I am a the merchant of " + this.getOwner().getDisplayName().getString() + "!"), player.getUUID());
+                if (getOwner() != null) player.sendMessage(new TextComponent("" + this.getName().getString() + ": Hello, I am the merchant of " + this.getOwner().getDisplayName().getString() + "!"), player.getUUID());
 
             }
             return InteractionResult.PASS;
@@ -219,6 +219,11 @@ public class MerchantEntity extends AbstractWorkerEntity{
         this.setCanPickUpLoot(true);
 
         this.heal(100);
+    }
+
+    @Override
+    public boolean shouldDirectNavigation() {
+        return false;
     }
 
     protected void pickUpItem(ItemEntity itemEntity) {

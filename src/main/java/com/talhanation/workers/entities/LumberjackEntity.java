@@ -153,7 +153,6 @@ public class LumberjackEntity extends AbstractWorkerEntity{
         super.registerGoals();
         this.goalSelector.addGoal(1, new FloatGoal(this));
         this.goalSelector.addGoal(2, new WorkerPickupWantedItemGoal(this));
-        this.goalSelector.addGoal(2, new WorkerFollowOwnerGoal(this, 1.2D, 7.F, 4.0F));
         this.goalSelector.addGoal(3, new LumberjackAI(this));
 
         this.goalSelector.addGoal(1, new PanicGoal(this, 1.3D));
@@ -197,6 +196,11 @@ public class LumberjackEntity extends AbstractWorkerEntity{
         this.setRandomSpawnBonus();
         this.setPersistenceRequired();
         this.setCanPickUpLoot(true);
+    }
+
+    @Override
+    public boolean shouldDirectNavigation() {
+        return true;
     }
 
     protected void pickUpItem(ItemEntity itemEntity) {

@@ -1,22 +1,13 @@
 package com.talhanation.workers.entities;
 
 import com.google.common.collect.ImmutableSet;
-import com.talhanation.workers.Main;
 import com.talhanation.workers.entities.ai.ShepherdAI;
 import com.talhanation.workers.entities.ai.WorkerFollowOwnerGoal;
 import com.talhanation.workers.entities.ai.WorkerPickupWantedItemGoal;
-import com.talhanation.workers.inventory.ShepherdInventoryContainer;
-import com.talhanation.workers.network.MessageOpenGuiShepherd;
 import net.minecraft.nbt.CompoundTag;
-import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.TextComponent;
-import net.minecraft.network.syncher.EntityDataAccessor;
-import net.minecraft.network.syncher.EntityDataSerializers;
-import net.minecraft.network.syncher.SynchedEntityData;
 import net.minecraft.server.level.ServerLevel;
-import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.DifficultyInstance;
-import net.minecraft.world.MenuProvider;
 import net.minecraft.world.SimpleContainer;
 import net.minecraft.world.entity.*;
 import net.minecraft.world.entity.ai.attributes.AttributeSupplier;
@@ -27,22 +18,18 @@ import net.minecraft.world.entity.ai.goal.RandomLookAroundGoal;
 import net.minecraft.world.entity.ai.goal.WaterAvoidingRandomStrollGoal;
 import net.minecraft.world.entity.ai.navigation.GroundPathNavigation;
 import net.minecraft.world.entity.item.ItemEntity;
-import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.entity.player.Player;
-import net.minecraft.world.inventory.AbstractContainerMenu;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.ServerLevelAccessor;
-import net.minecraftforge.network.NetworkHooks;
 
 import javax.annotation.Nullable;
 import java.util.Set;
 import java.util.function.Predicate;
 
-public class ShepherdEntity extends AbstractWorkerEntity{
-    private static final EntityDataAccessor<Integer> MAX_SHEEPS = SynchedEntityData.defineId(MinerEntity.class, EntityDataSerializers.INT);
+public class ShepherdEntity extends AbstractAnimalFarmerEntity{
 
     private final Predicate<ItemEntity> ALLOWED_ITEMS = (item) -> {
         return !item.hasPickUpDelay() && item.isAlive() && this.wantsToPickUp(item.getItem());
@@ -71,20 +58,6 @@ public class ShepherdEntity extends AbstractWorkerEntity{
         super(entityType, world);
     }
 
-    protected void defineSynchedData() {
-        super.defineSynchedData();
-        this.entityData.define(MAX_SHEEPS, 8);
-    }
-
-    public void addAdditionalSaveData(CompoundTag nbt) {
-        super.addAdditionalSaveData(nbt);
-        nbt.putInt("MaxSheep", this.getMaxSheepCount());
-    }
-
-    public void readAdditionalSaveData(CompoundTag nbt) {
-        super.readAdditionalSaveData(nbt);
-        this.setMaxSheepCount(nbt.getInt("MaxSheep"));
-    }
 
     @Override
     public void tick() {
@@ -119,7 +92,6 @@ public class ShepherdEntity extends AbstractWorkerEntity{
     protected void registerGoals() {
         super.registerGoals();
         this.goalSelector.addGoal(0, new FloatGoal(this));
-        this.goalSelector.addGoal(1, new WorkerFollowOwnerGoal(this, 1.2D, 7.F, 4.0F));
         this.goalSelector.addGoal(2, new WorkerPickupWantedItemGoal(this));
         this.goalSelector.addGoal(3, new ShepherdAI(this, 1));
         //this.goalSelector.addGoal(3, new BreedAnimalGoal<>(this, SheepEntity.class));
@@ -192,32 +164,10 @@ public class ShepherdEntity extends AbstractWorkerEntity{
         this.setItemSlot(EquipmentSlot.OFFHAND, new ItemStack(Items.WOODEN_HOE));
     }
 
-    public void setMaxSheepCount(int x){
-        this.entityData.set(MAX_SHEEPS, x);
-    }
-
-    public int getMaxSheepCount(){
-        return entityData.get(MAX_SHEEPS);
-    }
 
 
     @Override
-    public void openGUI(Player player) {
-        if (player instanceof ServerPlayer) {
-            NetworkHooks.openGui((ServerPlayer) player, new MenuProvider() {
-                @Override
-                public Component getDisplayName() {
-                    return getName();
-                }
-
-                @Nullable
-                @Override
-                public AbstractContainerMenu createMenu(int i, Inventory playerInventory, Player playerEntity) {
-                    return new ShepherdInventoryContainer(i, ShepherdEntity.this, playerInventory);
-                }
-            }, packetBuffer -> {packetBuffer.writeUUID(getUUID());});
-        } else {
-            Main.SIMPLE_CHANNEL.sendToServer(new MessageOpenGuiShepherd(player, this.getUUID()));
-        }
+    public boolean shouldDirectNavigation() {
+        return false;
     }
 }

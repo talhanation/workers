@@ -1,6 +1,7 @@
 package com.talhanation.workers.network;
 
 import com.talhanation.workers.entities.MinerEntity;
+import de.maxhenkel.corelib.net.Message;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.network.NetworkEvent;

@@ -16,9 +16,11 @@ public class ClientEvent {
     public static void clientSetup(EntityRenderersEvent.RegisterRenderers event){
         event.registerEntityRenderer(ModEntityTypes.MINER.get(), MinerRenderer::new);
         event.registerEntityRenderer(ModEntityTypes.LUMBERJACK.get(), LumberjackRenderer::new );
-        event.registerEntityRenderer(ModEntityTypes.SHEPHERD.get(), WorkersRenderer::new );
-        event.registerEntityRenderer(ModEntityTypes.FARMER.get(), WorkersRenderer::new );
+        event.registerEntityRenderer(ModEntityTypes.SHEPHERD.get(), ShepherdRenderer::new );
+        event.registerEntityRenderer(ModEntityTypes.FARMER.get(), FarmerRenderer::new );
         event.registerEntityRenderer(ModEntityTypes.FISHERMAN.get(), FishermanRenderer::new );
         event.registerEntityRenderer(ModEntityTypes.MERCHANT.get(), MerchantRenderer::new );
+        event.registerEntityRenderer(ModEntityTypes.CATTLE_FARMER.get(), CattleFarmerRenderer::new );
+        event.registerEntityRenderer(ModEntityTypes.CHICKEN_FARMER.get(), ChickenFarmerRenderer::new );
     }
 }

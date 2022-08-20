@@ -1,6 +1,7 @@
 package com.talhanation.workers.init;
 
 import com.talhanation.workers.Main;
+import com.talhanation.workers.client.render.ChickenFarmerRenderer;
 import com.talhanation.workers.entities.*;
 import net.minecraft.world.entity.MobCategory;
 import net.minecraft.world.entity.EntityType;
@@ -61,4 +62,22 @@ public class ModEntityTypes {
                     .setTrackingRange(32)
                     .setShouldReceiveVelocityUpdates(true)
                     .build(new ResourceLocation(Main.MOD_ID, "merchant").toString()));
+
+
+    public static final RegistryObject<EntityType<CattleFarmerEntity>> CATTLE_FARMER = ENTITY_TYPES.register("cattle_farmer",
+            () -> EntityType.Builder.of(CattleFarmerEntity::new, MobCategory.CREATURE)
+                    .sized(0.6F, 1.95F)
+                    .canSpawnFarFromPlayer()
+                    .setTrackingRange(32)
+                    .setShouldReceiveVelocityUpdates(true)
+                    .build(new ResourceLocation(Main.MOD_ID, "cattle_farmer").toString()));
+
+    public static final RegistryObject<EntityType<ChickenFarmerEntity>> CHICKEN_FARMER = ENTITY_TYPES.register("chicken_farmer",
+            () -> EntityType.Builder.of(ChickenFarmerEntity::new, MobCategory.CREATURE)
+                    .sized(0.6F, 1.95F)
+                    .canSpawnFarFromPlayer()
+                    .setTrackingRange(32)
+                    .setShouldReceiveVelocityUpdates(true)
+                    .build(new ResourceLocation(Main.MOD_ID, "chicken_farmer").toString()));
+
 }

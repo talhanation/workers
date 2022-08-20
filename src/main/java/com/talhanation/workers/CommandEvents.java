@@ -3,6 +3,7 @@ package com.talhanation.workers;
 import com.talhanation.workers.entities.AbstractWorkerEntity;
 import com.talhanation.workers.entities.MerchantEntity;
 import com.talhanation.workers.entities.MinerEntity;
+import net.minecraft.network.chat.TranslatableComponent;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.entity.player.Inventory;
@@ -12,6 +13,7 @@ import net.minecraft.world.item.ItemStack;
 import net.minecraft.core.Direction;
 import net.minecraft.core.BlockPos;
 import net.minecraft.network.chat.TextComponent;
+import net.minecraft.world.item.Items;
 
 import java.util.Objects;
 import java.util.Optional;
@@ -19,20 +21,32 @@ import java.util.UUID;
 
 public class CommandEvents {
 
+    public static final TranslatableComponent TEXT_HIRE_COSTS = new TranslatableComponent("chat.recruits.text.hire_costs");
+
     public static void setStartPosWorker(UUID player_uuid, AbstractWorkerEntity worker, BlockPos blockpos) {
         LivingEntity owner = worker.getOwner();
 
         if (worker.isTame() && Objects.equals(worker.getOwnerUUID(), player_uuid)) {
             if (owner != null) {
-                if (worker instanceof MinerEntity) {
+                if (worker instanceof MinerEntity miner) {
                     Direction playerDirection = owner.getDirection();
-                    MinerEntity miner = (MinerEntity) worker;
                     miner.setMineDirection(playerDirection);
                 }
             }
-            worker.setStartPos(Optional.of(blockpos));
+            worker.setStartPos(blockpos);
             worker.setFollow(false);
             worker.setIsWorking(true);
+        }
+    }
+
+    public static void setHomePosWorker(UUID player_uuid, AbstractWorkerEntity worker, BlockPos blockpos) {
+        LivingEntity owner = worker.getOwner();
+
+        if (worker.isTame() && worker.getOwnerUUID().equals(player_uuid)) {
+            if (owner != null) {
+                Main.LOGGER.debug("Event: " + blockpos.toShortString());
+                worker.setHomePos(blockpos);
+            }
         }
     }
 
@@ -121,6 +135,7 @@ public class CommandEvents {
 
             //add tradeGoodLeft to merchantInv
             ItemStack tradeGoodLeft = tradeItemStack.copy();
+            //int maxSize = tradeGoodLeft.getMaxStackSize();
             for(int i = 0; i < 18 ;i++) {
                 if (merchantTradeItem > 64) {
                     tradeGoodLeft.setCount(merchantTradeItem);
@@ -193,4 +208,60 @@ public class CommandEvents {
                 merchant.getOwner().sendMessage(new TextComponent("" + merchant.getName().getString() + ": My inventory is full, i cant accept new items!"), player.getUUID());
         }
     }
+
+    public static void handleRecruiting(Player player, AbstractWorkerEntity workerEntity){
+        String name = workerEntity.getName().getString() + ": ";
+        String hire_costs = TEXT_HIRE_COSTS.getString();
+        int costs = workerEntity.workerCosts();
+
+        String recruit_info = String.format(hire_costs, costs);
+        Inventory playerInv = player.getInventory();
+
+        int playerEmeralds = 0;
+
+        ItemStack emeraldItemStack = Items.EMERALD.getDefaultInstance();
+        Item emerald = emeraldItemStack.getItem();//
+        int sollPrice = workerEntity.workerCosts();
+
+
+        //checkPlayerMoney
+        for (int i = 0; i < playerInv.getContainerSize(); i++){
+            ItemStack itemStackInSlot = playerInv.getItem(i);
+            Item itemInSlot = itemStackInSlot.getItem();
+            if (itemInSlot == emerald){
+                playerEmeralds = playerEmeralds + itemStackInSlot.getCount();
+            }
+        }
+
+        boolean playerCanPay = playerEmeralds >= sollPrice;
+
+        if (playerCanPay){
+            if(workerEntity.hire(player)) {
+
+                //give player tradeGood
+                //remove playerEmeralds ->add left
+                //
+                playerEmeralds = playerEmeralds - sollPrice;
+
+                //merchantEmeralds = merchantEmeralds + sollPrice;
+
+                //remove playerEmeralds
+                for (int i = 0; i < playerInv.getContainerSize(); i++) {
+                    ItemStack itemStackInSlot = playerInv.getItem(i);
+                    Item itemInSlot = itemStackInSlot.getItem();
+                    if (itemInSlot == emerald) {
+                        playerInv.removeItemNoUpdate(i);
+                    }
+                }
+
+                //add leftEmeralds to playerInventory
+                ItemStack emeraldsLeft = emeraldItemStack.copy();
+                emeraldsLeft.setCount(playerEmeralds);
+                playerInv.add(emeraldsLeft);
+            }
+        }
+        else
+            player.sendMessage(new TextComponent(name + recruit_info), player.getUUID());
+    }
+
 }

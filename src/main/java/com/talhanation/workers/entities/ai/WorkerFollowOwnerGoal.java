@@ -40,6 +40,8 @@ public class WorkerFollowOwnerGoal extends Goal {
             return false;
         } else if (!this.workerEntity.getFollow()) {
             return false;
+        } else if (this.workerEntity.isSleeping()) {
+            return false;
         } else if (this.workerEntity.isOrderedToSit()) {
             return false;
         } else if (this.workerEntity.distanceToSqr(owner) < (double)(this.startDistance * this.startDistance)) {
@@ -53,6 +55,8 @@ public class WorkerFollowOwnerGoal extends Goal {
 
     public boolean canContinueToUse() {
         if (this.navigation.isDone()) {
+            return false;
+        } else if (!this.workerEntity.isSleeping()) {
             return false;
         } else if (this.workerEntity.isOrderedToSit()) {
             return false;

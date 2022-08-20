@@ -29,13 +29,13 @@ public class MinerMine8x8x1FlatGoal extends Goal {
     }
 
     public boolean canUse() {
-        if (!this.miner.getStartPos().isPresent()) {
+        if (this.miner.getStartPos() == null) {
             return false;
         }
         if (this.miner.getFollow()) {
             return false;
 
-        } else if (this.miner.getStartPos().get().closerThan(miner.getOnPos(), within) && !this.miner.getFollow() && miner.getMineType() == 4)
+        } else if (this.miner.getStartPos().closerThan(miner.getOnPos(), within) && !this.miner.getFollow() && miner.getMineType() == 4)
 
             return true;
 
@@ -66,16 +66,16 @@ public class MinerMine8x8x1FlatGoal extends Goal {
 
         if (!miner.getFollow()) {
             if (miner.getMineDirection().equals(Direction.EAST)) {
-                this.minePos = new BlockPos(miner.getStartPos().get().getX() + blocks, miner.getStartPos().get().getY(), miner.getStartPos().get().getZ() - side);
+                this.minePos = new BlockPos(miner.getStartPos().getX() + blocks, miner.getStartPos().getY(), miner.getStartPos().getZ() - side);
 
             } else if (miner.getMineDirection().equals(Direction.WEST)) {
-                this.minePos = new BlockPos(miner.getStartPos().get().getX() - blocks, miner.getStartPos().get().getY(), miner.getStartPos().get().getZ() + side);
+                this.minePos = new BlockPos(miner.getStartPos().getX() - blocks, miner.getStartPos().getY(), miner.getStartPos().getZ() + side);
 
             } else if (miner.getMineDirection().equals(Direction.NORTH)) {
-                this.minePos = new BlockPos(miner.getStartPos().get().getX() - side, miner.getStartPos().get().getY(), miner.getStartPos().get().getZ() - blocks);
+                this.minePos = new BlockPos(miner.getStartPos().getX() - side, miner.getStartPos().getY(), miner.getStartPos().getZ() - blocks);
 
             } else if (miner.getMineDirection().equals(Direction.SOUTH)) {
-                this.minePos = new BlockPos(miner.getStartPos().get().getX() + side, miner.getStartPos().get().getY(), miner.getStartPos().get().getZ() + blocks);
+                this.minePos = new BlockPos(miner.getStartPos().getX() + side, miner.getStartPos().getY(), miner.getStartPos().getZ() + blocks);
             }
 
             if (!minePos.closerThan(miner.getOnPos(), 2) && !miner.getIsPickingUp()){
@@ -104,7 +104,7 @@ public class MinerMine8x8x1FlatGoal extends Goal {
             }
 
             if (side == 8){
-                miner.setStartPos(Optional.empty());
+                miner.clearStartPos();
                 miner.setIsWorking(false);
             }
         }
