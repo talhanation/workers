@@ -4,6 +4,7 @@ import com.talhanation.workers.entities.AbstractWorkerEntity;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.ai.goal.Goal;
 import net.minecraft.world.entity.ai.navigation.PathNavigation;
+import net.minecraft.world.level.block.FenceBlock;
 import net.minecraft.world.level.pathfinder.BlockPathTypes;
 import net.minecraft.world.level.LevelReader;
 
@@ -73,12 +74,16 @@ public class WorkerFollowOwnerGoal extends Goal {
         this.timeToRecalcPath = 0;
         this.oldWaterCost = this.workerEntity.getPathfindingMalus(BlockPathTypes.WATER);
         this.workerEntity.setPathfindingMalus(BlockPathTypes.WATER, 0.0F);
+        this.navigation.getNodeEvaluator().setCanPassDoors(true);
+        this.navigation.getNodeEvaluator().setCanOpenDoors(true);
     }
 
     public void stop() {
         this.owner = null;
         this.navigation.stop();
         this.workerEntity.setPathfindingMalus(BlockPathTypes.WATER, this.oldWaterCost);
+        this.navigation.getNodeEvaluator().setCanPassDoors(false);
+        this.navigation.getNodeEvaluator().setCanOpenDoors(false);
     }
 
     public void tick() {

@@ -94,6 +94,7 @@ public abstract class AbstractWorkerEntity extends AbstractChunkLoaderEntity {
         this.goalSelector.addGoal(0, new EatGoal(this));
         this.goalSelector.addGoal(0, new SleepGoal(this));
         this.goalSelector.addGoal(0, new OpenDoorGoal(this, true));
+        this.goalSelector.addGoal(0, new OpenFenceGateGoal(this, true));//node-evaluator needs to detect that block
         //this.goalSelector.addGoal(1, new TransferItemsInChestGoal(this));
         this.goalSelector.addGoal(1, new WorkerMoveToHomeGoal<>(this, 6.0F));
         this.goalSelector.addGoal(1, new WorkerFollowOwnerGoal(this, 1.2D, 5.0F, 2.0F));
@@ -494,10 +495,6 @@ public abstract class AbstractWorkerEntity extends AbstractChunkLoaderEntity {
         this.setPreviousTimeBreak(-1);
     }
 
-    public boolean isOwnedByThisPlayer(AbstractWorkerEntity recruit, Player player){
-        return  (recruit.getOwnerUUID() == player.getUUID());
-    }
-
     @Override
     public boolean canBeLeashed(Player player) {
         return false;
@@ -506,18 +503,7 @@ public abstract class AbstractWorkerEntity extends AbstractChunkLoaderEntity {
 
     @Override
     @OnlyIn(Dist.CLIENT)
-    protected void spawnTamingParticles(boolean p_70908_1_) {
-        ParticleOptions iparticledata = ParticleTypes.HAPPY_VILLAGER;
-        if (!p_70908_1_) {
-            iparticledata = ParticleTypes.SMOKE;
-        }
-
-        for(int i = 0; i < 7; ++i) {
-            double d0 = this.random.nextGaussian() * 0.02D;
-            double d1 = this.random.nextGaussian() * 0.02D;
-            double d2 = this.random.nextGaussian() * 0.02D;
-            this.level.addParticle(iparticledata, this.getRandomX(1.0D), this.getRandomY() + 0.5D, this.getRandomZ(1.0D), d0, d1, d2);
-        }
+    protected void spawnTamingParticles(boolean smoke) {
 
     }
 
