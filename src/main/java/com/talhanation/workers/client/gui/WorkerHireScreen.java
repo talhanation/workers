@@ -79,19 +79,19 @@ public class WorkerHireScreen extends ScreenBase<WorkerHireContainer> {
 
         //Info
         font.draw(matrixStack, "Hp:", k, l, fontColor);
-        font.draw(matrixStack, "" + health, k + 25, l , fontColor);
+        font.draw(matrixStack, "" + health, k + 40, l , fontColor);
 
         font.draw(matrixStack, "MaxHp:", k , l  + 10, fontColor);
-        font.draw(matrixStack, "" + maxHealth, k + 25 , l + 10, fontColor);
+        font.draw(matrixStack, "" + maxHealth, k + 40 , l + 10, fontColor);
 
         font.draw(matrixStack, "Speed:", k, l + 20, fontColor);
-        font.draw(matrixStack, "" + decimalformat.format(speed), k + 25, l + 20, fontColor);
+        font.draw(matrixStack, "" + decimalformat.format(speed), k + 40, l + 20, fontColor);
 
         font.draw(matrixStack, "Hunger:", k, l + 30, fontColor);
-        font.draw(matrixStack, ""+ hunger, k + 25, l + 30, fontColor);
+        font.draw(matrixStack, ""+ hunger, k + 40, l + 30, fontColor);
 
         font.draw(matrixStack, "Costs:", k, l + 40, fontColor);
-        font.draw(matrixStack, ""+ costs, k + 30, l + 40, fontColor);
+        font.draw(matrixStack, ""+ costs, k + 40, l + 40, fontColor);
 
     }
 
