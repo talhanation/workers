@@ -5,6 +5,7 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.world.SimpleContainer;
 import net.minecraft.world.entity.ai.goal.Goal;
 import net.minecraft.world.entity.animal.Chicken;
+import net.minecraft.world.entity.animal.Cow;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
 
@@ -123,6 +124,7 @@ public class ChickenFarmerAI extends Goal {
                         .inflate(8D), Chicken::isAlive)
                 .stream()
                 .filter(not(Chicken::isBaby))
+                .filter(not(Chicken::isInLove))
                 .collect(Collectors.toList());
     }
 

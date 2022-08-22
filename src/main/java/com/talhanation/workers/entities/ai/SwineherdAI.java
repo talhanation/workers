@@ -1,12 +1,9 @@
 package com.talhanation.workers.entities.ai;
 
-import com.talhanation.workers.entities.CattleFarmerEntity;
 import com.talhanation.workers.entities.SwineherdEntity;
 import net.minecraft.core.BlockPos;
-import net.minecraft.sounds.SoundEvents;
 import net.minecraft.world.SimpleContainer;
 import net.minecraft.world.entity.ai.goal.Goal;
-import net.minecraft.world.entity.animal.Cow;
 import net.minecraft.world.entity.animal.Pig;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
@@ -24,8 +21,6 @@ public class SwineherdAI extends Goal {
     private boolean breeding;
     private boolean slaughtering;
     private BlockPos workPos;
-
-
 
     public SwineherdAI(SwineherdEntity worker, int coolDown) {
         this.swineherd = worker;
@@ -60,11 +55,11 @@ public class SwineherdAI extends Goal {
             if (this.pig.isPresent() ) {
                 int i = pig.get().getAge();
 
-                if (i == 0 && this.hasWheat()) {
+                if (i == 0 && this.hasCarrot()) {
                     this.swineherd.getNavigation().moveTo(this.pig.get(), 1);
 
                     if (pig.get().closerThan(this.swineherd, 1.5)) {
-                        this.consumeWheat();
+                        this.consumeCarrot();
                         this.swineherd.getLookControl().setLookAt(pig.get().getX(), pig.get().getEyeY(), pig.get().getZ(), 10.0F, (float) this.swineherd.getMaxHeadXRot());
                         pig.get().setInLove(null);
                         this.pig = Optional.empty();
@@ -103,40 +98,15 @@ public class SwineherdAI extends Goal {
 
     }
 
-    private void consumeWheat(){
+    private void consumeCarrot(){
         SimpleContainer inventory = swineherd.getInventory();
         for(int i = 0; i < inventory.getContainerSize(); i++) {
             ItemStack itemStack = inventory.getItem(i);
-            if (itemStack.getItem().equals(Items.WHEAT))
+            if (itemStack.getItem().equals(Items.CARROT))
                 itemStack.shrink(1);
         }
     }
 
-    public void milkCow(Cow cow) {
-       swineherd.workerSwingArm();
-
-        SimpleContainer inventory = swineherd.getInventory();
-        for(int i = 0; i < inventory.getContainerSize(); i++) {
-            ItemStack itemStack = inventory.getItem(i);
-            if (itemStack.getItem().equals(Items.BUCKET)){
-                itemStack.shrink(1);
-            }
-        }
-        inventory.addItem(Items.MILK_BUCKET.getDefaultInstance());
-
-        cow.playSound(SoundEvents.COW_MILK, 1.0F, 1.0F);
-    }
-
-    public boolean hasBucket(){
-        SimpleContainer inventory = swineherd.getInventory();
-        for(int i = 0; i < inventory.getContainerSize(); i++) {
-            ItemStack itemStack = inventory.getItem(i);
-            if (itemStack.getItem().equals(Items.BUCKET)){
-                return true;
-            }
-        }
-        return false;
-    }
 
     private Optional<Pig> findCowMilking() {
         return  swineherd.level.getEntitiesOfClass(Pig.class, swineherd.getBoundingBox()
@@ -152,14 +122,15 @@ public class SwineherdAI extends Goal {
                         .inflate(8D), Pig::isAlive)
                 .stream()
                 .filter(not(Pig::isBaby))
+                .filter(not(Pig::isInLove))
                 .collect(Collectors.toList());
     }
 
-    private boolean hasWheat() {
+    private boolean hasCarrot() {
         SimpleContainer inventory = swineherd.getInventory();
         for(int i = 0; i < inventory.getContainerSize(); i++) {
             ItemStack itemStack = inventory.getItem(i);
-            if (itemStack.getItem().equals(Items.WHEAT))
+            if (itemStack.getItem().equals(Items.CARROT))
                 if (itemStack.getCount() >= 2)
                     return true;
         }

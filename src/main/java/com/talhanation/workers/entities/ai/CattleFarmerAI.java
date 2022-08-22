@@ -1,6 +1,6 @@
 package com.talhanation.workers.entities.ai;
 
-import com.talhanation.workers.Main;
+
 import com.talhanation.workers.entities.CattleFarmerEntity;
 import net.minecraft.core.BlockPos;
 import net.minecraft.sounds.SoundEvents;
@@ -172,6 +172,7 @@ public class CattleFarmerAI extends Goal {
                         .inflate(8D), Cow::isAlive)
                 .stream()
                 .filter(not(Cow::isBaby))
+                .filter(not(Cow::isInLove))
                 .collect(Collectors.toList());
     }
 

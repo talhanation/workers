@@ -3,6 +3,7 @@ package com.talhanation.workers.entities.ai;
 import com.talhanation.workers.entities.ShepherdEntity;
 import net.minecraft.core.BlockPos;
 import net.minecraft.world.entity.ai.goal.Goal;
+import net.minecraft.world.entity.animal.Chicken;
 import net.minecraft.world.entity.animal.Sheep;
 import net.minecraft.world.SimpleContainer;
 import net.minecraft.world.item.ItemStack;
@@ -162,6 +163,7 @@ public class ShepherdAI extends Goal {
                         .inflate(8D), Sheep::isAlive)
                 .stream()
                 .filter(not(Sheep::isBaby))
+                .filter(not(Sheep::isInLove))
                 .collect(Collectors.toList());
 
     }
