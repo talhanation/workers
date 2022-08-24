@@ -9,7 +9,7 @@ import net.minecraft.world.damagesource.DamageSource;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.EquipmentSlot;
 import net.minecraft.world.entity.TamableAnimal;
-import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.*;
 import net.minecraft.world.level.Level;
 
 public abstract class AbstractInventoryEntity extends TamableAnimal {
@@ -76,6 +76,32 @@ public abstract class AbstractInventoryEntity extends TamableAnimal {
 
 
     ////////////////////////////////////OTHER FUNCTIONS////////////////////////////////////
+
+    public void upgradeTool(){
+        for(int i = 0; i < this.inventory.getContainerSize(); i++){
+            ItemStack firstTool = inventory.getItem(i);
+
+            if (firstTool.getItem() instanceof AxeItem && this instanceof LumberjackEntity){
+                this.setItemInHand(InteractionHand.MAIN_HAND, firstTool);
+                break;
+            }
+
+            if (firstTool.getItem() instanceof PickaxeItem && this instanceof MinerEntity){
+                this.setItemInHand(InteractionHand.MAIN_HAND, firstTool);
+                break;
+            }
+
+            if (firstTool.getItem() instanceof HoeItem && this instanceof FarmerEntity){
+                this.setItemInHand(InteractionHand.MAIN_HAND, firstTool);
+                break;
+            }
+
+            if (firstTool.getItem() instanceof FishingRodItem && this instanceof FishermanEntity){
+                this.setItemInHand(InteractionHand.MAIN_HAND, firstTool);
+                break;
+            }
+        }
+    }
 
     public void die(DamageSource dmg) {
         super.die(dmg);

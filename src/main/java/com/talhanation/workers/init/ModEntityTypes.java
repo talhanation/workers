@@ -80,4 +80,12 @@ public class ModEntityTypes {
                     .setShouldReceiveVelocityUpdates(true)
                     .build(new ResourceLocation(Main.MOD_ID, "chicken_farmer").toString()));
 
+    public static final RegistryObject<EntityType<SwineherdEntity>> SWINEHERD = ENTITY_TYPES.register("swineherd",
+            () -> EntityType.Builder.of(SwineherdEntity::new, MobCategory.CREATURE)
+                    .sized(0.6F, 1.95F)
+                    .canSpawnFarFromPlayer()
+                    .setTrackingRange(32)
+                    .setShouldReceiveVelocityUpdates(true)
+                    .build(new ResourceLocation(Main.MOD_ID, "swineherd").toString()));
+
 }

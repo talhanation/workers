@@ -3,6 +3,7 @@ package com.talhanation.workers.entities.ai;
 import com.talhanation.workers.entities.ChickenFarmerEntity;
 import net.minecraft.core.BlockPos;
 import net.minecraft.world.SimpleContainer;
+import net.minecraft.world.entity.EquipmentSlot;
 import net.minecraft.world.entity.ai.goal.Goal;
 import net.minecraft.world.entity.animal.Chicken;
 import net.minecraft.world.entity.animal.Cow;
@@ -48,7 +49,7 @@ public class ChickenFarmerAI extends Goal {
     @Override
     public void tick() {
         super.tick();
-        if ( workPos != null && !workPos.closerThan(chickenFarmer.getOnPos(), 10D) && !chickenFarmer.getFollow())
+        if (workPos != null && !workPos.closerThan(chickenFarmer.getOnPos(), 10D) && !chickenFarmer.getFollow())
             this.chickenFarmer.getNavigation().moveTo(workPos.getX(), workPos.getY(), workPos.getZ(), 1);
 
         if (breeding){
@@ -58,6 +59,7 @@ public class ChickenFarmerAI extends Goal {
 
                 if (i == 0 && this.hasSeeds()) {
                     this.chickenFarmer.getNavigation().moveTo(this.chicken.get(), 1);
+                    this.chickenFarmer.setItemSlot(EquipmentSlot.MAINHAND, new ItemStack(Items.WHEAT_SEEDS));
 
                     if (chicken.get().closerThan(this.chickenFarmer, 1.5)) {
                         this.consumeSeed();
@@ -69,10 +71,12 @@ public class ChickenFarmerAI extends Goal {
                 else {
                     breeding = false;
                     slaughtering = true;
+                    this.chickenFarmer.setItemSlot(EquipmentSlot.MAINHAND, ItemStack.EMPTY);
                 }
             } else {
                 breeding = false;
                 slaughtering = true;
+                this.chickenFarmer.setItemSlot(EquipmentSlot.MAINHAND, ItemStack.EMPTY);
             }
         }
 

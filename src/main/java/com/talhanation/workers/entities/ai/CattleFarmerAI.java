@@ -5,6 +5,7 @@ import com.talhanation.workers.entities.CattleFarmerEntity;
 import net.minecraft.core.BlockPos;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.world.SimpleContainer;
+import net.minecraft.world.entity.EquipmentSlot;
 import net.minecraft.world.entity.ai.goal.Goal;
 import net.minecraft.world.entity.animal.Cow;
 import net.minecraft.world.item.ItemStack;
@@ -59,6 +60,7 @@ public class CattleFarmerAI extends Goal {
             this.cow = findCowMilking();
             if (this.cow.isPresent() && hasBucket()) {
                 this.cattleFarmer.getNavigation().moveTo(this.cow.get(), 1);
+                this.cattleFarmer.setItemSlot(EquipmentSlot.MAINHAND, new ItemStack(Items.BUCKET));
 
                 if (cow.get().closerThan(this.cattleFarmer, 1.5)) {
                     milkCow(this.cow.get());
@@ -70,6 +72,7 @@ public class CattleFarmerAI extends Goal {
             else {
                 milking = false;
                 breeding = true;
+                this.cattleFarmer.setItemSlot(EquipmentSlot.MAINHAND, ItemStack.EMPTY);
             }
 
         }
@@ -81,6 +84,7 @@ public class CattleFarmerAI extends Goal {
 
                 if (i == 0 && this.hasWheat()) {
                     this.cattleFarmer.getNavigation().moveTo(this.cow.get(), 1);
+                    this.cattleFarmer.setItemSlot(EquipmentSlot.MAINHAND, new ItemStack(Items.WHEAT));
 
                     if (cow.get().closerThan(this.cattleFarmer, 1.5)) {
                         this.consumeWheat();
@@ -90,10 +94,12 @@ public class CattleFarmerAI extends Goal {
                     }
                 }
                 else {
+                    this.cattleFarmer.setItemSlot(EquipmentSlot.MAINHAND, ItemStack.EMPTY);
                     breeding = false;
                     slaughtering = true;
                 }
             } else {
+                this.cattleFarmer.setItemSlot(EquipmentSlot.MAINHAND, ItemStack.EMPTY);
                 breeding = false;
                 slaughtering = true;
             }

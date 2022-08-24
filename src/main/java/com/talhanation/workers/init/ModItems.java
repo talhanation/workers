@@ -23,6 +23,9 @@ public class ModItems {
     public static final RegistryObject<Item> FARMER_SPAWN_EGG = RegistryUtils.createSpawnEggItem("farmer", ModEntityTypes.FARMER::get, 16755200, 16777045);
     public static final RegistryObject<Item> MERCHANT_SPAWN_EGG = RegistryUtils.createSpawnEggItem("merchant", ModEntityTypes.MERCHANT::get, 16755200, 16777045);
     public static final RegistryObject<Item> CATTLE_FARMER_SPAWN_EGG = RegistryUtils.createSpawnEggItem("cattle_farmer", ModEntityTypes.CATTLE_FARMER::get, 16755200, 16777045);
+    public static final RegistryObject<Item> CHICKEN_FARMER_SPAWN_EGG = RegistryUtils.createSpawnEggItem("chicken_farmer", ModEntityTypes.CHICKEN_FARMER::get, 16755200, 16777045);
+    public static final RegistryObject<Item> SWINEHERD_SPAWN_EGG = RegistryUtils.createSpawnEggItem("swineherd", ModEntityTypes.SWINEHERD::get, 16755200, 16777045);
+
 
     public static final RegistryObject<BlockItem> miner_block = ITEMS.register("miner_block", () -> new BlockItem(ModBlocks.MINER_BLOCK.get(), (new Item.Properties()).tab(CreativeModeTab.TAB_DECORATIONS)));
     public static final RegistryObject<BlockItem> lumberjack_block = ITEMS.register("lumberjack_block", () -> new BlockItem(ModBlocks.LUMBERJACK_BLOCK.get(), (new Item.Properties()).tab(CreativeModeTab.TAB_DECORATIONS)));
@@ -33,5 +36,6 @@ public class ModItems {
     public static final RegistryObject<BlockItem> shepherd_block = ITEMS.register("shepherd_block", () -> new BlockItem(ModBlocks.SHEPHERD_BLOCK.get(), (new Item.Properties()).tab(CreativeModeTab.TAB_DECORATIONS)));
     public static final RegistryObject<BlockItem> cattle_farmer_block = ITEMS.register("cattle_farmer_block", () -> new BlockItem(ModBlocks.CATTLE_FARMER_BLOCK.get(), (new Item.Properties()).tab(CreativeModeTab.TAB_DECORATIONS)));
     public static final RegistryObject<BlockItem> chicken_farmer_block = ITEMS.register("chicken_farmer_block", () -> new BlockItem(ModBlocks.CHICKEN_FARMER_BLOCK.get(), (new Item.Properties()).tab(CreativeModeTab.TAB_DECORATIONS)));
+    public static final RegistryObject<BlockItem> swineherd_block = ITEMS.register("swineherd_block", () -> new BlockItem(ModBlocks.SWINEHERD_BLOCK.get(), (new Item.Properties()).tab(CreativeModeTab.TAB_DECORATIONS)));
 
 }

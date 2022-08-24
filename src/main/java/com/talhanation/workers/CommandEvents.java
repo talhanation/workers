@@ -21,7 +21,7 @@ import java.util.UUID;
 
 public class CommandEvents {
 
-    public static final TranslatableComponent TEXT_HIRE_COSTS = new TranslatableComponent("chat.recruits.text.hire_costs");
+    public static final TranslatableComponent TEXT_HIRE_COSTS = new TranslatableComponent("chat.workers.text.hire_costs");
 
     public static void setStartPosWorker(UUID player_uuid, AbstractWorkerEntity worker, BlockPos blockpos) {
         LivingEntity owner = worker.getOwner();
@@ -44,7 +44,6 @@ public class CommandEvents {
 
         if (worker.isTame() && worker.getOwnerUUID().equals(player_uuid)) {
             if (owner != null) {
-                Main.LOGGER.debug("Event: " + blockpos.toShortString());
                 worker.setHomePos(blockpos);
             }
         }

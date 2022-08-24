@@ -18,6 +18,7 @@ public class AttributeEvent {
         event.put(ModEntityTypes.MINER.get(), MinerEntity.setAttributes().build());
         event.put(ModEntityTypes.SHEPHERD.get(), ShepherdEntity.setAttributes().build());
         event.put(ModEntityTypes.CATTLE_FARMER.get(), CattleFarmerEntity.setAttributes().build());
-        event.put(ModEntityTypes.CHICKEN_FARMER.get(), CattleFarmerEntity.setAttributes().build());
+        event.put(ModEntityTypes.CHICKEN_FARMER.get(), ChickenFarmerEntity.setAttributes().build());
+        event.put(ModEntityTypes.SWINEHERD.get(), SwineherdEntity.setAttributes().build());
     }
 }

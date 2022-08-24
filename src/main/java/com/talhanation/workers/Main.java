@@ -49,8 +49,9 @@ public class Main {
     public static VillagerProfession MERCHANT;
     public static VillagerProfession SHEPHERD;
     public static VillagerProfession FISHER;
-    public static VillagerProfession CATTLE_FARMER;//villagerevents nachtragen
-    public static VillagerProfession CHICKEN_FARMER;//villager events nachtragen
+    public static VillagerProfession CATTLE_FARMER;
+    public static VillagerProfession CHICKEN_FARMER;
+    public static VillagerProfession SWINEHERD;
     public static PoiType POI_MINER;
     public static PoiType POI_LUMBERJACK;
     public static PoiType POI_FARMER;
@@ -59,6 +60,8 @@ public class Main {
     public static PoiType POI_FISHER;
     public static PoiType POI_CATTLE_FARMER;
     public static PoiType POI_CHICKEN_FARMER;
+    public static PoiType POI_SWINEHERD;
+
     public static KeyMapping C_KEY;
     public static MenuType<WorkerHireContainer> HIRE_CONTAINER_TYPE;
     public static MenuType<WorkerInventoryContainer> MINER_CONTAINER_TYPE;
@@ -137,21 +140,23 @@ public class Main {
         POI_MERCHANT.setRegistryName(Main.MOD_ID, "poi_merchant");
         POI_SHEPHERD = new PoiType("poi_shepherd", PoiType.getBlockStates(ModBlocks.SHEPHERD_BLOCK.get()), 1, 1);
         POI_SHEPHERD.setRegistryName(Main.MOD_ID, "poi_shepherd");
-        /*
-        POI_CATTLE_FARMER = new PoiType("poi_cattle_farmer", PoiType.getBlockStates(ModBlocks.FARMER_BLOCK.get()), 1, 1);
-        POI_CATTLE_FARMER.setRegistryName(Main.MOD_ID, "poi_cattle_farmer");
-        POI_CHICKEN_FARMER = new PoiType("poi_chicken_farmer", PoiType.getBlockStates(ModBlocks.FARMER_BLOCK.get()), 1, 1);
-        POI_CHICKEN_FARMER.setRegistryName(Main.MOD_ID, "poi_chicken_farmer");
 
-         */
+        POI_CATTLE_FARMER = new PoiType("poi_cattle_farmer", PoiType.getBlockStates(ModBlocks.CATTLE_FARMER_BLOCK.get()), 1, 1);
+        POI_CATTLE_FARMER.setRegistryName(Main.MOD_ID, "poi_cattle_farmer");
+        POI_CHICKEN_FARMER = new PoiType("poi_chicken_farmer", PoiType.getBlockStates(ModBlocks.CHICKEN_FARMER_BLOCK.get()), 1, 1);
+        POI_CHICKEN_FARMER.setRegistryName(Main.MOD_ID, "poi_chicken_farmer");
+        POI_SWINEHERD = new PoiType("poi_swineherd", PoiType.getBlockStates(ModBlocks.SWINEHERD_BLOCK.get()), 1, 1);
+        POI_SWINEHERD.setRegistryName(Main.MOD_ID, "poi_swineherd");
+
         event.getRegistry().register(POI_MINER);
         event.getRegistry().register(POI_LUMBERJACK);
         event.getRegistry().register(POI_FISHER);
         event.getRegistry().register(POI_FARMER);
         event.getRegistry().register(POI_MERCHANT);
         event.getRegistry().register(POI_SHEPHERD);
-        //event.getRegistry().register(POI_CATTLE_FARMER);
-        //event.getRegistry().register(POI_CHICKEN_FARMER);
+        event.getRegistry().register(POI_CATTLE_FARMER);
+        event.getRegistry().register(POI_CHICKEN_FARMER);
+        event.getRegistry().register(POI_SWINEHERD);
     }
 
     @SubscribeEvent
@@ -168,20 +173,22 @@ public class Main {
         FARMER.setRegistryName(Main.MOD_ID, "farmer");
         MERCHANT = new VillagerProfession("merchant", POI_MERCHANT, ImmutableSet.of(), ImmutableSet.of(), SoundEvents.VILLAGER_CELEBRATE);
         MERCHANT.setRegistryName(Main.MOD_ID, "merchant");
-    /*
         CATTLE_FARMER = new VillagerProfession("cattle_farmer", POI_CATTLE_FARMER, ImmutableSet.of(), ImmutableSet.of(), SoundEvents.VILLAGER_CELEBRATE);
         CATTLE_FARMER.setRegistryName(Main.MOD_ID, "cattle_farmer");
         CHICKEN_FARMER = new VillagerProfession("chicken_farmer", POI_CHICKEN_FARMER, ImmutableSet.of(), ImmutableSet.of(), SoundEvents.VILLAGER_CELEBRATE);
         CHICKEN_FARMER.setRegistryName(Main.MOD_ID, "chicken_farmer");
-*/
+        SWINEHERD = new VillagerProfession("swineherd", POI_SWINEHERD, ImmutableSet.of(), ImmutableSet.of(), SoundEvents.VILLAGER_CELEBRATE);
+        SWINEHERD.setRegistryName(Main.MOD_ID, "swineherd");
+
         event.getRegistry().register(MINER);
         event.getRegistry().register(LUMBERJACK);
         event.getRegistry().register(FISHER);
         event.getRegistry().register(MERCHANT);
         event.getRegistry().register(FARMER);
         event.getRegistry().register(SHEPHERD);
-        //event.getRegistry().register(CATTLE_FARMER);
-        //event.getRegistry().register(CHICKEN_FARMER);
+        event.getRegistry().register(CATTLE_FARMER);
+        event.getRegistry().register(CHICKEN_FARMER);
+        event.getRegistry().register(SWINEHERD);
     }
 
     @SubscribeEvent

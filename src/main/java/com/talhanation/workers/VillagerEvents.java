@@ -54,6 +54,18 @@ public class VillagerEvents {
                 createMerchant(villager);
             }
 
+            if (profession == Main.CATTLE_FARMER) {
+                createCattleFarmer(villager);
+            }
+
+            if (profession == Main.CHICKEN_FARMER) {
+                createChickenFarmer(villager);
+            }
+
+            if (profession == Main.SWINEHERD) {
+                createSwineherd(villager);
+            }
+
         }
 
     }
@@ -112,8 +124,41 @@ public class VillagerEvents {
         villager.level.addFreshEntity(shepherd);
     }
 
+    private static void createSwineherd(LivingEntity entity){
+        SwineherdEntity swineherd = ModEntityTypes.SWINEHERD.get().create(entity.level);
+        Villager villager = (Villager) entity;
+        swineherd.copyPosition(villager);
+
+        swineherd.initSpawn();
+
+        villager.remove(Entity.RemovalReason.DISCARDED);
+        villager.level.addFreshEntity(swineherd);
+    }
+
     private static void createFarmer(LivingEntity entity){
         FarmerEntity farmer = ModEntityTypes.FARMER.get().create(entity.level);
+        Villager villager = (Villager) entity;
+        farmer.copyPosition(villager);
+
+        farmer.initSpawn();
+
+        villager.remove(Entity.RemovalReason.DISCARDED);
+        villager.level.addFreshEntity(farmer);
+    }
+
+    private static void createCattleFarmer(LivingEntity entity){
+        CattleFarmerEntity farmer = ModEntityTypes.CATTLE_FARMER.get().create(entity.level);
+        Villager villager = (Villager) entity;
+        farmer.copyPosition(villager);
+
+        farmer.initSpawn();
+
+        villager.remove(Entity.RemovalReason.DISCARDED);
+        villager.level.addFreshEntity(farmer);
+    }
+
+    private static void createChickenFarmer(LivingEntity entity){
+        ChickenFarmerEntity farmer = ModEntityTypes.CHICKEN_FARMER.get().create(entity.level);
         Villager villager = (Villager) entity;
         farmer.copyPosition(villager);
 
@@ -138,14 +183,14 @@ public class VillagerEvents {
             event.getTrades().put(2, list);
         }
         if (event.getType() == VillagerProfession.FARMER) {
-            VillagerTrades.ItemListing block_trade = new Trade(Items.EMERALD, 15, ModBlocks.LUMBERJACK_BLOCK.get(), 1, 4, 20);
+            VillagerTrades.ItemListing block_trade = new Trade(Items.EMERALD, 23, ModBlocks.LUMBERJACK_BLOCK.get(), 1, 4, 20);
             List list = event.getTrades().get(2);
             list.add(block_trade);
             event.getTrades().put(2, list);
         }
 
         if (event.getType() == VillagerProfession.FISHERMAN) {
-            VillagerTrades.ItemListing block_trade = new Trade(Items.EMERALD, 25, ModBlocks.FISHER_BLOCK.get(), 1, 4, 20);
+            VillagerTrades.ItemListing block_trade = new Trade(Items.EMERALD, 32, ModBlocks.FISHER_BLOCK.get(), 1, 4, 20);
             List list = event.getTrades().get(2);
             list.add(block_trade);
             event.getTrades().put(2, list);
@@ -153,6 +198,13 @@ public class VillagerEvents {
 
         if (event.getType() == VillagerProfession.BUTCHER) {
             VillagerTrades.ItemListing block_trade = new Trade(Items.EMERALD, 35, ModBlocks.SHEPHERD_BLOCK.get(), 1, 4, 20);
+            List list = event.getTrades().get(2);
+            list.add(block_trade);
+            event.getTrades().put(2, list);
+        }
+
+        if (event.getType() == VillagerProfession.SHEPHERD) {
+            VillagerTrades.ItemListing block_trade = new Trade(Items.EMERALD, 25, ModBlocks.SHEPHERD_BLOCK.get(), 1, 4, 20);
             List list = event.getTrades().get(2);
             list.add(block_trade);
             event.getTrades().put(2, list);
@@ -167,6 +219,27 @@ public class VillagerEvents {
 
         if (event.getType() == VillagerProfession.FARMER) {
             VillagerTrades.ItemListing block_trade = new Trade(Items.EMERALD, 28, ModBlocks.FARMER_BLOCK.get(), 1, 4, 20);
+            List list = event.getTrades().get(2);
+            list.add(block_trade);
+            event.getTrades().put(2, list);
+        }
+
+        if (event.getType() == VillagerProfession.BUTCHER) {
+            VillagerTrades.ItemListing block_trade = new Trade(Items.EMERALD, 40, ModBlocks.CATTLE_FARMER_BLOCK.get(), 1, 4, 20);
+            List list = event.getTrades().get(2);
+            list.add(block_trade);
+            event.getTrades().put(2, list);
+        }
+
+        if (event.getType() == VillagerProfession.BUTCHER) {
+            VillagerTrades.ItemListing block_trade = new Trade(Items.EMERALD, 32, ModBlocks.CHICKEN_FARMER_BLOCK.get(), 1, 4, 20);
+            List list = event.getTrades().get(2);
+            list.add(block_trade);
+            event.getTrades().put(2, list);
+        }
+
+        if (event.getType() == VillagerProfession.BUTCHER) {
+            VillagerTrades.ItemListing block_trade = new Trade(Items.EMERALD, 38, ModBlocks.SWINEHERD_BLOCK.get(), 1, 4, 20);
             List list = event.getTrades().get(2);
             list.add(block_trade);
             event.getTrades().put(2, list);

@@ -94,10 +94,9 @@ public abstract class AbstractWorkerEntity extends AbstractChunkLoaderEntity {
         this.goalSelector.addGoal(0, new EatGoal(this));
         this.goalSelector.addGoal(0, new SleepGoal(this));
         this.goalSelector.addGoal(0, new OpenDoorGoal(this, true));
-        this.goalSelector.addGoal(0, new OpenFenceGateGoal(this, true));//node-evaluator needs to detect that block
         //this.goalSelector.addGoal(1, new TransferItemsInChestGoal(this));
         this.goalSelector.addGoal(1, new WorkerMoveToHomeGoal<>(this, 6.0F));
-        this.goalSelector.addGoal(1, new WorkerFollowOwnerGoal(this, 1.2D, 5.0F, 2.0F));
+        this.goalSelector.addGoal(2, new WorkerFollowOwnerGoal(this, 1.2D, 5.0F, 2.0F));
     }
 
 

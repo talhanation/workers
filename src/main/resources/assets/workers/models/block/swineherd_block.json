@@ -1,0 +1,12 @@
+{
+  "parent": "minecraft:block/cube",
+  "textures": {
+    "particle": "workers:block/swineherd_table_side",
+    "north": "workers:block/swineherd_table_side",
+    "south": "workers:block/swineherd_table_side",
+    "east": "workers:block/swineherd_table_side",
+    "west": "workers:block/swineherd_table_side",
+    "up": "workers:block/swineherd_table_top",
+    "down": "workers:block/swineherd_table_bottom"
+  }
+}

@@ -36,7 +36,7 @@ public class SwineherdEntity extends AbstractAnimalFarmerEntity{
 
     private static final Set<Item> WANTED_ITEMS = ImmutableSet.of(
             Items.PORKCHOP,
-            Items.WHEAT
+            Items.CARROT
     );
 
     public SwineherdEntity(EntityType<? extends AbstractAnimalFarmerEntity> entityType, Level world) {
@@ -115,7 +115,7 @@ public class SwineherdEntity extends AbstractAnimalFarmerEntity{
 
     @Override
     public void initSpawn() {
-        this.setCustomName(new TextComponent("Cattle Farmer"));
+        this.setCustomName(new TextComponent("Swineherd"));
         this.setEquipment();
         this.getNavigation().setCanFloat(true);
         this.setDropEquipment();
@@ -157,7 +157,6 @@ public class SwineherdEntity extends AbstractAnimalFarmerEntity{
 
     @Override
     public void setEquipment() {
-        int i = this.random.nextInt(9);
-        this.setItemSlot(EquipmentSlot.OFFHAND, new ItemStack(Items.WOODEN_HOE));
+        this.setItemSlot(EquipmentSlot.OFFHAND, new ItemStack(Items.STONE_AXE));
     }
 }

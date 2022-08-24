@@ -2,10 +2,12 @@ package com.talhanation.workers.entities.ai;
 
 import com.talhanation.workers.entities.ShepherdEntity;
 import net.minecraft.core.BlockPos;
+import net.minecraft.world.entity.EquipmentSlot;
 import net.minecraft.world.entity.ai.goal.Goal;
 import net.minecraft.world.entity.animal.Chicken;
 import net.minecraft.world.entity.animal.Sheep;
 import net.minecraft.world.SimpleContainer;
+import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
 import net.minecraft.sounds.SoundSource;
@@ -61,6 +63,8 @@ public class ShepherdAI extends Goal {
             this.sheep = findSheepSheering();
             if (this.sheep.isPresent() && sheep.get().readyForShearing()) {
                 this.shepherd.getNavigation().moveTo(this.sheep.get(), 1);
+                this.shepherd.setItemSlot(EquipmentSlot.MAINHAND, new ItemStack(Items.SHEARS));
+
 
                 if (sheep.get().closerThan(this.shepherd, 1.5)) {
                     sheerSheep(this.sheep.get());
@@ -72,6 +76,7 @@ public class ShepherdAI extends Goal {
             else {
                 sheering = false;
                 breeding = true;
+                this.shepherd.setItemSlot(EquipmentSlot.MAINHAND, ItemStack.EMPTY);
             }
 
         }
@@ -83,6 +88,7 @@ public class ShepherdAI extends Goal {
 
                 if (i == 0 && this.hasWheat()) {
                     this.shepherd.getNavigation().moveTo(this.sheep.get(), 1);
+                    this.shepherd.setItemSlot(EquipmentSlot.MAINHAND, new ItemStack(Items.WHEAT));
 
                     if (sheep.get().closerThan(this.shepherd, 1.5)) {
                         this.consumeWheat();
@@ -94,10 +100,12 @@ public class ShepherdAI extends Goal {
                 else {
                     breeding = false;
                     slaughtering = true;
+                    this.shepherd.setItemSlot(EquipmentSlot.MAINHAND, ItemStack.EMPTY);
                 }
             } else {
                 breeding = false;
                 slaughtering = true;
+                this.shepherd.setItemSlot(EquipmentSlot.MAINHAND, ItemStack.EMPTY);
             }
         }
 

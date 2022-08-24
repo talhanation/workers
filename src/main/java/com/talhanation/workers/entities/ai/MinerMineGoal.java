@@ -71,7 +71,7 @@ public abstract class MinerMineGoal extends Goal {
                 int bp = (int) (blockstate.getDestroySpeed(this.miner.level, blockPos) * 10);
                 this.miner.setBreakingTime(bp);
 
-                this.miner.setCurrentTimeBreak(this.miner.getCurrentTimeBreak() + (int) (1 * (this.miner.getUseItem().getDestroySpeed(blockstate))));
+                this.miner.setCurrentTimeBreak(this.miner.getCurrentTimeBreak() + (int) (2 * (this.miner.getUseItem().getDestroySpeed(blockstate))));
                 float f = (float) this.miner.getCurrentTimeBreak() / (float) this.miner.getBreakingTime();
 
                 int i = (int) (f * 10);

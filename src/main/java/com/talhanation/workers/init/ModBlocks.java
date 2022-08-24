@@ -35,4 +35,7 @@ public class ModBlocks {
 
     public static final RegistryObject<Block> CHICKEN_FARMER_BLOCK = BLOCKS.register("chicken_farmer_block",
             () -> new Block(BlockBehaviour.Properties.copy(Blocks.FLETCHING_TABLE)));
+
+    public static final RegistryObject<Block> SWINEHERD_BLOCK = BLOCKS.register("swineherd_block",
+            () -> new Block(BlockBehaviour.Properties.copy(Blocks.FLETCHING_TABLE)));
 }

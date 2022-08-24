@@ -3,6 +3,7 @@ package com.talhanation.workers.entities.ai;
 import com.talhanation.workers.entities.SwineherdEntity;
 import net.minecraft.core.BlockPos;
 import net.minecraft.world.SimpleContainer;
+import net.minecraft.world.entity.EquipmentSlot;
 import net.minecraft.world.entity.ai.goal.Goal;
 import net.minecraft.world.entity.animal.Pig;
 import net.minecraft.world.item.ItemStack;
@@ -51,12 +52,13 @@ public class SwineherdAI extends Goal {
 
 
         if (breeding){
-            this.pig = findCowMilking();
+            this.pig = findPigBreeding();
             if (this.pig.isPresent() ) {
                 int i = pig.get().getAge();
 
                 if (i == 0 && this.hasCarrot()) {
                     this.swineherd.getNavigation().moveTo(this.pig.get(), 1);
+                    this.swineherd.setItemSlot(EquipmentSlot.MAINHAND, new ItemStack(Items.CARROT));
 
                     if (pig.get().closerThan(this.swineherd, 1.5)) {
                         this.consumeCarrot();
@@ -68,17 +70,19 @@ public class SwineherdAI extends Goal {
                 else {
                     breeding = false;
                     slaughtering = true;
+                    this.swineherd.setItemSlot(EquipmentSlot.MAINHAND, ItemStack.EMPTY);
                 }
             } else {
                 breeding = false;
                 slaughtering = true;
+                this.swineherd.setItemSlot(EquipmentSlot.MAINHAND, ItemStack.EMPTY);
             }
         }
 
 
         if (slaughtering) {
 
-            List<Pig> cows = findCowSlaughtering();
+            List<Pig> cows = findPigSlaughtering();
             if (cows.size() > swineherd.getMaxAnimalCount()) {
                 pig = cows.stream().findFirst();
 
@@ -93,6 +97,7 @@ public class SwineherdAI extends Goal {
             }
             else {
                 slaughtering = false;
+                breeding = true;
             }
         }
 
@@ -108,7 +113,7 @@ public class SwineherdAI extends Goal {
     }
 
 
-    private Optional<Pig> findCowMilking() {
+    private Optional<Pig> findPigBreeding() {
         return  swineherd.level.getEntitiesOfClass(Pig.class, swineherd.getBoundingBox()
                 .inflate(8D), Pig::isAlive)
                 .stream()
@@ -117,7 +122,7 @@ public class SwineherdAI extends Goal {
                 .findAny();
     }
 
-    private List<Pig> findCowSlaughtering() {
+    private List<Pig> findPigSlaughtering() {
         return  swineherd.level.getEntitiesOfClass(Pig.class, swineherd.getBoundingBox()
                         .inflate(8D), Pig::isAlive)
                 .stream()
