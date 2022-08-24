@@ -50,6 +50,8 @@ public class CommandEvents {
     }
 
     public static void handleMerchantTrade(Player player, MerchantEntity merchant, int tradeID){
+        String name = merchant.getName().getString() + ": ";
+
         int[] PRICE_SLOT = new int[]{0,2,4,6};
         int[] TRADE_SLOT = new int[]{1,3,5,7};
 
@@ -191,20 +193,24 @@ public class CommandEvents {
             //player.sendMessage(new StringTextComponent("MerchantEmeralds: " + merchantEmeralds), player.getUUID());
             //player.sendMessage(new StringTextComponent("PlayerEmeralds: " + playerEmeralds), player.getUUID());
         }
+
         else if (!merchantHasItems){
-            player.sendMessage(new TextComponent("" + merchant.getName().getString() + ": Sorry, im out of Stock."), player.getUUID());
+            player.sendMessage(new TextComponent(name + TEXT_OUT_OF_STOCK.getString()), player.getUUID());
 
             if (merchant.getOwner() != null)
-                merchant.getOwner().sendMessage(new TextComponent("" + merchant.getName().getString() + ": Im out of Stock."), player.getUUID());
+                merchant.getOwner().sendMessage(new TextComponent(name + TEXT_OUT_OF_STOCK_OWNER.getString()), player.getUUID());
         }
         else if (!playerCanPay){
-            player.sendMessage(new TextComponent("" + merchant.getName().getString() + ": Sorry, you need " + sollPrice + "x " + emerald +  "."), player.getUUID());
+            String need = TEXT_NEED.getString();
+            String needInfo = String.format(need, sollPrice, emerald);
+
+            player.sendMessage(new TextComponent(name + needInfo), player.getUUID());
         }
         else if (!canAddItemToInv){
-            player.sendMessage(new TextComponent("" + merchant.getName().getString() + ": Sorry, i cant take your Items currently."), player.getUUID());
+            player.sendMessage(new TextComponent(name + TEXT_INV_FULL.getString()), player.getUUID());
 
             if (merchant.getOwner() != null)
-                merchant.getOwner().sendMessage(new TextComponent("" + merchant.getName().getString() + ": My inventory is full, i cant accept new items!"), player.getUUID());
+                merchant.getOwner().sendMessage(new TextComponent(name + TEXT_INV_FULL_OWNER.getString()), player.getUUID());
         }
     }
 
@@ -262,5 +268,14 @@ public class CommandEvents {
         else
             player.sendMessage(new TextComponent(name + recruit_info), player.getUUID());
     }
+
+
+    public static final TranslatableComponent TEXT_OUT_OF_STOCK = new TranslatableComponent("chat.workers.text.outOfStock");
+    public static final TranslatableComponent TEXT_OUT_OF_STOCK_OWNER = new TranslatableComponent("chat.workers.text.outOfStockOwner");
+
+    public static final TranslatableComponent TEXT_NEED = new TranslatableComponent("chat.workers.text.need");
+    public static final TranslatableComponent TEXT_INV_FULL = new TranslatableComponent("chat.workers.text.invFull");
+    public static final TranslatableComponent TEXT_INV_FULL_OWNER = new TranslatableComponent("chat.workers.text.invFullOwner");
+
 
 }

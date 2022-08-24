@@ -62,6 +62,8 @@ public abstract class AbstractWorkerEntity extends AbstractChunkLoaderEntity {
     private static final EntityDataAccessor<Boolean> IS_EATING = SynchedEntityData.defineId(AbstractWorkerEntity.class, EntityDataSerializers.BOOLEAN);
     private static final EntityDataAccessor<String> OWNER_NAME = SynchedEntityData.defineId(AbstractWorkerEntity.class, EntityDataSerializers.STRING);
 
+    private static final EntityDataAccessor<String> PROFESSION_NAME = SynchedEntityData.defineId(AbstractWorkerEntity.class, EntityDataSerializers.STRING);
+
     int hurtTimeStamp = 0;
     public ItemStack beforeFoodItem;
 
@@ -96,7 +98,7 @@ public abstract class AbstractWorkerEntity extends AbstractChunkLoaderEntity {
         this.goalSelector.addGoal(0, new OpenDoorGoal(this, true));
         //this.goalSelector.addGoal(1, new TransferItemsInChestGoal(this));
         this.goalSelector.addGoal(1, new WorkerMoveToHomeGoal<>(this, 6.0F));
-        this.goalSelector.addGoal(2, new WorkerFollowOwnerGoal(this, 1.2D, 5.0F, 2.0F));
+        this.goalSelector.addGoal(2, new WorkerFollowOwnerGoal(this, 1.2D, 5.0F, 1.0F));
     }
 
 
@@ -127,6 +129,9 @@ public abstract class AbstractWorkerEntity extends AbstractChunkLoaderEntity {
 
     public void tick() {
         super.tick();
+        Main.LOGGER.debug("WorkerName: " + this.getName().getString());
+        Main.LOGGER.debug("OwnerName: " + this.getOwnerName());
+        Main.LOGGER.debug("Profession: " + this.getProfessionName().getString());
         updateSwingTime();
         updateSwimming();
         updateHunger();
@@ -182,6 +187,7 @@ public abstract class AbstractWorkerEntity extends AbstractChunkLoaderEntity {
         this.entityData.define(previousTimeBreak, -1);
         this.entityData.define(HUNGER, 50F);
         this.entityData.define(OWNER_NAME, "");
+        this.entityData.define(PROFESSION_NAME, "");
 
     }
 
@@ -195,6 +201,7 @@ public abstract class AbstractWorkerEntity extends AbstractChunkLoaderEntity {
         nbt.putInt("previousTimeBreak", this.getPreviousTimeBreak());
         nbt.putString("OwnerName", this.getOwnerName());
         nbt.putFloat("Hunger", this.getHunger());
+        nbt.putString("ProfessionName", this.getProfessionName().getString());
 
         if(this.getStartPos() != null){
             nbt.putInt("StartPosX", this.getStartPos().getX());
@@ -225,6 +232,7 @@ public abstract class AbstractWorkerEntity extends AbstractChunkLoaderEntity {
         this.setIsWorking(nbt.getBoolean("isWorking"));
         this.setHunger(nbt.getFloat("Hunger"));
         this.setOwnerName(nbt.getString("OwnerName"));
+        this.setProfessionName(nbt.getString("ProfessionName"));
 
         if (nbt.contains("StartPosX") && nbt.contains("StartPosY") && nbt.contains("StartPosZ")) {
             BlockPos blockpos = new BlockPos(
@@ -252,8 +260,11 @@ public abstract class AbstractWorkerEntity extends AbstractChunkLoaderEntity {
 
     }
 
-
     ////////////////////////////////////GET////////////////////////////////////
+
+    public TextComponent getProfessionName(){
+        return new TextComponent(entityData.get(PROFESSION_NAME));
+    }
 
     public String getOwnerName(){
         return entityData.get(OWNER_NAME);
@@ -329,6 +340,10 @@ public abstract class AbstractWorkerEntity extends AbstractChunkLoaderEntity {
 
     ////////////////////////////////////SET////////////////////////////////////
 
+    public void setProfessionName(String string) {
+        this.entityData.set(PROFESSION_NAME, string);
+    }
+
     public void setOwnerName(String string){
         this.entityData.set(OWNER_NAME, string);
     }
@@ -336,7 +351,7 @@ public abstract class AbstractWorkerEntity extends AbstractChunkLoaderEntity {
         this.entityData.set(HOME, Optional.of(pos));
 
         LivingEntity owner = this.getOwner();
-        if (owner != null) owner.sendMessage(new TextComponent(this.getName().getString() + ": My home is here now."), owner.getUUID());
+        if (owner != null) owner.sendMessage(new TextComponent(this.getName().getString() + ": " + TEXT_HOME.getString()), owner.getUUID());
     }
 
     public void setPreviousTimeBreak(int value) {
@@ -370,30 +385,38 @@ public abstract class AbstractWorkerEntity extends AbstractChunkLoaderEntity {
 
 
     public void setFollow(boolean bool) {
-        this.entityData.set(FOLLOW, bool);
+        String name = this.getName().getString() + ": ";
+        if(getFollow() != bool) {
+            this.entityData.set(FOLLOW, bool);
 
-        LivingEntity owner = this.getOwner();
-        if (owner != null) {
-            if (bool) {
-                owner.sendMessage(new TextComponent(this.getName().getString() + ": I will follow you!"), owner.getUUID());
-            } else
-                owner.sendMessage(new TextComponent(this.getName().getString() + ": I will wander here"), owner.getUUID());
+            LivingEntity owner = this.getOwner();
+            if (owner != null) {
+                if (bool) {
+                    owner.sendMessage(new TextComponent(name + TEXT_FOLLOW.getString()), owner.getUUID());
+                } else if (this.getIsWorking())
+                    owner.sendMessage(new TextComponent(name + TEXT_CONTINUE.getString()), owner.getUUID());
+                else
+                    owner.sendMessage(new TextComponent(name + TEXT_WANDER.getString()), owner.getUUID());
+            }
         }
     }
 
     public void setIsWorking(boolean bool) {
+        String name = this.getName().getString() + ": ";
         LivingEntity owner = this.getOwner();
 
-        if (owner != null) {
-            if (!isStarving()) {
-                if (bool) {
-                    owner.sendMessage(new TextComponent(this.getName().getString() + ": Im working now!"), owner.getUUID());
-                } else
-                    owner.sendMessage(new TextComponent(this.getName().getString() + ": Work is done!"), owner.getUUID());
-            } else if (bool != getIsWorking() && isStarving())
-                owner.sendMessage(new TextComponent(this.getName().getString() + ": Im starving! I need something to eat."), owner.getUUID());
+        if(getIsWorking() != bool) {
+            if (owner != null) {
+                if (!isStarving()) {
+                    if (bool) {
+                        owner.sendMessage(new TextComponent(name + TEXT_WORKING.getString()), owner.getUUID());
+                    } else
+                        owner.sendMessage(new TextComponent(name + TEXT_DONE.getString()), owner.getUUID());
+                } else if (isStarving())
+                    owner.sendMessage(new TextComponent(name + TEXT_STARVING.getString()), owner.getUUID());
+            }
+            entityData.set(IS_WORKING, bool);
         }
-        entityData.set(IS_WORKING, bool);
     }
 
 
@@ -429,6 +452,10 @@ public abstract class AbstractWorkerEntity extends AbstractChunkLoaderEntity {
     ////////////////////////////////////ATTACK FUNCTIONS////////////////////////////////////
 
     public boolean hurt(DamageSource dmg, float amt) {
+
+        String name = this.getName().getString();
+        String attacker_name;
+
         if (this.isInvulnerableTo(dmg)) {
             return false;
         } else {
@@ -439,10 +466,18 @@ public abstract class AbstractWorkerEntity extends AbstractChunkLoaderEntity {
             }
 
             LivingEntity attacker = this.getLastHurtByMob();
+
             if(this.isTame() && attacker != null && hurtTimeStamp <= 0){
+                attacker_name = attacker.getName().getString();
+                String attacked = TEXT_ATTACKED.getString();
+
+
+
+
                 LivingEntity owner = this.getOwner();
                 if (owner!= null && owner != attacker) {
-                    owner.sendMessage(new TextComponent(this.getName().getString() + " is getting attacked by " + attacker.getName().getString()), owner.getUUID());
+                    String notification = String.format(attacked, name, attacker_name);
+                    owner.sendMessage(new TextComponent(notification), owner.getUUID());
                     hurtTimeStamp = 80;
                 }
             }
@@ -515,16 +550,11 @@ public abstract class AbstractWorkerEntity extends AbstractChunkLoaderEntity {
     }
 
     public InteractionResult mobInteract(Player player, InteractionHand hand) {
-        ItemStack itemstack = player.getItemInHand(hand);
-        Item item = itemstack.getItem();
-
         String name = this.getName().getString() + ": ";
         String owner_name = this.getOwnerName();
+        String profession = this.getProfessionName().getString();
         String hello = TEXT_HELLO.getString();
         String hello_owned = TEXT_HELLO_OWNED.getString();
-        String hello_info = String.format(hello, name);
-        String hello_owned_info = String.format(hello, owner_name);
-
 
         if (this.level.isClientSide) {
             return InteractionResult.CONSUME;
@@ -539,10 +569,12 @@ public abstract class AbstractWorkerEntity extends AbstractChunkLoaderEntity {
                 }
             }
             else if (this.isTame() && !player.getUUID().equals(this.getOwnerUUID())) {
+                String hello_owned_info = String.format(hello_owned, profession, owner_name);
                 player.sendMessage(new TextComponent(name + hello_owned_info), player.getUUID());
             }
             else if (!this.isTame()) {
-                player.sendMessage(new TextComponent(TEXT_HELLO.getString()), player.getUUID());
+                String hello_info = String.format(hello, profession);
+                player.sendMessage(new TextComponent(name + hello_info), player.getUUID());
 
                 this.openHireGUI(player);
                 this.navigation.stop();
@@ -619,4 +651,14 @@ public abstract class AbstractWorkerEntity extends AbstractChunkLoaderEntity {
     public static final TranslatableComponent TEXT_RECRUITED1 = new TranslatableComponent("chat.workers.text.recruited1");
     public static final TranslatableComponent TEXT_RECRUITED2 = new TranslatableComponent("chat.workers.text.recruited2");
     public static final TranslatableComponent TEXT_RECRUITED3 = new TranslatableComponent("chat.workers.text.recruited3");
+    public static final TranslatableComponent TEXT_ATTACKED = new TranslatableComponent("chat.workers.text.attacked");
+
+    public static final TranslatableComponent TEXT_WORKING = new TranslatableComponent("chat.workers.text.working");
+    public static final TranslatableComponent TEXT_DONE = new TranslatableComponent("chat.workers.text.done");
+    public static final TranslatableComponent TEXT_STARVING = new TranslatableComponent("chat.workers.text.starving");
+
+    public static final TranslatableComponent TEXT_FOLLOW = new TranslatableComponent("chat.workers.text.follow");
+    public static final TranslatableComponent TEXT_CONTINUE = new TranslatableComponent("chat.workers.text.continue");
+    public static final TranslatableComponent TEXT_WANDER = new TranslatableComponent("chat.workers.text.wander");
+    public static final TranslatableComponent TEXT_HOME = new TranslatableComponent("chat.workers.text.home");
 }

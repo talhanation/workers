@@ -8,6 +8,7 @@ import com.talhanation.workers.entities.ai.WorkerFindWaterAI;
 import com.talhanation.workers.entities.ai.WorkerFollowOwnerGoal;
 import com.talhanation.workers.entities.ai.WorkerPickupWantedItemGoal;
 import com.talhanation.workers.network.MessageOpenGuiWorker;
+import net.minecraft.network.chat.TranslatableComponent;
 import net.minecraft.world.entity.*;
 import net.minecraft.world.entity.AgeableMob;
 import net.minecraft.world.entity.ai.attributes.AttributeSupplier;
@@ -116,7 +117,10 @@ public class FishermanEntity extends AbstractWorkerEntity {
 
     @Override
     public void initSpawn() {
-        this.setCustomName(new TextComponent("Fisherman"));
+        String name = new TranslatableComponent("entity.workers.fisherman").getString();
+
+        this.setProfessionName(name);
+        this.setCustomName(new TextComponent(name));
         this.setEquipment();
         this.getNavigation().setCanFloat(true);
         this.setDropEquipment();

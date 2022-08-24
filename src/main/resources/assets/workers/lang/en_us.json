@@ -5,6 +5,9 @@
   "entity.workers.shepherd": "Shepherd",
   "entity.workers.merchant": "Merchant",
   "entity.workers.farmer": "Farmer",
+  "entity.workers.swineherd": "Swineherd",
+  "entity.workers.chicken_farmer": "Chicken Farmer",
+  "entity.workers.cattle_farmer": "Cattle Farmer",
 
   "item.workers.miner_spawn_egg": "Miner Spawn Egg",
   "item.workers.farmer_spawn_egg": "Farmer Spawn Egg",
@@ -16,7 +19,6 @@
   "item.workers.cattle_farmer_spawn_egg": "Cattle Farmer Spawn Egg",
   "item.workers.chicken_farmer_spawn_egg": "Chicken Farmer Spawn Egg",
 
-
   "block.workers.miner_block": "Miner's Table",
   "block.workers.farmer_block": "Farmer's Table",
   "block.workers.lumberjack_block": "Lumberjack's Table",
@@ -27,19 +29,15 @@
   "block.workers.cattle_farmer_block": "Cattle Farmer's Table",
   "block.workers.chicken_farmer_block": "Chicken Farmer's Table",
 
-
-
   "gui.workers.home": "Home",
   "gui.workers.following": "Following",
   "gui.workers.wandering": "Wandering",
-
   "gui.workers.miner.mine_mode": "Mine-Mode",
   "gui.workers.miner.tunnel": "Tunnel",
   "gui.workers.miner.tunnel3x3": "Tunnel 3x3",
   "gui.workers.miner.pit8x8x8": "Pit 8x8x8",
   "gui.workers.miner.flat8x8x1": "Flat 8x8x1",
   "gui.workers.miner.depth": "Depth",
-
   "gui.workers.merchant.trade": "Trade",
   "gui.workers.hire_gui.text.hire": "Hire",
   "gui.workers.shepherd.max_animals": "max.",
@@ -51,8 +49,21 @@
   "chat.workers.text.recruited1": "It's a honor for me to work for you.",
   "chat.workers.text.recruited2": "I am the best for this work.",
   "chat.workers.text.recruited3": "I work fast and reliable.",
-  "chat.workers.text.hello_owned": "Hello, Im the worker of %s",
-  "chat.workers.text.hello": "Hello, Im a %s",
+  "chat.workers.text.hello_owned": "Hello, Im the %1$ of %2$.",
+  "chat.workers.text.hello": "Hello, Im a %s.",
 
-  "chat.workers.text.hire_costs": "You need %x Emeralds to recruit me!"
+  "chat.workers.text.hire_costs": "You need %x Emeralds to hire me!",
+  "chat.workers.text.attacked": "%1$ is getting attacked by %2$!",
+  "chat.workers.text.working": "Im working now!",
+  "chat.workers.text.done": "Work is done!",
+  "chat.workers.text.starving": "Im starving! I need something to eat.",
+  "chat.workers.text.wander": "I will wander here.",
+  "chat.workers.text.continue": "I will continue my work.",
+  "chat.workers.text.follow": "I will follow you!",
+  "chat.workers.text.home": "My home is here now.",
+  "chat.workers.text.outOfStock": "Sorry, im out of Stock.",
+  "chat.workers.text.need": "Sorry, you need %xx %s.",
+  "chat.workers.text.outOfStockOwner": "Im out of stock!",
+  "chat.workers.text.invFull": "Sorry, i cant take your Items currently.",
+  "chat.workers.text.invFullOwner": "My inventory is full, i cant accept new items!"
 }

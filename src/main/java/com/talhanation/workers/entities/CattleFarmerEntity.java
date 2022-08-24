@@ -6,6 +6,7 @@ import com.talhanation.workers.entities.ai.WorkerFollowOwnerGoal;
 import com.talhanation.workers.entities.ai.WorkerPickupWantedItemGoal;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.chat.TextComponent;
+import net.minecraft.network.chat.TranslatableComponent;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.DifficultyInstance;
 import net.minecraft.world.SimpleContainer;
@@ -118,7 +119,10 @@ public class CattleFarmerEntity extends AbstractAnimalFarmerEntity{
 
     @Override
     public void initSpawn() {
-        this.setCustomName(new TextComponent("Cattle Farmer"));
+        String name = new TranslatableComponent("entity.workers.cattle_farmer").getString();
+
+        this.setProfessionName(name);
+        this.setCustomName(new TextComponent(name));
         this.setEquipment();
         this.getNavigation().setCanFloat(true);
         this.setDropEquipment();

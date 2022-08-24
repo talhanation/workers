@@ -26,8 +26,7 @@ public class VillagerEvents {
     @SubscribeEvent
     public void onVillagerLivingUpdate(LivingEvent.LivingUpdateEvent event) {
         Entity entity = event.getEntityLiving();
-        if (entity instanceof Villager) {
-            Villager villager = (Villager) entity;
+        if (entity instanceof Villager villager) {
             VillagerProfession profession = villager.getVillagerData().getProfession();
 
             if (profession == Main.MINER) {

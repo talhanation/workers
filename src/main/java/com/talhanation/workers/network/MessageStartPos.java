@@ -30,7 +30,7 @@ public class MessageStartPos implements Message<MessageStartPos> {
     }
 
     public void executeServerSide(NetworkEvent.Context context) {
-        List<AbstractWorkerEntity> list = Objects.requireNonNull(context.getSender()).level.getEntitiesOfClass(AbstractWorkerEntity.class, context.getSender().getBoundingBox().inflate(8.0D));
+        List<AbstractWorkerEntity> list = Objects.requireNonNull(context.getSender()).level.getEntitiesOfClass(AbstractWorkerEntity.class, context.getSender().getBoundingBox().inflate(5.5D));
         for (AbstractWorkerEntity workers : list) {
                 CommandEvents.setStartPosWorker(this.player, workers, this.startPos);
         }

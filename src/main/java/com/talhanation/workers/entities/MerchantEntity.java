@@ -6,6 +6,7 @@ import com.talhanation.workers.inventory.MerchantTradeContainer;
 import com.talhanation.workers.entities.ai.WorkerFollowOwnerGoal;
 import com.talhanation.workers.network.MessageOpenGuiMerchant;
 import com.talhanation.workers.network.MessageOpenGuiWorker;
+import net.minecraft.network.chat.TranslatableComponent;
 import net.minecraft.world.entity.*;
 import net.minecraft.world.entity.ai.attributes.AttributeSupplier;
 import net.minecraft.world.entity.ai.attributes.Attributes;
@@ -46,6 +47,7 @@ import net.minecraft.world.entity.ai.goal.RandomLookAroundGoal;
 public class MerchantEntity extends AbstractWorkerEntity{
 
     private final SimpleContainer tradeInventory = new SimpleContainer(8);
+
 
     public MerchantEntity(EntityType<? extends AbstractWorkerEntity> entityType, Level world) {
         super(entityType, world);
@@ -98,6 +100,7 @@ public class MerchantEntity extends AbstractWorkerEntity{
                     }
                 }
                 this.tame(player);
+                this.setOwnerName(player.getDisplayName().getString());
                 this.navigation.stop();
                 this.setTarget(null);
                 this.setOrderedToSit(false);
@@ -114,13 +117,14 @@ public class MerchantEntity extends AbstractWorkerEntity{
             }
 
             else if (this.isTame() && player.getUUID() != this.getOwnerUUID()) {
-                if (getOwner() != null) player.sendMessage(new TextComponent("" + this.getName().getString() + ": Hello, I am the merchant of " + this.getOwner().getDisplayName().getString() + "!"), player.getUUID());
+                player.sendMessage(new TextComponent("" + this.getName().getString() + ": Hello, I am the merchant of " + this.getOwnerName() + "!"), player.getUUID());
                 if (!player.isCrouching()) {
                     openTradeGUI(player);
                     return InteractionResult.SUCCESS;
-                } else
-                if (getOwner() != null) player.sendMessage(new TextComponent("" + this.getName().getString() + ": Hello, I am the merchant of " + this.getOwner().getDisplayName().getString() + "!"), player.getUUID());
-
+                }
+                else {
+                    player.sendMessage(new TextComponent("" + this.getName().getString() + ": Hello, I am the merchant of " + this.getOwnerName() + "!"), player.getUUID());
+                }
             }
             return InteractionResult.PASS;
         }
@@ -179,7 +183,7 @@ public class MerchantEntity extends AbstractWorkerEntity{
         super.registerGoals();
         this.goalSelector.addGoal(1, new FloatGoal(this));
         //this.goalSelector.addGoal(2, new WorkerPickupWantedItemGoal(this));
-        this.goalSelector.addGoal(2, new WorkerFollowOwnerGoal(this, 1.2D, 7.F, 4.0F));
+        this.goalSelector.addGoal(2, new WorkerFollowOwnerGoal(this, 1.2D, 7.F, 1.0F));
         this.goalSelector.addGoal(3, new PanicGoal(this,2D));
         this.goalSelector.addGoal(5, new LookAtPlayerGoal(this, Player.class, 8.0F));
         this.goalSelector.addGoal(6, new RandomLookAroundGoal(this));
@@ -210,7 +214,10 @@ public class MerchantEntity extends AbstractWorkerEntity{
 
     @Override
     public void initSpawn() {
-        this.setCustomName(new TextComponent("Merchant"));
+        String name = new TranslatableComponent("entity.workers.merchant").getString();
+
+        this.setProfessionName(name);
+        this.setCustomName(new TextComponent(name));
         this.setEquipment();
         this.getNavigation().setCanFloat(true);
         this.setDropEquipment();
