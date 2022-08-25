@@ -119,6 +119,7 @@ public class LumberjackEntity extends AbstractWorkerEntity{
 
     public LumberjackEntity(EntityType<? extends AbstractWorkerEntity> entityType, Level world) {
         super(entityType, world);
+        this.initSpawn();
     }
 
     public Predicate<ItemEntity> getAllowedItems(){

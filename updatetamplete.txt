@@ -1,0 +1,23 @@
+Update 1.8.1
+
+---------------------------------------------------------------------------------------------------------------------------
++ fixed recruits attack owner on block event
+
++ made block event target also on neutral
+
++ added escorts/patrols of recruits escorting villagers (configurable default: true)
++ added escorts/patrols of pillagers (configurable default: true)
+
+---------------------------------------------------------------------------------------------------------------------------
+
+
+
+
+recruits mod update 1.6.1:  
+
++ improved eating ability
++ fixed chrash in command screen
++ reworked attributres (nerfed all recruits)
++ added lang support
+
+https://www.curseforge.com/minecraft/mc-mods/recruits/files

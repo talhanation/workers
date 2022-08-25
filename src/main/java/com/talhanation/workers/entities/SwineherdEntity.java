@@ -43,6 +43,7 @@ public class SwineherdEntity extends AbstractAnimalFarmerEntity{
 
     public SwineherdEntity(EntityType<? extends AbstractAnimalFarmerEntity> entityType, Level world) {
         super(entityType, world);
+        this.initSpawn();
     }
 
     protected void defineSynchedData() {

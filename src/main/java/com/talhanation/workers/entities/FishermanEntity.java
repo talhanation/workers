@@ -53,6 +53,7 @@ public class FishermanEntity extends AbstractWorkerEntity {
 
     public FishermanEntity(EntityType<? extends AbstractWorkerEntity> entityType, Level world) {
         super(entityType, world);
+        this.initSpawn();
     }
 
     @Override

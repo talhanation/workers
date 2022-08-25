@@ -201,10 +201,7 @@ public class CommandEvents {
                 merchant.getOwner().sendMessage(new TextComponent(name + TEXT_OUT_OF_STOCK_OWNER.getString()), player.getUUID());
         }
         else if (!playerCanPay){
-            String need = TEXT_NEED.getString();
-            String needInfo = String.format(need, sollPrice, emerald);
-
-            player.sendMessage(new TextComponent(name + needInfo), player.getUUID());
+            player.sendMessage(new TextComponent(TEXT_NEED.getString() +  " " + sollPrice +  " " + emerald + "."), player.getUUID());
         }
         else if (!canAddItemToInv){
             player.sendMessage(new TextComponent(name + TEXT_INV_FULL.getString()), player.getUUID());

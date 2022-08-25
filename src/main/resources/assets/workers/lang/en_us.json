@@ -49,11 +49,11 @@
   "chat.workers.text.recruited1": "It's a honor for me to work for you.",
   "chat.workers.text.recruited2": "I am the best for this work.",
   "chat.workers.text.recruited3": "I work fast and reliable.",
-  "chat.workers.text.hello_owned": "Hello, Im the %1$ of %2$.",
+  "chat.workers.text.hello_owned": "Hello, Im the %s of %s.",
   "chat.workers.text.hello": "Hello, Im a %s.",
 
   "chat.workers.text.hire_costs": "You need %x Emeralds to hire me!",
-  "chat.workers.text.attacked": "%1$ is getting attacked by %2$!",
+  "chat.workers.text.attacked": "%s is getting attacked by %s!",
   "chat.workers.text.working": "Im working now!",
   "chat.workers.text.done": "Work is done!",
   "chat.workers.text.starving": "Im starving! I need something to eat.",
@@ -62,7 +62,7 @@
   "chat.workers.text.follow": "I will follow you!",
   "chat.workers.text.home": "My home is here now.",
   "chat.workers.text.outOfStock": "Sorry, im out of Stock.",
-  "chat.workers.text.need": "Sorry, you need %xx %s.",
+  "chat.workers.text.need": "Sorry, you need",
   "chat.workers.text.outOfStockOwner": "Im out of stock!",
   "chat.workers.text.invFull": "Sorry, i cant take your Items currently.",
   "chat.workers.text.invFullOwner": "My inventory is full, i cant accept new items!"

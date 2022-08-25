@@ -57,7 +57,7 @@ public class MinerEntity extends AbstractWorkerEntity {
     2 = 3x3 Tunel
     3 = 8x8x8 Pit
     4 = 8x8x1 flat
-     */
+    */
 
     private static final Set<Item> WANTED_ITEMS = ImmutableSet.of(
         Items.COAL,

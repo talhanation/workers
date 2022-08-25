@@ -129,9 +129,9 @@ public abstract class AbstractWorkerEntity extends AbstractChunkLoaderEntity {
 
     public void tick() {
         super.tick();
-        Main.LOGGER.debug("WorkerName: " + this.getName().getString());
-        Main.LOGGER.debug("OwnerName: " + this.getOwnerName());
-        Main.LOGGER.debug("Profession: " + this.getProfessionName().getString());
+        //Main.LOGGER.debug("WorkerName: " + this.getName().getString());
+        //Main.LOGGER.debug("OwnerName: " + this.getOwnerName());
+        //Main.LOGGER.debug("Profession: " + this.getProfessionName().getString());
         updateSwingTime();
         updateSwimming();
         updateHunger();
@@ -201,7 +201,7 @@ public abstract class AbstractWorkerEntity extends AbstractChunkLoaderEntity {
         nbt.putInt("previousTimeBreak", this.getPreviousTimeBreak());
         nbt.putString("OwnerName", this.getOwnerName());
         nbt.putFloat("Hunger", this.getHunger());
-        nbt.putString("ProfessionName", this.getProfessionName().getString());
+        nbt.putString("ProfessionName", this.getProfessionName());
 
         if(this.getStartPos() != null){
             nbt.putInt("StartPosX", this.getStartPos().getX());
@@ -262,8 +262,8 @@ public abstract class AbstractWorkerEntity extends AbstractChunkLoaderEntity {
 
     ////////////////////////////////////GET////////////////////////////////////
 
-    public TextComponent getProfessionName(){
-        return new TextComponent(entityData.get(PROFESSION_NAME));
+    public String getProfessionName(){
+        return entityData.get(PROFESSION_NAME);
     }
 
     public String getOwnerName(){
@@ -469,15 +469,13 @@ public abstract class AbstractWorkerEntity extends AbstractChunkLoaderEntity {
 
             if(this.isTame() && attacker != null && hurtTimeStamp <= 0){
                 attacker_name = attacker.getName().getString();
-                String attacked = TEXT_ATTACKED.getString();
-
-
-
+                //String attacked = TEXT_ATTACKED.getString();
 
                 LivingEntity owner = this.getOwner();
                 if (owner!= null && owner != attacker) {
-                    String notification = String.format(attacked, name, attacker_name);
-                    owner.sendMessage(new TextComponent(notification), owner.getUUID());
+                    //String notification = String.format(attacked, name, attacker_name);
+                    //owner.sendMessage(new TextComponent(notification), owner.getUUID());
+                    owner.sendMessage(new TextComponent(name + ", your " + getProfessionName() + ", is getting attacked by " + attacker_name + "!"), owner.getUUID());
                     hurtTimeStamp = 80;
                 }
             }
@@ -550,12 +548,6 @@ public abstract class AbstractWorkerEntity extends AbstractChunkLoaderEntity {
     }
 
     public InteractionResult mobInteract(Player player, InteractionHand hand) {
-        String name = this.getName().getString() + ": ";
-        String owner_name = this.getOwnerName();
-        String profession = this.getProfessionName().getString();
-        String hello = TEXT_HELLO.getString();
-        String hello_owned = TEXT_HELLO_OWNED.getString();
-
         if (this.level.isClientSide) {
             return InteractionResult.CONSUME;
         } else {
@@ -569,12 +561,14 @@ public abstract class AbstractWorkerEntity extends AbstractChunkLoaderEntity {
                 }
             }
             else if (this.isTame() && !player.getUUID().equals(this.getOwnerUUID())) {
-                String hello_owned_info = String.format(hello_owned, profession, owner_name);
-                player.sendMessage(new TextComponent(name + hello_owned_info), player.getUUID());
+                player.sendMessage(new TextComponent("" + this.getName().getString() + ": Hello, I am the " + this.getProfessionName() + " of " + this.getOwnerName() + "!"), player.getUUID());
+
+                //player.sendMessage(new TextComponent(name + hello_owned_info), player.getUUID());
             }
             else if (!this.isTame()) {
-                String hello_info = String.format(hello, profession);
-                player.sendMessage(new TextComponent(name + hello_info), player.getUUID());
+                player.sendMessage(new TextComponent("" + this.getName().getString() + ": Hello, I am a " + this.getProfessionName() + ". "), player.getUUID());
+
+                //player.sendMessage(new TextComponent(name + hello_info), player.getUUID());
 
                 this.openHireGUI(player);
                 this.navigation.stop();

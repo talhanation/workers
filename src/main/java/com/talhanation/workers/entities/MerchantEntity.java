@@ -51,6 +51,7 @@ public class MerchantEntity extends AbstractWorkerEntity{
 
     public MerchantEntity(EntityType<? extends AbstractWorkerEntity> entityType, Level world) {
         super(entityType, world);
+        this.initSpawn();
     }
 
     @Override
@@ -75,55 +76,15 @@ public class MerchantEntity extends AbstractWorkerEntity{
 
     @Override
     public InteractionResult mobInteract(Player player, InteractionHand hand) {
-        ItemStack itemstack = player.getItemInHand(hand);
-        Item item = itemstack.getItem();
+        super.mobInteract(player,hand);
         if (this.level.isClientSide) {
             boolean flag = this.isOwnedBy(player) || this.isTame() || isInSittingPose();
             return flag ? InteractionResult.CONSUME : InteractionResult.PASS;
         } else {
-            if (this.isTame() && player.getUUID().equals(this.getOwnerUUID())) {
-                if (player.isCrouching()) {
-                    openGUI(player);
-                    return InteractionResult.SUCCESS;
-                }
-
-                if(!player.isCrouching()) {
-                    setFollow(!getFollow());
-                    return InteractionResult.SUCCESS;
-                }
-
-            }
-            else if (item == Items.EMERALD && !this.isTame() && playerHasEnoughEmeralds(player)) {
-                if (!player.getAbilities().instabuild) {
-                    if (!player.isCreative()) {
-                        itemstack.shrink(workerCosts());
-                    }
-                }
-                this.tame(player);
-                this.setOwnerName(player.getDisplayName().getString());
-                this.navigation.stop();
-                this.setTarget(null);
-                this.setOrderedToSit(false);
-                this.setIsWorking(false);
-                return InteractionResult.SUCCESS;
-            }
-            else if (item == Items.EMERALD  && !this.isTame() && !playerHasEnoughEmeralds(player)) {
-                player.sendMessage(new TextComponent("" + this.getName().getString() + ": You need " + workerCosts() + " Emeralds to hire me!"), player.getUUID());
-                return InteractionResult.SUCCESS;
-            }
-            else if (!this.isTame() && item != Items.EMERALD ) {
-                player.sendMessage(new TextComponent("I am a " + this.getName().getString()), player.getUUID());
-                return InteractionResult.SUCCESS;
-            }
-
-            else if (this.isTame() && player.getUUID() != this.getOwnerUUID()) {
-                player.sendMessage(new TextComponent("" + this.getName().getString() + ": Hello, I am the merchant of " + this.getOwnerName() + "!"), player.getUUID());
+            if (this.isTame() && player.getUUID() != this.getOwnerUUID()) {
                 if (!player.isCrouching()) {
                     openTradeGUI(player);
                     return InteractionResult.SUCCESS;
-                }
-                else {
-                    player.sendMessage(new TextComponent("" + this.getName().getString() + ": Hello, I am the merchant of " + this.getOwnerName() + "!"), player.getUUID());
                 }
             }
             return InteractionResult.PASS;
