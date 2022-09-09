@@ -37,9 +37,9 @@ import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraftforge.network.NetworkHooks;
+import org.jetbrains.annotations.NotNull;
 
 import javax.annotation.Nullable;
-import java.util.Optional;
 import java.util.Set;
 import java.util.function.Predicate;
 
@@ -135,7 +135,7 @@ public class MinerEntity extends AbstractWorkerEntity {
         super.registerGoals();
         this.goalSelector.addGoal(1, new FloatGoal(this));
         this.goalSelector.addGoal(2, new WorkerPickupWantedItemGoal(this));
-        this.goalSelector.addGoal(2, new MinerMineTunnelGoal(this, 0.5D, 10D));
+        this.goalSelector.addGoal(2, new MinerMineTunnelGoal(this, 0.5D));
         this.goalSelector.addGoal(2, new MinerMine3x3TunnelGoal(this, 0.5D, 10D));
         this.goalSelector.addGoal(2, new MinerMine8x8PitGoal(this, 0.5D, 15D));
         this.goalSelector.addGoal(2, new MinerMine8x8x1FlatGoal(this, 0.5D, 15D));
@@ -207,7 +207,7 @@ public class MinerEntity extends AbstractWorkerEntity {
         return (WANTED_ITEMS.contains(item));
     }
 
-    public boolean shouldIgnorBlock(Block block) {
+    public boolean shouldIgnoreBlock(Block block) {
         return (IGNORING_BLOCKS.contains(block));
     }
 
@@ -218,7 +218,7 @@ public class MinerEntity extends AbstractWorkerEntity {
 
     @Nullable
     @Override
-    public AgeableMob getBreedOffspring(ServerLevel world, AgeableMob ageable) {
+    public AgeableMob getBreedOffspring(@NotNull ServerLevel world, @NotNull AgeableMob ageable) {
         return null;
     }
 

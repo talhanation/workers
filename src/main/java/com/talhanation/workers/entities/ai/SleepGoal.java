@@ -25,7 +25,7 @@ public class SleepGoal extends Goal {
 
     @Override
     public boolean canUse() {
-        return !worker.level.isDay() || (worker.isSleeping() && worker.level.isDay());
+        return worker.needsToSleep() || (worker.isSleeping() && worker.level.isDay());
     }
 
     public boolean canContinueToUse() {

@@ -3,7 +3,6 @@ package com.talhanation.workers.entities.ai;
 import com.talhanation.workers.entities.MinerEntity;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.state.BlockState;
-import net.minecraft.world.entity.ai.attributes.Attributes;
 import net.minecraft.world.entity.ai.goal.Goal;
 import net.minecraft.core.Direction;
 import net.minecraft.core.BlockPos;
@@ -11,12 +10,11 @@ import net.minecraft.core.BlockPos;
 import java.util.EnumSet;
 
 public class MinerMineTunnelGoal extends MinerMineGoal {
-    private final double within;
     private BlockPos minePos;
 
-    public MinerMineTunnelGoal(MinerEntity miner, double v, double within) {
+    public MinerMineTunnelGoal(MinerEntity miner, double v) {
         this.miner = miner;
-        this.within = within;
+
         this.setFlags(EnumSet.of(Goal.Flag.MOVE));
     }
 
@@ -65,7 +63,7 @@ public class MinerMineTunnelGoal extends MinerMineGoal {
 
             }
 
-            if (miner.shouldIgnorBlock(block)) {
+            if (miner.shouldIgnoreBlock(block)) {
                 y++;
             }
 

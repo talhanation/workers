@@ -61,7 +61,7 @@ public abstract class MinerMineGoal extends Goal {
             BlockState blockstate = this.miner.level.getBlockState(blockPos);
             Block block = blockstate.getBlock();
 
-            if (!miner.shouldIgnorBlock(block)) {
+            if (!miner.shouldIgnoreBlock(block)) {
 
                 if (miner.getCurrentTimeBreak() % 5 == 4) {
                     miner.level.playLocalSound(blockPos.getX(), blockPos.getY(), blockPos.getZ(), blockstate.getSoundType().getHitSound(), SoundSource.BLOCKS, 1F, 0.75F, false);

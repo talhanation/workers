@@ -5,12 +5,9 @@ import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.entity.ai.goal.Goal;
 import net.minecraft.core.Direction;
-import net.minecraft.sounds.SoundSource;
 import net.minecraft.core.BlockPos;
-import net.minecraftforge.event.ForgeEventFactory;
 
 import java.util.EnumSet;
-import java.util.Optional;
 
 public class MinerMine3x3TunnelGoal extends MinerMineGoal {
     private final double within;
@@ -85,7 +82,7 @@ public class MinerMine3x3TunnelGoal extends MinerMineGoal {
             if (minePos.closerThan(miner.getOnPos(), 6)) this.mineBlock(this.minePos);
 
 
-            if (miner.shouldIgnorBlock(block1)) {
+            if (miner.shouldIgnoreBlock(block1)) {
                 y++;
             }
 

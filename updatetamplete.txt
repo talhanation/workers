@@ -1,23 +1,25 @@
-Update 1.8.1
+Update 1.5.1
 
 ---------------------------------------------------------------------------------------------------------------------------
-+ fixed recruits attack owner on block event
++ fixed workers eating while sleeping
++ fixed workers eating bug
++ fixed workers spamming food info
 
-+ made block event target also on neutral
++ improved eating conditions
 
-+ added escorts/patrols of recruits escorting villagers (configurable default: true)
-+ added escorts/patrols of pillagers (configurable default: true)
++ added efficiency improvement when having a home with bed
 
 ---------------------------------------------------------------------------------------------------------------------------
 
 
 
 
-recruits mod update 1.6.1:  
+workers mod update 1.5.1:
 
-+ improved eating ability
-+ fixed chrash in command screen
-+ reworked attributres (nerfed all recruits)
-+ added lang support
++ fixed workers eating while sleeping
++ fixed workers eating bug
++ fixed workers spamming food info
++ improved eating conditions
++ added efficiency improvement when having a home with bed
 
-https://www.curseforge.com/minecraft/mc-mods/recruits/files
+https://www.curseforge.com/minecraft/mc-mods/workers/files

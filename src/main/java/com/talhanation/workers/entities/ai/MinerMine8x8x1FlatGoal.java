@@ -11,7 +11,6 @@ import net.minecraft.world.level.block.state.BlockState;
 import net.minecraftforge.event.ForgeEventFactory;
 
 import java.util.EnumSet;
-import java.util.Optional;
 
 public class MinerMine8x8x1FlatGoal extends Goal {
     private final MinerEntity miner;
@@ -93,7 +92,7 @@ public class MinerMine8x8x1FlatGoal extends Goal {
             //erst mienen wenn nah genug
             if (minePos.closerThan(miner.getOnPos(), 6)) this.mineBlock(this.minePos);
 
-            if (miner.shouldIgnorBlock(block1)) {
+            if (miner.shouldIgnoreBlock(block1)) {
                 blocks++;
             }
 
@@ -115,7 +114,7 @@ public class MinerMine8x8x1FlatGoal extends Goal {
             BlockState blockstate = this.miner.level.getBlockState(blockPos);
             Block block = blockstate.getBlock();
 
-            if (!miner.shouldIgnorBlock(block)) {
+            if (!miner.shouldIgnoreBlock(block)) {
 
                 if (miner.getCurrentTimeBreak() % 5 == 4) {
                     miner.level.playLocalSound(blockPos.getX(), blockPos.getY(), blockPos.getZ(), blockstate.getSoundType().getHitSound(), SoundSource.BLOCKS, 1F, 0.75F, false);

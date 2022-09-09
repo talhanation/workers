@@ -14,7 +14,6 @@ import net.minecraft.core.BlockPos;
 import net.minecraftforge.event.ForgeEventFactory;
 
 import java.util.EnumSet;
-import java.util.Optional;
 
 public class MinerMine8x8PitGoal extends Goal {
     private final MinerEntity miner;
@@ -99,7 +98,7 @@ public class MinerMine8x8PitGoal extends Goal {
             this.miner.getAttribute(Attributes.MOVEMENT_SPEED).setBaseValue(0.3D);
             //erst mienen wenn nah genug
             if (minePos.closerThan(miner.getOnPos(), 6)) this.mineBlock(this.minePos);
-            if (miner.shouldIgnorBlock(block1) || block1 == Blocks.OAK_PLANKS) {
+            if (miner.shouldIgnoreBlock(block1) || block1 == Blocks.OAK_PLANKS) {
                 blocks++;
                 if (block1 != Blocks.OAK_PLANKS) placePlanks();
 
@@ -128,7 +127,7 @@ public class MinerMine8x8PitGoal extends Goal {
             BlockState blockstate = this.miner.level.getBlockState(blockPos);
             Block block = blockstate.getBlock();
 
-            if (!miner.shouldIgnorBlock(block) && block != Blocks.OAK_PLANKS) {
+            if (!miner.shouldIgnoreBlock(block) && block != Blocks.OAK_PLANKS) {
 
                 if (miner.getCurrentTimeBreak() % 5 == 4) {
                     miner.level.playLocalSound(blockPos.getX(), blockPos.getY(), blockPos.getZ(), blockstate.getSoundType().getHitSound(), SoundSource.BLOCKS, 1F, 0.75F, false);

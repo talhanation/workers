@@ -1,13 +1,10 @@
 package com.talhanation.workers.entities;
 
-import com.talhanation.workers.CommandEvents;
 import com.talhanation.workers.Main;
 import com.talhanation.workers.entities.ai.*;
 import com.talhanation.workers.inventory.WorkerHireContainer;
 import com.talhanation.workers.network.MessageHireGui;
 import net.minecraft.core.BlockPos;
-import net.minecraft.core.particles.ParticleOptions;
-import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.TextComponent;
@@ -34,9 +31,7 @@ import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.entity.projectile.AbstractArrow;
 import net.minecraft.world.inventory.AbstractContainerMenu;
-import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
-import net.minecraft.world.item.Items;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.ServerLevelAccessor;
 import net.minecraftforge.api.distmarker.Dist;
@@ -61,12 +56,8 @@ public abstract class AbstractWorkerEntity extends AbstractChunkLoaderEntity {
     private static final EntityDataAccessor<Float> HUNGER = SynchedEntityData.defineId(AbstractWorkerEntity.class, EntityDataSerializers.FLOAT);
     private static final EntityDataAccessor<Boolean> IS_EATING = SynchedEntityData.defineId(AbstractWorkerEntity.class, EntityDataSerializers.BOOLEAN);
     private static final EntityDataAccessor<String> OWNER_NAME = SynchedEntityData.defineId(AbstractWorkerEntity.class, EntityDataSerializers.STRING);
-
     private static final EntityDataAccessor<String> PROFESSION_NAME = SynchedEntityData.defineId(AbstractWorkerEntity.class, EntityDataSerializers.STRING);
-
     int hurtTimeStamp = 0;
-    public ItemStack beforeFoodItem;
-
 
 
     public AbstractWorkerEntity(EntityType<? extends AbstractWorkerEntity> entityType, Level world) {
@@ -104,11 +95,6 @@ public abstract class AbstractWorkerEntity extends AbstractChunkLoaderEntity {
 
     ///////////////////////////////////TICK/////////////////////////////////////////
 
-    private void resetItemInHand() {
-        this.setItemInHand(InteractionHand.MAIN_HAND, this.beforeFoodItem);
-        this.getSlot(10).set(this.beforeFoodItem);
-        this.beforeFoodItem = null;
-    }
 
     public double getMyRidingOffset(){
         return -0.35D;
@@ -129,17 +115,9 @@ public abstract class AbstractWorkerEntity extends AbstractChunkLoaderEntity {
 
     public void tick() {
         super.tick();
-        //Main.LOGGER.debug("WorkerName: " + this.getName().getString());
-        //Main.LOGGER.debug("OwnerName: " + this.getOwnerName());
-        //Main.LOGGER.debug("Profession: " + this.getProfessionName().getString());
         updateSwingTime();
         updateSwimming();
         updateHunger();
-
-        if (this.getIsEating() && !this.isUsingItem()) {
-            if (beforeFoodItem != null) resetItemInHand();
-            setIsEating(false);
-        }
 
         if(hurtTimeStamp > 0) hurtTimeStamp--;
     }
@@ -147,8 +125,7 @@ public abstract class AbstractWorkerEntity extends AbstractChunkLoaderEntity {
 
     public void rideTick() {
         super.rideTick();
-        if (this.getVehicle() instanceof PathfinderMob) {
-            PathfinderMob creatureentity = (PathfinderMob)this.getVehicle();
+        if (this.getVehicle() instanceof PathfinderMob creatureentity) {
             this.yBodyRot = creatureentity.yBodyRot;
         }
 
@@ -188,7 +165,6 @@ public abstract class AbstractWorkerEntity extends AbstractChunkLoaderEntity {
         this.entityData.define(HUNGER, 50F);
         this.entityData.define(OWNER_NAME, "");
         this.entityData.define(PROFESSION_NAME, "");
-
     }
 
     public void addAdditionalSaveData(CompoundTag nbt) {
@@ -370,7 +346,6 @@ public abstract class AbstractWorkerEntity extends AbstractChunkLoaderEntity {
         this.entityData.set(HUNGER, value);
     }
 
-
     public void setDestPos(BlockPos pos){
         this.entityData.set(DEST_POS, Optional.of(pos));
     }
@@ -382,8 +357,6 @@ public abstract class AbstractWorkerEntity extends AbstractChunkLoaderEntity {
     public void clearStartPos(){
         this.entityData.set(START_POS, Optional.empty());
     }
-
-
     public void setFollow(boolean bool) {
         String name = this.getName().getString() + ": ";
         if(getFollow() != bool) {
@@ -412,13 +385,15 @@ public abstract class AbstractWorkerEntity extends AbstractChunkLoaderEntity {
                         owner.sendMessage(new TextComponent(name + TEXT_WORKING.getString()), owner.getUUID());
                     } else
                         owner.sendMessage(new TextComponent(name + TEXT_DONE.getString()), owner.getUUID());
-                } else if (isStarving())
+                }
+                else if (isStarving()) {
                     owner.sendMessage(new TextComponent(name + TEXT_STARVING.getString()), owner.getUUID());
+                    entityData.set(IS_WORKING, false);
+                }
             }
             entityData.set(IS_WORKING, bool);
         }
     }
-
 
     public void setIsPickingUp(boolean bool) {
         entityData.set(IS_PICKING_UP, bool);
@@ -435,19 +410,6 @@ public abstract class AbstractWorkerEntity extends AbstractChunkLoaderEntity {
 
     public void setEquipment(){}
 
-//////////ON FUNCTIONS////////////////////////////////////
-
-    boolean playerHasEnoughEmeralds(Player player) {
-        int recruitCosts = this.workerCosts();
-        int emeraldCount = player.getItemInHand(InteractionHand.MAIN_HAND).getCount();
-        if (emeraldCount >= recruitCosts){
-            return true;
-        }
-        if (player.isCreative()){
-            return true;
-        }
-        else return false;
-    }
 
     ////////////////////////////////////ATTACK FUNCTIONS////////////////////////////////////
 
@@ -502,23 +464,35 @@ public abstract class AbstractWorkerEntity extends AbstractChunkLoaderEntity {
 
     ////////////////////////////////////OTHER FUNCTIONS////////////////////////////////////
 
+    public boolean needsToSleep() {
+        return !this.level.isDay();
+    }
     public void updateHunger(){
-        if(getHunger() > 0) {
+        if(getHunger() > 0 && getHunger() <= 100) {
             if (getIsWorking())
-                setHunger((getHunger() - 0.005F));
+                setHunger((getHunger() - 0.0025F));
+
+            else if (isSleeping())
+                setHunger((getHunger() + 0.0005F));
+
             else
                 setHunger((getHunger() - 0.001F));
         }
 
-        if(isStarving())this.setIsWorking(false);
+
+        if(isStarving() && this.getIsWorking())this.setIsWorking(false);
     }
 
     public boolean needsToEat(){
-        return (getHunger() <= 20F);
+        return (getHunger() <= 20F || getHealth() < getMaxHealth() * 0.2);
     }
 
     public boolean isStarving(){
         return (getHunger() <= 1F);
+    }
+
+    public boolean isSaturated(){
+        return (getHunger() >= 90F);
     }
 
     public void resetWorkerParameters(){
