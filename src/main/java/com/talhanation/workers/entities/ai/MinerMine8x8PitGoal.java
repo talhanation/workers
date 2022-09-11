@@ -60,12 +60,12 @@ public class MinerMine8x8PitGoal extends Goal {
     @Override
     public void stop() {
         super.stop();
-        restetCounts();
+        resetCounts();
     }
 
     public void tick() {
         if (miner.getFollow() || !miner.getIsWorking()){
-            restetCounts();
+            resetCounts();
         }
 
         if (!miner.getFollow()) {
@@ -101,7 +101,6 @@ public class MinerMine8x8PitGoal extends Goal {
             if (miner.shouldIgnoreBlock(block1) || block1 == Blocks.OAK_PLANKS) {
                 blocks++;
                 if (block1 != Blocks.OAK_PLANKS) placePlanks();
-
             }
 
             if (blocks == 8) {
@@ -159,10 +158,8 @@ public class MinerMine8x8PitGoal extends Goal {
                 }
             }
         }
-
     }
-
-    public void restetCounts(){
+    public void resetCounts(){
         blocks = 0;
         side = 0;
         depth = 0;
@@ -170,7 +167,7 @@ public class MinerMine8x8PitGoal extends Goal {
 
     public boolean shouldPlacePlanks(){
         if (side == 0) {
-            if (blocks == depth) return true;
+            return (blocks -1) == depth;
 
         }
         return false;

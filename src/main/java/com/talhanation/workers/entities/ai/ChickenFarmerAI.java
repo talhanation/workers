@@ -108,8 +108,11 @@ public class ChickenFarmerAI extends Goal {
         SimpleContainer inventory = chickenFarmer.getInventory();
         for(int i = 0; i < inventory.getContainerSize(); i++) {
             ItemStack itemStack = inventory.getItem(i);
-            if (itemStack.getItem().equals(Items.WHEAT_SEEDS) || itemStack.getItem().equals(Items.MELON_SEEDS) || itemStack.getItem().equals(Items.BEETROOT_SEEDS) || itemStack.getItem().equals(Items.PUMPKIN_SEEDS))
+            if (itemStack.getItem().equals(Items.WHEAT_SEEDS) || itemStack.getItem().equals(Items.MELON_SEEDS) || itemStack.getItem().equals(Items.BEETROOT_SEEDS) || itemStack.getItem().equals(Items.PUMPKIN_SEEDS)){
                 itemStack.shrink(1);
+                break;
+            }
+
         }
     }
 

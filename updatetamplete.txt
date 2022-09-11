@@ -1,25 +1,26 @@
-Update 1.5.1
+Update 1.5.2
 
 ---------------------------------------------------------------------------------------------------------------------------
-+ fixed workers eating while sleeping
-+ fixed workers eating bug
-+ fixed workers spamming food info
++ fixed herd workers consume all stacks in inv for 1x breeding
++ fixed workers could get in love with wheat
++ fixed workers don't eat when starving
++ fixed workers swing wrong arm
 
-+ improved eating conditions
++ improved pit minetype
 
-+ added efficiency improvement when having a home with bed
-
++ added minetype room 8x8x3
 ---------------------------------------------------------------------------------------------------------------------------
 
 
 
 
-workers mod update 1.5.1:
+workers mod update 1.5.2:
 
-+ fixed workers eating while sleeping
-+ fixed workers eating bug
-+ fixed workers spamming food info
-+ improved eating conditions
-+ added efficiency improvement when having a home with bed
++ fixed herd workers consume all stacks in inv for 1x breeding
++ fixed workers could get in love with wheat
++ fixed workers don't eat when starving
++ fixed workers swing wrong arm
++ improved pit minetype
++ added minetype room 8x8x3
 
 https://www.curseforge.com/minecraft/mc-mods/workers/files

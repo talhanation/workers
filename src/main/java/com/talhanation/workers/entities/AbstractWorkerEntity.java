@@ -31,7 +31,6 @@ import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.entity.projectile.AbstractArrow;
 import net.minecraft.world.inventory.AbstractContainerMenu;
-import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.ServerLevelAccessor;
 import net.minecraftforge.api.distmarker.Dist;
@@ -471,6 +470,8 @@ public abstract class AbstractWorkerEntity extends AbstractChunkLoaderEntity {
         if(getHunger() > 0 && getHunger() <= 100) {
             if (getIsWorking())
                 setHunger((getHunger() - 0.0025F));
+            else if (getIsWorking() && getLevel().isNight())
+                setHunger((getHunger() - 0.006F));
 
             else if (isSleeping())
                 setHunger((getHunger() + 0.0005F));
@@ -484,7 +485,7 @@ public abstract class AbstractWorkerEntity extends AbstractChunkLoaderEntity {
     }
 
     public boolean needsToEat(){
-        return (getHunger() <= 20F || getHealth() < getMaxHealth() * 0.2);
+        return (getHunger() <= 20F || getHealth() < getMaxHealth() * 0.2) || isStarving();
     }
 
     public boolean isStarving(){
@@ -508,6 +509,11 @@ public abstract class AbstractWorkerEntity extends AbstractChunkLoaderEntity {
     public abstract int workerCosts() ;
 
     @Override
+    public boolean canBreed() {
+        return false;
+    }
+
+    @Override
     @OnlyIn(Dist.CLIENT)
     protected void spawnTamingParticles(boolean smoke) {
 
@@ -516,7 +522,7 @@ public abstract class AbstractWorkerEntity extends AbstractChunkLoaderEntity {
     public void workerSwingArm(){
         if (this.getRandom().nextInt(5) == 0) {
             if (!this.swinging) {
-                this.swing(this.getUsedItemHand(), true);
+                this.swing(InteractionHand.MAIN_HAND);
             }
         }
     }

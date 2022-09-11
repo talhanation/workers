@@ -107,8 +107,11 @@ public class SwineherdAI extends Goal {
         SimpleContainer inventory = swineherd.getInventory();
         for(int i = 0; i < inventory.getContainerSize(); i++) {
             ItemStack itemStack = inventory.getItem(i);
-            if (itemStack.getItem().equals(Items.CARROT))
+            if (itemStack.getItem().equals(Items.CARROT)){
                 itemStack.shrink(1);
+                break;
+            }
+
         }
     }
 

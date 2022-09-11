@@ -133,8 +133,10 @@ public class CattleFarmerAI extends Goal {
         SimpleContainer inventory = cattleFarmer.getInventory();
         for(int i = 0; i < inventory.getContainerSize(); i++) {
             ItemStack itemStack = inventory.getItem(i);
-            if (itemStack.getItem().equals(Items.WHEAT))
+            if (itemStack.getItem().equals(Items.WHEAT)){
                 itemStack.shrink(1);
+                break;
+            }
         }
     }
 

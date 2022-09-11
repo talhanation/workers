@@ -37,7 +37,7 @@ public class EatGoal extends Goal {
 
     @Override
     public void start() {
-        beforeFoodItem = worker.getItemInHand(InteractionHand.OFF_HAND);
+        beforeFoodItem = worker.getItemInHand(InteractionHand.MAIN_HAND);
         worker.setIsEating(true);
         this.foodStack = getFoodInInv();
 
@@ -46,8 +46,8 @@ public class EatGoal extends Goal {
             worker.setHunger(worker.getHunger() + Objects.requireNonNull(foodStack.getItem().getFoodProperties(foodStack, worker)).getSaturationModifier() * 100);
 
 
-        worker.setItemInHand(InteractionHand.OFF_HAND, foodStack);
-        worker.startUsingItem(InteractionHand.OFF_HAND);
+        worker.setItemInHand(InteractionHand.MAIN_HAND, foodStack);
+        worker.startUsingItem(InteractionHand.MAIN_HAND);
     }
 
 
@@ -83,6 +83,6 @@ public class EatGoal extends Goal {
     }
 
     public void resetItemInHand() {
-        worker.setItemInHand(InteractionHand.OFF_HAND, this.beforeFoodItem);
+        worker.setItemInHand(InteractionHand.MAIN_HAND, this.beforeFoodItem);
     }
 }

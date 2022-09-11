@@ -4,6 +4,7 @@ import com.talhanation.workers.entities.MinerEntity;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.sounds.SoundSource;
+import net.minecraft.world.InteractionHand;
 import net.minecraft.world.entity.ai.goal.Goal;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.state.BlockState;
@@ -89,7 +90,7 @@ public abstract class MinerMineGoal extends Goal {
                 miner.changeTool(blockstate);
                 if (this.miner.getRandom().nextInt(5) == 0) {
                     if (!this.miner.swinging) {
-                        this.miner.swing(this.miner.getUsedItemHand());
+                        this.miner.workerSwingArm();
                     }
                 }
             }

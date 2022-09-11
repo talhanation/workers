@@ -37,6 +37,7 @@
   "gui.workers.miner.tunnel3x3": "Tunnel 3x3",
   "gui.workers.miner.pit8x8x8": "Pit 8x8x8",
   "gui.workers.miner.flat8x8x1": "Flat 8x8x1",
+  "gui.workers.miner.room8x8x3": "Room 8x8x3",
   "gui.workers.miner.depth": "Depth",
   "gui.workers.merchant.trade": "Trade",
   "gui.workers.hire_gui.text.hire": "Hire",

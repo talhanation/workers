@@ -137,8 +137,11 @@ public class ShepherdAI extends Goal {
         SimpleContainer inventory = shepherd.getInventory();
         for(int i = 0; i < inventory.getContainerSize(); i++) {
             ItemStack itemStack = inventory.getItem(i);
-            if (itemStack.getItem().equals(Items.WHEAT))
+            if (itemStack.getItem().equals(Items.WHEAT)){
                 itemStack.shrink(1);
+                break;
+            }
+
         }
     }
 
