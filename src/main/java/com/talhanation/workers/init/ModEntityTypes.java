@@ -6,6 +6,7 @@ import com.talhanation.workers.entities.*;
 import net.minecraft.world.entity.MobCategory;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.resources.ResourceLocation;
+import net.minecraft.world.entity.animal.Bee;
 import net.minecraftforge.registries.DeferredRegister;
 import net.minecraftforge.registries.ForgeRegistries;
 import net.minecraftforge.registries.RegistryObject;
@@ -87,5 +88,22 @@ public class ModEntityTypes {
                     .setTrackingRange(32)
                     .setShouldReceiveVelocityUpdates(true)
                     .build(new ResourceLocation(Main.MOD_ID, "swineherd").toString()));
+
+    public static final RegistryObject<EntityType<RabbitFarmerEntity>> RABBIT_FARMER = ENTITY_TYPES.register("rabbit_farmer",
+            () -> EntityType.Builder.of(RabbitFarmerEntity::new, MobCategory.CREATURE)
+                    .sized(0.6F, 1.95F)
+                    .canSpawnFarFromPlayer()
+                    .setTrackingRange(32)
+                    .setShouldReceiveVelocityUpdates(true)
+                    .build(new ResourceLocation(Main.MOD_ID, "rabbit_farmer").toString()));
+
+    public static final RegistryObject<EntityType<BeekeeperEntity>> BEEKEEPER = ENTITY_TYPES.register("beekeeper",
+            () -> EntityType.Builder.of(BeekeeperEntity::new, MobCategory.CREATURE)
+                    .sized(0.6F, 1.95F)
+                    .canSpawnFarFromPlayer()
+                    .setTrackingRange(32)
+                    .setShouldReceiveVelocityUpdates(true)
+                    .build(new ResourceLocation(Main.MOD_ID, "beekeeper").toString()));
+
 
 }

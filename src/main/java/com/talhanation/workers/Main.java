@@ -69,6 +69,7 @@ public class Main {
     public static MenuType<WorkerInventoryContainer> WORKER_CONTAINER_TYPE;
     public static MenuType<MerchantTradeContainer> MERCHANT_CONTAINER_TYPE;
     public static MenuType<MerchantInventoryContainer> MERCHANT_OWNER_CONTAINER_TYPE;
+    public static MenuType<CommandContainer> COMMAND_CONTAINER_TYPE;
 
     public Main() {
         //ModLoadingContext.get().registerConfig(ModConfig.Type.COMMON, workersModConfig.CONFIG);
@@ -124,6 +125,7 @@ public class Main {
         ClientRegistry.registerScreen(Main.MERCHANT_OWNER_CONTAINER_TYPE, MerchantOwnerScreen::new);
         ClientRegistry.registerScreen(Main.ANIMAL_FARMER_CONTAINER_TYPE, AnimalFarmerInventoryScreen::new);
         ClientRegistry.registerScreen(Main.HIRE_CONTAINER_TYPE, WorkerHireScreen::new);
+        ClientRegistry.registerScreen(Main.COMMAND_CONTAINER_TYPE, CommandScreen::new);
     }
 
     @SubscribeEvent

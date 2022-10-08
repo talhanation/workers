@@ -55,12 +55,12 @@ public class MinerMine8x8x1FlatGoal extends Goal {
     @Override
     public void stop() {
         super.stop();
-        restetCounts();
+        resetCounts();
     }
 
     public void tick() {
         if (miner.getFollow() || !miner.getIsWorking()){
-            restetCounts();
+            resetCounts();
         }
 
         if (!miner.getFollow()) {
@@ -149,7 +149,7 @@ public class MinerMine8x8x1FlatGoal extends Goal {
 
     }
 
-    public void restetCounts(){
+    public void resetCounts(){
         blocks = 0;
         side = 0;
     }

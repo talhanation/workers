@@ -1,13 +1,9 @@
-Update 1.5.2
+Update 1.5.3
 
 ---------------------------------------------------------------------------------------------------------------------------
-+ fixed herd workers consume all stacks in inv for 1x breeding
-+ fixed workers could get in love with wheat
-+ fixed workers don't eat when starving
-+ fixed workers swing wrong arm
 
-+ improved pit minetype
 
++ added beekeeper
 + added minetype room 8x8x3
 ---------------------------------------------------------------------------------------------------------------------------
 
@@ -15,7 +11,7 @@ Update 1.5.2
 
 
 workers mod update 1.5.2:
-
+s
 + fixed herd workers consume all stacks in inv for 1x breeding
 + fixed workers could get in love with wheat
 + fixed workers don't eat when starving

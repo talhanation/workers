@@ -8,6 +8,8 @@
   "entity.workers.swineherd": "Swineherd",
   "entity.workers.chicken_farmer": "Chicken Farmer",
   "entity.workers.cattle_farmer": "Cattle Farmer",
+  "entity.workers.beekeeper": "Beekeeper",
+  "entity.workers.rabbit_farmer": "Rabbit Farmer",
 
   "item.workers.miner_spawn_egg": "Miner Spawn Egg",
   "item.workers.farmer_spawn_egg": "Farmer Spawn Egg",

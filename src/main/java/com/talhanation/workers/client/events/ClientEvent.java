@@ -23,5 +23,7 @@ public class ClientEvent {
         event.registerEntityRenderer(ModEntityTypes.CATTLE_FARMER.get(), CattleFarmerRenderer::new );
         event.registerEntityRenderer(ModEntityTypes.CHICKEN_FARMER.get(), ChickenFarmerRenderer::new );
         event.registerEntityRenderer(ModEntityTypes.SWINEHERD.get(), SwineherdRenderer::new );
+        event.registerEntityRenderer(ModEntityTypes.RABBIT_FARMER.get(), RabbitFarmerRenderer::new );
+        event.registerEntityRenderer(ModEntityTypes.BEEKEEPER.get(), BeekeeperRenderer::new );
     }
 }

@@ -56,8 +56,7 @@ public abstract class MinerMineGoal extends Goal {
         }
     }
 
-    public void mineBlock(BlockPos blockPos){
-
+    protected void mineBlock(BlockPos blockPos){
         if (this.miner.isAlive() && ForgeEventFactory.getMobGriefingEvent(this.miner.level, this.miner) && !miner.getFollow()) {
             BlockState blockstate = this.miner.level.getBlockState(blockPos);
             Block block = blockstate.getBlock();
@@ -68,11 +67,10 @@ public abstract class MinerMineGoal extends Goal {
                     miner.level.playLocalSound(blockPos.getX(), blockPos.getY(), blockPos.getZ(), blockstate.getSoundType().getHitSound(), SoundSource.BLOCKS, 1F, 0.75F, false);
                 }
 
-
                 int bp = (int) (blockstate.getDestroySpeed(this.miner.level, blockPos) * 10);
                 this.miner.setBreakingTime(bp);
 
-                this.miner.setCurrentTimeBreak(this.miner.getCurrentTimeBreak() + (int) (2 * (this.miner.getUseItem().getDestroySpeed(blockstate))));
+                this.miner.setCurrentTimeBreak(this.miner.getCurrentTimeBreak() + (int) (1 * (this.miner.getUseItem().getDestroySpeed(blockstate))));
                 float f = (float) this.miner.getCurrentTimeBreak() / (float) this.miner.getBreakingTime();
 
                 int i = (int) (f * 10);
@@ -90,11 +88,12 @@ public abstract class MinerMineGoal extends Goal {
                 miner.changeTool(blockstate);
                 if (this.miner.getRandom().nextInt(5) == 0) {
                     if (!this.miner.swinging) {
-                        this.miner.workerSwingArm();
+                        this.miner.swing(this.miner.getUsedItemHand());
                     }
                 }
             }
         }
+
     }
 
     public BlockPos getBlockPositionsFromDirection(int x, int y, int z, BlockPos startPos, Direction direction){

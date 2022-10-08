@@ -1,5 +1,6 @@
 package com.talhanation.workers;
 
+import com.talhanation.workers.client.render.RabbitFarmerRenderer;
 import com.talhanation.workers.entities.*;
 import com.talhanation.workers.init.ModEntityTypes;
 import net.minecraftforge.event.entity.EntityAttributeCreationEvent;
@@ -20,5 +21,7 @@ public class AttributeEvent {
         event.put(ModEntityTypes.CATTLE_FARMER.get(), CattleFarmerEntity.setAttributes().build());
         event.put(ModEntityTypes.CHICKEN_FARMER.get(), ChickenFarmerEntity.setAttributes().build());
         event.put(ModEntityTypes.SWINEHERD.get(), SwineherdEntity.setAttributes().build());
+        event.put(ModEntityTypes.RABBIT_FARMER.get(), RabbitFarmerEntity.setAttributes().build());
+        event.put(ModEntityTypes.BEEKEEPER.get(), BeekeeperEntity.setAttributes().build());
     }
 }
