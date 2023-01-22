@@ -5,8 +5,6 @@ import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.ai.goal.Goal;
 import net.minecraft.core.BlockPos;
 
-import java.util.Optional;
-
 public class WorkerMoveToHomeGoal<T extends LivingEntity> extends Goal {
 
     private final AbstractWorkerEntity worker;

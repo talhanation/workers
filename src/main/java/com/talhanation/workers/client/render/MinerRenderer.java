@@ -2,15 +2,13 @@ package com.talhanation.workers.client.render;
 
 import com.talhanation.workers.Main;
 import com.talhanation.workers.entities.AbstractWorkerEntity;
-import net.minecraft.client.renderer.entity.EntityRenderDispatcher;
-import net.minecraft.client.renderer.entity.EntityRenderer;
 import net.minecraft.client.renderer.entity.EntityRendererProvider;
 import net.minecraft.resources.ResourceLocation;
 
 public class MinerRenderer extends AbstractWorkersRenderer<AbstractWorkerEntity> {
 
     private static final ResourceLocation[] TEXTURE = {
-            new ResourceLocation(Main.MOD_ID,"textures/entity/miner.png"),
+            new ResourceLocation(Main.MOD_ID, "textures/entity/miner.png"),
     };
 
     public MinerRenderer(EntityRendererProvider.Context mgr) {

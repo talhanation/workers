@@ -1,6 +1,5 @@
 package com.talhanation.workers.client.gui;
 
-
 import com.mojang.blaze3d.systems.RenderSystem;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.talhanation.workers.Main;
@@ -11,8 +10,7 @@ import de.maxhenkel.corelib.inventory.ScreenBase;
 import net.minecraft.client.gui.components.Button;
 import net.minecraft.client.gui.screens.inventory.InventoryScreen;
 import net.minecraft.network.chat.Component;
-import net.minecraft.network.chat.TextComponent;
-import net.minecraft.network.chat.TranslatableComponent;
+import net.minecraft.network.chat.MutableComponent;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.util.Mth;
 import net.minecraft.world.entity.ai.attributes.Attributes;
@@ -25,9 +23,10 @@ import java.text.DecimalFormat;
 
 @OnlyIn(Dist.CLIENT)
 public class WorkerHireScreen extends ScreenBase<WorkerHireContainer> {
-    private static final ResourceLocation RESOURCE_LOCATION = new ResourceLocation(Main.MOD_ID,"textures/gui/hire_gui.png" );
+    private static final ResourceLocation RESOURCE_LOCATION = new ResourceLocation(Main.MOD_ID,
+            "textures/gui/hire_gui.png");
 
-    private static final TranslatableComponent TEXT_HIRE = new TranslatableComponent("gui.workers.hire_gui.text.hire");
+    private static final MutableComponent TEXT_HIRE = Component.translatable("gui.workers.hire_gui.text.hire");
 
     private static final int fontColor = 4210752;
 
@@ -35,11 +34,12 @@ public class WorkerHireScreen extends ScreenBase<WorkerHireContainer> {
     private final Player player;
 
     public WorkerHireScreen(WorkerHireContainer recruitContainer, Inventory playerInventory, Component title) {
-        super(RESOURCE_LOCATION, recruitContainer, playerInventory, new TextComponent(""));
+        super(RESOURCE_LOCATION, recruitContainer, playerInventory, Component.literal(""));
         this.worker = recruitContainer.getWorkerEntity();
         this.player = playerInventory.player;
         imageWidth = 176;
         imageHeight = 218;
+        Main.LOGGER.info("WorkerHireScreen loaded");
     }
 
     @Override
@@ -47,7 +47,6 @@ public class WorkerHireScreen extends ScreenBase<WorkerHireContainer> {
         super.init();
         int zeroLeftPos = leftPos + 180;
         int zeroTopPos = topPos + 10;
-
 
         int mirror = 240 - 60;
 
@@ -64,34 +63,33 @@ public class WorkerHireScreen extends ScreenBase<WorkerHireContainer> {
         int maxHealth = Mth.ceil(worker.getMaxHealth());
         int hunger = Mth.ceil(worker.getHunger());
 
-
         double speed = worker.getAttributeBaseValue(Attributes.MOVEMENT_SPEED) / 0.3;
         DecimalFormat decimalformat = new DecimalFormat("##.##");
         int costs = worker.workerCosts();
 
+        int k = 89;// rechst links
+        int l = 19;// höhe
 
-        int k = 89;//rechst links
-        int l = 19;//höhe
-
-        //Titles
+        // Titles
         font.draw(matrixStack, worker.getDisplayName().getVisualOrderText(), 8, 5, fontColor);
-        font.draw(matrixStack, player.getInventory().getDisplayName().getVisualOrderText(), 8, this.imageHeight - 96 + 2, fontColor);
+        font.draw(matrixStack, player.getInventory().getDisplayName().getVisualOrderText(), 8,
+                this.imageHeight - 96 + 2, fontColor);
 
-        //Info
+        // Info
         font.draw(matrixStack, "Hp:", k, l, fontColor);
-        font.draw(matrixStack, "" + health, k + 40, l , fontColor);
+        font.draw(matrixStack, "" + health, k + 40, l, fontColor);
 
-        font.draw(matrixStack, "MaxHp:", k , l  + 10, fontColor);
-        font.draw(matrixStack, "" + maxHealth, k + 40 , l + 10, fontColor);
+        font.draw(matrixStack, "MaxHp:", k, l + 10, fontColor);
+        font.draw(matrixStack, "" + maxHealth, k + 40, l + 10, fontColor);
 
         font.draw(matrixStack, "Speed:", k, l + 20, fontColor);
         font.draw(matrixStack, "" + decimalformat.format(speed), k + 40, l + 20, fontColor);
 
         font.draw(matrixStack, "Hunger:", k, l + 30, fontColor);
-        font.draw(matrixStack, ""+ hunger, k + 40, l + 30, fontColor);
+        font.draw(matrixStack, "" + hunger, k + 40, l + 30, fontColor);
 
         font.draw(matrixStack, "Costs:", k, l + 40, fontColor);
-        font.draw(matrixStack, ""+ costs, k + 40, l + 40, fontColor);
+        font.draw(matrixStack, "" + costs, k + 40, l + 40, fontColor);
 
     }
 
@@ -102,6 +100,7 @@ public class WorkerHireScreen extends ScreenBase<WorkerHireContainer> {
         int i = (this.width - this.imageWidth) / 2;
         int j = (this.height - this.imageHeight) / 2;
 
-        InventoryScreen.renderEntityInInventory(i + 40, j + 72, 20, (float)(i + 50) - mouseX, (float)(j + 75 - 50) - mouseY, this.worker);
+        InventoryScreen.renderEntityInInventory(i + 40, j + 72, 20, (float) (i + 50) - mouseX,
+                (float) (j + 75 - 50) - mouseY, this.worker);
     }
 }

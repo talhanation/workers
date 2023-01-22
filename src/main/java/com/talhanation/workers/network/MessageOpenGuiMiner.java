@@ -16,7 +16,6 @@ public class MessageOpenGuiMiner implements Message<MessageOpenGuiMiner> {
     private UUID uuid;
     private UUID worker;
 
-
     public MessageOpenGuiMiner() {
         this.uuid = new UUID(0, 0);
     }
@@ -38,14 +37,10 @@ public class MessageOpenGuiMiner implements Message<MessageOpenGuiMiner> {
         }
 
         ServerPlayer player = context.getSender();
-        player.level.getEntitiesOfClass(MinerEntity.class, player.getBoundingBox()
-                .inflate(16.0D), v -> v
-                .getUUID()
-                .equals(this.worker))
-                .stream()
-                .filter(Entity::isAlive)
-                .findAny()
-                .ifPresent(worker -> worker.openGUI(player));
+        player.level
+                .getEntitiesOfClass(MinerEntity.class, player.getBoundingBox().inflate(16.0D),
+                        v -> v.getUUID().equals(this.worker))
+                .stream().filter(Entity::isAlive).findAny().ifPresent(worker -> worker.openGUI(player));
     }
 
     @Override

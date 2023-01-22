@@ -6,7 +6,6 @@ import net.minecraft.world.SimpleContainer;
 import net.minecraft.world.entity.EquipmentSlot;
 import net.minecraft.world.entity.ai.goal.Goal;
 import net.minecraft.world.entity.animal.Chicken;
-import net.minecraft.world.entity.animal.Cow;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
 
@@ -24,7 +23,6 @@ public class ChickenFarmerAI extends Goal {
     private boolean slaughtering;
     private BlockPos workPos;
 
-
     public ChickenFarmerAI(ChickenFarmerEntity worker) {
         this.chickenFarmer = worker;
         this.setFlags(EnumSet.of(Flag.MOVE, Flag.LOOK));
@@ -34,8 +32,8 @@ public class ChickenFarmerAI extends Goal {
     public boolean canUse() {
         if (!this.chickenFarmer.level.isDay()) {
             return false;
-        }
-        else return chickenFarmer.getIsWorking() && !chickenFarmer.getFollow();
+        } else
+            return chickenFarmer.getIsWorking() && !chickenFarmer.getFollow();
     }
 
     @Override
@@ -52,9 +50,9 @@ public class ChickenFarmerAI extends Goal {
         if (workPos != null && !workPos.closerThan(chickenFarmer.getOnPos(), 10D) && !chickenFarmer.getFollow())
             this.chickenFarmer.getNavigation().moveTo(workPos.getX(), workPos.getY(), workPos.getZ(), 1);
 
-        if (breeding){
+        if (breeding) {
             this.chicken = findChickenBreeding();
-            if (this.chicken.isPresent() ) {
+            if (this.chicken.isPresent()) {
                 int i = chicken.get().getAge();
 
                 if (i == 0 && this.hasSeeds()) {
@@ -63,12 +61,12 @@ public class ChickenFarmerAI extends Goal {
 
                     if (chicken.get().closerThan(this.chickenFarmer, 1.5)) {
                         this.consumeSeed();
-                        this.chickenFarmer.getLookControl().setLookAt(chicken.get().getX(), chicken.get().getEyeY(), chicken.get().getZ(), 10.0F, (float) this.chickenFarmer.getMaxHeadXRot());
+                        this.chickenFarmer.getLookControl().setLookAt(chicken.get().getX(), chicken.get().getEyeY(),
+                                chicken.get().getZ(), 10.0F, (float) this.chickenFarmer.getMaxHeadXRot());
                         chicken.get().setInLove(null);
                         this.chicken = Optional.empty();
                     }
-                }
-                else {
+                } else {
                     breeding = false;
                     slaughtering = true;
                     this.chickenFarmer.setItemSlot(EquipmentSlot.MAINHAND, ItemStack.EMPTY);
@@ -80,7 +78,6 @@ public class ChickenFarmerAI extends Goal {
             }
         }
 
-
         if (slaughtering) {
 
             List<Chicken> cows = findChickenSlaughtering();
@@ -88,15 +85,15 @@ public class ChickenFarmerAI extends Goal {
                 chicken = cows.stream().findFirst();
 
                 if (chicken.isPresent()) {
-                    this.chickenFarmer.getNavigation().moveTo(chicken.get().getX(), chicken.get().getY(), chicken.get().getZ(), 1);
+                    this.chickenFarmer.getNavigation().moveTo(chicken.get().getX(), chicken.get().getY(),
+                            chicken.get().getZ(), 1);
                     if (chicken.get().closerThan(this.chickenFarmer, 1.5)) {
                         chicken.get().kill();
                         chickenFarmer.workerSwingArm();
                     }
                 }
 
-            }
-            else {
+            } else {
                 slaughtering = false;
                 breeding = true;
             }
@@ -104,11 +101,13 @@ public class ChickenFarmerAI extends Goal {
 
     }
 
-    private void consumeSeed(){
+    private void consumeSeed() {
         SimpleContainer inventory = chickenFarmer.getInventory();
-        for(int i = 0; i < inventory.getContainerSize(); i++) {
+        for (int i = 0; i < inventory.getContainerSize(); i++) {
             ItemStack itemStack = inventory.getItem(i);
-            if (itemStack.getItem().equals(Items.WHEAT_SEEDS) || itemStack.getItem().equals(Items.MELON_SEEDS) || itemStack.getItem().equals(Items.BEETROOT_SEEDS) || itemStack.getItem().equals(Items.PUMPKIN_SEEDS)){
+            if (itemStack.getItem().equals(Items.WHEAT_SEEDS) || itemStack.getItem().equals(Items.MELON_SEEDS)
+                    || itemStack.getItem().equals(Items.BEETROOT_SEEDS)
+                    || itemStack.getItem().equals(Items.PUMPKIN_SEEDS)) {
                 itemStack.shrink(1);
                 break;
             }
@@ -116,30 +115,25 @@ public class ChickenFarmerAI extends Goal {
         }
     }
 
-
     private Optional<Chicken> findChickenBreeding() {
-        return  chickenFarmer.level.getEntitiesOfClass(Chicken.class, chickenFarmer.getBoundingBox()
-                .inflate(8D), Chicken::isAlive)
-                .stream()
-                .filter(not(Chicken::isBaby))
-                .filter(not(Chicken::isInLove))
-                .findAny();
+        return chickenFarmer.level
+                .getEntitiesOfClass(Chicken.class, chickenFarmer.getBoundingBox().inflate(8D), Chicken::isAlive)
+                .stream().filter(not(Chicken::isBaby)).filter(not(Chicken::isInLove)).findAny();
     }
 
     private List<Chicken> findChickenSlaughtering() {
-        return  chickenFarmer.level.getEntitiesOfClass(Chicken.class, chickenFarmer.getBoundingBox()
-                        .inflate(8D), Chicken::isAlive)
-                .stream()
-                .filter(not(Chicken::isBaby))
-                .filter(not(Chicken::isInLove))
-                .collect(Collectors.toList());
+        return chickenFarmer.level
+                .getEntitiesOfClass(Chicken.class, chickenFarmer.getBoundingBox().inflate(8D), Chicken::isAlive)
+                .stream().filter(not(Chicken::isBaby)).filter(not(Chicken::isInLove)).collect(Collectors.toList());
     }
 
     private boolean hasSeeds() {
         SimpleContainer inventory = chickenFarmer.getInventory();
-        for(int i = 0; i < inventory.getContainerSize(); i++) {
+        for (int i = 0; i < inventory.getContainerSize(); i++) {
             ItemStack itemStack = inventory.getItem(i);
-            if (itemStack.getItem().equals(Items.WHEAT_SEEDS) || itemStack.getItem().equals(Items.MELON_SEEDS) || itemStack.getItem().equals(Items.BEETROOT_SEEDS) || itemStack.getItem().equals(Items.PUMPKIN_SEEDS))
+            if (itemStack.getItem().equals(Items.WHEAT_SEEDS) || itemStack.getItem().equals(Items.MELON_SEEDS)
+                    || itemStack.getItem().equals(Items.BEETROOT_SEEDS)
+                    || itemStack.getItem().equals(Items.PUMPKIN_SEEDS))
                 if (itemStack.getCount() >= 2)
                     return true;
         }

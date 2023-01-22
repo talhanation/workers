@@ -1,9 +1,9 @@
 {
   "homepage": "https://www.curseforge.com/minecraft/mc-mods/workers/files",
-  "1.18.2": {
+  "1.19.2": {
     "promos": {
-      "1.18.2-latest": "1.5.2",
-      "1.18.2-recommended": "1.5.2"
+      "1.19.2-latest": "1.5.2",
+      "1.19.2-recommended": "1.5.2"
     }
   }
 }

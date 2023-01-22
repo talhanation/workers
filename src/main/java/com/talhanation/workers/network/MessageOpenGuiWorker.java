@@ -16,7 +16,6 @@ public class MessageOpenGuiWorker implements Message<MessageOpenGuiWorker> {
     private UUID uuid;
     private UUID worker;
 
-
     public MessageOpenGuiWorker() {
         this.uuid = new UUID(0, 0);
     }
@@ -38,14 +37,10 @@ public class MessageOpenGuiWorker implements Message<MessageOpenGuiWorker> {
         }
 
         ServerPlayer player = context.getSender();
-        player.level.getEntitiesOfClass(AbstractWorkerEntity.class, player.getBoundingBox()
-                .inflate(16.0D), v -> v
-                .getUUID()
-                .equals(this.worker))
-                .stream()
-                .filter(Entity::isAlive)
-                .findAny()
-                .ifPresent(worker -> worker.openGUI(player));
+        player.level
+                .getEntitiesOfClass(AbstractWorkerEntity.class, player.getBoundingBox().inflate(16.0D),
+                        v -> v.getUUID().equals(this.worker))
+                .stream().filter(Entity::isAlive).findAny().ifPresent(worker -> worker.openGUI(player));
     }
 
     @Override

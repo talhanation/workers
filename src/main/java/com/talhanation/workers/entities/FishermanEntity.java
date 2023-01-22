@@ -5,12 +5,13 @@ import com.talhanation.workers.Main;
 import com.talhanation.workers.inventory.WorkerInventoryContainer;
 import com.talhanation.workers.entities.ai.FishermanAI;
 import com.talhanation.workers.entities.ai.WorkerFindWaterAI;
-import com.talhanation.workers.entities.ai.WorkerFollowOwnerGoal;
 import com.talhanation.workers.entities.ai.WorkerPickupWantedItemGoal;
 import com.talhanation.workers.network.MessageOpenGuiWorker;
-import net.minecraft.network.chat.TranslatableComponent;
-import net.minecraft.world.entity.*;
 import net.minecraft.world.entity.AgeableMob;
+import net.minecraft.world.entity.EntityType;
+import net.minecraft.world.entity.EquipmentSlot;
+import net.minecraft.world.entity.MobSpawnType;
+import net.minecraft.world.entity.SpawnGroupData;
 import net.minecraft.world.entity.ai.attributes.AttributeSupplier;
 import net.minecraft.world.entity.ai.attributes.Attributes;
 import net.minecraft.world.entity.ai.goal.LookAtPlayerGoal;
@@ -29,7 +30,6 @@ import net.minecraft.world.item.Items;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.world.entity.ai.navigation.GroundPathNavigation;
 import net.minecraft.network.chat.Component;
-import net.minecraft.network.chat.TextComponent;
 import net.minecraft.world.DifficultyInstance;
 import net.minecraft.world.level.ServerLevelAccessor;
 import net.minecraft.world.level.Level;
@@ -42,14 +42,14 @@ import java.util.function.Predicate;
 
 public class FishermanEntity extends AbstractWorkerEntity {
 
-    private final Predicate<ItemEntity> ALLOWED_ITEMS = (item) -> !item.hasPickUpDelay() && item.isAlive() && this.wantsToPickUp(item.getItem());
+    private final Predicate<ItemEntity> ALLOWED_ITEMS = (item) -> !item.hasPickUpDelay() && item.isAlive()
+            && this.wantsToPickUp(item.getItem());
 
     public static final Set<Item> WANTED_ITEMS = ImmutableSet.of(
             Items.COD,
             Items.SALMON,
             Items.PUFFERFISH,
-            Items.TROPICAL_FISH
-    );
+            Items.TROPICAL_FISH);
 
     public FishermanEntity(EntityType<? extends AbstractWorkerEntity> entityType, Level world) {
         super(entityType, world);
@@ -72,12 +72,11 @@ public class FishermanEntity extends AbstractWorkerEntity {
     }
 
     @Override
-    public Predicate<ItemEntity> getAllowedItems(){
+    public Predicate<ItemEntity> getAllowedItems() {
         return ALLOWED_ITEMS;
     }
 
-
-    //ATTRIBUTES
+    // ATTRIBUTES
     public static AttributeSupplier.Builder setAttributes() {
         return createMobAttributes()
                 .add(Attributes.MAX_HEALTH, 20.0D)
@@ -106,10 +105,11 @@ public class FishermanEntity extends AbstractWorkerEntity {
 
     @Override
     @Nullable
-    public SpawnGroupData finalizeSpawn(ServerLevelAccessor world, DifficultyInstance difficultyInstance, MobSpawnType reason, @Nullable SpawnGroupData data, @Nullable CompoundTag nbt) {
+    public SpawnGroupData finalizeSpawn(ServerLevelAccessor world, DifficultyInstance difficultyInstance,
+            MobSpawnType reason, @Nullable SpawnGroupData data, @Nullable CompoundTag nbt) {
         SpawnGroupData ilivingentitydata = super.finalizeSpawn(world, difficultyInstance, reason, data, nbt);
-        ((GroundPathNavigation)this.getNavigation()).setCanOpenDoors(true);
-        this.populateDefaultEquipmentEnchantments(difficultyInstance);
+        ((GroundPathNavigation) this.getNavigation()).setCanOpenDoors(true);
+        this.populateDefaultEquipmentEnchantments(random, difficultyInstance);
 
         this.initSpawn();
 
@@ -118,10 +118,10 @@ public class FishermanEntity extends AbstractWorkerEntity {
 
     @Override
     public void initSpawn() {
-        String name = new TranslatableComponent("entity.workers.fisherman").getString();
+        String name = Component.translatable("entity.workers.fisherman").getString();
 
         this.setProfessionName(name);
-        this.setCustomName(new TextComponent(name));
+        this.setCustomName(Component.literal(name));
         this.setEquipment();
         this.getNavigation().setCanFloat(true);
         this.setDropEquipment();
@@ -149,7 +149,7 @@ public class FishermanEntity extends AbstractWorkerEntity {
     @Override
     public void openGUI(Player player) {
         if (player instanceof ServerPlayer) {
-            NetworkHooks.openGui((ServerPlayer) player, new MenuProvider() {
+            NetworkHooks.openScreen((ServerPlayer) player, new MenuProvider() {
                 @Override
                 public Component getDisplayName() {
                     return getName();
@@ -160,7 +160,9 @@ public class FishermanEntity extends AbstractWorkerEntity {
                 public AbstractContainerMenu createMenu(int i, Inventory playerInventory, Player playerEntity) {
                     return new WorkerInventoryContainer(i, FishermanEntity.this, playerInventory);
                 }
-            }, packetBuffer -> {packetBuffer.writeUUID(getUUID());});
+            }, packetBuffer -> {
+                packetBuffer.writeUUID(getUUID());
+            });
         } else {
             Main.SIMPLE_CHANNEL.sendToServer(new MessageOpenGuiWorker(player, this.getUUID()));
         }

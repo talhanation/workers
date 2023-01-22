@@ -1,13 +1,11 @@
 package com.talhanation.workers.entities.ai;
 
-
 import com.talhanation.workers.entities.ShepherdEntity;
 import net.minecraft.core.BlockPos;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.world.SimpleContainer;
 import net.minecraft.world.entity.EquipmentSlot;
 import net.minecraft.world.entity.ai.goal.Goal;
-import net.minecraft.world.entity.animal.Cow;
 import net.minecraft.world.entity.animal.goat.Goat;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
@@ -15,7 +13,6 @@ import net.minecraft.world.item.Items;
 import java.util.EnumSet;
 import java.util.List;
 import java.util.Optional;
-import java.util.Random;
 import java.util.stream.Collectors;
 
 import static com.google.common.base.Predicates.not;
@@ -28,8 +25,6 @@ public class GoatFarmerAI extends Goal {
     private boolean slaughtering;
     private BlockPos workPos;
 
-
-
     public GoatFarmerAI(ShepherdEntity worker, int coolDown) {
         this.shepherd = worker;
         this.setFlags(EnumSet.of(Flag.MOVE, Flag.LOOK));
@@ -39,8 +34,8 @@ public class GoatFarmerAI extends Goal {
     public boolean canUse() {
         if (!this.shepherd.level.isDay()) {
             return false;
-        }
-        else return shepherd.getIsWorking() && !shepherd.getFollow();
+        } else
+            return shepherd.getIsWorking() && !shepherd.getFollow();
     }
 
     @Override
@@ -58,7 +53,7 @@ public class GoatFarmerAI extends Goal {
         if (!workPos.closerThan(shepherd.getOnPos(), 10D) && workPos != null && !shepherd.getFollow())
             this.shepherd.getNavigation().moveTo(workPos.getX(), workPos.getY(), workPos.getZ(), 1);
 
-        if (milking){
+        if (milking) {
             this.goat = findGoatMilking();
             if (this.goat.isPresent() && hasBucket()) {
                 this.shepherd.getNavigation().moveTo(this.goat.get(), 1);
@@ -66,12 +61,12 @@ public class GoatFarmerAI extends Goal {
 
                 if (goat.get().closerThan(this.shepherd, 1.5)) {
                     milkCow(this.goat.get());
-                    this.shepherd.getLookControl().setLookAt(goat.get().getX(), goat.get().getEyeY(), goat.get().getZ(), 10.0F, (float) this.shepherd.getMaxHeadXRot());
+                    this.shepherd.getLookControl().setLookAt(goat.get().getX(), goat.get().getEyeY(), goat.get().getZ(),
+                            10.0F, (float) this.shepherd.getMaxHeadXRot());
 
                     this.goat = Optional.empty();
                 }
-            }
-            else {
+            } else {
                 milking = false;
                 breeding = true;
                 this.shepherd.setItemSlot(EquipmentSlot.MAINHAND, ItemStack.EMPTY);
@@ -79,9 +74,9 @@ public class GoatFarmerAI extends Goal {
 
         }
 
-        if (breeding){
+        if (breeding) {
             this.goat = findGoatMilking();
-            if (this.goat.isPresent() ) {
+            if (this.goat.isPresent()) {
                 int i = goat.get().getAge();
 
                 if (i == 0 && this.hasWheat()) {
@@ -90,12 +85,12 @@ public class GoatFarmerAI extends Goal {
 
                     if (goat.get().closerThan(this.shepherd, 1.5)) {
                         this.consumeWheat();
-                        this.shepherd.getLookControl().setLookAt(goat.get().getX(), goat.get().getEyeY(), goat.get().getZ(), 10.0F, (float) this.shepherd.getMaxHeadXRot());
+                        this.shepherd.getLookControl().setLookAt(goat.get().getX(), goat.get().getEyeY(),
+                                goat.get().getZ(), 10.0F, (float) this.shepherd.getMaxHeadXRot());
                         goat.get().setInLove(null);
                         this.goat = Optional.empty();
                     }
-                }
-                else {
+                } else {
                     this.shepherd.setItemSlot(EquipmentSlot.MAINHAND, ItemStack.EMPTY);
                     breeding = false;
                     slaughtering = true;
@@ -106,7 +101,6 @@ public class GoatFarmerAI extends Goal {
                 slaughtering = true;
             }
         }
-
 
         if (slaughtering) {
 
@@ -125,8 +119,7 @@ public class GoatFarmerAI extends Goal {
                     }
                 }
 
-            }
-            else {
+            } else {
                 slaughtering = false;
                 milking = true;
             }
@@ -134,11 +127,11 @@ public class GoatFarmerAI extends Goal {
 
     }
 
-    private void consumeWheat(){
+    private void consumeWheat() {
         SimpleContainer inventory = shepherd.getInventory();
-        for(int i = 0; i < inventory.getContainerSize(); i++) {
+        for (int i = 0; i < inventory.getContainerSize(); i++) {
             ItemStack itemStack = inventory.getItem(i);
-            if (itemStack.getItem().equals(Items.WHEAT)){
+            if (itemStack.getItem().equals(Items.WHEAT)) {
                 itemStack.shrink(1);
                 break;
             }
@@ -146,12 +139,12 @@ public class GoatFarmerAI extends Goal {
     }
 
     public void milkCow(Goat cow) {
-       shepherd.workerSwingArm();
+        shepherd.workerSwingArm();
 
         SimpleContainer inventory = shepherd.getInventory();
-        for(int i = 0; i < inventory.getContainerSize(); i++) {
+        for (int i = 0; i < inventory.getContainerSize(); i++) {
             ItemStack itemStack = inventory.getItem(i);
-            if (itemStack.getItem().equals(Items.BUCKET)){
+            if (itemStack.getItem().equals(Items.BUCKET)) {
                 itemStack.shrink(1);
             }
         }
@@ -160,11 +153,11 @@ public class GoatFarmerAI extends Goal {
         cow.playSound(cow.isScreamingGoat() ? SoundEvents.GOAT_SCREAMING_MILK : SoundEvents.GOAT_MILK, 1.0F, 1.0F);
     }
 
-    public boolean hasBucket(){
+    public boolean hasBucket() {
         SimpleContainer inventory = shepherd.getInventory();
-        for(int i = 0; i < inventory.getContainerSize(); i++) {
+        for (int i = 0; i < inventory.getContainerSize(); i++) {
             ItemStack itemStack = inventory.getItem(i);
-            if (itemStack.getItem().equals(Items.BUCKET)){
+            if (itemStack.getItem().equals(Items.BUCKET)) {
                 return true;
             }
         }
@@ -172,26 +165,18 @@ public class GoatFarmerAI extends Goal {
     }
 
     private Optional<Goat> findGoatMilking() {
-        return  shepherd.level.getEntitiesOfClass(Goat.class, shepherd.getBoundingBox()
-                .inflate(8D), Goat::isAlive)
-                .stream()
-                .filter(not(Goat::isBaby))
-                .filter(not(Goat::isInLove))
-                .findAny();
+        return shepherd.level.getEntitiesOfClass(Goat.class, shepherd.getBoundingBox().inflate(8D), Goat::isAlive)
+                .stream().filter(not(Goat::isBaby)).filter(not(Goat::isInLove)).findAny();
     }
 
     private List<Goat> findGoatSlaughtering() {
-        return  shepherd.level.getEntitiesOfClass(Goat.class, shepherd.getBoundingBox()
-                        .inflate(8D), Goat::isAlive)
-                .stream()
-                .filter(not(Goat::isBaby))
-                .filter(not(Goat::isInLove))
-                .collect(Collectors.toList());
+        return shepherd.level.getEntitiesOfClass(Goat.class, shepherd.getBoundingBox().inflate(8D), Goat::isAlive)
+                .stream().filter(not(Goat::isBaby)).filter(not(Goat::isInLove)).collect(Collectors.toList());
     }
 
     private boolean hasWheat() {
         SimpleContainer inventory = shepherd.getInventory();
-        for(int i = 0; i < inventory.getContainerSize(); i++) {
+        for (int i = 0; i < inventory.getContainerSize(); i++) {
             ItemStack itemStack = inventory.getItem(i);
             if (itemStack.getItem().equals(Items.WHEAT))
                 if (itemStack.getCount() >= 2)

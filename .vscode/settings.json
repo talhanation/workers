@@ -1,0 +1,9 @@
+{
+    "java.configuration.updateBuildConfiguration": "automatic",
+    "java.jdt.ls.vmargs": "-XX:+UseParallelGC -XX:GCTimeRatio=4 -XX:AdaptiveSizePolicyWeight=90 -Dsun.zip.disableMemoryMapping=true -Xmx2G -Xms100m -Xlog:disable",
+    "java.format.settings.profile": "GoogleStyle",
+    "java.format.settings.url": ".vscode/eclipse-java-google-style.xml",
+    "[java]": {
+        "editor.detectIndentation": true
+    },
+}
