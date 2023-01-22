@@ -3,7 +3,6 @@ package com.talhanation.workers;
 import com.talhanation.workers.entities.AbstractWorkerEntity;
 import com.talhanation.workers.entities.MerchantEntity;
 import com.talhanation.workers.entities.MinerEntity;
-import net.minecraft.network.chat.contents.TranslatableContents;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.entity.player.Inventory;
@@ -13,15 +12,13 @@ import net.minecraft.world.item.ItemStack;
 import net.minecraft.core.Direction;
 import net.minecraft.core.BlockPos;
 import net.minecraft.network.chat.Component;
+import net.minecraft.network.chat.MutableComponent;
 import net.minecraft.world.item.Items;
 
 import java.util.Objects;
 import java.util.UUID;
 
 public class CommandEvents {
-
-    public static final TranslatableContents TEXT_HIRE_COSTS = new TranslatableContents("chat.workers.text.hire_costs");
-
     public static void setStartPosWorker(UUID player_uuid, AbstractWorkerEntity worker, BlockPos blockpos) {
         LivingEntity owner = worker.getOwner();
 
@@ -51,8 +48,12 @@ public class CommandEvents {
     public static void handleMerchantTrade(Player player, MerchantEntity merchant, int tradeID) {
         String name = merchant.getName().getString() + ": ";
 
-        int[] PRICE_SLOT = new int[] { 0, 2, 4, 6 };
-        int[] TRADE_SLOT = new int[] { 1, 3, 5, 7 };
+        int[] PRICE_SLOT = new int[] {
+                0, 2, 4, 6
+        };
+        int[] TRADE_SLOT = new int[] {
+                1, 3, 5, 7
+        };
 
         Inventory playerInv = player.getInventory();
         SimpleContainer merchantInv = merchant.getInventory();// supply and money
@@ -200,27 +201,25 @@ public class CommandEvents {
         } else {
             LivingEntity owner = merchant.getOwner();
             if (!merchantHasItems) {
-                player.sendSystemMessage(Component.literal(name + TEXT_OUT_OF_STOCK.toString()));
+                player.sendSystemMessage(Component.literal(name).append(TEXT_OUT_OF_STOCK));
                 if (owner != null)
-                    owner.sendSystemMessage(Component.literal(name + TEXT_OUT_OF_STOCK_OWNER.toString()));
+                    owner.sendSystemMessage(Component.literal(name).append(TEXT_OUT_OF_STOCK_OWNER));
             } else if (!playerCanPay) {
-                player.sendSystemMessage(
-                        Component.literal(TEXT_NEED.toString() + " " + sollPrice + " " + emerald + "."));
+                player.sendSystemMessage(TEXT_NEED(sollPrice, emerald));
             } else if (!canAddItemToInv) {
-                player.sendSystemMessage(Component.literal(name + TEXT_INV_FULL.toString()));
+                player.sendSystemMessage(Component.literal(name).append(TEXT_INV_FULL));
 
                 if (owner != null)
-                    owner.sendSystemMessage(Component.literal(name + TEXT_INV_FULL_OWNER.toString()));
+                    owner.sendSystemMessage(Component.literal(name).append(TEXT_INV_FULL_OWNER));
             }
         }
     }
 
     public static void handleRecruiting(Player player, AbstractWorkerEntity workerEntity) {
         String name = workerEntity.getName().getString() + ": ";
-        String hire_costs = TEXT_HIRE_COSTS.toString();
+
         int costs = workerEntity.workerCosts();
 
-        String recruit_info = String.format(hire_costs, costs);
         Inventory playerInv = player.getInventory();
 
         int playerEmeralds = 0;
@@ -264,18 +263,23 @@ public class CommandEvents {
                 emeraldsLeft.setCount(playerEmeralds);
                 playerInv.add(emeraldsLeft);
             }
-        } else
-            player.sendSystemMessage(Component.literal(name + recruit_info));
+        } else {
+            player.sendSystemMessage(TEXT_HIRE_COSTS(costs));
+        }
     }
 
-    public static final TranslatableContents TEXT_OUT_OF_STOCK = new TranslatableContents(
-            "chat.workers.text.outOfStock");
-    public static final TranslatableContents TEXT_OUT_OF_STOCK_OWNER = new TranslatableContents(
-            "chat.workers.text.outOfStockOwner");
+    public static final MutableComponent TEXT_HIRE_COSTS(int cost) {
+        return Component.translatable("chat.workers.text.hire_costs", cost);
+    }
 
-    public static final TranslatableContents TEXT_NEED = new TranslatableContents("chat.workers.text.need");
-    public static final TranslatableContents TEXT_INV_FULL = new TranslatableContents("chat.workers.text.invFull");
-    public static final TranslatableContents TEXT_INV_FULL_OWNER = new TranslatableContents(
-            "chat.workers.text.invFullOwner");
+    public static final MutableComponent TEXT_NEED(int sollPrice, Item emerald) {
+        return Component.translatable("chat.workers.text.need", sollPrice, emerald);
+    }
+
+    public static final MutableComponent TEXT_OUT_OF_STOCK = Component.translatable("chat.workers.text.outOfStock");
+    public static final MutableComponent TEXT_OUT_OF_STOCK_OWNER =
+            Component.translatable("chat.workers.text.outOfStockOwner");
+    public static final MutableComponent TEXT_INV_FULL = Component.translatable("chat.workers.text.invFull");
+    public static final MutableComponent TEXT_INV_FULL_OWNER = Component.translatable("chat.workers.text.invFullOwner");
 
 }

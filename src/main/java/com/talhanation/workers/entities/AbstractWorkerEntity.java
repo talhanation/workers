@@ -7,6 +7,8 @@ import com.talhanation.workers.entities.ai.WorkerFollowOwnerGoal;
 import com.talhanation.workers.entities.ai.WorkerMoveToHomeGoal;
 import com.talhanation.workers.inventory.WorkerHireContainer;
 import com.talhanation.workers.network.MessageHireGui;
+
+import net.minecraft.ChatFormatting;
 import net.minecraft.core.BlockPos;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.FriendlyByteBuf;
@@ -448,10 +450,7 @@ public abstract class AbstractWorkerEntity extends AbstractChunkLoaderEntity {
 
                 LivingEntity owner = this.getOwner();
                 if (owner != null && owner != attacker) {
-                    // String notification = String.format(attacked, name, attacker_name);
-                    // owner.sendMessage(Component.literal(notification), owner.getUUID());
-                    owner.sendSystemMessage(Component.literal(name + ", your " + getProfessionName()
-                            + ", is getting attacked by " + attacker_name + "!"));
+                    owner.sendSystemMessage(TEXT_ATTACKED(name, attacker_name));
                     hurtTimeStamp = 80;
                 }
             }
@@ -549,6 +548,7 @@ public abstract class AbstractWorkerEntity extends AbstractChunkLoaderEntity {
         if (this.level.isClientSide) {
             return InteractionResult.CONSUME;
         } else {
+            MutableComponent prefix = Component.literal(this.getName().getString() + ": ");
             if (this.isTame() && player.getUUID().equals(this.getOwnerUUID())) {
                 if (player.isCrouching()) {
                     openGUI(player);
@@ -558,19 +558,10 @@ public abstract class AbstractWorkerEntity extends AbstractChunkLoaderEntity {
                     return InteractionResult.SUCCESS;
                 }
             } else if (this.isTame() && !player.getUUID().equals(this.getOwnerUUID())) {
-                ForgeRegistries.VILLAGER_PROFESSIONS.getValues().forEach(profession -> {
-                    Main.LOGGER.info("Profession {}", profession);
-                });
-                player.sendSystemMessage(Component.literal("" + this.getName().getString() + ": Hello, I am the "
-                        + this.getProfessionName() + " of " + this.getOwnerName() + "!"));
-
-                // player.sendMessage(Component.literal(name + hello_owned_info),
-                // player.getUUID());
+                player.sendSystemMessage(
+                        prefix.append(TEXT_HELLO_OWNED(this.getProfessionName(), this.getOwnerName())));
             } else if (!this.isTame()) {
-                player.sendSystemMessage(Component
-                        .literal(this.getName().getString() + ": Hello, I am a " + this.getProfessionName() + ". "));
-
-                // player.sendMessage(Component.literal(name + hello_info), player.getUUID());
+                player.sendSystemMessage(prefix.append(TEXT_HELLO(this.getProfessionName())));
                 this.openHireGUI(player);
                 this.navigation.stop();
                 return InteractionResult.SUCCESS;
@@ -651,12 +642,21 @@ public abstract class AbstractWorkerEntity extends AbstractChunkLoaderEntity {
         }
     }
 
-    public static final MutableComponent TEXT_HELLO = Component.translatable("chat.workers.text.hello");
-    public static final MutableComponent TEXT_HELLO_OWNED = Component.translatable("chat.workers.text.hello_owned");
+    public static final MutableComponent TEXT_HELLO(String job) {
+        return Component.translatable("chat.workers.text.hello", job);
+    }
+
+    public static final MutableComponent TEXT_HELLO_OWNED(String job, String owner) {
+        return Component.translatable("chat.workers.text.hello_owned", job, owner);
+    }
+
     public static final MutableComponent TEXT_RECRUITED1 = Component.translatable("chat.workers.text.recruited1");
     public static final MutableComponent TEXT_RECRUITED2 = Component.translatable("chat.workers.text.recruited2");
     public static final MutableComponent TEXT_RECRUITED3 = Component.translatable("chat.workers.text.recruited3");
-    public static final MutableComponent TEXT_ATTACKED = Component.translatable("chat.workers.text.attacked");
+
+    public static final MutableComponent TEXT_ATTACKED(String job, String attacker) {
+        return Component.translatable("chat.workers.text.attacked");
+    }
 
     public static final MutableComponent TEXT_WORKING = Component.translatable("chat.workers.text.working");
     public static final MutableComponent TEXT_DONE = Component.translatable("chat.workers.text.done");
