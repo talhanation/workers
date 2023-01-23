@@ -7,21 +7,20 @@ import com.talhanation.workers.inventory.MerchantInventoryContainer;
 import com.talhanation.workers.network.MessageHomePos;
 import de.maxhenkel.corelib.inventory.ScreenBase;
 import net.minecraft.client.gui.components.Button;
-import net.minecraft.network.chat.TextComponent;
-import net.minecraft.network.chat.TranslatableComponent;
 import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.network.chat.Component;
 
 public class MerchantOwnerScreen extends ScreenBase<MerchantInventoryContainer> {
 
-    private static final ResourceLocation GUI_TEXTURE_3 = new ResourceLocation(Main.MOD_ID,"textures/gui/merchant_owner_gui.png");
+    private static final ResourceLocation GUI_TEXTURE_3 = new ResourceLocation(Main.MOD_ID,
+            "textures/gui/merchant_owner_gui.png");
 
     private final MerchantEntity merchant;
     private final Inventory playerInventory;
 
     public MerchantOwnerScreen(MerchantInventoryContainer container, Inventory playerInventory, Component title) {
-        super(GUI_TEXTURE_3, container, playerInventory, new TextComponent(""));
+        super(GUI_TEXTURE_3, container, playerInventory, Component.literal(""));
         this.merchant = (MerchantEntity) container.getWorker();
         this.playerInventory = playerInventory;
 
@@ -32,17 +31,20 @@ public class MerchantOwnerScreen extends ScreenBase<MerchantInventoryContainer> 
     @Override
     protected void init() {
         super.init();
-        //HOME POS
-        addRenderableWidget(new Button(leftPos + 140, topPos + 30, 24, 12, new TranslatableComponent("gui.workers.home"), button -> {
-            Main.SIMPLE_CHANNEL.sendToServer(new MessageHomePos(playerInventory.player.getUUID(), merchant.getUUID(), merchant.getWorkerOnPos()));
-        }));
+        // HOME POS
+        addRenderableWidget(new Button(leftPos + 140, topPos + 30, 24, 12,
+                Component.translatable("gui.workers.home"), button -> {
+                    Main.SIMPLE_CHANNEL.sendToServer(new MessageHomePos(playerInventory.player.getUUID(),
+                            merchant.getUUID(), merchant.getWorkerOnPos()));
+                }));
     }
 
     @Override
     protected void renderLabels(PoseStack matrixStack, int mouseX, int mouseY) {
         super.renderLabels(matrixStack, mouseX, mouseY);
         font.draw(matrixStack, merchant.getDisplayName().getVisualOrderText(), 8, 6, FONT_COLOR);
-        font.draw(matrixStack, playerInventory.getDisplayName().getVisualOrderText(), 8, imageHeight - 152 + 59, FONT_COLOR);
+        font.draw(matrixStack, playerInventory.getDisplayName().getVisualOrderText(), 8, imageHeight - 152 + 59,
+                FONT_COLOR);
     }
 
     @Override

@@ -1,38 +1,39 @@
 package com.talhanation.workers.client.render;
 
-
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.talhanation.workers.entities.AbstractInventoryEntity;
 import net.minecraft.client.model.HumanoidModel;
 import net.minecraft.client.model.PlayerModel;
 import net.minecraft.client.model.geom.ModelLayers;
+import net.minecraft.client.renderer.ItemInHandRenderer;
 import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.entity.EntityRendererProvider;
 import net.minecraft.client.renderer.entity.MobRenderer;
 import net.minecraft.client.renderer.entity.layers.ArrowLayer;
 import net.minecraft.client.renderer.entity.layers.BeeStingerLayer;
 import net.minecraft.client.renderer.entity.layers.HumanoidArmorLayer;
-import net.minecraft.client.renderer.entity.layers.PlayerItemInHandLayer;
-import net.minecraft.client.renderer.entity.player.PlayerRenderer;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.entity.HumanoidArm;
 import net.minecraft.world.item.CrossbowItem;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
 import net.minecraft.world.item.UseAnim;
-import net.minecraftforge.client.event.RenderPlayerEvent;
 
-public abstract class AbstractWorkersRenderer<Type extends AbstractInventoryEntity> extends MobRenderer<Type, PlayerModel<Type>> {
+public abstract class AbstractWorkersRenderer<Type extends AbstractInventoryEntity>
+        extends MobRenderer<Type, PlayerModel<Type>> {
 
     public AbstractWorkersRenderer(EntityRendererProvider.Context mgr) {
         super(mgr, new PlayerModel<>((mgr.bakeLayer(ModelLayers.PLAYER)), false), 0.5F);
-        this.addLayer(new HumanoidArmorLayer<>(this, new HumanoidModel(mgr.bakeLayer(ModelLayers.PLAYER_INNER_ARMOR)), new HumanoidModel(mgr.bakeLayer(ModelLayers.PLAYER_OUTER_ARMOR))));
+        this.addLayer(new HumanoidArmorLayer<>(this, new HumanoidModel(mgr.bakeLayer(ModelLayers.PLAYER_INNER_ARMOR)),
+                new HumanoidModel(mgr.bakeLayer(ModelLayers.PLAYER_OUTER_ARMOR))));
         this.addLayer(new ArrowLayer<>(mgr, this));
         this.addLayer(new BeeStingerLayer<>(this));
-        this.addLayer(new WorkerItemInHandLayer<>(this));
+        ItemInHandRenderer itemInHandRenderer = mgr.getItemInHandRenderer();
+        this.addLayer(new WorkerItemInHandLayer<>(this, itemInHandRenderer));
     }
 
-    public void render(AbstractInventoryEntity recruit, float p_117789_, float p_117790_, PoseStack p_117791_, MultiBufferSource p_117792_, int p_117793_) {
+    public void render(AbstractInventoryEntity recruit, float p_117789_, float p_117790_, PoseStack p_117791_,
+            MultiBufferSource p_117792_, int p_117793_) {
         this.setModelProperties(recruit);
         super.render((Type) recruit, p_117789_, p_117790_, p_117791_, p_117792_, p_117793_);
     }
@@ -51,7 +52,8 @@ public abstract class AbstractWorkersRenderer<Type extends AbstractInventoryEnti
         HumanoidModel.ArmPose humanoidmodel$armpose = getArmPose(recruit, InteractionHand.MAIN_HAND);
         HumanoidModel.ArmPose humanoidmodel$armpose1 = getArmPose(recruit, InteractionHand.OFF_HAND);
         if (humanoidmodel$armpose.isTwoHanded()) {
-            humanoidmodel$armpose1 = recruit.getOffhandItem().isEmpty() ? HumanoidModel.ArmPose.EMPTY : HumanoidModel.ArmPose.ITEM;
+            humanoidmodel$armpose1 = recruit.getOffhandItem().isEmpty() ? HumanoidModel.ArmPose.EMPTY
+                    : HumanoidModel.ArmPose.ITEM;
         }
         if (recruit.getMainArm() == HumanoidArm.RIGHT) {
             model.rightArmPose = humanoidmodel$armpose;
@@ -88,7 +90,8 @@ public abstract class AbstractWorkersRenderer<Type extends AbstractInventoryEnti
                     return HumanoidModel.ArmPose.SPYGLASS;
                 }
 
-                if (recruit.getUsedItemHand() == hand && recruit.getItemInHand(hand) == Items.SHIELD.getDefaultInstance()){
+                if (recruit.getUsedItemHand() == hand
+                        && recruit.getItemInHand(hand) == Items.SHIELD.getDefaultInstance()) {
                     return HumanoidModel.ArmPose.ITEM;
                 }
             } else if (!recruit.swinging && itemstack.is(Items.CROSSBOW) && CrossbowItem.isCharged(itemstack)) {

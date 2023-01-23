@@ -45,17 +45,16 @@
   "gui.workers.hire_gui.text.hire": "Hire",
   "gui.workers.shepherd.max_animals": "max.",
 
-  "chat.workers.needHome":"I need a home to store items.",
-
-  "chat.workers.needBed":"I need a bed to sleep.",
+  "chat.workers.needHome": "I need a home to store items.",
+  "chat.workers.needBed": "I need a bed to sleep.",
   "chat.workers.needChest": "I need a chest to put the items in.",
   "chat.workers.text.recruited1": "It's a honor for me to work for you.",
   "chat.workers.text.recruited2": "I am the best for this work.",
   "chat.workers.text.recruited3": "I work fast and reliable.",
-  "chat.workers.text.hello_owned": "Hello, Im the %s of %s.",
-  "chat.workers.text.hello": "Hello, Im a %s.",
+  "chat.workers.text.hello_owned": "Hello, I am the %s of %s.",
+  "chat.workers.text.hello": "Hello, I am a %s.",
 
-  "chat.workers.text.hire_costs": "You need %x Emeralds to hire me!",
+  "chat.workers.text.hire_costs": "You need %s Emeralds to hire me!",
   "chat.workers.text.attacked": "%s is getting attacked by %s!",
   "chat.workers.text.working": "Im working now!",
   "chat.workers.text.done": "Work is done!",
@@ -65,7 +64,7 @@
   "chat.workers.text.follow": "I will follow you!",
   "chat.workers.text.home": "My home is here now.",
   "chat.workers.text.outOfStock": "Sorry, im out of Stock.",
-  "chat.workers.text.need": "Sorry, you need",
+  "chat.workers.text.need": "Sorry, you need %s %s",
   "chat.workers.text.outOfStockOwner": "Im out of stock!",
   "chat.workers.text.invFull": "Sorry, i cant take your Items currently.",
   "chat.workers.text.invFullOwner": "My inventory is full, i cant accept new items!"

@@ -8,8 +8,7 @@ import com.talhanation.workers.network.MessageOpenGuiMiner;
 import net.minecraft.core.Direction;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.chat.Component;
-import net.minecraft.network.chat.TextComponent;
-import net.minecraft.network.chat.TranslatableComponent;
+import net.minecraft.network.chat.MutableComponent;
 import net.minecraft.network.syncher.EntityDataAccessor;
 import net.minecraft.network.syncher.EntityDataSerializers;
 import net.minecraft.network.syncher.SynchedEntityData;
@@ -45,71 +44,30 @@ import java.util.function.Predicate;
 
 public class MinerEntity extends AbstractWorkerEntity {
 
-    private final Predicate<ItemEntity> ALLOWED_ITEMS = (item) -> !item.hasPickUpDelay() && item.isAlive() && this.wantsToPickUp(item.getItem());
+    private final Predicate<ItemEntity> ALLOWED_ITEMS =
+            (item) -> !item.hasPickUpDelay() && item.isAlive() && this.wantsToPickUp(item.getItem());
 
-    private static final EntityDataAccessor<Direction> DIRECTION = SynchedEntityData.defineId(MinerEntity.class, EntityDataSerializers.DIRECTION);
-    private static final EntityDataAccessor<Integer> MINE_TYPE = SynchedEntityData.defineId(MinerEntity.class, EntityDataSerializers.INT);
-    private static final EntityDataAccessor<Integer> DEPTH = SynchedEntityData.defineId(MinerEntity.class, EntityDataSerializers.INT);
+    private static final EntityDataAccessor<Direction> DIRECTION =
+            SynchedEntityData.defineId(MinerEntity.class, EntityDataSerializers.DIRECTION);
+    private static final EntityDataAccessor<Integer> MINE_TYPE =
+            SynchedEntityData.defineId(MinerEntity.class, EntityDataSerializers.INT);
+    private static final EntityDataAccessor<Integer> DEPTH =
+            SynchedEntityData.defineId(MinerEntity.class, EntityDataSerializers.INT);
     /*
-    MINE TYPES:
-    0 = nothing
-    1 = 1x1 Tunel
-    2 = 3x3 Tunel
-    3 = 8x8x8 Pit
-    4 = 8x8x1 Flat
-    5 = 8x8x3 Room
-    */
+     * MINE TYPES: 0 = nothing 1 = 1x1 Tunel 2 = 3x3 Tunel 3 = 8x8x8 Pit 4 = 8x8x1 Flat 5 = 8x8x3 Room
+     */
 
-    private static final Set<Item> WANTED_ITEMS = ImmutableSet.of(
-        Items.COAL,
-        Items.COPPER_ORE,
-        Items.IRON_ORE,
-        Items.GOLD_ORE,
-        Items.DIAMOND,
-        Items.EMERALD,
-        Items.STONE,
-        Items.COBBLESTONE,
-        Items.ANDESITE,
-        Items.GRANITE,
-        Items.GRAVEL,
-        Items.SAND,
-        Items.SANDSTONE,
-        Items.RED_SAND,
-        Items.REDSTONE,
-        Items.DIRT,
-        Items.DIORITE,
-        Items.COARSE_DIRT,
-        Items.RAW_COPPER,
-        Items.RAW_IRON,
-        Items.RAW_GOLD
-    );
+    private static final Set<Item> WANTED_ITEMS = ImmutableSet.of(Items.COAL, Items.COPPER_ORE, Items.IRON_ORE,
+            Items.GOLD_ORE, Items.DIAMOND, Items.EMERALD, Items.STONE, Items.COBBLESTONE, Items.ANDESITE, Items.GRANITE,
+            Items.GRAVEL, Items.SAND, Items.SANDSTONE, Items.RED_SAND, Items.REDSTONE, Items.DIRT, Items.DIORITE,
+            Items.COARSE_DIRT, Items.RAW_COPPER, Items.RAW_IRON, Items.RAW_GOLD);
 
-    public static final Set<Block> IGNORING_BLOCKS = ImmutableSet.of(
-            Blocks.CAVE_AIR,
-            Blocks.AIR,
-            Blocks.TORCH,
-            Blocks.WALL_TORCH,
-            Blocks.SOUL_WALL_TORCH,
-            Blocks.REDSTONE_WIRE,
-            Blocks.CAMPFIRE,
-            Blocks.CAKE,
-            Blocks.ACACIA_SIGN,
-            Blocks.SPRUCE_SIGN,
-            Blocks.BIRCH_SIGN,
-            Blocks.DARK_OAK_SIGN,
-            Blocks.JUNGLE_SIGN,
-            Blocks.OAK_SIGN,
-            Blocks.ACACIA_WALL_SIGN,
-            Blocks.SPRUCE_WALL_SIGN,
-            Blocks.BIRCH_WALL_SIGN,
-            Blocks.DARK_OAK_WALL_SIGN,
-            Blocks.JUNGLE_WALL_SIGN,
-            Blocks.OAK_WALL_SIGN,
-            Blocks.SOUL_LANTERN,
-            Blocks.LANTERN,
-            Blocks.DETECTOR_RAIL,
-            Blocks.RAIL
-    );
+    public static final Set<Block> IGNORING_BLOCKS = ImmutableSet.of(Blocks.CAVE_AIR, Blocks.AIR, Blocks.TORCH,
+            Blocks.WALL_TORCH, Blocks.SOUL_WALL_TORCH, Blocks.REDSTONE_WIRE, Blocks.CAMPFIRE, Blocks.CAKE,
+            Blocks.ACACIA_SIGN, Blocks.SPRUCE_SIGN, Blocks.BIRCH_SIGN, Blocks.DARK_OAK_SIGN, Blocks.JUNGLE_SIGN,
+            Blocks.OAK_SIGN, Blocks.ACACIA_WALL_SIGN, Blocks.SPRUCE_WALL_SIGN, Blocks.BIRCH_WALL_SIGN,
+            Blocks.DARK_OAK_WALL_SIGN, Blocks.JUNGLE_WALL_SIGN, Blocks.OAK_WALL_SIGN, Blocks.SOUL_LANTERN,
+            Blocks.LANTERN, Blocks.DETECTOR_RAIL, Blocks.RAIL);
 
     protected void defineSynchedData() {
         super.defineSynchedData();
@@ -123,13 +81,10 @@ public class MinerEntity extends AbstractWorkerEntity {
 
     }
 
-    //ATTRIBUTES
+    // ATTRIBUTES
     public static AttributeSupplier.Builder setAttributes() {
-        return createMobAttributes()
-                .add(Attributes.MAX_HEALTH, 20.0D)
-                .add(Attributes.MOVEMENT_SPEED, 0.3D)
-                .add(Attributes.ATTACK_DAMAGE, 1.0D)
-                .add(Attributes.FOLLOW_RANGE, 32.0D);
+        return createMobAttributes().add(Attributes.MAX_HEALTH, 20.0D).add(Attributes.MOVEMENT_SPEED, 0.3D)
+                .add(Attributes.ATTACK_DAMAGE, 1.0D).add(Attributes.FOLLOW_RANGE, 32.0D);
     }
 
     protected void registerGoals() {
@@ -153,10 +108,11 @@ public class MinerEntity extends AbstractWorkerEntity {
     }
 
     @Nullable
-    public SpawnGroupData finalizeSpawn(ServerLevelAccessor world, DifficultyInstance difficultyInstance, MobSpawnType reason, @Nullable SpawnGroupData data, @Nullable CompoundTag nbt) {
+    public SpawnGroupData finalizeSpawn(ServerLevelAccessor world, DifficultyInstance difficultyInstance,
+            MobSpawnType reason, @Nullable SpawnGroupData data, @Nullable CompoundTag nbt) {
         SpawnGroupData ilivingentitydata = super.finalizeSpawn(world, difficultyInstance, reason, data, nbt);
-        ((GroundPathNavigation)this.getNavigation()).setCanOpenDoors(true);
-        this.populateDefaultEquipmentEnchantments(difficultyInstance);
+        ((GroundPathNavigation) this.getNavigation()).setCanOpenDoors(true);
+        this.populateDefaultEquipmentEnchantments(random, difficultyInstance);
 
         this.initSpawn();
 
@@ -165,10 +121,10 @@ public class MinerEntity extends AbstractWorkerEntity {
 
     @Override
     public void initSpawn() {
-        String name = new TranslatableComponent("entity.workers.miner").getString();
+        MutableComponent name = Component.translatable("entity.workers.miner");
 
-        this.setProfessionName(name);
-        this.setCustomName(new TextComponent(name));
+        this.setProfessionName(name.getString());
+        this.setCustomName(name);
         this.setEquipment();
         this.getNavigation().setCanFloat(true);
         this.setDropEquipment();
@@ -229,15 +185,14 @@ public class MinerEntity extends AbstractWorkerEntity {
         return 10;
     }
 
-    public int getMaxMineDepth(){
+    public int getMaxMineDepth() {
         return 16;
     }
 
     @Override
-    public Predicate<ItemEntity> getAllowedItems(){
+    public Predicate<ItemEntity> getAllowedItems() {
         return ALLOWED_ITEMS;
     }
-
 
     public void addAdditionalSaveData(CompoundTag nbt) {
         super.addAdditionalSaveData(nbt);
@@ -264,49 +219,50 @@ public class MinerEntity extends AbstractWorkerEntity {
         return entityData.get(DIRECTION);
     }
 
-    public void setMineType(int x){
+    public void setMineType(int x) {
         this.clearStartPos();
         entityData.set(MINE_TYPE, x);
     }
 
-    public int getMineType(){
-       return entityData.get(MINE_TYPE);
+    public int getMineType() {
+        return entityData.get(MINE_TYPE);
     }
 
-    public void setMineDepth(int x){
+    public void setMineDepth(int x) {
         entityData.set(DEPTH, x);
     }
 
-    public int getMineDepth(){
+    public int getMineDepth() {
         return entityData.get(DEPTH);
     }
 
     public void changeTool(BlockState blockState) {
-        if (blockState != null){
-            if (blockState.is(BlockTags.MINEABLE_WITH_SHOVEL)){
+        if (blockState != null) {
+            if (blockState.is(BlockTags.MINEABLE_WITH_SHOVEL)) {
                 this.setItemSlot(EquipmentSlot.MAINHAND, new ItemStack(Items.STONE_SHOVEL));
-            }
-            else if (blockState.is(BlockTags.MINEABLE_WITH_PICKAXE)){
+            } else if (blockState.is(BlockTags.MINEABLE_WITH_PICKAXE)) {
                 this.setItemSlot(EquipmentSlot.MAINHAND, new ItemStack(Items.STONE_PICKAXE));
-            }
-            else
+            } else
                 this.setItemSlot(EquipmentSlot.MAINHAND, new ItemStack(ItemStack.EMPTY.getItem()));
         }
     }
 
     public void openGUI(Player player) {
         if (player instanceof ServerPlayer) {
-            NetworkHooks.openGui((ServerPlayer) player, new MenuProvider() {
+            NetworkHooks.openScreen((ServerPlayer) player, new MenuProvider() {
                 @Override
                 public Component getDisplayName() {
                     return getName();
                 }
+
                 @Nullable
                 @Override
                 public AbstractContainerMenu createMenu(int i, Inventory playerInventory, Player playerEntity) {
                     return new MinerInventoryContainer(i, MinerEntity.this, playerInventory);
                 }
-            }, packetBuffer -> {packetBuffer.writeUUID(getUUID());});
+            }, packetBuffer -> {
+                packetBuffer.writeUUID(getUUID());
+            });
         } else {
             Main.SIMPLE_CHANNEL.sendToServer(new MessageOpenGuiMiner(player, this.getUUID()));
         }
@@ -317,12 +273,11 @@ public class MinerEntity extends AbstractWorkerEntity {
         if (this.getMineType() == 0) {
             bool = false;
             entityData.set(IS_WORKING, bool);
-        }
-        else
+        } else
             super.setIsWorking(bool);
     }
 
-    public void tick(){
+    public void tick() {
         super.tick();
     }
 }

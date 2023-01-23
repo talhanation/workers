@@ -21,7 +21,8 @@ import javax.annotation.Nullable;
 
 public abstract class AbstractAnimalFarmerEntity extends AbstractWorkerEntity {
 
-    private static final EntityDataAccessor<Integer> MAX_ANIMALS = SynchedEntityData.defineId(AbstractAnimalFarmerEntity.class, EntityDataSerializers.INT);
+    private static final EntityDataAccessor<Integer> MAX_ANIMALS = SynchedEntityData
+            .defineId(AbstractAnimalFarmerEntity.class, EntityDataSerializers.INT);
 
     public AbstractAnimalFarmerEntity(EntityType<? extends AbstractWorkerEntity> entityType, Level world) {
         super(entityType, world);
@@ -42,19 +43,18 @@ public abstract class AbstractAnimalFarmerEntity extends AbstractWorkerEntity {
         this.setMaxAnimalCount(nbt.getInt("MaxAnimals"));
     }
 
-    public void setMaxAnimalCount(int x){
+    public void setMaxAnimalCount(int x) {
         this.entityData.set(MAX_ANIMALS, x);
     }
 
-    public int getMaxAnimalCount(){
+    public int getMaxAnimalCount() {
         return entityData.get(MAX_ANIMALS);
     }
-
 
     @Override
     public void openGUI(Player player) {
         if (player instanceof ServerPlayer) {
-            NetworkHooks.openGui((ServerPlayer) player, new MenuProvider() {
+            NetworkHooks.openScreen((ServerPlayer) player, new MenuProvider() {
                 @Override
                 public Component getDisplayName() {
                     return getName();
@@ -65,7 +65,9 @@ public abstract class AbstractAnimalFarmerEntity extends AbstractWorkerEntity {
                 public AbstractContainerMenu createMenu(int i, Inventory playerInventory, Player playerEntity) {
                     return new AnimalFarmerInventoryContainer(i, AbstractAnimalFarmerEntity.this, playerInventory);
                 }
-            }, packetBuffer -> {packetBuffer.writeUUID(getUUID());});
+            }, packetBuffer -> {
+                packetBuffer.writeUUID(getUUID());
+            });
         } else {
             Main.SIMPLE_CHANNEL.sendToServer(new MessageOpenGuiAnimalFarmer(player, this.getUUID()));
         }

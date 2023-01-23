@@ -4,7 +4,6 @@ import com.talhanation.workers.entities.MinerEntity;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.sounds.SoundSource;
-import net.minecraft.world.InteractionHand;
 import net.minecraft.world.entity.ai.goal.Goal;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.state.BlockState;
@@ -18,22 +17,21 @@ public abstract class MinerMineGoal extends Goal {
     public MinerEntity miner;
     public BlockPos minePos;
     public BlockPos startPos;
-    public MinerMineGoal(){
+
+    public MinerMineGoal() {
 
     }
 
     public boolean canUse() {
         if (this.miner.getStartPos() == null) {
             return false;
-        }
-        else if (this.miner.getFollow()) {
+        } else if (this.miner.getFollow()) {
             return false;
-        }
-        else if (!this.miner.level.isDay()) {
+        } else if (!this.miner.level.isDay()) {
             return false;
-        }
-        else
-            return this.miner.getStartPos().closerThan(miner.getOnPos(), 16D) && !this.miner.getFollow() && miner.getMineType() == 1;
+        } else
+            return this.miner.getStartPos().closerThan(miner.getOnPos(), 16D) && !this.miner.getFollow()
+                    && miner.getMineType() == 1;
     }
 
     @Override
@@ -47,30 +45,34 @@ public abstract class MinerMineGoal extends Goal {
         z = 0;
     }
 
-    public void moveToPosition(){
-        if (!minePos.closerThan(miner.getOnPos(), 4)){
-            this.miner.getNavigation().moveTo(minePos.getX(), minePos.getY(), minePos.getZ(),1);
+    public void moveToPosition() {
+        if (!minePos.closerThan(miner.getOnPos(), 4)) {
+            this.miner.getNavigation().moveTo(minePos.getX(), minePos.getY(), minePos.getZ(), 1);
         }
-        if (minePos.closerThan(miner.getOnPos(), 4)){
-            this.miner.getLookControl().setLookAt(minePos.getX(), minePos.getY() + 1, minePos.getZ(), 10.0F, (float) this.miner.getMaxHeadXRot());
+        if (minePos.closerThan(miner.getOnPos(), 4)) {
+            this.miner.getLookControl().setLookAt(minePos.getX(), minePos.getY() + 1, minePos.getZ(), 10.0F,
+                    (float) this.miner.getMaxHeadXRot());
         }
     }
 
-    protected void mineBlock(BlockPos blockPos){
-        if (this.miner.isAlive() && ForgeEventFactory.getMobGriefingEvent(this.miner.level, this.miner) && !miner.getFollow()) {
+    protected void mineBlock(BlockPos blockPos) {
+        if (this.miner.isAlive() && ForgeEventFactory.getMobGriefingEvent(this.miner.level, this.miner)
+                && !miner.getFollow()) {
             BlockState blockstate = this.miner.level.getBlockState(blockPos);
             Block block = blockstate.getBlock();
 
             if (!miner.shouldIgnoreBlock(block)) {
 
                 if (miner.getCurrentTimeBreak() % 5 == 4) {
-                    miner.level.playLocalSound(blockPos.getX(), blockPos.getY(), blockPos.getZ(), blockstate.getSoundType().getHitSound(), SoundSource.BLOCKS, 1F, 0.75F, false);
+                    miner.level.playLocalSound(blockPos.getX(), blockPos.getY(), blockPos.getZ(),
+                            blockstate.getSoundType().getHitSound(), SoundSource.BLOCKS, 1F, 0.75F, false);
                 }
 
                 int bp = (int) (blockstate.getDestroySpeed(this.miner.level, blockPos) * 10);
                 this.miner.setBreakingTime(bp);
 
-                this.miner.setCurrentTimeBreak(this.miner.getCurrentTimeBreak() + (int) (1 * (this.miner.getUseItem().getDestroySpeed(blockstate))));
+                this.miner.setCurrentTimeBreak(this.miner.getCurrentTimeBreak()
+                        + (int) (1 * (this.miner.getUseItem().getDestroySpeed(blockstate))));
                 float f = (float) this.miner.getCurrentTimeBreak() / (float) this.miner.getBreakingTime();
 
                 int i = (int) (f * 10);
@@ -96,7 +98,7 @@ public abstract class MinerMineGoal extends Goal {
 
     }
 
-    public BlockPos getBlockPositionsFromDirection(int x, int y, int z, BlockPos startPos, Direction direction){
+    public BlockPos getBlockPositionsFromDirection(int x, int y, int z, BlockPos startPos, Direction direction) {
         BlockPos pos = null;
         if (direction.equals(Direction.EAST)) {
             pos = new BlockPos(startPos.getX() + x, startPos.getY() + y, startPos.getZ() - z);

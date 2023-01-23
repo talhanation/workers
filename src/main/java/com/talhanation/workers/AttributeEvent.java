@@ -1,6 +1,5 @@
 package com.talhanation.workers;
 
-import com.talhanation.workers.client.render.RabbitFarmerRenderer;
 import com.talhanation.workers.entities.*;
 import com.talhanation.workers.init.ModEntityTypes;
 import net.minecraftforge.event.entity.EntityAttributeCreationEvent;

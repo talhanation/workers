@@ -3,19 +3,15 @@ package com.talhanation.workers.entities.ai;
 import com.talhanation.workers.Main;
 import com.talhanation.workers.entities.AbstractWorkerEntity;
 import net.minecraft.core.BlockPos;
-import net.minecraft.network.chat.TextComponent;
-import net.minecraft.network.chat.TranslatableComponent;
-import net.minecraft.util.Mth;
+import net.minecraft.network.chat.Component;
+import net.minecraft.network.chat.MutableComponent;
 import net.minecraft.world.Container;
-import net.minecraft.world.ContainerListener;
 import net.minecraft.world.SimpleContainer;
+import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.ai.goal.Goal;
-import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.block.BaseEntityBlock;
-import net.minecraft.world.level.block.Block;
-import net.minecraft.world.level.block.ChestBlock;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import org.jetbrains.annotations.Nullable;
 
@@ -25,10 +21,10 @@ public class TransferItemsInChestGoal extends Goal {
     private BlockPos chestPos;
     private BlockPos homePos;
     private Container container;
-    private final TranslatableComponent NEED_ITEMS_HOME = new TranslatableComponent("chat.workers.needHome");
-    private final TranslatableComponent NEED_CHEST = new TranslatableComponent("chat.workers.needChest");
+    private final MutableComponent NEED_ITEMS_HOME = Component.translatable("chat.workers.needHome");
+    private final MutableComponent NEED_CHEST = Component.translatable("chat.workers.needChest");
 
-    public TransferItemsInChestGoal(AbstractWorkerEntity worker){
+    public TransferItemsInChestGoal(AbstractWorkerEntity worker) {
         this.worker = worker;
     }
 
@@ -43,19 +39,25 @@ public class TransferItemsInChestGoal extends Goal {
 
     @Override
     public void start() {
-        if(worker.getHomePos() != null) this.homePos = worker.getHomePos();
-        if(this.chestPos != null){
+        if (worker.getHomePos() != null)
+            this.homePos = worker.getHomePos();
+        if (this.chestPos != null) {
             Main.LOGGER.debug("found chestPos");
         }
 
-        if (homePos == null && worker.getOwner() != null){
-            worker.getOwner().sendMessage(new TextComponent(worker.getName().getString() + ": " + NEED_ITEMS_HOME.getString()),worker.getOwner().getUUID());
+        LivingEntity owner = worker.getOwner();
+        if (owner == null) {
+            return;
         }
-        else if (homePos != null){
+        if (homePos == null) {
+            owner.sendSystemMessage(
+                    Component.literal(worker.getName().getString() + ": " + NEED_ITEMS_HOME.getString()));
+        } else {
             this.chestPos = this.findChestPos();
 
-            if (chestPos == null && worker.getOwner() != null){
-                worker.getOwner().sendMessage(new TextComponent(worker.getName().getString() + ": " + NEED_CHEST.getString()), worker.getOwner().getUUID());
+            if (chestPos == null) {
+                owner.sendSystemMessage(
+                        Component.literal(worker.getName().getString() + ": " + NEED_CHEST.getString()));
             }
         }
     }
@@ -69,39 +71,40 @@ public class TransferItemsInChestGoal extends Goal {
 
     @Override
     public void tick() {
-        if(!worker.isSleeping()){
-            if (homePos != null) chestPos = this.findChestPos();
+        if (!worker.isSleeping()) {
+            if (homePos != null)
+                chestPos = this.findChestPos();
         }
 
-        if(chestPos != null && !worker.getInventory().isEmpty()){
+        if (chestPos != null && !worker.getInventory().isEmpty()) {
             Main.LOGGER.debug("Moving to chest");
             this.worker.getNavigation().moveTo(chestPos.getX(), chestPos.getY(), chestPos.getZ(), 1.1D);
 
-            if (worker.level.getBlockState(chestPos).getBlock() instanceof BaseEntityBlock entityBlock){
+            if (worker.level.getBlockState(chestPos).getBlock() instanceof BaseEntityBlock entityBlock) {
 
-                    BlockEntity entity = worker.level.getBlockEntity(chestPos);
-                    if (entity instanceof Container containerEntity) {
-                        this.container = containerEntity;
-                    }
+                BlockEntity entity = worker.level.getBlockEntity(chestPos);
+                if (entity instanceof Container containerEntity) {
+                    this.container = containerEntity;
+                }
             }
 
-            if (container != null && chestPos.closerThan(worker.getOnPos(), 3)){
+            if (container != null && chestPos.closerThan(worker.getOnPos(), 3)) {
 
                 this.worker.getNavigation().stop();
-                this.worker.getLookControl().setLookAt(chestPos.getX(), chestPos.getY() + 1, chestPos.getZ(), 10.0F, (float) this.worker.getMaxHeadXRot());
+                this.worker.getLookControl().setLookAt(chestPos.getX(), chestPos.getY() + 1, chestPos.getZ(), 10.0F,
+                        (float) this.worker.getMaxHeadXRot());
 
                 Main.LOGGER.debug("Depositing to chest");
                 this.depositItems();
-                //this.done = true;
+                // this.done = true;
             }
         }
     }
 
-    private void depositItems(){
+    private void depositItems() {
         SimpleContainer inventory = worker.getInventory();
 
-
-        for(int i = 0; i < inventory.getContainerSize(); i++){
+        for (int i = 0; i < inventory.getContainerSize(); i++) {
             ItemStack stack = inventory.getItem(i);
             Item itemInSlot = stack.getItem();
 
@@ -111,7 +114,7 @@ public class TransferItemsInChestGoal extends Goal {
             Main.LOGGER.debug("itemcount: " + itemcount);
             Main.LOGGER.debug("depositCount: " + depositCount);
 
-            for(int k = 0; k < inventory.getContainerSize() ;k++) {
+            for (int k = 0; k < inventory.getContainerSize(); k++) {
                 if (depositCount > 64) {
                     stack.setCount(depositCount);
                     this.addItem(stack, container);
@@ -124,21 +127,16 @@ public class TransferItemsInChestGoal extends Goal {
                     break;
                 }
             }
-            Main.LOGGER.debug("added " + stack.getDisplayName().getString() + " "+ depositCount + "x");
+            Main.LOGGER.debug("added " + stack.getDisplayName().getString() + " " + depositCount + "x");
             Main.LOGGER.debug("deposit done");
 
             inventory.removeItemNoUpdate(i);
 
-
-
-            //add rest to villager inv
+            // add rest to villager inv
             stack.setCount(depositCount);
             this.addItem(stack, worker.getInventory());
 
         }
-
-
-
 
         // pro item -> transfer
         // zähl die items nur 1/2 wird deposit
@@ -148,14 +146,14 @@ public class TransferItemsInChestGoal extends Goal {
 
     }
 
-    private int countItemsInInventory(Item item){
+    private int countItemsInInventory(Item item) {
         int count = 0;
         SimpleContainer workerInv = this.worker.getInventory();
 
-        for (int i = 0; i < workerInv.getContainerSize(); i++){
+        for (int i = 0; i < workerInv.getContainerSize(); i++) {
             ItemStack itemStackInSlot = workerInv.getItem(i);
             Item itemInSlot = itemStackInSlot.getItem();
-            if (itemInSlot == item){
+            if (itemInSlot == item) {
                 count = count + itemStackInSlot.getCount();
             }
         }
@@ -165,7 +163,7 @@ public class TransferItemsInChestGoal extends Goal {
 
     @Nullable
     private BlockPos findChestPos() {
-        if(this.worker.getHomePos() != null) {
+        if (this.worker.getHomePos() != null) {
             BlockPos chestPos;
             int range = 8;
 
@@ -195,7 +193,7 @@ public class TransferItemsInChestGoal extends Goal {
     }
 
     private void moveItemToEmptySlots(ItemStack stack, Container container) {
-        for(int i = 0; i < container.getContainerSize(); ++i) {
+        for (int i = 0; i < container.getContainerSize(); ++i) {
             ItemStack itemstack = container.getItem(i);
             if (itemstack.isEmpty()) {
                 container.setItem(i, stack.copy());
@@ -207,7 +205,7 @@ public class TransferItemsInChestGoal extends Goal {
     }
 
     private void moveItemToOccupiedSlotsWithSameType(ItemStack stack, Container container) {
-        for(int i = 0; i < container.getContainerSize(); ++i) {
+        for (int i = 0; i < container.getContainerSize(); ++i) {
             ItemStack itemstack = container.getItem(i);
             if (ItemStack.isSameItemSameTags(itemstack, stack)) {
                 this.moveItemsBetweenStacks(stack, itemstack, container);

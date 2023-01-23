@@ -1,0 +1,13 @@
+{
+  "values": [
+    "workers:miner",
+    "workers:lumberjack",
+    "workers:farmer",
+    "workers:merchant",
+    "workers:shepherd",
+    "workers:fisherman",
+    "workers:cattle_farmer",
+    "workers:chicken_farmer",
+    "workers:swineherd"
+  ]
+}

@@ -4,10 +4,8 @@ import com.google.common.collect.ImmutableSet;
 import com.talhanation.workers.Main;
 import com.talhanation.workers.inventory.WorkerInventoryContainer;
 import com.talhanation.workers.entities.ai.FarmerCropAI;
-import com.talhanation.workers.entities.ai.WorkerFollowOwnerGoal;
 import com.talhanation.workers.entities.ai.WorkerPickupWantedItemGoal;
 import com.talhanation.workers.network.MessageOpenGuiWorker;
-import net.minecraft.network.chat.TranslatableComponent;
 import net.minecraft.world.entity.*;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.Blocks;
@@ -31,7 +29,6 @@ import net.minecraft.world.item.Items;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.world.entity.ai.navigation.GroundPathNavigation;
 import net.minecraft.network.chat.Component;
-import net.minecraft.network.chat.TextComponent;
 import net.minecraft.world.DifficultyInstance;
 import net.minecraft.world.level.ServerLevelAccessor;
 import net.minecraft.world.level.Level;
@@ -42,25 +39,24 @@ import javax.annotation.Nullable;
 import java.util.Set;
 import java.util.function.Predicate;
 
-public class FarmerEntity extends AbstractWorkerEntity{
+public class FarmerEntity extends AbstractWorkerEntity {
 
-    private final Predicate<ItemEntity> ALLOWED_ITEMS = (item) -> !item.hasPickUpDelay() && item.isAlive() && this.wantsToPickUp(item.getItem());
+    private final Predicate<ItemEntity> ALLOWED_ITEMS = (item) -> !item.hasPickUpDelay() && item.isAlive()
+            && this.wantsToPickUp(item.getItem());
 
     public static final Set<Item> WANTED_SEEDS = ImmutableSet.of(
             Items.WHEAT_SEEDS,
             Items.MELON_SEEDS,
             Items.POTATO,
             Items.BEETROOT_SEEDS,
-            Items.CARROT
-    );
+            Items.CARROT);
 
     public final Set<Item> WANTED_ITEMS = ImmutableSet.of(
             Items.WHEAT,
             Items.MELON_SLICE,
             Items.POTATO,
             Items.BEETROOT,
-            Items.CARROT
-    );
+            Items.CARROT);
 
     public static final Set<Block> CROP_BLOCKS = ImmutableSet.of(
             Blocks.WHEAT,
@@ -68,8 +64,7 @@ public class FarmerEntity extends AbstractWorkerEntity{
             Blocks.CARROTS,
             Blocks.BEETROOTS,
             Blocks.MELON,
-            Blocks.PUMPKIN
-    );
+            Blocks.PUMPKIN);
 
     public FarmerEntity(EntityType<? extends AbstractWorkerEntity> entityType, Level world) {
         super(entityType, world);
@@ -92,14 +87,14 @@ public class FarmerEntity extends AbstractWorkerEntity{
     }
 
     @Override
-    public Predicate<ItemEntity> getAllowedItems(){
+    public Predicate<ItemEntity> getAllowedItems() {
         return ALLOWED_ITEMS;
     }
 
     @Override
     public void openGUI(Player player) {
         if (player instanceof ServerPlayer) {
-            NetworkHooks.openGui((ServerPlayer) player, new MenuProvider() {
+            NetworkHooks.openScreen((ServerPlayer) player, new MenuProvider() {
                 @Override
                 public Component getDisplayName() {
                     return getName();
@@ -110,13 +105,15 @@ public class FarmerEntity extends AbstractWorkerEntity{
                 public AbstractContainerMenu createMenu(int i, Inventory playerInventory, Player playerEntity) {
                     return new WorkerInventoryContainer(i, FarmerEntity.this, playerInventory);
                 }
-            }, packetBuffer -> {packetBuffer.writeUUID(getUUID());});
+            }, packetBuffer -> {
+                packetBuffer.writeUUID(getUUID());
+            });
         } else {
             Main.SIMPLE_CHANNEL.sendToServer(new MessageOpenGuiWorker(player, this.getUUID()));
         }
     }
 
-    //ATTRIBUTES
+    // ATTRIBUTES
     public static AttributeSupplier.Builder setAttributes() {
         return createMobAttributes()
                 .add(Attributes.MAX_HEALTH, 20.0D)
@@ -135,8 +132,7 @@ public class FarmerEntity extends AbstractWorkerEntity{
         this.goalSelector.addGoal(6, new RandomLookAroundGoal(this));
         this.goalSelector.addGoal(6, new WaterAvoidingRandomStrollGoal(this, 1.0D, 0F));
 
-
-        //this.targetSelector.addGoal(1, new (this));
+        // this.targetSelector.addGoal(1, new (this));
 
     }
 
@@ -148,10 +144,11 @@ public class FarmerEntity extends AbstractWorkerEntity{
 
     @Override
     @Nullable
-    public SpawnGroupData finalizeSpawn(ServerLevelAccessor world, DifficultyInstance difficultyInstance, MobSpawnType reason, @Nullable SpawnGroupData data, @Nullable CompoundTag nbt) {
+    public SpawnGroupData finalizeSpawn(ServerLevelAccessor world, DifficultyInstance difficultyInstance,
+            MobSpawnType reason, @Nullable SpawnGroupData data, @Nullable CompoundTag nbt) {
         SpawnGroupData ilivingentitydata = super.finalizeSpawn(world, difficultyInstance, reason, data, nbt);
-        ((GroundPathNavigation)this.getNavigation()).setCanOpenDoors(true);
-        this.populateDefaultEquipmentEnchantments(difficultyInstance);
+        ((GroundPathNavigation) this.getNavigation()).setCanOpenDoors(true);
+        this.populateDefaultEquipmentEnchantments(random, difficultyInstance);
 
         this.initSpawn();
 
@@ -160,10 +157,10 @@ public class FarmerEntity extends AbstractWorkerEntity{
 
     @Override
     public void initSpawn() {
-        String name = new TranslatableComponent("entity.workers.farmer").getString();
+        String name = Component.translatable("entity.workers.farmer").getString();
 
         this.setProfessionName(name);
-        this.setCustomName(new TextComponent(name));
+        this.setCustomName(Component.literal(name));
         this.setEquipment();
         this.getNavigation().setCanFloat(true);
         this.setDropEquipment();
@@ -192,6 +189,7 @@ public class FarmerEntity extends AbstractWorkerEntity{
         }
 
     }
+
     @Override
     public boolean wantsToPickUp(ItemStack itemStack) {
         Item item = itemStack.getItem();
@@ -202,13 +200,12 @@ public class FarmerEntity extends AbstractWorkerEntity{
         return (CROP_BLOCKS.contains(block));
     }
 
-
     @Override
     public void setEquipment() {
         int i = this.random.nextInt(2);
         if (i == 1) {
             this.setItemSlot(EquipmentSlot.MAINHAND, new ItemStack(Items.STONE_HOE));
-        }else{
+        } else {
             this.setItemSlot(EquipmentSlot.MAINHAND, new ItemStack(Items.WOODEN_HOE));
         }
     }

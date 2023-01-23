@@ -1,13 +1,10 @@
 package com.talhanation.workers.entities;
 
 import com.google.common.collect.ImmutableSet;
-import com.talhanation.workers.Main;
-import com.talhanation.workers.entities.ai.CattleFarmerAI;
 import com.talhanation.workers.entities.ai.SwineherdAI;
 import com.talhanation.workers.entities.ai.WorkerPickupWantedItemGoal;
 import net.minecraft.nbt.CompoundTag;
-import net.minecraft.network.chat.TextComponent;
-import net.minecraft.network.chat.TranslatableComponent;
+import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.DifficultyInstance;
 import net.minecraft.world.SimpleContainer;
@@ -31,15 +28,14 @@ import javax.annotation.Nullable;
 import java.util.Set;
 import java.util.function.Predicate;
 
-public class SwineherdEntity extends AbstractAnimalFarmerEntity{
+public class SwineherdEntity extends AbstractAnimalFarmerEntity {
     private final Predicate<ItemEntity> ALLOWED_ITEMS = (item) -> {
         return !item.hasPickUpDelay() && item.isAlive() && this.wantsToPickUp(item.getItem());
     };
 
     private static final Set<Item> WANTED_ITEMS = ImmutableSet.of(
             Items.PORKCHOP,
-            Items.CARROT
-    );
+            Items.CARROT);
 
     public SwineherdEntity(EntityType<? extends AbstractAnimalFarmerEntity> entityType, Level world) {
         super(entityType, world);
@@ -74,11 +70,11 @@ public class SwineherdEntity extends AbstractAnimalFarmerEntity{
     }
 
     @Override
-    public Predicate<ItemEntity> getAllowedItems(){
+    public Predicate<ItemEntity> getAllowedItems() {
         return ALLOWED_ITEMS;
     }
 
-    //ATTRIBUTES
+    // ATTRIBUTES
     public static AttributeSupplier.Builder setAttributes() {
         return createMobAttributes()
                 .add(Attributes.MAX_HEALTH, 20.0D)
@@ -106,10 +102,11 @@ public class SwineherdEntity extends AbstractAnimalFarmerEntity{
 
     @Override
     @Nullable
-    public SpawnGroupData finalizeSpawn(ServerLevelAccessor world, DifficultyInstance difficultyInstance, MobSpawnType reason, @Nullable SpawnGroupData data, @Nullable CompoundTag nbt) {
+    public SpawnGroupData finalizeSpawn(ServerLevelAccessor world, DifficultyInstance difficultyInstance,
+            MobSpawnType reason, @Nullable SpawnGroupData data, @Nullable CompoundTag nbt) {
         SpawnGroupData ilivingentitydata = super.finalizeSpawn(world, difficultyInstance, reason, data, nbt);
-        ((GroundPathNavigation)this.getNavigation()).setCanOpenDoors(true);
-        this.populateDefaultEquipmentEnchantments(difficultyInstance);
+        ((GroundPathNavigation) this.getNavigation()).setCanOpenDoors(true);
+        this.populateDefaultEquipmentEnchantments(random, difficultyInstance);
 
         this.initSpawn();
 
@@ -118,10 +115,10 @@ public class SwineherdEntity extends AbstractAnimalFarmerEntity{
 
     @Override
     public void initSpawn() {
-        String name = new TranslatableComponent("entity.workers.swineherd").getString();
+        String name = Component.translatable("entity.workers.swineherd").getString();
 
         this.setProfessionName(name);
-        this.setCustomName(new TextComponent(name));
+        this.setCustomName(Component.literal(name));
         this.setEquipment();
         this.getNavigation().setCanFloat(true);
         this.setDropEquipment();
@@ -155,6 +152,7 @@ public class SwineherdEntity extends AbstractAnimalFarmerEntity{
         }
 
     }
+
     @Override
     public boolean wantsToPickUp(ItemStack itemStack) {
         Item item = itemStack.getItem();

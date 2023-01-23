@@ -5,7 +5,6 @@ import com.talhanation.workers.Main;
 import com.talhanation.workers.inventory.WorkerInventoryContainer;
 import com.talhanation.workers.entities.ai.*;
 import com.talhanation.workers.network.MessageOpenGuiWorker;
-import net.minecraft.network.chat.TranslatableComponent;
 import net.minecraft.world.entity.*;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.Blocks;
@@ -24,7 +23,6 @@ import net.minecraft.world.item.Items;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.world.entity.ai.navigation.GroundPathNavigation;
 import net.minecraft.network.chat.Component;
-import net.minecraft.network.chat.TextComponent;
 import net.minecraft.world.DifficultyInstance;
 import net.minecraft.world.level.ServerLevelAccessor;
 import net.minecraft.world.level.Level;
@@ -44,13 +42,12 @@ import net.minecraft.world.entity.ai.goal.PanicGoal;
 import net.minecraft.world.entity.ai.goal.RandomLookAroundGoal;
 import net.minecraft.world.entity.ai.goal.WaterAvoidingRandomStrollGoal;
 
-public class LumberjackEntity extends AbstractWorkerEntity{
+public class LumberjackEntity extends AbstractWorkerEntity {
 
-    public final Predicate<ItemEntity> ALLOWED_ITEMS = (item) ->
-            (!item.hasPickUpDelay() && item.isAlive() && this.wantsToPickUp(item.getItem()));
+    public final Predicate<ItemEntity> ALLOWED_ITEMS = (
+            item) -> (!item.hasPickUpDelay() && item.isAlive() && this.wantsToPickUp(item.getItem()));
 
-    public final Predicate<Block> ALLOWED_BLOCKS = (item) ->
-            (this.wantsToBreak(item));
+    public final Predicate<Block> ALLOWED_BLOCKS = (item) -> (this.wantsToBreak(item));
 
     public static final Set<Item> WANTED_SAPLINGS = ImmutableSet.of(
             Items.OAK_SAPLING,
@@ -58,8 +55,7 @@ public class LumberjackEntity extends AbstractWorkerEntity{
             Items.SPRUCE_SAPLING,
             Items.ACACIA_SAPLING,
             Items.JUNGLE_SAPLING,
-            Items.DARK_OAK_SAPLING
-    );
+            Items.DARK_OAK_SAPLING);
 
     public static final Set<Item> WANTED_ITEMS = ImmutableSet.of(
             Items.OAK_LOG,
@@ -87,8 +83,7 @@ public class LumberjackEntity extends AbstractWorkerEntity{
             Items.STRIPPED_DARK_OAK_LOG,
             Items.STRIPPED_DARK_OAK_WOOD,
             Items.STICK,
-            Items.APPLE
-    );
+            Items.APPLE);
 
     public static final Set<Block> WANTED_BLOCKS = ImmutableSet.of(
             Blocks.ACACIA_LOG,
@@ -114,15 +109,14 @@ public class LumberjackEntity extends AbstractWorkerEntity{
             Blocks.STRIPPED_OAK_LOG,
             Blocks.STRIPPED_OAK_WOOD,
             Blocks.STRIPPED_SPRUCE_LOG,
-            Blocks.STRIPPED_SPRUCE_WOOD
-    );
+            Blocks.STRIPPED_SPRUCE_WOOD);
 
     public LumberjackEntity(EntityType<? extends AbstractWorkerEntity> entityType, Level world) {
         super(entityType, world);
         this.initSpawn();
     }
 
-    public Predicate<ItemEntity> getAllowedItems(){
+    public Predicate<ItemEntity> getAllowedItems() {
         return ALLOWED_ITEMS;
     }
 
@@ -141,7 +135,7 @@ public class LumberjackEntity extends AbstractWorkerEntity{
         return 8;
     }
 
-    //ATTRIBUTES
+    // ATTRIBUTES
     public static AttributeSupplier.Builder setAttributes() {
         return createMobAttributes()
                 .add(Attributes.MAX_HEALTH, 20.0D)
@@ -166,8 +160,7 @@ public class LumberjackEntity extends AbstractWorkerEntity{
         this.goalSelector.addGoal(12, new RandomLookAroundGoal(this));
         this.goalSelector.addGoal(10, new LookAtPlayerGoal(this, LivingEntity.class, 8.0F));
 
-
-        //this.targetSelector.addGoal(1, new (this));
+        // this.targetSelector.addGoal(1, new (this));
 
     }
 
@@ -179,10 +172,11 @@ public class LumberjackEntity extends AbstractWorkerEntity{
 
     @Override
     @Nullable
-    public SpawnGroupData finalizeSpawn(ServerLevelAccessor world, DifficultyInstance difficultyInstance, MobSpawnType reason, @Nullable SpawnGroupData data, @Nullable CompoundTag nbt) {
+    public SpawnGroupData finalizeSpawn(ServerLevelAccessor world, DifficultyInstance difficultyInstance,
+            MobSpawnType reason, @Nullable SpawnGroupData data, @Nullable CompoundTag nbt) {
         SpawnGroupData ilivingentitydata = super.finalizeSpawn(world, difficultyInstance, reason, data, nbt);
-        ((GroundPathNavigation)this.getNavigation()).setCanOpenDoors(true);
-        this.populateDefaultEquipmentEnchantments(difficultyInstance);
+        ((GroundPathNavigation) this.getNavigation()).setCanOpenDoors(true);
+        this.populateDefaultEquipmentEnchantments(random, difficultyInstance);
 
         this.initSpawn();
 
@@ -191,10 +185,10 @@ public class LumberjackEntity extends AbstractWorkerEntity{
 
     @Override
     public void initSpawn() {
-        String name = new TranslatableComponent("entity.workers.lumberjack").getString();
+        String name = Component.translatable("entity.workers.lumberjack").getString();
 
         this.setProfessionName(name);
-        this.setCustomName(new TextComponent(name));
+        this.setCustomName(Component.literal(name));
         this.setEquipment();
         this.getNavigation().setCanFloat(true);
         this.setDropEquipment();
@@ -228,6 +222,7 @@ public class LumberjackEntity extends AbstractWorkerEntity{
         }
 
     }
+
     @Override
     public boolean wantsToPickUp(ItemStack itemStack) {
         Item item = itemStack.getItem();
@@ -240,13 +235,13 @@ public class LumberjackEntity extends AbstractWorkerEntity{
 
     @Override
     public void setEquipment() {
-            this.setItemSlot(EquipmentSlot.MAINHAND, new ItemStack(Items.STONE_AXE));
+        this.setItemSlot(EquipmentSlot.MAINHAND, new ItemStack(Items.STONE_AXE));
     }
 
     @Override
     public void openGUI(Player player) {
         if (player instanceof ServerPlayer) {
-            NetworkHooks.openGui((ServerPlayer) player, new MenuProvider() {
+            NetworkHooks.openScreen((ServerPlayer) player, new MenuProvider() {
                 @Override
                 public Component getDisplayName() {
                     return getName();
@@ -257,7 +252,9 @@ public class LumberjackEntity extends AbstractWorkerEntity{
                 public AbstractContainerMenu createMenu(int i, Inventory playerInventory, Player playerEntity) {
                     return new WorkerInventoryContainer(i, LumberjackEntity.this, playerInventory);
                 }
-            }, packetBuffer -> {packetBuffer.writeUUID(getUUID());});
+            }, packetBuffer -> {
+                packetBuffer.writeUUID(getUUID());
+            });
         } else {
             Main.SIMPLE_CHANNEL.sendToServer(new MessageOpenGuiWorker(player, this.getUUID()));
         }
