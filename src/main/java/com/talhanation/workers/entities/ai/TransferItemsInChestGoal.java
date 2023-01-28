@@ -9,28 +9,46 @@ import net.minecraft.world.Container;
 import net.minecraft.world.SimpleContainer;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.ai.goal.Goal;
-import net.minecraft.world.item.Item;
+import net.minecraft.world.entity.ai.navigation.PathNavigation;
 import net.minecraft.world.item.ItemStack;
-import net.minecraft.world.level.block.BaseEntityBlock;
 import net.minecraft.world.level.block.entity.BlockEntity;
-import org.jetbrains.annotations.Nullable;
+import net.minecraft.world.level.block.state.BlockState;
+import net.minecraftforge.common.Tags.Blocks;
 
 public class TransferItemsInChestGoal extends Goal {
-
     private final AbstractWorkerEntity worker;
-    private BlockPos chestPos;
-    private BlockPos homePos;
-    private Container container;
     private final MutableComponent NEED_ITEMS_HOME = Component.translatable("chat.workers.needHome");
-    private final MutableComponent NEED_CHEST = Component.translatable("chat.workers.needChest");
+    private final MutableComponent CANT_FIND_CHEST =Component.translatable("chat.workers.cantFindChest");
+    private final MutableComponent CHEST_FULL = Component.translatable("chat.workers.chestFull");
+
+    private PathNavigation pathFinder;
 
     public TransferItemsInChestGoal(AbstractWorkerEntity worker) {
         this.worker = worker;
+        this.pathFinder = this.worker.getNavigation();
     }
 
     @Override
     public boolean canUse() {
-        return true;
+        if (
+            this.worker.getOwner() == null ||
+            this.worker.needsHome() ||
+            this.worker.needsChest() ||
+            this.worker.needsToSleep()
+        ) {
+            return false;
+        }
+        SimpleContainer inventory = this.worker.getInventory();
+        if (inventory == null) {
+            return false;
+        }
+        for (ItemStack item : inventory.items) {
+            // If there's at least one item that the worker wants to save in the chest
+            if (this.worker.wantsToPickUp(item) && !this.worker.wantsToKeep(item)) {
+                return true;
+            }
+        }
+        return false;
     }
 
     public boolean canContinueToUse() {
@@ -38,148 +56,135 @@ public class TransferItemsInChestGoal extends Goal {
     }
 
     @Override
-    public void start() {
-        if (worker.getHomePos() != null)
-            this.homePos = worker.getHomePos();
-        if (this.chestPos != null) {
-            Main.LOGGER.debug("found chestPos");
-        }
-
+    public void tick() {
         LivingEntity owner = worker.getOwner();
-        if (owner == null) {
+        if (owner == null) return;
+        if (worker.isSleeping()) return;
+        if (this.worker.getHomePos() == null) {
+            this.worker.tellPlayer(owner, NEED_ITEMS_HOME);
+            this.worker.setNeedsHome(true);
             return;
         }
-        if (homePos == null) {
-            owner.sendSystemMessage(
-                    Component.literal(worker.getName().getString() + ": " + NEED_ITEMS_HOME.getString()));
-        } else {
-            this.chestPos = this.findChestPos();
-
-            if (chestPos == null) {
-                owner.sendSystemMessage(
-                        Component.literal(worker.getName().getString() + ": " + NEED_CHEST.getString()));
-            }
+        
+        BlockPos chestPos = this.worker.getChestPos();
+        if (chestPos == null) {
+            this.worker.tellPlayer(owner, CANT_FIND_CHEST);
+            this.worker.setNeedsChest(true);
+            return;
         }
-    }
-
-    @Override
-    public void stop() {
-        super.stop();
-        this.chestPos = null;
-        this.container = null;
-    }
-
-    @Override
-    public void tick() {
-        if (!worker.isSleeping()) {
-            if (homePos != null)
-                chestPos = this.findChestPos();
+        
+        BlockState chest = worker.level.getBlockState(this.worker.getChestPos());
+        Container containerEntity = null;
+        if (chest instanceof Container container) {
+            containerEntity = container;
+        }
+        if (
+            containerEntity == null || chest == null || (
+                !chest.is(Blocks.CHESTS) && 
+                !chest.is(Blocks.BARRELS)
+            )
+        ) {
+            this.worker.tellPlayer(owner, CANT_FIND_CHEST);
+            this.worker.setNeedsChest(true);
+            return;
         }
 
-        if (chestPos != null && !worker.getInventory().isEmpty()) {
-            Main.LOGGER.debug("Moving to chest");
-            this.worker.getNavigation().moveTo(chestPos.getX(), chestPos.getY(), chestPos.getZ(), 1.1D);
 
-            if (worker.level.getBlockState(chestPos).getBlock() instanceof BaseEntityBlock entityBlock) {
+        Main.LOGGER.debug("Moving to chest");
+        pathFinder.moveTo(chestPos.getX(), chestPos.getY(), chestPos.getZ(), 1.1D);
 
-                BlockEntity entity = worker.level.getBlockEntity(chestPos);
-                if (entity instanceof Container containerEntity) {
-                    this.container = containerEntity;
-                }
-            }
+        if (chestPos.closerThan(worker.getOnPos(), 1)) {
+            pathFinder.stop();
+            this.worker.getLookControl().setLookAt(
+                chestPos.getX(),
+                chestPos.getY() + 1,
+                chestPos.getZ(),
+                10.0F,
+                (float) this.worker.getMaxHeadXRot()
+            );
 
-            if (container != null && chestPos.closerThan(worker.getOnPos(), 3)) {
-
-                this.worker.getNavigation().stop();
-                this.worker.getLookControl().setLookAt(chestPos.getX(), chestPos.getY() + 1, chestPos.getZ(), 10.0F,
-                        (float) this.worker.getMaxHeadXRot());
-
-                Main.LOGGER.debug("Depositing to chest");
-                this.depositItems();
-                // this.done = true;
-            }
+            Main.LOGGER.debug("Depositing to chest");
+            this.depositItems(containerEntity);
         }
     }
+    
 
-    private void depositItems() {
+    private void depositItems(Container container) {
         SimpleContainer inventory = worker.getInventory();
-
+        boolean couldDepositSomething = false;
         for (int i = 0; i < inventory.getContainerSize(); i++) {
             ItemStack stack = inventory.getItem(i);
-            Item itemInSlot = stack.getItem();
-
-            int itemcount = countItemsInInventory(itemInSlot);
-            int depositCount = (int) Math.ceil((double) itemcount / 2);
-
-            Main.LOGGER.debug("itemcount: " + itemcount);
-            Main.LOGGER.debug("depositCount: " + depositCount);
-
-            for (int k = 0; k < inventory.getContainerSize(); k++) {
-                if (depositCount > 64) {
-                    stack.setCount(depositCount);
-                    this.addItem(stack, container);
-
-                    depositCount = depositCount - 64;
-
-                } else {
-                    stack.setCount(depositCount);
-                    this.addItem(stack, container);
-                    break;
-                }
+            
+            // This avoids depositing items such as tools, food, 
+            // or anything the workers wouldn't pick up while they're working.
+            // It also avoids depositing items that the worker needs to continue working.
+            if (
+                stack.isEmpty() ||
+                !worker.wantsToPickUp(stack) ||
+                worker.wantsToKeep(stack)
+            ) {
+                continue;
             }
-            Main.LOGGER.debug("added " + stack.getDisplayName().getString() + " " + depositCount + "x");
-            Main.LOGGER.debug("deposit done");
+            int originalAmount = stack.getCount();
+            // Attempt to deposit the stack in the container, keep the remainder
+            ItemStack remainder = this.deposit(stack, container);
+            inventory.setItem(i, remainder);
+            if (originalAmount != remainder.getCount()) {
+                couldDepositSomething = true;
+            }
 
-            inventory.removeItemNoUpdate(i);
-
-            // add rest to villager inv
-            stack.setCount(depositCount);
-            this.addItem(stack, worker.getInventory());
-
+            Main.LOGGER.debug(
+                "Stored {} x {}",
+                stack.getCount() - remainder.getCount(),
+                stack.getDisplayName().getString()
+            );
+            Main.LOGGER.debug(
+                "Kept {} x ", 
+                remainder.getCount(), 
+                stack.getDisplayName().getString()
+            );
         }
-
-        // pro item -> transfer
-        // zähl die items nur 1/2 wird deposit
-        // check ob platz gibt
-        // ja -> remove 1 add 1
-        // nein -> abbruch
-
+        if (!couldDepositSomething) {
+            this.worker.tellPlayer(worker.getOwner(), CHEST_FULL);
+            this.worker.setNeedsChest(true);
+        }
     }
 
-    private int countItemsInInventory(Item item) {
-        int count = 0;
-        SimpleContainer workerInv = this.worker.getInventory();
-
-        for (int i = 0; i < workerInv.getContainerSize(); i++) {
-            ItemStack itemStackInSlot = workerInv.getItem(i);
-            Item itemInSlot = itemStackInSlot.getItem();
-            if (itemInSlot == item) {
-                count = count + itemStackInSlot.getCount();
-            }
-        }
-
-        return count;
-    }
-
-    @Nullable
-    private BlockPos findChestPos() {
-        if (this.worker.getHomePos() != null) {
-            BlockPos chestPos;
-            int range = 8;
-
-            for (int x = -range; x < range; x++) {
-                for (int y = -range; y < range; y++) {
-                    for (int z = -range; z < range; z++) {
-                        chestPos = homePos.offset(x, y, z);
-                        BlockEntity block = worker.level.getBlockEntity(chestPos);
-                        if (block instanceof Container)
-                            return chestPos;
-                    }
+    
+    /**
+     * Deposits a stack in a target container.
+     * @return The shrinked stack with the remaining items that were not deposited.
+     */
+    private ItemStack deposit(ItemStack stack, Container container) {
+        // Attempt to fill matching stacks first.
+        for (int i = 0; i < container.getContainerSize(); i++) {
+            ItemStack targetSlot = container.getItem(i);
+            if (targetSlot.sameItem(stack)) {
+                int amountToDeposit = Math.min(
+                    stack.getCount(), 
+                    targetSlot.getMaxStackSize() - targetSlot.getCount()
+                );
+                targetSlot.grow(amountToDeposit);
+                stack.shrink(amountToDeposit);
+                container.setItem(i, targetSlot);
+                if (stack.isEmpty()) {
+                    return stack;
                 }
             }
         }
-        return null;
+        // Put the remainder in the first empty slot we can find.
+        for (int i = 0; i < container.getContainerSize(); i++) {
+            ItemStack targetSlot = container.getItem(i);
+            if (targetSlot.isEmpty()) {
+                container.setItem(i, stack);
+                return ItemStack.EMPTY;
+            }
+        }
+        // If we haven't returned at this point, the item can't be inserted. 
+        // Return the remainder.
+        return stack;
     }
+
 
     public ItemStack addItem(ItemStack stack, Container container) {
         ItemStack itemstack = stack.copy();

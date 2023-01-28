@@ -1,21 +1,13 @@
 package com.talhanation.workers;
 
-import com.talhanation.workers.entities.CattleFarmerEntity;
-import com.talhanation.workers.entities.ChickenFarmerEntity;
-import com.talhanation.workers.entities.FarmerEntity;
-import com.talhanation.workers.entities.FishermanEntity;
-import com.talhanation.workers.entities.LumberjackEntity;
-import com.talhanation.workers.entities.MerchantEntity;
-import com.talhanation.workers.entities.MinerEntity;
-import com.talhanation.workers.entities.ShepherdEntity;
-import com.talhanation.workers.entities.SwineherdEntity;
+import com.talhanation.workers.entities.AbstractWorkerEntity;
 import com.talhanation.workers.init.ModBlocks;
 import com.talhanation.workers.init.ModEntityTypes;
 import com.talhanation.workers.init.ModProfessions;
 
 import net.minecraft.util.RandomSource;
 import net.minecraft.world.entity.Entity;
-import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.npc.Villager;
 import net.minecraft.world.entity.npc.VillagerProfession;
 import net.minecraft.world.entity.npc.VillagerTrades;
@@ -29,155 +21,46 @@ import net.minecraft.world.level.block.Block;
 import net.minecraftforge.event.entity.living.LivingEvent.LivingTickEvent;
 import net.minecraftforge.event.village.VillagerTradesEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
-
+import java.util.HashMap;
 import java.util.List;
 
 public class VillagerEvents {
-
     @SubscribeEvent
     public void onVillagerLivingUpdate(LivingTickEvent event) {
+        HashMap<
+            VillagerProfession, 
+            EntityType<? extends AbstractWorkerEntity>
+        > entitiesByProfession = new HashMap<>(){{
+            put(ModProfessions.MINER.get(), ModEntityTypes.MINER.get());
+            put(ModProfessions.LUMBERJACK.get(), ModEntityTypes.LUMBERJACK.get());
+            put(ModProfessions.FISHER.get(), ModEntityTypes.FISHERMAN.get());
+            put(ModProfessions.SHEPHERD.get(), ModEntityTypes.SHEPHERD.get());
+            put(ModProfessions.FARMER.get(), ModEntityTypes.FARMER.get());
+            put(ModProfessions.MERCHANT.get(), ModEntityTypes.MERCHANT.get());
+        }};
+
         Entity entity = event.getEntity();
         if (entity instanceof Villager villager) {
             VillagerProfession profession = villager.getVillagerData().getProfession();
-
-            if (profession == ModProfessions.MINER.get()) {
-                createMiner(villager);
+            
+            if (entitiesByProfession.containsKey(profession)) {
+                EntityType<? extends AbstractWorkerEntity> workerType = entitiesByProfession.get(profession);
+                createWorker(villager, workerType);
             }
-
-            if (profession == ModProfessions.LUMBERJACK.get()) {
-                createLumber(villager);
-            }
-
-            if (profession == ModProfessions.FISHER.get()) {
-                createFisher(villager);
-            }
-
-            if (profession == ModProfessions.SHEPHERD.get()) {
-                createShepherd(villager);
-            }
-
-            if (profession == ModProfessions.FARMER.get()) {
-                createFarmer(villager);
-            }
-
-            if (profession == ModProfessions.MERCHANT.get()) {
-                createMerchant(villager);
-            }
-
-            if (profession == ModProfessions.CATTLE_FARMER.get()) {
-                createCattleFarmer(villager);
-            }
-
-            if (profession == ModProfessions.CHICKEN_FARMER.get()) {
-                createChickenFarmer(villager);
-            }
-
-            if (profession == ModProfessions.SWINEHERD.get()) {
-                createSwineherd(villager);
-            }
-
         }
-
     }
 
-    private static void createMiner(LivingEntity entity) {
-        MinerEntity miner = ModEntityTypes.MINER.get().create(entity.level);
-        Villager villager = (Villager) entity;
-        if (miner != null) {
-            miner.copyPosition(villager);
-            miner.initSpawn();
+
+    private void createWorker(Villager villager, EntityType<? extends AbstractWorkerEntity> workerType) {
+        AbstractWorkerEntity worker = workerType.create(villager.level);
+        if (worker != null) {
+            worker.copyPosition(villager);
+            worker.initSpawn();
             villager.remove(Entity.RemovalReason.DISCARDED);
-            villager.level.addFreshEntity(miner);
+            villager.level.addFreshEntity(worker);
         }
     }
 
-    private static void createLumber(LivingEntity entity) {
-        LumberjackEntity lumberjack = ModEntityTypes.LUMBERJACK.get().create(entity.level);
-        Villager villager = (Villager) entity;
-        if (lumberjack != null) {
-            lumberjack.copyPosition(villager);
-            lumberjack.initSpawn();
-            villager.remove(Entity.RemovalReason.DISCARDED);
-            villager.level.addFreshEntity(lumberjack);
-        }
-    }
-
-    private static void createFisher(LivingEntity entity) {
-        FishermanEntity fisher = ModEntityTypes.FISHERMAN.get().create(entity.level);
-        Villager villager = (Villager) entity;
-        if (fisher != null) {
-            fisher.copyPosition(villager);
-            fisher.initSpawn();
-            villager.remove(Entity.RemovalReason.DISCARDED);
-            villager.level.addFreshEntity(fisher);
-        }
-    }
-
-    private static void createMerchant(LivingEntity entity) {
-        MerchantEntity merchant = ModEntityTypes.MERCHANT.get().create(entity.level);
-        Villager villager = (Villager) entity;
-        if (merchant != null) {
-            merchant.copyPosition(villager);
-            merchant.initSpawn();
-            villager.remove(Entity.RemovalReason.DISCARDED);
-            villager.level.addFreshEntity(merchant);
-        }
-    }
-
-    private static void createShepherd(LivingEntity entity) {
-        ShepherdEntity shepherd = ModEntityTypes.SHEPHERD.get().create(entity.level);
-        Villager villager = (Villager) entity;
-        if (shepherd != null) {
-            shepherd.copyPosition(villager);
-            shepherd.initSpawn();
-            villager.remove(Entity.RemovalReason.DISCARDED);
-            villager.level.addFreshEntity(shepherd);
-        }
-    }
-
-    private static void createSwineherd(LivingEntity entity) {
-        SwineherdEntity swineherd = ModEntityTypes.SWINEHERD.get().create(entity.level);
-        Villager villager = (Villager) entity;
-        if (swineherd != null) {
-            swineherd.copyPosition(villager);
-            swineherd.initSpawn();
-            villager.remove(Entity.RemovalReason.DISCARDED);
-            villager.level.addFreshEntity(swineherd);
-        }
-    }
-
-    private static void createFarmer(LivingEntity entity) {
-        FarmerEntity farmer = ModEntityTypes.FARMER.get().create(entity.level);
-        Villager villager = (Villager) entity;
-        if (farmer != null) {
-            farmer.copyPosition(villager);
-            farmer.initSpawn();
-            villager.remove(Entity.RemovalReason.DISCARDED);
-            villager.level.addFreshEntity(farmer);
-        }
-    }
-
-    private static void createCattleFarmer(LivingEntity entity) {
-        CattleFarmerEntity farmer = ModEntityTypes.CATTLE_FARMER.get().create(entity.level);
-        Villager villager = (Villager) entity;
-        if (farmer != null) {
-            farmer.copyPosition(villager);
-            farmer.initSpawn();
-            villager.remove(Entity.RemovalReason.DISCARDED);
-            villager.level.addFreshEntity(farmer);
-        }
-    }
-
-    private static void createChickenFarmer(LivingEntity entity) {
-        ChickenFarmerEntity farmer = ModEntityTypes.CHICKEN_FARMER.get().create(entity.level);
-        Villager villager = (Villager) entity;
-        if (farmer != null) {
-            farmer.copyPosition(villager);
-            farmer.initSpawn();
-            villager.remove(Entity.RemovalReason.DISCARDED);
-            villager.level.addFreshEntity(farmer);
-        }
-    }
 
     @SubscribeEvent
     public void WanderingVillagerTrades(VillagerTradesEvent event) {

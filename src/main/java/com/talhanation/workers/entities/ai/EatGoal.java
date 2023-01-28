@@ -1,6 +1,9 @@
 package com.talhanation.workers.entities.ai;
 
 import com.talhanation.workers.entities.AbstractWorkerEntity;
+
+import net.minecraft.sounds.SoundEvents;
+import net.minecraft.sounds.SoundSource;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.entity.ai.goal.Goal;
 import net.minecraft.world.item.ItemStack;
@@ -42,12 +45,22 @@ public class EatGoal extends Goal {
         this.foodStack = getFoodInInv();
 
         worker.heal(Objects.requireNonNull(foodStack.getItem().getFoodProperties(foodStack, worker)).getSaturationModifier() * 1);
-        if (!worker.isSaturated())
+        if (!worker.isSaturated()) {
             worker.setHunger(worker.getHunger() + Objects.requireNonNull(foodStack.getItem().getFoodProperties(foodStack, worker)).getSaturationModifier() * 100);
-
-
+        }
+        
         worker.setItemInHand(InteractionHand.MAIN_HAND, foodStack);
         worker.startUsingItem(InteractionHand.MAIN_HAND);
+        worker.level.playSound(
+            null, 
+            worker.getX(), 
+            worker.getY(), 
+            worker.getZ(), 
+            SoundEvents.GENERIC_EAT, 
+            SoundSource.BLOCKS,
+            1F, 
+            0.9F + 0.2F
+        );
     }
 
 

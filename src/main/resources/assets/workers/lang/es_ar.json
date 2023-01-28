@@ -47,7 +47,9 @@
 
   "chat.workers.needHome": "Che, estoy homeless, haceme una casita.",
   "chat.workers.needBed": "Todo bien con la casa, pero dónde querés que duerma?",
-  "chat.workers.needChest": "Media pila, vieja, no tiene cofre mi casa.",
+  "chat.workers.needChest": "Btw le falta un cofre a la casa.",
+  "chat.workers.cantFindChest": "No encuentro mi cofre, me mostrás la casa de nuevo?",
+  "chat.workers.chestFull": "Che, llené el cofre, sacá lo que tengas ganas y mostrame la casa de nuevo cuando termines.",
   "chat.workers.text.recruited1": "A laburar!",
   "chat.workers.text.recruited2": "Igual no me pongas en blanco, eh",
   "chat.workers.text.recruited3": "Che, voy a tener aguinaldo?",
@@ -64,6 +66,7 @@
   "chat.workers.text.follow": "A dónde vamos? Te sigo.",
   "chat.workers.text.home": "Uh alta casa, locura, gracias!",
   "chat.workers.text.outOfStock": "Uh, justo de esos no tengo! Están en falta.",
+  "chat.workers.text.outOfTools": "Che, se me rompió mi %s... tenés más?",
   "chat.workers.text.need": "Necesitás %s de %s si querés comprar eso.",
   "chat.workers.text.outOfStockOwner": "Loco, me están pidiendo productos que no tengo! Me podés mandar un proveedor?",
   "chat.workers.text.invFull": "Disculpá, pero no me entra más nada en la mochila.",

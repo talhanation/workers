@@ -5,25 +5,33 @@ import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.LeavesBlock;
-import net.minecraft.world.level.material.Material;
+import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.ai.goal.Goal;
+import net.minecraft.world.InteractionHand;
 import net.minecraft.world.SimpleContainer;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
 import net.minecraft.sounds.SoundSource;
+import net.minecraft.tags.ItemTags;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.world.phys.AABB;
 import net.minecraft.core.BlockPos;
+import net.minecraft.network.chat.Component;
+import net.minecraft.network.chat.MutableComponent;
 import net.minecraftforge.event.ForgeEventFactory;
 
 import java.util.EnumSet;
 import java.util.Random;
 
-import static com.talhanation.workers.entities.LumberjackEntity.WANTED_SAPLINGS;
-
 public class LumberjackAI extends Goal {
     private final LumberjackEntity lumber;
     private BlockPos workPos;
+    private final MutableComponent TEXT_OUT_OF_TOOLS(ItemStack lastItem) {
+        return Component.translatable(
+            "chat.workers.text.outOfTools", 
+            lastItem.getDisplayName().getString()
+        );
+    } 
 
     public LumberjackAI(LumberjackEntity lumber) {
         this.lumber = lumber;
@@ -31,17 +39,25 @@ public class LumberjackAI extends Goal {
     }
 
     public boolean canUse() {
+        // Stop AI while following the player.
         if (this.lumber.getFollow()) {
             return false;
         }
-        else if (!this.lumber.level.isDay()) {
+        // Stop AI to at night, so SleepGoal can start.
+        if (!this.lumber.level.isDay()) {
             return false;
         }
-        else if (this.lumber.getStartPos() != null && !this.lumber.getFollow())
-            return true;
-
-        else
+        // Stop AI if inventory is full, so TransferItemsInChestGoal can start.
+        if (this.lumber.hasFullInventory()) {
             return false;
+        }
+        // Stop AI if work position is not set.
+        BlockPos initialPosition = this.lumber.getStartPos();
+        if (initialPosition == null) {
+            return false;
+        }
+        // Start AI if there are trees near the work place.
+        return this.getWoodPos() != null;
     }
 
     public boolean canContinueToUse() {
@@ -58,21 +74,37 @@ public class LumberjackAI extends Goal {
     public void tick() {
         breakLeaves();
 
-        if ( workPos != null && !workPos.closerThan(lumber.getOnPos(), 10D) && !lumber.getFollow())
+        // TODO: Add memories of initial saplings/trees around the work position. 
+        // TODO: Replant if the blocks are AIR.
+
+        // Go back to assigned work position.
+        if (workPos != null && !workPos.closerThan(lumber.getOnPos(), 10D) && !lumber.getFollow()) {
             this.lumber.getNavigation().moveTo(workPos.getX(), workPos.getY(), workPos.getZ(), 1);
+            return;
+        }
 
-
+        // If near work position, start chopping.
         BlockPos chopPos = getWoodPos();
-        if (chopPos != null) {
-            this.lumber.getNavigation().moveTo(chopPos.getX(), chopPos.getY(), chopPos.getZ(), 1);
-            this.lumber.getLookControl().setLookAt(chopPos.getX(), chopPos.getY() + 1, chopPos.getZ(), 10.0F, (float) this.lumber.getMaxHeadXRot());
+        if (chopPos == null) return;
 
-            if (chopPos.closerThan(lumber.getOnPos(), 9)) {
-                this.mineBlock(chopPos);
+        BlockPos lumberPos = lumber.getOnPos();
+        this.lumber.getNavigation().moveTo(chopPos.getX(), chopPos.getY(), chopPos.getZ(), 1);
+        this.lumber.getLookControl().setLookAt(chopPos.getX(), chopPos.getY() + 1, chopPos.getZ(), 10.0F, (float) this.lumber.getMaxHeadXRot());
 
-                if(lumber.level.getBlockState(chopPos.below()).is(Blocks.DIRT) && this.lumber.level.isEmptyBlock(chopPos)){
-                    plantSaplingFromInv(chopPos);
-                }
+        boolean standingBelowChopPos = (
+            lumberPos.getX() == chopPos.getX() && 
+            lumberPos.getZ() == chopPos.getZ() && 
+            lumberPos.getY() < chopPos.getY()
+        );
+
+        if (
+            chopPos.closerThan(lumber.getOnPos(), 9) ||
+            standingBelowChopPos
+        ) {
+            this.mineBlock(chopPos);
+
+            if(lumber.level.getBlockState(chopPos.below()).is(Blocks.DIRT) && this.lumber.level.isEmptyBlock(chopPos)){
+                plantSaplingFromInv(chopPos);
             }
         }
     }
@@ -81,7 +113,7 @@ public class LumberjackAI extends Goal {
         AABB boundingBox = this.lumber.getBoundingBox();
         double offset = 0.25D;
         BlockPos start = new BlockPos(boundingBox.minX - offset, boundingBox.minY - offset, boundingBox.minZ - offset);
-        BlockPos end = new BlockPos(boundingBox.maxX + offset, boundingBox.maxY + offset, boundingBox.maxZ + offset);
+        BlockPos end = new BlockPos(boundingBox.maxX + offset, (boundingBox.maxY + offset) * 2, boundingBox.maxZ + offset);
         BlockPos.MutableBlockPos pos = new BlockPos.MutableBlockPos();
         boolean hasBroken = false;
         if (this.lumber.level.hasChunksAt(start, end)) {
@@ -94,7 +126,6 @@ public class LumberjackAI extends Goal {
                             this.lumber.level.destroyBlock(pos, true, this.lumber);
                             hasBroken = true;
                         }
-
                     }
                 }
             }
@@ -109,16 +140,14 @@ public class LumberjackAI extends Goal {
     public BlockPos getWoodPos() {
         int range = 16;
 
-        for (int j = 0; j < range; j++){
-            for (int i = 0; i < range; i++){
-                for(int k = 0; k < 8; k++){
+        for (int j = 0; j < range; j++) {
+            for (int i = 0; i < range; i++) {
+                for(int k = 0; k < range * 2; k++){
                     BlockPos blockPos = this.lumber.getStartPos().offset(j - range / 2F, k, i - range / 2F);
-                   //this.lumber.level.setBlock(blockPos, Blocks.COBWEB.defaultBlockState(), 3);
-                    BlockState blockState = this.lumber.level.getBlockState(blockPos);
 
-                    Material blockStateMaterial = blockState.getMaterial();
-                    if (blockStateMaterial == Material.WOOD) {
-                         return blockPos;
+                    BlockState blockState = this.lumber.level.getBlockState(blockPos);
+                    if (this.lumber.wantsToBreak(blockState.getBlock())) {
+                        return blockPos;
                     }
                 }
             }
@@ -140,56 +169,22 @@ public class LumberjackAI extends Goal {
         return null;
     }
 
-    private boolean hasPlantInInv(){
-        SimpleContainer inventory = lumber.getInventory();
-        return inventory.hasAnyOf(WANTED_SAPLINGS);
-    }
-
 
     private void plantSaplingFromInv(BlockPos blockPos) {
-        if (hasPlantInInv()) {
-            SimpleContainer inventory = lumber.getInventory();
+        SimpleContainer inventory = lumber.getInventory();
 
-            for (int i = 0; i < inventory.getContainerSize(); ++i) {
-                ItemStack itemstack = inventory.getItem(i);
-                boolean flag = false;
-                if (!itemstack.isEmpty()) {
-                    if (itemstack.getItem() == Items.SPRUCE_SAPLING) {
-                        lumber.level.setBlock(blockPos, Blocks.SPRUCE_SAPLING.defaultBlockState(), 3);
-                        flag = true;
-
-                    } else if (itemstack.getItem() == Items.OAK_SAPLING) {
-                        this.lumber.level.setBlock(blockPos, Blocks.OAK_SAPLING.defaultBlockState(),3);
-                        flag = true;
-
-                    } else if (itemstack.getItem() == Items.DARK_OAK_SAPLING) {
-                        this.lumber.level.setBlock(blockPos, Blocks.DARK_OAK_SAPLING.defaultBlockState(),3);
-                        flag = true;
-
-                    } else if (itemstack.getItem() == Items.BIRCH_SAPLING) {
-                        this.lumber.level.setBlock(blockPos, Blocks.BIRCH_SAPLING.defaultBlockState(), 3);
-                        flag = true;
-
-                    } else if (itemstack.getItem() == Items.SPRUCE_SAPLING) {
-                        this.lumber.level.setBlock(blockPos, Blocks.SPRUCE_SAPLING.defaultBlockState(), 3);
-                        flag = true;
-
-                    } else if (itemstack.getItem() == Items.JUNGLE_SAPLING) {
-                        this.lumber.level.setBlock(blockPos, Blocks.JUNGLE_SAPLING.defaultBlockState(), 3);
-                        flag = true;
-                    }
+        for (int i = 0; i < inventory.getContainerSize(); ++i) {
+            ItemStack itemstack = inventory.getItem(i);
+            if (!itemstack.isEmpty() && itemstack.is(ItemTags.SAPLINGS)) {
+                BlockState placedSaplingBlock = Block.byItem(itemstack.getItem()).defaultBlockState();
+                this.lumber.level.setBlock(blockPos, placedSaplingBlock, 3);
+                lumber.level.playSound(null, (double) blockPos.getX(), (double) blockPos.getY(), (double) blockPos.getZ(), SoundEvents.GRASS_PLACE, SoundSource.BLOCKS, 1.0F, 1.0F);
+                itemstack.shrink(1);
+                if (itemstack.isEmpty()) {
+                    inventory.setItem(i, ItemStack.EMPTY);
                 }
-
-                if (flag) {
-                    lumber.level.playSound(null, (double) blockPos.getX(), (double) blockPos.getY(), (double) blockPos.getZ(), SoundEvents.GRASS_PLACE, SoundSource.BLOCKS, 1.0F, 1.0F);
-                    itemstack.shrink(1);
-                    if (itemstack.isEmpty()) {
-                        inventory.setItem(i, ItemStack.EMPTY);
-                    }
-                    break;
-                }
+                break;
             }
-
         }
     }
 
@@ -198,6 +193,7 @@ public class LumberjackAI extends Goal {
 
             BlockState blockstate = this.lumber.level.getBlockState(blockPos);
             Block block = blockstate.getBlock();
+            ItemStack heldItem = this.lumber.getItemInHand(InteractionHand.MAIN_HAND);
 
             if (lumber.wantsToBreak(block)){
                 if (lumber.getCurrentTimeBreak() % 5 == 4) {
@@ -209,7 +205,7 @@ public class LumberjackAI extends Goal {
                 this.lumber.setBreakingTime(bp);
 
                 //increase current
-                this.lumber.setCurrentTimeBreak(this.lumber.getCurrentTimeBreak() + (int) (1 * (this.lumber.getUseItem().getDestroySpeed(blockstate))));
+                this.lumber.setCurrentTimeBreak(this.lumber.getCurrentTimeBreak() + (int) (1 * (heldItem.getDestroySpeed(blockstate))));
                 float f = (float) this.lumber.getCurrentTimeBreak() / (float) this.lumber.getBreakingTime();
 
                 int i = (int) (f * 10);
@@ -219,10 +215,28 @@ public class LumberjackAI extends Goal {
                     this.lumber.setPreviousTimeBreak(i);
                 }
 
-                if (this.lumber.getCurrentTimeBreak() == this.lumber.getBreakingTime()) {
+                if (this.lumber.getCurrentTimeBreak() >= this.lumber.getBreakingTime()) {
+                    // Break the target block
                     this.lumber.level.destroyBlock(blockPos, true, this.lumber);
                     this.lumber.setCurrentTimeBreak(-1);
                     this.lumber.setBreakingTime(0);
+                    // Damage the tool
+                    heldItem.setDamageValue(heldItem.getDamageValue() + 1);
+                    // Break the tool when it reaches max durability
+                    if (!heldItem.is(Items.AIR) && heldItem.getDamageValue() >= heldItem.getMaxDamage()) {
+                        this.lumber.broadcastBreakEvent(InteractionHand.MAIN_HAND);
+                        this.lumber.setItemInHand(InteractionHand.MAIN_HAND, ItemStack.EMPTY);
+                        this.lumber.stopUsingItem();
+                        // Attempt to use the next available tool in inventory
+                        this.lumber.upgradeTool();
+                        if (this.lumber.getItemInHand(InteractionHand.MAIN_HAND).isEmpty()) {
+                            // If there are no more tools remaining, alert the owner
+                            LivingEntity owner = this.lumber.getOwner();
+                            if (owner != null) {
+                                this.lumber.tellPlayer(owner, TEXT_OUT_OF_TOOLS(heldItem));
+                            }
+                        }
+                     }
                     return true;
                 }
                 this.lumber.workerSwingArm();
@@ -231,3 +245,4 @@ public class LumberjackAI extends Goal {
         return false;
     }
 }
+

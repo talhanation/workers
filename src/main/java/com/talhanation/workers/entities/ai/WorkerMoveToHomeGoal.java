@@ -6,18 +6,22 @@ import net.minecraft.world.entity.ai.goal.Goal;
 import net.minecraft.core.BlockPos;
 
 public class WorkerMoveToHomeGoal<T extends LivingEntity> extends Goal {
-
     private final AbstractWorkerEntity worker;
     private final double within;
 
     public WorkerMoveToHomeGoal(AbstractWorkerEntity worker, double within) {
         this.worker = worker;
         this.within = within;
-
     }
 
     public boolean canUse() {
-        return this.worker.getHomePos() != null && !worker.getFollow() && !worker.getIsWorking();
+        return (
+            this.worker.getHomePos() != null && 
+            !worker.getFollow() && 
+            !worker.getIsWorking() &&
+            !worker.getIsEating() && 
+            !worker.isSleeping()
+        );
     }
 
     public boolean canContinueToUse() {
@@ -29,8 +33,14 @@ public class WorkerMoveToHomeGoal<T extends LivingEntity> extends Goal {
         super.tick();
         BlockPos blockpos = this.worker.getHomePos();
         if (blockpos != null && canUse()) {
-            if (!blockpos.closerThan(worker.getOnPos(), within))
-                this.worker.getNavigation().moveTo(blockpos.getX(), blockpos.getY(), blockpos.getZ(), 1);
+            if (!blockpos.closerThan(worker.getOnPos(), within)) {
+                this.worker.getNavigation().moveTo(
+                    blockpos.getX(), 
+                    blockpos.getY(), 
+                    blockpos.getZ(), 
+                    1
+                );
+            }
         }
     }
 }

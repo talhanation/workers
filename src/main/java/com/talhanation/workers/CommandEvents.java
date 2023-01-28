@@ -14,6 +14,11 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.MutableComponent;
 import net.minecraft.world.item.Items;
+import net.minecraft.world.level.block.Blocks;
+import net.minecraft.world.level.block.entity.BlockEntity;
+import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.level.block.state.properties.BedPart;
+import net.minecraft.world.level.block.state.properties.BlockStateProperties;
 
 import java.util.Objects;
 import java.util.UUID;
@@ -37,23 +42,68 @@ public class CommandEvents {
 
     public static void setHomePosWorker(UUID player_uuid, AbstractWorkerEntity worker, BlockPos blockpos) {
         LivingEntity owner = worker.getOwner();
+        UUID expectedOwnerUuid = worker.getOwnerUUID();
+        if (!worker.isTame() || expectedOwnerUuid == null || owner == null) {
+            return;
+        }
+        if (expectedOwnerUuid.equals(player_uuid)) {
+            worker.setHomePos(blockpos);
+            worker.setNeedsHome(false);
+            worker.tellPlayer(owner, TEXT_HOME);
 
-        if (worker.isTame() && worker.getOwnerUUID() == player_uuid) {
-            if (owner != null) {
-                worker.setHomePos(blockpos);
-            }
+            setChestPosWorker(worker, blockpos, owner);
+            setBedPosWorker(worker, blockpos, owner);
         }
     }
 
-    public static void handleMerchantTrade(Player player, MerchantEntity merchant, int tradeID) {
-        String name = merchant.getName().getString() + ": ";
+    public static void setChestPosWorker(AbstractWorkerEntity worker, BlockPos homePos, LivingEntity owner) {
+        int range = 8;
+        
+        for (int x = -range; x < range; x++) {
+            for (int y = -range; y < range; y++) {
+                for (int z = -range; z < range; z++) {
+                    BlockPos chestPos = homePos.offset(x, y, z);
+                    BlockState block = worker.level.getBlockState(chestPos);
+                    if (block == null) continue;
+                    if (block.is(Blocks.CHEST) || block.is(Blocks.BARREL)) {
+                        worker.setChestPos(chestPos);
+                        worker.setNeedsChest(false);
+                        return;
+                    }
+                }
+            }
+        }
+        worker.setNeedsChest(true);
+        worker.tellPlayer(owner, NEED_CHEST);
+    }
 
-        int[] PRICE_SLOT = new int[] {
-                0, 2, 4, 6
-        };
-        int[] TRADE_SLOT = new int[] {
-                1, 3, 5, 7
-        };
+    public static void setBedPosWorker(AbstractWorkerEntity worker, BlockPos homePos, LivingEntity owner) {
+        int range = 8;
+        
+        for (int x = -range; x < range; x++) {
+            for (int y = -range; y < range; y++) {
+                for (int z = -range; z < range; z++) {
+                    BlockPos bedPos = homePos.offset(x, y, z);
+                    BlockState block = worker.level.getBlockState(bedPos);
+                    if (block == null) continue;
+                    if (
+                        block.isBed(worker.level, bedPos, worker) && 
+                        block.getValue(BlockStateProperties.BED_PART) == BedPart.HEAD
+                    ) {
+                        worker.setBedPos(bedPos);
+                        worker.setNeedsBed(false);
+                        return;
+                    }
+                }
+            }
+        }
+        worker.setNeedsBed(true);
+        worker.tellPlayer(owner, NEED_BED);
+    }
+
+    public static void handleMerchantTrade(Player player, MerchantEntity merchant, int tradeID) {
+        int[] PRICE_SLOT = new int[] { 0, 2, 4, 6 };
+        int[] TRADE_SLOT = new int[] { 1, 3, 5, 7 };
 
         Inventory playerInv = player.getInventory();
         SimpleContainer merchantInv = merchant.getInventory();// supply and money
@@ -201,23 +251,22 @@ public class CommandEvents {
         } else {
             LivingEntity owner = merchant.getOwner();
             if (!merchantHasItems) {
-                player.sendSystemMessage(Component.literal(name).append(TEXT_OUT_OF_STOCK));
-                if (owner != null)
-                    owner.sendSystemMessage(Component.literal(name).append(TEXT_OUT_OF_STOCK_OWNER));
+                merchant.tellPlayer(player, TEXT_OUT_OF_STOCK);
+                if (owner != null) {
+                    merchant.tellPlayer(owner, TEXT_OUT_OF_STOCK_OWNER);
+                }
             } else if (!playerCanPay) {
-                player.sendSystemMessage(TEXT_NEED(sollPrice, emerald));
+                merchant.tellPlayer(player, TEXT_NEED(sollPrice, emerald));
             } else if (!canAddItemToInv) {
-                player.sendSystemMessage(Component.literal(name).append(TEXT_INV_FULL));
-
-                if (owner != null)
-                    owner.sendSystemMessage(Component.literal(name).append(TEXT_INV_FULL_OWNER));
+                merchant.tellPlayer(player, TEXT_INV_FULL);
+                if (owner != null) {
+                    merchant.tellPlayer(owner, TEXT_INV_FULL_OWNER);
+                }
             }
         }
     }
 
     public static void handleRecruiting(Player player, AbstractWorkerEntity workerEntity) {
-        String name = workerEntity.getName().getString() + ": ";
-
         int costs = workerEntity.workerCosts();
 
         Inventory playerInv = player.getInventory();
@@ -264,22 +313,21 @@ public class CommandEvents {
                 playerInv.add(emeraldsLeft);
             }
         } else {
-            player.sendSystemMessage(TEXT_HIRE_COSTS(costs));
+            workerEntity.tellPlayer(player, TEXT_HIRE_COSTS(costs));
         }
     }
 
     public static final MutableComponent TEXT_HIRE_COSTS(int cost) {
         return Component.translatable("chat.workers.text.hire_costs", cost);
     }
-
     public static final MutableComponent TEXT_NEED(int sollPrice, Item emerald) {
         return Component.translatable("chat.workers.text.need", sollPrice, emerald);
     }
-
     public static final MutableComponent TEXT_OUT_OF_STOCK = Component.translatable("chat.workers.text.outOfStock");
-    public static final MutableComponent TEXT_OUT_OF_STOCK_OWNER =
-            Component.translatable("chat.workers.text.outOfStockOwner");
+    public static final MutableComponent TEXT_OUT_OF_STOCK_OWNER = Component.translatable("chat.workers.text.outOfStockOwner");
     public static final MutableComponent TEXT_INV_FULL = Component.translatable("chat.workers.text.invFull");
     public static final MutableComponent TEXT_INV_FULL_OWNER = Component.translatable("chat.workers.text.invFullOwner");
-
+    public static final MutableComponent TEXT_HOME = Component.translatable("chat.workers.text.home");
+    public static final MutableComponent NEED_CHEST = Component.translatable("chat.workers.needChest");
+    public static final MutableComponent NEED_BED = Component.translatable("chat.workers.needBed");
 }

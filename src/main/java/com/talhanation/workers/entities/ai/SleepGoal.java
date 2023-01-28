@@ -7,14 +7,13 @@ import net.minecraft.network.chat.MutableComponent;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.ai.goal.Goal;
 import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.level.block.state.properties.BedPart;
 import net.minecraft.world.level.block.state.properties.BlockStateProperties;
 import org.jetbrains.annotations.Nullable;
 
 public class SleepGoal extends Goal {
-
     private final AbstractWorkerEntity worker;
     private BlockPos sleepPos;
-    private BlockPos homePos;
 
     private final MutableComponent NEED_HOME = Component.translatable("chat.workers.needHome");
     private final MutableComponent NEED_BED = Component.translatable("chat.workers.needBed");
@@ -25,7 +24,15 @@ public class SleepGoal extends Goal {
 
     @Override
     public boolean canUse() {
-        return worker.needsToSleep() || (worker.isSleeping() && worker.level.isDay());
+        if (
+            this.worker.getOwner() == null ||
+            this.worker.needsHome() ||
+            this.worker.needsBed()
+        ) {
+            return false;
+        }
+        
+        return worker.needsToSleep();
     }
 
     public boolean canContinueToUse() {
@@ -33,55 +40,14 @@ public class SleepGoal extends Goal {
     }
 
     @Override
-    public void start() {
-        if (worker.getHomePos() != null)
-            this.homePos = worker.getHomePos();
-
-        LivingEntity owner = worker.getOwner();
-        if (owner == null) {
-            return;
-        }
-        if (homePos == null) {
-            owner.sendSystemMessage(
-                    Component.literal(worker.getName().getString() + ": " + NEED_HOME.getString()));
-        } else {
-            this.sleepPos = this.findSleepPos();
-
-            if (sleepPos == null) {
-                owner.sendSystemMessage(
-                        Component.literal(worker.getName().getString() + ": " + NEED_BED.getString()));
-            }
-        }
-    }
-
-    @Override
     public void stop() {
-        super.stop();
-        if (worker.getStartPos() != null)
-            this.worker.setIsWorking(true);
+        super.stop();   
         this.worker.stopSleeping();
         this.worker.clearSleepingPos();
     }
 
     @Override
     public void tick() {
-        if (!worker.level.isDay() && !worker.isSleeping()) {
-            if (homePos != null)
-                sleepPos = this.findSleepPos();
-
-        }
-
-        if (!worker.isSleeping() && sleepPos != null) {
-            this.worker.getNavigation().moveTo(sleepPos.getX(), sleepPos.getY(), sleepPos.getZ(), 1.1D);
-            this.worker.getLookControl().setLookAt(sleepPos.getX(), sleepPos.getY() + 1, sleepPos.getZ(), 10.0F,
-                    (float) this.worker.getMaxHeadXRot());
-
-            if (sleepPos.closerThan(worker.getOnPos(), 4)) {
-                this.worker.startSleeping(sleepPos);
-                this.worker.setSleepingPos(sleepPos);
-            }
-        }
-
         if (worker.isSleeping()) {
             this.worker.getNavigation().stop();
 
@@ -93,13 +59,55 @@ public class SleepGoal extends Goal {
                 this.stop();
             }
         }
+
+        LivingEntity owner = worker.getOwner();
+        if (owner != null) {
+
+            if (worker.getHomePos() == null) {
+                worker.setNeedsHome(true);
+                worker.tellPlayer(owner, NEED_HOME);
+                return;
+            }
+
+            if (worker.needsBed()) {
+                worker.tellPlayer(owner, NEED_BED);
+                return;
+            }
+        }
+
+        this.sleepPos = worker.getBedPos();
+        // If the worker doesn't have an owner, grab a random bed.
+        if (this.sleepPos == null) {
+            this.sleepPos = this.findSleepPos();
+        }
+
+        if (this.sleepPos != null) {
+            // Move to the bed and stay there.
+            this.worker.getNavigation().moveTo(sleepPos.getX(), sleepPos.getY(), sleepPos.getZ(), 1.1D);
+            this.worker.getLookControl().setLookAt(
+                sleepPos.getX(), 
+                sleepPos.getY() + 1, 
+                sleepPos.getZ(), 
+                10.0F,
+                (float) this.worker.getMaxHeadXRot()
+            );
+
+            if (sleepPos.closerThan(worker.getOnPos(), 4)) {
+                this.worker.startSleeping(sleepPos);
+                this.worker.setSleepingPos(sleepPos);
+            }
+        } else {
+            // If no beds nearby, do another goal, like wander or return to village.
+            this.stop();
+        }
     }
 
     @Nullable
     private BlockPos findSleepPos() {
-        if (this.worker.getHomePos() != null) {
+        BlockPos homePos = this.worker.getHomePos();
+        if (homePos != null) {
             BlockPos bedPos;
-            int range = 8;
+            int range = 16;
 
             for (int x = -range; x < range; x++) {
                 for (int y = -range; y < range; y++) {
@@ -107,8 +115,11 @@ public class SleepGoal extends Goal {
                         bedPos = homePos.offset(x, y, z);
                         BlockState state = worker.level.getBlockState(bedPos);
 
-                        if (state.isBed(worker.level, bedPos, this.worker)
-                                && !state.getValue(BlockStateProperties.OCCUPIED)) {
+                        if (
+                            state.isBed(worker.level, bedPos, this.worker) && 
+                            state.getValue(BlockStateProperties.BED_PART) == BedPart.HEAD &&
+                            !state.getValue(BlockStateProperties.OCCUPIED)
+                        ) {
                             return bedPos;
                         }
                     }

@@ -136,9 +136,9 @@ public class FarmerCropAI extends Goal {
     private void debug() {
         LivingEntity owner = this.farmer.getOwner();
         if (owner != null) {
-            owner.sendSystemMessage(Component.literal("State: " + state));
-            owner.sendSystemMessage(Component.literal("WorkPos: " + workPos));
-            owner.sendSystemMessage(Component.literal("StartPos: " + farmer.getStartPos()));
+            this.farmer.tellPlayer(owner, Component.literal("State: " + state));
+            this.farmer.tellPlayer(owner, Component.literal("WorkPos: " + workPos));
+            this.farmer.tellPlayer(owner, Component.literal("StartPos: " + farmer.getStartPos()));
         }
     }
 

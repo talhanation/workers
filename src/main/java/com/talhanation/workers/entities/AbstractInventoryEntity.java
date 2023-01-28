@@ -12,14 +12,13 @@ import net.minecraft.world.item.*;
 import net.minecraft.world.level.Level;
 
 public abstract class AbstractInventoryEntity extends TamableAnimal {
-
     private final SimpleContainer inventory = new SimpleContainer(18);
 
     public AbstractInventoryEntity(EntityType<? extends TamableAnimal> entityType, Level world) {
         super(entityType, world);
     }
 
-    ///////////////////////////////////TICK/////////////////////////////////////////
+    /////////////////////////////////// TICK/////////////////////////////////////////
 
     public void aiStep() {
         super.aiStep();
@@ -29,8 +28,7 @@ public abstract class AbstractInventoryEntity extends TamableAnimal {
         super.tick();
     }
 
-    ////////////////////////////////////DATA////////////////////////////////////
-
+    //////////////////////////////////// DATA////////////////////////////////////
 
     protected void defineSynchedData() {
         super.defineSynchedData();
@@ -63,48 +61,70 @@ public abstract class AbstractInventoryEntity extends TamableAnimal {
         }
     }
 
-
-    ////////////////////////////////////GET////////////////////////////////////
+    //////////////////////////////////// GET////////////////////////////////////
 
     public SimpleContainer getInventory() {
         return this.inventory;
     }
 
+    public boolean hasFullInventory() {
+        for (int i = 0; i < this.inventory.getContainerSize(); i++) {
+            if (this.inventory.getItem(i).isEmpty()) {
+                return false;
+            }
+        }
+        return true;
+    }
 
     ////////////////////////////////////SET////////////////////////////////////
 
+    public void updateInventory(int slot, ItemStack stack) {
+        this.inventory.setItem(slot, stack);
+    }
 
     ////////////////////////////////////OTHER FUNCTIONS////////////////////////////////////
 
-    public void upgradeTool(){
-        for(int i = 0; i < this.inventory.getContainerSize(); i++){
-            ItemStack firstTool = inventory.getItem(i);
-
-            if (firstTool.getItem() instanceof AxeItem && this instanceof LumberjackEntity){
-                this.setItemInHand(InteractionHand.MAIN_HAND, firstTool);
-                break;
+    public void upgradeTool() {
+        for (int i = 0; i < this.inventory.getContainerSize(); i++) {
+            ItemStack item = inventory.getItem(i);
+            Item itemType = item.getItem();
+            
+            if (itemType instanceof AxeItem && this instanceof LumberjackEntity) {
+                this.handleToolUpgrade(item, i);
             }
 
-            if (firstTool.getItem() instanceof PickaxeItem && this instanceof MinerEntity){
-                this.setItemInHand(InteractionHand.MAIN_HAND, firstTool);
-                break;
+            if (itemType instanceof PickaxeItem && this instanceof MinerEntity) {
+                this.handleToolUpgrade(item, i);
             }
 
-            if (firstTool.getItem() instanceof HoeItem && this instanceof FarmerEntity){
-                this.setItemInHand(InteractionHand.MAIN_HAND, firstTool);
-                break;
+            if (itemType instanceof HoeItem && this instanceof FarmerEntity) {
+                this.handleToolUpgrade(item, i);
             }
 
-            if (firstTool.getItem() instanceof FishingRodItem && this instanceof FishermanEntity){
-                this.setItemInHand(InteractionHand.MAIN_HAND, firstTool);
-                break;
+            if (itemType instanceof FishingRodItem && this instanceof FishermanEntity) {
+                this.handleToolUpgrade(item, i);
             }
         }
     }
 
+    private void handleToolUpgrade(ItemStack tool, int inventoryIndex) {
+        if (tool.getDamageValue() >= tool.getMaxDamage()) {
+            // Delete tool if it is broken
+            this.inventory.setItem(inventoryIndex, ItemStack.EMPTY);
+        } else {
+            // Equip tool otherwise
+            this.equipTool(tool);
+        }
+    }
+
+    public void equipTool(ItemStack tool) {
+        this.setItemInHand(InteractionHand.MAIN_HAND, tool);
+        this.updateUsingItem(tool);
+        this.startUsingItem(InteractionHand.MAIN_HAND);
+    }
+
     public void die(DamageSource dmg) {
+        Containers.dropContents(level, this, inventory);
         super.die(dmg);
-        for (int i = 0; i < this.inventory.getContainerSize(); i++)
-        Containers.dropItemStack(this.level, getX(), getY(), getZ(), this.inventory.getItem(i));
     }
 }
