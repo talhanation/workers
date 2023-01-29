@@ -34,39 +34,29 @@ public class WorkerFollowOwnerGoal extends Goal {
 
     public boolean canUse() {
         LivingEntity owner = this.workerEntity.getOwner();
-        if (owner == null) {
-            return false;
-        } else if (owner.isSpectator()) {
-            return false;
-        } else if (!this.workerEntity.getFollow()) {
-            return false;
-        } else if (this.workerEntity.isSleeping()) {
-            return false;
-        } else if (this.workerEntity.isOrderedToSit()) {
-            return false;
-        } else if (this.workerEntity.distanceToSqr(owner) < (double)(this.startDistance * this.startDistance)) {
+        if (
+            owner == null ||
+            owner.isSpectator() ||
+            this.workerEntity.isSleeping() ||
+            this.workerEntity.isOrderedToSit() ||
+            this.workerEntity.distanceToSqr(owner) < (double)(this.startDistance * this.startDistance)
+        ) {
             return false;
         }
-        else {
-            this.owner = owner;
-            return workerEntity.getFollow();
-        }
+        this.owner = owner;
+        return this.workerEntity.getFollow();
     }
 
     public boolean canContinueToUse() {
-        if (this.navigation.isDone()) {
-            return false;
-        } else if (!this.workerEntity.isSleeping()) {
-            return false;
-        } else if (this.workerEntity.isOrderedToSit()) {
-            return false;
-        } else if (!this.workerEntity.getFollow()) {
+        if (
+            this.navigation.isDone() ||
+            !this.workerEntity.isSleeping() ||
+            this.workerEntity.isOrderedToSit() ||
+            !this.workerEntity.getFollow()
+         ) {
             return false;
         }
-        else {
-            return !(this.workerEntity.distanceToSqr(this.owner) <= (double)(this.stopDistance * this.stopDistance));
-        }
-
+        return this.workerEntity.distanceTo(this.owner) <= this.stopDistance;
     }
 
     public void start() {

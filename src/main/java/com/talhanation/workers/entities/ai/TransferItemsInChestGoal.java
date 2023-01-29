@@ -10,6 +10,7 @@ import net.minecraft.world.Container;
 import net.minecraft.world.SimpleContainer;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.ai.goal.Goal;
+import net.minecraft.world.entity.ai.navigation.GroundPathNavigation;
 import net.minecraft.world.entity.ai.navigation.PathNavigation;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.block.state.BlockState;
@@ -20,7 +21,7 @@ public class TransferItemsInChestGoal extends Goal {
     private final MutableComponent CANT_FIND_CHEST = Component.translatable("chat.workers.cantFindChest");
     private final MutableComponent CHEST_FULL = Component.translatable("chat.workers.chestFull");
 
-    private PathNavigation pathFinder;
+    private GroundPathNavigation pathFinder;
 
     public TransferItemsInChestGoal(AbstractWorkerEntity worker) {
         this.worker = worker;
@@ -31,6 +32,7 @@ public class TransferItemsInChestGoal extends Goal {
     public boolean canUse() {
         if (
             this.worker.getOwner() == null ||
+            this.worker.getFollow() ||
             this.worker.needsChest() ||
             this.worker.needsToSleep()
         ) {
@@ -84,6 +86,7 @@ public class TransferItemsInChestGoal extends Goal {
 
 
         Main.LOGGER.debug("Moving to chest");
+        pathFinder.setCanOpenDoors(true);
         pathFinder.moveTo(chestPos.getX(), chestPos.getY(), chestPos.getZ(), 1.1D);
 
         if (chestPos.closerThan(worker.getOnPos(), 1)) {

@@ -20,6 +20,7 @@ import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.MutableComponent;
 import net.minecraftforge.event.ForgeEventFactory;
 
+import java.util.ArrayList;
 import java.util.EnumSet;
 import java.util.Random;
 
@@ -103,7 +104,10 @@ public class LumberjackAI extends Goal {
         ) {
             this.mineBlock(chopPos);
 
-            if(lumber.level.getBlockState(chopPos.below()).is(Blocks.DIRT) && this.lumber.level.isEmptyBlock(chopPos)){
+            if (
+                lumber.level.getBlockState(chopPos.below()).is(Blocks.DIRT) && 
+                this.lumber.level.isEmptyBlock(chopPos)
+            ) {
                 plantSaplingFromInv(chopPos);
             }
         }

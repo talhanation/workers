@@ -129,6 +129,7 @@ public abstract class AbstractWorkerEntity extends AbstractChunkLoaderEntity {
         EntityDataSerializers.STRING
     );
     int hurtTimeStamp = 0;
+    
     protected GroundPathNavigation navigation;
 
 
@@ -153,8 +154,14 @@ public abstract class AbstractWorkerEntity extends AbstractChunkLoaderEntity {
         return new GroundPathNavigation(this, level);
     }
 
-    protected GroundPathNavigation geNavigation() {
-        return this.navigation;
+    @Override
+    @NotNull
+    public GroundPathNavigation getNavigation() {
+        if (super.getNavigation() instanceof GroundPathNavigation navigation) {
+            return navigation;
+        } else {
+            throw new IllegalStateException("Invalid worker entity navigation, not a GroundPathNavigation");
+        }
     }
 
     @Override
