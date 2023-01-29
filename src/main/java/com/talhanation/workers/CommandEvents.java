@@ -15,7 +15,6 @@ import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.MutableComponent;
 import net.minecraft.world.item.Items;
 import net.minecraft.world.level.block.Blocks;
-import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.block.state.properties.BedPart;
 import net.minecraft.world.level.block.state.properties.BlockStateProperties;
@@ -24,7 +23,7 @@ import java.util.Objects;
 import java.util.UUID;
 
 public class CommandEvents {
-    public static void setStartPosWorker(UUID player_uuid, AbstractWorkerEntity worker, BlockPos blockpos) {
+	public static void setStartPosWorker(UUID player_uuid, AbstractWorkerEntity worker, BlockPos blockpos) {
         LivingEntity owner = worker.getOwner();
 
         if (worker.isTame() && Objects.equals(worker.getOwnerUUID(), player_uuid)) {
@@ -37,6 +36,42 @@ public class CommandEvents {
             worker.setStartPos(blockpos);
             worker.setFollow(false);
             worker.setIsWorking(true);
+        }
+    }
+
+    public static void setChestPosWorker(UUID player_uuid, AbstractWorkerEntity worker, BlockPos blockpos) {
+        LivingEntity owner = worker.getOwner();
+        UUID expectedOwnerUuid = worker.getOwnerUUID();
+        if (!worker.isTame() || expectedOwnerUuid == null || owner == null) {
+            return;
+        }
+        if (expectedOwnerUuid.equals(player_uuid)) {
+            BlockState selectedBlock = worker.level.getBlockState(blockpos);
+            if (selectedBlock.is(Blocks.CHEST) || selectedBlock.is(Blocks.BARREL)) {
+                worker.setChestPos(blockpos);
+                worker.setNeedsChest(false);
+                worker.tellPlayer(owner, TEXT_CHEST);
+            } else {
+                worker.tellPlayer(owner, TEXT_CHEST_ERROR);
+            }
+        }
+    }
+
+    public static void setBedPosWorker(UUID player_uuid, AbstractWorkerEntity worker, BlockPos blockpos) {
+        LivingEntity owner = worker.getOwner();
+        UUID expectedOwnerUuid = worker.getOwnerUUID();
+        if (!worker.isTame() || expectedOwnerUuid == null || owner == null) {
+            return;
+        }
+        if (expectedOwnerUuid.equals(player_uuid)) {
+            BlockState selectedBlock = worker.level.getBlockState(blockpos);
+            if (selectedBlock.isBed(worker.level, blockpos, owner)) {
+                worker.setBedPos(blockpos);
+                worker.setNeedsBed(false);
+                worker.tellPlayer(owner, TEXT_BED);
+            } else {
+                worker.tellPlayer(owner, TEXT_BED_ERROR);
+            }
         }
     }
 
@@ -329,5 +364,10 @@ public class CommandEvents {
     public static final MutableComponent TEXT_INV_FULL_OWNER = Component.translatable("chat.workers.text.invFullOwner");
     public static final MutableComponent TEXT_HOME = Component.translatable("chat.workers.text.home");
     public static final MutableComponent NEED_CHEST = Component.translatable("chat.workers.needChest");
+    public static final MutableComponent TEXT_CHEST = Component.translatable("chat.workers.text.chest");
+	public static final MutableComponent TEXT_CHEST_ERROR = Component.translatable("chat.workers.text.chestError");
     public static final MutableComponent NEED_BED = Component.translatable("chat.workers.needBed");
+	public static final MutableComponent TEXT_BED = Component.translatable("chat.workers.text.bed");
+	public static final MutableComponent TEXT_BED_ERROR = Component.translatable("chat.workers.text.bedError");
+
 }
