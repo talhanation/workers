@@ -79,19 +79,6 @@ public class Main {
 
         SIMPLE_CHANNEL = CommonRegistry.registerChannel(Main.MOD_ID, "default");
 
-
-        // CommonRegistry.registerMessage(SIMPLE_CHANNEL, 0, MessageStartPos.class);
-        // CommonRegistry.registerMessage(SIMPLE_CHANNEL, 1, MessageOpenGuiMiner.class);
-        // CommonRegistry.registerMessage(SIMPLE_CHANNEL, 2, MessageMineType.class);
-        // CommonRegistry.registerMessage(SIMPLE_CHANNEL, 3, MessageMineDepth.class);
-        // CommonRegistry.registerMessage(SIMPLE_CHANNEL, 4, MessageOpenGuiWorker.class);
-        // CommonRegistry.registerMessage(SIMPLE_CHANNEL, 5, MessageHomePos.class);
-        // CommonRegistry.registerMessage(SIMPLE_CHANNEL, 6, MessageOpenGuiMerchant.class);
-        // CommonRegistry.registerMessage(SIMPLE_CHANNEL, 7, MessageTradeButton.class);
-        // CommonRegistry.registerMessage(SIMPLE_CHANNEL, 8, MessageOpenGuiAnimalFarmer.class);
-        // CommonRegistry.registerMessage(SIMPLE_CHANNEL, 9, MessageAnimalCount.class);
-        // CommonRegistry.registerMessage(SIMPLE_CHANNEL, 10, MessageHire.class);
-        // CommonRegistry.registerMessage(SIMPLE_CHANNEL, 11, MessageHireGui.class);
         Class[] messages = {
             MessageStartPos.class,
             MessageOpenGuiMiner.class,
@@ -108,11 +95,7 @@ public class Main {
             MessageChest.class,
             MessageBed.class
         };
-        for (int i = 0; i < messages.length; i++) {
-            Class<Message> message = messages[i];
-            CommonRegistry.registerMessage(SIMPLE_CHANNEL, i, message);
-        }
-
+        for (int i = 0; i < messages.length; i++) CommonRegistry.registerMessage(SIMPLE_CHANNEL, i, messages[i]);
         LOGGER.info("Messages registered");
     }
 

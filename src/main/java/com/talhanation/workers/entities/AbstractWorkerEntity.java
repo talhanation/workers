@@ -6,6 +6,7 @@ import com.talhanation.workers.entities.ai.SleepGoal;
 import com.talhanation.workers.entities.ai.TransferItemsInChestGoal;
 import com.talhanation.workers.entities.ai.WorkerFollowOwnerGoal;
 import com.talhanation.workers.entities.ai.WorkerMoveToHomeGoal;
+import com.talhanation.workers.init.ModShortcuts;
 import com.talhanation.workers.inventory.WorkerHireContainer;
 import com.talhanation.workers.network.MessageHireGui;
 
@@ -326,7 +327,7 @@ public abstract class AbstractWorkerEntity extends AbstractChunkLoaderEntity {
         this.setIsPickingUp(nbt.getBoolean("isPickingUp"));
         this.setCurrentTimeBreak(nbt.getInt("currentTimeBreak"));
         this.setPreviousTimeBreak(nbt.getInt("previousTimeBreak"));
-        this.setIsWorking(nbt.getBoolean("isWorking"));
+        this.setIsWorking(nbt.getBoolean("isWorking"), true);
         this.setHunger(nbt.getFloat("Hunger"));
         this.setOwnerName(nbt.getString("OwnerName"));
         this.setProfessionName(nbt.getString("ProfessionName"));
@@ -536,8 +537,7 @@ public abstract class AbstractWorkerEntity extends AbstractChunkLoaderEntity {
     }
 
     public void setFollow(boolean bool) {
-        if (getFollow() == bool)
-            return;
+        if (getFollow() == bool) return;
         this.entityData.set(FOLLOW, bool);
 
         LivingEntity owner = this.getOwner();
@@ -545,6 +545,7 @@ public abstract class AbstractWorkerEntity extends AbstractChunkLoaderEntity {
 
         if (bool) {
             this.tellPlayer(owner, TEXT_FOLLOW);
+            this.explainControls(owner);
         } else if (this.getIsWorking()) {
             this.tellPlayer(owner, TEXT_CONTINUE);
         } else {
@@ -552,7 +553,13 @@ public abstract class AbstractWorkerEntity extends AbstractChunkLoaderEntity {
         }
     }
 
-    public void setIsWorking(boolean bool) {
+    private void explainControls(LivingEntity owner) {
+        this.tellPlayer(owner, TEXT_BED_KEY());
+        this.tellPlayer(owner, TEXT_CHEST_KEY());
+        this.tellPlayer(owner, TEXT_WORKSPACE_KEY());
+	}
+
+	public void setIsWorking(boolean bool) {
         LivingEntity owner = this.getOwner();
 
         if (getIsWorking() != bool) {
@@ -569,6 +576,14 @@ public abstract class AbstractWorkerEntity extends AbstractChunkLoaderEntity {
                 }
             }
             entityData.set(IS_WORKING, bool);
+        }
+    }
+
+	public void setIsWorking(boolean bool, boolean withoutFeedback) {
+        if (withoutFeedback) {
+            entityData.set(IS_WORKING, bool);
+        } else {
+            this.setIsWorking(bool);
         }
     }
 
@@ -845,4 +860,17 @@ public abstract class AbstractWorkerEntity extends AbstractChunkLoaderEntity {
     public static final MutableComponent TEXT_FOLLOW = Component.translatable("chat.workers.text.follow");
     public static final MutableComponent TEXT_CONTINUE = Component.translatable("chat.workers.text.continue");
     public static final MutableComponent TEXT_WANDER = Component.translatable("chat.workers.text.wander");
+
+    public static final MutableComponent TEXT_BED_KEY() {
+        Component currentMapping = ModShortcuts.ASSIGN_BED_KEY.getTranslatedKeyMessage();
+        return Component.translatable("chat.workers.controls.assign_bed_key", currentMapping);
+    }
+    public static final MutableComponent TEXT_CHEST_KEY() {
+        Component currentMapping = ModShortcuts.ASSIGN_CHEST_KEY.getTranslatedKeyMessage();
+        return Component.translatable("chat.workers.controls.assign_chest_key", currentMapping);
+    }
+    public static final MutableComponent TEXT_WORKSPACE_KEY() {
+        Component currentMapping = ModShortcuts.ASSIGN_WORKSPACE_KEY.getTranslatedKeyMessage();
+        return Component.translatable("chat.workers.controls.assign_workspace_key", currentMapping);
+    }
 }

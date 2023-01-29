@@ -30,16 +30,13 @@ public class FishermanAI extends Goal {
 
     @Override
     public boolean canUse() {
-        if (this.fisherman.getFollow()) {
+        if (
+            this.fisherman.getFollow() ||
+            this.fisherman.needsToSleep()
+        ) {
             return false;
         }
-        else if (!this.fisherman.level.isDay()) {
-            return false;
-
-        } else if (fisherman.getIsWorking() && !this.fisherman.getFollow() && isNearWater())
-            return true;
-        else
-            return false;
+        return isNearWater();
     }
 
     @Override
@@ -93,6 +90,7 @@ public class FishermanAI extends Goal {
                 fisherman.playSound(SoundEvents.FISHING_BOBBER_THROW, 1, 0.5F);
                 throwTimer = fisherman.getRandom().nextInt(400);
                 //if (fisherman.getOwner() != null)
+                FishingBobberEntity
                 //fisherman.level.addFreshEntity(new FishermansFishingBobberEntity(this.fisherman.level, this.fisherman.getOwner())); // need fishbobber for worker
             }
 

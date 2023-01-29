@@ -82,5 +82,9 @@
   "chat.workers.text.need": "Sorry, you need %s %s",
   "chat.workers.text.outOfStockOwner": "I'm out of stock!",
   "chat.workers.text.invFull": "Sorry, I cant take your items currently.",
-  "chat.workers.text.invFullOwner": "My inventory is full, I can't accept new items!"
+  "chat.workers.text.invFullOwner": "My inventory is full, I can't accept new items!",
+
+  "chat.workers.controls.assign_bed_key": "Press \"%s\" to assign me a bed.",
+  "chat.workers.controls.assign_chest_key": "Press \"%s\" to assign me a chest.",
+  "chat.workers.controls.assign_workspace_key": "Press \"%s\" to send me to assign me a place to work."
 }

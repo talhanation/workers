@@ -72,7 +72,7 @@
   "chat.workers.text.attacked": "Al %s te lo está haciendo cagar %s!",
   "chat.workers.text.working": "Bueh, a laburar.",
   "chat.workers.text.done": "Terminé!!",
-  "chat.workers.text.starving": "Estoy de paro, me quiero ir a mi casa.",
+  "chat.workers.text.starving": "Estoy de paro, dame comida.",
   "chat.workers.text.wander": "Dale, me quedo boludeando por acá.",
   "chat.workers.text.continue": "Dale, ahí sigo con lo que estaba haciendo.",
   "chat.workers.text.follow": "A dónde vamos? Te sigo.",
@@ -82,5 +82,9 @@
   "chat.workers.text.need": "Necesitás %s de %s si querés comprar eso.",
   "chat.workers.text.outOfStockOwner": "Loco, me están pidiendo productos que no tengo! Me podés mandar un proveedor?",
   "chat.workers.text.invFull": "Disculpá, pero no me entra más nada en la mochila.",
-  "chat.workers.text.invFullOwner": "Che, me tenés los items un segundo? Me quedé sin espacio."
+  "chat.workers.text.invFullOwner": "Che, me tenés los items un segundo? Me quedé sin espacio.",
+
+  "chat.workers.controls.assign_bed_key": "Apretá \"%s\" para elegir mi cama.",
+  "chat.workers.controls.assign_chest_key": "Apretá \"%s\" para asignarme un cofre.",
+  "chat.workers.controls.assign_workspace_key": "Apretá \"%s\" para mandarme a laburar."
 }
