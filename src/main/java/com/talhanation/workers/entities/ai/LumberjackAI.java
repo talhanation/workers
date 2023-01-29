@@ -20,7 +20,6 @@ import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.MutableComponent;
 import net.minecraftforge.event.ForgeEventFactory;
 
-import java.util.ArrayList;
 import java.util.EnumSet;
 import java.util.Random;
 

@@ -173,10 +173,7 @@ public class LumberjackEntity extends AbstractWorkerEntity {
 
     public boolean wantsToBreak(Block block) {
         BlockState blockState = block.defaultBlockState();
-        return (
-            blockState.is(BlockTags.LOGS) ||
-            blockState.is(BlockTags.MANGROVE_LOGS)
-        ); 
+        return blockState.is(BlockTags.LOGS); 
     }
 
     @Override

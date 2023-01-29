@@ -19,8 +19,6 @@ import org.jetbrains.annotations.Nullable;
 public class SleepGoal extends Goal {
     private final AbstractWorkerEntity worker;
     private final MutableComponent NEED_BED = Component.translatable("chat.workers.needBed");
-    
-    // TODO: Json this message
     private final MutableComponent CANT_FIND_BED = Component.translatable("chat.workers.cantFindBed");
 
     public SleepGoal(AbstractWorkerEntity worker) {

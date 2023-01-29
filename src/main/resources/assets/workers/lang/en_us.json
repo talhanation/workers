@@ -50,14 +50,18 @@
   "controls.assign_bed": "Assign Bed",
 
   "chat.workers.needHome": "I need a home to store items.",
+
   "chat.workers.needBed": "I need a bed to sleep.",
-  "chat.workers.text.chest": "Okay, I'll save my items there.",
-  "chat.workers.text.chestError": "I don't think I can put my items inside that.",
-  "chat.workers.needChest": "I need a chest to put the items in.",
   "chat.workers.text.bed": "Thanks! I'll sleep there from now on.",
   "chat.workers.text.bedError": "That doesn't look like a bed.",
+  "chat.workers.cantFindBed": "I can't find my bed anymore, can you help me find a new one?",
+
+  "chat.workers.needChest": "I need a chest to put the items in.",
+  "chat.workers.text.chest": "Okay, I'll save my items there.",
+  "chat.workers.text.chestError": "I don't think I can put my items inside that.",
   "chat.workers.cantFindChest": "I can't find my chest anymore, can you help me find a new one?",
   "chat.workers.chestFull": "My chest is full, can you help me find a new one?",
+
   "chat.workers.text.recruited1": "It's a honor for me to work for you.",
   "chat.workers.text.recruited2": "I am the best for this work.",
   "chat.workers.text.recruited3": "I work fast and reliable.",
