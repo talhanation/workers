@@ -5,20 +5,19 @@ import com.talhanation.workers.entities.AbstractWorkerEntity;
 import net.minecraft.core.BlockPos;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.MutableComponent;
+import net.minecraft.sounds.SoundEvents;
 import net.minecraft.world.Container;
 import net.minecraft.world.SimpleContainer;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.ai.goal.Goal;
 import net.minecraft.world.entity.ai.navigation.PathNavigation;
 import net.minecraft.world.item.ItemStack;
-import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraftforge.common.Tags.Blocks;
 
 public class TransferItemsInChestGoal extends Goal {
     private final AbstractWorkerEntity worker;
-    private final MutableComponent NEED_ITEMS_HOME = Component.translatable("chat.workers.needHome");
-    private final MutableComponent CANT_FIND_CHEST =Component.translatable("chat.workers.cantFindChest");
+    private final MutableComponent CANT_FIND_CHEST = Component.translatable("chat.workers.cantFindChest");
     private final MutableComponent CHEST_FULL = Component.translatable("chat.workers.chestFull");
 
     private PathNavigation pathFinder;
@@ -32,7 +31,6 @@ public class TransferItemsInChestGoal extends Goal {
     public boolean canUse() {
         if (
             this.worker.getOwner() == null ||
-            this.worker.needsHome() ||
             this.worker.needsChest() ||
             this.worker.needsToSleep()
         ) {
@@ -60,11 +58,6 @@ public class TransferItemsInChestGoal extends Goal {
         LivingEntity owner = worker.getOwner();
         if (owner == null) return;
         if (worker.isSleeping()) return;
-        if (this.worker.getHomePos() == null) {
-            this.worker.tellPlayer(owner, NEED_ITEMS_HOME);
-            this.worker.setNeedsHome(true);
-            return;
-        }
         
         BlockPos chestPos = this.worker.getChestPos();
         if (chestPos == null) {
@@ -73,9 +66,9 @@ public class TransferItemsInChestGoal extends Goal {
             return;
         }
         
-        BlockState chest = worker.level.getBlockState(this.worker.getChestPos());
         Container containerEntity = null;
-        if (chest instanceof Container container) {
+        BlockState chest = worker.level.getBlockState(this.worker.getChestPos());
+        if (worker.level.getBlockEntity(chestPos) instanceof Container container) {
             containerEntity = container;
         }
         if (
@@ -104,7 +97,23 @@ public class TransferItemsInChestGoal extends Goal {
             );
 
             Main.LOGGER.debug("Depositing to chest");
+            worker.level.playSound(
+                null, 
+                chestPos,
+                SoundEvents.CHEST_OPEN,
+                worker.getSoundSource(),
+                0.7F, 
+                0.8F + 0.4F * worker.getRandom().nextFloat()
+            );
             this.depositItems(containerEntity);
+            worker.level.playSound(
+                null, 
+                chestPos,
+                SoundEvents.CHEST_CLOSE,
+                worker.getSoundSource(),
+                0.7F, 
+                0.8F + 0.4F * worker.getRandom().nextFloat()
+            );
         }
     }
     
@@ -183,53 +192,5 @@ public class TransferItemsInChestGoal extends Goal {
         // If we haven't returned at this point, the item can't be inserted. 
         // Return the remainder.
         return stack;
-    }
-
-
-    public ItemStack addItem(ItemStack stack, Container container) {
-        ItemStack itemstack = stack.copy();
-        this.moveItemToOccupiedSlotsWithSameType(itemstack, container);
-        if (itemstack.isEmpty()) {
-            return ItemStack.EMPTY;
-        } else {
-            this.moveItemToEmptySlots(itemstack, container);
-            return itemstack.isEmpty() ? ItemStack.EMPTY : itemstack;
-        }
-    }
-
-    private void moveItemToEmptySlots(ItemStack stack, Container container) {
-        for (int i = 0; i < container.getContainerSize(); ++i) {
-            ItemStack itemstack = container.getItem(i);
-            if (itemstack.isEmpty()) {
-                container.setItem(i, stack.copy());
-                stack.setCount(0);
-                return;
-            }
-        }
-
-    }
-
-    private void moveItemToOccupiedSlotsWithSameType(ItemStack stack, Container container) {
-        for (int i = 0; i < container.getContainerSize(); ++i) {
-            ItemStack itemstack = container.getItem(i);
-            if (ItemStack.isSameItemSameTags(itemstack, stack)) {
-                this.moveItemsBetweenStacks(stack, itemstack, container);
-                if (stack.isEmpty()) {
-                    return;
-                }
-            }
-        }
-
-    }
-
-    private void moveItemsBetweenStacks(ItemStack stack, ItemStack stack1, Container container) {
-        int i = Math.min(container.getMaxStackSize(), stack1.getMaxStackSize());
-        int j = Math.min(stack.getCount(), i - stack1.getCount());
-        if (j > 0) {
-            stack1.grow(j);
-            stack.shrink(j);
-            container.setChanged();
-        }
-
     }
 }

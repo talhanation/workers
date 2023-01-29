@@ -14,6 +14,7 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.MutableComponent;
 import net.minecraft.world.item.Items;
+import net.minecraft.world.level.block.BedBlock;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.block.state.properties.BedPart;
@@ -66,7 +67,13 @@ public class CommandEvents {
         if (expectedOwnerUuid.equals(player_uuid)) {
             BlockState selectedBlock = worker.level.getBlockState(blockpos);
             if (selectedBlock.isBed(worker.level, blockpos, owner)) {
-                worker.setBedPos(blockpos);
+                BlockPos bedHead;
+                if (selectedBlock.getValue(BlockStateProperties.BED_PART) == BedPart.HEAD) {
+                    bedHead = blockpos;
+                } else {
+                    bedHead = blockpos.relative(selectedBlock.getValue(BlockStateProperties.HORIZONTAL_FACING));
+                }
+                worker.setBedPos(bedHead);
                 worker.setNeedsBed(false);
                 worker.tellPlayer(owner, TEXT_BED);
             } else {
