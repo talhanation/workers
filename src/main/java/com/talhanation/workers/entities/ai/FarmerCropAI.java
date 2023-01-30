@@ -2,11 +2,9 @@ package com.talhanation.workers.entities.ai;
 
 import com.talhanation.workers.entities.FarmerEntity;
 import net.minecraft.core.BlockPos;
-import net.minecraft.network.chat.Component;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.sounds.SoundSource;
 import net.minecraft.world.SimpleContainer;
-import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.ai.goal.Goal;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
@@ -130,15 +128,6 @@ public class FarmerCropAI extends Goal {
                 } else
                     state = 0;
                 break;
-        }
-    }
-
-    private void debug() {
-        LivingEntity owner = this.farmer.getOwner();
-        if (owner != null) {
-            this.farmer.tellPlayer(owner, Component.literal("State: " + state));
-            this.farmer.tellPlayer(owner, Component.literal("WorkPos: " + workPos));
-            this.farmer.tellPlayer(owner, Component.literal("StartPos: " + farmer.getStartPos()));
         }
     }
 

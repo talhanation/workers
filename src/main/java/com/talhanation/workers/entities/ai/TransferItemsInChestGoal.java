@@ -11,7 +11,6 @@ import net.minecraft.world.SimpleContainer;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.ai.goal.Goal;
 import net.minecraft.world.entity.ai.navigation.GroundPathNavigation;
-import net.minecraft.world.entity.ai.navigation.PathNavigation;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraftforge.common.Tags.Blocks;
@@ -38,17 +37,19 @@ public class TransferItemsInChestGoal extends Goal {
         ) {
             return false;
         }
-        SimpleContainer inventory = this.worker.getInventory();
-        if (inventory == null) {
-            return false;
-        }
-        for (ItemStack item : inventory.items) {
-            // If there's at least one item that the worker wants to save in the chest
-            if (this.worker.wantsToPickUp(item) && !this.worker.wantsToKeep(item)) {
-                return true;
-            }
-        }
-        return false;
+        return this.worker.itemsFarmed >= 10;
+        // SimpleContainer inventory = this.worker.getInventory();
+        // if (inventory == null) {
+        //     return false;
+        // }
+        // for (ItemStack item : inventory.items) {
+        //     // If there's at least one item that the worker wants to save in the chest
+        //     if (this.worker.wantsToPickUp(item) && !this.worker.wantsToKeep(item)) {
+        //         Main.LOGGER.debug("Saving {} in chest", item.getDisplayName().getString());
+        //         return true;
+        //     }
+        // }
+        // return false;
     }
 
     public boolean canContinueToUse() {
@@ -89,7 +90,7 @@ public class TransferItemsInChestGoal extends Goal {
         pathFinder.setCanOpenDoors(true);
         pathFinder.moveTo(chestPos.getX(), chestPos.getY(), chestPos.getZ(), 1.1D);
 
-        if (chestPos.closerThan(worker.getOnPos(), 1)) {
+        if (chestPos.closerThan(worker.getOnPos(), 2.5D)) {
             pathFinder.stop();
             this.worker.getLookControl().setLookAt(
                 chestPos.getX(),
@@ -159,6 +160,8 @@ public class TransferItemsInChestGoal extends Goal {
         if (!couldDepositSomething) {
             this.worker.tellPlayer(worker.getOwner(), CHEST_FULL);
             this.worker.setNeedsChest(true);
+        } else {
+            this.worker.itemsFarmed = 0;
         }
     }
 

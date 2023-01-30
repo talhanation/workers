@@ -132,6 +132,7 @@ public abstract class AbstractWorkerEntity extends AbstractChunkLoaderEntity {
     int hurtTimeStamp = 0;
     
     protected GroundPathNavigation navigation;
+    public int itemsFarmed;
 
 
     public AbstractWorkerEntity(EntityType<? extends AbstractWorkerEntity> entityType, Level world) {
@@ -140,6 +141,7 @@ public abstract class AbstractWorkerEntity extends AbstractChunkLoaderEntity {
         this.navigation = this.createNavigation(world);
         this.navigation.setCanOpenDoors(true);
         this.xpReward = 2;
+        this.itemsFarmed = 0;
     }
 
     /*
@@ -845,6 +847,7 @@ public abstract class AbstractWorkerEntity extends AbstractChunkLoaderEntity {
         return Component.translatable("chat.workers.text.hello_owned", job, owner);
     }
 
+    // TODO: Use these only when work starts
     public static final MutableComponent TEXT_RECRUITED1 = Component.translatable("chat.workers.text.recruited1");
     public static final MutableComponent TEXT_RECRUITED2 = Component.translatable("chat.workers.text.recruited2");
     public static final MutableComponent TEXT_RECRUITED3 = Component.translatable("chat.workers.text.recruited3");
@@ -873,4 +876,10 @@ public abstract class AbstractWorkerEntity extends AbstractChunkLoaderEntity {
         Component currentMapping = ModShortcuts.ASSIGN_WORKSPACE_KEY.getTranslatedKeyMessage();
         return Component.translatable("chat.workers.controls.assign_workspace_key", currentMapping);
     }
+    public static final MutableComponent TEXT_OUT_OF_TOOLS(ItemStack lastItem) {
+        return Component.translatable(
+            "chat.workers.text.outOfTools", 
+            lastItem.getDisplayName().getString()
+        );
+    } 
 }

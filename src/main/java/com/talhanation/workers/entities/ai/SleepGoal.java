@@ -8,8 +8,6 @@ import net.minecraft.network.chat.MutableComponent;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.ai.goal.Goal;
 import net.minecraft.world.entity.ai.navigation.PathNavigation;
-import net.minecraft.world.level.block.BedBlock;
-import net.minecraft.world.level.block.entity.BedBlockEntity;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.block.state.properties.BedPart;
@@ -101,9 +99,6 @@ public class SleepGoal extends Goal {
         );
     
         if (bedPos.distManhattan((Vec3i) worker.getWorkerOnPos()) <= 5) {
-            BedBlock bed = (BedBlock) worker.level.getBlockState(bedPos).getBlock();
-            BedBlockEntity bedEntity = (BedBlockEntity) worker.level.getBlockEntity(bedPos);
-
             this.worker.startSleeping(bedPos);
             this.worker.setSleepingPos(bedPos);
             pathFinder.stop();

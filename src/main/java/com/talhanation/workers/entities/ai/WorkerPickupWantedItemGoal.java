@@ -18,7 +18,6 @@ public class WorkerPickupWantedItemGoal extends Goal{
     @Override
     public boolean canUse() {
         if (
-            !this.worker.level.isDay() || 
             this.worker.getStartPos() == null ||
             this.worker.getFollow() ||
             this.worker.isSleeping()

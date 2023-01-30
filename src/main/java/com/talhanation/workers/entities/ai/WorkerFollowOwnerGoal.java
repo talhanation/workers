@@ -5,14 +5,11 @@ import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.ai.goal.Goal;
 import net.minecraft.world.entity.ai.navigation.PathNavigation;
 import net.minecraft.world.level.pathfinder.BlockPathTypes;
-import net.minecraft.world.level.LevelReader;
-
 import java.util.EnumSet;
 
 public class WorkerFollowOwnerGoal extends Goal {
     private final AbstractWorkerEntity workerEntity;
     private LivingEntity owner;
-    private final LevelReader level;
     private final double speedModifier;
     private final PathNavigation navigation;
     private int timeToRecalcPath;
@@ -24,7 +21,6 @@ public class WorkerFollowOwnerGoal extends Goal {
 
     public WorkerFollowOwnerGoal(AbstractWorkerEntity abstractworkerEntity, double v, float startDistance, float stopDistance) {
         this.workerEntity = abstractworkerEntity;
-        this.level = abstractworkerEntity.level;
         this.speedModifier = v;
         this.navigation = abstractworkerEntity.getNavigation();
         this.startDistance = startDistance;

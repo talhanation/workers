@@ -22,6 +22,7 @@ import net.minecraft.world.item.UseAnim;
 public abstract class AbstractWorkersRenderer<Type extends AbstractInventoryEntity>
         extends MobRenderer<Type, PlayerModel<Type>> {
 
+    @SuppressWarnings("rawtypes")
     public AbstractWorkersRenderer(EntityRendererProvider.Context mgr) {
         super(mgr, new PlayerModel<>((mgr.bakeLayer(ModelLayers.PLAYER)), false), 0.5F);
         this.addLayer(new HumanoidArmorLayer<>(this, new HumanoidModel(mgr.bakeLayer(ModelLayers.PLAYER_INNER_ARMOR)),
@@ -32,12 +33,14 @@ public abstract class AbstractWorkersRenderer<Type extends AbstractInventoryEnti
         this.addLayer(new WorkerItemInHandLayer<>(this, itemInHandRenderer));
     }
 
+    @SuppressWarnings("unchecked")
     public void render(AbstractInventoryEntity recruit, float p_117789_, float p_117790_, PoseStack p_117791_,
             MultiBufferSource p_117792_, int p_117793_) {
         this.setModelProperties(recruit);
         super.render((Type) recruit, p_117789_, p_117790_, p_117791_, p_117792_, p_117793_);
     }
 
+    @SuppressWarnings("unchecked")
     private void setModelProperties(AbstractInventoryEntity recruit) {
         PlayerModel<AbstractInventoryEntity> model = (PlayerModel<AbstractInventoryEntity>) this.getModel();
 

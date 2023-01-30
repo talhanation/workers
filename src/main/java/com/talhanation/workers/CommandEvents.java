@@ -14,7 +14,6 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.MutableComponent;
 import net.minecraft.world.item.Items;
-import net.minecraft.world.level.block.BedBlock;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.block.state.properties.BedPart;
@@ -370,6 +369,7 @@ public class CommandEvents {
     public static final MutableComponent TEXT_INV_FULL = Component.translatable("chat.workers.text.invFull");
     public static final MutableComponent TEXT_INV_FULL_OWNER = Component.translatable("chat.workers.text.invFullOwner");
     public static final MutableComponent TEXT_HOME = Component.translatable("chat.workers.text.home");
+    // TODO: Remove home button.
     public static final MutableComponent NEED_CHEST = Component.translatable("chat.workers.needChest");
     public static final MutableComponent TEXT_CHEST = Component.translatable("chat.workers.text.chest");
 	public static final MutableComponent TEXT_CHEST_ERROR = Component.translatable("chat.workers.text.chestError");

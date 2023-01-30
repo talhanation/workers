@@ -262,15 +262,4 @@ public class MerchantEntity extends AbstractWorkerEntity {
         for (int i = 0; i < this.tradeInventory.getContainerSize(); i++)
             Containers.dropItemStack(this.level, getX(), getY(), getZ(), this.tradeInventory.getItem(i));
     }
-
-    @Override
-    public boolean hurt(DamageSource dmg, float amt) {
-        Entity entity = dmg.getEntity();
-        String name = "";
-        if (entity != null) {
-            name = entity.getName().getString();
-        }
-
-        return super.hurt(dmg, amt);
-    }
 }

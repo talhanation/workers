@@ -1,5 +1,6 @@
 package com.talhanation.workers.entities.ai;
 
+import com.talhanation.workers.entities.AbstractWorkerEntity;
 import com.talhanation.workers.entities.LumberjackEntity;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.state.BlockState;
@@ -16,8 +17,6 @@ import net.minecraft.tags.ItemTags;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.world.phys.AABB;
 import net.minecraft.core.BlockPos;
-import net.minecraft.network.chat.Component;
-import net.minecraft.network.chat.MutableComponent;
 import net.minecraftforge.event.ForgeEventFactory;
 
 import java.util.EnumSet;
@@ -26,12 +25,6 @@ import java.util.Random;
 public class LumberjackAI extends Goal {
     private final LumberjackEntity lumber;
     private BlockPos workPos;
-    private final MutableComponent TEXT_OUT_OF_TOOLS(ItemStack lastItem) {
-        return Component.translatable(
-            "chat.workers.text.outOfTools", 
-            lastItem.getDisplayName().getString()
-        );
-    } 
 
     public LumberjackAI(LumberjackEntity lumber) {
         this.lumber = lumber;
@@ -112,6 +105,7 @@ public class LumberjackAI extends Goal {
         }
     }
 
+    @SuppressWarnings("deprecation")
     private void breakLeaves() {
         AABB boundingBox = this.lumber.getBoundingBox();
         double offset = 0.25D;
@@ -236,7 +230,7 @@ public class LumberjackAI extends Goal {
                             // If there are no more tools remaining, alert the owner
                             LivingEntity owner = this.lumber.getOwner();
                             if (owner != null) {
-                                this.lumber.tellPlayer(owner, TEXT_OUT_OF_TOOLS(heldItem));
+                                this.lumber.tellPlayer(owner, AbstractWorkerEntity.TEXT_OUT_OF_TOOLS(heldItem));
                             }
                         }
                      }

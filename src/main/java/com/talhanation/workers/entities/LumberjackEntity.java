@@ -151,6 +151,7 @@ public class LumberjackEntity extends AbstractWorkerEntity {
                 itemEntity.remove(RemovalReason.DISCARDED);
             } else {
                 itemstack.setCount(itemstack1.getCount());
+                this.itemsFarmed += 1;
             }
         }
 
@@ -184,15 +185,7 @@ public class LumberjackEntity extends AbstractWorkerEntity {
     }
 
     @Override
-    public void openGUI(Player player) {
-        this.goalSelector.getAvailableGoals().forEach((goal -> {
-            Main.LOGGER.info("Lumberjack available goal: {}", goal.getGoal().getClass().getName());
-        }));
-
-        this.goalSelector.getRunningGoals().forEach((goal -> {
-            Main.LOGGER.info("Lumberjack running goal: {}", goal.getGoal().getClass().getName());
-        }));
-        
+    public void openGUI(Player player) {        
         if (player instanceof ServerPlayer) {
             NetworkHooks.openScreen((ServerPlayer) player, new MenuProvider() {
                 @Override

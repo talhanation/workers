@@ -3,7 +3,6 @@ package com.talhanation.workers;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
-import com.mojang.blaze3d.platform.InputConstants;
 import com.talhanation.workers.client.events.KeyEvents;
 import com.talhanation.workers.init.ModBlocks;
 import com.talhanation.workers.init.ModEntityTypes;
@@ -28,11 +27,8 @@ import com.talhanation.workers.network.MessageStartPos;
 import com.talhanation.workers.network.MessageTradeButton;
 
 import de.maxhenkel.corelib.CommonRegistry;
-import de.maxhenkel.corelib.net.Message;
-import net.minecraft.client.KeyMapping;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
-import net.minecraftforge.client.event.RegisterKeyMappingsEvent;
 import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.eventbus.api.IEventBus;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
@@ -71,6 +67,7 @@ public class Main {
         MinecraftForge.EVENT_BUS.register(new KeyEvents());
     }
 
+    @SuppressWarnings({"unchecked", "rawtypes"})
     private void setup(final FMLCommonSetupEvent event) {
         LOGGER.info("FMLCommonSetupEvent triggered");
         MinecraftForge.EVENT_BUS.register(new VillagerEvents());
