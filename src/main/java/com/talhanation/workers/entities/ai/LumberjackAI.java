@@ -66,13 +66,12 @@ public class LumberjackAI extends Goal {
 
     public void tick() {
         breakLeaves();
-
         // TODO: Add memories of initial saplings/trees around the work position. 
         // TODO: Replant if the blocks are AIR.
 
         // Go back to assigned work position.
-        if (workPos != null && !workPos.closerThan(lumber.getOnPos(), 10D) && !lumber.getFollow()) {
-            this.lumber.getNavigation().moveTo(workPos.getX(), workPos.getY(), workPos.getZ(), 1);
+        if (workPos != null && !workPos.closerThan(lumber.blockPosition(), 10D)) {
+            this.lumber.walkTowards(workPos, 1);
             return;
         }
 
@@ -80,9 +79,8 @@ public class LumberjackAI extends Goal {
         BlockPos chopPos = getWoodPos();
         if (chopPos == null) return;
 
-        BlockPos lumberPos = lumber.getOnPos();
-        this.lumber.getNavigation().moveTo(chopPos.getX(), chopPos.getY(), chopPos.getZ(), 1);
-        this.lumber.getLookControl().setLookAt(chopPos.getX(), chopPos.getY() + 1, chopPos.getZ(), 10.0F, (float) this.lumber.getMaxHeadXRot());
+        BlockPos lumberPos = lumber.blockPosition();
+        this.lumber.walkTowards(chopPos, 1);
 
         boolean standingBelowChopPos = (
             lumberPos.getX() == chopPos.getX() && 
@@ -91,7 +89,7 @@ public class LumberjackAI extends Goal {
         );
 
         if (
-            chopPos.closerThan(lumber.getOnPos(), 9) ||
+            chopPos.closerThan(lumber.blockPosition(), 9) ||
             standingBelowChopPos
         ) {
             this.mineBlock(chopPos);
@@ -217,23 +215,7 @@ public class LumberjackAI extends Goal {
                     this.lumber.level.destroyBlock(blockPos, true, this.lumber);
                     this.lumber.setCurrentTimeBreak(-1);
                     this.lumber.setBreakingTime(0);
-                    // Damage the tool
-                    heldItem.setDamageValue(heldItem.getDamageValue() + 1);
-                    // Break the tool when it reaches max durability
-                    if (!heldItem.is(Items.AIR) && heldItem.getDamageValue() >= heldItem.getMaxDamage()) {
-                        this.lumber.broadcastBreakEvent(InteractionHand.MAIN_HAND);
-                        this.lumber.setItemInHand(InteractionHand.MAIN_HAND, ItemStack.EMPTY);
-                        this.lumber.stopUsingItem();
-                        // Attempt to use the next available tool in inventory
-                        this.lumber.upgradeTool();
-                        if (this.lumber.getItemInHand(InteractionHand.MAIN_HAND).isEmpty()) {
-                            // If there are no more tools remaining, alert the owner
-                            LivingEntity owner = this.lumber.getOwner();
-                            if (owner != null) {
-                                this.lumber.tellPlayer(owner, AbstractWorkerEntity.TEXT_OUT_OF_TOOLS(heldItem));
-                            }
-                        }
-                     }
+                    this.lumber.consumeToolDurability();
                     return true;
                 }
                 this.lumber.workerSwingArm();

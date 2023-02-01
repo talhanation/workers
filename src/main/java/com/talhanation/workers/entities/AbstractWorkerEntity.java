@@ -26,6 +26,7 @@ import net.minecraft.world.DifficultyInstance;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResult;
 import net.minecraft.world.MenuProvider;
+import net.minecraft.world.SimpleContainer;
 import net.minecraft.world.damagesource.DamageSource;
 import net.minecraft.world.entity.*;
 import net.minecraft.world.entity.ai.attributes.AttributeInstance;
@@ -41,6 +42,7 @@ import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.entity.projectile.AbstractArrow;
 import net.minecraft.world.inventory.AbstractContainerMenu;
 import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.Items;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.ServerLevelAccessor;
 import net.minecraftforge.api.distmarker.Dist;
@@ -210,6 +212,48 @@ public abstract class AbstractWorkerEntity extends AbstractChunkLoaderEntity {
                 }
             }
         }
+    }
+
+    @Override
+    protected void pickUpItem(ItemEntity itemEntity) {
+        ItemStack itemstack = itemEntity.getItem();
+        if (this.wantsToPickUp(itemstack)) {
+            SimpleContainer inventory = this.getInventory();
+            if (!inventory.canAddItem(itemstack)) return;
+
+            this.onItemPickup(itemEntity);
+            this.take(itemEntity, itemstack.getCount());
+            ItemStack itemstack1 = inventory.addItem(itemstack);
+            if (itemstack1.isEmpty()) {
+                itemEntity.remove(RemovalReason.DISCARDED);
+            } else {
+                itemstack.setCount(itemstack1.getCount());
+                this.itemsFarmed += 1;
+            }
+        }
+    }
+
+    // TODO: Boolean for worker "can work without tools" like lumberjacks punching trees, or farmers.
+    // TODO: GoalAI#canUse() should check for this boolean.
+    public void consumeToolDurability() {
+        ItemStack heldItem = this.getItemInHand(InteractionHand.MAIN_HAND);
+        // Damage the tool
+        heldItem.setDamageValue(heldItem.getDamageValue() + 1);
+        // Break the tool when it reaches max durability
+        if (!heldItem.is(Items.AIR) && heldItem.getDamageValue() >= heldItem.getMaxDamage()) {
+            this.broadcastBreakEvent(InteractionHand.MAIN_HAND);
+            this.setItemInHand(InteractionHand.MAIN_HAND, ItemStack.EMPTY);
+            this.stopUsingItem();
+            // Attempt to use the next available tool in inventory
+            this.upgradeTool();
+            if (this.getItemInHand(InteractionHand.MAIN_HAND).isEmpty()) {
+                // If there are no more tools remaining, alert the owner
+                LivingEntity owner = this.getOwner();
+                if (owner != null) {
+                    this.tellPlayer(owner, TEXT_OUT_OF_TOOLS(heldItem));
+                }
+            }
+         }
     }
 
     public void tick() {
@@ -685,6 +729,17 @@ public abstract class AbstractWorkerEntity extends AbstractChunkLoaderEntity {
         player.sendSystemMessage(dialogue);
     }
 
+    public void walkTowards(BlockPos pos, double speed) {
+        this.getNavigation().moveTo(pos.getX(), pos.getY(), pos.getZ(), speed);
+        this.getLookControl().setLookAt(
+            pos.getX(), 
+            pos.getY() + 1, 
+            pos.getZ(), 
+            10.0F,
+            this.getMaxHeadXRot()
+        );
+    }
+
     public boolean needsToEat() {
         return (getHunger() <= 20F || getHealth() < getMaxHealth() * 0.2) || isStarving();
     }
@@ -698,6 +753,7 @@ public abstract class AbstractWorkerEntity extends AbstractChunkLoaderEntity {
     }
 
     public void resetWorkerParameters() {
+        this.itemsFarmed = 0;
         this.setBreakingTime(0);
         this.setCurrentTimeBreak(-1);
         this.setPreviousTimeBreak(-1);

@@ -25,6 +25,7 @@ public class FishermanAI extends Goal {
     private final FishermanEntity fisherman;
     private int fishingTimer = 100;
     private int throwTimer = 0;
+    private final int fishingRange = 4;
     private BlockPos fishingPos = null;
     private BlockPos workPos;
 
@@ -89,13 +90,8 @@ public class FishermanAI extends Goal {
     public void tick() {
         if (workPos == null) return;
         // When far from work pos, move to work pos
-        if (!workPos.closerThan(fisherman.getOnPos(), 9D)) {
-            this.fisherman.getNavigation().moveTo(
-                workPos.getX(), 
-                workPos.getY(), 
-                workPos.getZ(), 
-                2
-            );
+        if (!workPos.closerThan(fisherman.blockPosition(), 9D)) {
+            this.fisherman.walkTowards(workPos, 2);
             return;
         }
 
@@ -115,7 +111,7 @@ public class FishermanAI extends Goal {
         );
 
         // Either walk towards the water block, or stop and stare.
-        if (this.fisherman.getOnPos().closerThan(fishingPos, 4.0D)) {
+        if (this.fisherman.blockPosition().closerThan(fishingPos, this.fishingRange)) {
             this.fisherman.getMoveControl().setWantedPosition(
                 fishingPos.getX(), 
                 fishingPos.getY() + 1, 
@@ -125,12 +121,7 @@ public class FishermanAI extends Goal {
             this.fisherman.getNavigation().stop();
 
         } else {
-            this.fisherman.getNavigation().moveTo(
-                fishingPos.getX(), 
-                fishingPos.getY(), 
-                fishingPos.getZ(), 
-                1
-            );
+            this.fisherman.walkTowards(fishingPos, 1);
             return;
         }
 
@@ -149,26 +140,8 @@ public class FishermanAI extends Goal {
             spawnFishingLoot();
             fisherman.playSound(SoundEvents.FISHING_BOBBER_SPLASH, 1, 1);
             this.fisherman.swing(InteractionHand.MAIN_HAND);
-
-            // Damage the tool
-            ItemStack heldItem = this.fisherman.getItemInHand(InteractionHand.MAIN_HAND);
-            heldItem.setDamageValue(heldItem.getDamageValue() + 1);
-            // Break the tool when it reaches max durability
-            if (heldItem.getDamageValue() >= heldItem.getMaxDamage()) {
-                this.fisherman.broadcastBreakEvent(InteractionHand.MAIN_HAND);
-                this.fisherman.setItemInHand(InteractionHand.MAIN_HAND, ItemStack.EMPTY);
-                this.fisherman.stopUsingItem();
-                // Attempt to use the next available tool in inventory
-                this.fisherman.upgradeTool();
-                if (this.fisherman.getItemInHand(InteractionHand.MAIN_HAND).isEmpty()) {
-                    // If there are no more tools remaining, alert the owner
-                    LivingEntity owner = this.fisherman.getOwner();
-                    if (owner != null) {
-                        this.fisherman.tellPlayer(owner, AbstractWorkerEntity.TEXT_OUT_OF_TOOLS(heldItem));
-                    }
-                }
-            }
             this.fisherman.itemsFarmed += 1;
+            this.fisherman.consumeToolDurability();
             this.resetTask();
         }
         
@@ -177,10 +150,10 @@ public class FishermanAI extends Goal {
 
     // Find a water block to fish
     private BlockPos findWaterBlock() {
-        for (int x = -10; x < 10; ++x) {
+        for (int x = -this.fishingRange; x < this.fishingRange; ++x) {
             for (int y = -2; y < 2; ++y) {
-                for (int z = -10; z < 10; ++z) {
-                    BlockPos blockPos = this.fisherman.getOnPos().offset(x, y, z);
+                for (int z = -this.fishingRange; z < this.fishingRange; ++z) {
+                    BlockPos blockPos = this.workPos.offset(x, y, z);
                     BlockState targetBlock = this.fisherman.level.getBlockState(blockPos);
                     if (targetBlock.is(Blocks.WATER)) {
                         return blockPos;
@@ -189,6 +162,7 @@ public class FishermanAI extends Goal {
             }
         }
         // TODO: Handle no water near workplace
+            // Ideally the fisher should tell you his workPos is not valid and setWorkPos(null).
         return null;
 	}
 }

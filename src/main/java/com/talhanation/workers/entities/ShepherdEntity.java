@@ -134,27 +134,6 @@ public class ShepherdEntity extends AbstractAnimalFarmerEntity {
         this.setCanPickUpLoot(true);
     }
 
-    protected void pickUpItem(ItemEntity itemEntity) {
-        ItemStack itemstack = itemEntity.getItem();
-        if (this.wantsToPickUp(itemstack)) {
-            SimpleContainer inventory = this.getInventory();
-            boolean flag = inventory.canAddItem(itemstack);
-            if (!flag) {
-                return;
-            }
-
-            this.onItemPickup(itemEntity);
-            this.take(itemEntity, itemstack.getCount());
-            ItemStack itemstack1 = inventory.addItem(itemstack);
-            if (itemstack1.isEmpty()) {
-                itemEntity.remove(RemovalReason.DISCARDED);
-            } else {
-                itemstack.setCount(itemstack1.getCount());
-            }
-        }
-
-    }
-
     @Override
     public boolean wantsToPickUp(ItemStack itemStack) {
         Item item = itemStack.getItem();

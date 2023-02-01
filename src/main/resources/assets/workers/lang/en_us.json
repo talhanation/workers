@@ -45,10 +45,6 @@
   "gui.workers.hire_gui.text.hire": "Hire",
   "gui.workers.shepherd.max_animals": "max.",
 
-  "controls.assign_workspace": "Assign Workspace",
-  "controls.assign_chest": "Assign Chest",
-  "controls.assign_bed": "Assign Bed",
-
   "chat.workers.needHome": "I need a home to store items.",
 
   "chat.workers.needBed": "I need a bed to sleep.",
@@ -83,6 +79,10 @@
   "chat.workers.text.outOfStockOwner": "I'm out of stock!",
   "chat.workers.text.invFull": "Sorry, I cant take your items currently.",
   "chat.workers.text.invFullOwner": "My inventory is full, I can't accept new items!",
+
+  "controls.assign_workspace": "Assign Workspace",
+  "controls.assign_chest": "Assign Chest",
+  "controls.assign_bed": "Assign Bed",
 
   "chat.workers.controls.assign_bed_key": "Press \"%s\" to assign me a bed.",
   "chat.workers.controls.assign_chest_key": "Press \"%s\" to assign me a chest.",
