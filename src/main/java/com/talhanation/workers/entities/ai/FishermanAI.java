@@ -153,10 +153,12 @@ public class FishermanAI extends Goal {
         for (int x = -this.fishingRange; x < this.fishingRange; ++x) {
             for (int y = -2; y < 2; ++y) {
                 for (int z = -this.fishingRange; z < this.fishingRange; ++z) {
-                    BlockPos blockPos = this.workPos.offset(x, y, z);
-                    BlockState targetBlock = this.fisherman.level.getBlockState(blockPos);
-                    if (targetBlock.is(Blocks.WATER)) {
-                        return blockPos;
+                    if (workPos != null) {
+                        BlockPos blockPos = this.workPos.offset(x, y, z);
+                        BlockState targetBlock = this.fisherman.level.getBlockState(blockPos);
+                        if (targetBlock.is(Blocks.WATER)) {
+                            return blockPos;
+                        }
                     }
                 }
             }
