@@ -2,32 +2,31 @@ package com.talhanation.workers.entities.ai;
 
 import com.talhanation.workers.entities.AbstractWorkerEntity;
 
-import net.minecraft.sounds.SoundEvents;
-import net.minecraft.sounds.SoundSource;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.entity.ai.goal.Goal;
 import net.minecraft.world.item.ItemStack;
 
 import java.util.Objects;
-import java.util.Optional;
-public class EatGoal extends Goal {
+
+public class EatGoal extends Goal{
 
     public AbstractWorkerEntity worker;
     public ItemStack foodStack;
-    public ItemStack beforeFoodItem;
+    public ItemStack beforeItem;
+    public int slotID;
 
-    public EatGoal(AbstractWorkerEntity recruit) {
-        this.worker = recruit;
+    public EatGoal(AbstractWorkerEntity worker) {
+        this.worker = worker;
     }
 
     @Override
     public boolean canUse() {
-        return hasFoodInInv() && worker.needsToEat() && !worker.getIsEating() && !worker.isSleeping();
+        return hasFoodInInv() && worker.needsToEat() && !worker.getIsEating() && !worker.isUsingItem();
     }
 
     @Override
     public boolean canContinueToUse() {
-        return worker.getIsEating() && hasFoodInInv() && worker.needsToEat();
+        return worker.isUsingItem();
     }
 
     public boolean isInterruptable() {
@@ -40,51 +39,24 @@ public class EatGoal extends Goal {
 
     @Override
     public void start() {
-        beforeFoodItem = worker.getItemInHand(InteractionHand.MAIN_HAND);
+        slotID = 0;
+        beforeItem = worker.getOffhandItem().copy();
         worker.setIsEating(true);
-        this.foodStack = getFoodInInv();
+        this.foodStack = getAndRemoveFoodInInv().copy();
+        /*
+        Main.LOGGER.debug("Start--------------: ");
+        Main.LOGGER.debug("beforeFoodItem: " + beforeFoodItem.copy());
+        Main.LOGGER.debug("isEating: " + recruit.getIsEating());
+        Main.LOGGER.debug("foodStack: " + foodStack.copy());
+        Main.LOGGER.debug("Start--------------:");
+        */
 
         worker.heal(Objects.requireNonNull(foodStack.getItem().getFoodProperties(foodStack, worker)).getSaturationModifier() * 1);
-        if (!worker.isSaturated()) {
-            worker.setHunger(worker.getHunger() + Objects.requireNonNull(foodStack.getItem().getFoodProperties(foodStack, worker)).getSaturationModifier() * 100);
-        }
-        
-        worker.setItemInHand(InteractionHand.MAIN_HAND, foodStack);
-        worker.startUsingItem(InteractionHand.MAIN_HAND);
-        worker.level.playSound(
-            null, 
-            worker.getX(), 
-            worker.getY(), 
-            worker.getZ(), 
-            SoundEvents.GENERIC_EAT, 
-            SoundSource.BLOCKS,
-            1F, 
-            0.9F + 0.2F
-        );
-    }
+        if (!worker.isSaturated())
+            worker.setHunger(worker.getHunger() + Objects.requireNonNull(foodStack.getItem().getFoodProperties(foodStack, worker)).getSaturationModifier() * 10);
 
-
-    private boolean hasFoodInInv(){
-        return worker.getInventory().items
-                .stream()
-                .anyMatch(ItemStack::isEdible);
-    }
-
-    private ItemStack getFoodInInv(){
-        Optional<ItemStack> itemStack = worker.getInventory().items
-                .stream()
-                .filter(ItemStack::isEdible)
-                .findAny();
-
-        assert itemStack.isPresent();
-        return itemStack.get();
-    }
-
-    @Override
-    public void tick() {
-        super.tick();
-
-        if(!worker.isUsingItem() && worker.getIsEating() && beforeFoodItem != null) stop();
+        worker.setItemInHand(InteractionHand.OFF_HAND, foodStack);
+        worker.startUsingItem(InteractionHand.OFF_HAND);
     }
 
     @Override
@@ -93,9 +65,42 @@ public class EatGoal extends Goal {
         worker.stopUsingItem();
 
         resetItemInHand();
+        /*
+        Main.LOGGER.debug("Stop--------------: ");
+        Main.LOGGER.debug("beforeFoodItem: " + beforeFoodItem);
+        Main.LOGGER.debug("isEating: " + recruit.getIsEating());
+        Main.LOGGER.debug("foodStack: " + foodStack.copy());
+        Main.LOGGER.debug("Stop--------------:");
+         */
     }
 
     public void resetItemInHand() {
-        worker.setItemInHand(InteractionHand.MAIN_HAND, this.beforeFoodItem);
+        worker.setItemInHand(InteractionHand.OFF_HAND, ItemStack.EMPTY);
+        worker.getInventory().setItem(4, ItemStack.EMPTY);
+
+        worker.setItemInHand(InteractionHand.OFF_HAND, this.beforeItem.copy());
+        worker.getInventory().setItem(slotID, foodStack.copy());
+
+    }
+
+    private boolean hasFoodInInv(){
+        return worker.getInventory().items
+                .stream()
+                .anyMatch(ItemStack::isEdible);
+    }
+
+    private ItemStack getAndRemoveFoodInInv(){
+        ItemStack itemStack = null;
+        for(int i = 0; i < worker.getInventory().getContainerSize(); i++){
+            ItemStack stackInSlot = worker.getInventory().getItem(i).copy();
+            if(stackInSlot.isEdible()){
+                itemStack = stackInSlot.copy();
+                this.slotID = i;
+                worker.getInventory().removeItemNoUpdate(i); //removing item in slot
+                break;
+            }
+        }
+        return itemStack;
     }
 }
+
