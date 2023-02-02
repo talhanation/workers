@@ -37,7 +37,9 @@ public class MessageHomePos implements Message<MessageHomePos> {
         List<AbstractWorkerEntity> list = Objects.requireNonNull(context.getSender()).level.getEntitiesOfClass(AbstractWorkerEntity.class, context.getSender().getBoundingBox().inflate(16.0D));
         for (AbstractWorkerEntity workers : list) {
             Main.LOGGER.debug("Message: " + homePos.toShortString());
-            if(this.worker_uuid.equals(workers.getUUID())) CommandEvents.setHomePosWorker(player_uuid, workers, homePos);
+            if (this.worker_uuid.equals(workers.getUUID())) {
+                CommandEvents.setHomePosWorker(player_uuid, workers, homePos);
+            }
         }
     }
     public MessageHomePos fromBytes(FriendlyByteBuf buf) {

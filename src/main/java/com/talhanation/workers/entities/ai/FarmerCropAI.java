@@ -2,11 +2,9 @@ package com.talhanation.workers.entities.ai;
 
 import com.talhanation.workers.entities.FarmerEntity;
 import net.minecraft.core.BlockPos;
-import net.minecraft.network.chat.Component;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.sounds.SoundSource;
 import net.minecraft.world.SimpleContainer;
-import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.ai.goal.Goal;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
@@ -17,7 +15,7 @@ import net.minecraft.world.level.material.Fluids;
 import net.minecraftforge.event.ForgeEventFactory;
 
 import java.util.EnumSet;
-
+import java.util.Random;
 import static com.talhanation.workers.entities.FarmerEntity.CROP_BLOCKS;
 import static com.talhanation.workers.entities.FarmerEntity.WANTED_SEEDS;
 
@@ -25,26 +23,28 @@ public class FarmerCropAI extends Goal {
     private final FarmerEntity farmer;
     private BlockPos workPos;
     private BlockPos waterPos;
-    private int state;
+    private enum State {
+        PLOWING,
+        PLANTING,
+        HARVESTING
+    };
+    private State state;
 
     public FarmerCropAI(FarmerEntity farmer) {
         this.farmer = farmer;
         this.setFlags(EnumSet.of(Flag.MOVE));
+        this.state = State.PLOWING;
     }
 
     public boolean canUse() {
-        if (this.farmer.getStartPos() == null) {
+        if (
+            this.farmer.getStartPos() == null ||
+            this.farmer.needsToSleep() ||
+            this.farmer.getFollow() 
+        ) {
             return false;
         }
-        if (!this.farmer.level.isDay()) {
-            return false;
-        }
-        if (this.farmer.getFollow()) {
-            return false;
-        } else if (farmer.getIsWorking() && !this.farmer.getFollow())
-            return true;
-        else
-            return false;
+        return this.farmer.itemsFarmed < 10;
     }
 
     public boolean canContinueToUse() {
@@ -62,83 +62,74 @@ public class FarmerCropAI extends Goal {
     @Override
     public void stop() {
         super.stop();
-        state = 0;
+        state = State.PLOWING;
     }
 
     public void tick() {
+        // TODO: Fix bug where farmer infinitely replants farmland above crops. 
+            // Goes normal after manually doing this.workPos = getHoePos()
+            // Apparently reproducible by setting the workPos while hovering a planted crop.
+            // Ideally the farmer should tell you his workPos is not valid and setWorkPos(null).
 
-        // this.debug();
-
-        /*
-         * state:
-         * 0 = hoe
-         * 1 = plant
-         * 2 = harvest
-         */
-        if (workPos != null && !workPos.closerThan(farmer.getOnPos(), 10D) && !farmer.getFollow())
-            this.farmer.getNavigation().moveTo(workPos.getX(), workPos.getY(), workPos.getZ(), 1);
+        if (workPos != null && !workPos.closerThan(farmer.blockPosition(), 10D)) {
+            this.farmer.walkTowards(workPos, 1);
+        }
 
         switch (state) {
-            case 0:// hoe
-                if ((hasWaterInInv() || startPosIsWater()))
-                    this.workPos = getHoePos();
-
+            case PLOWING:
+                if (!startPosIsWater()) {
+                    this.farmer.walkTowards(waterPos, 1.2);
+                    if (waterPos.closerThan(farmer.blockPosition(), 4)) {
+                        farmer.workerSwingArm();
+                        this.prepareFarmLand(waterPos);
+                    }
+                }
+                this.workPos = getHoePos();
                 if (workPos != null) {
-                    this.farmer.getNavigation().moveTo(workPos.getX(), workPos.getY(), workPos.getZ(), 0.7);
-                    this.farmer.getLookControl().setLookAt(workPos.getX(), workPos.getY() + 1, workPos.getZ(), 10.0F,
-                            (float) this.farmer.getMaxHeadXRot());
-
-                    if (workPos.closerThan(farmer.getOnPos(), 2.25)) {
+                    this.farmer.walkTowards(workPos, 0.7);
+                    if (workPos.closerThan(farmer.blockPosition(), 2.25)) {
                         farmer.workerSwingArm();
                         this.prepareFarmLand(workPos);
                     }
-                } else
-                    state = 1;
+                } else {
+                    state = State.PLANTING;
+                }
                 break;
-            case 1:// plant
-                if (hasSeedInInv()) {
-                    this.workPos = getPlantPos();
-                } else
-                    state = 2;
+            case PLANTING:
+                if (!hasSeedInInv()) {
+                    state = State.HARVESTING;
+                    break;
+                }
 
-                if (workPos != null) {
-                    this.farmer.getNavigation().moveTo(workPos.getX(), workPos.getY(), workPos.getZ(), 0.7);
-                    this.farmer.getLookControl().setLookAt(workPos.getX(), workPos.getY(), workPos.getZ(), 10.0F,
-                            (float) this.farmer.getMaxHeadXRot());
-
-                    if (workPos.closerThan(farmer.getOnPos(), 2.25)) {
-                        farmer.workerSwingArm();
-                        this.plantSeedsFromInv(workPos);
-                    }
-                } else
-                    state = 2;
+                this.workPos = getPlantPos();
+                if (this.workPos == null) {
+                    state = State.HARVESTING;
+                    break;
+                }
+                
+                this.farmer.walkTowards(workPos, 0.7);
+                if (workPos.closerThan(farmer.blockPosition(), 2.25)) {
+                    farmer.workerSwingArm();
+                    this.plantRandomSeed(workPos);
+                }
                 break;
-
-            case 2:// harvest
+            case HARVESTING:
                 if (hasSpaceInInv())
                     this.workPos = getHarvestPos();
 
                 if (workPos != null) {
-                    this.farmer.getNavigation().moveTo(workPos.getX(), workPos.getY(), workPos.getZ(), 0.6);
-                    this.farmer.getLookControl().setLookAt(workPos.getX(), workPos.getY(), workPos.getZ(), 10.0F,
-                            (float) this.farmer.getMaxHeadXRot());
-
-                    if (workPos.closerThan(farmer.getOnPos(), 2.25)) {
+                    this.farmer.walkTowards(workPos, 0.6);
+                    if (workPos.closerThan(farmer.blockPosition(), 2.25)) {
                         farmer.workerSwingArm();
-                        this.mineBlock(workPos);
+                        boolean blockWasMined = this.mineBlock(workPos);
+                        if (blockWasMined) {
+                            this.farmer.itemsFarmed += 1;
+                            this.farmer.consumeToolDurability();
+                        }
                     }
                 } else
-                    state = 0;
+                    state = State.PLOWING;
                 break;
-        }
-    }
-
-    private void debug() {
-        LivingEntity owner = this.farmer.getOwner();
-        if (owner != null) {
-            owner.sendSystemMessage(Component.literal("State: " + state));
-            owner.sendSystemMessage(Component.literal("WorkPos: " + workPos));
-            owner.sendSystemMessage(Component.literal("StartPos: " + farmer.getStartPos()));
         }
     }
 
@@ -152,109 +143,118 @@ public class FarmerCropAI extends Goal {
         return inventory.canAddItem(farmer.WANTED_ITEMS.stream().findAny().get().getDefaultInstance());
     }
 
-    private boolean hasWaterInInv() {
-        SimpleContainer inventory = farmer.getInventory();
-        for (int i = 0; i < inventory.getContainerSize(); ++i) {
-            ItemStack itemstack = inventory.getItem(i);
-
-            if (!itemstack.isEmpty() && itemstack.getItem() == Items.WATER_BUCKET) {
-                return true;
-            }
-        }
-        return false;
-    }
-
     private boolean startPosIsWater() {
-        BlockPos blockPos = farmer.getStartPos();
-        if (blockPos != null) {
-            FluidState waterBlockState = this.farmer.level.getFluidState(blockPos);
-
-            if (waterBlockState == Fluids.WATER.defaultFluidState()
-                    || waterBlockState == Fluids.FLOWING_WATER.defaultFluidState()) {
+        if (this.waterPos != null) {
+            FluidState waterBlockState = this.farmer.level.getFluidState(this.waterPos);
+            if (waterBlockState.is(Fluids.WATER) || waterBlockState.is(Fluids.FLOWING_WATER)) {
                 return true;
             }
         }
         return false;
     }
 
-    private void plantSeedsFromInv(BlockPos blockPos) {
+    private void plantRandomSeed(BlockPos aboveFarmlandPos) {
         SimpleContainer inventory = farmer.getInventory();
 
-        for (int i = 0; i < inventory.getContainerSize(); ++i) {
-            ItemStack itemstack = inventory.getItem(i);
-            boolean flag = false;
-            if (!itemstack.isEmpty()) {
-                if (itemstack.getItem() == Items.CARROT) {
-                    farmer.level.setBlock(blockPos, Blocks.CARROTS.defaultBlockState(), 3);
-                    flag = true;
+        // Durstenfeld's Shuffle
+        // https://en.wikipedia.org/wiki/Fisher%E2%80%93Yates_shuffle#The_modern_algorithm
+        Random random = new Random();
+        for (int i = inventory.getContainerSize() - 1; i > 0; i--) {
+            int index = random.nextInt(i + 1);
+            ItemStack foundSeed = inventory.getItem(index);
+            inventory.setItem(index, inventory.getItem(i));
+            inventory.setItem(i, foundSeed);
 
-                } else if (itemstack.getItem() == Items.POTATO) {
-                    this.farmer.level.setBlock(blockPos, Blocks.POTATOES.defaultBlockState(), 3);
-                    flag = true;
-
-                } else if (itemstack.getItem() == Items.WHEAT_SEEDS) {
-                    this.farmer.level.setBlock(blockPos, Blocks.WHEAT.defaultBlockState(), 3);
-                    flag = true;
-
-                } else if (itemstack.getItem() == Items.BEETROOT_SEEDS) {
-                    this.farmer.level.setBlock(blockPos, Blocks.BEETROOTS.defaultBlockState(), 3);
-                    flag = true;
-                }
+            if (foundSeed.isEmpty()) {
+                continue;
             }
 
-            if (flag) {
-                farmer.level.playSound(null, (double) blockPos.getX(), (double) blockPos.getY(),
-                        (double) blockPos.getZ(), SoundEvents.GRASS_PLACE, SoundSource.BLOCKS, 1.0F, 1.0F);
-                itemstack.shrink(1);
-                if (itemstack.isEmpty()) {
-                    inventory.setItem(i, ItemStack.EMPTY);
-                }
+            BlockState foundSeedBlock = null;
+            if (foundSeed.getItem() == Items.CARROT) {
+                foundSeedBlock = Blocks.CARROTS.defaultBlockState();
+            } else if (foundSeed.getItem() == Items.POTATO) {
+                foundSeedBlock = Blocks.POTATOES.defaultBlockState();
+    
+            } else if (foundSeed.getItem() == Items.WHEAT_SEEDS) {
+                foundSeedBlock = Blocks.WHEAT.defaultBlockState();
+    
+            } else if (foundSeed.getItem() == Items.BEETROOT_SEEDS) {
+                foundSeedBlock = Blocks.BEETROOTS.defaultBlockState();
+            }
+            if (foundSeedBlock != null) {
+                this.placeSeedInWorld(aboveFarmlandPos, i, foundSeed, foundSeedBlock);
                 break;
-            }
+            }   
         }
+    }
 
+    private void placeSeedInWorld(BlockPos blockPos, int inventoryIndex, ItemStack seed, BlockState foundCrop) {
+        seed.shrink(1);
+        if (seed.isEmpty()) {
+            this.farmer.updateInventory(inventoryIndex, ItemStack.EMPTY);
+        }
+        this.farmer.level.setBlock(blockPos, foundCrop, 3);
+        farmer.level.playSound(
+            null, 
+            (double) blockPos.getX(), 
+            (double) blockPos.getY(),
+            (double) blockPos.getZ(), 
+            SoundEvents.GRASS_PLACE, 
+            SoundSource.BLOCKS, 
+            1.0F, 
+            1.0F
+        );
     }
 
     private void prepareFarmLand(BlockPos blockPos) {
+        // Make sure the center block remains waterlogged.
+        if (waterPos != null) {
+            FluidState waterBlockState = this.farmer.level.getFluidState(waterPos);
+
+            if (
+                waterBlockState != Fluids.WATER.defaultFluidState() || 
+                waterBlockState != Fluids.FLOWING_WATER.defaultFluidState()
+            ) {
+                farmer.level.setBlock(waterPos, Blocks.WATER.defaultBlockState(), 3);
+                farmer.level.playSound(null, blockPos.getX(), blockPos.getY(), blockPos.getZ(),
+                        SoundEvents.BUCKET_EMPTY, SoundSource.BLOCKS, 1.0F, 1.0F);
+            }
+            farmer.workerSwingArm();
+        }
+
         farmer.level.setBlock(blockPos, Blocks.FARMLAND.defaultBlockState(), 3);
         farmer.level.playSound(null, blockPos.getX(), blockPos.getY(), blockPos.getZ(), SoundEvents.HOE_TILL,
                 SoundSource.BLOCKS, 1.0F, 1.0F);
         BlockState blockState = this.farmer.level.getBlockState(blockPos.above());
         Block block = blockState.getBlock();
+        farmer.workerSwingArm();
 
         if (block instanceof BushBlock || block instanceof GrowingPlantBlock) {
-
             farmer.level.destroyBlock(blockPos.above(), false);
             farmer.level.playSound(null, blockPos.getX(), blockPos.getY(), blockPos.getZ(), SoundEvents.GRASS_BREAK,
                     SoundSource.BLOCKS, 1.0F, 1.0F);
         }
 
-        if (waterPos != null) {
-            FluidState waterBlockState = this.farmer.level.getFluidState(waterPos);
-
-            if (waterBlockState != Fluids.WATER.defaultFluidState()
-                    || waterBlockState != Fluids.FLOWING_WATER.defaultFluidState()) {
-                farmer.level.setBlock(waterPos, Blocks.WATER.defaultBlockState(), 3);
-                farmer.level.playSound(null, blockPos.getX(), blockPos.getY(), blockPos.getZ(),
-                        SoundEvents.BUCKET_EMPTY, SoundSource.BLOCKS, 1.0F, 1.0F);
-                this.waterPos = null;
-            }
-        }
     }
-
+    // TODO: Selecting a growing crop as a startPos adds 1 extra y level, 1 block starting above the farmer.
     public BlockPos getHoePos() {
         // int range = 8;
         for (int j = 0; j <= 8; j++) {
             for (int i = 0; i <= 8; i++) {
-                BlockPos blockPos = this.farmer.getStartPos().offset(j - 4, 0, i - 4);
+                BlockPos blockPos = this.waterPos.offset(j - 4, 0, i - 4);
                 BlockPos aboveBlockPos = blockPos.above();
                 BlockState blockState = this.farmer.level.getBlockState(blockPos);
                 BlockState aboveBlockState = this.farmer.level.getBlockState(aboveBlockPos);
 
                 Block block = blockState.getBlock();
                 Block aboveBlock = aboveBlockState.getBlock();
-                if ((block == Blocks.GRASS_BLOCK || block == Blocks.DIRT) && (aboveBlock == Blocks.AIR
-                        || aboveBlock instanceof BushBlock || aboveBlock instanceof GrowingPlantBlock)) {
+                boolean canSustainSeeds = block == Blocks.GRASS_BLOCK || block == Blocks.DIRT;
+                boolean hasSpaceAbove = (
+                    aboveBlockState.is(Blocks.AIR) || 
+                    aboveBlock instanceof BushBlock || 
+                    aboveBlock instanceof GrowingPlantBlock
+                );
+                if (canSustainSeeds && hasSpaceAbove) {
                     return blockPos;
                 }
             }
@@ -266,7 +266,7 @@ public class FarmerCropAI extends Goal {
         // int range = 8;
         for (int j = 0; j <= 8; j++) {
             for (int i = 0; i <= 8; i++) {
-                BlockPos blockPos = this.farmer.getStartPos().offset(j - 4, 0, i - 4);
+                BlockPos blockPos = this.waterPos.offset(j - 4, 0, i - 4);
                 BlockPos aboveBlockPos = blockPos.above();
                 BlockState blockState = this.farmer.level.getBlockState(blockPos);
                 BlockState aboveBlockState = this.farmer.level.getBlockState(aboveBlockPos);
@@ -285,7 +285,7 @@ public class FarmerCropAI extends Goal {
         // int range = 8;
         for (int j = 0; j <= 8; j++) {
             for (int i = 0; i <= 8; i++) {
-                BlockPos blockPos = this.farmer.getStartPos().offset(j - 4, 1, i - 4);
+                BlockPos blockPos = waterPos.offset(j - 4, 1, i - 4);
                 BlockState blockState = this.farmer.level.getBlockState(blockPos);
 
                 Block block = blockState.getBlock();

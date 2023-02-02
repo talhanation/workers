@@ -4,6 +4,7 @@ import com.talhanation.workers.entities.MinerEntity;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.sounds.SoundSource;
+import net.minecraft.world.entity.ai.attributes.AttributeInstance;
 import net.minecraft.world.entity.ai.attributes.Attributes;
 import net.minecraft.world.entity.ai.goal.Goal;
 import net.minecraft.world.level.block.Block;
@@ -14,7 +15,6 @@ import java.util.EnumSet;
 
 public class MinerMine8x8x1FlatGoal extends Goal {
     private final MinerEntity miner;
-    private final double speedModifier;
     private final double within;
     private BlockPos minePos;
     private int blocks;
@@ -22,7 +22,6 @@ public class MinerMine8x8x1FlatGoal extends Goal {
 
     public MinerMine8x8x1FlatGoal(MinerEntity miner, double v, double within) {
         this.miner = miner;
-        this.speedModifier = v;
         this.within = within;
         this.setFlags(EnumSet.of(Goal.Flag.MOVE));
     }
@@ -88,7 +87,8 @@ public class MinerMine8x8x1FlatGoal extends Goal {
             BlockState blockstate = miner.level.getBlockState(minePos);
             Block block1 = blockstate.getBlock();
 
-            this.miner.getAttribute(Attributes.MOVEMENT_SPEED).setBaseValue(0.3D);
+            AttributeInstance movSpeed = this.miner.getAttribute(Attributes.MOVEMENT_SPEED);
+            if (movSpeed != null) movSpeed.setBaseValue(0.3D);
             //erst mienen wenn nah genug
             if (minePos.closerThan(miner.getOnPos(), 6)) this.mineBlock(this.minePos);
 

@@ -3,6 +3,7 @@ package com.talhanation.workers.entities.ai;
 import com.talhanation.workers.entities.MinerEntity;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
+import net.minecraft.world.entity.ai.attributes.AttributeInstance;
 import net.minecraft.world.entity.ai.attributes.Attributes;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.state.BlockState;
@@ -78,7 +79,8 @@ public class MinerMine8x8RoomGoal extends MinerMineGoal {
             }
             BlockState blockstate = miner.level.getBlockState(minePos);
             Block block1 = blockstate.getBlock();
-            this.miner.getAttribute(Attributes.MOVEMENT_SPEED).setBaseValue(0.3D);
+            AttributeInstance movSpeed = this.miner.getAttribute(Attributes.MOVEMENT_SPEED);
+            if (movSpeed != null) movSpeed.setBaseValue(0.3D);
 
             if (minePos.closerThan(miner.getOnPos(), 6)) this.mineBlock(this.minePos);
 

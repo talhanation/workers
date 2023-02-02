@@ -3,7 +3,6 @@ package com.talhanation.workers;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
-import com.mojang.blaze3d.platform.InputConstants;
 import com.talhanation.workers.client.events.KeyEvents;
 import com.talhanation.workers.init.ModBlocks;
 import com.talhanation.workers.init.ModEntityTypes;
@@ -11,7 +10,10 @@ import com.talhanation.workers.init.ModItems;
 import com.talhanation.workers.init.ModMenuTypes;
 import com.talhanation.workers.init.ModPois;
 import com.talhanation.workers.init.ModProfessions;
+import com.talhanation.workers.init.ModShortcuts;
 import com.talhanation.workers.network.MessageAnimalCount;
+import com.talhanation.workers.network.MessageBed;
+import com.talhanation.workers.network.MessageChest;
 import com.talhanation.workers.network.MessageHire;
 import com.talhanation.workers.network.MessageHireGui;
 import com.talhanation.workers.network.MessageHomePos;
@@ -25,10 +27,8 @@ import com.talhanation.workers.network.MessageStartPos;
 import com.talhanation.workers.network.MessageTradeButton;
 
 import de.maxhenkel.corelib.CommonRegistry;
-import net.minecraft.client.KeyMapping;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
-import net.minecraftforge.client.event.RegisterKeyMappingsEvent;
 import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.eventbus.api.IEventBus;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
@@ -43,8 +43,6 @@ public class Main {
     public static final String MOD_ID = "workers";
     public static final Logger LOGGER = LogManager.getLogger(MOD_ID);
     public static SimpleChannel SIMPLE_CHANNEL;
-
-    public static KeyMapping C_KEY;
 
     public Main() {
         // ModLoadingContext.get().registerConfig(ModConfig.Type.COMMON,
@@ -63,12 +61,13 @@ public class Main {
         ModEntityTypes.ENTITY_TYPES.register(modEventBus);
 
         modEventBus.addListener(this::clientSetup);
-        modEventBus.addListener(this::registerBindings);
+        modEventBus.addListener(ModShortcuts::registerBindings);
 
         MinecraftForge.EVENT_BUS.register(this);
         MinecraftForge.EVENT_BUS.register(new KeyEvents());
     }
 
+    @SuppressWarnings({"unchecked", "rawtypes"})
     private void setup(final FMLCommonSetupEvent event) {
         LOGGER.info("FMLCommonSetupEvent triggered");
         MinecraftForge.EVENT_BUS.register(new VillagerEvents());
@@ -77,27 +76,24 @@ public class Main {
 
         SIMPLE_CHANNEL = CommonRegistry.registerChannel(Main.MOD_ID, "default");
 
-        CommonRegistry.registerMessage(SIMPLE_CHANNEL, 0, MessageStartPos.class);
-        CommonRegistry.registerMessage(SIMPLE_CHANNEL, 1, MessageOpenGuiMiner.class);
-        CommonRegistry.registerMessage(SIMPLE_CHANNEL, 2, MessageMineType.class);
-        CommonRegistry.registerMessage(SIMPLE_CHANNEL, 3, MessageMineDepth.class);
-        CommonRegistry.registerMessage(SIMPLE_CHANNEL, 4, MessageOpenGuiWorker.class);
-        CommonRegistry.registerMessage(SIMPLE_CHANNEL, 5, MessageHomePos.class);
-        CommonRegistry.registerMessage(SIMPLE_CHANNEL, 6, MessageOpenGuiMerchant.class);
-        CommonRegistry.registerMessage(SIMPLE_CHANNEL, 7, MessageTradeButton.class);
-        CommonRegistry.registerMessage(SIMPLE_CHANNEL, 8, MessageOpenGuiAnimalFarmer.class);
-        CommonRegistry.registerMessage(SIMPLE_CHANNEL, 9, MessageAnimalCount.class);
-        CommonRegistry.registerMessage(SIMPLE_CHANNEL, 10, MessageHire.class);
-        CommonRegistry.registerMessage(SIMPLE_CHANNEL, 11, MessageHireGui.class);
+        Class[] messages = {
+            MessageStartPos.class,
+            MessageOpenGuiMiner.class,
+            MessageMineType.class,
+            MessageMineDepth.class,
+            MessageOpenGuiWorker.class,
+            MessageHomePos.class,
+            MessageOpenGuiMerchant.class,
+            MessageTradeButton.class,
+            MessageOpenGuiAnimalFarmer.class,
+            MessageAnimalCount.class,
+            MessageHire.class,
+            MessageHireGui.class,
+            MessageChest.class,
+            MessageBed.class
+        };
+        for (int i = 0; i < messages.length; i++) CommonRegistry.registerMessage(SIMPLE_CHANNEL, i, messages[i]);
         LOGGER.info("Messages registered");
-    }
-
-    @SubscribeEvent
-    @OnlyIn(Dist.CLIENT)
-    public void registerBindings(RegisterKeyMappingsEvent event) {
-        C_KEY = new KeyMapping("Control workers", InputConstants.Type.KEYSYM, InputConstants.KEY_C, "Workers");
-        event.register(C_KEY);
-        LOGGER.info("Keybindings registered");
     }
 
     @SubscribeEvent

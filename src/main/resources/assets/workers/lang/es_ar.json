@@ -45,9 +45,23 @@
   "gui.workers.hire_gui.text.hire": "Contratar",
   "gui.workers.shepherd.max_animals": "max.",
 
+  "controls.assign_workspace": "Asignar espacio de trabajo",
+  "controls.assign_chest": "Asignar cofre",
+  "controls.assign_bed": "Asignar cama",
+
   "chat.workers.needHome": "Che, estoy homeless, haceme una casita.",
+
   "chat.workers.needBed": "Todo bien con la casa, pero dónde querés que duerma?",
-  "chat.workers.needChest": "Media pila, vieja, no tiene cofre mi casa.",
+  "chat.workers.text.bed": "Gracias! De ahora en más duermo ahí.",
+  "chat.workers.text.bedError": "De dónde le viste pinta de cama a eso?",
+  "chat.workers.cantFindBed": "No encuentro mi cama, me das otra?",
+
+  "chat.workers.needChest": "Necesito un cofre para guardar mis cosas.",
+  "chat.workers.text.chest": "Dale, guardo mis cosas ahí.",
+  "chat.workers.text.chestError": "No creo que pueda andar guardando cosas ahí, eh.",
+  "chat.workers.cantFindChest": "No encuentro mi cofre, me das otro?",
+  "chat.workers.chestFull": "Che, llené mi cofre, me das otro?",
+
   "chat.workers.text.recruited1": "A laburar!",
   "chat.workers.text.recruited2": "Igual no me pongas en blanco, eh",
   "chat.workers.text.recruited3": "Che, voy a tener aguinaldo?",
@@ -58,14 +72,19 @@
   "chat.workers.text.attacked": "Al %s te lo está haciendo cagar %s!",
   "chat.workers.text.working": "Bueh, a laburar.",
   "chat.workers.text.done": "Terminé!!",
-  "chat.workers.text.starving": "Estoy de paro, me quiero ir a mi casa.",
+  "chat.workers.text.starving": "Estoy de paro, dame comida.",
   "chat.workers.text.wander": "Dale, me quedo boludeando por acá.",
   "chat.workers.text.continue": "Dale, ahí sigo con lo que estaba haciendo.",
   "chat.workers.text.follow": "A dónde vamos? Te sigo.",
   "chat.workers.text.home": "Uh alta casa, locura, gracias!",
   "chat.workers.text.outOfStock": "Uh, justo de esos no tengo! Están en falta.",
+  "chat.workers.text.outOfTools": "Che, se me rompió mi %s... tenés más?",
   "chat.workers.text.need": "Necesitás %s de %s si querés comprar eso.",
   "chat.workers.text.outOfStockOwner": "Loco, me están pidiendo productos que no tengo! Me podés mandar un proveedor?",
   "chat.workers.text.invFull": "Disculpá, pero no me entra más nada en la mochila.",
-  "chat.workers.text.invFullOwner": "Che, me tenés los items un segundo? Me quedé sin espacio."
+  "chat.workers.text.invFullOwner": "Che, me tenés los items un segundo? Me quedé sin espacio.",
+
+  "chat.workers.controls.assign_bed_key": "Apretá \"%s\" para elegir mi cama.",
+  "chat.workers.controls.assign_chest_key": "Apretá \"%s\" para asignarme un cofre.",
+  "chat.workers.controls.assign_workspace_key": "Apretá \"%s\" para mandarme a laburar."
 }

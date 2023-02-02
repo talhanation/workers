@@ -169,31 +169,16 @@ public class FarmerEntity extends AbstractWorkerEntity {
         this.setCanPickUpLoot(true);
     }
 
-    protected void pickUpItem(ItemEntity itemEntity) {
-        ItemStack itemstack = itemEntity.getItem();
-        if (this.wantsToPickUp(itemstack)) {
-            SimpleContainer inventory = this.getInventory();
-            boolean flag = inventory.canAddItem(itemstack);
-            if (!flag) {
-                return;
-            }
-
-            this.onItemPickup(itemEntity);
-            this.take(itemEntity, itemstack.getCount());
-            ItemStack itemstack1 = inventory.addItem(itemstack);
-            if (itemstack1.isEmpty()) {
-                itemEntity.remove(RemovalReason.DISCARDED);
-            } else {
-                itemstack.setCount(itemstack1.getCount());
-            }
-        }
-
-    }
-
     @Override
     public boolean wantsToPickUp(ItemStack itemStack) {
         Item item = itemStack.getItem();
         return (WANTED_ITEMS.contains(item) || WANTED_SEEDS.contains(item));
+    }
+
+    @Override
+    public boolean wantsToKeep(ItemStack itemStack) {
+        Item item = itemStack.getItem();
+        return (WANTED_SEEDS.contains(item));
     }
 
     public boolean isCropBlock(Block block) {

@@ -5,14 +5,11 @@ import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.ai.goal.Goal;
 import net.minecraft.world.entity.ai.navigation.PathNavigation;
 import net.minecraft.world.level.pathfinder.BlockPathTypes;
-import net.minecraft.world.level.LevelReader;
-
 import java.util.EnumSet;
 
 public class WorkerFollowOwnerGoal extends Goal {
     private final AbstractWorkerEntity workerEntity;
     private LivingEntity owner;
-    private final LevelReader level;
     private final double speedModifier;
     private final PathNavigation navigation;
     private int timeToRecalcPath;
@@ -24,7 +21,6 @@ public class WorkerFollowOwnerGoal extends Goal {
 
     public WorkerFollowOwnerGoal(AbstractWorkerEntity abstractworkerEntity, double v, float startDistance, float stopDistance) {
         this.workerEntity = abstractworkerEntity;
-        this.level = abstractworkerEntity.level;
         this.speedModifier = v;
         this.navigation = abstractworkerEntity.getNavigation();
         this.startDistance = startDistance;
@@ -34,39 +30,29 @@ public class WorkerFollowOwnerGoal extends Goal {
 
     public boolean canUse() {
         LivingEntity owner = this.workerEntity.getOwner();
-        if (owner == null) {
-            return false;
-        } else if (owner.isSpectator()) {
-            return false;
-        } else if (!this.workerEntity.getFollow()) {
-            return false;
-        } else if (this.workerEntity.isSleeping()) {
-            return false;
-        } else if (this.workerEntity.isOrderedToSit()) {
-            return false;
-        } else if (this.workerEntity.distanceToSqr(owner) < (double)(this.startDistance * this.startDistance)) {
+        if (
+            owner == null ||
+            owner.isSpectator() ||
+            this.workerEntity.isSleeping() ||
+            this.workerEntity.isOrderedToSit() ||
+            this.workerEntity.distanceToSqr(owner) < (double)(this.startDistance * this.startDistance)
+        ) {
             return false;
         }
-        else {
-            this.owner = owner;
-            return workerEntity.getFollow();
-        }
+        this.owner = owner;
+        return this.workerEntity.getFollow();
     }
 
     public boolean canContinueToUse() {
-        if (this.navigation.isDone()) {
-            return false;
-        } else if (!this.workerEntity.isSleeping()) {
-            return false;
-        } else if (this.workerEntity.isOrderedToSit()) {
-            return false;
-        } else if (!this.workerEntity.getFollow()) {
+        if (
+            this.navigation.isDone() ||
+            !this.workerEntity.isSleeping() ||
+            this.workerEntity.isOrderedToSit() ||
+            !this.workerEntity.getFollow()
+         ) {
             return false;
         }
-        else {
-            return !(this.workerEntity.distanceToSqr(this.owner) <= (double)(this.stopDistance * this.stopDistance));
-        }
-
+        return this.workerEntity.distanceTo(this.owner) <= this.stopDistance;
     }
 
     public void start() {

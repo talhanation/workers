@@ -1,22 +1,23 @@
 package com.talhanation.workers.entities;
 
-import com.google.common.collect.ImmutableSet;
 import com.talhanation.workers.Main;
 import com.talhanation.workers.inventory.WorkerInventoryContainer;
 import com.talhanation.workers.entities.ai.FishermanAI;
-import com.talhanation.workers.entities.ai.WorkerFindWaterAI;
 import com.talhanation.workers.entities.ai.WorkerPickupWantedItemGoal;
 import com.talhanation.workers.network.MessageOpenGuiWorker;
 import net.minecraft.world.entity.AgeableMob;
 import net.minecraft.world.entity.EntityType;
-import net.minecraft.world.entity.EquipmentSlot;
+import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.MobSpawnType;
 import net.minecraft.world.entity.SpawnGroupData;
 import net.minecraft.world.entity.ai.attributes.AttributeSupplier;
 import net.minecraft.world.entity.ai.attributes.Attributes;
 import net.minecraft.world.entity.ai.goal.LookAtPlayerGoal;
+import net.minecraft.world.entity.ai.goal.MoveBackToVillageGoal;
+import net.minecraft.world.entity.ai.goal.PanicGoal;
 import net.minecraft.world.entity.ai.goal.RandomLookAroundGoal;
 import net.minecraft.world.entity.ai.goal.FloatGoal;
+import net.minecraft.world.entity.ai.goal.GolemRandomStrollInVillageGoal;
 import net.minecraft.world.entity.ai.goal.WaterAvoidingRandomStrollGoal;
 import net.minecraft.world.entity.item.ItemEntity;
 import net.minecraft.world.entity.player.Player;
@@ -24,7 +25,6 @@ import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.inventory.AbstractContainerMenu;
 import net.minecraft.world.MenuProvider;
-import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
 import net.minecraft.nbt.CompoundTag;
@@ -37,19 +37,16 @@ import net.minecraft.server.level.ServerLevel;
 import net.minecraftforge.network.NetworkHooks;
 
 import javax.annotation.Nullable;
-import java.util.Set;
 import java.util.function.Predicate;
 
 public class FishermanEntity extends AbstractWorkerEntity {
-
-    private final Predicate<ItemEntity> ALLOWED_ITEMS = (item) -> !item.hasPickUpDelay() && item.isAlive()
-            && this.wantsToPickUp(item.getItem());
-
-    public static final Set<Item> WANTED_ITEMS = ImmutableSet.of(
-            Items.COD,
-            Items.SALMON,
-            Items.PUFFERFISH,
-            Items.TROPICAL_FISH);
+    private final Predicate<ItemEntity> ALLOWED_ITEMS = (item) -> {
+        return (
+            !item.hasPickUpDelay() && 
+            item.isAlive() && 
+            this.wantsToPickUp(item.getItem())
+        );
+    };
 
     public FishermanEntity(EntityType<? extends AbstractWorkerEntity> entityType, Level world) {
         super(entityType, world);
@@ -90,11 +87,15 @@ public class FishermanEntity extends AbstractWorkerEntity {
         super.registerGoals();
         this.goalSelector.addGoal(1, new FloatGoal(this));
         this.goalSelector.addGoal(2, new WorkerPickupWantedItemGoal(this));
-        this.goalSelector.addGoal(3, new WorkerFindWaterAI(this));
+        // this.goalSelector.addGoal(3, new WorkerFindWaterAI(this));
         this.goalSelector.addGoal(4, new FishermanAI(this));
-        this.goalSelector.addGoal(5, new LookAtPlayerGoal(this, Player.class, 8.0F));
-        this.goalSelector.addGoal(6, new RandomLookAroundGoal(this));
-        this.goalSelector.addGoal(6, new WaterAvoidingRandomStrollGoal(this, 1.0D, 0F));
+        this.goalSelector.addGoal(1, new PanicGoal(this, 1.3D));
+        this.goalSelector.addGoal(9, new MoveBackToVillageGoal(this, 0.6D, false));
+        this.goalSelector.addGoal(10, new GolemRandomStrollInVillageGoal(this, 0.6D));
+        this.goalSelector.addGoal(10, new WaterAvoidingRandomStrollGoal(this, 1.0D, 0F));
+        this.goalSelector.addGoal(11, new LookAtPlayerGoal(this, Player.class, 8.0F));
+        this.goalSelector.addGoal(10, new LookAtPlayerGoal(this, LivingEntity.class, 8.0F));
+        this.goalSelector.addGoal(12, new RandomLookAroundGoal(this));
     }
 
     @Nullable
@@ -137,13 +138,19 @@ public class FishermanEntity extends AbstractWorkerEntity {
 
     @Override
     public boolean wantsToPickUp(ItemStack itemStack) {
-        Item item = itemStack.getItem();
-        return (WANTED_ITEMS.contains(item));
+        return !itemStack.isEmpty();
+    }
+    
+    @Override
+    public boolean wantsToKeep(ItemStack itemStack) {
+        return itemStack.is(Items.FISHING_ROD);
     }
 
     @Override
     public void setEquipment() {
-        this.setItemSlot(EquipmentSlot.MAINHAND, new ItemStack(Items.FISHING_ROD));
+        ItemStack initialTool = new ItemStack(Items.FISHING_ROD);
+        this.updateInventory(0, initialTool);
+        this.equipTool(initialTool);
     }
 
     @Override

@@ -4,9 +4,9 @@ import com.talhanation.workers.entities.MinerEntity;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.block.Blocks;
+import net.minecraft.world.entity.ai.attributes.AttributeInstance;
 import net.minecraft.world.entity.ai.attributes.Attributes;
 import net.minecraft.world.entity.ai.goal.Goal;
-import net.minecraft.world.SimpleContainer;
 import net.minecraft.core.Direction;
 import net.minecraft.sounds.SoundSource;
 import net.minecraft.sounds.SoundEvents;
@@ -17,17 +17,14 @@ import java.util.EnumSet;
 
 public class MinerMine8x8PitGoal extends Goal {
     private final MinerEntity miner;
-    private final double speedModifier;
     private final double within;
     private BlockPos minePos;
-    private BlockPos standPos;
     private int blocks;
     private int side;
     private int depth;
 
     public MinerMine8x8PitGoal(MinerEntity miner, double v, double within) {
         this.miner = miner;
-        this.speedModifier = v;
         this.within = within;
         this.setFlags(EnumSet.of(Goal.Flag.MOVE));
     }
@@ -71,19 +68,19 @@ public class MinerMine8x8PitGoal extends Goal {
         if (!miner.getFollow()) {
             if (miner.getMineDirection().equals(Direction.EAST)) {
                 this.minePos = new BlockPos(miner.getStartPos().getX() + blocks, miner.getStartPos().getY() - depth, miner.getStartPos().getZ() - side);
-                this.standPos = new BlockPos(minePos.getX() + 2, minePos.getY(), minePos.getZ());
+                new BlockPos(minePos.getX() + 2, minePos.getY(), minePos.getZ());
 
             } else if (miner.getMineDirection().equals(Direction.WEST)) {
                 this.minePos = new BlockPos(miner.getStartPos().getX() - blocks, miner.getStartPos().getY() - depth, miner.getStartPos().getZ() + side);
-                this.standPos = new BlockPos(minePos.getX() - 2, minePos.getY(), minePos.getZ());
+                new BlockPos(minePos.getX() - 2, minePos.getY(), minePos.getZ());
 
             } else if (miner.getMineDirection().equals(Direction.NORTH)) {
                 this.minePos = new BlockPos(miner.getStartPos().getX() - side, miner.getStartPos().getY() - depth, miner.getStartPos().getZ() - blocks);
-                this.standPos = new BlockPos(minePos.getX(), minePos.getY(), minePos.getZ() - 2);
+                new BlockPos(minePos.getX(), minePos.getY(), minePos.getZ() - 2);
 
             } else if (miner.getMineDirection().equals(Direction.SOUTH)) {
                 this.minePos = new BlockPos(miner.getStartPos().getX() + side, miner.getStartPos().getY() - depth, miner.getStartPos().getZ() + blocks);
-                this.standPos = new BlockPos(minePos.getX(), minePos.getY(), minePos.getZ() + 2);
+                new BlockPos(minePos.getX(), minePos.getY(), minePos.getZ() + 2);
             }
 
             if (!minePos.closerThan(miner.getOnPos(), 2) && !miner.getIsPickingUp()){
@@ -95,7 +92,8 @@ public class MinerMine8x8PitGoal extends Goal {
             }
             BlockState blockstate = miner.level.getBlockState(minePos);
             Block block1 = blockstate.getBlock();
-            this.miner.getAttribute(Attributes.MOVEMENT_SPEED).setBaseValue(0.3D);
+            AttributeInstance movSpeed = this.miner.getAttribute(Attributes.MOVEMENT_SPEED);
+            if (movSpeed != null) movSpeed.setBaseValue(0.3D);
             //erst mienen wenn nah genug
             if (minePos.closerThan(miner.getOnPos(), 6)) this.mineBlock(this.minePos);
             if (miner.shouldIgnoreBlock(block1) || block1 == Blocks.OAK_PLANKS) {
@@ -181,7 +179,7 @@ public class MinerMine8x8PitGoal extends Goal {
     }
 
     private boolean hasPlanksInInv(){
-        SimpleContainer inventory = miner.getInventory();
+        // SimpleContainer inventory = miner.getInventory();
         return true;
     }
 }

@@ -1,7 +1,12 @@
 package com.talhanation.workers.client.events;
 
 import com.talhanation.workers.Main;
+import com.talhanation.workers.init.ModShortcuts;
+import com.talhanation.workers.network.MessageBed;
+import com.talhanation.workers.network.MessageChest;
 import com.talhanation.workers.network.MessageStartPos;
+
+import de.maxhenkel.corelib.net.Message;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.player.LocalPlayer;
 import net.minecraft.core.BlockPos;
@@ -19,16 +24,29 @@ public class KeyEvents {
     public void onKeyInput(InputEvent.Key event) {
         Minecraft minecraft = Minecraft.getInstance();
         LocalPlayer clientPlayerEntity = minecraft.player;
-        if (clientPlayerEntity == null)
-            return;
+        if (clientPlayerEntity == null) return;
 
-        if (Main.C_KEY.isDown()) {
+        if (
+            ModShortcuts.ASSIGN_WORKSPACE_KEY.isDown() ||
+            ModShortcuts.ASSIGN_CHEST_KEY.isDown() ||
+            ModShortcuts.ASSIGN_BED_KEY.isDown()
+        ) {
             HitResult rayTraceResult = minecraft.hitResult;
             if (rayTraceResult != null) {
                 if (rayTraceResult.getType() == HitResult.Type.BLOCK) {
                     BlockHitResult blockraytraceresult = (BlockHitResult) rayTraceResult;
                     BlockPos blockpos = blockraytraceresult.getBlockPos();
-                    Main.SIMPLE_CHANNEL.sendToServer(new MessageStartPos(clientPlayerEntity.getUUID(), blockpos));
+                    
+                    Message<?> message;
+                    if (ModShortcuts.ASSIGN_WORKSPACE_KEY.isDown()) {
+                        message = new MessageStartPos(clientPlayerEntity.getUUID(), blockpos);
+                    } else if (ModShortcuts.ASSIGN_CHEST_KEY.isDown()) {
+                        message = new MessageChest(clientPlayerEntity.getUUID(), blockpos);
+                    } else {
+                        message = new MessageBed(clientPlayerEntity.getUUID(), blockpos);
+                    }
+
+                    Main.SIMPLE_CHANNEL.sendToServer(message);
                 }
             }
         }

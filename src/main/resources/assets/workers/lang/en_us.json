@@ -46,8 +46,18 @@
   "gui.workers.shepherd.max_animals": "max.",
 
   "chat.workers.needHome": "I need a home to store items.",
+
   "chat.workers.needBed": "I need a bed to sleep.",
+  "chat.workers.text.bed": "Thanks! I'll sleep there from now on.",
+  "chat.workers.text.bedError": "That doesn't look like a bed.",
+  "chat.workers.cantFindBed": "I can't find my bed anymore, can you help me find a new one?",
+
   "chat.workers.needChest": "I need a chest to put the items in.",
+  "chat.workers.text.chest": "Okay, I'll save my items there.",
+  "chat.workers.text.chestError": "I don't think I can put my items inside that.",
+  "chat.workers.cantFindChest": "I can't find my chest anymore, can you help me find a new one?",
+  "chat.workers.chestFull": "My chest is full, can you help me find a new one?",
+
   "chat.workers.text.recruited1": "It's a honor for me to work for you.",
   "chat.workers.text.recruited2": "I am the best for this work.",
   "chat.workers.text.recruited3": "I work fast and reliable.",
@@ -56,16 +66,25 @@
 
   "chat.workers.text.hire_costs": "You need %s Emeralds to hire me!",
   "chat.workers.text.attacked": "%s is getting attacked by %s!",
-  "chat.workers.text.working": "Im working now!",
+  "chat.workers.text.working": "I'm working now!",
   "chat.workers.text.done": "Work is done!",
-  "chat.workers.text.starving": "Im starving! I need something to eat.",
+  "chat.workers.text.starving": "I'm starving! I need something to eat.",
   "chat.workers.text.wander": "I will wander here.",
   "chat.workers.text.continue": "I will continue my work.",
   "chat.workers.text.follow": "I will follow you!",
   "chat.workers.text.home": "My home is here now.",
-  "chat.workers.text.outOfStock": "Sorry, im out of Stock.",
+  "chat.workers.text.outOfStock": "Sorry, I'm out of Stock.",
+  "chat.workers.text.outOfTools": "My last %s just broke! May I have a new one?",
   "chat.workers.text.need": "Sorry, you need %s %s",
-  "chat.workers.text.outOfStockOwner": "Im out of stock!",
-  "chat.workers.text.invFull": "Sorry, i cant take your Items currently.",
-  "chat.workers.text.invFullOwner": "My inventory is full, i cant accept new items!"
+  "chat.workers.text.outOfStockOwner": "I'm out of stock!",
+  "chat.workers.text.invFull": "Sorry, I cant take your items currently.",
+  "chat.workers.text.invFullOwner": "My inventory is full, I can't accept new items!",
+
+  "controls.assign_workspace": "Assign Workspace",
+  "controls.assign_chest": "Assign Chest",
+  "controls.assign_bed": "Assign Bed",
+
+  "chat.workers.controls.assign_bed_key": "Press \"%s\" to assign me a bed.",
+  "chat.workers.controls.assign_chest_key": "Press \"%s\" to assign me a chest.",
+  "chat.workers.controls.assign_workspace_key": "Press \"%s\" to send me to assign me a place to work."
 }

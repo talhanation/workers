@@ -195,27 +195,6 @@ public class MerchantEntity extends AbstractWorkerEntity {
         return false;
     }
 
-    protected void pickUpItem(ItemEntity itemEntity) {
-        ItemStack itemstack = itemEntity.getItem();
-        if (this.wantsToPickUp(itemstack)) {
-            SimpleContainer inventory = this.getInventory();
-            boolean flag = inventory.canAddItem(itemstack);
-            if (!flag) {
-                return;
-            }
-
-            this.onItemPickup(itemEntity);
-            this.take(itemEntity, itemstack.getCount());
-            ItemStack itemstack1 = inventory.addItem(itemstack);
-            if (itemstack1.isEmpty()) {
-                itemEntity.remove(RemovalReason.DISCARDED);
-            } else {
-                itemstack.setCount(itemstack1.getCount());
-            }
-        }
-
-    }
-
     @Override
     public void setEquipment() {
         int i = this.random.nextInt(9);
@@ -261,16 +240,5 @@ public class MerchantEntity extends AbstractWorkerEntity {
         super.die(dmg);
         for (int i = 0; i < this.tradeInventory.getContainerSize(); i++)
             Containers.dropItemStack(this.level, getX(), getY(), getZ(), this.tradeInventory.getItem(i));
-    }
-
-    @Override
-    public boolean hurt(DamageSource dmg, float amt) {
-        Entity entity = dmg.getEntity();
-        String name = "";
-        if (entity != null) {
-            name = entity.getName().getString();
-        }
-
-        return super.hurt(dmg, amt);
     }
 }

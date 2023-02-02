@@ -12,7 +12,7 @@ import java.util.HashSet;
 import java.util.Optional;
 import java.util.Set;
 
-public abstract class AbstractChunkLoaderEntity extends AbstractInventoryEntity{
+public abstract class AbstractChunkLoaderEntity extends AbstractInventoryEntity {
 
     private Optional<Pair<Integer, Integer>> loadedChunk = Optional.empty();
 
@@ -27,14 +27,14 @@ public abstract class AbstractChunkLoaderEntity extends AbstractInventoryEntity{
         updateChunkLoading();
     }
 
-    public void updateChunkLoading(){
+    public void updateChunkLoading() {
         if (this.shouldLoadChunk() && !this.level.isClientSide) {
             Pair<Integer, Integer> currentChunk = new Pair<>(this.chunkPosition().x, this.chunkPosition().z);
             if (!loadedChunk.isPresent()) {
                 this.forceChunk(currentChunk);
                 loadedChunk = Optional.of(currentChunk);
 
-            } else if (!currentChunk.equals(loadedChunk.get())){
+            } else if (!currentChunk.equals(loadedChunk.get())) {
 
                 Set<Pair<Integer, Integer>> toForce = getSetOfChunks(currentChunk);
                 Set<Pair<Integer, Integer>> toUnForce = getSetOfChunks(loadedChunk.get());
