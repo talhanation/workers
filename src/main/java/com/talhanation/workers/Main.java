@@ -1,5 +1,9 @@
 package com.talhanation.workers;
 
+import com.talhanation.workers.config.WorkersModConfig;
+import net.minecraftforge.fml.ModLoadingContext;
+import net.minecraftforge.fml.config.ModConfig;
+import net.minecraftforge.fml.loading.FMLPaths;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -45,10 +49,8 @@ public class Main {
     public static SimpleChannel SIMPLE_CHANNEL;
 
     public Main() {
-        // ModLoadingContext.get().registerConfig(ModConfig.Type.COMMON,
-        // workersModConfig.CONFIG);
-        // workersModConfig.loadConfig(workersModConfig.CONFIG,
-        // FMLPaths.CONFIGDIR.get().resolve("workers-common.toml"));
+        ModLoadingContext.get().registerConfig(ModConfig.Type.COMMON, WorkersModConfig.CONFIG);
+        WorkersModConfig.loadConfig(WorkersModConfig.CONFIG, FMLPaths.CONFIGDIR.get().resolve("workers-common.toml"));
 
         final IEventBus modEventBus = FMLJavaModLoadingContext.get().getModEventBus();
         modEventBus.addListener(this::setup);

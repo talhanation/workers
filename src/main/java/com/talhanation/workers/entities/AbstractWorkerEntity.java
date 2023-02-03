@@ -1,6 +1,7 @@
 package com.talhanation.workers.entities;
 
 import com.talhanation.workers.Main;
+import com.talhanation.workers.config.WorkersModConfig;
 import com.talhanation.workers.entities.ai.EatGoal;
 import com.talhanation.workers.entities.ai.SleepGoal;
 import com.talhanation.workers.entities.ai.TransferItemsInChestGoal;
@@ -488,11 +489,19 @@ public abstract class AbstractWorkerEntity extends AbstractChunkLoaderEntity {
     }
 
     public SoundEvent getHurtSound(DamageSource ds) {
-        return SoundEvents.VILLAGER_HURT;
+        if(WorkersModConfig.WorkersLookLikeVillagers.get()){
+            return SoundEvents.VILLAGER_HURT;
+        }
+        else
+            return SoundEvents.PLAYER_HURT;
     }
 
     protected SoundEvent getDeathSound() {
-        return SoundEvents.VILLAGER_DEATH;
+        if(WorkersModConfig.WorkersLookLikeVillagers.get()){
+            return SoundEvents.VILLAGER_DEATH;
+        }
+        else
+            return SoundEvents.PLAYER_DEATH;
     }
 
     protected float getSoundVolume() {
@@ -836,8 +845,8 @@ public abstract class AbstractWorkerEntity extends AbstractChunkLoaderEntity {
             null, 
             this.getX(), 
             this.getY() + 4, 
-            this.getZ(), 
-            SoundEvents.VILLAGER_AMBIENT,
+            this.getZ(),
+            WorkersModConfig.WorkersLookLikeVillagers.get() ? SoundEvents.VILLAGER_AMBIENT : SoundEvents.PLAYER_BREATH,
             this.getSoundSource(), 
             15.0F, 
             0.8F + 0.4F * this.random.nextFloat()
