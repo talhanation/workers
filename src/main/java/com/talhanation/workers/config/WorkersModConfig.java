@@ -13,10 +13,11 @@ public class WorkersModConfig {
     private static final ForgeConfigSpec.Builder BUILDER = new ForgeConfigSpec.Builder();
     public static ForgeConfigSpec CONFIG;
     public static ForgeConfigSpec.IntValue VERSION;
-    public static final int NEW_VERSION = 2;
+    public static final int NEW_VERSION = 3;
 
 
     public static ForgeConfigSpec.BooleanValue PlayVillagerAmbientSound;
+    public static ForgeConfigSpec.BooleanValue WorkersLookLikeVillagers;
 
     static{
         VERSION = BUILDER.comment("\n" +"##Version, do not change!##")
@@ -29,7 +30,11 @@ public class WorkersModConfig {
                 "\t" + "default: true")
                 .define("PlayVillagerAmbientSound", true);
 
-        //config here
+        WorkersLookLikeVillagers = BUILDER.comment("\n" + "----Should Workers look like Villagers?----" + "\n" +
+                        "\t" + "(takes effect after restart)" + "\n" +
+                        "\t" + "default: true")
+                .worldRestart()
+                .define("WorkersLookLikeVillagers", true);
 
     CONFIG = BUILDER.build();
 }
