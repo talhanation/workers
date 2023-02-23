@@ -1,6 +1,7 @@
 package com.talhanation.workers;
 
 import com.talhanation.workers.config.WorkersModConfig;
+import net.minecraftforge.fml.DistExecutor;
 import net.minecraftforge.fml.ModLoadingContext;
 import net.minecraftforge.fml.config.ModConfig;
 import net.minecraftforge.fml.loading.FMLPaths;
@@ -62,11 +63,9 @@ public class Main {
         ModItems.ITEMS.register(modEventBus);
         ModEntityTypes.ENTITY_TYPES.register(modEventBus);
 
-        modEventBus.addListener(this::clientSetup);
-        modEventBus.addListener(ModShortcuts::registerBindings);
+        DistExecutor.unsafeRunWhenOn(Dist.CLIENT, () -> () -> FMLJavaModLoadingContext.get().getModEventBus().addListener(Main.this::clientSetup));
 
         MinecraftForge.EVENT_BUS.register(this);
-        MinecraftForge.EVENT_BUS.register(new KeyEvents());
     }
 
     @SuppressWarnings({"unchecked", "rawtypes"})
@@ -101,6 +100,8 @@ public class Main {
     @SubscribeEvent
     @OnlyIn(Dist.CLIENT)
     public void clientSetup(FMLClientSetupEvent event) {
-        event.enqueueWork(() -> ModMenuTypes.registerMenus());
+        event.enqueueWork(ModMenuTypes::registerMenus);
+        MinecraftForge.EVENT_BUS.register(new ModShortcuts());
+        MinecraftForge.EVENT_BUS.register(new KeyEvents());
     }
 }
