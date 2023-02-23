@@ -47,14 +47,17 @@ public class MinerEntity extends AbstractWorkerEntity {
     private final Predicate<ItemEntity> ALLOWED_ITEMS =
             (item) -> !item.hasPickUpDelay() && item.isAlive() && this.wantsToPickUp(item.getItem());
 
-    private static final EntityDataAccessor<Direction> DIRECTION =
-            SynchedEntityData.defineId(MinerEntity.class, EntityDataSerializers.DIRECTION);
-    private static final EntityDataAccessor<Integer> MINE_TYPE =
-            SynchedEntityData.defineId(MinerEntity.class, EntityDataSerializers.INT);
-    private static final EntityDataAccessor<Integer> DEPTH =
-            SynchedEntityData.defineId(MinerEntity.class, EntityDataSerializers.INT);
+    private static final EntityDataAccessor<Direction> DIRECTION = SynchedEntityData.defineId(MinerEntity.class, EntityDataSerializers.DIRECTION);
+    private static final EntityDataAccessor<Integer> MINE_TYPE = SynchedEntityData.defineId(MinerEntity.class, EntityDataSerializers.INT);
+    private static final EntityDataAccessor<Integer> DEPTH = SynchedEntityData.defineId(MinerEntity.class, EntityDataSerializers.INT);
     /*
-     * MINE TYPES: 0 = nothing 1 = 1x1 Tunel 2 = 3x3 Tunel 3 = 8x8x8 Pit 4 = 8x8x1 Flat 5 = 8x8x3 Room
+     * MINE TYPES:
+     *  0 = nothing
+     *  1 = 1x1 Tunnel
+     *  2 = 3x3 Tunnel
+     *  3 = 8x8x8 Pit
+     *  4 = 8x8x1 Flat
+     *  5 = 8x8x3 Room
      */
 
     private static final Set<Item> WANTED_ITEMS = ImmutableSet.of(Items.COAL, Items.COPPER_ORE, Items.IRON_ORE,

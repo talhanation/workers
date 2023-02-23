@@ -7,7 +7,6 @@ import com.talhanation.workers.entities.ai.SleepGoal;
 import com.talhanation.workers.entities.ai.TransferItemsInChestGoal;
 import com.talhanation.workers.entities.ai.WorkerFollowOwnerGoal;
 import com.talhanation.workers.entities.ai.WorkerMoveToHomeGoal;
-import com.talhanation.workers.init.ModShortcuts;
 import com.talhanation.workers.inventory.WorkerHireContainer;
 import com.talhanation.workers.network.MessageHireGui;
 
@@ -15,7 +14,6 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.network.chat.Component;
-import net.minecraft.network.chat.MutableComponent;
 import net.minecraft.network.syncher.EntityDataAccessor;
 import net.minecraft.network.syncher.EntityDataSerializers;
 import net.minecraft.network.syncher.SynchedEntityData;
@@ -59,79 +57,27 @@ import java.util.Optional;
 import java.util.function.Consumer;
 import java.util.function.Predicate;
 
+import static com.talhanation.workers.Translatable.*;
+
 public abstract class AbstractWorkerEntity extends AbstractChunkLoaderEntity {
-    private static final EntityDataAccessor<Optional<BlockPos>> START_POS = SynchedEntityData.defineId(
-        AbstractWorkerEntity.class, 
-        EntityDataSerializers.OPTIONAL_BLOCK_POS
-    );
-    private static final EntityDataAccessor<Optional<BlockPos>> DEST_POS = SynchedEntityData.defineId(
-        AbstractWorkerEntity.class, 
-        EntityDataSerializers.OPTIONAL_BLOCK_POS
-    );
-    private static final EntityDataAccessor<Optional<BlockPos>> HOME = SynchedEntityData.defineId(
-        AbstractWorkerEntity.class, 
-        EntityDataSerializers.OPTIONAL_BLOCK_POS
-    );
-    private static final EntityDataAccessor<Optional<BlockPos>> CHEST = SynchedEntityData.defineId(
-        AbstractWorkerEntity.class, 
-        EntityDataSerializers.OPTIONAL_BLOCK_POS
-    );
-    private static final EntityDataAccessor<Optional<BlockPos>> BED = SynchedEntityData.defineId(
-        AbstractWorkerEntity.class, 
-        EntityDataSerializers.OPTIONAL_BLOCK_POS
-    );
-    private static final EntityDataAccessor<Boolean> FOLLOW = SynchedEntityData.defineId(
-        AbstractWorkerEntity.class, 
-        EntityDataSerializers.BOOLEAN
-    );
-    public static final EntityDataAccessor<Boolean> IS_WORKING = SynchedEntityData.defineId(
-        AbstractWorkerEntity.class, 
-        EntityDataSerializers.BOOLEAN
-    );
-    private static final EntityDataAccessor<Boolean> IS_PICKING_UP = SynchedEntityData.defineId(
-        AbstractWorkerEntity.class, 
-        EntityDataSerializers.BOOLEAN
-    );
-    private static final EntityDataAccessor<Integer> breakingTime = SynchedEntityData.defineId(
-        AbstractWorkerEntity.class, 
-        EntityDataSerializers.INT
-    );
-    private static final EntityDataAccessor<Integer> currentTimeBreak = SynchedEntityData.defineId(
-        AbstractWorkerEntity.class, 
-        EntityDataSerializers.INT
-    );
-    private static final EntityDataAccessor<Integer> previousTimeBreak = SynchedEntityData.defineId(
-        AbstractWorkerEntity.class, 
-        EntityDataSerializers.INT
-    );
-    private static final EntityDataAccessor<Float> HUNGER = SynchedEntityData.defineId(
-        AbstractWorkerEntity.class, 
-        EntityDataSerializers.FLOAT
-    );
-    private static final EntityDataAccessor<Boolean> IS_EATING = SynchedEntityData.defineId(
-        AbstractWorkerEntity.class, 
-        EntityDataSerializers.BOOLEAN
-    );
-    private static final EntityDataAccessor<Boolean> NEEDS_HOME = SynchedEntityData.defineId(
-        AbstractWorkerEntity.class, 
-        EntityDataSerializers.BOOLEAN
-    );
-    private static final EntityDataAccessor<Boolean> NEEDS_CHEST = SynchedEntityData.defineId(
-        AbstractWorkerEntity.class, 
-        EntityDataSerializers.BOOLEAN
-    );
-    private static final EntityDataAccessor<Boolean> NEEDS_BED = SynchedEntityData.defineId(
-        AbstractWorkerEntity.class, 
-        EntityDataSerializers.BOOLEAN
-    );
-    private static final EntityDataAccessor<String> OWNER_NAME = SynchedEntityData.defineId(
-        AbstractWorkerEntity.class, 
-        EntityDataSerializers.STRING
-    );
-    private static final EntityDataAccessor<String> PROFESSION_NAME = SynchedEntityData.defineId(
-        AbstractWorkerEntity.class, 
-        EntityDataSerializers.STRING
-    );
+    private static final EntityDataAccessor<Optional<BlockPos>> START_POS = SynchedEntityData.defineId(AbstractWorkerEntity.class, EntityDataSerializers.OPTIONAL_BLOCK_POS);
+    private static final EntityDataAccessor<Optional<BlockPos>> DEST_POS = SynchedEntityData.defineId(AbstractWorkerEntity.class, EntityDataSerializers.OPTIONAL_BLOCK_POS);
+    private static final EntityDataAccessor<Optional<BlockPos>> HOME = SynchedEntityData.defineId(AbstractWorkerEntity.class, EntityDataSerializers.OPTIONAL_BLOCK_POS);
+    private static final EntityDataAccessor<Optional<BlockPos>> CHEST = SynchedEntityData.defineId(AbstractWorkerEntity.class, EntityDataSerializers.OPTIONAL_BLOCK_POS);
+    private static final EntityDataAccessor<Optional<BlockPos>> BED = SynchedEntityData.defineId(AbstractWorkerEntity.class, EntityDataSerializers.OPTIONAL_BLOCK_POS);
+    private static final EntityDataAccessor<Boolean> FOLLOW = SynchedEntityData.defineId(AbstractWorkerEntity.class, EntityDataSerializers.BOOLEAN);
+    public static final EntityDataAccessor<Boolean> IS_WORKING = SynchedEntityData.defineId(AbstractWorkerEntity.class, EntityDataSerializers.BOOLEAN);
+    private static final EntityDataAccessor<Boolean> IS_PICKING_UP = SynchedEntityData.defineId(AbstractWorkerEntity.class, EntityDataSerializers.BOOLEAN);
+    private static final EntityDataAccessor<Integer> breakingTime = SynchedEntityData.defineId(AbstractWorkerEntity.class, EntityDataSerializers.INT);
+    private static final EntityDataAccessor<Integer> currentTimeBreak = SynchedEntityData.defineId(AbstractWorkerEntity.class, EntityDataSerializers.INT);
+    private static final EntityDataAccessor<Integer> previousTimeBreak = SynchedEntityData.defineId(AbstractWorkerEntity.class, EntityDataSerializers.INT);
+    private static final EntityDataAccessor<Float> HUNGER = SynchedEntityData.defineId(AbstractWorkerEntity.class, EntityDataSerializers.FLOAT);
+    private static final EntityDataAccessor<Boolean> IS_EATING = SynchedEntityData.defineId(AbstractWorkerEntity.class, EntityDataSerializers.BOOLEAN);
+    private static final EntityDataAccessor<Boolean> NEEDS_HOME = SynchedEntityData.defineId(AbstractWorkerEntity.class, EntityDataSerializers.BOOLEAN);
+    private static final EntityDataAccessor<Boolean> NEEDS_CHEST = SynchedEntityData.defineId(AbstractWorkerEntity.class, EntityDataSerializers.BOOLEAN);
+    private static final EntityDataAccessor<Boolean> NEEDS_BED = SynchedEntityData.defineId(AbstractWorkerEntity.class, EntityDataSerializers.BOOLEAN);
+    private static final EntityDataAccessor<String> OWNER_NAME = SynchedEntityData.defineId(AbstractWorkerEntity.class, EntityDataSerializers.STRING);
+    private static final EntityDataAccessor<String> PROFESSION_NAME = SynchedEntityData.defineId(AbstractWorkerEntity.class, EntityDataSerializers.STRING);
     int hurtTimeStamp = 0;
     
     protected GroundPathNavigation navigation;
@@ -174,7 +120,7 @@ public abstract class AbstractWorkerEntity extends AbstractChunkLoaderEntity {
     protected void registerGoals() {
         this.goalSelector.addGoal(0, new EatGoal(this));
         this.goalSelector.addGoal(0, new SleepGoal(this));
-        this.goalSelector.addGoal(0, new OpenDoorGoal(this, true));
+        //this.goalSelector.addGoal(0, new OpenDoorGoal(this, true));
         this.goalSelector.addGoal(1, new TransferItemsInChestGoal(this));
         this.goalSelector.addGoal(1, new WorkerMoveToHomeGoal<>(this, 6.0F));
         this.goalSelector.addGoal(2, new WorkerFollowOwnerGoal(this, 1.2D, 5.0F, 1.0F));
@@ -609,9 +555,9 @@ public abstract class AbstractWorkerEntity extends AbstractChunkLoaderEntity {
     }
 
     private void explainControls(LivingEntity owner) {
-        this.tellPlayer(owner, TEXT_BED_KEY());
-        this.tellPlayer(owner, TEXT_CHEST_KEY());
-        this.tellPlayer(owner, TEXT_WORKSPACE_KEY());
+        //this.tellPlayer(owner, TEXT_BED_KEY());
+        //his.tellPlayer(owner, TEXT_CHEST_KEY());
+        //this.tellPlayer(owner, TEXT_WORKSPACE_KEY());
 	}
 
 	public void setIsWorking(boolean bool) {
@@ -903,48 +849,4 @@ public abstract class AbstractWorkerEntity extends AbstractChunkLoaderEntity {
             Main.SIMPLE_CHANNEL.sendToServer(new MessageHireGui(player, this.getUUID()));
         }
     }
-
-    public static final MutableComponent TEXT_HELLO(String job) {
-        return Component.translatable("chat.workers.text.hello", job);
-    }
-
-    public static final MutableComponent TEXT_HELLO_OWNED(String job, String owner) {
-        return Component.translatable("chat.workers.text.hello_owned", job, owner);
-    }
-
-    // TODO: Use these only when work starts
-    public static final MutableComponent TEXT_RECRUITED1 = Component.translatable("chat.workers.text.recruited1");
-    public static final MutableComponent TEXT_RECRUITED2 = Component.translatable("chat.workers.text.recruited2");
-    public static final MutableComponent TEXT_RECRUITED3 = Component.translatable("chat.workers.text.recruited3");
-
-    public static final MutableComponent TEXT_ATTACKED(String job, String attacker) {
-        return Component.translatable("chat.workers.text.attacked");
-    }
-
-    public static final MutableComponent TEXT_WORKING = Component.translatable("chat.workers.text.working");
-    public static final MutableComponent TEXT_DONE = Component.translatable("chat.workers.text.done");
-    public static final MutableComponent TEXT_STARVING = Component.translatable("chat.workers.text.starving");
-
-    public static final MutableComponent TEXT_FOLLOW = Component.translatable("chat.workers.text.follow");
-    public static final MutableComponent TEXT_CONTINUE = Component.translatable("chat.workers.text.continue");
-    public static final MutableComponent TEXT_WANDER = Component.translatable("chat.workers.text.wander");
-
-    public static final MutableComponent TEXT_BED_KEY() {
-        Component currentMapping = ModShortcuts.ASSIGN_BED_KEY.getTranslatedKeyMessage();
-        return Component.translatable("chat.workers.controls.assign_bed_key", currentMapping);
-    }
-    public static final MutableComponent TEXT_CHEST_KEY() {
-        Component currentMapping = ModShortcuts.ASSIGN_CHEST_KEY.getTranslatedKeyMessage();
-        return Component.translatable("chat.workers.controls.assign_chest_key", currentMapping);
-    }
-    public static final MutableComponent TEXT_WORKSPACE_KEY() {
-        Component currentMapping = ModShortcuts.ASSIGN_WORKSPACE_KEY.getTranslatedKeyMessage();
-        return Component.translatable("chat.workers.controls.assign_workspace_key", currentMapping);
-    }
-    public static final MutableComponent TEXT_OUT_OF_TOOLS(ItemStack lastItem) {
-        return Component.translatable(
-            "chat.workers.text.outOfTools", 
-            lastItem.getDisplayName().getString()
-        );
-    } 
 }

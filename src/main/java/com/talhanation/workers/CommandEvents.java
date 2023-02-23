@@ -3,24 +3,37 @@ package com.talhanation.workers;
 import com.talhanation.workers.entities.AbstractWorkerEntity;
 import com.talhanation.workers.entities.MerchantEntity;
 import com.talhanation.workers.entities.MinerEntity;
+import com.talhanation.workers.inventory.CommandMenu;
+import com.talhanation.workers.network.MessageOpenCommandScreen;
+import com.talhanation.workers.network.MessageToClientUpdateCommandScreen;
+import net.minecraft.network.chat.Component;
+import net.minecraft.server.level.ServerLevel;
+import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.world.MenuProvider;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.SimpleContainer;
+import net.minecraft.world.inventory.AbstractContainerMenu;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.core.Direction;
 import net.minecraft.core.BlockPos;
-import net.minecraft.network.chat.Component;
-import net.minecraft.network.chat.MutableComponent;
 import net.minecraft.world.item.Items;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.block.state.properties.BedPart;
 import net.minecraft.world.level.block.state.properties.BlockStateProperties;
+import net.minecraftforge.network.NetworkHooks;
+import net.minecraftforge.network.PacketDistributor;
+import org.jetbrains.annotations.NotNull;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Objects;
 import java.util.UUID;
+
+import static com.talhanation.workers.Translatable.*;
 
 public class CommandEvents {
 	public static void setStartPosWorker(UUID player_uuid, AbstractWorkerEntity worker, BlockPos blockpos) {
@@ -358,23 +371,37 @@ public class CommandEvents {
         }
     }
 
-    public static final MutableComponent TEXT_HIRE_COSTS(int cost) {
-        return Component.translatable("chat.workers.text.hire_costs", cost);
-    }
-    public static final MutableComponent TEXT_NEED(int sollPrice, Item emerald) {
-        return Component.translatable("chat.workers.text.need", sollPrice, emerald);
-    }
-    public static final MutableComponent TEXT_OUT_OF_STOCK = Component.translatable("chat.workers.text.outOfStock");
-    public static final MutableComponent TEXT_OUT_OF_STOCK_OWNER = Component.translatable("chat.workers.text.outOfStockOwner");
-    public static final MutableComponent TEXT_INV_FULL = Component.translatable("chat.workers.text.invFull");
-    public static final MutableComponent TEXT_INV_FULL_OWNER = Component.translatable("chat.workers.text.invFullOwner");
-    public static final MutableComponent TEXT_HOME = Component.translatable("chat.workers.text.home");
     // TODO: Remove home button.
-    public static final MutableComponent NEED_CHEST = Component.translatable("chat.workers.needChest");
-    public static final MutableComponent TEXT_CHEST = Component.translatable("chat.workers.text.chest");
-	public static final MutableComponent TEXT_CHEST_ERROR = Component.translatable("chat.workers.text.chestError");
-    public static final MutableComponent NEED_BED = Component.translatable("chat.workers.needBed");
-	public static final MutableComponent TEXT_BED = Component.translatable("chat.workers.text.bed");
-	public static final MutableComponent TEXT_BED_ERROR = Component.translatable("chat.workers.text.bedError");
+    public static void openCommandScreen(Player player) {
+        if (player instanceof ServerPlayer) {
+            NetworkHooks.openScreen((ServerPlayer) player, new MenuProvider() {
 
+                @Override
+                public @NotNull Component getDisplayName() {
+                    return Component.literal("command_screen");
+                }
+                @Override
+                public @NotNull AbstractContainerMenu createMenu(int i, @NotNull Inventory playerInventory, @NotNull Player playerEntity) {
+                    return new CommandMenu(i, playerEntity);
+                }
+            }, packetBuffer -> {packetBuffer.writeUUID(player.getUUID());});
+        } else {
+            Main.SIMPLE_CHANNEL.sendToServer(new MessageOpenCommandScreen(player));
+        }
+    }
+
+    public static void updateCommandScreen(ServerPlayer player, ServerLevel level){
+        //TODO: Blockstate
+        List<AbstractWorkerEntity> list = Objects.requireNonNull(player.level.getEntitiesOfClass(AbstractWorkerEntity.class, player.getBoundingBox().inflate(16D)));
+        List<UUID> workers = new ArrayList<>();
+        List<String> names = new ArrayList<>();
+
+        for(AbstractWorkerEntity worker : list) {
+            if (Objects.equals(worker.getOwnerUUID(), player.getUUID())){
+                workers.add(worker.getUUID());
+                names.add(worker.getName().getString());
+            }
+        }
+        Main.SIMPLE_CHANNEL.send(PacketDistributor.PLAYER.with(()-> player), new MessageToClientUpdateCommandScreen(workers, names));
+    }
 }

@@ -1,6 +1,7 @@
 package com.talhanation.workers;
 
 import com.talhanation.workers.config.WorkersModConfig;
+import com.talhanation.workers.network.*;
 import net.minecraftforge.fml.ModLoadingContext;
 import net.minecraftforge.fml.config.ModConfig;
 import net.minecraftforge.fml.loading.FMLPaths;
@@ -15,20 +16,6 @@ import com.talhanation.workers.init.ModMenuTypes;
 import com.talhanation.workers.init.ModPois;
 import com.talhanation.workers.init.ModProfessions;
 import com.talhanation.workers.init.ModShortcuts;
-import com.talhanation.workers.network.MessageAnimalCount;
-import com.talhanation.workers.network.MessageBed;
-import com.talhanation.workers.network.MessageChest;
-import com.talhanation.workers.network.MessageHire;
-import com.talhanation.workers.network.MessageHireGui;
-import com.talhanation.workers.network.MessageHomePos;
-import com.talhanation.workers.network.MessageMineDepth;
-import com.talhanation.workers.network.MessageMineType;
-import com.talhanation.workers.network.MessageOpenGuiAnimalFarmer;
-import com.talhanation.workers.network.MessageOpenGuiMerchant;
-import com.talhanation.workers.network.MessageOpenGuiMiner;
-import com.talhanation.workers.network.MessageOpenGuiWorker;
-import com.talhanation.workers.network.MessageStartPos;
-import com.talhanation.workers.network.MessageTradeButton;
 
 import de.maxhenkel.corelib.CommonRegistry;
 import net.minecraftforge.api.distmarker.Dist;
@@ -91,8 +78,10 @@ public class Main {
             MessageAnimalCount.class,
             MessageHire.class,
             MessageHireGui.class,
-            MessageChest.class,
-            MessageBed.class
+            MessageChestPos.class,
+            MessageBedPos.class,
+            MessageOpenCommandScreen.class,
+            MessageToClientUpdateCommandScreen.class
         };
         for (int i = 0; i < messages.length; i++) CommonRegistry.registerMessage(SIMPLE_CHANNEL, i, messages[i]);
         LOGGER.info("Messages registered");
@@ -101,6 +90,6 @@ public class Main {
     @SubscribeEvent
     @OnlyIn(Dist.CLIENT)
     public void clientSetup(FMLClientSetupEvent event) {
-        event.enqueueWork(() -> ModMenuTypes.registerMenus());
+        event.enqueueWork(ModMenuTypes::registerMenus);
     }
 }

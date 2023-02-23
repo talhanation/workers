@@ -12,15 +12,15 @@ import java.util.List;
 import java.util.Objects;
 import java.util.UUID;
 
-public class MessageBed implements Message<MessageBed> {
+public class MessageBedPos implements Message<MessageBedPos> {
 
     private UUID player;
     private BlockPos bedPos;
 
-    public MessageBed(){
+    public MessageBedPos(){
     }
 
-    public MessageBed(UUID player, BlockPos bedPos) {
+    public MessageBedPos(UUID player, BlockPos bedPos) {
         this.player = player;
         this.bedPos = bedPos;
     }
@@ -35,7 +35,7 @@ public class MessageBed implements Message<MessageBed> {
                 CommandEvents.setBedPosWorker(this.player, workers, this.bedPos);
         }
     }
-    public MessageBed fromBytes(FriendlyByteBuf buf) {
+    public MessageBedPos fromBytes(FriendlyByteBuf buf) {
         this.player = buf.readUUID();
         this.bedPos= buf.readBlockPos();
         return this;

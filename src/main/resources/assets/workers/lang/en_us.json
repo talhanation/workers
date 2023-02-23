@@ -45,6 +45,10 @@
   "gui.workers.hire_gui.text.hire": "Hire",
   "gui.workers.shepherd.max_animals": "max.",
 
+  "gui.workers.button.workPos": "Work Pos.",
+  "gui.workers.button.sleepPos": "Sleep Pos.",
+  "gui.workers.button.chestPos": "Chest Pos.",
+
   "chat.workers.needHome": "I need a home to store items.",
 
   "chat.workers.needBed": "I need a bed to sleep.",

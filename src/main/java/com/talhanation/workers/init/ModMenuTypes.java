@@ -1,25 +1,18 @@
 package com.talhanation.workers.init;
 
+import java.util.Arrays;
 import java.util.UUID;
 import javax.annotation.Nullable;
+
+import com.talhanation.workers.client.gui.*;
+import com.talhanation.workers.inventory.*;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import com.talhanation.workers.Main;
-import com.talhanation.workers.client.gui.AnimalFarmerInventoryScreen;
-import com.talhanation.workers.client.gui.MerchantOwnerScreen;
-import com.talhanation.workers.client.gui.MerchantTradeScreen;
-import com.talhanation.workers.client.gui.MinerInventoryScreen;
 
-import com.talhanation.workers.client.gui.WorkerHireScreen;
-import com.talhanation.workers.client.gui.WorkerInventoryScreen;
 import com.talhanation.workers.entities.AbstractWorkerEntity;
 import com.talhanation.workers.entities.MerchantEntity;
 import com.talhanation.workers.entities.MinerEntity;
-import com.talhanation.workers.inventory.MerchantInventoryContainer;
-import com.talhanation.workers.inventory.MerchantTradeContainer;
-
-import com.talhanation.workers.inventory.WorkerHireContainer;
-import com.talhanation.workers.inventory.WorkerInventoryContainer;
 
 import net.minecraft.client.gui.screens.MenuScreens;
 import net.minecraft.client.gui.screens.MenuScreens.ScreenConstructor;
@@ -56,7 +49,7 @@ public class ModMenuTypes {
                 } catch (Exception e) {
                     logger.error("Error in hire container: ");
                     logger.error(e.getMessage());
-                    logger.error(e.getStackTrace().toString());
+                    logger.error(Arrays.toString(e.getStackTrace()));
                     return null;
                 }
             }));
@@ -106,19 +99,25 @@ public class ModMenuTypes {
                 return new MerchantInventoryContainer(windowId, rec, inv);
             }));
 
-    public static final void registerMenus() {
+    public static final RegistryObject<MenuType<CommandMenu>> COMMAND_CONTAINER_TYPE =
+            MENU_TYPES.register("command_container", () -> IForgeMenuType.create((windowId, inv, data) -> {
+                Player player = inv.player;
+                return new CommandMenu(windowId, player);
+            }));
+
+    public static void registerMenus() {
         registerMenu(MINER_CONTAINER_TYPE.get(), MinerInventoryScreen::new);
         registerMenu(WORKER_CONTAINER_TYPE.get(), WorkerInventoryScreen::new);
         registerMenu(MERCHANT_CONTAINER_TYPE.get(), MerchantTradeScreen::new);
         registerMenu(MERCHANT_OWNER_CONTAINER_TYPE.get(), MerchantOwnerScreen::new);
         registerMenu(ANIMAL_FARMER_CONTAINER_TYPE.get(), AnimalFarmerInventoryScreen::new);
         registerMenu(HIRE_CONTAINER_TYPE.get(), WorkerHireScreen::new);
+        registerMenu(COMMAND_CONTAINER_TYPE.get(), CommandScreen::new);
         logger.info("MenuScreens registered");
     }
 
     /**
      * Registers a menuType/container with a screen constructor.
-     * 
      * It has a try/catch block because the Forge screen constructor fails silently.
      */
     private static <M extends AbstractContainerMenu, U extends Screen & MenuAccess<M>> void registerMenu(
@@ -129,7 +128,7 @@ public class ModMenuTypes {
             } catch (Exception e) {
                 logger.error("Could not instantiate {}", screenConstructor.getClass().getSimpleName());
                 logger.error(e.getMessage());
-                logger.error(e.getStackTrace().toString());
+                logger.error(Arrays.toString(e.getStackTrace()));
                 return null;
             }
         });

@@ -16,13 +16,15 @@ public class MessageStartPos implements Message<MessageStartPos> {
 
     private UUID player;
     private BlockPos startPos;
+    private UUID worker;
 
     public MessageStartPos(){
     }
 
-    public MessageStartPos(UUID player, BlockPos startPos) {
+    public MessageStartPos(UUID player, BlockPos startPos, UUID worker) {
         this.player = player;
         this.startPos = startPos;
+        this.worker = worker;
     }
 
     public Dist getExecutingSide() {
@@ -30,20 +32,23 @@ public class MessageStartPos implements Message<MessageStartPos> {
     }
 
     public void executeServerSide(NetworkEvent.Context context) {
-        List<AbstractWorkerEntity> list = Objects.requireNonNull(context.getSender()).level.getEntitiesOfClass(AbstractWorkerEntity.class, context.getSender().getBoundingBox().inflate(5.5D));
-        for (AbstractWorkerEntity workers : list) {
-                CommandEvents.setStartPosWorker(this.player, workers, this.startPos);
+        List<AbstractWorkerEntity> workers = Objects.requireNonNull(context.getSender()).level.getEntitiesOfClass(AbstractWorkerEntity.class, context.getSender().getBoundingBox().inflate(5.5D));
+        for (AbstractWorkerEntity worker : workers) {
+            if(Objects.equals(worker.getOwnerUUID(), player))
+                CommandEvents.setStartPosWorker(this.player, worker, this.startPos);
         }
     }
     public MessageStartPos fromBytes(FriendlyByteBuf buf) {
         this.player = buf.readUUID();
         this.startPos= buf.readBlockPos();
+        this.worker = buf.readUUID();
         return this;
     }
 
     public void toBytes(FriendlyByteBuf buf) {
         buf.writeUUID(this.player);
         buf.writeBlockPos(this.startPos);
+        buf.writeUUID(this.worker);
     }
 
 }

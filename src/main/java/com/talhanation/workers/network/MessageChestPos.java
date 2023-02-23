@@ -12,15 +12,15 @@ import java.util.List;
 import java.util.Objects;
 import java.util.UUID;
 
-public class MessageChest implements Message<MessageChest> {
+public class MessageChestPos implements Message<MessageChestPos> {
 
     private UUID player;
     private BlockPos chestPos;
 
-    public MessageChest(){
+    public MessageChestPos(){
     }
 
-    public MessageChest(UUID player, BlockPos chestPos) {
+    public MessageChestPos(UUID player, BlockPos chestPos) {
         this.player = player;
         this.chestPos = chestPos;
     }
@@ -35,7 +35,7 @@ public class MessageChest implements Message<MessageChest> {
                 CommandEvents.setChestPosWorker(this.player, workers, this.chestPos);
         }
     }
-    public MessageChest fromBytes(FriendlyByteBuf buf) {
+    public MessageChestPos fromBytes(FriendlyByteBuf buf) {
         this.player = buf.readUUID();
         this.chestPos= buf.readBlockPos();
         return this;
