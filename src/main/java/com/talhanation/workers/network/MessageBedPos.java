@@ -15,12 +15,14 @@ import java.util.UUID;
 public class MessageBedPos implements Message<MessageBedPos> {
 
     private UUID player;
+    private UUID worker;
     private BlockPos bedPos;
 
     public MessageBedPos(){
     }
 
-    public MessageBedPos(UUID player, BlockPos bedPos) {
+    public MessageBedPos(UUID player, BlockPos bedPos, UUID worker) {
+        this.worker = worker;
         this.player = player;
         this.bedPos = bedPos;
     }
@@ -31,18 +33,21 @@ public class MessageBedPos implements Message<MessageBedPos> {
 
     public void executeServerSide(NetworkEvent.Context context) {
         List<AbstractWorkerEntity> list = Objects.requireNonNull(context.getSender()).level.getEntitiesOfClass(AbstractWorkerEntity.class, context.getSender().getBoundingBox().inflate(5.5D));
-        for (AbstractWorkerEntity workers : list) {
-                CommandEvents.setBedPosWorker(this.player, workers, this.bedPos);
+        for (AbstractWorkerEntity worker : list) {
+            if(worker.getUUID().equals(this.worker))
+                CommandEvents.setBedPosWorker(this.player, worker, this.bedPos);
         }
     }
     public MessageBedPos fromBytes(FriendlyByteBuf buf) {
         this.player = buf.readUUID();
+        this.worker = buf.readUUID();
         this.bedPos= buf.readBlockPos();
         return this;
     }
 
     public void toBytes(FriendlyByteBuf buf) {
         buf.writeUUID(this.player);
+        buf.writeUUID(this.worker);
         buf.writeBlockPos(this.bedPos);
     }
 

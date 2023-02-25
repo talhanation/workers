@@ -15,12 +15,14 @@ import java.util.UUID;
 public class MessageChestPos implements Message<MessageChestPos> {
 
     private UUID player;
+    private UUID worker;
     private BlockPos chestPos;
 
     public MessageChestPos(){
     }
 
-    public MessageChestPos(UUID player, BlockPos chestPos) {
+    public MessageChestPos(UUID player, BlockPos chestPos, UUID worker) {
+        this.worker = worker;
         this.player = player;
         this.chestPos = chestPos;
     }
@@ -31,18 +33,21 @@ public class MessageChestPos implements Message<MessageChestPos> {
 
     public void executeServerSide(NetworkEvent.Context context) {
         List<AbstractWorkerEntity> list = Objects.requireNonNull(context.getSender()).level.getEntitiesOfClass(AbstractWorkerEntity.class, context.getSender().getBoundingBox().inflate(5.5D));
-        for (AbstractWorkerEntity workers : list) {
-                CommandEvents.setChestPosWorker(this.player, workers, this.chestPos);
+        for (AbstractWorkerEntity worker : list) {
+            if(worker.getUUID().equals(this.worker))
+                CommandEvents.setChestPosWorker(this.player, worker, this.chestPos);
         }
     }
     public MessageChestPos fromBytes(FriendlyByteBuf buf) {
         this.player = buf.readUUID();
+        this.worker = buf.readUUID();
         this.chestPos= buf.readBlockPos();
         return this;
     }
 
     public void toBytes(FriendlyByteBuf buf) {
         buf.writeUUID(this.player);
+        buf.writeUUID(this.worker);
         buf.writeBlockPos(this.chestPos);
     }
 

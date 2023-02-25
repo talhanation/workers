@@ -59,7 +59,7 @@ public class CommandScreen extends ScreenBase<CommandMenu> {
     @Override
     protected void init() {
         super.init();
-
+        this.name = worker_names.get(index);
         this.setButtons();
     }
 
@@ -83,6 +83,7 @@ public class CommandScreen extends ScreenBase<CommandMenu> {
         this.sleepPosButton.active = blockpos != null && getBlockState().isBed(player.level, blockpos, player);
         this.chestPosButton.active = blockpos != null && player.level.getBlockEntity(blockpos) instanceof Container;
 
+        this.name = worker_names.get(index);
     }
 
     @Override
@@ -96,7 +97,8 @@ public class CommandScreen extends ScreenBase<CommandMenu> {
 
         int size = worker_ids == null ? 0 : worker_ids.size() ;
 
-        int k = 90;//rechst links
+
+        int k = 70;//rechst links
         int l = 50;//höhe
 
         font.draw(matrixStack, "" + "Workers: " + size, k, l, fontColor);
@@ -111,23 +113,23 @@ public class CommandScreen extends ScreenBase<CommandMenu> {
     }
 
     private Button setChestPosition(BlockPos pos, int x, int y){
-        return addRenderableWidget(new ExtendedButton(x - 90 - 90 , y + 140, 80, 18, Translatable.TEXT_BUTTON_CHEST_POS,
+        return addRenderableWidget(new ExtendedButton(x - 180 , y + 140, 80, 18, Translatable.TEXT_BUTTON_CHEST_POS,
             button -> {
-                Main.SIMPLE_CHANNEL.sendToServer(new MessageChestPos(this.player.getUUID(), pos));
+                Main.SIMPLE_CHANNEL.sendToServer(new MessageChestPos(this.player.getUUID(), pos, getCurrentWorker()));
             }
         ));
     }
 
     private Button setSleepPosition(BlockPos pos, int x, int y){
-        return addRenderableWidget(new ExtendedButton(x + 90 + 90, y + 140, 80, 18, Translatable.TEXT_BUTTON_SLEEP_POS,
+        return addRenderableWidget(new ExtendedButton(x , y + 140, 80, 18, Translatable.TEXT_BUTTON_SLEEP_POS,
             button -> {
-                Main.SIMPLE_CHANNEL.sendToServer(new MessageBedPos(this.player.getUUID(), pos));
+                Main.SIMPLE_CHANNEL.sendToServer(new MessageBedPos(this.player.getUUID(), pos, getCurrentWorker()));
             }
         ));
     }
 
     private Button cycleButtonLeft(int x, int y){
-        return addRenderableWidget(new ExtendedButton(x - 120, y + 50, 50, 18, Component.literal("<"),
+        return addRenderableWidget(new ExtendedButton(x - 150, y + 50, 50, 18, Component.literal("<"),
             button -> {
                 if(canCycleLeft()){
                     index--;
@@ -139,7 +141,7 @@ public class CommandScreen extends ScreenBase<CommandMenu> {
 
 
     private Button cycleButtonRight(int x, int y){
-        return addRenderableWidget(new ExtendedButton(x + 20, y + 50, 50, 18, Component.literal(">"),
+        return addRenderableWidget(new ExtendedButton(x, y + 50, 50, 18, Component.literal(">"),
             button -> {
                 if(canCycleRight()){
                     index++;
@@ -152,10 +154,10 @@ public class CommandScreen extends ScreenBase<CommandMenu> {
 
 
     private boolean canCycleLeft() {
-        return this.index > 0;
+        return !worker_ids.isEmpty() && index > 0;
     }
     private boolean canCycleRight() {
-        return this.index + 1 != worker_ids.size();
+        return !worker_ids.isEmpty() && this.index + 1 != worker_ids.size();
     }
 
     private UUID getCurrentWorker(){

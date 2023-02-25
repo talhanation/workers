@@ -399,7 +399,8 @@ public class CommandEvents {
         for(AbstractWorkerEntity worker : list) {
             if (Objects.equals(worker.getOwnerUUID(), player.getUUID())){
                 workers.add(worker.getUUID());
-                names.add(worker.getName().getString());
+                String name = worker.getName().getString() + " / " + worker.getProfessionName();
+                names.add(name);
             }
         }
         Main.SIMPLE_CHANNEL.send(PacketDistributor.PLAYER.with(()-> player), new MessageToClientUpdateCommandScreen(workers, names));
