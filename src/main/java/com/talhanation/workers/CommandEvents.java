@@ -392,7 +392,7 @@ public class CommandEvents {
 
     public static void updateCommandScreen(ServerPlayer player, ServerLevel level){
         //TODO: Blockstate
-        List<AbstractWorkerEntity> list = Objects.requireNonNull(player.level.getEntitiesOfClass(AbstractWorkerEntity.class, player.getBoundingBox().inflate(16D)));
+        List<AbstractWorkerEntity> list = Objects.requireNonNull(player.level.getEntitiesOfClass(AbstractWorkerEntity.class, player.getBoundingBox().inflate(64D)));
         List<UUID> workers = new ArrayList<>();
         List<String> names = new ArrayList<>();
 

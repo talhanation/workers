@@ -32,7 +32,7 @@ public class MessageBedPos implements Message<MessageBedPos> {
     }
 
     public void executeServerSide(NetworkEvent.Context context) {
-        List<AbstractWorkerEntity> list = Objects.requireNonNull(context.getSender()).level.getEntitiesOfClass(AbstractWorkerEntity.class, context.getSender().getBoundingBox().inflate(5.5D));
+        List<AbstractWorkerEntity> list = Objects.requireNonNull(context.getSender()).level.getEntitiesOfClass(AbstractWorkerEntity.class, context.getSender().getBoundingBox().inflate(64D));
         for (AbstractWorkerEntity worker : list) {
             if(worker.getUUID().equals(this.worker))
                 CommandEvents.setBedPosWorker(this.player, worker, this.bedPos);
