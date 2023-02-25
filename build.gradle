@@ -21,13 +21,13 @@ apply plugin: 'com.github.johnrengelman.shadow'
 
 version = '1.6.0'
 group = 'com.talhanation.workers' // http://maven.apache.org/guides/mini/guide-naming-conventions.html
-archivesBaseName = 'workers-1.19'
+archivesBaseName = 'workers-1.19.2'
 
 java.toolchain.languageVersion = JavaLanguageVersion.of(17)
 
 //println('Java: ' + System.getProperty('java.version') + ' JVM: ' + System.getProperty('java.vm.version') + '(' + System.getProperty('java.vendor') + ') Arch: ' + System.getProperty('os.arch'))
 minecraft {
-    mappings channel: 'official', version: '1.19'
+    mappings channel: 'official', version: '1.19.2'
     accessTransformer = file('src/main/resources/META-INF/accesstransformer.cfg')
     runs {
         client {
@@ -84,28 +84,13 @@ sourceSets.main.resources {
 }
 
 dependencies {
-    minecraft 'net.minecraftforge:forge:1.19-41.1.0'
-    shadow fg.deobf("de.maxhenkel.corelib:corelib:1.19-1.0.0:api")
-    runtimeOnly fg.deobf("de.maxhenkel.corelib:corelib:1.19-1.0.0")
-    runtimeOnly fg.deobf("de.maxhenkel.corelib:corelib:1.19-1.0.0:javadoc")
+    minecraft 'net.minecraftforge:forge:1.19.2-43.2.0'
+    shadow fg.deobf("de.maxhenkel.corelib:corelib:1.19.2-1.0.0:api")
+    runtimeOnly fg.deobf("de.maxhenkel.corelib:corelib:1.19.2-1.0.0")
+    runtimeOnly fg.deobf("de.maxhenkel.corelib:corelib:1.19.2-1.0.0:javadoc")
 
     annotationProcessor 'org.spongepowered:mixin:0.8.2:processor'
     testAnnotationProcessor 'org.spongepowered:mixin:0.8.2:processor'
-}
-
-jar {
-    manifest {
-        attributes([
-                "Specification-Title": "examplemod",
-                "Specification-Vendor": "examplemodsareus",
-                "Specification-Version": "1", // We are version 1 of ourselves
-                "Implementation-Title": project.name,
-                "Implementation-Version": "${version}",
-                "Implementation-Vendor" :"examplemodsareus",
-                "Implementation-Timestamp": new Date().format("yyyy-MM-dd'T'HH:mm:ssZ")
-        ])
-        rename 'mixin.refmap.json', 'recruits.mixin-refmap.json'
-    }
 }
 
 

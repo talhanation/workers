@@ -76,8 +76,8 @@ public class CommandScreen extends ScreenBase<CommandMenu> {
         this.sleepPosButton = setSleepPosition(blockpos, zeroLeftPos, zeroTopPos);
         this.chestPosButton = setChestPosition(blockpos, zeroLeftPos, zeroTopPos);
 
-        this.leftButton.active = this.index > 0;
-        this.rightButton.active = this.index != worker_ids.size();
+        this.leftButton.active = canCycleLeft();
+        this.rightButton.active = canCycleRight();
 
         this.workPosButton.active = blockpos != null;
         this.sleepPosButton.active = blockpos != null && getBlockState().isBed(player.level, blockpos, player);
@@ -94,7 +94,7 @@ public class CommandScreen extends ScreenBase<CommandMenu> {
     protected void renderLabels(PoseStack matrixStack, int mouseX, int mouseY) {
         super.renderLabels(matrixStack, mouseX, mouseY);
 
-        byte size = (byte) worker_ids.size();
+        int size = worker_ids == null ? 0 : worker_ids.size() ;
 
         int k = 90;//rechst links
         int l = 50;//höhe
@@ -104,44 +104,58 @@ public class CommandScreen extends ScreenBase<CommandMenu> {
     }
     private Button setWorkPosition(BlockPos pos, int x, int y){
         return addRenderableWidget(new ExtendedButton(x - 90, y + 140, 80, 18, Translatable.TEXT_BUTTON_WORK_POS,
-                button -> {
-                    Main.SIMPLE_CHANNEL.sendToServer(new MessageStartPos(this.player.getUUID(), pos, getCurrentWorker()));
-                }
+            button -> {
+                Main.SIMPLE_CHANNEL.sendToServer(new MessageStartPos(this.player.getUUID(), pos, getCurrentWorker()));
+            }
         ));
     }
 
     private Button setChestPosition(BlockPos pos, int x, int y){
         return addRenderableWidget(new ExtendedButton(x - 90 - 90 , y + 140, 80, 18, Translatable.TEXT_BUTTON_CHEST_POS,
-                button -> {
-                    Main.SIMPLE_CHANNEL.sendToServer(new MessageChestPos(this.player.getUUID(), pos));
-                }
+            button -> {
+                Main.SIMPLE_CHANNEL.sendToServer(new MessageChestPos(this.player.getUUID(), pos));
+            }
         ));
     }
 
     private Button setSleepPosition(BlockPos pos, int x, int y){
         return addRenderableWidget(new ExtendedButton(x + 90 + 90, y + 140, 80, 18, Translatable.TEXT_BUTTON_SLEEP_POS,
-                button -> {
-                    Main.SIMPLE_CHANNEL.sendToServer(new MessageBedPos(this.player.getUUID(), pos));
-                }
+            button -> {
+                Main.SIMPLE_CHANNEL.sendToServer(new MessageBedPos(this.player.getUUID(), pos));
+            }
         ));
     }
 
     private Button cycleButtonLeft(int x, int y){
         return addRenderableWidget(new ExtendedButton(x - 120, y + 50, 50, 18, Component.literal("<"),
-                button -> {
+            button -> {
+                if(canCycleLeft()){
                     index--;
                     this.setButtons();
                 }
+            }
         ));
     }
 
+
     private Button cycleButtonRight(int x, int y){
         return addRenderableWidget(new ExtendedButton(x + 20, y + 50, 50, 18, Component.literal(">"),
-                button -> {
+            button -> {
+                if(canCycleRight()){
                     index++;
                     this.setButtons();
                 }
+            }
         ));
+    }
+
+
+
+    private boolean canCycleLeft() {
+        return this.index > 0;
+    }
+    private boolean canCycleRight() {
+        return this.index + 1 != worker_ids.size();
     }
 
     private UUID getCurrentWorker(){
