@@ -37,7 +37,7 @@ public class TransferItemsInChestGoal extends Goal {
         ) {
             return false;
         }
-        return this.worker.itemsFarmed >= 10;
+        return this.worker.needsToDeposit();
         // SimpleContainer inventory = this.worker.getInventory();
         // if (inventory == null) {
         //     return false;
@@ -161,7 +161,7 @@ public class TransferItemsInChestGoal extends Goal {
             this.worker.tellPlayer(worker.getOwner(), CHEST_FULL);
             this.worker.setNeedsChest(true);
         } else {
-            this.worker.itemsFarmed = 0;
+            this.worker.resetFarmedItems();
         }
     }
 

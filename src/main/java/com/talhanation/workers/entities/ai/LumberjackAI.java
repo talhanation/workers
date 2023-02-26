@@ -32,25 +32,8 @@ public class LumberjackAI extends Goal {
     }
 
     public boolean canUse() {
-        // Stop AI while following the player.
-        if (this.lumber.getFollow()) {
-            return false;
-        }
-        // Stop AI to at night, so SleepGoal can start.
-        if (!this.lumber.level.isDay()) {
-            return false;
-        }
-        // Stop AI if inventory is full, so TransferItemsInChestGoal can start.
-        if (this.lumber.hasFullInventory()) {
-            return false;
-        }
-        // Stop AI if work position is not set.
-        BlockPos initialPosition = this.lumber.getStartPos();
-        if (initialPosition == null) {
-            return false;
-        }
         // Start AI if there are trees near the work place.
-        return this.getWoodPos() != null;
+        return lumber.canWork() && this.getWoodPos() != null;// TODO: Better solution for getWoodPos because performance
     }
 
     public boolean canContinueToUse() {
@@ -60,8 +43,8 @@ public class LumberjackAI extends Goal {
     @Override
     public void start() {
         super.start();
-        this.workPos = lumber.getStartPos();
-        lumber.resetWorkerParameters();
+        this.workPos = this.lumber.getStartPos();
+        this.lumber.resetWorkerParameters();
     }
 
     public void tick() {
@@ -75,7 +58,7 @@ public class LumberjackAI extends Goal {
             return;
         }
 
-        // If near work position, start chopping.
+        // If near wood position, start chopping.
         BlockPos chopPos = getWoodPos();
         if (chopPos == null) return;
 
@@ -83,21 +66,15 @@ public class LumberjackAI extends Goal {
         this.lumber.walkTowards(chopPos, 1);
 
         boolean standingBelowChopPos = (
-            lumberPos.getX() == chopPos.getX() && 
+            lumberPos.getX() == chopPos.getX() &&
             lumberPos.getZ() == chopPos.getZ() && 
-            lumberPos.getY() < chopPos.getY()
-        );
+            lumberPos.getY() < chopPos.getY());
 
-        if (
-            chopPos.closerThan(lumber.blockPosition(), 9) ||
-            standingBelowChopPos
-        ) {
-            this.mineBlock(chopPos);
+        if (chopPos.closerThan(lumber.blockPosition(), 9) || standingBelowChopPos) {
+            if (this.mineBlock(chopPos))
+                this.lumber.increaseFarmedItems();
 
-            if (
-                lumber.level.getBlockState(chopPos.below()).is(Blocks.DIRT) && 
-                this.lumber.level.isEmptyBlock(chopPos)
-            ) {
+            if (lumber.level.getBlockState(chopPos.below()).is(Blocks.DIRT) && this.lumber.level.isEmptyBlock(chopPos)) {
                 plantSaplingFromInv(chopPos);
             }
         }

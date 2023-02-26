@@ -120,7 +120,7 @@ public abstract class AbstractWorkerEntity extends AbstractChunkLoaderEntity {
     protected void registerGoals() {
         this.goalSelector.addGoal(0, new EatGoal(this));
         this.goalSelector.addGoal(0, new SleepGoal(this));
-        //this.goalSelector.addGoal(0, new OpenDoorGoal(this, true));
+        this.goalSelector.addGoal(0, new OpenDoorGoal(this, true));
         this.goalSelector.addGoal(1, new TransferItemsInChestGoal(this));
         this.goalSelector.addGoal(1, new WorkerMoveToHomeGoal<>(this, 6.0F));
         this.goalSelector.addGoal(2, new WorkerFollowOwnerGoal(this, 1.2D, 5.0F, 1.0F));
@@ -546,19 +546,13 @@ public abstract class AbstractWorkerEntity extends AbstractChunkLoaderEntity {
 
         if (bool) {
             this.tellPlayer(owner, TEXT_FOLLOW);
-            this.explainControls(owner);
+
         } else if (this.getIsWorking()) {
             this.tellPlayer(owner, TEXT_CONTINUE);
         } else {
             this.tellPlayer(owner, TEXT_WANDER);
         }
     }
-
-    private void explainControls(LivingEntity owner) {
-        //this.tellPlayer(owner, TEXT_BED_KEY());
-        //his.tellPlayer(owner, TEXT_CHEST_KEY());
-        //this.tellPlayer(owner, TEXT_WORKSPACE_KEY());
-	}
 
 	public void setIsWorking(boolean bool) {
         LivingEntity owner = this.getOwner();
@@ -708,10 +702,34 @@ public abstract class AbstractWorkerEntity extends AbstractChunkLoaderEntity {
     }
 
     public void resetWorkerParameters() {
-        this.itemsFarmed = 0;
+        this.resetFarmedItems();
         this.setBreakingTime(0);
         this.setCurrentTimeBreak(-1);
         this.setPreviousTimeBreak(-1);
+    }
+
+    public boolean canWork(){
+        // Stop AI while following the player.
+        // Stop AI to at night, so SleepGoal can start.
+        // Stop AI if work position is not set.
+        // Stop AI if inventory is full, so TransferItemsInChestGoal can start.
+        if(this.getStartPos() == null || this.needsToSleep() || this.getFollow() || this.needsToDeposit()) {
+            return false;
+        }
+        // Start AI if should working
+        return this.getIsWorking();
+    }
+
+    public boolean needsToDeposit(){
+        return this.itemsFarmed >= 10; //TODO: configurable amount + save data
+    }
+
+    public void increaseFarmedItems(){
+        this.itemsFarmed++;
+    }
+
+    public void resetFarmedItems(){
+        this.itemsFarmed = 0;
     }
 
     @Override
@@ -860,4 +878,5 @@ public abstract class AbstractWorkerEntity extends AbstractChunkLoaderEntity {
             Main.SIMPLE_CHANNEL.sendToServer(new MessageHireGui(player, this.getUUID()));
         }
     }
+
 }

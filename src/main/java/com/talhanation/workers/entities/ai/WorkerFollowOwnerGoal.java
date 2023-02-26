@@ -68,9 +68,6 @@ public class WorkerFollowOwnerGoal extends Goal {
     }
 
     public void tick() {
-        this.navigation.getNodeEvaluator().setCanPassDoors(true);
-        this.navigation.getNodeEvaluator().setCanOpenDoors(true);
-
         this.workerEntity.getLookControl().setLookAt(this.owner, 10.0F, (float)this.workerEntity.getMaxHeadXRot());
         if (--this.timeToRecalcPath <= 0) {
             this.timeToRecalcPath = 10;

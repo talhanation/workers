@@ -20,17 +20,7 @@ public class MinerMine3x3TunnelGoal extends MinerMineGoal {
     }
 
     public boolean canUse() {
-        if (this.miner.getStartPos() == null) {
-            return false;
-        }
-        if (this.miner.getFollow()) {
-            return false;
-       } else if (this.miner.getStartPos().closerThan(miner.getOnPos(), within) && !this.miner.getFollow() && miner.getMineType() == 2)
-
-            return true;
-
-        else
-            return false;
+        return this.miner.canWork() && miner.getMineType() == 2;
     }
 
     public boolean canContinueToUse() {

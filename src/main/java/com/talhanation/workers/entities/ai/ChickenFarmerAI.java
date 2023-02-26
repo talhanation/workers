@@ -30,10 +30,7 @@ public class ChickenFarmerAI extends Goal {
 
     @Override
     public boolean canUse() {
-        if (!this.chickenFarmer.level.isDay()) {
-            return false;
-        } else
-            return chickenFarmer.getIsWorking() && !chickenFarmer.getFollow();
+        return this.chickenFarmer.canWork();
     }
 
     @Override
@@ -79,7 +76,6 @@ public class ChickenFarmerAI extends Goal {
         }
 
         if (slaughtering) {
-
             List<Chicken> cows = findChickenSlaughtering();
             if (cows.size() > chickenFarmer.getMaxAnimalCount()) {
                 chicken = cows.stream().findFirst();
@@ -89,7 +85,10 @@ public class ChickenFarmerAI extends Goal {
                             chicken.get().getZ(), 1);
                     if (chicken.get().closerThan(this.chickenFarmer, 1.5)) {
                         chicken.get().kill();
+
                         chickenFarmer.workerSwingArm();
+                        chickenFarmer.increaseFarmedItems();
+                        chickenFarmer.consumeToolDurability();
                     }
                 }
 

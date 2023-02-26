@@ -37,14 +37,7 @@ public class FarmerCropAI extends Goal {
     }
 
     public boolean canUse() {
-        if (
-            this.farmer.getStartPos() == null ||
-            this.farmer.needsToSleep() ||
-            this.farmer.getFollow() 
-        ) {
-            return false;
-        }
-        return this.farmer.itemsFarmed < 10;
+        return this.farmer.canWork();
     }
 
     public boolean canContinueToUse() {
@@ -123,7 +116,7 @@ public class FarmerCropAI extends Goal {
                         farmer.workerSwingArm();
                         boolean blockWasMined = this.mineBlock(workPos);
                         if (blockWasMined) {
-                            this.farmer.itemsFarmed += 1;
+                            this.farmer.increaseFarmedItems();
                             this.farmer.consumeToolDurability();
                         }
                     }

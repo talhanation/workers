@@ -35,11 +35,7 @@ public class FishermanAI extends Goal {
 
     @Override
     public boolean canUse() {
-        return (
-            this.fisherman.itemsFarmed < 10 &&
-            !this.fisherman.getFollow() &&
-            !this.fisherman.needsToSleep()
-        );
+        return this.fisherman.canWork();
     }
 
     @Override
@@ -140,7 +136,7 @@ public class FishermanAI extends Goal {
             spawnFishingLoot();
             fisherman.playSound(SoundEvents.FISHING_BOBBER_SPLASH, 1, 1);
             this.fisherman.swing(InteractionHand.MAIN_HAND);
-            this.fisherman.itemsFarmed += 1;
+            this.fisherman.increaseFarmedItems();
             this.fisherman.consumeToolDurability();
             this.resetTask();
         }

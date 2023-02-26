@@ -35,10 +35,7 @@ public class CattleFarmerAI extends Goal {
 
     @Override
     public boolean canUse() {
-        if (!this.cattleFarmer.level.isDay()) {
-            return false;
-        }
-        else return cattleFarmer.getIsWorking() && !cattleFarmer.getFollow();
+        return cattleFarmer.canWork();
     }
 
     @Override
