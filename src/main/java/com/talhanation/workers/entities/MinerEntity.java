@@ -27,9 +27,7 @@ import net.minecraft.world.entity.item.ItemEntity;
 import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.inventory.AbstractContainerMenu;
-import net.minecraft.world.item.Item;
-import net.minecraft.world.item.ItemStack;
-import net.minecraft.world.item.Items;
+import net.minecraft.world.item.*;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.ServerLevelAccessor;
 import net.minecraft.world.level.block.Block;
@@ -147,7 +145,12 @@ public class MinerEntity extends AbstractWorkerEntity {
 
     @Override
     public void setEquipment() {
-        this.setItemSlot(EquipmentSlot.MAINHAND, new ItemStack(Items.STONE_PICKAXE));
+        ItemStack initialTool = new ItemStack(Items.STONE_PICKAXE);
+        this.updateInventory(0, initialTool);
+        this.equipTool(initialTool);
+
+        ItemStack initialTool2 = new ItemStack(Items.STONE_SHOVEL);
+        this.updateInventory(1, initialTool2);
     }
 
     @Nullable
@@ -215,9 +218,20 @@ public class MinerEntity extends AbstractWorkerEntity {
     public void changeTool(BlockState blockState) {
         if (blockState != null) {
             if (blockState.is(BlockTags.MINEABLE_WITH_SHOVEL)) {
-                this.setItemSlot(EquipmentSlot.MAINHAND, new ItemStack(Items.STONE_SHOVEL));
+                for (int i = 0; i < getInventory().items.size(); i++){
+                    ItemStack stack = getInventory().items.get(i);
+                    if(stack.getItem() instanceof ShovelItem){
+                        this.equipTool(stack);
+                    }
+                }
+
             } else if (blockState.is(BlockTags.MINEABLE_WITH_PICKAXE)) {
-                this.setItemSlot(EquipmentSlot.MAINHAND, new ItemStack(Items.STONE_PICKAXE));
+                for (int i = 0; i < getInventory().items.size(); i++){
+                    ItemStack stack = getInventory().items.get(i);
+                    if(stack.getItem() instanceof PickaxeItem){
+                        this.equipTool(stack);
+                    }
+                }
             } else
                 this.setItemSlot(EquipmentSlot.MAINHAND, new ItemStack(ItemStack.EMPTY.getItem()));
         }
