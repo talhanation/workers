@@ -114,7 +114,6 @@ public class MinerEntity extends AbstractWorkerEntity {
     public SpawnGroupData finalizeSpawn(ServerLevelAccessor world, DifficultyInstance difficultyInstance,
             MobSpawnType reason, @Nullable SpawnGroupData data, @Nullable CompoundTag nbt) {
         SpawnGroupData ilivingentitydata = super.finalizeSpawn(world, difficultyInstance, reason, data, nbt);
-        ((GroundPathNavigation) this.getNavigation()).setCanOpenDoors(true);
         this.populateDefaultEquipmentEnchantments(random, difficultyInstance);
 
         this.initSpawn();
@@ -124,16 +123,11 @@ public class MinerEntity extends AbstractWorkerEntity {
 
     @Override
     public void initSpawn() {
+        super.initSpawn();
         MutableComponent name = Component.translatable("entity.workers.miner");
 
         this.setProfessionName(name.getString());
         this.setCustomName(name);
-        this.setEquipment();
-        this.getNavigation().setCanFloat(true);
-        this.setDropEquipment();
-        this.setRandomSpawnBonus();
-        this.setPersistenceRequired();
-        this.setCanPickUpLoot(true);
     }
 
     @Override

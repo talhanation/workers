@@ -110,7 +110,7 @@ public class ChickenFarmerEntity extends AbstractAnimalFarmerEntity {
     public SpawnGroupData finalizeSpawn(ServerLevelAccessor world, DifficultyInstance difficultyInstance,
             MobSpawnType reason, @Nullable SpawnGroupData data, @Nullable CompoundTag nbt) {
         SpawnGroupData ilivingentitydata = super.finalizeSpawn(world, difficultyInstance, reason, data, nbt);
-        ((GroundPathNavigation) this.getNavigation()).setCanOpenDoors(true);
+
         this.populateDefaultEquipmentEnchantments(random, difficultyInstance);
 
         this.initSpawn();
@@ -120,16 +120,11 @@ public class ChickenFarmerEntity extends AbstractAnimalFarmerEntity {
 
     @Override
     public void initSpawn() {
+        super.initSpawn();
         String name = Component.translatable("entity.workers.chicken_farmer").getString();
 
         this.setProfessionName(name);
         this.setCustomName(Component.literal(name));
-        this.setEquipment();
-        this.getNavigation().setCanFloat(true);
-        this.setDropEquipment();
-        this.setRandomSpawnBonus();
-        this.setPersistenceRequired();
-        this.setCanPickUpLoot(true);
     }
 
     @Override

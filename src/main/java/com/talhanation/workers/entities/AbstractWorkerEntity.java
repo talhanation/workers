@@ -811,7 +811,18 @@ public abstract class AbstractWorkerEntity extends AbstractChunkLoaderEntity {
 
     public abstract void openGUI(Player player);
 
-    public abstract void initSpawn();
+    public void initSpawn(){
+        GroundPathNavigation navigation = this.getNavigation();
+        navigation.setCanOpenDoors(true);
+        navigation.setCanPassDoors(true);
+        navigation.setCanFloat(true);
+
+        this.setEquipment();
+        this.setDropEquipment();
+        this.setRandomSpawnBonus();
+        this.setPersistenceRequired();
+        this.setCanPickUpLoot(true);
+    }
 
     public abstract boolean shouldDirectNavigation();
 
