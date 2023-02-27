@@ -73,7 +73,6 @@ public class Main {
             MessageMineType.class,
             MessageMineDepth.class,
             MessageOpenGuiWorker.class,
-            MessageHomePos.class,
             MessageOpenGuiMerchant.class,
             MessageTradeButton.class,
             MessageOpenGuiAnimalFarmer.class,
