@@ -31,10 +31,7 @@ public class BeekeeperAI extends Goal {
 
     @Override
     public boolean canUse() {
-        if (!this.beekeeper.level.isDay()) {
-            return false;
-        } else
-            return beekeeper.getIsWorking() && !beekeeper.getFollow();
+        return beekeeper.canWork();
     }
 
     @Override
