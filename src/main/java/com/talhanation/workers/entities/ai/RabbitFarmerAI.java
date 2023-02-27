@@ -8,12 +8,12 @@ import net.minecraft.world.entity.ai.goal.Goal;
 import net.minecraft.world.entity.animal.Rabbit;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
+
 import java.util.EnumSet;
 import java.util.List;
 import java.util.Optional;
+import java.util.function.Predicate;
 import java.util.stream.Collectors;
-
-import static com.google.common.base.Predicates.not;
 
 public class RabbitFarmerAI extends Goal {
     private Optional<Rabbit> rabbit;
@@ -116,8 +116,8 @@ public class RabbitFarmerAI extends Goal {
         return  rabbitFarmer.level.getEntitiesOfClass(Rabbit.class, rabbitFarmer.getBoundingBox()
                 .inflate(8D), Rabbit::isAlive)
                 .stream()
-                .filter(not(Rabbit::isBaby))
-                .filter(not(Rabbit::isInLove))
+                .filter(((Predicate<Rabbit>) Rabbit::isBaby).negate())
+                .filter(((Predicate<Rabbit>) Rabbit::isInLove).negate())
                 .findAny();
     }
 
@@ -125,8 +125,8 @@ public class RabbitFarmerAI extends Goal {
         return  rabbitFarmer.level.getEntitiesOfClass(Rabbit.class, rabbitFarmer.getBoundingBox()
                         .inflate(8D), Rabbit::isAlive)
                 .stream()
-                .filter(not(Rabbit::isBaby))
-                .filter(not(Rabbit::isInLove))
+                .filter(((Predicate<Rabbit>) Rabbit::isBaby).negate())
+                .filter(((Predicate<Rabbit>) Rabbit::isInLove).negate())
                 .collect(Collectors.toList());
     }
 
