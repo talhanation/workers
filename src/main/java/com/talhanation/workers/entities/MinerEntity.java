@@ -94,18 +94,10 @@ public class MinerEntity extends AbstractWorkerEntity {
     protected void registerGoals() {
         super.registerGoals();
         this.goalSelector.addGoal(1, new FloatGoal(this));
+        this.goalSelector.addGoal(1, new PanicGoal(this, 1.3D));
         this.goalSelector.addGoal(2, new WorkerPickupWantedItemGoal(this));
         this.goalSelector.addGoal(2, new MinerAI(this));
-        /*
-        this.goalSelector.addGoal(2, new MinerMineTunnelGoal(this, 0.5D));
-        this.goalSelector.addGoal(2, new MinerMine3x3TunnelGoal(this, 0.5D, 10D));
-        this.goalSelector.addGoal(2, new MinerMine8x8PitGoal(this, 0.5D, 15D));
-        this.goalSelector.addGoal(2, new MinerMine8x8x1FlatGoal(this, 0.5D, 15D));
-        this.goalSelector.addGoal(2, new MinerMine8x8RoomGoal(this, 15D));
 
-         */
-
-        this.goalSelector.addGoal(1, new PanicGoal(this, 1.3D));
 
         this.goalSelector.addGoal(9, new MoveBackToVillageGoal(this, 0.6D, false));
         this.goalSelector.addGoal(10, new GolemRandomStrollInVillageGoal(this, 0.6D));
@@ -176,7 +168,7 @@ public class MinerEntity extends AbstractWorkerEntity {
     }
 
     public int getMaxMineDepth() {
-        return 16;
+        return 32;
     }
 
     @Override
