@@ -5,6 +5,7 @@ import com.talhanation.workers.Main;
 import com.talhanation.workers.entities.ai.*;
 import com.talhanation.workers.inventory.MinerInventoryContainer;
 import com.talhanation.workers.network.MessageOpenGuiMiner;
+import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.chat.Component;
@@ -17,12 +18,10 @@ import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.tags.BlockTags;
 import net.minecraft.world.DifficultyInstance;
 import net.minecraft.world.MenuProvider;
-import net.minecraft.world.SimpleContainer;
 import net.minecraft.world.entity.*;
 import net.minecraft.world.entity.ai.attributes.AttributeSupplier;
 import net.minecraft.world.entity.ai.attributes.Attributes;
 import net.minecraft.world.entity.ai.goal.*;
-import net.minecraft.world.entity.ai.navigation.GroundPathNavigation;
 import net.minecraft.world.entity.item.ItemEntity;
 import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.entity.player.Player;
@@ -48,6 +47,7 @@ public class MinerEntity extends AbstractWorkerEntity {
     private static final EntityDataAccessor<Direction> DIRECTION = SynchedEntityData.defineId(MinerEntity.class, EntityDataSerializers.DIRECTION);
     private static final EntityDataAccessor<Integer> MINE_TYPE = SynchedEntityData.defineId(MinerEntity.class, EntityDataSerializers.INT);
     private static final EntityDataAccessor<Integer> DEPTH = SynchedEntityData.defineId(MinerEntity.class, EntityDataSerializers.INT);
+
     /*
      * MINE TYPES:
      *  0 = nothing
@@ -70,6 +70,9 @@ public class MinerEntity extends AbstractWorkerEntity {
             Blocks.DARK_OAK_WALL_SIGN, Blocks.JUNGLE_WALL_SIGN, Blocks.OAK_WALL_SIGN, Blocks.SOUL_LANTERN,
             Blocks.LANTERN, Blocks.DETECTOR_RAIL, Blocks.RAIL);
 
+    public int blocks;
+    public int side;
+    public int depth;
     protected void defineSynchedData() {
         super.defineSynchedData();
         this.entityData.define(DIRECTION, Direction.NORTH);
@@ -92,11 +95,15 @@ public class MinerEntity extends AbstractWorkerEntity {
         super.registerGoals();
         this.goalSelector.addGoal(1, new FloatGoal(this));
         this.goalSelector.addGoal(2, new WorkerPickupWantedItemGoal(this));
+        this.goalSelector.addGoal(2, new MinerAI(this));
+        /*
         this.goalSelector.addGoal(2, new MinerMineTunnelGoal(this, 0.5D));
         this.goalSelector.addGoal(2, new MinerMine3x3TunnelGoal(this, 0.5D, 10D));
         this.goalSelector.addGoal(2, new MinerMine8x8PitGoal(this, 0.5D, 15D));
         this.goalSelector.addGoal(2, new MinerMine8x8x1FlatGoal(this, 0.5D, 15D));
         this.goalSelector.addGoal(2, new MinerMine8x8RoomGoal(this, 15D));
+
+         */
 
         this.goalSelector.addGoal(1, new PanicGoal(this, 1.3D));
 
@@ -137,6 +144,10 @@ public class MinerEntity extends AbstractWorkerEntity {
     public boolean wantsToPickUp(ItemStack itemStack) {
         Item item = itemStack.getItem();
         return (WANTED_ITEMS.contains(item));
+    }
+    @Override
+    public boolean needsToDeposit(){
+        return this.itemsFarmed >= 128;
     }
 
     public boolean shouldIgnoreBlock(Block block) {
@@ -200,7 +211,12 @@ public class MinerEntity extends AbstractWorkerEntity {
 
     public void setMineType(int x) {
         this.clearStartPos();
-        entityData.set(MINE_TYPE, x);
+        this.entityData.set(MINE_TYPE, x);
+    }
+    @Override
+    public void setStartPos(BlockPos pos){
+        this.resetCounts();
+        super.setStartPos(pos);
     }
 
     public int getMineType() {
@@ -269,5 +285,11 @@ public class MinerEntity extends AbstractWorkerEntity {
 
     public void tick() {
         super.tick();
+    }
+
+    public void resetCounts(){
+        blocks = 0;
+        side = 0;
+        depth = 0;
     }
 }

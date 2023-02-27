@@ -7,11 +7,10 @@ import net.minecraft.core.BlockPos;
 
 public class WorkerMoveToHomeGoal<T extends LivingEntity> extends Goal {
     private final AbstractWorkerEntity worker;
-    private final double within;
+    private BlockPos home;
 
-    public WorkerMoveToHomeGoal(AbstractWorkerEntity worker, double within) {
+    public WorkerMoveToHomeGoal(AbstractWorkerEntity worker) {
         this.worker = worker;
-        this.within = within;
     }
 
     public boolean canUse() {
@@ -29,17 +28,17 @@ public class WorkerMoveToHomeGoal<T extends LivingEntity> extends Goal {
     }
 
     @Override
+    public void start() {
+        super.start();
+        this.home = this.worker.getBedPos();
+    }
+
+    @Override
     public void tick() {
         super.tick();
-        BlockPos blockpos = this.worker.getHomePos();
-        if (blockpos != null && canUse()) {
-            if (!blockpos.closerThan(worker.getOnPos(), within)) {
-                this.worker.getNavigation().moveTo(
-                    blockpos.getX(), 
-                    blockpos.getY(), 
-                    blockpos.getZ(), 
-                    1
-                );
+        if (home != null) {
+            if (!home.closerThan(worker.getOnPos(), 16)) {
+                this.worker.walkTowards(home, 1);
             }
         }
     }
