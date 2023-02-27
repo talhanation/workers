@@ -1,17 +1,14 @@
 package com.talhanation.workers.entities.ai;
 
-import com.talhanation.workers.entities.AbstractWorkerEntity;
 import com.talhanation.workers.entities.LumberjackEntity;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.LeavesBlock;
-import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.ai.goal.Goal;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.SimpleContainer;
 import net.minecraft.world.item.ItemStack;
-import net.minecraft.world.item.Items;
 import net.minecraft.sounds.SoundSource;
 import net.minecraft.tags.ItemTags;
 import net.minecraft.sounds.SoundEvents;
@@ -20,7 +17,6 @@ import net.minecraft.core.BlockPos;
 import net.minecraftforge.event.ForgeEventFactory;
 
 import java.util.EnumSet;
-import java.util.Random;
 
 public class LumberjackAI extends Goal {
     private final LumberjackEntity lumber;
@@ -33,7 +29,7 @@ public class LumberjackAI extends Goal {
 
     public boolean canUse() {
         // Start AI if there are trees near the work place.
-        return lumber.canWork() && this.getWoodPos() != null;// TODO: Better solution for getWoodPos because performance
+        return lumber.canWork();// TODO: Better solution for getWoodPos because performance
     }
 
     public boolean canContinueToUse() {
@@ -48,12 +44,12 @@ public class LumberjackAI extends Goal {
     }
 
     public void tick() {
-        breakLeaves();
+        this.breakLeaves();
         // TODO: Add memories of initial saplings/trees around the work position. 
         // TODO: Replant if the blocks are AIR.
 
         // Go back to assigned work position.
-        if (workPos != null && !workPos.closerThan(lumber.blockPosition(), 10D)) {
+        if (workPos != null && !workPos.closerThan(lumber.blockPosition(), 12D)) {
             this.lumber.walkTowards(workPos, 1);
             return;
         }
@@ -85,7 +81,7 @@ public class LumberjackAI extends Goal {
         AABB boundingBox = this.lumber.getBoundingBox();
         double offset = 0.25D;
         BlockPos start = new BlockPos(boundingBox.minX - offset, boundingBox.minY - offset, boundingBox.minZ - offset);
-        BlockPos end = new BlockPos(boundingBox.maxX + offset, (boundingBox.maxY + offset) * 2, boundingBox.maxZ + offset);
+        BlockPos end = new BlockPos(boundingBox.maxX + offset, (boundingBox.maxY + offset), boundingBox.maxZ + offset);
         BlockPos.MutableBlockPos pos = new BlockPos.MutableBlockPos();
         boolean hasBroken = false;
         if (this.lumber.level.hasChunksAt(start, end)) {
@@ -126,7 +122,7 @@ public class LumberjackAI extends Goal {
         }
         return null;
     }
-
+/*
     public BlockPos getPlantPos() {
         int range = 16;
         Random random = new Random();
@@ -140,7 +136,7 @@ public class LumberjackAI extends Goal {
         }
         return null;
     }
-
+*/
 
     private void plantSaplingFromInv(BlockPos blockPos) {
         SimpleContainer inventory = lumber.getInventory();
@@ -150,7 +146,7 @@ public class LumberjackAI extends Goal {
             if (!itemstack.isEmpty() && itemstack.is(ItemTags.SAPLINGS)) {
                 BlockState placedSaplingBlock = Block.byItem(itemstack.getItem()).defaultBlockState();
                 this.lumber.level.setBlock(blockPos, placedSaplingBlock, 3);
-                lumber.level.playSound(null, (double) blockPos.getX(), (double) blockPos.getY(), (double) blockPos.getZ(), SoundEvents.GRASS_PLACE, SoundSource.BLOCKS, 1.0F, 1.0F);
+                lumber.level.playSound(null, blockPos.getX(), blockPos.getY(), blockPos.getZ(), SoundEvents.GRASS_PLACE, SoundSource.BLOCKS, 1.0F, 1.0F);
                 itemstack.shrink(1);
                 if (itemstack.isEmpty()) {
                     inventory.setItem(i, ItemStack.EMPTY);

@@ -15,13 +15,11 @@ import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.tags.BlockTags;
 import net.minecraft.tags.ItemTags;
-import net.minecraft.world.SimpleContainer;
 import net.minecraft.world.inventory.AbstractContainerMenu;
 import net.minecraft.world.MenuProvider;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
 import net.minecraft.nbt.CompoundTag;
-import net.minecraft.world.entity.ai.navigation.GroundPathNavigation;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.DifficultyInstance;
 import net.minecraft.world.level.ServerLevelAccessor;
@@ -40,13 +38,12 @@ import net.minecraft.world.entity.ai.goal.MoveBackToVillageGoal;
 import net.minecraft.world.entity.ai.goal.PanicGoal;
 import net.minecraft.world.entity.ai.goal.RandomLookAroundGoal;
 import net.minecraft.world.entity.ai.goal.WaterAvoidingRandomStrollGoal;
+import org.jetbrains.annotations.NotNull;
 
 public class LumberjackEntity extends AbstractWorkerEntity {
 
     public final Predicate<ItemEntity> ALLOWED_ITEMS = (
             item) -> (!item.hasPickUpDelay() && item.isAlive() && this.wantsToPickUp(item.getItem()));
-
-    public final Predicate<Block> ALLOWED_BLOCKS = (item) -> (this.wantsToBreak(item));
 
     public LumberjackEntity(EntityType<? extends AbstractWorkerEntity> entityType, Level world) {
         super(entityType, world);
@@ -97,9 +94,9 @@ public class LumberjackEntity extends AbstractWorkerEntity {
     }
    
 
-    @Nullable
+
     @Override
-    public AgeableMob getBreedOffspring(ServerLevel p_241840_1_, AgeableMob p_241840_2_) {
+    public AgeableMob getBreedOffspring(@NotNull ServerLevel p_241840_1_, @NotNull AgeableMob p_241840_2_) {
         return null;
     }
 
@@ -155,6 +152,11 @@ public class LumberjackEntity extends AbstractWorkerEntity {
     }
 
     @Override
+    public boolean needsToDeposit(){
+        return this.itemsFarmed >= 64;
+    }
+
+    @Override
     public void setEquipment() {
         ItemStack initialTool = new ItemStack(Items.STONE_AXE);
         this.updateInventory(0, initialTool);
@@ -166,18 +168,16 @@ public class LumberjackEntity extends AbstractWorkerEntity {
         if (player instanceof ServerPlayer) {
             NetworkHooks.openScreen((ServerPlayer) player, new MenuProvider() {
                 @Override
-                public Component getDisplayName() {
+                public @NotNull Component getDisplayName() {
                     return getName();
                 }
 
-                @Nullable
+
                 @Override
-                public AbstractContainerMenu createMenu(int i, Inventory playerInventory, Player playerEntity) {
+                public AbstractContainerMenu createMenu(int i, @NotNull Inventory playerInventory, @NotNull Player playerEntity) {
                     return new WorkerInventoryContainer(i, LumberjackEntity.this, playerInventory);
                 }
-            }, packetBuffer -> {
-                packetBuffer.writeUUID(getUUID());
-            });
+            }, packetBuffer -> packetBuffer.writeUUID(getUUID()));
         } else {
             Main.SIMPLE_CHANNEL.sendToServer(new MessageOpenGuiWorker(player, this.getUUID()));
         }
