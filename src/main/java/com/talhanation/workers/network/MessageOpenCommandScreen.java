@@ -32,8 +32,8 @@ public class MessageOpenCommandScreen implements Message<MessageOpenCommandScree
         if (!player.getUUID().equals(uuid)) {
             return;
         }
-        CommandEvents.openCommandScreen(player);
         CommandEvents.updateCommandScreen(player, player.getLevel());
+        CommandEvents.openCommandScreen(player);
     }
 
     @Override
