@@ -79,8 +79,8 @@ public class FarmerCropAI extends Goal {
                 }
                 this.workPos = getHoePos();
                 if (workPos != null) {
-                    this.farmer.walkTowards(workPos, 0.7);
-                    if (workPos.closerThan(farmer.blockPosition(), 2.25)) {
+                    this.farmer.walkTowards(workPos, 1);
+                    if (workPos.closerThan(farmer.blockPosition(), 3)) {
                         farmer.workerSwingArm();
                         this.prepareFarmLand(workPos);
                     }
@@ -101,7 +101,7 @@ public class FarmerCropAI extends Goal {
                 }
                 
                 this.farmer.walkTowards(workPos, 0.7);
-                if (workPos.closerThan(farmer.blockPosition(), 2.25)) {
+                if (workPos.closerThan(farmer.blockPosition(), 3)) {
                     farmer.workerSwingArm();
                     this.plantRandomSeed(workPos);
                 }
@@ -112,7 +112,7 @@ public class FarmerCropAI extends Goal {
 
                 if (workPos != null) {
                     this.farmer.walkTowards(workPos, 0.6);
-                    if (workPos.closerThan(farmer.blockPosition(), 2.25)) {
+                    if (workPos.closerThan(farmer.blockPosition(), 3)) {
                         farmer.workerSwingArm();
                         boolean blockWasMined = this.mineBlock(workPos);
                         if (blockWasMined) {
