@@ -2,11 +2,7 @@ package com.talhanation.workers.entities;
 
 import com.talhanation.workers.Main;
 import com.talhanation.workers.config.WorkersModConfig;
-import com.talhanation.workers.entities.ai.EatGoal;
-import com.talhanation.workers.entities.ai.SleepGoal;
-import com.talhanation.workers.entities.ai.TransferItemsInChestGoal;
-import com.talhanation.workers.entities.ai.WorkerFollowOwnerGoal;
-import com.talhanation.workers.entities.ai.WorkerMoveToHomeGoal;
+import com.talhanation.workers.entities.ai.*;
 import com.talhanation.workers.inventory.WorkerHireContainer;
 import com.talhanation.workers.network.MessageHireGui;
 
@@ -118,6 +114,7 @@ public abstract class AbstractWorkerEntity extends AbstractChunkLoaderEntity {
 
     @Override
     protected void registerGoals() {
+        this.goalSelector.addGoal(0, new WorkerUpkeepPosGoal(this));
         this.goalSelector.addGoal(0, new EatGoal(this));
         this.goalSelector.addGoal(0, new SleepGoal(this));
         this.goalSelector.addGoal(0, new OpenDoorGoal(this, true));
@@ -688,7 +685,10 @@ public abstract class AbstractWorkerEntity extends AbstractChunkLoaderEntity {
             this.getMaxHeadXRot()
         );
     }
-
+    public boolean needsToGetFood(){
+        boolean isChest = this.getChestPos() != null;
+        return this.needsToEat() && (isChest);
+    }
     public boolean needsToEat() {
         return (getHunger() <= 20F || getHealth() < getMaxHealth() * 0.2) || isStarving();
     }
@@ -713,7 +713,7 @@ public abstract class AbstractWorkerEntity extends AbstractChunkLoaderEntity {
         // Stop AI to at night, so SleepGoal can start.
         // Stop AI if work position is not set.
         // Stop AI if inventory is full, so TransferItemsInChestGoal can start.
-        if(this.getStartPos() == null || this.needsToSleep() || this.getFollow() || this.needsToDeposit()) {
+        if(this.getStartPos() == null || this.needsToSleep() || this.getFollow() || this.needsToDeposit() || this.needsToGetFood()) {
             return false;
         }
         // Start AI if should working

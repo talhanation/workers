@@ -83,6 +83,8 @@
   "chat.workers.text.outOfStockOwner": "I'm out of stock!",
   "chat.workers.text.invFull": "Sorry, I cant take your items currently.",
   "chat.workers.text.invFullOwner": "My inventory is full, I can't accept new items!",
+  "chat.workers.text.fisherNoWater": "I could not find any water source nearby.",
+  "chat.workers.text.noFoodInUpkeep": "I could not find any food in my chest.",
 
   "key.workers.open_command_screen": "Open Command Screen",
 

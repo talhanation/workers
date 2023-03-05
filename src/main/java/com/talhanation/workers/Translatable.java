@@ -21,8 +21,8 @@ public class Translatable {
     public static final MutableComponent TEXT_RECRUITED2 = Component.translatable("chat.workers.text.recruited2");
     public static final MutableComponent TEXT_RECRUITED3 = Component.translatable("chat.workers.text.recruited3");
 
-    public static final MutableComponent TEXT_ATTACKED(String job, String attacker) {
-        return Component.translatable("chat.workers.text.attacked");
+    public static MutableComponent TEXT_ATTACKED(String job, String attacker) {
+        return Component.translatable("chat.workers.text.attacked", job, attacker);
     }
 
     public static final MutableComponent TEXT_WORKING = Component.translatable("chat.workers.text.working");
@@ -52,10 +52,10 @@ public class Translatable {
         return Component.translatable("chat.workers.text.outOfTools", lastItem.getDisplayName().getString());
     }
 
-    public static final MutableComponent TEXT_HIRE_COSTS(int cost) {
+    public static MutableComponent TEXT_HIRE_COSTS(int cost) {
         return Component.translatable("chat.workers.text.hire_costs", cost);
     }
-    public static final MutableComponent TEXT_NEED(int sollPrice, Item emerald) {
+    public static MutableComponent TEXT_NEED(int sollPrice, Item emerald) {
         return Component.translatable("chat.workers.text.need", sollPrice, emerald);
     }
     public static final MutableComponent TEXT_OUT_OF_STOCK = Component.translatable("chat.workers.text.outOfStock");
@@ -71,8 +71,10 @@ public class Translatable {
     public static final MutableComponent TEXT_BED = Component.translatable("chat.workers.text.bed");
     public static final MutableComponent TEXT_BED_ERROR = Component.translatable("chat.workers.text.bedError");
 
+    public static final MutableComponent TEXT_NO_FOOD = Component.translatable("chat.workers.text.noFoodInUpkeep");
     public static final MutableComponent TEXT_BUTTON_WORK_POS = Component.translatable("gui.workers.button.workPos");
     public static final MutableComponent TEXT_BUTTON_CHEST_POS = Component.translatable("gui.workers.button.chestPos");
     public static final MutableComponent TEXT_BUTTON_SLEEP_POS = Component.translatable("gui.workers.button.sleepPos");
+
 
 }
