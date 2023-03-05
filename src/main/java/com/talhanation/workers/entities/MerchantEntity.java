@@ -40,6 +40,7 @@ import net.minecraft.world.entity.ai.goal.FloatGoal;
 import net.minecraft.world.entity.ai.goal.LookAtPlayerGoal;
 import net.minecraft.world.entity.ai.goal.PanicGoal;
 import net.minecraft.world.entity.ai.goal.RandomLookAroundGoal;
+import org.jetbrains.annotations.NotNull;
 
 public class MerchantEntity extends AbstractWorkerEntity {
 
@@ -199,7 +200,7 @@ public class MerchantEntity extends AbstractWorkerEntity {
         }
     }
 
-    public void addAdditionalSaveData(CompoundTag nbt) {
+    public void addAdditionalSaveData(@NotNull CompoundTag nbt) {
         super.addAdditionalSaveData(nbt);
         ListTag list = new ListTag();
         for (int i = 0; i < this.tradeInventory.getContainerSize(); ++i) {
@@ -215,7 +216,7 @@ public class MerchantEntity extends AbstractWorkerEntity {
         nbt.put("TradeInventory", list);
     }
 
-    public void readAdditionalSaveData(CompoundTag nbt) {
+    public void readAdditionalSaveData(@NotNull CompoundTag nbt) {
         super.readAdditionalSaveData(nbt);
         ListTag list = nbt.getList("TradeInventory", 10);
         for (int i = 0; i < list.size(); ++i) {
@@ -230,7 +231,7 @@ public class MerchantEntity extends AbstractWorkerEntity {
         return this.tradeInventory;
     }
 
-    public void die(DamageSource dmg) {
+    public void die(@NotNull DamageSource dmg) {
         super.die(dmg);
         for (int i = 0; i < this.tradeInventory.getContainerSize(); i++)
             Containers.dropItemStack(this.level, getX(), getY(), getZ(), this.tradeInventory.getItem(i));
