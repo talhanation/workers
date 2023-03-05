@@ -28,13 +28,13 @@ import net.minecraft.world.MenuProvider;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
 import net.minecraft.nbt.CompoundTag;
-import net.minecraft.world.entity.ai.navigation.GroundPathNavigation;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.DifficultyInstance;
 import net.minecraft.world.level.ServerLevelAccessor;
 import net.minecraft.world.level.Level;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraftforge.network.NetworkHooks;
+import org.jetbrains.annotations.NotNull;
 
 import javax.annotation.Nullable;
 import java.util.function.Predicate;
@@ -87,7 +87,6 @@ public class FishermanEntity extends AbstractWorkerEntity {
         super.registerGoals();
         this.goalSelector.addGoal(1, new FloatGoal(this));
         this.goalSelector.addGoal(2, new WorkerPickupWantedItemGoal(this));
-        // this.goalSelector.addGoal(3, new WorkerFindWaterAI(this));
         this.goalSelector.addGoal(4, new FishermanAI(this));
         this.goalSelector.addGoal(1, new PanicGoal(this, 1.3D));
         this.goalSelector.addGoal(9, new MoveBackToVillageGoal(this, 0.6D, false));
@@ -100,7 +99,7 @@ public class FishermanEntity extends AbstractWorkerEntity {
 
     @Nullable
     @Override
-    public AgeableMob getBreedOffspring(ServerLevel p_241840_1_, AgeableMob p_241840_2_) {
+    public AgeableMob getBreedOffspring(@NotNull ServerLevel p_241840_1_, @NotNull AgeableMob p_241840_2_) {
         return null;
     }
 
@@ -137,7 +136,7 @@ public class FishermanEntity extends AbstractWorkerEntity {
     
     @Override
     public boolean wantsToKeep(ItemStack itemStack) {
-        return itemStack.is(Items.FISHING_ROD);
+        return super.wantsToKeep(itemStack) || itemStack.is(Items.FISHING_ROD);
     }
 
     @Override
@@ -156,9 +155,8 @@ public class FishermanEntity extends AbstractWorkerEntity {
                     return getName();
                 }
 
-                @Nullable
                 @Override
-                public AbstractContainerMenu createMenu(int i, Inventory playerInventory, Player playerEntity) {
+                public @NotNull AbstractContainerMenu createMenu(int i, @NotNull Inventory playerInventory, @NotNull Player playerEntity) {
                     return new WorkerInventoryContainer(i, FishermanEntity.this, playerInventory);
                 }
             }, packetBuffer -> {

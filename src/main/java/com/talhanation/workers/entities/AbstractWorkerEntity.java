@@ -277,7 +277,7 @@ public abstract class AbstractWorkerEntity extends AbstractChunkLoaderEntity {
         this.entityData.define(PROFESSION_NAME, "");
     }
 
-    public void addAdditionalSaveData(CompoundTag nbt) {
+    public void addAdditionalSaveData(@NotNull CompoundTag nbt) {
         super.addAdditionalSaveData(nbt);
         nbt.putBoolean("Follow", this.getFollow());
         nbt.putBoolean("isWorking", this.getIsWorking());
@@ -310,7 +310,7 @@ public abstract class AbstractWorkerEntity extends AbstractChunkLoaderEntity {
         nbt.putInt(String.format("%sPosZ", blockName), pos.getZ());
     }
 
-    public void readAdditionalSaveData(CompoundTag nbt) {
+    public void readAdditionalSaveData(@NotNull CompoundTag nbt) {
         super.readAdditionalSaveData(nbt);
         this.setFollow(nbt.getBoolean("Follow"));
         this.setBreakingTime(nbt.getInt("breakTime"));
@@ -465,11 +465,11 @@ public abstract class AbstractWorkerEntity extends AbstractChunkLoaderEntity {
      * 
      * For example, lumberjacks need saplings to replant trees, farmers need seeds, etc.
      * 
-     * @param stack The ItemStack to compare against
+     * @param itemStack The ItemStack to compare against
      * @return true if the ItemStack will be kept in inventory, false if it will be stored in a chest.
      */
-    public boolean wantsToKeep(ItemStack stack) {
-        return false;
+    public boolean wantsToKeep(ItemStack itemStack) {
+        return (itemStack.isEdible() && itemStack.getFoodProperties(this).getNutrition() > 4);
     }
 
     //////////////////////////////////// SET////////////////////////////////////
@@ -638,7 +638,7 @@ public abstract class AbstractWorkerEntity extends AbstractChunkLoaderEntity {
         return flag;
     }
 
-    public void die(DamageSource dmg) {
+    public void die(@NotNull DamageSource dmg) {
         // TODO: Liberate POI on death.
         super.die(dmg);
 
@@ -657,8 +657,6 @@ public abstract class AbstractWorkerEntity extends AbstractChunkLoaderEntity {
                 setHunger((getHunger() - 0.0025F));
             else if (getIsWorking() && getLevel().isNight())
                 setHunger((getHunger() - 0.006F));
-            else if (isSleeping())
-                setHunger((getHunger() + 0.0005F));
             else
                 setHunger((getHunger() - 0.001F));
         }

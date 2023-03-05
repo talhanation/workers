@@ -22,6 +22,7 @@ import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.ServerLevelAccessor;
+import org.jetbrains.annotations.NotNull;
 
 import javax.annotation.Nullable;
 import java.util.Set;
@@ -45,11 +46,11 @@ public class SwineherdEntity extends AbstractAnimalFarmerEntity {
         super.defineSynchedData();
     }
 
-    public void addAdditionalSaveData(CompoundTag nbt) {
+    public void addAdditionalSaveData(@NotNull CompoundTag nbt) {
         super.addAdditionalSaveData(nbt);
     }
 
-    public void readAdditionalSaveData(CompoundTag nbt) {
+    public void readAdditionalSaveData(@NotNull CompoundTag nbt) {
         super.readAdditionalSaveData(nbt);
     }
 
@@ -129,6 +130,11 @@ public class SwineherdEntity extends AbstractAnimalFarmerEntity {
     public boolean wantsToPickUp(ItemStack itemStack) {
         Item item = itemStack.getItem();
         return (WANTED_ITEMS.contains(item));
+    }
+
+    @Override
+    public boolean wantsToKeep(ItemStack itemStack) {
+        return super.wantsToKeep(itemStack);
     }
 
     @Override

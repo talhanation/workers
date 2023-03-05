@@ -143,7 +143,7 @@ public class LumberjackEntity extends AbstractWorkerEntity {
 
     @Override
     public boolean wantsToKeep(ItemStack itemStack) {
-        return itemStack.is(ItemTags.SAPLINGS);
+        return super.wantsToKeep(itemStack) || itemStack.is(ItemTags.SAPLINGS);
     }
 
     public boolean wantsToBreak(Block block) {

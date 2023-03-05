@@ -172,7 +172,7 @@ public class FarmerEntity extends AbstractWorkerEntity {
     @Override
     public boolean wantsToKeep(ItemStack itemStack) {
         Item item = itemStack.getItem();
-        return (WANTED_SEEDS.contains(item));
+        return super.wantsToKeep(itemStack) || (WANTED_SEEDS.contains(item));
     }
 
     public boolean isCropBlock(Block block) {

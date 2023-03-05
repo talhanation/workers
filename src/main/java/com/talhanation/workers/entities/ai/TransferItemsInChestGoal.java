@@ -30,7 +30,6 @@ public class TransferItemsInChestGoal extends Goal {
     @Override
     public boolean canUse() {
         if (
-            this.worker.getOwner() == null ||
             this.worker.getFollow() ||
             this.worker.needsChest() ||
             this.worker.needsToSleep()
@@ -74,12 +73,7 @@ public class TransferItemsInChestGoal extends Goal {
         if (worker.level.getBlockEntity(chestPos) instanceof Container container) {
             containerEntity = container;
         }
-        if (
-            containerEntity == null || chest == null || (
-                !chest.is(Blocks.CHESTS) && 
-                !chest.is(Blocks.BARRELS)
-            )
-        ) {
+        if (containerEntity == null || chest == null || (!chest.is(Blocks.CHESTS) && !chest.is(Blocks.BARRELS))) {
             this.worker.tellPlayer(owner, CANT_FIND_CHEST);
             this.worker.setNeedsChest(true);
             return;
@@ -131,11 +125,7 @@ public class TransferItemsInChestGoal extends Goal {
             // This avoids depositing items such as tools, food, 
             // or anything the workers wouldn't pick up while they're working.
             // It also avoids depositing items that the worker needs to continue working.
-            if (
-                stack.isEmpty() ||
-                !worker.wantsToPickUp(stack) ||
-                worker.wantsToKeep(stack)
-            ) {
+            if (stack.isEmpty() || !worker.wantsToPickUp(stack) || worker.wantsToKeep(stack)) {
                 continue;
             }
             int originalAmount = stack.getCount();
@@ -158,7 +148,7 @@ public class TransferItemsInChestGoal extends Goal {
             );
         }
         if (!couldDepositSomething) {
-            this.worker.tellPlayer(worker.getOwner(), CHEST_FULL);
+            if(worker.getOwner() != null) this.worker.tellPlayer(worker.getOwner(), CHEST_FULL);
             this.worker.setNeedsChest(true);
         } else {
             this.worker.resetFarmedItems();

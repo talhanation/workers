@@ -85,7 +85,6 @@ public class WorkerUpkeepPosGoal extends Goal {
                 }
                 else {
                     if(worker.getOwner() != null && message){
-                        //TODO: tell Player No food
                         worker.tellPlayer(worker.getOwner(), Translatable.TEXT_NO_FOOD);
                         message = false;
                     }
@@ -127,7 +126,8 @@ public class WorkerUpkeepPosGoal extends Goal {
     private ItemStack getFoodFromInv(Container inv){
         ItemStack itemStack = null;
         for(int i = 0; i < inv.getContainerSize(); i++){
-            if(inv.getItem(i).isEdible()){
+            ItemStack itemStack2 = inv.getItem(i);
+            if(itemStack2.isEdible() && itemStack2.getFoodProperties(this.worker).getNutrition() > 3){
                 itemStack = inv.getItem(i);
                 break;
             }

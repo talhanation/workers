@@ -24,6 +24,7 @@ import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
+import net.minecraft.world.item.ShearsItem;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.ServerLevelAccessor;
 
@@ -132,6 +133,11 @@ public class ShepherdEntity extends AbstractAnimalFarmerEntity {
     public boolean wantsToPickUp(ItemStack itemStack) {
         Item item = itemStack.getItem();
         return (WANTED_ITEMS.contains(item));
+    }
+
+    @Override
+    public boolean wantsToKeep(ItemStack itemStack) {
+        return super.wantsToKeep(itemStack) || itemStack.getItem() instanceof ShearsItem;
     }
 
     @Override

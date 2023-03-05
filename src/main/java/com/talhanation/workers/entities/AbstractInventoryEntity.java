@@ -10,6 +10,7 @@ import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.TamableAnimal;
 import net.minecraft.world.item.*;
 import net.minecraft.world.level.Level;
+import org.jetbrains.annotations.NotNull;
 
 public abstract class AbstractInventoryEntity extends TamableAnimal {
     private final SimpleContainer inventory = new SimpleContainer(18);
@@ -34,7 +35,7 @@ public abstract class AbstractInventoryEntity extends TamableAnimal {
         super.defineSynchedData();
     }
 
-    public void addAdditionalSaveData(CompoundTag nbt) {
+    public void addAdditionalSaveData(@NotNull CompoundTag nbt) {
         super.addAdditionalSaveData(nbt);
         ListTag list = new ListTag();
         for (int i = 0; i < this.inventory.getContainerSize(); ++i) {
@@ -50,7 +51,7 @@ public abstract class AbstractInventoryEntity extends TamableAnimal {
         nbt.put("Inventory", list);
     }
 
-    public void readAdditionalSaveData(CompoundTag nbt) {
+    public void readAdditionalSaveData(@NotNull CompoundTag nbt) {
         super.readAdditionalSaveData(nbt);
         ListTag list = nbt.getList("Inventory", 10);
         for (int i = 0; i < list.size(); ++i) {
@@ -66,7 +67,7 @@ public abstract class AbstractInventoryEntity extends TamableAnimal {
     public SimpleContainer getInventory() {
         return this.inventory;
     }
-
+    /*
     public boolean hasFullInventory() {
         for (int i = 0; i < this.inventory.getContainerSize(); i++) {
             if (this.inventory.getItem(i).isEmpty()) {
@@ -75,6 +76,7 @@ public abstract class AbstractInventoryEntity extends TamableAnimal {
         }
         return true;
     }
+    */
 
     ////////////////////////////////////SET////////////////////////////////////
 
@@ -123,7 +125,7 @@ public abstract class AbstractInventoryEntity extends TamableAnimal {
         this.startUsingItem(InteractionHand.MAIN_HAND);
     }
 
-    public void die(DamageSource dmg) {
+    public void die(@NotNull DamageSource dmg) {
         Containers.dropContents(level, this, inventory);
         super.die(dmg);
     }

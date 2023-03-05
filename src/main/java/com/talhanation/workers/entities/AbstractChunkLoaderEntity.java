@@ -7,6 +7,7 @@ import net.minecraft.nbt.CompoundTag;
 import net.minecraft.world.level.Level;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraftforge.common.world.ForgeChunkManager;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.HashSet;
 import java.util.Optional;
@@ -54,7 +55,7 @@ public abstract class AbstractChunkLoaderEntity extends AbstractInventoryEntity 
 
     ////////////////////////////////////DATA////////////////////////////////////
 
-    public void addAdditionalSaveData(CompoundTag nbt) {
+    public void addAdditionalSaveData(@NotNull CompoundTag nbt) {
         super.addAdditionalSaveData(nbt);
         if(loadedChunk.isPresent()) {
             nbt.putInt("chunkX", loadedChunk.get().getFirst());
@@ -62,7 +63,7 @@ public abstract class AbstractChunkLoaderEntity extends AbstractInventoryEntity 
         }
     }
 
-    public void readAdditionalSaveData(CompoundTag nbt) {
+    public void readAdditionalSaveData(@NotNull CompoundTag nbt) {
         super.readAdditionalSaveData(nbt);
         if (nbt.contains("chunkX")) {
             int x = nbt.getInt("chunkX");
