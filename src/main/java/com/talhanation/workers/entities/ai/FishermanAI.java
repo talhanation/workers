@@ -1,14 +1,12 @@
 package com.talhanation.workers.entities.ai;
 
-import com.talhanation.workers.Main;
-import com.talhanation.workers.entities.AbstractWorkerEntity;
+import com.talhanation.workers.Translatable;
 import com.talhanation.workers.entities.FishermanEntity;
 import net.minecraft.core.BlockPos;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.world.InteractionHand;
-import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.ai.goal.Goal;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.block.Blocks;
@@ -47,7 +45,6 @@ public class FishermanAI extends Goal {
     public void start() {
         this.workPos = fisherman.getStartPos();
         this.fishingPos = this.findWaterBlock();
-        Main.LOGGER.debug("Fishing started");
         super.start();
     }
 
@@ -55,7 +52,6 @@ public class FishermanAI extends Goal {
     public void stop() {
         this.fishingPos = null;
         this.fishingTimer = 0;
-        Main.LOGGER.debug("Fishing stopped");
         super.stop();
     }
 
@@ -65,7 +61,8 @@ public class FishermanAI extends Goal {
     }
 
     public void spawnFishingLoot() {
-        this.fishingTimer = 500 + fisherman.getRandom().nextInt(2000);
+        //TODO: When water depth is deep, reduce timer
+        this.fishingTimer = 500 + fisherman.getRandom().nextInt(4000);
         double luck = 0.1D;
         LootContext.Builder lootcontext$builder = (new LootContext.Builder((ServerLevel)fisherman.level))
                 .withParameter(LootContextParams.ORIGIN, fisherman.position())
@@ -91,11 +88,14 @@ public class FishermanAI extends Goal {
             return;
         }
 
+        /*
         // When near work pos, find a water block to fish
         if (this.fishingPos == null) {
             this.fishingPos = this.findWaterBlock();
             return;
         }
+         */
+
 
         // Look at the water block
         this.fisherman.getLookControl().setLookAt(
@@ -133,8 +133,8 @@ public class FishermanAI extends Goal {
 
         if (fishingTimer == 0) {
             // Get the loot
-            spawnFishingLoot();
-            fisherman.playSound(SoundEvents.FISHING_BOBBER_SPLASH, 1, 1);
+            this.spawnFishingLoot();
+            this.fisherman.playSound(SoundEvents.FISHING_BOBBER_SPLASH, 1, 1);
             this.fisherman.swing(InteractionHand.MAIN_HAND);
             this.fisherman.increaseFarmedItems();
             this.fisherman.consumeToolDurability();
@@ -150,17 +150,22 @@ public class FishermanAI extends Goal {
             for (int y = -2; y < 2; ++y) {
                 for (int z = -this.fishingRange; z < this.fishingRange; ++z) {
                     if (workPos != null) {
-                        BlockPos blockPos = this.workPos.offset(x, y, z);
-                        BlockState targetBlock = this.fisherman.level.getBlockState(blockPos);
+                        BlockPos pos = this.workPos.offset(x, y, z);
+                        BlockState targetBlock = this.fisherman.level.getBlockState(pos);
                         if (targetBlock.is(Blocks.WATER)) {
-                            return blockPos;
+                            return pos;
                         }
                     }
                 }
             }
         }
-        // TODO: Handle no water near workplace
-            // Ideally the fisher should tell you his workPos is not valid and setWorkPos(null).
+        //No water nearby
+        if (fisherman.getOwner() != null){
+            fisherman.tellPlayer(fisherman.getOwner(), Translatable.TEXT_FISHER_NO_WATER);
+            this.fisherman.setIsWorking(false, false);
+            this.fisherman.clearStartPos();
+            this.stop();
+        }
         return null;
 	}
 }

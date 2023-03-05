@@ -58,6 +58,7 @@ public class Translatable {
     public static MutableComponent TEXT_NEED(int sollPrice, Item emerald) {
         return Component.translatable("chat.workers.text.need", sollPrice, emerald);
     }
+    public static final MutableComponent TEXT_FISHER_NO_WATER = Component.translatable("chat.workers.text.fisherNoWater");
     public static final MutableComponent TEXT_OUT_OF_STOCK = Component.translatable("chat.workers.text.outOfStock");
     public static final MutableComponent TEXT_OUT_OF_STOCK_OWNER = Component.translatable("chat.workers.text.outOfStockOwner");
     public static final MutableComponent TEXT_INV_FULL = Component.translatable("chat.workers.text.invFull");
