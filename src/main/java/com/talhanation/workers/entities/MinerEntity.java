@@ -137,6 +137,11 @@ public class MinerEntity extends AbstractWorkerEntity {
         Item item = itemStack.getItem();
         return (WANTED_ITEMS.contains(item));
     }
+
+    @Override
+    public boolean wantsToKeep(ItemStack itemStack) {
+        return super.wantsToKeep(itemStack) || itemStack.getItem() instanceof ShovelItem || itemStack.getItem() instanceof PickaxeItem;
+    }
     @Override
     public boolean needsToDeposit(){
         return this.itemsFarmed >= 128;
@@ -176,13 +181,13 @@ public class MinerEntity extends AbstractWorkerEntity {
         return ALLOWED_ITEMS;
     }
 
-    public void addAdditionalSaveData(CompoundTag nbt) {
+    public void addAdditionalSaveData(@NotNull CompoundTag nbt) {
         super.addAdditionalSaveData(nbt);
         nbt.putInt("MineType", this.getMineType());
         nbt.putInt("Depth", this.getMineDepth());
     }
 
-    public void readAdditionalSaveData(CompoundTag nbt) {
+    public void readAdditionalSaveData(@NotNull CompoundTag nbt) {
         super.readAdditionalSaveData(nbt);
         this.setMineType(nbt.getInt("MineType"));
         this.setMineDepth(nbt.getInt("Depth"));
@@ -249,13 +254,12 @@ public class MinerEntity extends AbstractWorkerEntity {
         if (player instanceof ServerPlayer) {
             NetworkHooks.openScreen((ServerPlayer) player, new MenuProvider() {
                 @Override
-                public Component getDisplayName() {
+                public @NotNull Component getDisplayName() {
                     return getName();
                 }
 
-                @Nullable
                 @Override
-                public AbstractContainerMenu createMenu(int i, Inventory playerInventory, Player playerEntity) {
+                public @NotNull AbstractContainerMenu createMenu(int i, @NotNull Inventory playerInventory, @NotNull Player playerEntity) {
                     return new MinerInventoryContainer(i, MinerEntity.this, playerInventory);
                 }
             }, packetBuffer -> {
