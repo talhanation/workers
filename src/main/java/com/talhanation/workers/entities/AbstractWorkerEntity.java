@@ -187,12 +187,13 @@ public abstract class AbstractWorkerEntity extends AbstractChunkLoaderEntity {
             worker.setItemInHand(InteractionHand.MAIN_HAND, ItemStack.EMPTY);
             worker.stopUsingItem();
 
-            worker.upgradeTool();
             if (worker.getItemInHand(InteractionHand.MAIN_HAND).isEmpty()) {
                 LivingEntity owner = worker.getOwner();
                 if (owner != null) worker.tellPlayer(owner, TEXT_OUT_OF_TOOLS(heldItem));
                 // TODO: Change to setNeedsToGetTool
             }
+
+            worker.upgradeTool();
         });
     }
 

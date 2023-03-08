@@ -27,6 +27,7 @@ public abstract class AbstractInventoryEntity extends TamableAnimal {
 
     public void tick() {
         super.tick();
+        if(this.getMainHandItem() == ItemStack.EMPTY) upgradeTool();
     }
 
     //////////////////////////////////// DATA////////////////////////////////////
@@ -104,6 +105,10 @@ public abstract class AbstractInventoryEntity extends TamableAnimal {
             }
 
             if (itemType instanceof FishingRodItem && this instanceof FishermanEntity) {
+                this.handleToolUpgrade(item, i);
+            }
+
+            if ((itemType instanceof ShearsItem || itemType instanceof AxeItem)  && this instanceof ShepherdEntity) {
                 this.handleToolUpgrade(item, i);
             }
         }

@@ -14,16 +14,15 @@ import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.inventory.AbstractContainerMenu;
+import net.minecraft.world.item.Item;
+import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.Level;
 import net.minecraftforge.network.NetworkHooks;
 import org.jetbrains.annotations.NotNull;
 
-import javax.annotation.Nullable;
-
 public abstract class AbstractAnimalFarmerEntity extends AbstractWorkerEntity {
 
-    private static final EntityDataAccessor<Integer> MAX_ANIMALS = SynchedEntityData
-            .defineId(AbstractAnimalFarmerEntity.class, EntityDataSerializers.INT);
+    private static final EntityDataAccessor<Integer> MAX_ANIMALS = SynchedEntityData.defineId(AbstractAnimalFarmerEntity.class, EntityDataSerializers.INT);
 
     public AbstractAnimalFarmerEntity(EntityType<? extends AbstractWorkerEntity> entityType, Level world) {
         super(entityType, world);
@@ -52,18 +51,48 @@ public abstract class AbstractAnimalFarmerEntity extends AbstractWorkerEntity {
         return entityData.get(MAX_ANIMALS);
     }
 
-    @Override
+    public void changeToBreedItem(Item breedItem) {
+        for(int i = 0; i < getInventory().getContainerSize(); i++){
+            ItemStack itemStack = getInventory().getItem(i);
+            if(itemStack.is(breedItem)){
+                this.equipTool(itemStack);
+                return;
+            }
+        }
+    }
+
+    public void changeToTool(boolean main){
+        for(int i = 0; i < getInventory().getContainerSize(); i++){
+            ItemStack itemStack = getInventory().getItem(i);
+            //Main Tool
+            if(main){
+                if (this.isRequiredMainTool(itemStack)) {
+                    this.equipTool(itemStack);
+                    break;
+                }
+            }
+            //Second Tool
+            else{
+                if (this.isRequiredSecondTool(itemStack)) {
+                    this.equipTool(itemStack);
+                    break;
+                }
+            }
+        }
+    }
+    public abstract boolean isRequiredMainTool(ItemStack tool);
+    public abstract boolean isRequiredSecondTool(ItemStack tool);
+
     public void openGUI(Player player) {
         if (player instanceof ServerPlayer) {
             NetworkHooks.openScreen((ServerPlayer) player, new MenuProvider() {
                 @Override
-                public Component getDisplayName() {
+                public @NotNull Component getDisplayName() {
                     return getName();
                 }
 
-                @Nullable
                 @Override
-                public AbstractContainerMenu createMenu(int i, Inventory playerInventory, Player playerEntity) {
+                public @NotNull AbstractContainerMenu createMenu(int i, @NotNull Inventory playerInventory, @NotNull Player playerEntity) {
                     return new AnimalFarmerInventoryContainer(i, AbstractAnimalFarmerEntity.this, playerInventory);
                 }
             }, packetBuffer -> {
@@ -73,4 +102,5 @@ public abstract class AbstractAnimalFarmerEntity extends AbstractWorkerEntity {
             Main.SIMPLE_CHANNEL.sendToServer(new MessageOpenGuiAnimalFarmer(player, this.getUUID()));
         }
     }
+
 }

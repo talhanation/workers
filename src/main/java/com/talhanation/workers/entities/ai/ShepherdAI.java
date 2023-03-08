@@ -2,8 +2,7 @@ package com.talhanation.workers.entities.ai;
 
 import com.talhanation.workers.entities.ShepherdEntity;
 import net.minecraft.core.BlockPos;
-import net.minecraft.world.entity.EquipmentSlot;
-import net.minecraft.world.entity.ai.goal.Goal;
+import net.minecraft.sounds.SoundEvents;
 import net.minecraft.world.entity.animal.Sheep;
 import net.minecraft.world.SimpleContainer;
 import net.minecraft.world.item.ItemStack;
@@ -17,60 +16,54 @@ import java.util.stream.Collectors;
 
 import static com.google.common.base.Predicates.not;
 
-public class ShepherdAI extends Goal {
+public class ShepherdAI extends AnimalFarmerAI{
     private Optional<Sheep> sheep;
-    private final ShepherdEntity shepherd;
     private boolean sheering;
     private boolean breeding;
     private boolean slaughtering;
     private BlockPos workPos;
 
-    public ShepherdAI(ShepherdEntity worker, int coolDown) {
-        this.shepherd = worker;
+    public ShepherdAI(ShepherdEntity worker) {
+        this.animalFarmer = worker;
         this.setFlags(EnumSet.of(Flag.MOVE, Flag.LOOK));
     }
 
     @Override
     public boolean canUse() {
-        if (!this.shepherd.level.isDay()) {
-            return false;
-        } else
-            return shepherd.getIsWorking() && !shepherd.getFollow();
+        return animalFarmer.canWork();
     }
 
     @Override
     public void start() {
         super.start();
-        this.workPos = shepherd.getStartPos();
+        this.workPos = animalFarmer.getStartPos();
         this.sheering = true;
         this.breeding = false;
         this.slaughtering = false;
     }
 
     @Override
-    public void tick() {
-        super.tick();
+    public void performWork() {
 
-        if (workPos != null && !workPos.closerThan(shepherd.getOnPos(), 10D) && !shepherd.getFollow())
-            this.shepherd.getNavigation().moveTo(workPos.getX(), workPos.getY(), workPos.getZ(), 1);
+        if (workPos != null && !workPos.closerThan(animalFarmer.getOnPos(), 10D) && !animalFarmer.getFollow())
+            this.animalFarmer.getNavigation().moveTo(workPos.getX(), workPos.getY(), workPos.getZ(), 1);
 
         if (sheering) {
             this.sheep = findSheepSheering();
-            if (this.sheep.isPresent() && sheep.get().readyForShearing()) {
-                this.shepherd.getNavigation().moveTo(this.sheep.get(), 1);
-                this.shepherd.setItemSlot(EquipmentSlot.MAINHAND, new ItemStack(Items.SHEARS));
+            if (this.sheep.isPresent() && sheep.get().readyForShearing() && hasMainToolInInv()) {
 
-                if (sheep.get().closerThan(this.shepherd, 1.5)) {
+                this.animalFarmer.getNavigation().moveTo(this.sheep.get(), 1);
+
+                if(!animalFarmer.isRequiredMainTool(animalFarmer.getMainHandItem())) this.animalFarmer.changeToTool(true);
+
+                if (sheep.get().closerThan(this.animalFarmer, 2)) {
                     sheerSheep(this.sheep.get());
-                    this.shepherd.getLookControl().setLookAt(sheep.get().getX(), sheep.get().getEyeY(),
-                            sheep.get().getZ(), 10.0F, (float) this.shepherd.getMaxHeadXRot());
-                    // timer = 0;
+                    this.animalFarmer.getLookControl().setLookAt(sheep.get().getX(), sheep.get().getEyeY(), sheep.get().getZ(), 10.0F, (float) this.animalFarmer.getMaxHeadXRot());
                     this.sheep = Optional.empty();
                 }
             } else {
                 sheering = false;
                 breeding = true;
-                this.shepherd.setItemSlot(EquipmentSlot.MAINHAND, ItemStack.EMPTY);
             }
 
         }
@@ -80,53 +73,61 @@ public class ShepherdAI extends Goal {
             if (this.sheep.isPresent()) {
                 int i = sheep.get().getAge();
 
-                if (i == 0 && this.hasWheat()) {
-                    this.shepherd.getNavigation().moveTo(this.sheep.get(), 1);
-                    this.shepherd.setItemSlot(EquipmentSlot.MAINHAND, new ItemStack(Items.WHEAT));
+                if (i == 0 && this.hasBreedItem(Items.WHEAT)) {
+                    this.animalFarmer.changeToBreedItem(Items.WHEAT);
 
-                    if (sheep.get().closerThan(this.shepherd, 1.5)) {
+                    this.animalFarmer.getNavigation().moveTo(this.sheep.get(), 1);
+                    if (sheep.get().closerThan(this.animalFarmer, 2)) {
+                        this.animalFarmer.workerSwingArm();
                         this.consumeWheat();
-                        this.shepherd.getLookControl().setLookAt(sheep.get().getX(), sheep.get().getEyeY(),
-                                sheep.get().getZ(), 10.0F, (float) this.shepherd.getMaxHeadXRot());
+                        this.animalFarmer.getLookControl().setLookAt(sheep.get().getX(), sheep.get().getEyeY(),
+                                sheep.get().getZ(), 10.0F, (float) this.animalFarmer.getMaxHeadXRot());
                         sheep.get().setInLove(null);
                         this.sheep = Optional.empty();
                     }
                 } else {
                     breeding = false;
                     slaughtering = true;
-                    this.shepherd.setItemSlot(EquipmentSlot.MAINHAND, ItemStack.EMPTY);
                 }
             } else {
                 breeding = false;
                 slaughtering = true;
-                this.shepherd.setItemSlot(EquipmentSlot.MAINHAND, ItemStack.EMPTY);
             }
         }
 
         if (slaughtering) {
-
             List<Sheep> sheeps = findSheepSlaughtering();
-            if (sheeps.size() > shepherd.getMaxAnimalCount()) {
+            if (sheeps.size() > animalFarmer.getMaxAnimalCount()) {
                 sheep = sheeps.stream().findFirst();
 
-                if (sheep.isPresent()) {
-                    this.shepherd.getNavigation().moveTo(sheep.get().getX(), sheep.get().getY(), sheep.get().getZ(), 1);
-                    if (sheep.get().getOnPos().closerThan(shepherd.getOnPos(), 1.5)) {
-                        sheep.get().kill();
-                        shepherd.workerSwingArm();
-                    }
-                }
+                if (sheep.isPresent() && hasSecondToolInInv()) {
+                    this.animalFarmer.getNavigation().moveTo(sheep.get().getX(), sheep.get().getY(), sheep.get().getZ(), 1);
 
+                    if(!animalFarmer.isRequiredSecondTool(animalFarmer.getMainHandItem())) this.animalFarmer.changeToTool(false);
+
+                    if (sheep.get().getOnPos().closerThan(animalFarmer.getOnPos(), 2)) {
+
+                        animalFarmer.workerSwingArm();
+
+                        sheep.get().kill();
+                        animalFarmer.playSound(SoundEvents.PLAYER_ATTACK_STRONG);
+
+                        this.animalFarmer.consumeToolDurability();
+                        animalFarmer.increaseFarmedItems();
+                    }
+                } else {
+                    slaughtering = false;
+                    sheering = true;
+                }
             } else {
                 slaughtering = false;
                 sheering = true;
             }
         }
-
     }
 
     private void consumeWheat() {
-        SimpleContainer inventory = shepherd.getInventory();
+        SimpleContainer inventory = animalFarmer.getInventory();
         for (int i = 0; i < inventory.getContainerSize(); i++) {
             ItemStack itemStack = inventory.getItem(i);
             if (itemStack.getItem().equals(Items.WHEAT)) {
@@ -140,37 +141,30 @@ public class ShepherdAI extends Goal {
     public void sheerSheep(Sheep sheepEntity) {
         sheepEntity.shear(SoundSource.PLAYERS);
         sheepEntity.setSheared(true);
-        if (!this.shepherd.swinging) {
-            this.shepherd.workerSwingArm();
+        animalFarmer.increaseFarmedItems();
+
+        if (!this.animalFarmer.swinging) {
+            this.animalFarmer.workerSwingArm();
         }
+        this.animalFarmer.consumeToolDurability();
     }
 
     private Optional<Sheep> findSheepSheering() {
-        return shepherd.level
-                .getEntitiesOfClass(Sheep.class, shepherd.getBoundingBox().inflate(8D), Sheep::readyForShearing)
+        return animalFarmer.level
+                .getEntitiesOfClass(Sheep.class, animalFarmer.getBoundingBox().inflate(8D), Sheep::readyForShearing)
                 .stream().filter(not(Sheep::isBaby)).findAny();
     }
 
     private Optional<Sheep> findSheepBreeding() {
-        return shepherd.level
-                .getEntitiesOfClass(Sheep.class, shepherd.getBoundingBox().inflate(8D), Sheep::canFallInLove).stream()
+        return animalFarmer.level
+                .getEntitiesOfClass(Sheep.class, animalFarmer.getBoundingBox().inflate(8D), Sheep::canFallInLove).stream()
                 .filter(not(Sheep::isBaby)).filter(not(Sheep::isInLove)).findAny();
     }
 
     private List<Sheep> findSheepSlaughtering() {
-        return shepherd.level.getEntitiesOfClass(Sheep.class, shepherd.getBoundingBox().inflate(8D), Sheep::isAlive)
+        return animalFarmer.level.getEntitiesOfClass(Sheep.class, animalFarmer.getBoundingBox().inflate(8D), Sheep::isAlive)
                 .stream().filter(not(Sheep::isBaby)).filter(not(Sheep::isInLove)).collect(Collectors.toList());
 
     }
 
-    private boolean hasWheat() {
-        SimpleContainer inventory = shepherd.getInventory();
-        for (int i = 0; i < inventory.getContainerSize(); i++) {
-            ItemStack itemStack = inventory.getItem(i);
-            if (itemStack.getItem().equals(Items.WHEAT))
-                if (itemStack.getCount() >= 2)
-                    return true;
-        }
-        return false;
-    }
 }

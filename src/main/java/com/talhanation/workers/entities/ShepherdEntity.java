@@ -1,15 +1,14 @@
 package com.talhanation.workers.entities;
 
-import com.google.common.collect.ImmutableSet;
 import com.talhanation.workers.entities.ai.ShepherdAI;
 import com.talhanation.workers.entities.ai.WorkerPickupWantedItemGoal;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerLevel;
+import net.minecraft.tags.ItemTags;
 import net.minecraft.world.DifficultyInstance;
 import net.minecraft.world.entity.AgeableMob;
 import net.minecraft.world.entity.EntityType;
-import net.minecraft.world.entity.EquipmentSlot;
 import net.minecraft.world.entity.MobSpawnType;
 import net.minecraft.world.entity.SpawnGroupData;
 import net.minecraft.world.entity.ai.attributes.AttributeSupplier;
@@ -18,43 +17,24 @@ import net.minecraft.world.entity.ai.goal.FloatGoal;
 import net.minecraft.world.entity.ai.goal.LookAtPlayerGoal;
 import net.minecraft.world.entity.ai.goal.RandomLookAroundGoal;
 import net.minecraft.world.entity.ai.goal.WaterAvoidingRandomStrollGoal;
-import net.minecraft.world.entity.ai.navigation.GroundPathNavigation;
 import net.minecraft.world.entity.item.ItemEntity;
 import net.minecraft.world.entity.player.Player;
-import net.minecraft.world.item.Item;
-import net.minecraft.world.item.ItemStack;
-import net.minecraft.world.item.Items;
-import net.minecraft.world.item.ShearsItem;
+import net.minecraft.world.item.*;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.ServerLevelAccessor;
+import org.jetbrains.annotations.NotNull;
 
 import javax.annotation.Nullable;
-import java.util.Set;
 import java.util.function.Predicate;
 
 public class ShepherdEntity extends AbstractAnimalFarmerEntity {
-
+    public final ItemStack MAIN_TOOL = new ItemStack(Items.SHEARS);
+    public final ItemStack SECOND_TOOL = new ItemStack(Items.STONE_AXE);
     private final Predicate<ItemEntity> ALLOWED_ITEMS = (item) -> {
         return !item.hasPickUpDelay() && item.isAlive() && this.wantsToPickUp(item.getItem());
     };
 
-    private static final Set<Item> WANTED_ITEMS = ImmutableSet.of(
-            Items.BLACK_WOOL,
-            Items.WHITE_WOOL,
-            Items.RED_WOOL,
-            Items.BLUE_WOOL,
-            Items.ORANGE_WOOL,
-            Items.GREEN_WOOL,
-            Items.LIGHT_BLUE_WOOL,
-            Items.GRAY_WOOL,
-            Items.LIGHT_GRAY_WOOL,
-            Items.BROWN_WOOL,
-            Items.CYAN_WOOL,
-            Items.MAGENTA_WOOL,
-            Items.YELLOW_WOOL,
-            Items.PINK_WOOL,
-            Items.LIME_WOOL,
-            Items.MUTTON);
+
 
     public ShepherdEntity(EntityType<? extends AbstractWorkerEntity> entityType, Level world) {
         super(entityType, world);
@@ -95,7 +75,7 @@ public class ShepherdEntity extends AbstractAnimalFarmerEntity {
         super.registerGoals();
         this.goalSelector.addGoal(0, new FloatGoal(this));
         this.goalSelector.addGoal(2, new WorkerPickupWantedItemGoal(this));
-        this.goalSelector.addGoal(3, new ShepherdAI(this, 1));
+        this.goalSelector.addGoal(3, new ShepherdAI(this));
         this.goalSelector.addGoal(6, new LookAtPlayerGoal(this, Player.class, 8.0F));
         this.goalSelector.addGoal(6, new RandomLookAroundGoal(this));
         this.goalSelector.addGoal(6, new WaterAvoidingRandomStrollGoal(this, 1.0D, 0F));
@@ -103,7 +83,7 @@ public class ShepherdEntity extends AbstractAnimalFarmerEntity {
 
     @Nullable
     @Override
-    public AgeableMob getBreedOffspring(ServerLevel p_241840_1_, AgeableMob p_241840_2_) {
+    public AgeableMob getBreedOffspring(@NotNull ServerLevel p_241840_1_, @NotNull AgeableMob p_241840_2_) {
         return null;
     }
 
@@ -126,28 +106,44 @@ public class ShepherdEntity extends AbstractAnimalFarmerEntity {
 
         this.setProfessionName(name);
         this.setCustomName(Component.literal(name));
+    }
 
+    public boolean needsToDeposit(){
+        return this.itemsFarmed >= 16;
     }
 
     @Override
     public boolean wantsToPickUp(ItemStack itemStack) {
-        Item item = itemStack.getItem();
-        return (WANTED_ITEMS.contains(item));
+        return (itemStack.is(ItemTags.WOOL) || itemStack.is(Items.MUTTON));
     }
 
     @Override
     public boolean wantsToKeep(ItemStack itemStack) {
-        return super.wantsToKeep(itemStack) || itemStack.getItem() instanceof ShearsItem;
+        return super.wantsToKeep(itemStack);
     }
 
     @Override
     public void setEquipment() {
-        this.setItemSlot(EquipmentSlot.MAINHAND, new ItemStack(Items.SHEARS));
-        this.setItemSlot(EquipmentSlot.OFFHAND, new ItemStack(Items.WOODEN_HOE));
+        ItemStack initialTool = MAIN_TOOL;
+        this.updateInventory(0, initialTool);
+        ItemStack initialTool2 = SECOND_TOOL;
+        this.updateInventory(1, initialTool2);
+
+        this.equipTool(initialTool);
+        this.equipTool(initialTool2);
+    }
+
+    public boolean isRequiredMainTool(ItemStack tool) {
+        return tool.getItem() instanceof ShearsItem;
+    }
+
+    public boolean isRequiredSecondTool(ItemStack tool) {
+        return tool.getItem() instanceof AxeItem;
     }
 
     @Override
     public boolean shouldDirectNavigation() {
         return false;
     }
+
 }
