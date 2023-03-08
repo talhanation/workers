@@ -98,11 +98,13 @@ public class CommandScreen extends ScreenBase<CommandMenu> {
         int size = worker_ids == null ? 0 : worker_ids.size() ;
 
 
-        int k = 70;//rechst links
-        int l = 50;//höhe
+        int k = 85;//rechst links
+        int l = 65;//höhe
+        String workers = "Workers: ";
+        String worker = this.index + 1 + ": " + this.name;
 
-        font.draw(matrixStack, "" + "Workers: " + size, k, l, fontColor);
-        font.draw(matrixStack, this.index + 1 + ": " + this.name, k, l + 25, fontColor);
+        font.draw(matrixStack, workers + size, k - workers.length(), l, fontColor);
+        font.draw(matrixStack, worker, k - worker.length() - 15, l + 25, fontColor);
     }
     private Button setWorkPosition(BlockPos pos, int x, int y){
         return addRenderableWidget(new ExtendedButton(x - 90, y + 140, 80, 18, Translatable.TEXT_BUTTON_WORK_POS,
@@ -151,15 +153,12 @@ public class CommandScreen extends ScreenBase<CommandMenu> {
         ));
     }
 
-
-
     private boolean canCycleLeft() {
         return !worker_ids.isEmpty() && index > 0;
     }
     private boolean canCycleRight() {
         return !worker_ids.isEmpty() && this.index + 1 != worker_ids.size();
     }
-
     private UUID getCurrentWorker(){
         return worker_ids.get(this.index);
     }
