@@ -78,7 +78,7 @@
   "chat.workers.text.follow": "I will follow you!",
   "chat.workers.text.home": "My home is here now.",
   "chat.workers.text.outOfStock": "Sorry, I'm out of Stock.",
-  "chat.workers.text.outOfTools": "My last %s just broke! May I have a new one?",
+  "chat.workers.text.outOfTools": "My last %s just broke, i need a new one!",
   "chat.workers.text.need": "Sorry, you need %s %s",
   "chat.workers.text.outOfStockOwner": "I'm out of stock!",
   "chat.workers.text.invFull": "Sorry, I cant take your items currently.",
