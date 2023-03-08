@@ -31,6 +31,17 @@ public abstract class AnimalFarmerAI extends Goal {
         return false;
     }
 
+    public void consumeBreedItem(Item breedItem){
+        SimpleContainer inventory = this.animalFarmer.getInventory();
+        for(int i = 0; i < inventory.getContainerSize(); i++) {
+            ItemStack itemStack = inventory.getItem(i);
+            if (itemStack.getItem().equals(breedItem)){
+                itemStack.shrink(1);
+                break;
+            }
+        }
+    }
+
     public boolean hasMainToolInInv() {
         SimpleContainer inventory = animalFarmer.getInventory();
         for (int i = 0; i < inventory.getContainerSize(); i++) {

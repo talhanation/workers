@@ -57,7 +57,7 @@ public class ShepherdAI extends AnimalFarmerAI{
                 if(!animalFarmer.isRequiredMainTool(animalFarmer.getMainHandItem())) this.animalFarmer.changeToTool(true);
 
                 if (sheep.get().closerThan(this.animalFarmer, 2)) {
-                    sheerSheep(this.sheep.get());
+                    this.sheerSheep(this.sheep.get());
                     this.animalFarmer.getLookControl().setLookAt(sheep.get().getX(), sheep.get().getEyeY(), sheep.get().getZ(), 10.0F, (float) this.animalFarmer.getMaxHeadXRot());
                     this.sheep = Optional.empty();
                 }
@@ -79,7 +79,7 @@ public class ShepherdAI extends AnimalFarmerAI{
                     this.animalFarmer.getNavigation().moveTo(this.sheep.get(), 1);
                     if (sheep.get().closerThan(this.animalFarmer, 2)) {
                         this.animalFarmer.workerSwingArm();
-                        this.consumeWheat();
+                        this.consumeBreedItem(Items.WHEAT);
                         this.animalFarmer.getLookControl().setLookAt(sheep.get().getX(), sheep.get().getEyeY(),
                                 sheep.get().getZ(), 10.0F, (float) this.animalFarmer.getMaxHeadXRot());
                         sheep.get().setInLove(null);
@@ -123,18 +123,6 @@ public class ShepherdAI extends AnimalFarmerAI{
                 slaughtering = false;
                 sheering = true;
             }
-        }
-    }
-
-    private void consumeWheat() {
-        SimpleContainer inventory = animalFarmer.getInventory();
-        for (int i = 0; i < inventory.getContainerSize(); i++) {
-            ItemStack itemStack = inventory.getItem(i);
-            if (itemStack.getItem().equals(Items.WHEAT)) {
-                itemStack.shrink(1);
-                break;
-            }
-
         }
     }
 
