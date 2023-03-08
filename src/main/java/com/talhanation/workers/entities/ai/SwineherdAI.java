@@ -2,9 +2,9 @@ package com.talhanation.workers.entities.ai;
 
 import com.talhanation.workers.entities.SwineherdEntity;
 import net.minecraft.core.BlockPos;
+import net.minecraft.sounds.SoundEvents;
 import net.minecraft.world.SimpleContainer;
 import net.minecraft.world.entity.EquipmentSlot;
-import net.minecraft.world.entity.ai.goal.Goal;
 import net.minecraft.world.entity.animal.Pig;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
@@ -16,39 +16,34 @@ import java.util.stream.Collectors;
 
 import static com.google.common.base.Predicates.not;
 
-public class SwineherdAI extends Goal {
+public class SwineherdAI extends AnimalFarmerAI {
     private Optional<Pig> pig;
-    private final SwineherdEntity swineherd;
     private boolean breeding;
     private boolean slaughtering;
     private BlockPos workPos;
 
-    public SwineherdAI(SwineherdEntity worker, int coolDown) {
-        this.swineherd = worker;
+    public SwineherdAI(SwineherdEntity worker) {
+        this.animalFarmer = worker;
         this.setFlags(EnumSet.of(Flag.MOVE, Flag.LOOK));
     }
 
     @Override
     public boolean canUse() {
-        if (!this.swineherd.level.isDay()) {
-            return false;
-        }
-        else return swineherd.getIsWorking() && !swineherd.getFollow();
+        return animalFarmer.canWork();
     }
 
     @Override
     public void start() {
         super.start();
-        this.workPos = swineherd.getStartPos();
+        this.workPos = animalFarmer.getStartPos();
         this.breeding = true;
         this.slaughtering = false;
     }
 
     @Override
-    public void tick() {
-        super.tick();
-        if (!workPos.closerThan(swineherd.getOnPos(), 10D) && workPos != null && !swineherd.getFollow())
-            this.swineherd.getNavigation().moveTo(workPos.getX(), workPos.getY(), workPos.getZ(), 1);
+    public void performWork() {
+        if (!workPos.closerThan(animalFarmer.getOnPos(), 10D) && workPos != null && !animalFarmer.getFollow())
+            this.animalFarmer.getNavigation().moveTo(workPos.getX(), workPos.getY(), workPos.getZ(), 1);
 
 
         if (breeding){
@@ -56,13 +51,14 @@ public class SwineherdAI extends Goal {
             if (this.pig.isPresent() ) {
                 int i = pig.get().getAge();
 
-                if (i == 0 && this.hasCarrot()) {
-                    this.swineherd.getNavigation().moveTo(this.pig.get(), 1);
-                    this.swineherd.setItemSlot(EquipmentSlot.MAINHAND, new ItemStack(Items.CARROT));
+                if (i == 0 && this.hasBreedItem(Items.CARROT)) {
+                    this.animalFarmer.getNavigation().moveTo(this.pig.get(), 1);
+                    this.animalFarmer.changeToBreedItem(Items.CARROT);
 
-                    if (pig.get().closerThan(this.swineherd, 1.5)) {
-                        this.consumeCarrot();
-                        this.swineherd.getLookControl().setLookAt(pig.get().getX(), pig.get().getEyeY(), pig.get().getZ(), 10.0F, (float) this.swineherd.getMaxHeadXRot());
+                    if (pig.get().closerThan(this.animalFarmer, 2)) {
+                        this.animalFarmer.workerSwingArm();
+                        this.consumeBreedItem(Items.CARROT);
+                        this.animalFarmer.getLookControl().setLookAt(pig.get().getX(), pig.get().getEyeY(), pig.get().getZ(), 10.0F, (float) this.animalFarmer.getMaxHeadXRot());
                         pig.get().setInLove(null);
                         this.pig = Optional.empty();
                     }
@@ -70,30 +66,36 @@ public class SwineherdAI extends Goal {
                 else {
                     breeding = false;
                     slaughtering = true;
-                    this.swineherd.setItemSlot(EquipmentSlot.MAINHAND, ItemStack.EMPTY);
                 }
             } else {
                 breeding = false;
                 slaughtering = true;
-                this.swineherd.setItemSlot(EquipmentSlot.MAINHAND, ItemStack.EMPTY);
             }
         }
 
 
         if (slaughtering) {
-
             List<Pig> cows = findPigSlaughtering();
-            if (cows.size() > swineherd.getMaxAnimalCount()) {
+            if (cows.size() > animalFarmer.getMaxAnimalCount()) {
                 pig = cows.stream().findFirst();
 
                 if (pig.isPresent()) {
-                    this.swineherd.getNavigation().moveTo(pig.get().getX(), pig.get().getY(), pig.get().getZ(), 1);
-                    if (pig.get().closerThan(this.swineherd, 1.5)) {
+                    if(!animalFarmer.isRequiredMainTool(animalFarmer.getMainHandItem())) this.animalFarmer.changeToTool(true);
+                    this.animalFarmer.getNavigation().moveTo(pig.get().getX(), pig.get().getY(), pig.get().getZ(), 1);
+
+                    if (pig.get().closerThan(this.animalFarmer, 2)) {
                         pig.get().kill();
-                        swineherd.workerSwingArm();
+
+                        this.animalFarmer.workerSwingArm();
+                        this.animalFarmer.playSound(SoundEvents.PLAYER_ATTACK_STRONG);
+                        this.animalFarmer.consumeToolDurability();
+                        this.animalFarmer.increaseFarmedItems();
                     }
                 }
-
+                else {
+                    slaughtering = false;
+                    breeding = true;
+                }
             }
             else {
                 slaughtering = false;
@@ -102,46 +104,20 @@ public class SwineherdAI extends Goal {
         }
 
     }
-
-    private void consumeCarrot(){
-        SimpleContainer inventory = swineherd.getInventory();
-        for(int i = 0; i < inventory.getContainerSize(); i++) {
-            ItemStack itemStack = inventory.getItem(i);
-            if (itemStack.getItem().equals(Items.CARROT)){
-                itemStack.shrink(1);
-                break;
-            }
-
-        }
-    }
-
-
     private Optional<Pig> findPigBreeding() {
-        return  swineherd.level.getEntitiesOfClass(Pig.class, swineherd.getBoundingBox()
+        return  this.animalFarmer.level.getEntitiesOfClass(Pig.class, this.animalFarmer.getBoundingBox()
                 .inflate(8D), Pig::isAlive)
                 .stream()
                 .filter(not(Pig::isBaby))
                 .filter(not(Pig::isInLove))
                 .findAny();
     }
-
     private List<Pig> findPigSlaughtering() {
-        return  swineherd.level.getEntitiesOfClass(Pig.class, swineherd.getBoundingBox()
+        return this.animalFarmer.level.getEntitiesOfClass(Pig.class, this.animalFarmer.getBoundingBox()
                         .inflate(8D), Pig::isAlive)
                 .stream()
                 .filter(not(Pig::isBaby))
                 .filter(not(Pig::isInLove))
                 .collect(Collectors.toList());
-    }
-
-    private boolean hasCarrot() {
-        SimpleContainer inventory = swineherd.getInventory();
-        for(int i = 0; i < inventory.getContainerSize(); i++) {
-            ItemStack itemStack = inventory.getItem(i);
-            if (itemStack.getItem().equals(Items.CARROT))
-                if (itemStack.getCount() >= 2)
-                    return true;
-        }
-        return false;
     }
 }
