@@ -104,8 +104,8 @@ public class BeekeeperEntity extends AbstractAnimalFarmerEntity {
 
     @Override
     @Nullable
-    public SpawnGroupData finalizeSpawn(ServerLevelAccessor world, DifficultyInstance difficultyInstance,
-            MobSpawnType reason, @Nullable SpawnGroupData data, @Nullable CompoundTag nbt) {
+    public SpawnGroupData finalizeSpawn(@NotNull ServerLevelAccessor world, @NotNull DifficultyInstance difficultyInstance,
+                                        @NotNull MobSpawnType reason, @Nullable SpawnGroupData data, @Nullable CompoundTag nbt) {
         SpawnGroupData ilivingentitydata = super.finalizeSpawn(world, difficultyInstance, reason, data, nbt);
         this.populateDefaultEquipmentEnchantments(random, difficultyInstance);
 
@@ -142,5 +142,15 @@ public class BeekeeperEntity extends AbstractAnimalFarmerEntity {
     @Override
     public void setEquipment() {
         this.setItemSlot(EquipmentSlot.MAINHAND, new ItemStack(Items.WOODEN_HOE));
+    }
+
+    @Override
+    public boolean isRequiredMainTool(ItemStack tool) {
+        return false;
+    }
+
+    @Override
+    public boolean isRequiredSecondTool(ItemStack tool) {
+        return false;
     }
 }

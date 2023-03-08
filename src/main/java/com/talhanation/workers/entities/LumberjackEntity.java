@@ -103,7 +103,7 @@ public class LumberjackEntity extends AbstractWorkerEntity {
     @Override
     @Nullable
     public SpawnGroupData finalizeSpawn(ServerLevelAccessor world, DifficultyInstance difficultyInstance,
-            MobSpawnType reason, @Nullable SpawnGroupData data, @Nullable CompoundTag nbt) {
+        MobSpawnType reason, @Nullable SpawnGroupData data, @Nullable CompoundTag nbt) {
         SpawnGroupData ilivingentitydata = super.finalizeSpawn(world, difficultyInstance, reason, data, nbt);
         this.populateDefaultEquipmentEnchantments(random, difficultyInstance);
 
@@ -146,9 +146,11 @@ public class LumberjackEntity extends AbstractWorkerEntity {
         return super.wantsToKeep(itemStack) || itemStack.is(ItemTags.SAPLINGS);
     }
 
+
     public boolean wantsToBreak(Block block) {
+        //TODO: Maybe actually find a structure that is a tree?
         BlockState blockState = block.defaultBlockState();
-        return blockState.is(BlockTags.LOGS); 
+        return blockState.is(BlockTags.LOGS);
     }
 
     @Override

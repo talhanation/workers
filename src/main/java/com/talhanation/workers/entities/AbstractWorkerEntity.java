@@ -28,6 +28,7 @@ import net.minecraft.world.entity.ai.attributes.AttributeInstance;
 import net.minecraft.world.entity.ai.attributes.AttributeModifier;
 import net.minecraft.world.entity.ai.attributes.Attributes;
 import net.minecraft.world.entity.ai.goal.OpenDoorGoal;
+import net.minecraft.world.entity.ai.goal.WrappedGoal;
 import net.minecraft.world.entity.ai.navigation.GroundPathNavigation;
 import net.minecraft.world.entity.ai.village.ReputationEventType;
 import net.minecraft.world.entity.item.ItemEntity;
@@ -37,7 +38,6 @@ import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.entity.projectile.AbstractArrow;
 import net.minecraft.world.inventory.AbstractContainerMenu;
 import net.minecraft.world.item.ItemStack;
-import net.minecraft.world.item.Items;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.ServerLevelAccessor;
 import net.minecraftforge.api.distmarker.Dist;
@@ -132,7 +132,7 @@ public abstract class AbstractWorkerEntity extends AbstractChunkLoaderEntity {
     @Override
     public void aiStep() {
         super.aiStep();
-        Main.LOGGER.debug("Running goals are: {}", this.goalSelector.getRunningGoals().map((goal) -> goal.getGoal()).toArray());
+        Main.LOGGER.debug("Running goals are: {}", this.goalSelector.getRunningGoals().map(WrappedGoal::getGoal).toArray());
         this.level.getProfiler().push("looting");
         if (
             !this.level.isClientSide && 
@@ -182,22 +182,18 @@ public abstract class AbstractWorkerEntity extends AbstractChunkLoaderEntity {
     public void consumeToolDurability() {
         ItemStack heldItem = this.getItemInHand(InteractionHand.MAIN_HAND);
         // Damage the tool
-        heldItem.setDamageValue(heldItem.getDamageValue() + 1);
-        // Break the tool when it reaches max durability
-        if (!heldItem.is(Items.AIR) && heldItem.getDamageValue() >= heldItem.getMaxDamage()) {
-            this.broadcastBreakEvent(InteractionHand.MAIN_HAND);
-            this.setItemInHand(InteractionHand.MAIN_HAND, ItemStack.EMPTY);
-            this.stopUsingItem();
-            // Attempt to use the next available tool in inventory
-            this.upgradeTool();
-            if (this.getItemInHand(InteractionHand.MAIN_HAND).isEmpty()) {
-                // If there are no more tools remaining, alert the owner
-                LivingEntity owner = this.getOwner();
-                if (owner != null) {
-                    this.tellPlayer(owner, TEXT_OUT_OF_TOOLS(heldItem));
-                }
+        heldItem.hurtAndBreak(1, this,(worker) -> {
+            worker.broadcastBreakEvent(EquipmentSlot.MAINHAND);
+            worker.setItemInHand(InteractionHand.MAIN_HAND, ItemStack.EMPTY);
+            worker.stopUsingItem();
+
+            worker.upgradeTool();
+            if (worker.getItemInHand(InteractionHand.MAIN_HAND).isEmpty()) {
+                LivingEntity owner = worker.getOwner();
+                if (owner != null) worker.tellPlayer(owner, TEXT_OUT_OF_TOOLS(heldItem));
+                // TODO: Change to setNeedsToGetTool
             }
-         }
+        });
     }
 
     public void tick() {
@@ -219,8 +215,8 @@ public abstract class AbstractWorkerEntity extends AbstractChunkLoaderEntity {
     }
 
     @Nullable
-    public SpawnGroupData finalizeSpawn(ServerLevelAccessor world, DifficultyInstance diff, MobSpawnType reason,
-            @Nullable SpawnGroupData spawnData, @Nullable CompoundTag nbt) {
+    public SpawnGroupData finalizeSpawn(@NotNull ServerLevelAccessor world, @NotNull DifficultyInstance diff, @NotNull MobSpawnType reason,
+                                        @Nullable SpawnGroupData spawnData, @Nullable CompoundTag nbt) {
         setRandomSpawnBonus();
         canPickUpLoot();
         return spawnData;
@@ -340,12 +336,11 @@ public abstract class AbstractWorkerEntity extends AbstractChunkLoaderEntity {
             nbt.contains(String.format("%sPosY", blockName)) &&
             nbt.contains(String.format("%sPosZ", blockName))
         ) {
-            BlockPos blockpos = new BlockPos(
-                nbt.getInt(String.format("%sPosX", blockName)), 
-                nbt.getInt(String.format("%sPosY", blockName)), 
+            return new BlockPos(
+                nbt.getInt(String.format("%sPosX", blockName)),
+                nbt.getInt(String.format("%sPosY", blockName)),
                 nbt.getInt(String.format("%sPosZ", blockName))
             );
-            return blockpos;
         }
         return null;
     }
@@ -749,10 +744,8 @@ public abstract class AbstractWorkerEntity extends AbstractChunkLoaderEntity {
     }
 
     public void workerSwingArm() {
-        if (this.getRandom().nextInt(5) == 0) {
-            if (!this.swinging) {
-                this.swing(InteractionHand.MAIN_HAND);
-            }
+        if (!this.swinging) {
+            this.swing(InteractionHand.MAIN_HAND);
         }
     }
 

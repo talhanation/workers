@@ -146,4 +146,14 @@ public class CattleFarmerEntity extends AbstractAnimalFarmerEntity {
     public void setEquipment() {
         this.setItemSlot(EquipmentSlot.OFFHAND, new ItemStack(Items.WOODEN_HOE));
     }
+
+    @Override
+    public boolean isRequiredMainTool(ItemStack tool) {
+        return false;
+    }
+
+    @Override
+    public boolean isRequiredSecondTool(ItemStack tool) {
+        return false;
+    }
 }

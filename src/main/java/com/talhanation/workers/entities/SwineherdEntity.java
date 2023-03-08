@@ -141,4 +141,14 @@ public class SwineherdEntity extends AbstractAnimalFarmerEntity {
     public void setEquipment() {
         this.setItemSlot(EquipmentSlot.OFFHAND, new ItemStack(Items.STONE_AXE));
     }
+
+    @Override
+    public boolean isRequiredMainTool(ItemStack tool) {
+        return false;
+    }
+
+    @Override
+    public boolean isRequiredSecondTool(ItemStack tool) {
+        return false;
+    }
 }
