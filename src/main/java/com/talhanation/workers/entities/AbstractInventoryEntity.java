@@ -127,7 +127,7 @@ public abstract class AbstractInventoryEntity extends TamableAnimal {
     public void equipTool(ItemStack tool) {
         this.setItemInHand(InteractionHand.MAIN_HAND, tool);
         this.updateUsingItem(tool);
-        this.startUsingItem(InteractionHand.MAIN_HAND);
+        //this.startUsingItem(InteractionHand.MAIN_HAND);
     }
 
     public void die(@NotNull DamageSource dmg) {
