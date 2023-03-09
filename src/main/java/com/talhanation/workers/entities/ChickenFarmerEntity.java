@@ -18,6 +18,7 @@ import net.minecraft.world.entity.ai.goal.WaterAvoidingRandomStrollGoal;
 import net.minecraft.world.entity.ai.navigation.GroundPathNavigation;
 import net.minecraft.world.entity.item.ItemEntity;
 import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.item.AxeItem;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
@@ -34,6 +35,7 @@ public class ChickenFarmerEntity extends AbstractAnimalFarmerEntity {
         return !item.hasPickUpDelay() && item.isAlive() && this.wantsToPickUp(item.getItem());
     };
 
+    public final ItemStack MAIN_TOOL = new ItemStack(Items.STONE_AXE);
     private static final Set<Item> WANTED_ITEMS = ImmutableSet.of(
             Items.FEATHER,
             Items.CHICKEN,
@@ -141,21 +143,31 @@ public class ChickenFarmerEntity extends AbstractAnimalFarmerEntity {
 
     @Override
     public boolean wantsToKeep(ItemStack itemStack) {
-        return super.wantsToKeep(itemStack) || itemStack.is(Items.FISHING_ROD);
+        return super.wantsToKeep(itemStack) || isBreedItem(itemStack);
     }
 
     @Override
     public void setEquipment() {
-        this.setItemSlot(EquipmentSlot.OFFHAND, new ItemStack(Items.WOODEN_HOE));
+        ItemStack initialTool = MAIN_TOOL;
+        this.updateInventory(0, initialTool);
+        this.equipTool(initialTool);
+
     }
 
     @Override
     public boolean isRequiredMainTool(ItemStack tool) {
-        return false;
+        return tool.getItem() instanceof AxeItem;
     }
 
     @Override
     public boolean isRequiredSecondTool(ItemStack tool) {
         return false;
+    }
+
+    public boolean isBreedItem(ItemStack itemStack){
+        return itemStack.getItem().equals(Items.WHEAT_SEEDS)
+                || itemStack.getItem().equals(Items.MELON_SEEDS)
+                || itemStack.getItem().equals(Items.BEETROOT_SEEDS)
+                || itemStack.getItem().equals(Items.PUMPKIN_SEEDS);
     }
 }

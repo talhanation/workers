@@ -3,8 +3,6 @@ package com.talhanation.workers.entities.ai;
 import com.talhanation.workers.entities.ChickenFarmerEntity;
 import net.minecraft.core.BlockPos;
 import net.minecraft.world.SimpleContainer;
-import net.minecraft.world.entity.EquipmentSlot;
-import net.minecraft.world.entity.ai.goal.Goal;
 import net.minecraft.world.entity.animal.Chicken;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
@@ -16,36 +14,34 @@ import java.util.stream.Collectors;
 
 import static com.google.common.base.Predicates.not;
 
-public class ChickenFarmerAI extends Goal {
+public class ChickenFarmerAI extends AnimalFarmerAI {
     private Optional<Chicken> chicken;
-    private final ChickenFarmerEntity chickenFarmer;
     private boolean breeding;
     private boolean slaughtering;
     private BlockPos workPos;
 
     public ChickenFarmerAI(ChickenFarmerEntity worker) {
-        this.chickenFarmer = worker;
+        this.animalFarmer = worker;
         this.setFlags(EnumSet.of(Flag.MOVE, Flag.LOOK));
     }
 
     @Override
     public boolean canUse() {
-        return this.chickenFarmer.canWork();
+        return this.animalFarmer.canWork();
     }
 
     @Override
     public void start() {
         super.start();
-        this.workPos = chickenFarmer.getStartPos();
+        this.workPos = animalFarmer.getStartPos();
         this.breeding = true;
         this.slaughtering = false;
     }
 
     @Override
-    public void tick() {
-        super.tick();
-        if (workPos != null && !workPos.closerThan(chickenFarmer.getOnPos(), 10D) && !chickenFarmer.getFollow())
-            this.chickenFarmer.getNavigation().moveTo(workPos.getX(), workPos.getY(), workPos.getZ(), 1);
+    public void performWork() {
+        if (workPos != null && !workPos.closerThan(animalFarmer.getOnPos(), 10D) && !animalFarmer.getFollow())
+            this.animalFarmer.getNavigation().moveTo(workPos.getX(), workPos.getY(), workPos.getZ(), 1);
 
         if (breeding) {
             this.chicken = findChickenBreeding();
@@ -53,42 +49,45 @@ public class ChickenFarmerAI extends Goal {
                 int i = chicken.get().getAge();
 
                 if (i == 0 && this.hasSeeds()) {
-                    this.chickenFarmer.getNavigation().moveTo(this.chicken.get(), 1);
-                    this.chickenFarmer.setItemSlot(EquipmentSlot.MAINHAND, new ItemStack(Items.WHEAT_SEEDS));
+                    this.animalFarmer.changeToBreedItem(Items.WHEAT_SEEDS);
 
-                    if (chicken.get().closerThan(this.chickenFarmer, 1.5)) {
+                    this.animalFarmer.getNavigation().moveTo(this.chicken.get(), 1);
+
+                    if (chicken.get().closerThan(this.animalFarmer, 2)) {
                         this.consumeSeed();
-                        this.chickenFarmer.getLookControl().setLookAt(chicken.get().getX(), chicken.get().getEyeY(),
-                                chicken.get().getZ(), 10.0F, (float) this.chickenFarmer.getMaxHeadXRot());
+                        this.animalFarmer.getLookControl().setLookAt(chicken.get().getX(), chicken.get().getEyeY(),
+                                chicken.get().getZ(), 10.0F, (float) this.animalFarmer.getMaxHeadXRot());
                         chicken.get().setInLove(null);
+                        animalFarmer.workerSwingArm();
                         this.chicken = Optional.empty();
                     }
                 } else {
                     breeding = false;
                     slaughtering = true;
-                    this.chickenFarmer.setItemSlot(EquipmentSlot.MAINHAND, ItemStack.EMPTY);
                 }
             } else {
                 breeding = false;
                 slaughtering = true;
-                this.chickenFarmer.setItemSlot(EquipmentSlot.MAINHAND, ItemStack.EMPTY);
             }
         }
 
         if (slaughtering) {
-            List<Chicken> cows = findChickenSlaughtering();
-            if (cows.size() > chickenFarmer.getMaxAnimalCount()) {
-                chicken = cows.stream().findFirst();
+            List<Chicken> chickens = findChickenSlaughtering();
+            if (chickens.size() > animalFarmer.getMaxAnimalCount()) {
+                chicken = chickens.stream().findFirst();
 
                 if (chicken.isPresent()) {
-                    this.chickenFarmer.getNavigation().moveTo(chicken.get().getX(), chicken.get().getY(),
+
+                    if(!animalFarmer.isRequiredMainTool(animalFarmer.getMainHandItem())) this.animalFarmer.changeToTool(true);
+
+                    this.animalFarmer.getNavigation().moveTo(chicken.get().getX(), chicken.get().getY(),
                             chicken.get().getZ(), 1);
-                    if (chicken.get().closerThan(this.chickenFarmer, 1.5)) {
+                    if (chicken.get().closerThan(this.animalFarmer, 2)) {
                         chicken.get().kill();
 
-                        chickenFarmer.workerSwingArm();
-                        chickenFarmer.increaseFarmedItems();
-                        chickenFarmer.consumeToolDurability();
+                        animalFarmer.workerSwingArm();
+                        animalFarmer.increaseFarmedItems();
+                        animalFarmer.consumeToolDurability();
                     }
                 }
 
@@ -101,7 +100,7 @@ public class ChickenFarmerAI extends Goal {
     }
 
     private void consumeSeed() {
-        SimpleContainer inventory = chickenFarmer.getInventory();
+        SimpleContainer inventory = animalFarmer.getInventory();
         for (int i = 0; i < inventory.getContainerSize(); i++) {
             ItemStack itemStack = inventory.getItem(i);
             if (itemStack.getItem().equals(Items.WHEAT_SEEDS) || itemStack.getItem().equals(Items.MELON_SEEDS)
@@ -115,19 +114,19 @@ public class ChickenFarmerAI extends Goal {
     }
 
     private Optional<Chicken> findChickenBreeding() {
-        return chickenFarmer.level
-                .getEntitiesOfClass(Chicken.class, chickenFarmer.getBoundingBox().inflate(8D), Chicken::isAlive)
+        return animalFarmer.level
+                .getEntitiesOfClass(Chicken.class, animalFarmer.getBoundingBox().inflate(8D), Chicken::isAlive)
                 .stream().filter(not(Chicken::isBaby)).filter(not(Chicken::isInLove)).findAny();
     }
 
     private List<Chicken> findChickenSlaughtering() {
-        return chickenFarmer.level
-                .getEntitiesOfClass(Chicken.class, chickenFarmer.getBoundingBox().inflate(8D), Chicken::isAlive)
+        return animalFarmer.level
+                .getEntitiesOfClass(Chicken.class, animalFarmer.getBoundingBox().inflate(8D), Chicken::isAlive)
                 .stream().filter(not(Chicken::isBaby)).filter(not(Chicken::isInLove)).collect(Collectors.toList());
     }
 
     private boolean hasSeeds() {
-        SimpleContainer inventory = chickenFarmer.getInventory();
+        SimpleContainer inventory = animalFarmer.getInventory();
         for (int i = 0; i < inventory.getContainerSize(); i++) {
             ItemStack itemStack = inventory.getItem(i);
             if (itemStack.getItem().equals(Items.WHEAT_SEEDS) || itemStack.getItem().equals(Items.MELON_SEEDS)
