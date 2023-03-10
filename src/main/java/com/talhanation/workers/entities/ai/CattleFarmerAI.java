@@ -6,7 +6,6 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.world.SimpleContainer;
 import net.minecraft.world.entity.EquipmentSlot;
-import net.minecraft.world.entity.ai.goal.Goal;
 import net.minecraft.world.entity.animal.Cow;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
@@ -18,58 +17,57 @@ import java.util.stream.Collectors;
 
 import static com.google.common.base.Predicates.not;
 
-public class CattleFarmerAI extends Goal {
+public class CattleFarmerAI extends AnimalFarmerAI {
     private Optional<Cow> cow;
-    private final CattleFarmerEntity cattleFarmer;
     private boolean milking;
     private boolean breeding;
     private boolean slaughtering;
     private BlockPos workPos;
 
-
-
-    public CattleFarmerAI(CattleFarmerEntity worker, int coolDown) {
-        this.cattleFarmer = worker;
+    public CattleFarmerAI(CattleFarmerEntity worker) {
+        this.animalFarmer = worker;
         this.setFlags(EnumSet.of(Flag.MOVE, Flag.LOOK));
     }
 
     @Override
     public boolean canUse() {
-        return cattleFarmer.canWork();
+        return animalFarmer.canWork();
     }
 
     @Override
     public void start() {
         super.start();
-        this.workPos = cattleFarmer.getStartPos();
+        this.workPos = animalFarmer.getStartPos();
         this.milking = true;
         this.breeding = false;
         this.slaughtering = false;
     }
 
     @Override
-    public void tick() {
-        super.tick();
-        if (!workPos.closerThan(cattleFarmer.getOnPos(), 10D) && workPos != null && !cattleFarmer.getFollow())
-            this.cattleFarmer.getNavigation().moveTo(workPos.getX(), workPos.getY(), workPos.getZ(), 1);
+    public void performWork() {
+        if (!workPos.closerThan(animalFarmer.getOnPos(), 10D) && workPos != null && !animalFarmer.getFollow())
+            this.animalFarmer.getNavigation().moveTo(workPos.getX(), workPos.getY(), workPos.getZ(), 1);
 
         if (milking){
             this.cow = findCowMilking();
             if (this.cow.isPresent() && hasBucket()) {
-                this.cattleFarmer.getNavigation().moveTo(this.cow.get(), 1);
-                this.cattleFarmer.setItemSlot(EquipmentSlot.MAINHAND, new ItemStack(Items.BUCKET));
+                this.animalFarmer.getNavigation().moveTo(this.cow.get(), 1);
 
-                if (cow.get().closerThan(this.cattleFarmer, 1.5)) {
+                if(!animalFarmer.isRequiredMainTool(animalFarmer.getMainHandItem())) this.animalFarmer.changeToTool(true);
+
+                if (cow.get().closerThan(this.animalFarmer, 2)) {
+
+                    this.animalFarmer.getLookControl().setLookAt(cow.get().getX(), cow.get().getEyeY(), cow.get().getZ(), 10.0F, (float) this.animalFarmer.getMaxHeadXRot());
+
+                    animalFarmer.workerSwingArm();
+                    animalFarmer.increaseFarmedItems();
                     milkCow(this.cow.get());
-                    this.cattleFarmer.getLookControl().setLookAt(cow.get().getX(), cow.get().getEyeY(), cow.get().getZ(), 10.0F, (float) this.cattleFarmer.getMaxHeadXRot());
-
                     this.cow = Optional.empty();
                 }
             }
             else {
                 milking = false;
                 breeding = true;
-                this.cattleFarmer.setItemSlot(EquipmentSlot.MAINHAND, ItemStack.EMPTY);
             }
 
         }
@@ -79,41 +77,46 @@ public class CattleFarmerAI extends Goal {
             if (this.cow.isPresent() ) {
                 int i = cow.get().getAge();
 
-                if (i == 0 && this.hasWheat()) {
-                    this.cattleFarmer.getNavigation().moveTo(this.cow.get(), 1);
-                    this.cattleFarmer.setItemSlot(EquipmentSlot.MAINHAND, new ItemStack(Items.WHEAT));
+                if (i == 0 && this.hasBreedItem(Items.WHEAT)) {
+                    this.animalFarmer.getNavigation().moveTo(this.cow.get(), 1);
+                    this.animalFarmer.changeToBreedItem(Items.WHEAT);
 
-                    if (cow.get().closerThan(this.cattleFarmer, 1.5)) {
-                        this.consumeWheat();
-                        this.cattleFarmer.getLookControl().setLookAt(cow.get().getX(), cow.get().getEyeY(), cow.get().getZ(), 10.0F, (float) this.cattleFarmer.getMaxHeadXRot());
-                        cow.get().setInLove(null);
+                    if (cow.get().closerThan(this.animalFarmer, 2)) {
+
+                        this.animalFarmer.getLookControl().setLookAt(cow.get().getX(), cow.get().getEyeY(), cow.get().getZ(), 10.0F, (float) this.animalFarmer.getMaxHeadXRot());
+
+                        this.consumeBreedItem(Items.WHEAT);
+                        animalFarmer.workerSwingArm();
+                        this.cow.get().setInLove(null);
                         this.cow = Optional.empty();
                     }
                 }
                 else {
-                    this.cattleFarmer.setItemSlot(EquipmentSlot.MAINHAND, ItemStack.EMPTY);
                     breeding = false;
                     slaughtering = true;
                 }
             } else {
-                this.cattleFarmer.setItemSlot(EquipmentSlot.MAINHAND, ItemStack.EMPTY);
                 breeding = false;
                 slaughtering = true;
             }
         }
 
-
         if (slaughtering) {
-
             List<Cow> cows = findCowSlaughtering();
-            if (cows.size() > cattleFarmer.getMaxAnimalCount()) {
+            if (cows.size() > animalFarmer.getMaxAnimalCount()) {
                 cow = cows.stream().findFirst();
 
+                if(!animalFarmer.isRequiredSecondTool(animalFarmer.getMainHandItem())) this.animalFarmer.changeToTool(false);
+
                 if (cow.isPresent()) {
-                    this.cattleFarmer.getNavigation().moveTo(cow.get().getX(), cow.get().getY(), cow.get().getZ(), 1);
-                    if (cow.get().closerThan(this.cattleFarmer, 1.5)) {
+                    this.animalFarmer.getNavigation().moveTo(cow.get().getX(), cow.get().getY(), cow.get().getZ(), 1);
+                    if (cow.get().closerThan(this.animalFarmer, 2)) {
                         cow.get().kill();
-                        cattleFarmer.workerSwingArm();
+                        animalFarmer.playSound(SoundEvents.PLAYER_ATTACK_STRONG);
+
+                        this.animalFarmer.consumeToolDurability();
+                        animalFarmer.increaseFarmedItems();
+                        animalFarmer.workerSwingArm();
                     }
                 }
 
@@ -126,21 +129,10 @@ public class CattleFarmerAI extends Goal {
 
     }
 
-    private void consumeWheat(){
-        SimpleContainer inventory = cattleFarmer.getInventory();
-        for(int i = 0; i < inventory.getContainerSize(); i++) {
-            ItemStack itemStack = inventory.getItem(i);
-            if (itemStack.getItem().equals(Items.WHEAT)){
-                itemStack.shrink(1);
-                break;
-            }
-        }
-    }
-
     public void milkCow(Cow cow) {
-       cattleFarmer.workerSwingArm();
+        animalFarmer.workerSwingArm();
 
-        SimpleContainer inventory = cattleFarmer.getInventory();
+        SimpleContainer inventory = animalFarmer.getInventory();
         for(int i = 0; i < inventory.getContainerSize(); i++) {
             ItemStack itemStack = inventory.getItem(i);
             if (itemStack.getItem().equals(Items.BUCKET)){
@@ -148,12 +140,12 @@ public class CattleFarmerAI extends Goal {
             }
         }
         inventory.addItem(Items.MILK_BUCKET.getDefaultInstance());
-
+        animalFarmer.increaseFarmedItems();
         cow.playSound(SoundEvents.COW_MILK, 1.0F, 1.0F);
     }
 
     public boolean hasBucket(){
-        SimpleContainer inventory = cattleFarmer.getInventory();
+        SimpleContainer inventory = animalFarmer.getInventory();
         for(int i = 0; i < inventory.getContainerSize(); i++) {
             ItemStack itemStack = inventory.getItem(i);
             if (itemStack.getItem().equals(Items.BUCKET)){
@@ -164,7 +156,7 @@ public class CattleFarmerAI extends Goal {
     }
 
     private Optional<Cow> findCowMilking() {
-        return  cattleFarmer.level.getEntitiesOfClass(Cow.class, cattleFarmer.getBoundingBox()
+        return  animalFarmer.level.getEntitiesOfClass(Cow.class, animalFarmer.getBoundingBox()
                 .inflate(8D), Cow::isAlive)
                 .stream()
                 .filter(not(Cow::isBaby))
@@ -173,22 +165,11 @@ public class CattleFarmerAI extends Goal {
     }
 
     private List<Cow> findCowSlaughtering() {
-        return  cattleFarmer.level.getEntitiesOfClass(Cow.class, cattleFarmer.getBoundingBox()
+        return  animalFarmer.level.getEntitiesOfClass(Cow.class, animalFarmer.getBoundingBox()
                         .inflate(8D), Cow::isAlive)
                 .stream()
                 .filter(not(Cow::isBaby))
                 .filter(not(Cow::isInLove))
                 .collect(Collectors.toList());
-    }
-
-    private boolean hasWheat() {
-        SimpleContainer inventory = cattleFarmer.getInventory();
-        for(int i = 0; i < inventory.getContainerSize(); i++) {
-            ItemStack itemStack = inventory.getItem(i);
-            if (itemStack.getItem().equals(Items.WHEAT))
-                if (itemStack.getCount() >= 2)
-                    return true;
-        }
-        return false;
     }
 }

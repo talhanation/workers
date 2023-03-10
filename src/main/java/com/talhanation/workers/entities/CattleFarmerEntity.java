@@ -18,9 +18,7 @@ import net.minecraft.world.entity.ai.goal.WaterAvoidingRandomStrollGoal;
 import net.minecraft.world.entity.ai.navigation.GroundPathNavigation;
 import net.minecraft.world.entity.item.ItemEntity;
 import net.minecraft.world.entity.player.Player;
-import net.minecraft.world.item.Item;
-import net.minecraft.world.item.ItemStack;
-import net.minecraft.world.item.Items;
+import net.minecraft.world.item.*;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.ServerLevelAccessor;
 import org.jetbrains.annotations.NotNull;
@@ -34,6 +32,9 @@ public class CattleFarmerEntity extends AbstractAnimalFarmerEntity {
     private final Predicate<ItemEntity> ALLOWED_ITEMS = (item) -> {
         return !item.hasPickUpDelay() && item.isAlive() && this.wantsToPickUp(item.getItem());
     };
+
+    public final ItemStack MAIN_TOOL = new ItemStack(Items.BUCKET);
+    public final ItemStack SECOND_TOOL = new ItemStack(Items.STONE_AXE);
 
     private static final Set<Item> WANTED_ITEMS = ImmutableSet.of(
             Items.LEATHER,
@@ -93,7 +94,7 @@ public class CattleFarmerEntity extends AbstractAnimalFarmerEntity {
         super.registerGoals();
         this.goalSelector.addGoal(0, new FloatGoal(this));
         this.goalSelector.addGoal(2, new WorkerPickupWantedItemGoal(this));
-        this.goalSelector.addGoal(3, new CattleFarmerAI(this, 1));
+        this.goalSelector.addGoal(3, new CattleFarmerAI(this));
         this.goalSelector.addGoal(6, new LookAtPlayerGoal(this, Player.class, 8.0F));
         this.goalSelector.addGoal(6, new RandomLookAroundGoal(this));
         this.goalSelector.addGoal(6, new WaterAvoidingRandomStrollGoal(this, 1.0D, 0F));
@@ -139,21 +140,27 @@ public class CattleFarmerEntity extends AbstractAnimalFarmerEntity {
 
     @Override
     public boolean wantsToKeep(ItemStack itemStack) {
-        return super.wantsToKeep(itemStack);
+        return super.wantsToKeep(itemStack) || itemStack.getItem() instanceof BucketItem;
     }
 
     @Override
     public void setEquipment() {
-        this.setItemSlot(EquipmentSlot.OFFHAND, new ItemStack(Items.WOODEN_HOE));
+        ItemStack initialTool = MAIN_TOOL;
+        this.updateInventory(0, initialTool);
+        ItemStack initialTool2 = SECOND_TOOL;
+        this.updateInventory(1, initialTool2);
+
+        this.equipTool(initialTool);
+        this.equipTool(initialTool2);
     }
 
     @Override
     public boolean isRequiredMainTool(ItemStack tool) {
-        return false;
+        return tool.getItem() instanceof BucketItem;
     }
 
     @Override
     public boolean isRequiredSecondTool(ItemStack tool) {
-        return false;
+        return tool.getItem() instanceof AxeItem;
     }
 }
