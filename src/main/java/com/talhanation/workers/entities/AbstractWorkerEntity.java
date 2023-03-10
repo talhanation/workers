@@ -216,36 +216,9 @@ public abstract class AbstractWorkerEntity extends AbstractChunkLoaderEntity {
     }
 
     @Nullable
-    public SpawnGroupData finalizeSpawn(@NotNull ServerLevelAccessor world, @NotNull DifficultyInstance diff, @NotNull MobSpawnType reason,
-                                        @Nullable SpawnGroupData spawnData, @Nullable CompoundTag nbt) {
-        setRandomSpawnBonus();
-        canPickUpLoot();
+    public SpawnGroupData finalizeSpawn(@NotNull ServerLevelAccessor world, @NotNull DifficultyInstance diff, @NotNull MobSpawnType reason, @Nullable SpawnGroupData spawnData, @Nullable CompoundTag nbt) {
         return spawnData;
     }
-
-    public void setRandomSpawnBonus() {
-        AttributeInstance maxHealth = getAttribute(Attributes.MAX_HEALTH);
-        if (maxHealth != null) {
-            maxHealth.addPermanentModifier(
-                new AttributeModifier(
-                    "heath_bonus",
-                    this.random.nextGaussian() * 0.10D, 
-                    AttributeModifier.Operation.MULTIPLY_BASE
-                )
-            );
-        }
-        AttributeInstance movementSpeed = getAttribute(Attributes.MOVEMENT_SPEED);
-        if (movementSpeed != null) {
-            movementSpeed.addPermanentModifier(
-                new AttributeModifier(
-                    "speed_bonus",
-                    this.random.nextGaussian() * 0.10D, 
-                    AttributeModifier.Operation.MULTIPLY_BASE
-                )
-            );
-        }
-    }
-
     public void setDropEquipment() {
         this.dropEquipment();
     }
@@ -829,7 +802,6 @@ public abstract class AbstractWorkerEntity extends AbstractChunkLoaderEntity {
 
         this.setEquipment();
         this.setDropEquipment();
-        this.setRandomSpawnBonus();
         this.setPersistenceRequired();
         this.setCanPickUpLoot(true);
     }
