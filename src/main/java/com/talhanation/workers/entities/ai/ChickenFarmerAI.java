@@ -109,7 +109,6 @@ public class ChickenFarmerAI extends AnimalFarmerAI {
                 itemStack.shrink(1);
                 break;
             }
-
         }
     }
 
