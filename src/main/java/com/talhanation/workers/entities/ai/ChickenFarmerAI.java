@@ -2,6 +2,7 @@ package com.talhanation.workers.entities.ai;
 
 import com.talhanation.workers.entities.ChickenFarmerEntity;
 import net.minecraft.core.BlockPos;
+import net.minecraft.sounds.SoundEvents;
 import net.minecraft.world.SimpleContainer;
 import net.minecraft.world.entity.animal.Chicken;
 import net.minecraft.world.item.ItemStack;
@@ -86,8 +87,10 @@ public class ChickenFarmerAI extends AnimalFarmerAI {
                         chicken.get().kill();
 
                         animalFarmer.workerSwingArm();
+                        animalFarmer.playSound(SoundEvents.PLAYER_ATTACK_STRONG);
+
+                        this.animalFarmer.consumeToolDurability();
                         animalFarmer.increaseFarmedItems();
-                        animalFarmer.consumeToolDurability();
                     }
                 }
 

@@ -121,7 +121,6 @@ public class LumberjackEntity extends AbstractWorkerEntity {
         this.setCustomName(Component.literal(name));
         this.setEquipment();
         this.setDropEquipment();
-        this.setRandomSpawnBonus();
         this.setPersistenceRequired();
         this.setCanPickUpLoot(true);
     }
