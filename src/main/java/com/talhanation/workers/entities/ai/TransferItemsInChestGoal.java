@@ -80,7 +80,7 @@ public class TransferItemsInChestGoal extends Goal {
         }
 
 
-        Main.LOGGER.debug("Moving to chest");
+        //Main.LOGGER.debug("Moving to chest");
         pathFinder.setCanOpenDoors(true);
         pathFinder.moveTo(chestPos.getX(), chestPos.getY(), chestPos.getZ(), 1.1D);
 
@@ -94,7 +94,7 @@ public class TransferItemsInChestGoal extends Goal {
                 (float) this.worker.getMaxHeadXRot()
             );
 
-            Main.LOGGER.debug("Depositing to chest");
+            //Main.LOGGER.debug("Depositing to chest");
             worker.level.playSound(
                 null, 
                 chestPos,

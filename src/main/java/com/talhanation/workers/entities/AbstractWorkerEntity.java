@@ -24,8 +24,6 @@ import net.minecraft.world.MenuProvider;
 import net.minecraft.world.SimpleContainer;
 import net.minecraft.world.damagesource.DamageSource;
 import net.minecraft.world.entity.*;
-import net.minecraft.world.entity.ai.attributes.AttributeInstance;
-import net.minecraft.world.entity.ai.attributes.AttributeModifier;
 import net.minecraft.world.entity.ai.attributes.Attributes;
 import net.minecraft.world.entity.ai.goal.OpenDoorGoal;
 import net.minecraft.world.entity.ai.goal.WrappedGoal;
@@ -132,7 +130,7 @@ public abstract class AbstractWorkerEntity extends AbstractChunkLoaderEntity {
     @Override
     public void aiStep() {
         super.aiStep();
-        Main.LOGGER.debug("Running goals are: {}", this.goalSelector.getRunningGoals().map(WrappedGoal::getGoal).toArray());
+        //Main.LOGGER.debug("Running goals are: {}", this.goalSelector.getRunningGoals().map(WrappedGoal::getGoal).toArray());
         this.level.getProfiler().push("looting");
         if (
             !this.level.isClientSide && 
