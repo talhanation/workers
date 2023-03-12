@@ -25,8 +25,7 @@ import net.minecraft.world.SimpleContainer;
 import net.minecraft.world.damagesource.DamageSource;
 import net.minecraft.world.entity.*;
 import net.minecraft.world.entity.ai.attributes.Attributes;
-import net.minecraft.world.entity.ai.goal.OpenDoorGoal;
-import net.minecraft.world.entity.ai.goal.WrappedGoal;
+import net.minecraft.world.entity.ai.goal.*;
 import net.minecraft.world.entity.ai.navigation.GroundPathNavigation;
 import net.minecraft.world.entity.ai.village.ReputationEventType;
 import net.minecraft.world.entity.item.ItemEntity;
@@ -119,6 +118,13 @@ public abstract class AbstractWorkerEntity extends AbstractChunkLoaderEntity {
         this.goalSelector.addGoal(1, new TransferItemsInChestGoal(this));
         this.goalSelector.addGoal(1, new WorkerMoveToHomeGoal<>(this));
         this.goalSelector.addGoal(2, new WorkerFollowOwnerGoal(this, 1.2D, 5.0F, 1.0F));
+
+        this.goalSelector.addGoal(9, new MoveBackToVillageGoal(this, 0.6D, false));
+        this.goalSelector.addGoal(10, new GolemRandomStrollInVillageGoal(this, 0.6D));
+        this.goalSelector.addGoal(10, new WaterAvoidingRandomStrollGoal(this, 1.0D, 0F));
+        this.goalSelector.addGoal(11, new WorkerLookAtPlayerGoal(this, Player.class, 8.0F));
+        this.goalSelector.addGoal(12, new WorkerRandomLookAroundGoal(this));
+        this.goalSelector.addGoal(10, new WorkerLookAtPlayerGoal(this, LivingEntity.class, 8.0F));
     }
 
     /////////////////////////////////// TICK/////////////////////////////////////////

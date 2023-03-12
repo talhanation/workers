@@ -97,14 +97,6 @@ public class MinerEntity extends AbstractWorkerEntity {
         this.goalSelector.addGoal(1, new PanicGoal(this, 1.3D));
         this.goalSelector.addGoal(2, new WorkerPickupWantedItemGoal(this));
         this.goalSelector.addGoal(2, new MinerAI(this));
-
-
-        this.goalSelector.addGoal(9, new MoveBackToVillageGoal(this, 0.6D, false));
-        this.goalSelector.addGoal(10, new GolemRandomStrollInVillageGoal(this, 0.6D));
-        this.goalSelector.addGoal(10, new WaterAvoidingRandomStrollGoal(this, 1.0D, 0F));
-        this.goalSelector.addGoal(11, new LookAtPlayerGoal(this, Player.class, 8.0F));
-        this.goalSelector.addGoal(12, new RandomLookAroundGoal(this));
-        this.goalSelector.addGoal(10, new LookAtPlayerGoal(this, LivingEntity.class, 8.0F));
     }
 
     @Nullable

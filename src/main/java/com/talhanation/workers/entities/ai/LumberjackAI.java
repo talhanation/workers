@@ -29,7 +29,7 @@ public class LumberjackAI extends Goal {
 
     public boolean canUse() {
         // Start AI if there are trees near the work place.
-        return lumber.canWork();// TODO: Better solution for getWoodPos because performance
+        return lumber.canWork();//TODO: Better solution for getWoodPos because performance
     }
 
     public boolean canContinueToUse() {
@@ -45,8 +45,8 @@ public class LumberjackAI extends Goal {
 
     public void tick() {
         this.breakLeaves();
-        // TODO: Add memories of initial saplings/trees around the work position. 
-        // TODO: Replant if the blocks are AIR.
+        //TODO: Add memories of initial saplings/trees around the work position.
+        //TODO: Replant if the blocks are AIR.
 
         // Go back to assigned work position.
         if (workPos != null && !workPos.closerThan(lumber.blockPosition(), 12D)) {
@@ -59,8 +59,8 @@ public class LumberjackAI extends Goal {
         if (chopPos == null) return;
 
         BlockPos lumberPos = lumber.blockPosition();
-        this.lumber.walkTowards(chopPos, 1);
-
+        //this.lumber.walkTowards(chopPos, 1);
+        this.lumber.getMoveControl().setWantedPosition(chopPos.getX(), chopPos.getY(), chopPos.getZ(), 1);
         boolean standingBelowChopPos = (
             lumberPos.getX() == chopPos.getX() &&
             lumberPos.getZ() == chopPos.getZ() && 

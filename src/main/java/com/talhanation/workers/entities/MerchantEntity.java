@@ -142,15 +142,8 @@ public class MerchantEntity extends AbstractWorkerEntity {
     protected void registerGoals() {
         super.registerGoals();
         this.goalSelector.addGoal(1, new FloatGoal(this));
-        // this.goalSelector.addGoal(2, new WorkerPickupWantedItemGoal(this));
         this.goalSelector.addGoal(2, new WorkerFollowOwnerGoal(this, 1.2D, 7.F, 1.0F));
         this.goalSelector.addGoal(3, new PanicGoal(this, 2D));
-        this.goalSelector.addGoal(5, new LookAtPlayerGoal(this, Player.class, 8.0F));
-        this.goalSelector.addGoal(6, new RandomLookAroundGoal(this));
-        // this.goalSelector.addGoal(6, new WaterAvoidingRandomWalkingGoal(this, 1.0D,
-        // 0F));
-
-        // this.targetSelector.addGoal(1, new (this));
 
     }
 

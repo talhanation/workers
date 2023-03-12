@@ -23,7 +23,7 @@ public class FishermanAI extends Goal {
     private final FishermanEntity fisherman;
     private int fishingTimer = 100;
     private int throwTimer = 0;
-    private final int fishingRange = 4;
+    private final int fishingRange = 5;
     private BlockPos fishingPos = null;
     private BlockPos workPos;
 
@@ -84,7 +84,7 @@ public class FishermanAI extends Goal {
         if (workPos == null) return;
         // When far from work pos, move to work pos
         if (!workPos.closerThan(fisherman.blockPosition(), 9D)) {
-            this.fisherman.walkTowards(workPos, 2);
+            this.fisherman.walkTowards(workPos, 1);
             return;
         }
 
@@ -96,51 +96,48 @@ public class FishermanAI extends Goal {
         }
          */
 
-
         // Look at the water block
-        this.fisherman.getLookControl().setLookAt(
-            fishingPos.getX(),
-            fishingPos.getY() + 1,
-            fishingPos.getZ(),
-            10.0F, 
-            (float) this.fisherman.getMaxHeadXRot()
-        );
+        if (fishingPos != null) {
+                this.fisherman.getLookControl().setLookAt(
+                        fishingPos.getX(),
+                        fishingPos.getY() + 1,
+                        fishingPos.getZ(),
+                        10.0F,
+                        (float) this.fisherman.getMaxHeadXRot()
+                );
 
-        // Either walk towards the water block, or stop and stare.
-        if (this.fisherman.blockPosition().closerThan(fishingPos, this.fishingRange)) {
-            this.fisherman.getMoveControl().setWantedPosition(
-                fishingPos.getX(), 
-                fishingPos.getY() + 1, 
-                fishingPos.getZ(), 
-                0
-            );
-            this.fisherman.getNavigation().stop();
 
-        } else {
-            this.fisherman.walkTowards(fishingPos, 1);
-            return;
+            // Either walk towards the water block, or stop and stare.
+            if (this.fisherman.blockPosition().closerThan(fishingPos, this.fishingRange)) {
+                this.fisherman.getMoveControl().setWantedPosition(fishingPos.getX(), fishingPos.getY() + 1, fishingPos.getZ(), 0
+                );
+                this.fisherman.getNavigation().stop();
+
+            } else {
+                this.fisherman.walkTowards(fishingPos, 1);
+                return;
+            }
+
+            if (throwTimer == 0) {
+                fisherman.playSound(SoundEvents.FISHING_BOBBER_THROW, 1, 0.5F);
+                this.fisherman.swing(InteractionHand.MAIN_HAND);
+                throwTimer = fisherman.getRandom().nextInt(400);
+                //  TODO: Create FishingBobberEntity compatible with AbstractEntityWorker.
+                // fisherman.level.addFreshEntity(new FishermansFishingBobberEntity(this.fisherman.level, this.fisherman.getOwner()));
+            }
+
+            if (fishingTimer > 0) fishingTimer--;
+
+            if (fishingTimer == 0) {
+                // Get the loot
+                this.spawnFishingLoot();
+                this.fisherman.playSound(SoundEvents.FISHING_BOBBER_SPLASH, 1, 1);
+                this.fisherman.swing(InteractionHand.MAIN_HAND);
+                this.fisherman.increaseFarmedItems();
+                this.fisherman.consumeToolDurability();
+                this.resetTask();
+            }
         }
-
-        if (throwTimer == 0) {
-            fisherman.playSound(SoundEvents.FISHING_BOBBER_THROW, 1, 0.5F);
-            this.fisherman.swing(InteractionHand.MAIN_HAND);
-            throwTimer = fisherman.getRandom().nextInt(400);
-            //  TODO: Create FishingBobberEntity compatible with AbstractEntityWorker.
-            // fisherman.level.addFreshEntity(new FishermansFishingBobberEntity(this.fisherman.level, this.fisherman.getOwner()));
-        }
-
-        if (fishingTimer > 0) fishingTimer--;
-
-        if (fishingTimer == 0) {
-            // Get the loot
-            this.spawnFishingLoot();
-            this.fisherman.playSound(SoundEvents.FISHING_BOBBER_SPLASH, 1, 1);
-            this.fisherman.swing(InteractionHand.MAIN_HAND);
-            this.fisherman.increaseFarmedItems();
-            this.fisherman.consumeToolDurability();
-            this.resetTask();
-        }
-        
         if (throwTimer > 0) throwTimer--;
     }
 
@@ -162,7 +159,7 @@ public class FishermanAI extends Goal {
         //No water nearby
         if (fisherman.getOwner() != null){
             fisherman.tellPlayer(fisherman.getOwner(), Translatable.TEXT_FISHER_NO_WATER);
-            this.fisherman.setIsWorking(false, false);
+            this.fisherman.setIsWorking(false, true);
             this.fisherman.clearStartPos();
             this.stop();
         }

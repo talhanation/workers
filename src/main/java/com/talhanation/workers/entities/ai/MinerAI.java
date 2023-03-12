@@ -78,9 +78,16 @@ public class MinerAI extends Goal {
             }
 
             //Move to minePos
-            if (!minePos.closerThan(miner.getOnPos(), 2)) {
-                this.miner.walkTowards(minePos, 1);
+
+            if (!minePos.closerThan(miner.getOnPos(), 3)) {
+                this.miner.getMoveControl().setWantedPosition(minePos.getX(), miner.getStartPos().getY(), minePos.getZ(), 1);
+
             }
+            else
+                miner.getNavigation().stop();
+
+
+
             if (minePos.closerThan(miner.getOnPos(), 3)){
                 this.miner.getLookControl().setLookAt(minePos.getX(), minePos.getY() + 1, minePos.getZ(), 10.0F, (float) this.miner.getMaxHeadXRot());
             }
