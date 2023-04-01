@@ -1,11 +1,13 @@
 package com.talhanation.workers.entities;
 
 import com.talhanation.workers.Main;
+import com.talhanation.workers.entities.ai.MerchantAI;
 import com.talhanation.workers.inventory.MerchantInventoryContainer;
 import com.talhanation.workers.inventory.MerchantTradeContainer;
 import com.talhanation.workers.entities.ai.WorkerFollowOwnerGoal;
 import com.talhanation.workers.network.MessageOpenGuiMerchant;
 import com.talhanation.workers.network.MessageOpenGuiWorker;
+import net.minecraft.network.chat.MutableComponent;
 import net.minecraft.world.entity.*;
 import net.minecraft.world.entity.ai.attributes.AttributeSupplier;
 import net.minecraft.world.entity.ai.attributes.Attributes;
@@ -155,8 +157,7 @@ public class MerchantEntity extends AbstractWorkerEntity {
 
     @Override
     @Nullable
-    public SpawnGroupData finalizeSpawn(@NotNull ServerLevelAccessor world, @NotNull DifficultyInstance difficultyInstance,
-                                        @NotNull MobSpawnType reason, @Nullable SpawnGroupData data, @Nullable CompoundTag nbt) {
+    public SpawnGroupData finalizeSpawn(@NotNull ServerLevelAccessor world, @NotNull DifficultyInstance difficultyInstance, @NotNull MobSpawnType reason, @Nullable SpawnGroupData data, @Nullable CompoundTag nbt) {
         SpawnGroupData ilivingentitydata = super.finalizeSpawn(world, difficultyInstance, reason, data, nbt);
         this.populateDefaultEquipmentEnchantments(random, difficultyInstance);
 
@@ -168,10 +169,10 @@ public class MerchantEntity extends AbstractWorkerEntity {
     @Override
     public void initSpawn() {
         super.initSpawn();
-        String name = Component.translatable("entity.workers.merchant").getString();
+        MutableComponent name = Component.translatable("entity.workers.merchant");
 
-        this.setProfessionName(name);
-        this.setCustomName(Component.literal(name));
+        this.setProfessionName(name.getString());
+        this.setCustomName(name);
 
         this.heal(100);
     }

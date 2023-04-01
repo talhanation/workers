@@ -5,6 +5,7 @@ import com.talhanation.workers.entities.ai.CattleFarmerAI;
 import com.talhanation.workers.entities.ai.WorkerPickupWantedItemGoal;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.chat.Component;
+import net.minecraft.network.chat.MutableComponent;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.DifficultyInstance;
 import net.minecraft.world.SimpleContainer;
@@ -118,10 +119,10 @@ public class CattleFarmerEntity extends AbstractAnimalFarmerEntity {
     @Override
     public void initSpawn() {
         super.initSpawn();
-        String name = Component.translatable("entity.workers.cattle_farmer").getString();
+        MutableComponent name = Component.translatable("entity.workers.cattle_farmer");
 
-        this.setProfessionName(name);
-        this.setCustomName(Component.literal(name));
+        this.setProfessionName(name.getString());
+        this.setCustomName(name);
     }
 
     @Override

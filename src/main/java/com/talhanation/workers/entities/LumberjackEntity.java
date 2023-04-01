@@ -4,6 +4,7 @@ import com.talhanation.workers.Main;
 import com.talhanation.workers.inventory.WorkerInventoryContainer;
 import com.talhanation.workers.entities.ai.*;
 import com.talhanation.workers.network.MessageOpenGuiWorker;
+import net.minecraft.network.chat.MutableComponent;
 import net.minecraft.world.entity.*;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.state.BlockState;
@@ -109,14 +110,10 @@ public class LumberjackEntity extends AbstractWorkerEntity {
     @Override
     public void initSpawn() {
         super.initSpawn();
-        String name = Component.translatable("entity.workers.lumberjack").getString();
+        MutableComponent name = Component.translatable("entity.workers.lumberjack");
 
-        this.setProfessionName(name);
-        this.setCustomName(Component.literal(name));
-        this.setEquipment();
-        this.setDropEquipment();
-        this.setPersistenceRequired();
-        this.setCanPickUpLoot(true);
+        this.setProfessionName(name.getString());
+        this.setCustomName(name);
     }
 
     @Override

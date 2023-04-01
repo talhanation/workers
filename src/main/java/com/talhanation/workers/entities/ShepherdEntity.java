@@ -4,6 +4,7 @@ import com.talhanation.workers.entities.ai.ShepherdAI;
 import com.talhanation.workers.entities.ai.WorkerPickupWantedItemGoal;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.chat.Component;
+import net.minecraft.network.chat.MutableComponent;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.tags.ItemTags;
 import net.minecraft.world.DifficultyInstance;
@@ -99,10 +100,10 @@ public class ShepherdEntity extends AbstractAnimalFarmerEntity {
     @Override
     public void initSpawn() {
         super.initSpawn();
-        String name = Component.translatable("entity.workers.shepherd").getString();
+        MutableComponent name = Component.translatable("entity.workers.shepherd");
 
-        this.setProfessionName(name);
-        this.setCustomName(Component.literal(name));
+        this.setProfessionName(name.getString());
+        this.setCustomName(name);
     }
 
     public boolean needsToDeposit(){

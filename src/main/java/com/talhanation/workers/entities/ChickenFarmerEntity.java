@@ -5,6 +5,7 @@ import com.talhanation.workers.entities.ai.ChickenFarmerAI;
 import com.talhanation.workers.entities.ai.WorkerPickupWantedItemGoal;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.chat.Component;
+import net.minecraft.network.chat.MutableComponent;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.DifficultyInstance;
 import net.minecraft.world.SimpleContainer;
@@ -25,6 +26,7 @@ import net.minecraft.world.item.Items;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.ServerLevelAccessor;
 import org.jetbrains.annotations.NotNull;
+import org.spongepowered.asm.mixin.Mutable;
 
 import javax.annotation.Nullable;
 import java.util.Set;
@@ -121,10 +123,10 @@ public class ChickenFarmerEntity extends AbstractAnimalFarmerEntity {
     @Override
     public void initSpawn() {
         super.initSpawn();
-        String name = Component.translatable("entity.workers.chicken_farmer").getString();
+        MutableComponent name = Component.translatable("entity.workers.chicken_farmer");
 
-        this.setProfessionName(name);
-        this.setCustomName(Component.literal(name));
+        this.setProfessionName(name.getString());
+        this.setCustomName(name);
     }
 
     @Override

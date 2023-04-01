@@ -6,6 +6,7 @@ import com.talhanation.workers.inventory.WorkerInventoryContainer;
 import com.talhanation.workers.entities.ai.FarmerCropAI;
 import com.talhanation.workers.entities.ai.WorkerPickupWantedItemGoal;
 import com.talhanation.workers.network.MessageOpenGuiWorker;
+import net.minecraft.network.chat.MutableComponent;
 import net.minecraft.world.entity.*;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.Blocks;
@@ -152,10 +153,10 @@ public class FarmerEntity extends AbstractWorkerEntity {
     @Override
     public void initSpawn() {
         super.initSpawn();
+        MutableComponent name = Component.translatable("entity.workers.farmer");
 
-        String name = Component.translatable("entity.workers.farmer").getString();
-        this.setProfessionName(name);
-        this.setCustomName(Component.literal(name));
+        this.setProfessionName(name.getString());
+        this.setCustomName(name);
     }
 
     @Override
