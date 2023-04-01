@@ -68,7 +68,7 @@ public class MinerEntity extends AbstractWorkerEntity {
             Blocks.ACACIA_SIGN, Blocks.SPRUCE_SIGN, Blocks.BIRCH_SIGN, Blocks.DARK_OAK_SIGN, Blocks.JUNGLE_SIGN,
             Blocks.OAK_SIGN, Blocks.ACACIA_WALL_SIGN, Blocks.SPRUCE_WALL_SIGN, Blocks.BIRCH_WALL_SIGN,
             Blocks.DARK_OAK_WALL_SIGN, Blocks.JUNGLE_WALL_SIGN, Blocks.OAK_WALL_SIGN, Blocks.SOUL_LANTERN,
-            Blocks.LANTERN, Blocks.DETECTOR_RAIL, Blocks.RAIL);
+            Blocks.LANTERN, Blocks.DETECTOR_RAIL, Blocks.RAIL, Blocks.WATER);
 
     public int blocks;
     public int side;
