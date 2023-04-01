@@ -144,7 +144,7 @@ public class MerchantEntity extends AbstractWorkerEntity {
         this.goalSelector.addGoal(1, new FloatGoal(this));
         this.goalSelector.addGoal(2, new WorkerFollowOwnerGoal(this, 1.2D, 7.F, 1.0F));
         this.goalSelector.addGoal(3, new PanicGoal(this, 2D));
-
+        this.goalSelector.addGoal(4, new MerchantAI(this));
     }
 
     @Nullable
