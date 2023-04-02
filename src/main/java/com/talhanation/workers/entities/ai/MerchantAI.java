@@ -33,7 +33,7 @@ public class MerchantAI extends Goal {
                 this.merchant.walkTowards(workPos, 1F);
             }
             //Near Mine Pos -> presice movement
-            if (!workPos.closerThan(merchant.getOnPos(), 1)) {
+            if (!workPos.closerThan(merchant.getOnPos(), 2F)) {
                 this.merchant.getMoveControl().setWantedPosition(workPos.getX(), workPos.getY(), workPos.getZ(), 1);
             } else
                 merchant.getNavigation().stop();

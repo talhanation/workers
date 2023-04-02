@@ -399,7 +399,8 @@ public class CommandEvents {
         for(AbstractWorkerEntity worker : list) {
             if (Objects.equals(worker.getOwnerUUID(), player.getUUID())){
                 workers.add(worker.getUUID());
-                String name = worker.getName().getString() + " / " + worker.getProfessionName();
+
+                String name = worker.getName().getString()  + " / " + worker.getProfessionName();
                 names.add(name);
             }
         }

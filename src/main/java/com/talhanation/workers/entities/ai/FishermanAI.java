@@ -82,11 +82,18 @@ public class FishermanAI extends Goal {
     @Override
     public void tick() {
         if (workPos == null) return;
-        // When far from work pos, move to work pos
-        if (!workPos.closerThan(fisherman.blockPosition(), 9D)) {
-            this.fisherman.walkTowards(workPos, 1);
-            return;
+
+        //Move to minePos -> normal movement
+        if(!workPos.closerThan(fisherman.getOnPos(), 12F)){
+            this.fisherman.walkTowards(workPos, 1F);
         }
+        //Near Mine Pos -> presice movement
+        if (!workPos.closerThan(fisherman.getOnPos(), 4F)) {
+            this.fisherman.getMoveControl().setWantedPosition(workPos.getX(), fisherman.getStartPos().getY(), workPos.getZ(), 1);
+        }
+        else
+            fisherman.getNavigation().stop();
+
 
         /*
         // When near work pos, find a water block to fish
@@ -106,17 +113,12 @@ public class FishermanAI extends Goal {
                         (float) this.fisherman.getMaxHeadXRot()
                 );
 
-
-            // Either walk towards the water block, or stop and stare.
-            if (this.fisherman.blockPosition().closerThan(fishingPos, this.fishingRange)) {
-                this.fisherman.getMoveControl().setWantedPosition(fishingPos.getX(), fishingPos.getY() + 1, fishingPos.getZ(), 0
-                );
-                this.fisherman.getNavigation().stop();
-
-            } else {
-                this.fisherman.walkTowards(fishingPos, 1);
-                return;
+            if (!fishingPos.closerThan(fisherman.getOnPos(), 10F)) {
+                this.fisherman.getMoveControl().setWantedPosition(fishingPos.getX(), fisherman.getStartPos().getY(), fishingPos.getZ(), 1);
             }
+            else
+                fisherman.getNavigation().stop();
+
 
             if (throwTimer == 0) {
                 fisherman.playSound(SoundEvents.FISHING_BOBBER_THROW, 1, 0.5F);

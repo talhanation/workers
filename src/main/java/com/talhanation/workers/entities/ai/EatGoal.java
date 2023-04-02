@@ -5,6 +5,7 @@ import com.talhanation.workers.entities.AbstractWorkerEntity;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.entity.ai.goal.Goal;
 import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.Items;
 
 import java.util.Objects;
 
@@ -86,6 +87,7 @@ public class EatGoal extends Goal{
     private boolean hasFoodInInv(){
         return worker.getInventory().items
                 .stream()
+                .filter(itemStack -> !itemStack.is(Items.PUFFERFISH))
                 .anyMatch(ItemStack::isEdible);
     }
 
@@ -93,7 +95,7 @@ public class EatGoal extends Goal{
         ItemStack itemStack = null;
         for(int i = 0; i < worker.getInventory().getContainerSize(); i++){
             ItemStack stackInSlot = worker.getInventory().getItem(i).copy();
-            if(stackInSlot.isEdible()){
+            if(stackInSlot.isEdible() && !stackInSlot.is(Items.PUFFERFISH)){
                 itemStack = stackInSlot.copy();
                 this.slotID = i;
                 worker.getInventory().removeItemNoUpdate(i); //removing item in slot

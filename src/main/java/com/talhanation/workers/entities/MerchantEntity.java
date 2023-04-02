@@ -44,6 +44,9 @@ import net.minecraft.world.entity.ai.goal.PanicGoal;
 import net.minecraft.world.entity.ai.goal.RandomLookAroundGoal;
 import org.jetbrains.annotations.NotNull;
 
+import static com.talhanation.workers.Translatable.TEXT_HELLO;
+import static com.talhanation.workers.Translatable.TEXT_HELLO_OWNED;
+
 public class MerchantEntity extends AbstractWorkerEntity {
 
     private final SimpleContainer tradeInventory = new SimpleContainer(8);
@@ -72,21 +75,32 @@ public class MerchantEntity extends AbstractWorkerEntity {
     public Predicate<ItemEntity> getAllowedItems() {
         return null;
     }
-
     @Override
     public InteractionResult mobInteract(Player player, InteractionHand hand) {
-        super.mobInteract(player, hand);
         if (this.level.isClientSide) {
-            boolean flag = this.isOwnedBy(player) || this.isTame() || isInSittingPose();
-            return flag ? InteractionResult.CONSUME : InteractionResult.PASS;
+            return InteractionResult.CONSUME;
         } else {
-            if (this.isTame() && player.getUUID() != this.getOwnerUUID()) {
+            if (this.isTame() && player.getUUID().equals(this.getOwnerUUID())) {
+                if (player.isCrouching()) {
+                    openGUI(player);
+                }
+                if (!player.isCrouching()) {
+                    setFollow(!getFollow());
+                    return InteractionResult.SUCCESS;
+                }
+            } else if (this.isTame() && !player.getUUID().equals(this.getOwnerUUID())) {
+                this.tellPlayer(player, TEXT_HELLO_OWNED(this.getProfessionName(), this.getOwnerName()));
                 if (!player.isCrouching()) {
                     openTradeGUI(player);
                     return InteractionResult.SUCCESS;
                 }
+            } else if (!this.isTame()) {
+                this.tellPlayer(player, TEXT_HELLO(this.getProfessionName()));
+                this.openHireGUI(player);
+                this.navigation.stop();
+                return InteractionResult.SUCCESS;
             }
-            return InteractionResult.PASS;
+            return super.mobInteract(player, hand);
         }
     }
 

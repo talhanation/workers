@@ -49,9 +49,18 @@ public class LumberjackAI extends Goal {
         //TODO: Replant if the blocks are AIR.
 
         // Go back to assigned work position.
-        if (workPos != null && !workPos.closerThan(lumber.blockPosition(), 12D)) {
-            this.lumber.walkTowards(workPos, 1);
-            return;
+
+        if (workPos != null){
+            //Move to minePos -> normal movement
+            if(!workPos.closerThan(lumber.getOnPos(), 12)){
+                this.lumber.walkTowards(workPos, 1F);
+            }
+            //Near Mine Pos -> presice movement
+            if (!workPos.closerThan(lumber.getOnPos(), 3.5F)) {
+                this.lumber.getMoveControl().setWantedPosition(workPos.getX(), lumber.getStartPos().getY(), workPos.getZ(), 1);
+            }
+            else
+                lumber.getNavigation().stop();
         }
 
         // If near wood position, start chopping.

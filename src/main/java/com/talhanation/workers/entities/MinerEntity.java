@@ -114,7 +114,6 @@ public class MinerEntity extends AbstractWorkerEntity {
     public void initSpawn() {
         super.initSpawn();
         MutableComponent name = Component.translatable("entity.workers.miner");
-
         this.setProfessionName(name.getString());
         this.setCustomName(name);
     }

@@ -571,7 +571,7 @@ public abstract class AbstractWorkerEntity extends AbstractChunkLoaderEntity {
     //////////////////////////////////// FUNCTIONS////////////////////////////////////
 
     public boolean hurt(DamageSource dmg, float amt) {
-        String name = this.getName().getString();
+        String name = this.getDisplayName().getString();
         String attacker_name;
 
         if (this.isInvulnerableTo(dmg)) {
@@ -586,7 +586,7 @@ public abstract class AbstractWorkerEntity extends AbstractChunkLoaderEntity {
             LivingEntity attacker = this.getLastHurtByMob();
 
             if (this.isTame() && attacker != null && hurtTimeStamp <= 0) {
-                attacker_name = attacker.getName().getString();
+                attacker_name = attacker.getDisplayName().getString();
 
                 LivingEntity owner = this.getOwner();
                 if (owner != null && owner != attacker) {
@@ -755,7 +755,7 @@ public abstract class AbstractWorkerEntity extends AbstractChunkLoaderEntity {
         this.makeHireSound();
 
         this.tame(player);
-        this.setOwnerName(player.getName().getString());
+        this.setOwnerName(player.getDisplayName().getString());
         this.setOrderedToSit(false);
         this.setOwnerUUID(player.getUUID());
         this.setOwned(true);
