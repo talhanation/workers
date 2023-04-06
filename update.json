@@ -1,15 +1,16 @@
 {
   "homepage": "https://www.curseforge.com/minecraft/mc-mods/workers/files",
   "promos": {
-    "1.19.2-recommended": "1.6.2",
+    "1.19.2-recommended": "1.6.3",
     "1.18.2-recommended": "1.5.2"
   },
   "1.18.2": {
-    "1.6.2": "fix minor ai issues and improved workers pathfinder.",
-    "1.6.1": "fix workers pathfinder.",
+    "1.6.2": "fixed minor ai issues and improved workers pathfinder.",
+    "1.6.1": "fixed workers pathfinder.",
     "1.6.0": "Big bug fix update and added command menu."
   },
   "1.19.2": {
+    "1.6.3": "fixed spawning for swineherd, cattle farmer and chicken farmer.",
     "1.6.2": "fix minor ai issues and improved workers pathfinder.",
     "1.6.1": "fix workers pathfinder.",
     "1.6.0": "Big bug fix update and added command menu."
