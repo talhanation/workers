@@ -37,9 +37,9 @@ public class VillagerEvents {
             put(ModProfessions.SHEPHERD.get(), ModEntityTypes.SHEPHERD.get());
             put(ModProfessions.FARMER.get(), ModEntityTypes.FARMER.get());
             put(ModProfessions.MERCHANT.get(), ModEntityTypes.MERCHANT.get());
-            put(ModProfessions.CHICKEN_FARMER.get(), ModEntityTypes.CHICKEN_FARMER.get()
-            put(ModProfessions.CATTLE_FARMER.get(), ModEntityTypes.CATTLE_FARMER.get()
-            put(ModProfessions.SHWINEHERD.get(), ModEntityTypes.SHWINEHERD.get()
+            put(ModProfessions.CHICKEN_FARMER.get(), ModEntityTypes.CHICKEN_FARMER.get());
+            put(ModProfessions.CATTLE_FARMER.get(), ModEntityTypes.CATTLE_FARMER.get());
+            put(ModProfessions.SWINEHERD.get(), ModEntityTypes.SWINEHERD.get());
         }};
 
         Entity entity = event.getEntity();
