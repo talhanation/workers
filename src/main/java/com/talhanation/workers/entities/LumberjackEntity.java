@@ -110,7 +110,7 @@ public class LumberjackEntity extends AbstractWorkerEntity {
     @Override
     public void initSpawn() {
         super.initSpawn();
-        MutableComponent name = Component.translatable("entity.workers.lumberjack");
+        Component name = Component.translatable("entity.workers.lumberjack");
 
         this.setProfessionName(name.getString());
         this.setCustomName(name);

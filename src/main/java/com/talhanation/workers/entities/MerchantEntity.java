@@ -183,7 +183,7 @@ public class MerchantEntity extends AbstractWorkerEntity {
     @Override
     public void initSpawn() {
         super.initSpawn();
-        MutableComponent name = Component.translatable("entity.workers.merchant");
+        Component name = Component.translatable("entity.workers.merchant");
 
         this.setProfessionName(name.getString());
         this.setCustomName(name);

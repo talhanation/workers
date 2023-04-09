@@ -115,7 +115,7 @@ public class SwineherdEntity extends AbstractAnimalFarmerEntity {
     @Override
     public void initSpawn() {
         super.initSpawn();
-        MutableComponent name = Component.translatable("entity.workers.swineherd");
+        Component name = Component.translatable("entity.workers.swineherd");
 
         this.setProfessionName(name.getString());
         this.setCustomName(name);
