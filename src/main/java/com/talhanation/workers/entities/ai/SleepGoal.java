@@ -25,7 +25,7 @@ public class SleepGoal extends Goal {
 
     @Override
     public boolean canUse() {        
-        return !this.worker.needsBed() && worker.needsToSleep();
+        return !this.worker.needsBed() && worker.needsToSleep() && !worker.getFollow();
     }
 
     public boolean canContinueToUse() {
