@@ -6,6 +6,7 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.world.Container;
 import net.minecraft.world.entity.ai.goal.Goal;
 import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.Items;
 import net.minecraft.world.level.block.entity.BlockEntity;
 
 import javax.annotation.Nullable;
@@ -34,6 +35,8 @@ public class WorkerUpkeepPosGoal extends Goal {
     private boolean hasFoodInInv(){
         return worker.getInventory().items
                 .stream()
+                .filter(itemStack -> !itemStack.is(Items.PUFFERFISH))
+                .filter(itemStack -> itemStack.isEdible() && itemStack.getFoodProperties(this.worker).getNutrition() > 4)
                 .anyMatch(ItemStack::isEdible);
     }
 
