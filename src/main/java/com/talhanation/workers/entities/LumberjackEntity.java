@@ -145,7 +145,7 @@ public class LumberjackEntity extends AbstractWorkerEntity {
 
     @Override
     public boolean needsToDeposit(){
-        return this.itemsFarmed >= 64;
+        return this.getFarmedItems() >= 64;
     }
 
     @Override

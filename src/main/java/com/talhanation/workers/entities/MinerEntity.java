@@ -135,7 +135,7 @@ public class MinerEntity extends AbstractWorkerEntity {
     }
     @Override
     public boolean needsToDeposit(){
-        return this.itemsFarmed >= 128;
+        return this.getFarmedItems() >= 128;
     }
 
     public boolean shouldIgnoreBlock(Block block) {

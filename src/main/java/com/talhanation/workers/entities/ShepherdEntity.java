@@ -107,7 +107,7 @@ public class ShepherdEntity extends AbstractAnimalFarmerEntity {
     }
 
     public boolean needsToDeposit(){
-        return this.itemsFarmed >= 16;
+        return this.getFarmedItems() >= 16;
     }
 
     @Override

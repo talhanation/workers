@@ -71,6 +71,8 @@ public abstract class AbstractWorkerEntity extends AbstractChunkLoaderEntity {
     private static final EntityDataAccessor<Boolean> NEEDS_BED = SynchedEntityData.defineId(AbstractWorkerEntity.class, EntityDataSerializers.BOOLEAN);
     private static final EntityDataAccessor<String> OWNER_NAME = SynchedEntityData.defineId(AbstractWorkerEntity.class, EntityDataSerializers.STRING);
     private static final EntityDataAccessor<String> PROFESSION_NAME = SynchedEntityData.defineId(AbstractWorkerEntity.class, EntityDataSerializers.STRING);
+    private static final EntityDataAccessor<Integer> FARMED_ITEMS = SynchedEntityData.defineId(AbstractWorkerEntity.class, EntityDataSerializers.INT);
+
     int hurtTimeStamp = 0;
     
     protected GroundPathNavigation navigation;
@@ -83,7 +85,6 @@ public abstract class AbstractWorkerEntity extends AbstractChunkLoaderEntity {
         this.navigation = this.createNavigation(world);
         this.navigation.setCanOpenDoors(true);
         this.xpReward = 2;
-        this.itemsFarmed = 0;
     }
 
     /*
@@ -176,7 +177,7 @@ public abstract class AbstractWorkerEntity extends AbstractChunkLoaderEntity {
                 itemEntity.remove(RemovalReason.DISCARDED);
             } else {
                 itemstack.setCount(itemstack1.getCount());
-                this.itemsFarmed += 1;
+                this.increaseFarmedItems();
             }
         }
     }
@@ -249,6 +250,7 @@ public abstract class AbstractWorkerEntity extends AbstractChunkLoaderEntity {
         this.entityData.define(HUNGER, 50F);
         this.entityData.define(OWNER_NAME, "");
         this.entityData.define(PROFESSION_NAME, "");
+        this.entityData.define(FARMED_ITEMS, 0);
     }
 
     public void addAdditionalSaveData(@NotNull CompoundTag nbt) {
@@ -264,6 +266,7 @@ public abstract class AbstractWorkerEntity extends AbstractChunkLoaderEntity {
         nbt.putString("OwnerName", this.getOwnerName());
         nbt.putFloat("Hunger", this.getHunger());
         nbt.putString("ProfessionName", this.getProfessionName());
+        nbt.putInt("FarmedItems", this.getFarmedItems());
 
         BlockPos startPos = this.getStartPos();
         if (startPos != null) this.setNbtPosition(nbt, "Start", startPos);
@@ -295,6 +298,7 @@ public abstract class AbstractWorkerEntity extends AbstractChunkLoaderEntity {
         this.setHunger(nbt.getFloat("Hunger"));
         this.setOwnerName(nbt.getString("OwnerName"));
         this.setProfessionName(nbt.getString("ProfessionName"));
+        this.setFarmedItems(nbt.getInt("FarmedItems"));
 
         BlockPos startPos = this.getNbtPosition(nbt, "Start");
         if (startPos != null) this.setStartPos(startPos);
@@ -324,6 +328,10 @@ public abstract class AbstractWorkerEntity extends AbstractChunkLoaderEntity {
     }
 
     //////////////////////////////////// GET////////////////////////////////////
+
+    public int getFarmedItems() {
+        return this.entityData.get(FARMED_ITEMS);
+    }
 
     public String getProfessionName() {
         return entityData.get(PROFESSION_NAME);
@@ -447,6 +455,9 @@ public abstract class AbstractWorkerEntity extends AbstractChunkLoaderEntity {
 
     //////////////////////////////////// SET////////////////////////////////////
 
+    public void setFarmedItems(int x){
+        this.entityData.set(FARMED_ITEMS, x);
+    }
     public void setProfessionName(String string) {
         this.entityData.set(PROFESSION_NAME, string);
     }
@@ -692,15 +703,15 @@ public abstract class AbstractWorkerEntity extends AbstractChunkLoaderEntity {
     }
 
     public boolean needsToDeposit(){
-        return this.itemsFarmed >= 10; //TODO: configurable amount + save data
+        return this.getFarmedItems() >= 10; //TODO: configurable amount
     }
 
     public void increaseFarmedItems(){
-        this.itemsFarmed++;
+        this.setFarmedItems(getFarmedItems() + 1);
     }
 
     public void resetFarmedItems(){
-        this.itemsFarmed = 0;
+        this.setFarmedItems(0);
     }
 
     @Override
