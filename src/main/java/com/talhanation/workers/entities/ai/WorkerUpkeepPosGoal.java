@@ -23,7 +23,7 @@ public class WorkerUpkeepPosGoal extends Goal {
 
     @Override
     public boolean canUse() {
-        return (worker.needsToEat() )&& worker.getChestPos() != null; //|| worker.needsTools()
+        return worker.needsToEat() && worker.getChestPos() != null && !worker.needsToSleep(); //|| worker.needsTools()
     }
 
     @Override
