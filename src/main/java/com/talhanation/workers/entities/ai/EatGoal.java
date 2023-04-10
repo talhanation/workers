@@ -88,7 +88,7 @@ public class EatGoal extends Goal{
         return worker.getInventory().items
                 .stream()
                 .filter(itemStack -> !itemStack.is(Items.PUFFERFISH))
-                .filter(itemStack -> Objects.requireNonNull(itemStack.getFoodProperties(this.worker)).getNutrition() > 4)
+                .filter(itemStack -> itemStack.isEdible() && itemStack.getFoodProperties(this.worker).getNutrition() > 4)
                 .anyMatch(ItemStack::isEdible);
     }
 
@@ -96,7 +96,7 @@ public class EatGoal extends Goal{
         ItemStack itemStack = null;
         for(int i = 0; i < worker.getInventory().getContainerSize(); i++){
             ItemStack stackInSlot = worker.getInventory().getItem(i).copy();
-            if(stackInSlot.isEdible() && !stackInSlot.is(Items.PUFFERFISH)){
+            if(stackInSlot.isEdible() && !stackInSlot.is(Items.PUFFERFISH) && stackInSlot.getFoodProperties(this.worker).getNutrition() > 4){
                 itemStack = stackInSlot.copy();
                 this.slotID = i;
                 worker.getInventory().removeItemNoUpdate(i); //removing item in slot
