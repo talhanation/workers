@@ -88,6 +88,7 @@ public class EatGoal extends Goal{
         return worker.getInventory().items
                 .stream()
                 .filter(itemStack -> !itemStack.is(Items.PUFFERFISH))
+                .filter(itemStack -> Objects.requireNonNull(itemStack.getFoodProperties(this.worker)).getNutrition() > 4)
                 .anyMatch(ItemStack::isEdible);
     }
 

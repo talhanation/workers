@@ -624,15 +624,15 @@ public abstract class AbstractWorkerEntity extends AbstractChunkLoaderEntity {
         return !this.level.isDay();
     }
 
-    public void updateHunger() {
-        if (getHunger() > 0 && getHunger() <= 100) {
-            if (getIsWorking())
-                setHunger((getHunger() - 0.0025F));
-            else if (getIsWorking() && getLevel().isNight())
-                setHunger((getHunger() - 0.006F));
-            else
-                setHunger((getHunger() - 0.001F));
-        }
+     public void updateHunger() {
+         if(getHunger() > 0) {
+             setHunger((getHunger() - 0.0001F));
+
+             if (getIsWorking())
+                 setHunger((getHunger() - 0.0002F));
+
+             if(getBedPos() == null) setHunger((getHunger() - 0.0002F));
+         }
 
         if (isStarving() && this.getIsWorking()) {
             this.setIsWorking(false);
