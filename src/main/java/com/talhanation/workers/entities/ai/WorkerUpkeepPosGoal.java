@@ -59,7 +59,7 @@ public class WorkerUpkeepPosGoal extends Goal {
     @Override
     public void tick() {
         super.tick();
-        this.chestPos = findInvPos();
+        this.chestPos = worker.getChestPos();
 
         if (chestPos != null && !this.hasFoodInInv()){
             BlockEntity entity = worker.level.getBlockEntity(chestPos);
@@ -95,36 +95,8 @@ public class WorkerUpkeepPosGoal extends Goal {
             }
             else stop();
         }
-        else {
-            this.chestPos = findInvPos();
-            //Main.LOGGER.debug("Chest not found");
-        }
     }
 
-
-
-    @Nullable
-    private BlockPos findInvPos() {
-        if(this.worker.getChestPos() != null) {
-            //Main.LOGGER.debug("up keep pos not null");
-            BlockPos chestPos;
-            int range = 8;
-
-            for (int x = -range; x < range; x++) {
-                for (int y = -range; y < range; y++) {
-                    for (int z = -range; z < range; z++) {
-                        chestPos = worker.getChestPos().offset(x, y, z);
-                        BlockEntity block = worker.level.getBlockEntity(chestPos);
-                        if (block instanceof Container)
-                            return chestPos;
-                    }
-                }
-            }
-        }
-        //Main.LOGGER.debug("UpkeepPos NULL");
-        //else entity around upkeepPos
-        return null;
-    }
     @Nullable
     private ItemStack getFoodFromInv(Container inv){
         ItemStack itemStack = null;
