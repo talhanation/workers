@@ -2,6 +2,7 @@ package com.talhanation.workers.entities;
 
 import com.mojang.datafixers.util.Pair;
 import com.talhanation.workers.Main;
+import net.minecraft.world.damagesource.DamageSource;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.world.level.Level;
@@ -31,7 +32,7 @@ public abstract class AbstractChunkLoaderEntity extends AbstractInventoryEntity 
     public void updateChunkLoading() {
         if (this.shouldLoadChunk() && !this.level.isClientSide) {
             Pair<Integer, Integer> currentChunk = new Pair<>(this.chunkPosition().x, this.chunkPosition().z);
-            if (!loadedChunk.isPresent()) {
+            if (loadedChunk.isEmpty()) {
                 this.forceChunk(currentChunk);
                 loadedChunk = Optional.of(currentChunk);
 
@@ -44,7 +45,6 @@ public abstract class AbstractChunkLoaderEntity extends AbstractInventoryEntity 
                 //verbliebene chunks
                 Set<Pair<Integer, Integer>> forced = getSetOfChunks(loadedChunk.get());
                 toForce.removeAll(forced);
-
 
                 toUnForce.forEach(this::unForceChunk);
                 toForce.forEach(this::forceChunk);
@@ -97,8 +97,8 @@ public abstract class AbstractChunkLoaderEntity extends AbstractInventoryEntity 
 
     protected abstract boolean shouldLoadChunk();
 
-    public void remove(){
-        super.remove(RemovalReason.DISCARDED);
+    public void die(@NotNull DamageSource dmg) {
+        super.die(dmg);
         if(!this.level.isClientSide) loadedChunk.ifPresent(chunk -> this.getSetOfChunks(chunk).forEach(this::unForceChunk));
     }
 }
