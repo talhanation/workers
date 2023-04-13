@@ -44,11 +44,19 @@ public class MinerAI extends Goal {
     }
 
     public void resetGoal(){
-        this.stop();
         miner.resetCounts();
-        miner.setIsWorking(false);
-        miner.clearStartPos();
-        this.miner.setIsPickingUp(false);
+
+        if(!this.miner.getChecked()){
+            this.miner.setChecked(true);
+
+        }
+        else {
+            miner.setIsWorking(false);
+            miner.clearStartPos();
+            this.miner.setIsPickingUp(false);
+            this.miner.setChecked(false);
+            this.stop();
+        }
     }
 
     private enum MineType {
@@ -121,7 +129,7 @@ public class MinerAI extends Goal {
                     }
 
                     if (miner.depth == 8) {
-                        this.stop();
+                        this.resetGoal();
                     }
                 }
 

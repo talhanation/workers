@@ -47,6 +47,8 @@ public class MinerEntity extends AbstractWorkerEntity {
     private static final EntityDataAccessor<Direction> DIRECTION = SynchedEntityData.defineId(MinerEntity.class, EntityDataSerializers.DIRECTION);
     private static final EntityDataAccessor<Integer> MINE_TYPE = SynchedEntityData.defineId(MinerEntity.class, EntityDataSerializers.INT);
     private static final EntityDataAccessor<Integer> DEPTH = SynchedEntityData.defineId(MinerEntity.class, EntityDataSerializers.INT);
+    private static final EntityDataAccessor<Boolean> CHECKED = SynchedEntityData.defineId(MinerEntity.class, EntityDataSerializers.BOOLEAN);
+
 
     /*
      * MINE TYPES:
@@ -78,6 +80,7 @@ public class MinerEntity extends AbstractWorkerEntity {
         this.entityData.define(DIRECTION, Direction.NORTH);
         this.entityData.define(MINE_TYPE, 0);
         this.entityData.define(DEPTH, 16);
+        this.entityData.define(CHECKED, false);
     }
 
     public MinerEntity(EntityType<? extends AbstractWorkerEntity> entityType, Level world) {
@@ -167,6 +170,10 @@ public class MinerEntity extends AbstractWorkerEntity {
         return 32;
     }
 
+    public boolean getChecked(){
+        return this.entityData.get(CHECKED);
+    }
+
     @Override
     public Predicate<ItemEntity> getAllowedItems() {
         return ALLOWED_ITEMS;
@@ -176,12 +183,14 @@ public class MinerEntity extends AbstractWorkerEntity {
         super.addAdditionalSaveData(nbt);
         nbt.putInt("MineType", this.getMineType());
         nbt.putInt("Depth", this.getMineDepth());
+        nbt.putBoolean("Checked", this.getChecked());
     }
 
     public void readAdditionalSaveData(@NotNull CompoundTag nbt) {
         super.readAdditionalSaveData(nbt);
         this.setMineType(nbt.getInt("MineType"));
         this.setMineDepth(nbt.getInt("Depth"));
+        this.setChecked(nbt.getBoolean("Checked"));
     }
 
     @Override
@@ -195,6 +204,10 @@ public class MinerEntity extends AbstractWorkerEntity {
 
     public Direction getMineDirection() {
         return entityData.get(DIRECTION);
+    }
+
+    public void setChecked(boolean checked){
+        this.entityData.set(CHECKED, checked);
     }
 
     public void setMineType(int x) {
