@@ -858,4 +858,7 @@ public abstract class AbstractWorkerEntity extends AbstractChunkLoaderEntity {
         }
     }
 
+    public double getDistanceToOwner(){
+        return this.getOwner() != null ? this.distanceToSqr(this.getOwner()) : 1D;
+    }
 }

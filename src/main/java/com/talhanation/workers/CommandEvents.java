@@ -28,10 +28,7 @@ import net.minecraftforge.network.NetworkHooks;
 import net.minecraftforge.network.PacketDistributor;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Objects;
-import java.util.UUID;
+import java.util.*;
 
 import static com.talhanation.workers.Translatable.*;
 
@@ -396,14 +393,16 @@ public class CommandEvents {
         List<UUID> workers = new ArrayList<>();
         List<String> names = new ArrayList<>();
 
+        list.sort(Comparator.comparing(AbstractWorkerEntity::getDistanceToOwner));
+
         for(AbstractWorkerEntity worker : list) {
             if (Objects.equals(worker.getOwnerUUID(), player.getUUID())){
                 workers.add(worker.getUUID());
-
                 String name = worker.getName().getString()  + " / " + worker.getProfessionName();
                 names.add(name);
             }
         }
+
         Main.SIMPLE_CHANNEL.send(PacketDistributor.PLAYER.with(()-> player), new MessageToClientUpdateCommandScreen(workers, names));
     }
 }
