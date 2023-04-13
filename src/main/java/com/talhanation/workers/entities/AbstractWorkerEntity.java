@@ -71,12 +71,11 @@ public abstract class AbstractWorkerEntity extends AbstractChunkLoaderEntity {
     private static final EntityDataAccessor<Boolean> NEEDS_BED = SynchedEntityData.defineId(AbstractWorkerEntity.class, EntityDataSerializers.BOOLEAN);
     private static final EntityDataAccessor<String> OWNER_NAME = SynchedEntityData.defineId(AbstractWorkerEntity.class, EntityDataSerializers.STRING);
     private static final EntityDataAccessor<String> PROFESSION_NAME = SynchedEntityData.defineId(AbstractWorkerEntity.class, EntityDataSerializers.STRING);
-    private static final EntityDataAccessor<Integer> FARMED_ITEMS = SynchedEntityData.defineId(AbstractWorkerEntity.class, EntityDataSerializers.INT);
+    public static final EntityDataAccessor<Integer> FARMED_ITEMS = SynchedEntityData.defineId(AbstractWorkerEntity.class, EntityDataSerializers.INT);
 
     int hurtTimeStamp = 0;
     
     protected GroundPathNavigation navigation;
-    public int itemsFarmed;
 
 
     public AbstractWorkerEntity(EntityType<? extends AbstractWorkerEntity> entityType, Level world) {

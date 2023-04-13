@@ -1,6 +1,7 @@
 package com.talhanation.workers.entities.ai;
 
 import com.talhanation.workers.entities.LumberjackEntity;
+import net.minecraft.tags.BlockTags;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.block.Blocks;
@@ -99,7 +100,7 @@ public class LumberjackAI extends Goal {
                     for (int k = start.getZ(); k <= end.getZ(); ++k) {
                         pos.set(i, j, k);
                         BlockState blockstate = this.lumber.level.getBlockState(pos);
-                        if (blockstate.getBlock() instanceof LeavesBlock) {
+                        if (blockstate.is(BlockTags.LEAVES)) {
                             this.lumber.level.destroyBlock(pos, true, this.lumber);
                             hasBroken = true;
                         }
