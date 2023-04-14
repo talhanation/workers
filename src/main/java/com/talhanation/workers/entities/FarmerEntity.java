@@ -167,12 +167,9 @@ public class FarmerEntity extends AbstractWorkerEntity {
 
     @Override
     public void setEquipment() {
-        int i = this.random.nextInt(2);
-        if (i == 1) {
-            this.setItemSlot(EquipmentSlot.MAINHAND, new ItemStack(Items.STONE_HOE));
-        } else {
-            this.setItemSlot(EquipmentSlot.MAINHAND, new ItemStack(Items.WOODEN_HOE));
-        }
+        ItemStack initialTool = new ItemStack(Items.WOODEN_HOE);
+        this.updateInventory(0, initialTool);
+        this.equipTool(initialTool);
     }
 
     @Override
