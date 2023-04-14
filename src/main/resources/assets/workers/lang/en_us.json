@@ -56,6 +56,7 @@
   "chat.workers.text.bedError": "That doesn't look like a bed.",
   "chat.workers.cantFindBed": "I can't find my bed anymore, can you help me find a new one?",
 
+  "chat.workers.couldNotDeposit": "I could not deposit my items into my chest, can you help me find a new one?",
   "chat.workers.needChest": "I need a chest to put the items in.",
   "chat.workers.text.chest": "Okay, I'll save my items there.",
   "chat.workers.text.chestError": "I don't think I can put my items inside that.",

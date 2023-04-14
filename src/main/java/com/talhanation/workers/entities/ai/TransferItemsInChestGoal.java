@@ -1,6 +1,7 @@
 package com.talhanation.workers.entities.ai;
 
 import com.talhanation.workers.Main;
+import com.talhanation.workers.Translatable;
 import com.talhanation.workers.entities.AbstractWorkerEntity;
 import net.minecraft.core.BlockPos;
 import net.minecraft.network.chat.Component;
@@ -17,9 +18,6 @@ import net.minecraftforge.common.Tags.Blocks;
 
 public class TransferItemsInChestGoal extends Goal {
     private final AbstractWorkerEntity worker;
-    private final MutableComponent CANT_FIND_CHEST = Component.translatable("chat.workers.cantFindChest");
-    private final MutableComponent CHEST_FULL = Component.translatable("chat.workers.chestFull");
-
     private GroundPathNavigation pathFinder;
 
     public TransferItemsInChestGoal(AbstractWorkerEntity worker) {
@@ -59,11 +57,11 @@ public class TransferItemsInChestGoal extends Goal {
     public void tick() {
         LivingEntity owner = worker.getOwner();
         if (owner == null) return;
-        if (worker.isSleeping()) return;
+        if (worker.needsToSleep()) return;
         
         BlockPos chestPos = this.worker.getChestPos();
         if (chestPos == null) {
-            this.worker.tellPlayer(owner, CANT_FIND_CHEST);
+            this.worker.tellPlayer(owner, Translatable.TEXT_CANT_FIND_CHEST);
             this.worker.setNeedsChest(true);
             return;
         }
@@ -73,8 +71,8 @@ public class TransferItemsInChestGoal extends Goal {
         if (worker.level.getBlockEntity(chestPos) instanceof Container container) {
             containerEntity = container;
         }
-        if (containerEntity == null || chest == null || (!chest.is(Blocks.CHESTS) && !chest.is(Blocks.BARRELS))) {
-            this.worker.tellPlayer(owner, CANT_FIND_CHEST);
+        if (containerEntity == null || (!chest.is(Blocks.CHESTS) && !chest.is(Blocks.BARRELS))) {
+            this.worker.tellPlayer(owner, Translatable.TEXT_CANT_FIND_CHEST);
             this.worker.setNeedsChest(true);
             return;
         }
@@ -103,13 +101,14 @@ public class TransferItemsInChestGoal extends Goal {
                 0.7F, 
                 0.8F + 0.4F * worker.getRandom().nextFloat()
             );
+            //TODO: actually open the chest visually
             this.depositItems(containerEntity);
             worker.level.playSound(
-                null, 
+                null,
                 chestPos,
                 SoundEvents.CHEST_CLOSE,
                 worker.getSoundSource(),
-                0.7F, 
+                0.7F,
                 0.8F + 0.4F * worker.getRandom().nextFloat()
             );
         }
@@ -119,6 +118,7 @@ public class TransferItemsInChestGoal extends Goal {
     private void depositItems(Container container) {
         SimpleContainer inventory = worker.getInventory();
         boolean couldDepositSomething = false;
+
         for (int i = 0; i < inventory.getContainerSize(); i++) {
             ItemStack stack = inventory.getItem(i);
             
@@ -148,14 +148,27 @@ public class TransferItemsInChestGoal extends Goal {
             );
         }
         if (!couldDepositSomething) {
-            if(worker.getOwner() != null) this.worker.tellPlayer(worker.getOwner(), CHEST_FULL);
+            if(worker.getOwner() != null) {
+                if (this.isContainerFull(container)) {
+                    this.worker.tellPlayer(worker.getOwner(), Translatable.TEXT_CHEST_FULL);
+                }
+                else
+                    this.worker.tellPlayer(worker.getOwner(), Translatable.TEXT_COULD_NOT_DEPOSIT);
+            }
+
             this.worker.setNeedsChest(true);
         } else {
             this.worker.resetFarmedItems();
         }
     }
 
-    
+    private boolean isContainerFull(Container container){
+        for(int i = 0; i < container.getContainerSize(); i++){
+            ItemStack itemStack = container.getItem(i);
+            if(itemStack.isEmpty()) return false;
+        }
+        return true;
+    }
     /**
      * Deposits a stack in a target container.
      * @return The shrinked stack with the remaining items that were not deposited.

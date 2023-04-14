@@ -1,5 +1,6 @@
 package com.talhanation.workers;
 import net.minecraft.network.chat.Component;
+import net.minecraft.network.chat.MutableComponent;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 
@@ -76,5 +77,8 @@ public class Translatable {
     public static final Component TEXT_BUTTON_CHEST_POS = Component.translatable("gui.workers.button.chestPos");
     public static final Component TEXT_BUTTON_SLEEP_POS = Component.translatable("gui.workers.button.sleepPos");
 
+    public static final MutableComponent TEXT_CANT_FIND_CHEST = Component.translatable("chat.workers.cantFindChest");
+    public static final MutableComponent TEXT_CHEST_FULL = Component.translatable("chat.workers.chestFull");
+    public static final MutableComponent TEXT_COULD_NOT_DEPOSIT = Component.translatable("chat.workers.couldNotDeposit");
 
 }
