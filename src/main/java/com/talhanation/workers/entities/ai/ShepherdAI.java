@@ -48,7 +48,7 @@ public class ShepherdAI extends AnimalFarmerAI{
 
         if (sheering) {
             this.sheep = findSheepSheering();
-            if (this.sheep.isPresent() && sheep.get().readyForShearing() && hasMainToolInInv()) {
+            if (hasMainToolInInv() && this.sheep.isPresent() && sheep.get().readyForShearing()) {
 
                 this.animalFarmer.getNavigation().moveTo(this.sheep.get(), 1);
 
