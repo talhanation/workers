@@ -46,7 +46,7 @@ public abstract class AnimalFarmerAI extends Goal {
         SimpleContainer inventory = animalFarmer.getInventory();
         for (int i = 0; i < inventory.getContainerSize(); i++) {
             ItemStack itemStack = inventory.getItem(i);
-            if (animalFarmer.isRequiredMainTool(itemStack)) return true;
+            if (this.animalFarmer.isRequiredMainTool(itemStack)) return true;
         }
         return false;
     }

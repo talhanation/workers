@@ -111,6 +111,9 @@ public abstract class AbstractInventoryEntity extends TamableAnimal {
             if ((itemType instanceof ShearsItem || itemType instanceof AxeItem)  && this instanceof ShepherdEntity) {
                 this.handleToolUpgrade(item, i);
             }
+
+            if (itemType instanceof AxeItem  && (this instanceof CattleFarmerEntity || this instanceof ChickenFarmerEntity || this instanceof SwineherdEntity))
+                this.handleToolUpgrade(item, i);
         }
     }
 
