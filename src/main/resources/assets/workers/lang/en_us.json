@@ -50,7 +50,7 @@
   "gui.workers.button.chestPos": "Chest Pos.",
 
   "chat.workers.needHome": "I need a home to store items.",
-
+  "chat.workers.text.noPickaxe": "I need a Pickaxe to continue.",
   "chat.workers.needBed": "I need a bed to sleep.",
   "chat.workers.text.bed": "Thanks! I'll sleep there from now on.",
   "chat.workers.text.bedError": "That doesn't look like a bed.",

@@ -1,10 +1,13 @@
 package com.talhanation.workers.entities.ai;
+import com.talhanation.workers.Translatable;
 import com.talhanation.workers.entities.MinerEntity;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.sounds.SoundSource;
+import net.minecraft.tags.BlockTags;
 import net.minecraft.world.InteractionHand;
+import net.minecraft.world.SimpleContainer;
 import net.minecraft.world.entity.ai.attributes.AttributeInstance;
 import net.minecraft.world.entity.ai.attributes.Attributes;
 import net.minecraft.world.entity.ai.goal.Goal;
@@ -21,6 +24,7 @@ public class MinerAI extends Goal {
     private final MinerEntity miner;
     private BlockPos minePos;
     private MineType mineType;
+    private boolean messageNoPickaxe;
 
     public MinerAI(MinerEntity miner) {
         this.miner = miner;
@@ -41,6 +45,7 @@ public class MinerAI extends Goal {
         this.miner.resetWorkerParameters();
         this.miner.resetCounts();
         this.mineType = getMineType();
+        this.messageNoPickaxe = false;
     }
 
     public void resetGoal(){
@@ -96,8 +101,6 @@ public class MinerAI extends Goal {
             else
                 miner.getNavigation().stop();
 
-
-
             if (minePos.closerThan(miner.getOnPos(), 3)){
                 this.miner.getLookControl().setLookAt(minePos.getX(), minePos.getY() + 1, minePos.getZ(), 10.0F, (float) this.miner.getMaxHeadXRot());
             }
@@ -108,6 +111,16 @@ public class MinerAI extends Goal {
 
             //break block if close enough
             if (minePos.closerThan(miner.getOnPos(), 6)){
+                boolean needsPickaxe = blockstate.is(BlockTags.MINEABLE_WITH_PICKAXE);
+
+                if(needsPickaxe && !hasMainToolInInv()) {
+                    if(!messageNoPickaxe && this.miner.getOwner() != null){
+                        this.miner.tellPlayer(miner.getOwner(), Translatable.TEXT_NO_PICKAXE);
+                        messageNoPickaxe = true;
+                    }
+                    return;
+                }
+
                 if (this.mineBlock(minePos)) this.miner.increaseFarmedItems();
             }
 
@@ -274,4 +287,12 @@ public class MinerAI extends Goal {
         }
     }
 
+    public boolean hasMainToolInInv() {
+        SimpleContainer inventory = this.miner.getInventory();
+        for (int i = 0; i < inventory.getContainerSize(); i++) {
+            ItemStack itemStack = inventory.getItem(i);
+            if (this.miner.isRequiredMainTool(itemStack)) return true;
+        }
+        return false;
+    }
 }

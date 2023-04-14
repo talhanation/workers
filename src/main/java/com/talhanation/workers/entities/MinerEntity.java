@@ -9,7 +9,6 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.chat.Component;
-import net.minecraft.network.chat.MutableComponent;
 import net.minecraft.network.syncher.EntityDataAccessor;
 import net.minecraft.network.syncher.EntityDataSerializers;
 import net.minecraft.network.syncher.SynchedEntityData;
@@ -138,7 +137,7 @@ public class MinerEntity extends AbstractWorkerEntity {
     }
     @Override
     public boolean needsToDeposit(){
-        return this.getFarmedItems() >= 128;
+        return this.getFarmedItems() >= 64;
     }
 
     public boolean shouldIgnoreBlock(Block block) {
@@ -291,5 +290,8 @@ public class MinerEntity extends AbstractWorkerEntity {
         blocks = 0;
         side = 0;
         depth = 0;
+    }
+    public boolean isRequiredMainTool(ItemStack tool) {
+        return tool.getItem() instanceof PickaxeItem;
     }
 }
