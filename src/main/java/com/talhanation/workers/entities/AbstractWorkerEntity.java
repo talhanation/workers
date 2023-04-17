@@ -84,6 +84,7 @@ public abstract class AbstractWorkerEntity extends AbstractChunkLoaderEntity {
         this.navigation = this.createNavigation(world);
         this.navigation.setCanOpenDoors(true);
         this.xpReward = 2;
+        this.maxUpStep = 1.25F;
     }
 
     /*
