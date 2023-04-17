@@ -727,7 +727,6 @@ public abstract class AbstractWorkerEntity extends AbstractChunkLoaderEntity {
     }
 
     @Override
-    @OnlyIn(Dist.CLIENT)
     protected void spawnTamingParticles(boolean smoke) {
 
     }
