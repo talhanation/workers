@@ -144,11 +144,6 @@ public class LumberjackEntity extends AbstractWorkerEntity {
     }
 
     @Override
-    public boolean needsToDeposit(){
-        return this.getFarmedItems() >= 64;
-    }
-
-    @Override
     public void setEquipment() {
         ItemStack initialTool = new ItemStack(Items.STONE_AXE);
         this.updateInventory(0, initialTool);

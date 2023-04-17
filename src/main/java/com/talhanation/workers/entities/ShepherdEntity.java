@@ -106,10 +106,6 @@ public class ShepherdEntity extends AbstractAnimalFarmerEntity {
         this.setCustomName(name);
     }
 
-    public boolean needsToDeposit(){
-        return this.getFarmedItems() >= 16;
-    }
-
     @Override
     public boolean wantsToPickUp(ItemStack itemStack) {
         return (itemStack.is(ItemTags.WOOL) || itemStack.is(Items.MUTTON));

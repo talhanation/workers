@@ -27,13 +27,6 @@ public class TransferItemsInChestGoal extends Goal {
 
     @Override
     public boolean canUse() {
-        if (
-            this.worker.getFollow() ||
-            this.worker.needsChest() ||
-            this.worker.needsToSleep()
-        ) {
-            return false;
-        }
         return this.worker.needsToDeposit();
         // SimpleContainer inventory = this.worker.getInventory();
         // if (inventory == null) {
@@ -148,6 +141,8 @@ public class TransferItemsInChestGoal extends Goal {
             );
         }
         if (!couldDepositSomething) {
+            this.worker.setNeedsChest(true);
+
             if(worker.getOwner() != null) {
                 if (this.isContainerFull(container)) {
                     this.worker.tellPlayer(worker.getOwner(), Translatable.TEXT_CHEST_FULL);
@@ -155,11 +150,9 @@ public class TransferItemsInChestGoal extends Goal {
                 else
                     this.worker.tellPlayer(worker.getOwner(), Translatable.TEXT_COULD_NOT_DEPOSIT);
             }
-
-            this.worker.setNeedsChest(true);
-        } else {
-            this.worker.resetFarmedItems();
         }
+
+        this.worker.resetFarmedItems();
     }
 
     private boolean isContainerFull(Container container){
@@ -176,15 +169,17 @@ public class TransferItemsInChestGoal extends Goal {
     private ItemStack deposit(ItemStack stack, Container container) {
         // Attempt to fill matching stacks first.
         for (int i = 0; i < container.getContainerSize(); i++) {
-            ItemStack targetSlot = container.getItem(i);
-            if (targetSlot.sameItem(stack)) {
+            ItemStack targetStack = container.getItem(i);
+            if (targetStack.sameItem(stack)) {
                 int amountToDeposit = Math.min(
                     stack.getCount(), 
-                    targetSlot.getMaxStackSize() - targetSlot.getCount()
+                    targetStack.getMaxStackSize() - targetStack.getCount()
                 );
-                targetSlot.grow(amountToDeposit);
+                targetStack.grow(amountToDeposit);
                 stack.shrink(amountToDeposit);
-                container.setItem(i, targetSlot);
+
+                container.setItem(i, targetStack);
+
                 if (stack.isEmpty()) {
                     return stack;
                 }
@@ -192,8 +187,8 @@ public class TransferItemsInChestGoal extends Goal {
         }
         // Put the remainder in the first empty slot we can find.
         for (int i = 0; i < container.getContainerSize(); i++) {
-            ItemStack targetSlot = container.getItem(i);
-            if (targetSlot.isEmpty()) {
+            ItemStack targetStack = container.getItem(i);
+            if (targetStack.isEmpty()) {
                 container.setItem(i, stack);
                 return ItemStack.EMPTY;
             }
