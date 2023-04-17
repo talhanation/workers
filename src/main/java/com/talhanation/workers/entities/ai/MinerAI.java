@@ -141,7 +141,7 @@ public class MinerAI extends Goal {
                         miner.depth++;
                     }
 
-                    if (miner.depth == 8) {
+                    if (miner.depth >= 8) {
                         this.resetGoal();
                     }
                 }
