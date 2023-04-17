@@ -10,6 +10,7 @@
     "1.6.0": "Big bug fix update and added command menu."
   },
   "1.19.2": {
+    "1.6.6": "fixed workers get stuck and wont work because they cant deposit.",
     "1.6.5": "fixed miner and farmer issues. Improved depositing",
     "1.6.4": "fixed issues with worker ai, upkeep, deposit, names and hunger/eat behavior.",
     "1.6.3": "fixed spawning for swineherd, cattle farmer and chicken farmer.",
