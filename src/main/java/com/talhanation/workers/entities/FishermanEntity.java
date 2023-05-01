@@ -5,7 +5,11 @@ import com.talhanation.workers.inventory.WorkerInventoryContainer;
 import com.talhanation.workers.entities.ai.FishermanAI;
 import com.talhanation.workers.entities.ai.WorkerPickupWantedItemGoal;
 import com.talhanation.workers.network.MessageOpenGuiWorker;
+import net.minecraft.core.Direction;
 import net.minecraft.network.chat.MutableComponent;
+import net.minecraft.network.syncher.EntityDataAccessor;
+import net.minecraft.network.syncher.EntityDataSerializers;
+import net.minecraft.network.syncher.SynchedEntityData;
 import net.minecraft.world.entity.AgeableMob;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.LivingEntity;
@@ -24,6 +28,7 @@ import net.minecraft.world.entity.item.ItemEntity;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.world.entity.vehicle.Boat;
 import net.minecraft.world.inventory.AbstractContainerMenu;
 import net.minecraft.world.MenuProvider;
 import net.minecraft.world.item.ItemStack;
@@ -41,6 +46,9 @@ import javax.annotation.Nullable;
 import java.util.function.Predicate;
 
 public class FishermanEntity extends AbstractWorkerEntity {
+
+    private static final EntityDataAccessor<Integer> STATE = SynchedEntityData.defineId(FishermanEntity.class, EntityDataSerializers.INT);
+
     private final Predicate<ItemEntity> ALLOWED_ITEMS = (item) -> {
         return (
             !item.hasPickUpDelay() && 
@@ -49,10 +57,37 @@ public class FishermanEntity extends AbstractWorkerEntity {
         );
     };
 
+
+
     public FishermanEntity(EntityType<? extends AbstractWorkerEntity> entityType, Level world) {
         super(entityType, world);
         this.initSpawn();
     }
+
+    protected void defineSynchedData() {
+        super.defineSynchedData();
+        this.entityData.define(STATE, 0);
+    }
+
+    public void addAdditionalSaveData(@NotNull CompoundTag nbt) {
+        super.addAdditionalSaveData(nbt);
+        nbt.putInt("State", this.getState());
+    }
+
+    //Boat
+    public void readAdditionalSaveData(@NotNull CompoundTag nbt) {
+        super.readAdditionalSaveData(nbt);
+        //this.setState(.getInt("State"));
+    }
+
+    public void setState(int state) {
+        //this.entityData.set(STATE, state.ordinal());
+    }
+
+    public int getState() {
+        return this.entityData.get(STATE);
+    }
+
 
     @Override
     public void tick() {
@@ -160,6 +195,15 @@ public class FishermanEntity extends AbstractWorkerEntity {
         } else {
             Main.SIMPLE_CHANNEL.sendToServer(new MessageOpenGuiWorker(player, this.getUUID()));
         }
+    }
+
+    public enum State{
+        MOVING_COAST,
+        MOVING_BOAT,
+        SAILING, // fährt zum fishing pos
+        FISHING,
+        STOPPING, // Wenn boat dann coast und eject
+        STOP //
     }
 
 }
