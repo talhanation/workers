@@ -198,6 +198,7 @@ public class FishermanEntity extends AbstractWorkerEntity {
     }
 
     public enum State{
+        IDLE,
         MOVING_COAST,
         MOVING_BOAT,
         SAILING, // fährt zum fishing pos
