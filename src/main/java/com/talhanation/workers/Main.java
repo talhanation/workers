@@ -82,7 +82,8 @@ public class Main {
             MessageChestPos.class,
             MessageBedPos.class,
             MessageOpenCommandScreen.class,
-            MessageToClientUpdateCommandScreen.class
+            MessageToClientUpdateCommandScreen.class,
+            MessageTravel.class
         };
         for (int i = 0; i < messages.length; i++) CommonRegistry.registerMessage(SIMPLE_CHANNEL, i, messages[i]);
         LOGGER.info("Messages registered");

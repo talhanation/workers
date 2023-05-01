@@ -280,7 +280,7 @@ public abstract class AbstractWorkerEntity extends AbstractChunkLoaderEntity {
         if (bedPos != null) this.setNbtPosition(nbt, "Bed", bedPos);
     }
 
-    private void setNbtPosition(CompoundTag nbt, String blockName, @Nullable BlockPos pos) {
+    public void setNbtPosition(CompoundTag nbt, String blockName, @Nullable BlockPos pos) {
         if (pos == null) return;
         nbt.putInt(String.format("%sPosX", blockName), pos.getX());
         nbt.putInt(String.format("%sPosY", blockName), pos.getY());

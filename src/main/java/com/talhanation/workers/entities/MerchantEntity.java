@@ -7,7 +7,12 @@ import com.talhanation.workers.inventory.MerchantTradeContainer;
 import com.talhanation.workers.entities.ai.WorkerFollowOwnerGoal;
 import com.talhanation.workers.network.MessageOpenGuiMerchant;
 import com.talhanation.workers.network.MessageOpenGuiWorker;
+import net.minecraft.core.BlockPos;
+import net.minecraft.core.Direction;
 import net.minecraft.network.chat.MutableComponent;
+import net.minecraft.network.syncher.EntityDataAccessor;
+import net.minecraft.network.syncher.EntityDataSerializers;
+import net.minecraft.network.syncher.SynchedEntityData;
 import net.minecraft.world.entity.*;
 import net.minecraft.world.entity.ai.attributes.AttributeSupplier;
 import net.minecraft.world.entity.ai.attributes.Attributes;
@@ -32,9 +37,13 @@ import net.minecraft.world.DifficultyInstance;
 import net.minecraft.world.level.ServerLevelAccessor;
 import net.minecraft.world.level.Level;
 import net.minecraft.server.level.ServerLevel;
+import net.minecraft.world.level.block.Block;
 import net.minecraftforge.network.NetworkHooks;
 
 import javax.annotation.Nullable;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Optional;
 import java.util.function.Predicate;
 
 import net.minecraft.world.entity.AgeableMob;
@@ -49,11 +58,27 @@ import static com.talhanation.workers.Translatable.TEXT_HELLO_OWNED;
 
 public class MerchantEntity extends AbstractWorkerEntity {
 
+    private static final EntityDataAccessor<Boolean> TRAVELING = SynchedEntityData.defineId(MerchantEntity.class, EntityDataSerializers.BOOLEAN);
+    private static final EntityDataAccessor<Integer> STATE = SynchedEntityData.defineId(MerchantEntity.class, EntityDataSerializers.INT);
+    private static final EntityDataAccessor<Optional<BlockPos>> CURRENT_WAYPOINT = SynchedEntityData.defineId(MerchantEntity.class, EntityDataSerializers.OPTIONAL_BLOCK_POS);
+    private static final EntityDataAccessor<Integer> CURRENT_WAYPOINT_INDEX = SynchedEntityData.defineId(MerchantEntity.class, EntityDataSerializers.INT);
+    private static final EntityDataAccessor<Integer> RETURNING_TIME = SynchedEntityData.defineId(MerchantEntity.class, EntityDataSerializers.INT);
     private final SimpleContainer tradeInventory = new SimpleContainer(8);
+    public boolean isTrading;
+
+    public List<BlockPos> WAYPOINTS = new ArrayList<>();
 
     public MerchantEntity(EntityType<? extends AbstractWorkerEntity> entityType, Level world) {
         super(entityType, world);
         this.initSpawn();
+    }
+
+    protected void defineSynchedData() {
+        super.defineSynchedData();
+        this.entityData.define(TRAVELING, false);
+        this.entityData.define(RETURNING_TIME, 1);
+        this.entityData.define(CURRENT_WAYPOINT_INDEX, 0);
+        this.entityData.define(CURRENT_WAYPOINT, Optional.empty());
     }
 
     @Override
@@ -218,8 +243,14 @@ public class MerchantEntity extends AbstractWorkerEntity {
                 list.add(compoundnbt);
             }
         }
-
         nbt.put("TradeInventory", list);
+        nbt.putBoolean("Traveling", this.getTraveling());
+
+        nbt.putInt("CurrentWayPointIndex", this.getCurrentWayPointIndex());
+        nbt.putInt("ReturningTime", this.getReturningTime());
+
+        BlockPos currentWayPoint = this.getCurrentWayPoint();
+        if (currentWayPoint != null) this.setNbtPosition(nbt, "CurrentWayPoint", currentWayPoint);
     }
 
     public void readAdditionalSaveData(@NotNull CompoundTag nbt) {
@@ -233,13 +264,59 @@ public class MerchantEntity extends AbstractWorkerEntity {
         }
     }
 
+    @Override
+    public void setStartPos(BlockPos pos) {
+        WAYPOINTS.add(pos);
+    }
+
     public SimpleContainer getTradeInventory() {
         return this.tradeInventory;
+    }
+
+    public boolean getTraveling() {
+        return this.entityData.get(TRAVELING);
+    }
+
+    public void setTraveling(boolean traveling){
+        this.entityData.set(TRAVELING, traveling);
+    }
+
+    public BlockPos getCurrentWayPoint(){
+        return this.entityData.get(CURRENT_WAYPOINT).orElse(null);
+    }
+
+    public void setCurrentWayPoint(BlockPos wayPoint){
+        this.entityData.set(CURRENT_WAYPOINT, Optional.of(wayPoint));
+    }
+
+    public int getCurrentWayPointIndex() {
+        return entityData.get(CURRENT_WAYPOINT_INDEX);
+    }
+
+    public void setCurrentWayPointIndex(int x) {
+        entityData.set(CURRENT_WAYPOINT_INDEX, x);
+    }
+
+    public int getReturningTime() { //MC Days
+        return entityData.get(RETURNING_TIME);
+    }
+
+    public void setReturningTime(int x) {
+        entityData.set(RETURNING_TIME, x);
     }
 
     public void die(@NotNull DamageSource dmg) {
         super.die(dmg);
         for (int i = 0; i < this.tradeInventory.getContainerSize(); i++)
             Containers.dropItemStack(this.level, getX(), getY(), getZ(), this.tradeInventory.getItem(i));
+    }
+
+    public enum State{
+        IDLE,
+        HOME,
+        TRAVELING,
+        PAUSING,
+        ARRIVED,
+        RETURNING,
     }
 }

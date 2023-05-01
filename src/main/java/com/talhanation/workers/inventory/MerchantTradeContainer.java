@@ -74,8 +74,11 @@ public class MerchantTradeContainer extends ContainerBase {
 
     @Override
     public boolean stillValid(Player playerIn) {
-        return this.workerInventory.stillValid(playerIn) && this.merchant.isAlive()
-                && this.merchant.distanceTo(playerIn) < 8.0F;
+        if(this.workerInventory.stillValid(playerIn) && this.merchant.isAlive() && this.merchant.distanceTo(playerIn) < 8.0F){
+            this.merchant.isTrading = true;
+            return true;
+        }
+        return false;
     }
 
     @Override

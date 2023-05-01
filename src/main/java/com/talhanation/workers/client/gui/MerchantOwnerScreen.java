@@ -4,7 +4,10 @@ import com.mojang.blaze3d.vertex.PoseStack;
 import com.talhanation.workers.Main;
 import com.talhanation.workers.entities.MerchantEntity;
 import com.talhanation.workers.inventory.MerchantInventoryContainer;
+import com.talhanation.workers.network.MessageHire;
+import com.talhanation.workers.network.MessageTravel;
 import de.maxhenkel.corelib.inventory.ScreenBase;
+import net.minecraft.client.gui.components.Button;
 import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.network.chat.Component;
@@ -29,13 +32,15 @@ public class MerchantOwnerScreen extends ScreenBase<MerchantInventoryContainer> 
     @Override
     protected void init() {
         super.init();
-        /*
-        addRenderableWidget(new Button(leftPos + 140, topPos + 30, 24, 12,
-                Component.translatable("gui.workers.home"), button -> {
-                    Main.SIMPLE_CHANNEL.sendToServer(new MessageHomePos(playerInventory.player.getUUID(),
-                            merchant.getUUID(), merchant.getWorkerOnPos()));
-                }));
-        */
+        int zeroLeftPos = leftPos + 180;
+        int zeroTopPos = topPos + 10;
+
+        int mirror = 240 - 60;
+
+        addRenderableWidget(new Button(zeroLeftPos - mirror + 40, zeroTopPos + 85, 100, 20, Component.literal("Travel"), button -> {
+            Main.SIMPLE_CHANNEL.sendToServer(new MessageTravel(merchant.getUUID()));
+            this.onClose();
+        }));
     }
 
     @Override

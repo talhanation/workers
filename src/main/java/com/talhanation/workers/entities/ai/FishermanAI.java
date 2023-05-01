@@ -2,7 +2,6 @@ package com.talhanation.workers.entities.ai;
 
 import com.talhanation.workers.Main;
 import com.talhanation.workers.Translatable;
-import com.talhanation.workers.entities.AbstractWorkerEntity;
 import com.talhanation.workers.entities.FishermanEntity;
 import net.minecraft.core.BlockPos;
 import net.minecraft.server.MinecraftServer;
@@ -13,7 +12,6 @@ import net.minecraft.world.InteractionHand;
 import net.minecraft.world.entity.ai.goal.Goal;
 import net.minecraft.world.entity.vehicle.Boat;
 import net.minecraft.world.item.ItemStack;
-import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.storage.loot.BuiltInLootTables;
@@ -23,16 +21,14 @@ import net.minecraft.world.level.storage.loot.parameters.LootContextParamSets;
 import net.minecraft.world.level.storage.loot.parameters.LootContextParams;
 
 import java.util.List;
-import java.util.Objects;
 
 import static com.talhanation.workers.entities.FishermanEntity.State.*;
-import static com.talhanation.workers.entities.FishermanEntity.State.IDLE;
 
 public class FishermanAI extends Goal {
     private final FishermanEntity fisherman;
     private int fishingTimer = 100;
     private int throwTimer = 0;
-    private final int fishingRange = 20;
+    private final int fishingRange = 5;
     private BlockPos fishingPos = null;
     private BlockPos coastPos;
     private Boat boat;
