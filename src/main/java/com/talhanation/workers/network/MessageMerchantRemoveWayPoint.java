@@ -1,23 +1,24 @@
 package com.talhanation.workers.network;
 
-import com.talhanation.workers.CommandEvents;
-import com.talhanation.workers.entities.AbstractWorkerEntity;
 import com.talhanation.workers.entities.MerchantEntity;
 import de.maxhenkel.corelib.net.Message;
+import net.minecraft.commands.Commands;
+import net.minecraft.core.BlockPos;
 import net.minecraft.network.FriendlyByteBuf;
+import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.network.NetworkEvent;
 
 import java.util.UUID;
 
-public class MessageTravel implements Message<MessageTravel> {
+public class MessageMerchantRemoveWayPoint implements Message<MessageMerchantRemoveWayPoint> {
     private UUID worker;
 
-    public MessageTravel() {
+    public MessageMerchantRemoveWayPoint() {
     }
 
-    public MessageTravel(UUID recruit) {
+    public MessageMerchantRemoveWayPoint(UUID recruit) {
         this.worker = recruit;
     }
 
@@ -35,15 +36,20 @@ public class MessageTravel implements Message<MessageTravel> {
                 .stream()
                 .filter(MerchantEntity::isAlive)
                 .findAny()
-                .ifPresent(this::onButton);
-
-    }
-    private void onButton(MerchantEntity merchant){
-        merchant.setTraveling(!merchant.getTraveling());
-        merchant.setIsWorking(true);
+                .ifPresent(merchant -> this.removeLastWayPoint(player, merchant));
     }
 
-    public MessageTravel fromBytes(FriendlyByteBuf buf) {
+    private void removeLastWayPoint(ServerPlayer player, MerchantEntity merchant){
+        BlockPos pos = merchant.WAYPOINTS.get(merchant.WAYPOINTS.size() - 1);
+
+        merchant.tellPlayer(player, Component.literal("Pos: " + pos + " was removed."));
+
+        merchant.WAYPOINTS.remove(merchant.WAYPOINTS.size() - 1);
+    }
+
+
+
+    public MessageMerchantRemoveWayPoint fromBytes(FriendlyByteBuf buf) {
         this.worker = buf.readUUID();
         return this;
     }

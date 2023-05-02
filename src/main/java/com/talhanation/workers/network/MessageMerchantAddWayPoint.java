@@ -1,23 +1,23 @@
 package com.talhanation.workers.network;
 
-import com.talhanation.workers.CommandEvents;
-import com.talhanation.workers.entities.AbstractWorkerEntity;
 import com.talhanation.workers.entities.MerchantEntity;
 import de.maxhenkel.corelib.net.Message;
+import net.minecraft.core.BlockPos;
 import net.minecraft.network.FriendlyByteBuf;
+import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.network.NetworkEvent;
 
 import java.util.UUID;
 
-public class MessageTravel implements Message<MessageTravel> {
+public class MessageMerchantAddWayPoint implements Message<MessageMerchantAddWayPoint> {
     private UUID worker;
 
-    public MessageTravel() {
+    public MessageMerchantAddWayPoint() {
     }
 
-    public MessageTravel(UUID recruit) {
+    public MessageMerchantAddWayPoint(UUID recruit) {
         this.worker = recruit;
     }
 
@@ -35,15 +35,18 @@ public class MessageTravel implements Message<MessageTravel> {
                 .stream()
                 .filter(MerchantEntity::isAlive)
                 .findAny()
-                .ifPresent(this::onButton);
-
-    }
-    private void onButton(MerchantEntity merchant){
-        merchant.setTraveling(!merchant.getTraveling());
-        merchant.setIsWorking(true);
+                .ifPresent(merchant -> this.addWayPoint(player, merchant));
     }
 
-    public MessageTravel fromBytes(FriendlyByteBuf buf) {
+    private void addWayPoint(ServerPlayer player, MerchantEntity merchant){
+        BlockPos pos = merchant.getOnPos();
+
+        merchant.tellPlayer(player, Component.literal("Pos: " + pos + " was added."));
+
+        merchant.WAYPOINTS.add(pos);
+    }
+
+    public MessageMerchantAddWayPoint fromBytes(FriendlyByteBuf buf) {
         this.worker = buf.readUUID();
         return this;
     }

@@ -31,6 +31,7 @@ public class MerchantAI extends Goal {
     @Override
     public void tick() {
         Main.LOGGER.info("State: " + state);
+        Main.LOGGER.info("Index: " + merchant.getCurrentWayPointIndex());
 
         switch (state){
             case IDLE -> {
@@ -38,19 +39,9 @@ public class MerchantAI extends Goal {
             }
 
             case TRAVELING -> {
-                this.merchant.setCurrentWayPoint(this.merchant.WAYPOINTS.get(merchant.getCurrentWayPointIndex()));
-                BlockPos pos = merchant.getCurrentWayPoint();
 
-                this.moveTo(pos);
+                moveToWayPoint(1, ARRIVED, merchant.getCurrentWayPointIndex() == merchant.WAYPOINTS.size());
 
-                if(merchant.distanceToSqr(pos.getX(), pos.getY(), pos.getZ()) < 4F){
-
-                    if(merchant.getCurrentWayPointIndex() == merchant.WAYPOINTS.size()){
-                        this.state = ARRIVED;
-                    }
-                    else
-                        merchant.setCurrentWayPointIndex(merchant.getCurrentWayPointIndex() + 1);
-                }
             }
 
             case ARRIVED -> {
@@ -60,16 +51,7 @@ public class MerchantAI extends Goal {
             }
 
             case RETURNING -> {
-                this.merchant.setCurrentWayPoint(this.merchant.WAYPOINTS.get(merchant.getCurrentWayPointIndex()));
-                BlockPos pos = merchant.getCurrentWayPoint();
-
-                this.moveTo(pos);
-
-                if(merchant.getCurrentWayPointIndex() == 0){
-                    this.state = HOME;
-                }
-                else
-                    merchant.setCurrentWayPointIndex(merchant.getCurrentWayPointIndex() - 1);
+                moveToWayPoint(-1, HOME, merchant.getCurrentWayPointIndex() == 0);
             }
 
             case HOME -> {
@@ -78,21 +60,20 @@ public class MerchantAI extends Goal {
         }
     }
 
-    private void moveToWayPoint(int indexChange, int maxIndex, MerchantEntity.State nextState){
+    private void moveToWayPoint(int indexChange, MerchantEntity.State nextState, boolean condition) {
+        this.merchant.setCurrentWayPoint(this.merchant.WAYPOINTS.get(merchant.getCurrentWayPointIndex()));
 
-    }
 
-    private void moveTo(BlockPos pos){
-        if (pos != null) {
-            //Move to minePos -> normal movement
-            if (!pos.closerThan(merchant.getOnPos(), 12)) {
-                this.merchant.walkTowards(pos, 1F);
-            }
-            //Near Mine Pos -> presice movement
-            if (!pos.closerThan(merchant.getOnPos(), 2F)) {
-                this.merchant.getMoveControl().setWantedPosition(pos.getX(), pos.getY(), pos.getZ(), 1);
+        BlockPos pos = merchant.getCurrentWayPoint();
+
+        this.merchant.walkTowards(pos, 1F);
+
+        if (merchant.distanceToSqr(pos.getX(), pos.getY(), pos.getZ()) < 4.5F) {
+
+            if (condition) {
+                this.state = nextState;
             } else
-                merchant.getNavigation().stop();
+                merchant.setCurrentWayPointIndex(merchant.getCurrentWayPointIndex() + indexChange);
         }
     }
 }

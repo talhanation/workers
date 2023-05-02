@@ -83,7 +83,9 @@ public class Main {
             MessageBedPos.class,
             MessageOpenCommandScreen.class,
             MessageToClientUpdateCommandScreen.class,
-            MessageTravel.class
+            MessageTravel.class,
+            MessageMerchantAddWayPoint.class,
+            MessageMerchantRemoveWayPoint.class
         };
         for (int i = 0; i < messages.length; i++) CommonRegistry.registerMessage(SIMPLE_CHANNEL, i, messages[i]);
         LOGGER.info("Messages registered");

@@ -244,13 +244,27 @@ public class MerchantEntity extends AbstractWorkerEntity {
             }
         }
         nbt.put("TradeInventory", list);
-        nbt.putBoolean("Traveling", this.getTraveling());
 
+        nbt.putBoolean("Traveling", this.getTraveling());
         nbt.putInt("CurrentWayPointIndex", this.getCurrentWayPointIndex());
         nbt.putInt("ReturningTime", this.getReturningTime());
 
         BlockPos currentWayPoint = this.getCurrentWayPoint();
         if (currentWayPoint != null) this.setNbtPosition(nbt, "CurrentWayPoint", currentWayPoint);
+
+
+        ListTag waypoints = new ListTag();
+        for(int i = 0; i < WAYPOINTS.size(); i++){
+            CompoundTag compoundnbt = new CompoundTag();
+            compoundnbt.putByte("Waypoint", (byte) i);
+            BlockPos pos = WAYPOINTS.get(i);
+            compoundnbt.putDouble("PosX", pos.getX());
+            compoundnbt.putDouble("PosY", pos.getY());
+            compoundnbt.putDouble("PosZ", pos.getZ());
+
+            waypoints.add(compoundnbt);
+        }
+        nbt.put("Waypoints", waypoints);
     }
 
     public void readAdditionalSaveData(@NotNull CompoundTag nbt) {
@@ -261,6 +275,26 @@ public class MerchantEntity extends AbstractWorkerEntity {
             int j = compoundnbt.getByte("TradeSlot") & 255;
 
             this.tradeInventory.setItem(j, ItemStack.of(compoundnbt));
+        }
+
+        this.setTraveling(nbt.getBoolean("Traveling"));
+        this.setCurrentWayPointIndex(nbt.getInt("CurrentWayPointIndex"));
+        this.setReturningTime(nbt.getInt("ReturningTime"));
+
+        BlockPos startPos = this.getNbtPosition(nbt, "CurrentWayPoint");
+        if (startPos != null) this.setCurrentWayPoint(startPos);
+
+
+        ListTag waypoints = nbt.getList("Waypoints", 10);
+        for (int i = 0; i < waypoints.size(); ++i) {
+            CompoundTag compoundnbt = waypoints.getCompound(i);
+            BlockPos pos = new BlockPos(
+                    compoundnbt.getDouble("PosX"),
+                    compoundnbt.getDouble("PosY"),
+                    compoundnbt.getDouble("PosZ"));
+
+
+            this.WAYPOINTS.add(pos);
         }
     }
 
