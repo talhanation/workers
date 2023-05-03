@@ -1,34 +1,27 @@
 package com.talhanation.workers.entities;
 
 import com.talhanation.workers.Main;
+import com.talhanation.workers.entities.ai.ControlBoatAI;
 import com.talhanation.workers.inventory.WorkerInventoryContainer;
 import com.talhanation.workers.entities.ai.FishermanAI;
 import com.talhanation.workers.entities.ai.WorkerPickupWantedItemGoal;
 import com.talhanation.workers.network.MessageOpenGuiWorker;
-import net.minecraft.core.Direction;
-import net.minecraft.network.chat.MutableComponent;
+import net.minecraft.core.BlockPos;
 import net.minecraft.network.syncher.EntityDataAccessor;
 import net.minecraft.network.syncher.EntityDataSerializers;
 import net.minecraft.network.syncher.SynchedEntityData;
 import net.minecraft.world.entity.AgeableMob;
 import net.minecraft.world.entity.EntityType;
-import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.MobSpawnType;
 import net.minecraft.world.entity.SpawnGroupData;
 import net.minecraft.world.entity.ai.attributes.AttributeSupplier;
 import net.minecraft.world.entity.ai.attributes.Attributes;
-import net.minecraft.world.entity.ai.goal.LookAtPlayerGoal;
-import net.minecraft.world.entity.ai.goal.MoveBackToVillageGoal;
 import net.minecraft.world.entity.ai.goal.PanicGoal;
-import net.minecraft.world.entity.ai.goal.RandomLookAroundGoal;
 import net.minecraft.world.entity.ai.goal.FloatGoal;
-import net.minecraft.world.entity.ai.goal.GolemRandomStrollInVillageGoal;
-import net.minecraft.world.entity.ai.goal.WaterAvoidingRandomStrollGoal;
 import net.minecraft.world.entity.item.ItemEntity;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.server.level.ServerPlayer;
-import net.minecraft.world.entity.vehicle.Boat;
 import net.minecraft.world.inventory.AbstractContainerMenu;
 import net.minecraft.world.MenuProvider;
 import net.minecraft.world.item.ItemStack;
@@ -43,11 +36,13 @@ import net.minecraftforge.network.NetworkHooks;
 import org.jetbrains.annotations.NotNull;
 
 import javax.annotation.Nullable;
+import java.util.Optional;
 import java.util.function.Predicate;
 
-public class FishermanEntity extends AbstractWorkerEntity {
+public class FishermanEntity extends AbstractWorkerEntity implements IBoatController{
 
     private static final EntityDataAccessor<Integer> STATE = SynchedEntityData.defineId(FishermanEntity.class, EntityDataSerializers.INT);
+    private static final EntityDataAccessor<Optional<BlockPos>> SAIL_POS = SynchedEntityData.defineId(FishermanEntity.class, EntityDataSerializers.OPTIONAL_BLOCK_POS);
 
     private final Predicate<ItemEntity> ALLOWED_ITEMS = (item) -> {
         return (
@@ -67,11 +62,13 @@ public class FishermanEntity extends AbstractWorkerEntity {
     protected void defineSynchedData() {
         super.defineSynchedData();
         this.entityData.define(STATE, 0);
+        this.entityData.define(SAIL_POS, Optional.empty());
     }
 
     public void addAdditionalSaveData(@NotNull CompoundTag nbt) {
         super.addAdditionalSaveData(nbt);
         nbt.putInt("State", this.getState());
+
     }
 
     //Boat
@@ -121,6 +118,7 @@ public class FishermanEntity extends AbstractWorkerEntity {
     @Override
     protected void registerGoals() {
         super.registerGoals();
+        this.goalSelector.addGoal(0, new ControlBoatAI(this));
         this.goalSelector.addGoal(1, new FloatGoal(this));
         this.goalSelector.addGoal(2, new WorkerPickupWantedItemGoal(this));
         this.goalSelector.addGoal(4, new FishermanAI(this));
@@ -197,10 +195,26 @@ public class FishermanEntity extends AbstractWorkerEntity {
         }
     }
 
+    @Override
+    @Nullable
+    public BlockPos getSailPos() {
+        return entityData.get(SAIL_POS).orElse(null);
+    }
+
+    @Override
+    public void setSailPos(BlockPos pos) {
+        this.entityData.set(SAIL_POS, Optional.of(pos));
+    }
+
+    @Override
+    public double getControlAccuracy() {
+        return 3.5D;
+    }
+
     public enum State{
         IDLE,
         MOVING_COAST,
-        MOVING_BOAT,
+        MOVING_TO_BOAT,
         SAILING, // fährt zum fishing pos
         FISHING,
         STOPPING, // Wenn boat dann coast und eject

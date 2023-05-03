@@ -1,6 +1,7 @@
 package com.talhanation.workers.entities;
 
 import com.talhanation.workers.Main;
+import com.talhanation.workers.entities.ai.ControlBoatAI;
 import com.talhanation.workers.entities.ai.MerchantAI;
 import com.talhanation.workers.inventory.MerchantInventoryContainer;
 import com.talhanation.workers.inventory.MerchantTradeContainer;
@@ -8,8 +9,6 @@ import com.talhanation.workers.entities.ai.WorkerFollowOwnerGoal;
 import com.talhanation.workers.network.MessageOpenGuiMerchant;
 import com.talhanation.workers.network.MessageOpenGuiWorker;
 import net.minecraft.core.BlockPos;
-import net.minecraft.core.Direction;
-import net.minecraft.network.chat.MutableComponent;
 import net.minecraft.network.syncher.EntityDataAccessor;
 import net.minecraft.network.syncher.EntityDataSerializers;
 import net.minecraft.network.syncher.SynchedEntityData;
@@ -28,7 +27,6 @@ import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.ListTag;
-import net.minecraft.world.entity.ai.navigation.GroundPathNavigation;
 import net.minecraft.world.InteractionResult;
 import net.minecraft.world.damagesource.DamageSource;
 import net.minecraft.world.InteractionHand;
@@ -37,7 +35,6 @@ import net.minecraft.world.DifficultyInstance;
 import net.minecraft.world.level.ServerLevelAccessor;
 import net.minecraft.world.level.Level;
 import net.minecraft.server.level.ServerLevel;
-import net.minecraft.world.level.block.Block;
 import net.minecraftforge.network.NetworkHooks;
 
 import javax.annotation.Nullable;
@@ -48,21 +45,21 @@ import java.util.function.Predicate;
 
 import net.minecraft.world.entity.AgeableMob;
 import net.minecraft.world.entity.ai.goal.FloatGoal;
-import net.minecraft.world.entity.ai.goal.LookAtPlayerGoal;
 import net.minecraft.world.entity.ai.goal.PanicGoal;
-import net.minecraft.world.entity.ai.goal.RandomLookAroundGoal;
 import org.jetbrains.annotations.NotNull;
 
 import static com.talhanation.workers.Translatable.TEXT_HELLO;
 import static com.talhanation.workers.Translatable.TEXT_HELLO_OWNED;
 
-public class MerchantEntity extends AbstractWorkerEntity {
+public class MerchantEntity extends AbstractWorkerEntity implements IBoatController {
 
     private static final EntityDataAccessor<Boolean> TRAVELING = SynchedEntityData.defineId(MerchantEntity.class, EntityDataSerializers.BOOLEAN);
     private static final EntityDataAccessor<Integer> STATE = SynchedEntityData.defineId(MerchantEntity.class, EntityDataSerializers.INT);
     private static final EntityDataAccessor<Optional<BlockPos>> CURRENT_WAYPOINT = SynchedEntityData.defineId(MerchantEntity.class, EntityDataSerializers.OPTIONAL_BLOCK_POS);
     private static final EntityDataAccessor<Integer> CURRENT_WAYPOINT_INDEX = SynchedEntityData.defineId(MerchantEntity.class, EntityDataSerializers.INT);
     private static final EntityDataAccessor<Integer> RETURNING_TIME = SynchedEntityData.defineId(MerchantEntity.class, EntityDataSerializers.INT);
+    private static final EntityDataAccessor<Optional<BlockPos>> SAIL_POS = SynchedEntityData.defineId(MerchantEntity.class, EntityDataSerializers.OPTIONAL_BLOCK_POS);
+
     private final SimpleContainer tradeInventory = new SimpleContainer(8);
     public boolean isTrading;
 
@@ -79,6 +76,7 @@ public class MerchantEntity extends AbstractWorkerEntity {
         this.entityData.define(RETURNING_TIME, 1);
         this.entityData.define(CURRENT_WAYPOINT_INDEX, 0);
         this.entityData.define(CURRENT_WAYPOINT, Optional.empty());
+        this.entityData.define(SAIL_POS, Optional.empty());
     }
 
     @Override
@@ -182,6 +180,7 @@ public class MerchantEntity extends AbstractWorkerEntity {
     @Override
     protected void registerGoals() {
         super.registerGoals();
+        this.goalSelector.addGoal(0, new ControlBoatAI(this));
         this.goalSelector.addGoal(1, new FloatGoal(this));
         this.goalSelector.addGoal(2, new WorkerFollowOwnerGoal(this, 1.2D, 7.F, 1.0F));
         this.goalSelector.addGoal(3, new PanicGoal(this, 2D));
@@ -339,6 +338,22 @@ public class MerchantEntity extends AbstractWorkerEntity {
         entityData.set(RETURNING_TIME, x);
     }
 
+    @Override
+    @Nullable
+    public BlockPos getSailPos() {
+        return entityData.get(SAIL_POS).orElse(null);
+    }
+
+    @Override
+    public void setSailPos(BlockPos pos) {
+        this.entityData.set(SAIL_POS, Optional.of(pos));
+    }
+
+    @Override
+    public double getControlAccuracy() {
+        return 3.5D;
+    }
+
     public void die(@NotNull DamageSource dmg) {
         super.die(dmg);
         for (int i = 0; i < this.tradeInventory.getContainerSize(); i++)
@@ -348,7 +363,9 @@ public class MerchantEntity extends AbstractWorkerEntity {
     public enum State{
         IDLE,
         HOME,
-        TRAVELING,
+        MOVE_TO_BOAT,
+        TRAVELING_GROUND,
+        SAILING,
         PAUSING,
         ARRIVED,
         RETURNING,

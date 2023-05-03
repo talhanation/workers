@@ -41,6 +41,7 @@ public class MessageTravel implements Message<MessageTravel> {
     private void onButton(MerchantEntity merchant){
         merchant.setTraveling(!merchant.getTraveling());
         merchant.setIsWorking(true);
+        merchant.setCurrentWayPointIndex(0);
     }
 
     public MessageTravel fromBytes(FriendlyByteBuf buf) {

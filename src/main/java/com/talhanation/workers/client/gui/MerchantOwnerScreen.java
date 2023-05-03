@@ -42,17 +42,17 @@ public class MerchantOwnerScreen extends ScreenBase<MerchantInventoryContainer> 
 
         int mirror = 240 - 60;
 
-        addRenderableWidget(new Button(zeroLeftPos - mirror + 170, zeroTopPos + 85, 41, 20, Component.literal("Travel"), button -> {
+        addRenderableWidget(new Button(zeroLeftPos - mirror + 180, zeroTopPos + 85, 41, 20, Component.literal("Travel"), button -> {
             Main.SIMPLE_CHANNEL.sendToServer(new MessageTravel(merchant.getUUID()));
 
         }));
 
-        addRenderableWidget(new Button(zeroLeftPos - mirror + 170, zeroTopPos + 106, 20, 20, Component.literal("+"), button -> {
+        addRenderableWidget(new Button(zeroLeftPos - mirror + 180, zeroTopPos + 106, 20, 20, Component.literal("+"), button -> {
             Main.SIMPLE_CHANNEL.sendToServer(new MessageMerchantAddWayPoint(merchant.getUUID()));
 
         }));
 
-        addRenderableWidget(new Button(zeroLeftPos - mirror + 191, zeroTopPos + 106, 20, 20, Component.literal("-"), button -> {
+        addRenderableWidget(new Button(zeroLeftPos - mirror + 201, zeroTopPos + 106, 20, 20, Component.literal("-"), button -> {
             Main.SIMPLE_CHANNEL.sendToServer(new MessageMerchantRemoveWayPoint(merchant.getUUID()));
 
         }));
