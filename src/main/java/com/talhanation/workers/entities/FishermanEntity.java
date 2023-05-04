@@ -68,17 +68,16 @@ public class FishermanEntity extends AbstractWorkerEntity implements IBoatContro
     public void addAdditionalSaveData(@NotNull CompoundTag nbt) {
         super.addAdditionalSaveData(nbt);
         nbt.putInt("State", this.getState());
-
     }
 
     //Boat
     public void readAdditionalSaveData(@NotNull CompoundTag nbt) {
         super.readAdditionalSaveData(nbt);
-        //this.setState(.getInt("State"));
+        this.setState(nbt.getInt("State"));
     }
 
     public void setState(int state) {
-        //this.entityData.set(STATE, state.ordinal());
+        this.entityData.set(STATE, state);
     }
 
     public int getState() {
@@ -212,13 +211,32 @@ public class FishermanEntity extends AbstractWorkerEntity implements IBoatContro
     }
 
     public enum State{
-        IDLE,
-        MOVING_COAST,
-        MOVING_TO_BOAT,
-        SAILING, // fährt zum fishing pos
-        FISHING,
-        STOPPING, // Wenn boat dann coast und eject
-        STOP //
+        IDLE(0),
+        MOVING_COAST(0),
+        MOVING_TO_BOAT(0),
+        SAILING(0), // fährt zum fishing pos
+        FISHING(0),
+        STOPPING(0), // Wenn boat dann coast und eject
+        STOP(0); //
+
+
+        private final int index;
+        State(int index){
+            this.index = index;
+        }
+
+        public int getIndex(){
+            return this.index;
+        }
+
+        public static State fromIndex(int index) {
+            for (State state : State.values()) {
+                if (state.getIndex() == index) {
+                    return state;
+                }
+            }
+            throw new IllegalArgumentException("Invalid State index: " + index);
+        }
     }
 
 }

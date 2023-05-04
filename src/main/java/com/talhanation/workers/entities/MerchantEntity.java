@@ -75,6 +75,7 @@ public class MerchantEntity extends AbstractWorkerEntity implements IBoatControl
         this.entityData.define(TRAVELING, false);
         this.entityData.define(RETURNING_TIME, 1);
         this.entityData.define(CURRENT_WAYPOINT_INDEX, 0);
+        this.entityData.define(STATE, 0);
         this.entityData.define(CURRENT_WAYPOINT, Optional.empty());
         this.entityData.define(SAIL_POS, Optional.empty());
     }
@@ -264,6 +265,8 @@ public class MerchantEntity extends AbstractWorkerEntity implements IBoatControl
             waypoints.add(compoundnbt);
         }
         nbt.put("Waypoints", waypoints);
+
+        nbt.putInt("State", this.getState());
     }
 
     public void readAdditionalSaveData(@NotNull CompoundTag nbt) {
@@ -295,6 +298,8 @@ public class MerchantEntity extends AbstractWorkerEntity implements IBoatControl
 
             this.WAYPOINTS.add(pos);
         }
+
+        this.setState(nbt.getInt("State"));
     }
 
     @Override
@@ -349,6 +354,14 @@ public class MerchantEntity extends AbstractWorkerEntity implements IBoatControl
         this.entityData.set(SAIL_POS, Optional.of(pos));
     }
 
+    public int getState() {
+        return entityData.get(STATE);
+    }
+
+    public void setState(int x) {
+        entityData.set(STATE, x);
+    }
+
     @Override
     public double getControlAccuracy() {
         return 3.5D;
@@ -361,13 +374,32 @@ public class MerchantEntity extends AbstractWorkerEntity implements IBoatControl
     }
 
     public enum State{
-        IDLE,
-        HOME,
-        MOVE_TO_BOAT,
-        TRAVELING_GROUND,
-        SAILING,
-        PAUSING,
-        ARRIVED,
-        RETURNING,
+        IDLE(0),
+        HOME(1),
+        MOVE_TO_BOAT(2),
+        TRAVELING_GROUND(3),
+        SAILING(4),
+        PAUSING(5),
+        ARRIVED(6),
+        RETURNING(7);
+
+        private final int index;
+        State(int index){
+            this.index = index;
+        }
+
+        public int getIndex(){
+            return this.index;
+        }
+
+        public static State fromIndex(int index) {
+            for (State state : State.values()) {
+                if (state.getIndex() == index) {
+                    return state;
+                }
+            }
+            throw new IllegalArgumentException("Invalid State index: " + index);
+        }
+
     }
 }

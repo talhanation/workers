@@ -53,7 +53,7 @@ public class FishermanAI extends Goal {
     public void start() {
         this.coastPos = fisherman.getStartPos();
         //this.fishingPos = this.findWaterBlock();
-        this.state = IDLE;
+        this.setWorkState(IDLE);
         super.start();
     }
 
@@ -61,11 +61,14 @@ public class FishermanAI extends Goal {
     @Override
     public void tick() {
         Main.LOGGER.info("State: " + state);
+        if(state == null)
+            state = FishermanEntity.State.fromIndex(fisherman.getState());
 
         switch (state){
             case IDLE -> {
                 if(fisherman.getStartPos() != null && fisherman.canWork()){
-                    this.state = MOVING_COAST;
+
+                    this.setWorkState(MOVING_COAST);
                 }
             }
 
@@ -78,22 +81,22 @@ public class FishermanAI extends Goal {
                     List<Boat> list =  fisherman.level.getEntitiesOfClass(Boat.class, fisherman.getBoundingBox().inflate(8D));
                     if(!list.isEmpty()){
                         boat = list.get(0);
-                        state = MOVING_TO_BOAT;
+                        this.setWorkState(MOVING_TO_BOAT);
                         fishingRange = 30;
                     }
                     else {
                         fishingRange = 5;
-                        state = FISHING;
+                        this.setWorkState(FISHING);
                     }
 
                     fishingPos = findWaterBlock();
-                    if(fishingPos == null) state = STOPPING;
+                    if(fishingPos == null) this.setWorkState(STOPPING);
                 }
 
             }
 
             case MOVING_TO_BOAT -> {
-                if(!fisherman.canWork()) this.state = STOPPING;
+                if(!fisherman.canWork()) this.setWorkState(STOPPING);
 
                 this.moveToPos(boat.getOnPos());
 
@@ -102,24 +105,24 @@ public class FishermanAI extends Goal {
                 }
 
                 if(boat.getFirstPassenger() != null && this.fisherman.equals(boat.getFirstPassenger())){
-                    state = SAILING;
+                    this.setWorkState(SAILING);
                 }
             }
 
             case SAILING -> {
-                if(!fisherman.canWork()) this.state = STOPPING;
+                if(!fisherman.canWork()) this.setWorkState(STOPPING);
 
                 this.fisherman.setSailPos(fishingPos);
 
                 if (coastPos.closerThan(fisherman.getOnPos(), 8F)) {
-                    state = FISHING;
+                    this.setWorkState(FISHING);
                 }
             }
 
             case FISHING -> {
-                if(!fisherman.canWork()) this.state = STOPPING;
+                if(!fisherman.canWork()) this.setWorkState(STOPPING);
 
-                if(fishingPos == null) state = STOPPING;
+                if(fishingPos == null) this.setWorkState(STOPPING);
                 fishing();
             }
 
@@ -132,11 +135,11 @@ public class FishermanAI extends Goal {
 
                     if (coastPos.closerThan(fisherman.getOnPos(), 3F)) {
                         fisherman.stopRiding();
-                        state = STOP;
+                        this.setWorkState(STOP);
                     }
                 }
                 else
-                    state = IDLE;
+                    this.setWorkState(IDLE);
             }
 
             case STOP -> {
@@ -145,13 +148,19 @@ public class FishermanAI extends Goal {
         }
     }
 
+    private void setWorkState(FishermanEntity.State state) {
+        this.state = state;
+        this.fisherman.setState(state.getIndex());
+
+    }
+
     private void moveToPos(BlockPos pos) {
         if(pos != null) {
-            //Move to minePos -> normal movement
+            //Move to Pos -> normal movement
             if (!pos.closerThan(fisherman.getOnPos(), 12F)) {
                 this.fisherman.walkTowards(pos, 1F);
             }
-            //Near Mine Pos -> presice movement
+            //Near Pos -> presice movement
             if (!pos.closerThan(fisherman.getOnPos(), 1F)) {
                 this.fisherman.getMoveControl().setWantedPosition(pos.getX(), fisherman.getStartPos().getY(), pos.getZ(), 1);
             }
@@ -163,7 +172,7 @@ public class FishermanAI extends Goal {
         this.fishingPos = null;
         this.fishingTimer = 0;
         this.resetTask();
-        this.state = IDLE;
+        this.setWorkState(IDLE);
         super.stop();
     }
 

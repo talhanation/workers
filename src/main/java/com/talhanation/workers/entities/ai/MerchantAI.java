@@ -31,22 +31,27 @@ public class MerchantAI extends Goal {
 
     @Override
     public void start() {
-        this.state = IDLE;
+        this.setWorkState(IDLE);
     }
 
     @Override
     public void tick() {
         Main.LOGGER.info("State: " + state);
-        Main.LOGGER.info("Index: " + merchant.getCurrentWayPointIndex());
+
+        if(state == null)
+            state = MerchantEntity.State.fromIndex(merchant.getState());
 
         switch (state){
             case IDLE -> {
                 if(merchant.getTraveling()){
-                    this.merchant.setCurrentWayPoint(this.merchant.WAYPOINTS.get(merchant.getCurrentWayPointIndex()));
+                    int index = this.merchant.getCurrentWayPointIndex();
+
+                    if (index >= 0 && index < this.merchant.WAYPOINTS.size()) {
+                        this.merchant.setCurrentWayPoint(this.merchant.WAYPOINTS.get(index));
+                    }
                     this.changeTravelType();
                 }
             }
-
             case MOVE_TO_BOAT -> {
                 this.searchForBoat();
                 if(boat != null) {
@@ -57,27 +62,27 @@ public class MerchantAI extends Goal {
                     }
 
                     if (boat.getFirstPassenger() != null && this.merchant.equals(boat.getFirstPassenger())) {
-                        state = SAILING;
+                        this.setWorkState(SAILING);
                     }
                 }
                 else {
-                    state = TRAVELING_GROUND;
+                    this.setWorkState(TRAVELING_GROUND);
                 }
             }
 
             case SAILING -> {
-                moveToWayPoint(1, ARRIVED, merchant.getCurrentWayPointIndex() == merchant.WAYPOINTS.size(), true);
+                moveToWayPoint(1, ARRIVED, merchant.getCurrentWayPointIndex() == merchant.WAYPOINTS.size() -1, true);
             }
 
             case TRAVELING_GROUND -> {
                 if(merchant.getVehicle() instanceof Boat) merchant.stopRiding();
 
-                moveToWayPoint(1, ARRIVED, merchant.getCurrentWayPointIndex() == merchant.WAYPOINTS.size(), false);
+                moveToWayPoint(1, ARRIVED, merchant.getCurrentWayPointIndex() == merchant.WAYPOINTS.size() -1, false);
             }
 
             case ARRIVED -> {
                 if(!merchant.level.isDay()){
-                    this.state = RETURNING;
+                    this.setWorkState(RETURNING);
                 }
             }
 
@@ -91,26 +96,39 @@ public class MerchantAI extends Goal {
         }
     }
 
-    private void moveToWayPoint(int indexChange, MerchantEntity.State nextState, boolean condition, boolean isSailing) {
-        this.merchant.setCurrentWayPoint(this.merchant.WAYPOINTS.get(merchant.getCurrentWayPointIndex()));
-        BlockPos pos = merchant.getCurrentWayPoint();
+    private void setWorkState(MerchantEntity.State state) {
+        this.state = state;
+        this.merchant.setState(state.getIndex());
 
-        if(isSailing){
-            merchant.setSailPos(pos);
-        }
-        else
-            moveToPos(pos);
-
-        if (merchant.distanceToSqr(pos.getX(), pos.getY(), pos.getZ()) < 4.5F) {
-
-            if (condition) {
-                this.state = nextState;
-            } else
-                merchant.setCurrentWayPointIndex(merchant.getCurrentWayPointIndex() + indexChange);
-        }
-        this.changeTravelType();
     }
 
+    private void moveToWayPoint(int indexChange, MerchantEntity.State nextState, boolean condition, boolean isSailing) {
+        int index = merchant.getCurrentWayPointIndex();
+        if(index >= this.merchant.WAYPOINTS.size()) index = this.merchant.WAYPOINTS.size() - 1;
+
+        if (index >= 0 && index < this.merchant.WAYPOINTS.size()) {
+            this.merchant.setCurrentWayPoint(this.merchant.WAYPOINTS.get(index));
+            BlockPos pos = merchant.getCurrentWayPoint();
+
+            if(isSailing){
+                merchant.setSailPos(pos);
+            } else {
+                moveToPos(pos);
+            }
+
+            if (merchant.distanceToSqr(pos.getX(), pos.getY(), pos.getZ()) < 4.5F) {
+                if (condition) {
+                    this.setWorkState(nextState);
+                } else{
+                    if(index < this.merchant.WAYPOINTS.size() - 1) {
+                        merchant.setCurrentWayPointIndex(index + indexChange);
+                    }
+                }
+            }
+        }
+
+        this.changeTravelType();
+    }
     private void searchForBoat() {
         List<Boat> list = merchant.level.getEntitiesOfClass(Boat.class, merchant.getBoundingBox().inflate(16D));
         if (!list.isEmpty()) {
@@ -120,11 +138,11 @@ public class MerchantAI extends Goal {
 
     private void moveToPos(BlockPos pos) {
         if(pos != null) {
-            //Move to minePos -> normal movement
+            //Move to Pos -> normal movement
             if (!pos.closerThan(merchant.getOnPos(), 12F)) {
                 this.merchant.walkTowards(pos, 1F);
             }
-            //Near Mine Pos -> precise movement
+            //Near Pos -> precise movement
             if (!pos.closerThan(merchant.getOnPos(), 1F)) {
                 this.merchant.getMoveControl().setWantedPosition(pos.getX(), pos.getY(), pos.getZ(), 1F);
             }
@@ -145,12 +163,12 @@ public class MerchantAI extends Goal {
     private void changeTravelType(){
         if(isWaterBlockPos(merchant.getCurrentWayPoint())){
             if(boat != null && boat.getFirstPassenger() != null && this.merchant.equals(boat.getFirstPassenger())){
-                state = SAILING;
+                this.setWorkState(SAILING);
             }
             else
-                state = MOVE_TO_BOAT;
+                this.setWorkState(MOVE_TO_BOAT);
         }
-        else
-            state = TRAVELING_GROUND;
+        else if (state != ARRIVED && state != RETURNING)
+            this.setWorkState(TRAVELING_GROUND);
     }
 }
