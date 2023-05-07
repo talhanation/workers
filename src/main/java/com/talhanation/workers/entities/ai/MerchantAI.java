@@ -71,27 +71,31 @@ public class MerchantAI extends Goal {
             }
 
             case SAILING -> {
-                moveToWayPoint(1, ARRIVED, merchant.getCurrentWayPointIndex() == merchant.WAYPOINTS.size() -1, true);
+                int indexChange = this.merchant.getReturning() ? -1 : 1;
+                moveToWayPoint(indexChange, ARRIVED, merchant.getCurrentWayPointIndex() == merchant.WAYPOINTS.size() -1, true);
             }
 
             case TRAVELING_GROUND -> {
                 if(merchant.getVehicle() instanceof Boat) merchant.stopRiding();
-
-                moveToWayPoint(1, ARRIVED, merchant.getCurrentWayPointIndex() == merchant.WAYPOINTS.size() -1, false);
+                int indexChange = this.merchant.getReturning() ? -1 : 1;
+                moveToWayPoint(indexChange, ARRIVED, merchant.getCurrentWayPointIndex() == merchant.WAYPOINTS.size() -1, false);
             }
 
             case ARRIVED -> {
                 if(!merchant.level.isDay()){
                     this.setWorkState(RETURNING);
+                    merchant.setReturning(true);
                 }
             }
 
             case RETURNING -> {
-                moveToWayPoint(-1, HOME, merchant.getCurrentWayPointIndex() == 0, false);
+                int indexChange = this.merchant.getReturning() ? -1 : 1;
+                moveToWayPoint(indexChange, HOME, merchant.getCurrentWayPointIndex() == 0, false);
             }
 
             case HOME -> {
                 merchant.setTraveling(false);
+                merchant.setReturning(false);
             }
         }
     }
@@ -106,7 +110,7 @@ public class MerchantAI extends Goal {
         int index = merchant.getCurrentWayPointIndex();
         if(index >= this.merchant.WAYPOINTS.size()) index = this.merchant.WAYPOINTS.size() - 1;
 
-        if (index >= 0 && index < this.merchant.WAYPOINTS.size()) {
+        if (index >= 0 && index < this.merchant.WAYPOINTS.size()) {// do not simplify
             this.merchant.setCurrentWayPoint(this.merchant.WAYPOINTS.get(index));
             BlockPos pos = merchant.getCurrentWayPoint();
 
@@ -120,7 +124,7 @@ public class MerchantAI extends Goal {
                 if (condition) {
                     this.setWorkState(nextState);
                 } else{
-                    if(index < this.merchant.WAYPOINTS.size() - 1) {
+                    if(index <= this.merchant.WAYPOINTS.size() - 1) {
                         merchant.setCurrentWayPointIndex(index + indexChange);
                     }
                 }

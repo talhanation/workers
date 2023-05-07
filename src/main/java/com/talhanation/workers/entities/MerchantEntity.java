@@ -59,6 +59,7 @@ public class MerchantEntity extends AbstractWorkerEntity implements IBoatControl
     private static final EntityDataAccessor<Integer> CURRENT_WAYPOINT_INDEX = SynchedEntityData.defineId(MerchantEntity.class, EntityDataSerializers.INT);
     private static final EntityDataAccessor<Integer> RETURNING_TIME = SynchedEntityData.defineId(MerchantEntity.class, EntityDataSerializers.INT);
     private static final EntityDataAccessor<Optional<BlockPos>> SAIL_POS = SynchedEntityData.defineId(MerchantEntity.class, EntityDataSerializers.OPTIONAL_BLOCK_POS);
+    private static final EntityDataAccessor<Boolean> RETURNING = SynchedEntityData.defineId(MerchantEntity.class, EntityDataSerializers.BOOLEAN);
 
     private final SimpleContainer tradeInventory = new SimpleContainer(8);
     public boolean isTrading;
@@ -73,6 +74,7 @@ public class MerchantEntity extends AbstractWorkerEntity implements IBoatControl
     protected void defineSynchedData() {
         super.defineSynchedData();
         this.entityData.define(TRAVELING, false);
+        this.entityData.define(RETURNING, false);
         this.entityData.define(RETURNING_TIME, 1);
         this.entityData.define(CURRENT_WAYPOINT_INDEX, 0);
         this.entityData.define(STATE, 0);
@@ -246,6 +248,7 @@ public class MerchantEntity extends AbstractWorkerEntity implements IBoatControl
         nbt.put("TradeInventory", list);
 
         nbt.putBoolean("Traveling", this.getTraveling());
+        nbt.putBoolean("Returning", this.getReturning());
         nbt.putInt("CurrentWayPointIndex", this.getCurrentWayPointIndex());
         nbt.putInt("ReturningTime", this.getReturningTime());
 
@@ -280,6 +283,7 @@ public class MerchantEntity extends AbstractWorkerEntity implements IBoatControl
         }
 
         this.setTraveling(nbt.getBoolean("Traveling"));
+        this.setReturning(nbt.getBoolean("Returning"));
         this.setCurrentWayPointIndex(nbt.getInt("CurrentWayPointIndex"));
         this.setReturningTime(nbt.getInt("ReturningTime"));
 
@@ -317,6 +321,14 @@ public class MerchantEntity extends AbstractWorkerEntity implements IBoatControl
 
     public void setTraveling(boolean traveling){
         this.entityData.set(TRAVELING, traveling);
+    }
+
+    public boolean getReturning() {
+        return this.entityData.get(RETURNING);
+    }
+
+    public void setReturning(boolean returning){
+        this.entityData.set(RETURNING, returning);
     }
 
     public BlockPos getCurrentWayPoint(){
