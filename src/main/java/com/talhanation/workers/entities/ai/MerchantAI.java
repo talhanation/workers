@@ -41,6 +41,10 @@ public class MerchantAI extends Goal {
         if(state == null)
             state = MerchantEntity.State.fromIndex(merchant.getState());
 
+        int indexChange = this.merchant.getReturning() ? -1 : 1;
+        boolean condition = this.merchant.getReturning() ? (merchant.getCurrentWayPointIndex() == 0) :(merchant.getCurrentWayPointIndex() == merchant.WAYPOINTS.size() -1);
+        MerchantEntity.State nextState = this.merchant.getReturning() ? HOME : ARRIVED;
+
         switch (state){
             case IDLE -> {
                 if(merchant.getTraveling()){
@@ -71,31 +75,25 @@ public class MerchantAI extends Goal {
             }
 
             case SAILING -> {
-                int indexChange = this.merchant.getReturning() ? -1 : 1;
-                moveToWayPoint(indexChange, ARRIVED, merchant.getCurrentWayPointIndex() == merchant.WAYPOINTS.size() -1, true);
+                moveToWayPoint(indexChange, nextState, merchant.getCurrentWayPointIndex() == merchant.WAYPOINTS.size() -1, true);
             }
 
             case TRAVELING_GROUND -> {
                 if(merchant.getVehicle() instanceof Boat) merchant.stopRiding();
-                int indexChange = this.merchant.getReturning() ? -1 : 1;
-                moveToWayPoint(indexChange, ARRIVED, merchant.getCurrentWayPointIndex() == merchant.WAYPOINTS.size() -1, false);
+                moveToWayPoint(indexChange, nextState, condition, false);
             }
 
             case ARRIVED -> {
-                if(!merchant.level.isDay()){
-                    this.setWorkState(RETURNING);
+                if(!merchant.level.isDay()){//Returning time elapsed
                     merchant.setReturning(true);
+                    this.setWorkState(IDLE);
                 }
-            }
-
-            case RETURNING -> {
-                int indexChange = this.merchant.getReturning() ? -1 : 1;
-                moveToWayPoint(indexChange, HOME, merchant.getCurrentWayPointIndex() == 0, false);
             }
 
             case HOME -> {
                 merchant.setTraveling(false);
                 merchant.setReturning(false);
+                this.setWorkState(IDLE);
             }
         }
     }
@@ -110,7 +108,7 @@ public class MerchantAI extends Goal {
         int index = merchant.getCurrentWayPointIndex();
         if(index >= this.merchant.WAYPOINTS.size()) index = this.merchant.WAYPOINTS.size() - 1;
 
-        if (index >= 0 && index < this.merchant.WAYPOINTS.size()) {// do not simplify
+        if (index < this.merchant.WAYPOINTS.size() && index >= 0 ) {// do not simplify
             this.merchant.setCurrentWayPoint(this.merchant.WAYPOINTS.get(index));
             BlockPos pos = merchant.getCurrentWayPoint();
 
@@ -143,7 +141,7 @@ public class MerchantAI extends Goal {
     private void moveToPos(BlockPos pos) {
         if(pos != null) {
             //Move to Pos -> normal movement
-            if (!pos.closerThan(merchant.getOnPos(), 12F)) {
+            if (!pos.closerThan(merchant.getOnPos(), 4F)) {
                 this.merchant.walkTowards(pos, 1F);
             }
             //Near Pos -> precise movement
@@ -172,7 +170,7 @@ public class MerchantAI extends Goal {
             else
                 this.setWorkState(MOVE_TO_BOAT);
         }
-        else if (state != ARRIVED && state != RETURNING)
+        else if (state != ARRIVED && state != HOME)
             this.setWorkState(TRAVELING_GROUND);
     }
 }

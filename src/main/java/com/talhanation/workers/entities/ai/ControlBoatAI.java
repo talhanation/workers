@@ -17,7 +17,7 @@ public class ControlBoatAI extends Goal {
 
     @Override
     public boolean canUse() {
-        return  this.worker.getVehicle() instanceof Boat boat && boat.getPassengers().get(0).equals(this.worker);
+        return  this.worker.getVehicle() instanceof Boat boat && boat.getPassengers().get(0).equals(this.worker) && !worker.getFollow();
     }
 
     public boolean canContinueToUse() {

@@ -376,7 +376,7 @@ public class MerchantEntity extends AbstractWorkerEntity implements IBoatControl
 
     @Override
     public double getControlAccuracy() {
-        return 3.5D;
+        return 1.5D;
     }
 
     public void die(@NotNull DamageSource dmg) {
@@ -392,8 +392,7 @@ public class MerchantEntity extends AbstractWorkerEntity implements IBoatControl
         TRAVELING_GROUND(3),
         SAILING(4),
         PAUSING(5),
-        ARRIVED(6),
-        RETURNING(7);
+        ARRIVED(6);
 
         private final int index;
         State(int index){
