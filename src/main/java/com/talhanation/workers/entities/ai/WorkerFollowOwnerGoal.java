@@ -1,6 +1,7 @@
 package com.talhanation.workers.entities.ai;
 
 import com.talhanation.workers.entities.AbstractWorkerEntity;
+import com.talhanation.workers.entities.IBoatController;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.ai.goal.Goal;
 import net.minecraft.world.entity.ai.navigation.PathNavigation;
@@ -75,6 +76,10 @@ public class WorkerFollowOwnerGoal extends Goal {
                 this.navigation.moveTo(this.owner, this.speedModifier);
             }
 
+        }
+
+        if(this.workerEntity instanceof IBoatController sailor){
+            sailor.setSailPos(owner.getOnPos());
         }
     }
 }
