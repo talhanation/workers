@@ -2,6 +2,7 @@ package com.talhanation.workers.entities.ai;
 
 import com.talhanation.workers.Main;
 import com.talhanation.workers.entities.AbstractWorkerEntity;
+import com.talhanation.workers.entities.FishermanEntity;
 import com.talhanation.workers.entities.IBoatController;
 import net.minecraft.core.BlockPos;
 import net.minecraft.util.Mth;
@@ -10,6 +11,7 @@ import net.minecraft.world.entity.ai.navigation.WaterBoundPathNavigation;
 import net.minecraft.world.entity.vehicle.Boat;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.level.pathfinder.BlockPathTypes;
 import net.minecraft.world.level.pathfinder.Node;
 import net.minecraft.world.level.pathfinder.Path;
 import net.minecraft.world.phys.Vec3;
@@ -56,16 +58,20 @@ public class ControlBoatAI extends Goal {
 
     public void tick() {
         if(this.worker instanceof IBoatController sailor && sailor.getSailPos() != null){
-            Main.LOGGER.info("Sate: " + state);
+            if(sailor.getSailPos() != null){
+                Main.LOGGER.info("Sate: " + state);
 
-            if(this.worker.getNavigation() instanceof WaterBoundPathNavigation waterNavigation) {
-                waterNavigation.createPath(sailor.getSailPos(), 16, 16);
-                Path path = waterNavigation.getPath();
-                if (path != null) {
-                    Node node = path.getNextNode();
-                    updateBoatControl(node.x, node.z);
+                if(this.worker.getNavigation() instanceof WaterBoundPathNavigation waterNavigation) {
+
+                    waterNavigation.createPath(sailor.getSailPos(), 16, 16);
+                    Path path = waterNavigation.getPath();
+                    if (path != null) {
+                        Node node = path.getNextNode();
+                        updateBoatControl(node.x, node.z);
+                    }
                 }
             }
+
             /*
             switch (state){
 

@@ -27,12 +27,15 @@ import net.minecraft.world.entity.*;
 import net.minecraft.world.entity.ai.attributes.Attributes;
 import net.minecraft.world.entity.ai.goal.*;
 import net.minecraft.world.entity.ai.navigation.GroundPathNavigation;
+import net.minecraft.world.entity.ai.navigation.PathNavigation;
+import net.minecraft.world.entity.ai.navigation.WaterBoundPathNavigation;
 import net.minecraft.world.entity.ai.village.ReputationEventType;
 import net.minecraft.world.entity.item.ItemEntity;
 import net.minecraft.world.entity.npc.Villager;
 import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.entity.projectile.AbstractArrow;
+import net.minecraft.world.entity.vehicle.Boat;
 import net.minecraft.world.inventory.AbstractContainerMenu;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.Level;
@@ -75,14 +78,14 @@ public abstract class AbstractWorkerEntity extends AbstractChunkLoaderEntity {
 
     int hurtTimeStamp = 0;
     
-    protected GroundPathNavigation navigation;
+    protected PathNavigation navigation;
 
 
     public AbstractWorkerEntity(EntityType<? extends AbstractWorkerEntity> entityType, Level world) {
         super(entityType, world);
         this.setOwned(false);
         this.navigation = this.createNavigation(world);
-        this.navigation.setCanOpenDoors(true);
+        if(navigation instanceof GroundPathNavigation groundPathNavigation) groundPathNavigation.setCanOpenDoors(true);
         this.xpReward = 2;
         this.maxUpStep = 1.25F;
     }
@@ -96,18 +99,18 @@ public abstract class AbstractWorkerEntity extends AbstractChunkLoaderEntity {
      */
     @Override
     @NotNull
-    protected GroundPathNavigation createNavigation(@NotNull Level level) {
+    protected PathNavigation createNavigation(@NotNull Level level) {
         return new GroundPathNavigation(this, level);
     }
 
     @Override
     @NotNull
-    public GroundPathNavigation getNavigation() {
-        if (super.getNavigation() instanceof GroundPathNavigation navigation) {
-            return navigation;
-        } else {
-            throw new IllegalStateException("Invalid worker entity navigation, not a GroundPathNavigation");
+    public PathNavigation getNavigation() {
+        if (this instanceof IBoatController && this.getVehicle() instanceof Boat) {
+            return new WaterBoundPathNavigation(this, level);
         }
+        else
+            return new GroundPathNavigation(this, level);
     }
 
     @Override
@@ -809,7 +812,7 @@ public abstract class AbstractWorkerEntity extends AbstractChunkLoaderEntity {
     public abstract void openGUI(Player player);
 
     public void initSpawn(){
-        GroundPathNavigation navigation = this.getNavigation();
+        GroundPathNavigation navigation = (GroundPathNavigation) this.getNavigation();
         navigation.setCanOpenDoors(true);
         navigation.setCanPassDoors(true);
         navigation.setCanFloat(true);

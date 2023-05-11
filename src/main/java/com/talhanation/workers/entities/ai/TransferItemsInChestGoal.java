@@ -22,7 +22,7 @@ public class TransferItemsInChestGoal extends Goal {
 
     public TransferItemsInChestGoal(AbstractWorkerEntity worker) {
         this.worker = worker;
-        this.pathFinder = this.worker.getNavigation();
+        this.pathFinder = (GroundPathNavigation) this.worker.getNavigation();
     }
 
     @Override

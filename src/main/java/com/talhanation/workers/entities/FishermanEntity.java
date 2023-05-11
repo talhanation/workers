@@ -52,8 +52,6 @@ public class FishermanEntity extends AbstractWorkerEntity implements IBoatContro
         );
     };
 
-
-
     public FishermanEntity(EntityType<? extends AbstractWorkerEntity> entityType, Level world) {
         super(entityType, world);
         this.initSpawn();
