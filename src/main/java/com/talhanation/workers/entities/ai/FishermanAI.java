@@ -60,7 +60,7 @@ public class FishermanAI extends Goal {
 
     @Override
     public void tick() {
-        Main.LOGGER.info("State: " + state);
+        //Main.LOGGER.info("State: " + state);
         if(state == null)
             state = FishermanEntity.State.fromIndex(fisherman.getState());
 
@@ -68,7 +68,7 @@ public class FishermanAI extends Goal {
             case IDLE -> {
                 if(fisherman.getStartPos() != null && fisherman.canWork()){
 
-                    this.setWorkState(MOVING_COAST);
+                    //this.setWorkState(MOVING_COAST);
                 }
             }
 

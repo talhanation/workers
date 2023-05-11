@@ -3,6 +3,7 @@ package com.talhanation.workers.entities;
 import com.talhanation.workers.Main;
 import com.talhanation.workers.config.WorkersModConfig;
 import com.talhanation.workers.entities.ai.*;
+import com.talhanation.workers.entities.ai.navigation.SailorPathNavigation;
 import com.talhanation.workers.inventory.WorkerHireContainer;
 import com.talhanation.workers.network.MessageHireGui;
 
@@ -28,7 +29,6 @@ import net.minecraft.world.entity.ai.attributes.Attributes;
 import net.minecraft.world.entity.ai.goal.*;
 import net.minecraft.world.entity.ai.navigation.GroundPathNavigation;
 import net.minecraft.world.entity.ai.navigation.PathNavigation;
-import net.minecraft.world.entity.ai.navigation.WaterBoundPathNavigation;
 import net.minecraft.world.entity.ai.village.ReputationEventType;
 import net.minecraft.world.entity.item.ItemEntity;
 import net.minecraft.world.entity.npc.Villager;
@@ -40,8 +40,6 @@ import net.minecraft.world.inventory.AbstractContainerMenu;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.ServerLevelAccessor;
-import net.minecraftforge.api.distmarker.Dist;
-import net.minecraftforge.api.distmarker.OnlyIn;
 import net.minecraftforge.event.ForgeEventFactory;
 import net.minecraftforge.network.NetworkHooks;
 import org.jetbrains.annotations.NotNull;
@@ -106,8 +104,8 @@ public abstract class AbstractWorkerEntity extends AbstractChunkLoaderEntity {
     @Override
     @NotNull
     public PathNavigation getNavigation() {
-        if (this instanceof IBoatController && this.getVehicle() instanceof Boat) {
-            return new WaterBoundPathNavigation(this, level);
+        if (this instanceof IBoatController sailor && this.getVehicle() instanceof Boat) {
+            return new SailorPathNavigation(sailor, level);
         }
         else
             return new GroundPathNavigation(this, level);

@@ -2,23 +2,21 @@ package com.talhanation.workers.entities.ai;
 
 import com.talhanation.workers.Main;
 import com.talhanation.workers.entities.AbstractWorkerEntity;
-import com.talhanation.workers.entities.FishermanEntity;
 import com.talhanation.workers.entities.IBoatController;
+import com.talhanation.workers.entities.ai.navigation.SailorPathNavigation;
 import net.minecraft.core.BlockPos;
 import net.minecraft.util.Mth;
 import net.minecraft.world.entity.ai.goal.Goal;
-import net.minecraft.world.entity.ai.navigation.WaterBoundPathNavigation;
 import net.minecraft.world.entity.vehicle.Boat;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.pathfinder.BlockPathTypes;
 import net.minecraft.world.level.pathfinder.Node;
 import net.minecraft.world.level.pathfinder.Path;
-import net.minecraft.world.phys.Vec3;
 
 import java.util.*;
 
-import static com.talhanation.workers.entities.ai.ControlBoatAI.State.*;
+
 
 public class ControlBoatAI extends Goal {
 
@@ -27,6 +25,8 @@ public class ControlBoatAI extends Goal {
     private BlockPos avoidPos;
     private BlockPos toSailPos;
     private State state;
+    private Path path;
+    private Node node;
 
     public ControlBoatAI(IBoatController worker) {
         this.worker = worker.getWorker();
@@ -46,7 +46,7 @@ public class ControlBoatAI extends Goal {
     }
 
     public void start(){
-        state = State.MOVING_TO_SAIL_POS;
+        state = State.CREATING_PATH;
     }
 
     public void stop(){
@@ -57,19 +57,42 @@ public class ControlBoatAI extends Goal {
     }
 
     public void tick() {
-        if(this.worker instanceof IBoatController sailor && sailor.getSailPos() != null){
+        if(this.worker instanceof IBoatController sailor){
             if(sailor.getSailPos() != null){
                 Main.LOGGER.info("Sate: " + state);
+                switch (state) {
 
-                if(this.worker.getNavigation() instanceof WaterBoundPathNavigation waterNavigation) {
+                    case CREATING_PATH -> {
+                        if(this.worker.getNavigation() instanceof SailorPathNavigation waterNavigation && worker.getStartPos() != null) {
+                            worker.setPathfindingMalus(BlockPathTypes.WATER, 0.0F);
+                            this.path = waterNavigation.createPath(worker.getStartPos(), 1);
 
-                    waterNavigation.createPath(sailor.getSailPos(), 16, 16);
-                    Path path = waterNavigation.getPath();
-                    if (path != null) {
-                        Node node = path.getNextNode();
-                        updateBoatControl(node.x, node.z);
+                            if (path != null) {
+                                this.node = this.path.getNextNode();
+                                state = State.MOVING_PATH;
+                            }
+                            else
+                                Main.LOGGER.info("path null");
+                        }
+                    }
+
+                    case MOVING_PATH -> {
+
+                        if (!(node.distanceToSqr(worker.getOnPos()) < 5F)){
+                            updateBoatControl(node.x, node.z);
+                        }
+                        else {
+                            path.advance();
+                            if(path.getNextNode() != null) this.node = path.getNextNode();
+                        }
+
+
+                        if(node == path.getEndNode()){
+                            state = State.CREATING_PATH;
+                        }
                     }
                 }
+
             }
 
             /*
@@ -196,8 +219,10 @@ public class ControlBoatAI extends Goal {
 
 
     enum State{
-        MOVING_TO_SAIL_POS,
-        AVOIDING,
-        MOVING_TO_WATER_POS,
+        CREATING_PATH,
+        MOVING_PATH
+        //MOVING_TO_SAIL_POS,
+        //AVOIDING,
+        //MOVING_TO_WATER_POS,
     }
 }
