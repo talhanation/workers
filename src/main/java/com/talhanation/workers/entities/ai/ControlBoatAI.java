@@ -16,6 +16,7 @@ import net.minecraft.world.level.pathfinder.Path;
 
 import java.util.*;
 
+import static com.talhanation.workers.entities.ai.ControlBoatAI.State.*;
 
 
 public class ControlBoatAI extends Goal {
@@ -46,7 +47,7 @@ public class ControlBoatAI extends Goal {
     }
 
     public void start(){
-        state = State.CREATING_PATH;
+        state = State.IDLE;
     }
 
     public void stop(){
@@ -57,39 +58,55 @@ public class ControlBoatAI extends Goal {
     }
 
     public void tick() {
-        if(this.worker instanceof IBoatController sailor){
-            if(sailor.getSailPos() != null){
+        if(this.worker instanceof IBoatController sailor && this.worker.getNavigation() instanceof SailorPathNavigation sailorPathNavigation) {
+            if (sailor.getSailPos() != null) {
                 Main.LOGGER.info("Sate: " + state);
                 switch (state) {
 
-                    case CREATING_PATH -> {
-                        if(this.worker.getNavigation() instanceof SailorPathNavigation waterNavigation && worker.getStartPos() != null) {
-                            worker.setPathfindingMalus(BlockPathTypes.WATER, 0.0F);
-                            this.path = waterNavigation.createPath(worker.getStartPos(), 1);
-
-                            if (path != null) {
-                                this.node = this.path.getNextNode();
-                                state = State.MOVING_PATH;
-                            }
-                            else
-                                Main.LOGGER.info("path null");
+                    case IDLE -> {
+                        if (sailor.getSailPos() != null) {
+                            this.state = State.CREATING_PATH;
                         }
+                    }
+
+                    case CREATING_PATH -> {
+                        if (sailor.getSailPos() != null) {
+                            worker.setPathfindingMalus(BlockPathTypes.WATER, 0.0F);
+                            this.path = sailorPathNavigation.createPath(sailor.getSailPos(), 8, false, 1);
+
+                            if (path != null && path.getNodeCount() > 1) {
+                                this.node = this.path.getNextNode();
+                                state = MOVING_PATH;
+                            } else {
+                                Main.LOGGER.info("Path null or has 1 node");
+                                worker.setStartPos(null);
+                                state = IDLE;
+                            }
+                            
+
+                        }
+                        else
+                            state = IDLE;
                     }
 
                     case MOVING_PATH -> {
 
-                        if (!(node.distanceToSqr(worker.getOnPos()) < 5F)){
+                        if (!(node.distanceToSqr(worker.getOnPos()) < 6F)) {
+                            this.worker.getLookControl().setLookAt(node.x,node.y, node.z);
                             updateBoatControl(node.x, node.z);
-                        }
-                        else {
+                        } else {
                             path.advance();
-                            if(path.getNextNode() != null) this.node = path.getNextNode();
+                            if (path.getNodeCount() == path.getNextNodeIndex() - 1 || node.equals(path.getEndNode())) {
+                                state = State.DONE;
+                                return;
+                            }
+                            this.node = path.getNextNode(); //TODO: fix crash here: "Index 1 out of bounds for length 1"
                         }
+                    }
 
-
-                        if(node == path.getEndNode()){
-                            state = State.CREATING_PATH;
-                        }
+                    case DONE -> {
+                        sailor.setSailPos(null);
+                        state = IDLE;
                     }
                 }
 
@@ -101,9 +118,6 @@ public class ControlBoatAI extends Goal {
                 case MOVING_TO_SAIL_POS -> {
 
                     }
-
-
-
 
                     if(!sailor.getSailPos().closerThan(this.worker.getOnPos(), sailor.getControlAccuracy()))
                         //updateBoatControl(posX,posZ);
@@ -184,43 +198,14 @@ public class ControlBoatAI extends Goal {
         return false;
     }
 
-    public BlockPos getWaterPos(BlockPos targetPos, BlockPos avoidPos){
-        List<BlockPos> waterBlockPos = new ArrayList<>();
-        int range = 15;
-        BlockPos workerPos = this.worker.getOnPos();
-        for(int i = -range; i < range; i++){
-            for(int j = -range; j < range; j++){
-                BlockPos pos = new BlockPos(workerPos.getX() + i, workerPos.getY(), workerPos.getZ() + j);
-                BlockState state = this.worker.getLevel().getBlockState(pos);
 
-                if(state.is(Blocks.WATER)){
-                    BlockState stateNorth = this.worker.getLevel().getBlockState(pos.north());
-                    BlockState stateEast = this.worker.getLevel().getBlockState(pos.east());
-                    BlockState stateSouth = this.worker.getLevel().getBlockState(pos.south());
-                    BlockState stateWest = this.worker.getLevel().getBlockState(pos.west());
-
-                    if(stateNorth.is(Blocks.WATER) && stateEast.is(Blocks.WATER) && stateSouth.is(Blocks.WATER) && stateWest.is(Blocks.WATER))
-                        waterBlockPos.add(pos);
-                }
-            }
-        }
-
-        waterBlockPos.sort(Comparator.comparingDouble(pos -> pos.distSqr(targetPos) + 1.5 * pos.distSqr(avoidPos)));
-        List<Double> distanceList = new ArrayList<>();
-        for(BlockPos pos : waterBlockPos){
-            distanceList.add(pos.distSqr(targetPos));
-        }
-
-        Main.LOGGER.info("onPos: " + this.worker.getOnPos());
-        Main.LOGGER.info("WaterPosList: " + waterBlockPos);
-        Main.LOGGER.info("distanceList: " + distanceList);
-        return !waterBlockPos.isEmpty() ? waterBlockPos.get(0) : null;
-    }
 
 
     enum State{
+        IDLE,
         CREATING_PATH,
-        MOVING_PATH
+        MOVING_PATH,
+        DONE
         //MOVING_TO_SAIL_POS,
         //AVOIDING,
         //MOVING_TO_WATER_POS,

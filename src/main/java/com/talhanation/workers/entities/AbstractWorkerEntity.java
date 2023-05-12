@@ -500,7 +500,7 @@ public abstract class AbstractWorkerEntity extends AbstractChunkLoaderEntity {
     }
 
     public void setStartPos(BlockPos pos) {
-        this.entityData.set(START_POS, Optional.of(pos));
+        this.entityData.set(START_POS, Optional.ofNullable(pos));
     }
 
     public void clearStartPos() {

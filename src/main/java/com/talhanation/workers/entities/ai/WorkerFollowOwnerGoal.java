@@ -77,9 +77,10 @@ public class WorkerFollowOwnerGoal extends Goal {
             }
 
         }
-
+        /*
         if(this.workerEntity instanceof IBoatController sailor){
             sailor.setSailPos(owner.getOnPos());
         }
+         */
     }
 }

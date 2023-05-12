@@ -1,6 +1,7 @@
 package com.talhanation.workers;
 
 import com.talhanation.workers.entities.AbstractWorkerEntity;
+import com.talhanation.workers.entities.IBoatController;
 import com.talhanation.workers.entities.MerchantEntity;
 import com.talhanation.workers.entities.MinerEntity;
 import com.talhanation.workers.inventory.CommandMenu;
@@ -46,6 +47,8 @@ public class CommandEvents {
             worker.setStartPos(blockpos);
             worker.setFollow(false);
             worker.setIsWorking(true);
+
+            if (worker instanceof IBoatController sailor) sailor.setSailPos(blockpos);
         }
     }
 

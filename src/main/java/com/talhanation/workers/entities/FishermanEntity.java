@@ -200,7 +200,7 @@ public class FishermanEntity extends AbstractWorkerEntity implements IBoatContro
 
     @Override
     public void setSailPos(BlockPos pos) {
-        this.entityData.set(SAIL_POS, Optional.of(pos));
+        this.entityData.set(SAIL_POS, Optional.ofNullable(pos));
     }
 
     @Override
