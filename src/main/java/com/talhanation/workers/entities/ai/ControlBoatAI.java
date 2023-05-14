@@ -64,7 +64,7 @@ public class ControlBoatAI extends Goal {
                 switch (state) {
 
                     case IDLE -> {
-                        if (sailor.getSailPos() != null) {
+                        if (sailor.getSailPos() != null && !worker.getStartPos().closerThan(worker.getOnPos(), 6F)) {
                             this.state = State.CREATING_PATH;
                         }
                     }
@@ -72,18 +72,15 @@ public class ControlBoatAI extends Goal {
                     case CREATING_PATH -> {
                         if (sailor.getSailPos() != null) {
                             worker.setPathfindingMalus(BlockPathTypes.WATER, 0.0F);
-                            this.path = sailorPathNavigation.createPath(sailor.getSailPos(), 8, false, 1);
+                            this.path = sailorPathNavigation.createPath(sailor.getSailPos(), 16, false, 1);
 
                             if (path != null && path.getNodeCount() > 1) {
                                 this.node = this.path.getNextNode();
                                 state = MOVING_PATH;
                             } else {
                                 Main.LOGGER.info("Path null or has 1 node");
-                                worker.setStartPos(null);
                                 state = IDLE;
                             }
-                            
-
                         }
                         else
                             state = IDLE;
@@ -96,6 +93,11 @@ public class ControlBoatAI extends Goal {
                             updateBoatControl(node.x, node.z);
                         } else {
                             path.advance();
+                            if(path.getNodeCount() == path.getNextNodeIndex() - 1 && !this.worker.getStartPos().closerThan(this.worker.getOnPos(), 3)){
+                                state = CREATING_PATH;
+                                return;
+                            }
+
                             if (path.getNodeCount() == path.getNextNodeIndex() - 1 || node.equals(path.getEndNode())) {
                                 state = State.DONE;
                                 return;
