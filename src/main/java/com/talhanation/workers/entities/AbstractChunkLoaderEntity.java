@@ -16,12 +16,16 @@ import java.util.Set;
 
 public abstract class AbstractChunkLoaderEntity extends AbstractInventoryEntity {
 
-    private Optional<Pair<Integer, Integer>> loadedChunk = Optional.empty();
 
     public AbstractChunkLoaderEntity(EntityType<? extends AbstractChunkLoaderEntity> entityType, Level world) {
         super(entityType, world);
     }
-
+		
+	public WorkersChunk currentChunk;
+	public WorkersChunk prevChunk;
+	
+	protected abstract boolean shouldLoadChunk();
+	
     ///////////////////////////////////TICK/////////////////////////////////////////
 
     public void tick() {
@@ -31,74 +35,87 @@ public abstract class AbstractChunkLoaderEntity extends AbstractInventoryEntity 
 
     public void updateChunkLoading() {
         if (this.shouldLoadChunk() && !this.level.isClientSide) {
-            Pair<Integer, Integer> currentChunk = new Pair<>(this.chunkPosition().x, this.chunkPosition().z);
-            if (loadedChunk.isEmpty()) {
+            this.currentChunk = new WorkersChunk(this.chunkPosition());		
+			
+            if (currentChunk != null && currentChunk.isSame(prevChunk)) {
                 this.forceChunk(currentChunk);
-                loadedChunk = Optional.of(currentChunk);
-
-            } else if (!currentChunk.equals(loadedChunk.get())) {
-
-                Set<Pair<Integer, Integer>> toForce = getSetOfChunks(currentChunk);
-                Set<Pair<Integer, Integer>> toUnForce = getSetOfChunks(loadedChunk.get());
-                toUnForce.removeAll(toForce);
-
-                //verbliebene chunks
-                Set<Pair<Integer, Integer>> forced = getSetOfChunks(loadedChunk.get());
-                toForce.removeAll(forced);
-
-                toUnForce.forEach(this::unForceChunk);
-                toForce.forEach(this::forceChunk);
-                loadedChunk = Optional.of(currentChunk);
-            }
+                
+				if(prevChunk != null){
+					//isLoaded maybe
+					this.unForceChunk(prevChunk);
+				}
+				prevChunk = currentChunk;
+            } 
         }
     }
 
     ////////////////////////////////////DATA////////////////////////////////////
-
+	/*
     public void addAdditionalSaveData(@NotNull CompoundTag nbt) {
         super.addAdditionalSaveData(nbt);
-        if(loadedChunk.isPresent()) {
-            nbt.putInt("chunkX", loadedChunk.get().getFirst());
-            nbt.putInt("chunkZ", loadedChunk.get().getSecond());
+        if(currentChunk != null) {
+            nbt.putInt("currentChunkX", currentChunk.x);
+            nbt.putInt("currentChunkZ", currentChunk.z);
         }
     }
 
     public void readAdditionalSaveData(@NotNull CompoundTag nbt) {
         super.readAdditionalSaveData(nbt);
-        if (nbt.contains("chunkX")) {
-            int x = nbt.getInt("chunkX");
-            int z = nbt.getInt("chunkZ");
-            loadedChunk = Optional.of(new Pair<>(x, z));
+        if (nbt.contains("currentChunkX")) {
+            int x = nbt.getInt("currentChunkX");
+            int z = nbt.getInt("currentChunkZ");
+            currentChunk = new WorkersChunk(x, z);
         }
     }
+	*/
 
     ////////////////////////////////////GET////////////////////////////////////
 
-    private Set<Pair<Integer, Integer>> getSetOfChunks(Pair<Integer, Integer> chunk){
-        Set<Pair<Integer, Integer>> set = new HashSet<>();
+    private List<WorkersChunk> getListOfChunks(WorkersChunk currentChunk){
+        List<WorkersChunk> list = new List<>();
 
         for(int i = -1; i <= 1; i++){
             for (int k = -1; k <= 1; k++){
-                set.add(new Pair<>(chunk.getFirst() + i, chunk.getSecond() + k));
+                list.add(new WorkersChunk(currentChunk.x + i, currentChunk.z + k));
             }
         }
-        return set;
+        return list;
     }
 
     ////////////////////////////////////SET////////////////////////////////////
 
-    private void forceChunk(Pair<Integer, Integer> chunk) {
-        ForgeChunkManager.forceChunk((ServerLevel) this.level, Main.MOD_ID, this.getUUID(), chunk.getFirst(), chunk.getSecond(), true, true);
+    private void forceChunk(WorkersChunk chunk) {
+        ForgeChunkManager.forceChunk((ServerLevel) this.level, Main.MOD_ID, this.getUUID(), chunk.x, chunk.z, true, true);
     }
 
-    private void unForceChunk(Pair<Integer, Integer> chunk) {
-        ForgeChunkManager.forceChunk((ServerLevel) this.level, Main.MOD_ID, this.getUUID(), chunk.getFirst(), chunk.getSecond(), false, true);
+    private void unForceChunk(WorkersChunk chunk) {
+        ForgeChunkManager.forceChunk((ServerLevel) this.level, Main.MOD_ID, this.getUUID(), chunk.x, chunk.z, false, true);
     }
-
-    protected abstract boolean shouldLoadChunk();
 
     public void die(@NotNull DamageSource dmg) {
         super.die(dmg);
-        if(!this.level.isClientSide) loadedChunk.ifPresent(chunk -> this.getSetOfChunks(chunk).forEach(this::unForceChunk));
+        this.unForceChunk(currentChunk);
+		this.unForceChunk(prevChunk);
     }
+	
+	
+	
+	public class WorkersChunk{
+		int x
+		int z
+		
+		public WorkersChunk(ChunkPosition chunkPosition){
+			this(chunkPosition.x, chunkPosition.z);
+		}
+		
+		public WorkersChunk(int x, int z){
+			this.x = x;
+			this.z = z;
+		}
+		
+		public boolean same(WorkersChunk otherChunk){
+			if(otherChunk != null) return this.x == otherChunk.x && this.z == otherChunk.z;
+			else return false;
+		}
+	}
 }
