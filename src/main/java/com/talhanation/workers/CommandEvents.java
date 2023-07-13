@@ -371,6 +371,98 @@ public class CommandEvents {
         }
     }
 
+
+ public static void handleCreativeMerchantTrade(Player player, MerchantEntity merchant, int tradeID) {
+        int[] PRICE_SLOT = new int[] { 0, 2, 4, 6 };
+        int[] TRADE_SLOT = new int[] { 1, 3, 5, 7 };
+
+        Inventory playerInv = player.getInventory();
+        SimpleContainer merchantInv = merchant.getInventory();// supply and money
+        SimpleContainer merchantTradeInv = merchant.getTradeInventory();// trade interface
+
+        int playerEmeralds = 0;
+        int merchantEmeralds = 0;
+        int playerTradeItem = 0;
+        int merchantTradeItem = 0;
+
+        ItemStack emeraldItemStack = merchantTradeInv.getItem(PRICE_SLOT[tradeID]);
+        Item emerald = emeraldItemStack.getItem();//
+        int sollPrice = emeraldItemStack.getCount();
+
+        ItemStack tradeItemStack = merchantTradeInv.getItem(TRADE_SLOT[tradeID]);
+        Item tradeItem = tradeItemStack.getItem();
+        int tradeCount = tradeItemStack.getCount();
+
+        // checkPlayerMoney
+        for (int i = 0; i < playerInv.getContainerSize(); i++) {
+            ItemStack itemStackInSlot = playerInv.getItem(i);
+            Item itemInSlot = itemStackInSlot.getItem();
+            if (itemInSlot == emerald) {
+                playerEmeralds = playerEmeralds + itemStackInSlot.getCount();
+            }
+        }
+        
+        // checkPlayerTradeGood
+        for (int i = 0; i < playerInv.getContainerSize(); i++) {
+            ItemStack itemStackInSlot = playerInv.getItem(i);
+            Item itemInSlot = itemStackInSlot.getItem();
+            if (itemInSlot == tradeItem) {
+                playerTradeItem = playerTradeItem + itemStackInSlot.getCount();
+            }
+        }
+        
+        boolean merchantHasItems = merchantTradeItem >= tradeCount;
+        boolean playerCanPay = playerEmeralds >= sollPrice;
+
+        if (playerCanPay) {
+            // give player
+            // remove merchant ->add left
+            //
+
+            merchantTradeItem = merchantTradeItem - tradeCount;
+            // playerTradeItem = playerTradeItem + tradeCount;
+
+            // add tradeItem to playerInventory
+            ItemStack tradeGood = tradeItemStack.copy();
+            tradeGood.setCount(tradeCount);
+            playerInv.add(tradeGood);
+
+            // give player tradeGood
+            // remove playerEmeralds ->add left
+            playerEmeralds = playerEmeralds - sollPrice;
+
+            // remove playerEmeralds
+            for (int i = 0; i < playerInv.getContainerSize(); i++) {
+                ItemStack itemStackInSlot = playerInv.getItem(i);
+                Item itemInSlot = itemStackInSlot.getItem();
+                if (itemInSlot == emerald) {
+                    playerInv.removeItemNoUpdate(i);
+                }
+            }
+
+            // add leftEmeralds to playerInventory
+            ItemStack emeraldsLeft = emeraldItemStack.copy();
+            emeraldsLeft.setCount(playerEmeralds);// später merchantEmeralds wenn ich alle s löschen tu
+            playerInv.add(emeraldsLeft);
+
+        } else {
+            LivingEntity owner = merchant.getOwner();
+            if (!merchantHasItems) {
+                merchant.tellPlayer(player, TEXT_OUT_OF_STOCK);
+                if (owner != null) {
+                    merchant.tellPlayer(owner, TEXT_OUT_OF_STOCK_OWNER);
+                }
+            } else if (!playerCanPay) {
+                merchant.tellPlayer(player, TEXT_NEED(sollPrice, emerald));
+            } else if (!canAddItemToInv) {
+                merchant.tellPlayer(player, TEXT_INV_FULL);
+                if (owner != null) {
+                    merchant.tellPlayer(owner, TEXT_INV_FULL_OWNER);
+                }
+            }
+        }
+    }
+
     // TODO: Remove home button.
     public static void openCommandScreen(Player player) {
         if (player instanceof ServerPlayer) {
