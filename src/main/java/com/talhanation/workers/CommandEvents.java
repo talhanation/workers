@@ -446,24 +446,10 @@ public class CommandEvents {
             playerInv.add(emeraldsLeft);
 
         } else {
-            LivingEntity owner = merchant.getOwner();
-            if (!merchantHasItems) {
-                merchant.tellPlayer(player, TEXT_OUT_OF_STOCK);
-                if (owner != null) {
-                    merchant.tellPlayer(owner, TEXT_OUT_OF_STOCK_OWNER);
-                }
-            } else if (!playerCanPay) {
-                merchant.tellPlayer(player, TEXT_NEED(sollPrice, emerald));
-            } else if (!canAddItemToInv) {
-                merchant.tellPlayer(player, TEXT_INV_FULL);
-                if (owner != null) {
-                    merchant.tellPlayer(owner, TEXT_INV_FULL_OWNER);
-                }
-            }
+            merchant.tellPlayer(player, TEXT_NEED(sollPrice, emerald));
         }
     }
 
-    // TODO: Remove home button.
     public static void openCommandScreen(Player player) {
         if (player instanceof ServerPlayer) {
             NetworkHooks.openScreen((ServerPlayer) player, new MenuProvider() {

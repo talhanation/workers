@@ -4,6 +4,7 @@ import com.talhanation.workers.Main;
 import com.talhanation.workers.config.WorkersModConfig;
 import com.talhanation.workers.entities.ai.*;
 import com.talhanation.workers.entities.ai.navigation.SailorPathNavigation;
+import com.talhanation.workers.entities.ai.navigation.WorkersPathNavigation;
 import com.talhanation.workers.inventory.WorkerHireContainer;
 import com.talhanation.workers.network.MessageHireGui;
 
@@ -83,7 +84,6 @@ public abstract class AbstractWorkerEntity extends AbstractChunkLoaderEntity {
         super(entityType, world);
         this.setOwned(false);
         this.navigation = this.createNavigation(world);
-        if(navigation instanceof GroundPathNavigation groundPathNavigation) groundPathNavigation.setCanOpenDoors(true);
         this.xpReward = 2;
         this.maxUpStep = 1.25F;
     }
@@ -98,7 +98,7 @@ public abstract class AbstractWorkerEntity extends AbstractChunkLoaderEntity {
     @Override
     @NotNull
     protected PathNavigation createNavigation(@NotNull Level level) {
-        return new GroundPathNavigation(this, level);
+        return new WorkersPathNavigation(this, level);
     }
 
     @Override
@@ -108,7 +108,7 @@ public abstract class AbstractWorkerEntity extends AbstractChunkLoaderEntity {
             return new SailorPathNavigation(sailor, level);
         }
         else
-            return new GroundPathNavigation(this, level);
+            return new WorkersPathNavigation(this, level);
     }
 
     @Override

@@ -1,18 +1,16 @@
 package com.talhanation.workers.entities;
 
-import com.mojang.datafixers.util.Pair;
 import com.talhanation.workers.Main;
 import net.minecraft.world.damagesource.DamageSource;
 import net.minecraft.world.entity.EntityType;
-import net.minecraft.nbt.CompoundTag;
+import net.minecraft.world.level.ChunkPos;
 import net.minecraft.world.level.Level;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraftforge.common.world.ForgeChunkManager;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.HashSet;
-import java.util.Optional;
-import java.util.Set;
+import java.util.ArrayList;
+import java.util.List;
 
 public abstract class AbstractChunkLoaderEntity extends AbstractInventoryEntity {
 
@@ -20,7 +18,6 @@ public abstract class AbstractChunkLoaderEntity extends AbstractInventoryEntity 
     public AbstractChunkLoaderEntity(EntityType<? extends AbstractChunkLoaderEntity> entityType, Level world) {
         super(entityType, world);
     }
-		
 	public WorkersChunk currentChunk;
 	public WorkersChunk prevChunk;
 	
@@ -31,23 +28,26 @@ public abstract class AbstractChunkLoaderEntity extends AbstractInventoryEntity 
     public void tick() {
         super.tick();
         updateChunkLoading();
+        //if(currentChunk != null)Main.LOGGER.info("currentChunk: ["+ currentChunk.x + ";" + currentChunk.z + "] ");
+        //if(prevChunk != null)Main.LOGGER.info("prevChunk: ["+ prevChunk.x + ";" + prevChunk.z + "] ");
     }
 
     public void updateChunkLoading() {
         if (this.shouldLoadChunk() && !this.level.isClientSide) {
-            this.currentChunk = new WorkersChunk(this.chunkPosition());		
-			
-            if (currentChunk != null && currentChunk.isSame(prevChunk)) {
-                this.forceChunk(currentChunk);
-                
-				if(prevChunk != null){
-					//isLoaded maybe
-					this.unForceChunk(prevChunk);
-				}
-				prevChunk = currentChunk;
-            } 
+            this.currentChunk = new WorkersChunk(this.chunkPosition());
+            this.forceChunk(currentChunk);
+
+            if (!currentChunk.isSame(prevChunk)) {
+
+
+                if(prevChunk != null) this.unForceChunk(prevChunk);
+                prevChunk = currentChunk;
+            }
+
         }
+
     }
+
 
     ////////////////////////////////////DATA////////////////////////////////////
 	/*
@@ -72,7 +72,7 @@ public abstract class AbstractChunkLoaderEntity extends AbstractInventoryEntity 
     ////////////////////////////////////GET////////////////////////////////////
 
     private List<WorkersChunk> getListOfChunks(WorkersChunk currentChunk){
-        List<WorkersChunk> list = new List<>();
+        List<WorkersChunk> list = new ArrayList<>();
 
         for(int i = -1; i <= 1; i++){
             for (int k = -1; k <= 1; k++){
@@ -89,7 +89,7 @@ public abstract class AbstractChunkLoaderEntity extends AbstractInventoryEntity 
     }
 
     private void unForceChunk(WorkersChunk chunk) {
-        ForgeChunkManager.forceChunk((ServerLevel) this.level, Main.MOD_ID, this.getUUID(), chunk.x, chunk.z, false, true);
+        ForgeChunkManager.forceChunk((ServerLevel) this.level, Main.MOD_ID, this.getUUID(), chunk.x, chunk.z, false, false);
     }
 
     public void die(@NotNull DamageSource dmg) {
@@ -100,11 +100,11 @@ public abstract class AbstractChunkLoaderEntity extends AbstractInventoryEntity 
 	
 	
 	
-	public class WorkersChunk{
-		int x
-		int z
+	public static class WorkersChunk{
+		int x;
+		int z;
 		
-		public WorkersChunk(ChunkPosition chunkPosition){
+		public WorkersChunk(ChunkPos chunkPosition){
 			this(chunkPosition.x, chunkPosition.z);
 		}
 		
@@ -113,7 +113,7 @@ public abstract class AbstractChunkLoaderEntity extends AbstractInventoryEntity 
 			this.z = z;
 		}
 		
-		public boolean same(WorkersChunk otherChunk){
+		public boolean isSame(WorkersChunk otherChunk){
 			if(otherChunk != null) return this.x == otherChunk.x && this.z == otherChunk.z;
 			else return false;
 		}
