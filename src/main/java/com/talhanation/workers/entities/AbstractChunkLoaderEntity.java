@@ -1,105 +1,69 @@
 package com.talhanation.workers.entities;
 
 import com.talhanation.workers.Main;
+import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.damagesource.DamageSource;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.level.ChunkPos;
 import net.minecraft.world.level.Level;
-import net.minecraft.server.level.ServerLevel;
 import net.minecraftforge.common.world.ForgeChunkManager;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.ArrayList;
-import java.util.List;
+import java.util.*;
 
 public abstract class AbstractChunkLoaderEntity extends AbstractInventoryEntity {
-
-
+    protected abstract boolean shouldLoadChunk();
     public AbstractChunkLoaderEntity(EntityType<? extends AbstractChunkLoaderEntity> entityType, Level world) {
         super(entityType, world);
     }
 	public WorkersChunk currentChunk;
 	public WorkersChunk prevChunk;
-	
-	protected abstract boolean shouldLoadChunk();
-	
+    public boolean initChunkLoad;
+
     ///////////////////////////////////TICK/////////////////////////////////////////
 
     public void tick() {
         super.tick();
         updateChunkLoading();
-        //if(currentChunk != null)Main.LOGGER.info("currentChunk: ["+ currentChunk.x + ";" + currentChunk.z + "] ");
-        //if(prevChunk != null)Main.LOGGER.info("prevChunk: ["+ prevChunk.x + ";" + prevChunk.z + "] ");
     }
 
     public void updateChunkLoading() {
-        if (this.shouldLoadChunk() && !this.level.isClientSide) {
+        if (this.shouldLoadChunk() && isAlive() && !this.level.isClientSide) {
             this.currentChunk = new WorkersChunk(this.chunkPosition());
-            this.forceChunk(currentChunk);
+
+            if(!initChunkLoad){
+                this.setForceChunk(currentChunk, true);
+                initChunkLoad = true;
+            }
 
             if (!currentChunk.isSame(prevChunk)) {
-
-
-                if(prevChunk != null) this.unForceChunk(prevChunk);
-                prevChunk = currentChunk;
+                if(prevChunk != null) {
+                    this.setForceChunk(prevChunk, false);
+                    initChunkLoad = false;
+                }
             }
 
+            prevChunk = currentChunk;
+
         }
-
-    }
-
-
-    ////////////////////////////////////DATA////////////////////////////////////
-	/*
-    public void addAdditionalSaveData(@NotNull CompoundTag nbt) {
-        super.addAdditionalSaveData(nbt);
-        if(currentChunk != null) {
-            nbt.putInt("currentChunkX", currentChunk.x);
-            nbt.putInt("currentChunkZ", currentChunk.z);
-        }
-    }
-
-    public void readAdditionalSaveData(@NotNull CompoundTag nbt) {
-        super.readAdditionalSaveData(nbt);
-        if (nbt.contains("currentChunkX")) {
-            int x = nbt.getInt("currentChunkX");
-            int z = nbt.getInt("currentChunkZ");
-            currentChunk = new WorkersChunk(x, z);
-        }
-    }
-	*/
-
-    ////////////////////////////////////GET////////////////////////////////////
-
-    private List<WorkersChunk> getListOfChunks(WorkersChunk currentChunk){
-        List<WorkersChunk> list = new ArrayList<>();
-
-        for(int i = -1; i <= 1; i++){
-            for (int k = -1; k <= 1; k++){
-                list.add(new WorkersChunk(currentChunk.x + i, currentChunk.z + k));
-            }
-        }
-        return list;
+        if(!this.level.isClientSide)
+            Main.LOGGER.info(ForgeChunkManager.hasForcedChunks((ServerLevel) this.level));
     }
 
     ////////////////////////////////////SET////////////////////////////////////
 
-    private void forceChunk(WorkersChunk chunk) {
-        ForgeChunkManager.forceChunk((ServerLevel) this.level, Main.MOD_ID, this.getUUID(), chunk.x, chunk.z, true, true);
-    }
-
-    private void unForceChunk(WorkersChunk chunk) {
-        ForgeChunkManager.forceChunk((ServerLevel) this.level, Main.MOD_ID, this.getUUID(), chunk.x, chunk.z, false, false);
+    private void setForceChunk(WorkersChunk chunk, boolean add) {
+        ForgeChunkManager.forceChunk((ServerLevel) this.level, Main.MOD_ID, this, chunk.x, chunk.z, add, false);
     }
 
     public void die(@NotNull DamageSource dmg) {
         super.die(dmg);
-        this.unForceChunk(currentChunk);
-		this.unForceChunk(prevChunk);
+        if(!this.level.isClientSide){
+            this.setForceChunk(currentChunk, false);
+            this.setForceChunk(prevChunk, false);
+        }
     }
-	
-	
-	
+
 	public static class WorkersChunk{
 		int x;
 		int z;
