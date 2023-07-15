@@ -1,6 +1,7 @@
 package com.talhanation.workers.entities;
 
 import com.talhanation.workers.Main;
+import com.talhanation.workers.config.WorkersModConfig;
 import com.talhanation.workers.entities.ai.ControlBoatAI;
 import com.talhanation.workers.inventory.WorkerInventoryContainer;
 import com.talhanation.workers.entities.ai.FishermanAI;
@@ -95,7 +96,7 @@ public class FishermanEntity extends AbstractWorkerEntity implements IBoatContro
 
     @Override
     public int workerCosts() {
-        return 25;
+        return WorkersModConfig.FishermanCost.get();
     }
 
     @Override

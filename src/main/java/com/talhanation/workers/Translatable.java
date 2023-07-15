@@ -50,7 +50,7 @@ public class Translatable {
         return Component.translatable("chat.workers.text.outOfTools", lastItem.getDisplayName().getString());
     }
 
-    public static Component TEXT_HIRE_COSTS(int cost) {
+    public static Component TEXT_HIRE_COSTS(int cost, String item) {
         return Component.translatable("chat.workers.text.hire_costs", cost);
     }
     public static Component TEXT_NEED(int sollPrice, Item emerald) {

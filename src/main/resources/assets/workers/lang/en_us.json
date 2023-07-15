@@ -69,7 +69,7 @@
   "chat.workers.text.hello_owned": "Hello, I am the %s of %s.",
   "chat.workers.text.hello": "Hello, I am a %s.",
 
-  "chat.workers.text.hire_costs": "You need %s Emeralds to hire me!",
+  "chat.workers.text.hire_costs": "You need %s %s to hire me!",
   "chat.workers.text.attacked": "%s is getting attacked by %s!",
   "chat.workers.text.working": "I'm working now!",
   "chat.workers.text.done": "Work is done!",

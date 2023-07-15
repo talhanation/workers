@@ -1,5 +1,6 @@
 package com.talhanation.workers;
 
+import com.talhanation.workers.config.WorkersModConfig;
 import com.talhanation.workers.entities.AbstractWorkerEntity;
 import com.talhanation.workers.entities.IBoatController;
 import com.talhanation.workers.entities.MerchantEntity;
@@ -7,7 +8,10 @@ import com.talhanation.workers.entities.MinerEntity;
 import com.talhanation.workers.inventory.CommandMenu;
 import com.talhanation.workers.network.MessageOpenCommandScreen;
 import com.talhanation.workers.network.MessageToClientUpdateCommandScreen;
+import it.unimi.dsi.fastutil.longs.LongSet;
+import net.minecraft.core.Holder;
 import net.minecraft.network.chat.Component;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.MenuProvider;
@@ -21,12 +25,17 @@ import net.minecraft.world.item.ItemStack;
 import net.minecraft.core.Direction;
 import net.minecraft.core.BlockPos;
 import net.minecraft.world.item.Items;
+import net.minecraft.world.level.ForcedChunksSavedData;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.block.state.properties.BedPart;
 import net.minecraft.world.level.block.state.properties.BlockStateProperties;
+import net.minecraftforge.event.TickEvent;
+import net.minecraftforge.event.level.ChunkEvent;
+import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.network.NetworkHooks;
 import net.minecraftforge.network.PacketDistributor;
+import net.minecraftforge.registries.ForgeRegistries;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
@@ -154,8 +163,14 @@ public class CommandEvents {
         worker.setNeedsBed(true);
         worker.tellPlayer(owner, NEED_BED);
     }
-
     public static void handleMerchantTrade(Player player, MerchantEntity merchant, int tradeID) {
+        if(merchant.isCreative()){
+            handleCreativeMerchantTrade(player, merchant, tradeID);
+        }
+        else
+            handleSurvivalMerchantTrade(player, merchant, tradeID);
+    }
+    public static void handleSurvivalMerchantTrade(Player player, MerchantEntity merchant, int tradeID) {
         int[] PRICE_SLOT = new int[] { 0, 2, 4, 6 };
         int[] TRADE_SLOT = new int[] { 1, 3, 5, 7 };
 
@@ -320,55 +335,55 @@ public class CommandEvents {
         }
     }
 
-    public static void handleRecruiting(Player player, AbstractWorkerEntity workerEntity) {
-        int costs = workerEntity.workerCosts();
-
+    public static void handleRecruiting(Player player, AbstractWorkerEntity worker){
+        int sollPrice = worker.workerCosts();
         Inventory playerInv = player.getInventory();
-
         int playerEmeralds = 0;
 
-        ItemStack emeraldItemStack = Items.EMERALD.getDefaultInstance();
-        Item emerald = emeraldItemStack.getItem();//
-        int sollPrice = workerEntity.workerCosts();
+        String str = WorkersModConfig.WorkersCurrency.get();
+        Optional<Holder<Item>> holder = ForgeRegistries.ITEMS.getHolder(ResourceLocation.tryParse(str));
 
-        // checkPlayerMoney
-        for (int i = 0; i < playerInv.getContainerSize(); i++) {
+        ItemStack currencyItemStack = holder.map(itemHolder -> itemHolder.value().getDefaultInstance()).orElseGet(Items.EMERALD::getDefaultInstance);
+
+        Item currency = currencyItemStack.getItem();
+
+        //checkPlayerMoney
+        for (int i = 0; i < playerInv.getContainerSize(); i++){
             ItemStack itemStackInSlot = playerInv.getItem(i);
             Item itemInSlot = itemStackInSlot.getItem();
-            if (itemInSlot == emerald) {
+            if (itemInSlot.equals(currency)){
                 playerEmeralds = playerEmeralds + itemStackInSlot.getCount();
             }
         }
 
         boolean playerCanPay = playerEmeralds >= sollPrice;
 
-        if (playerCanPay) {
-            if (workerEntity.hire(player)) {
-
-                // give player tradeGood
-                // remove playerEmeralds ->add left
+        if (playerCanPay){
+            if(worker.hire(player)) {
+                //give player tradeGood
+                //remove playerEmeralds ->add left
                 //
                 playerEmeralds = playerEmeralds - sollPrice;
 
-                // merchantEmeralds = merchantEmeralds + sollPrice;
+                //merchantEmeralds = merchantEmeralds + sollPrice;
 
-                // remove playerEmeralds
+                //remove playerEmeralds
                 for (int i = 0; i < playerInv.getContainerSize(); i++) {
                     ItemStack itemStackInSlot = playerInv.getItem(i);
                     Item itemInSlot = itemStackInSlot.getItem();
-                    if (itemInSlot == emerald) {
+                    if (itemInSlot.equals(currency)) {
                         playerInv.removeItemNoUpdate(i);
                     }
                 }
 
-                // add leftEmeralds to playerInventory
-                ItemStack emeraldsLeft = emeraldItemStack.copy();
+                //add leftEmeralds to playerInventory
+                ItemStack emeraldsLeft = currencyItemStack.copy();
                 emeraldsLeft.setCount(playerEmeralds);
                 playerInv.add(emeraldsLeft);
             }
-        } else {
-            workerEntity.tellPlayer(player, TEXT_HIRE_COSTS(costs));
         }
+        else
+             worker.tellPlayer(player, TEXT_HIRE_COSTS(sollPrice, currency.getDescription().getString()));
     }
 
 
@@ -377,11 +392,9 @@ public class CommandEvents {
         int[] TRADE_SLOT = new int[] { 1, 3, 5, 7 };
 
         Inventory playerInv = player.getInventory();
-        SimpleContainer merchantInv = merchant.getInventory();// supply and money
         SimpleContainer merchantTradeInv = merchant.getTradeInventory();// trade interface
 
         int playerEmeralds = 0;
-        int merchantEmeralds = 0;
         int playerTradeItem = 0;
         int merchantTradeItem = 0;
 
@@ -410,8 +423,7 @@ public class CommandEvents {
                 playerTradeItem = playerTradeItem + itemStackInSlot.getCount();
             }
         }
-        
-        boolean merchantHasItems = merchantTradeItem >= tradeCount;
+
         boolean playerCanPay = playerEmeralds >= sollPrice;
 
         if (playerCanPay) {
@@ -485,5 +497,13 @@ public class CommandEvents {
         }
 
         Main.SIMPLE_CHANNEL.send(PacketDistributor.PLAYER.with(()-> player), new MessageToClientUpdateCommandScreen(workers, names));
+    }
+
+    @SubscribeEvent
+    public void onEnterChunk(TickEvent.ServerTickEvent event){
+        ForcedChunksSavedData data = event.getServer().overworld().getDataStorage().get(ForcedChunksSavedData::load, "chunks");
+        if (data != null) {
+    //        Main.LOGGER.info(data.getEntityForcedChunks());
+        }
     }
 }

@@ -60,7 +60,7 @@ public class MerchantEntity extends AbstractWorkerEntity implements IBoatControl
     private static final EntityDataAccessor<Integer> RETURNING_TIME = SynchedEntityData.defineId(MerchantEntity.class, EntityDataSerializers.INT);
     private static final EntityDataAccessor<Optional<BlockPos>> SAIL_POS = SynchedEntityData.defineId(MerchantEntity.class, EntityDataSerializers.OPTIONAL_BLOCK_POS);
     private static final EntityDataAccessor<Boolean> RETURNING = SynchedEntityData.defineId(MerchantEntity.class, EntityDataSerializers.BOOLEAN);
-
+    private static final EntityDataAccessor<Boolean> IS_CREATIVE = SynchedEntityData.defineId(MerchantEntity.class, EntityDataSerializers.BOOLEAN);
     private final SimpleContainer tradeInventory = new SimpleContainer(8);
     public boolean isTrading;
 
@@ -80,6 +80,7 @@ public class MerchantEntity extends AbstractWorkerEntity implements IBoatControl
         this.entityData.define(STATE, 0);
         this.entityData.define(CURRENT_WAYPOINT, Optional.empty());
         this.entityData.define(SAIL_POS, Optional.empty());
+        this.entityData.define(IS_CREATIVE, false);
     }
 
     @Override
@@ -252,6 +253,8 @@ public class MerchantEntity extends AbstractWorkerEntity implements IBoatControl
         nbt.putInt("CurrentWayPointIndex", this.getCurrentWayPointIndex());
         nbt.putInt("ReturningTime", this.getReturningTime());
 
+        nbt.putBoolean("isCreative", this.isCreative());
+
         BlockPos currentWayPoint = this.getCurrentWayPoint();
         if (currentWayPoint != null) this.setNbtPosition(nbt, "CurrentWayPoint", currentWayPoint);
 
@@ -287,6 +290,8 @@ public class MerchantEntity extends AbstractWorkerEntity implements IBoatControl
         this.setCurrentWayPointIndex(nbt.getInt("CurrentWayPointIndex"));
         this.setReturningTime(nbt.getInt("ReturningTime"));
 
+        this.setCreative(nbt.getBoolean("isCreative"));
+
         BlockPos startPos = this.getNbtPosition(nbt, "CurrentWayPoint");
         if (startPos != null) this.setCurrentWayPoint(startPos);
 
@@ -306,6 +311,13 @@ public class MerchantEntity extends AbstractWorkerEntity implements IBoatControl
         this.setState(nbt.getInt("State"));
     }
 
+    public boolean isCreative() {
+        return this.entityData.get(IS_CREATIVE);
+    }
+
+    public void setCreative(boolean creative){
+        this.entityData.set(IS_CREATIVE, creative);
+    }
     @Override
     public void setStartPos(BlockPos pos) {
         WAYPOINTS.add(pos);

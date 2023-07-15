@@ -1,6 +1,7 @@
 package com.talhanation.workers.entities;
 
 import com.talhanation.workers.Main;
+import com.talhanation.workers.config.WorkersModConfig;
 import com.talhanation.workers.inventory.WorkerInventoryContainer;
 import com.talhanation.workers.entities.ai.*;
 import com.talhanation.workers.network.MessageOpenGuiWorker;
@@ -67,7 +68,7 @@ public class LumberjackEntity extends AbstractWorkerEntity {
 
     @Override
     public int workerCosts() {
-        return 8;
+        return WorkersModConfig.LumberjackCost.get();
     }
 
     // ATTRIBUTES

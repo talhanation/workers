@@ -2,6 +2,7 @@ package com.talhanation.workers.entities;
 
 import com.google.common.collect.ImmutableSet;
 import com.talhanation.workers.Main;
+import com.talhanation.workers.config.WorkersModConfig;
 import com.talhanation.workers.entities.ai.*;
 import com.talhanation.workers.inventory.MinerInventoryContainer;
 import com.talhanation.workers.network.MessageOpenGuiMiner;
@@ -158,7 +159,7 @@ public class MinerEntity extends AbstractWorkerEntity {
 
     @Override
     public int workerCosts() {
-        return 10;
+        return WorkersModConfig.MinerCost.get();
     }
 
     public int getMaxMineDepth() {

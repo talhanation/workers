@@ -3,6 +3,7 @@ package com.talhanation.workers.client.gui;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.talhanation.workers.Main;
 import com.talhanation.workers.Translatable;
+import com.talhanation.workers.config.WorkersModConfig;
 import com.talhanation.workers.inventory.CommandMenu;
 import com.talhanation.workers.network.MessageBedPos;
 import com.talhanation.workers.network.MessageChestPos;
@@ -51,8 +52,7 @@ public class CommandScreen extends ScreenBase<CommandMenu> {
     @Override
     public boolean keyReleased(int x, int y, int z) {
         super.keyReleased(x, y, z);
-        this.onClose();
-
+        if(!WorkersModConfig.CommandScreenToggle.get())this.onClose();
         return true;
     }
 

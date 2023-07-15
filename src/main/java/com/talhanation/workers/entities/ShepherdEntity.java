@@ -1,5 +1,6 @@
 package com.talhanation.workers.entities;
 
+import com.talhanation.workers.config.WorkersModConfig;
 import com.talhanation.workers.entities.ai.ShepherdAI;
 import com.talhanation.workers.entities.ai.WorkerPickupWantedItemGoal;
 import net.minecraft.nbt.CompoundTag;
@@ -54,7 +55,7 @@ public class ShepherdEntity extends AbstractAnimalFarmerEntity {
 
     @Override
     public int workerCosts() {
-        return 12;
+        return WorkersModConfig.ShepherdCost.get();
     }
 
     @Override

@@ -1,6 +1,7 @@
 package com.talhanation.workers.entities;
 
 import com.google.common.collect.ImmutableSet;
+import com.talhanation.workers.config.WorkersModConfig;
 import com.talhanation.workers.entities.ai.ChickenFarmerAI;
 import com.talhanation.workers.entities.ai.WorkerPickupWantedItemGoal;
 import net.minecraft.nbt.CompoundTag;
@@ -76,7 +77,7 @@ public class ChickenFarmerEntity extends AbstractAnimalFarmerEntity {
 
     @Override
     public int workerCosts() {
-        return 18;
+        return WorkersModConfig.ChickenFarmerCost.get();
     }
 
     @Override

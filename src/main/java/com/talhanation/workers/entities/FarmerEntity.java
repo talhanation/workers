@@ -2,6 +2,7 @@ package com.talhanation.workers.entities;
 
 import com.google.common.collect.ImmutableSet;
 import com.talhanation.workers.Main;
+import com.talhanation.workers.config.WorkersModConfig;
 import com.talhanation.workers.inventory.WorkerInventoryContainer;
 import com.talhanation.workers.entities.ai.FarmerAI;
 import com.talhanation.workers.entities.ai.WorkerPickupWantedItemGoal;
@@ -79,7 +80,7 @@ public class FarmerEntity extends AbstractWorkerEntity {
 
     @Override
     public int workerCosts() {
-        return 7;
+        return WorkersModConfig.FarmerCost.get();
     }
 
     @Override
@@ -147,7 +148,7 @@ public class FarmerEntity extends AbstractWorkerEntity {
     @Override
     public void initSpawn() {
         super.initSpawn();
-        Component name = Component.translatable("entity.workers.farmer");
+        Component name = Component.literal("Farmer");
 
         this.setProfessionName(name.getString());
         this.setCustomName(name);
