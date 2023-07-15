@@ -46,8 +46,6 @@ public abstract class AbstractChunkLoaderEntity extends AbstractInventoryEntity 
             prevChunk = currentChunk;
 
         }
-        if(!this.level.isClientSide)
-            Main.LOGGER.info(ForgeChunkManager.hasForcedChunks((ServerLevel) this.level));
     }
 
     ////////////////////////////////////SET////////////////////////////////////

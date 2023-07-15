@@ -144,7 +144,7 @@ public class FishermanEntity extends AbstractWorkerEntity implements IBoatContro
     @Override
     public void initSpawn() {
         super.initSpawn();
-        Component name = Component.translatable("entity.workers.fisherman");
+        Component name = Component.literal("Fisherman");
 
         this.setProfessionName(name.getString());
         this.setCustomName(name);
@@ -205,7 +205,7 @@ public class FishermanEntity extends AbstractWorkerEntity implements IBoatContro
     }
 
     @Override
-    public double getControlAccuracy() {
+    public double getBoatControlAccuracy() {
         return 3.5D;
     }
 

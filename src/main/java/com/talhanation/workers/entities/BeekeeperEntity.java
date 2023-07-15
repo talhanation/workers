@@ -115,7 +115,7 @@ public class BeekeeperEntity extends AbstractAnimalFarmerEntity {
     @Override
     public void initSpawn() {
         super.initSpawn();
-        Component name = Component.translatable("entity.workers.beekeeper");
+        Component name = Component.literal("Beekeeper");
 
         this.setProfessionName(name.getString());
         this.setCustomName(name);

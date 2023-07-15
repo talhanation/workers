@@ -1,6 +1,7 @@
 package com.talhanation.workers.entities;
 
 import com.talhanation.workers.Main;
+import com.talhanation.workers.config.WorkersModConfig;
 import com.talhanation.workers.entities.ai.ControlBoatAI;
 import com.talhanation.workers.entities.ai.MerchantAI;
 import com.talhanation.workers.inventory.MerchantInventoryContainer;
@@ -90,12 +91,12 @@ public class MerchantEntity extends AbstractWorkerEntity implements IBoatControl
 
     @Override
     protected boolean shouldLoadChunk() {
-        return false;
+        return true;
     }
 
     @Override
     public int workerCosts() {
-        return 25;
+        return WorkersModConfig.MerchantCost.get();
     }
 
     @Override
@@ -211,7 +212,7 @@ public class MerchantEntity extends AbstractWorkerEntity implements IBoatControl
     @Override
     public void initSpawn() {
         super.initSpawn();
-        Component name = Component.translatable("entity.workers.merchant");
+        Component name = Component.literal("Merchant");
 
         this.setProfessionName(name.getString());
         this.setCustomName(name);
@@ -387,14 +388,16 @@ public class MerchantEntity extends AbstractWorkerEntity implements IBoatControl
     }
 
     @Override
-    public double getControlAccuracy() {
+    public double getBoatControlAccuracy() {
         return 1.5D;
     }
 
     public void die(@NotNull DamageSource dmg) {
         super.die(dmg);
-        for (int i = 0; i < this.tradeInventory.getContainerSize(); i++)
-            Containers.dropItemStack(this.level, getX(), getY(), getZ(), this.tradeInventory.getItem(i));
+        if(!isCreative()){
+            for (int i = 0; i < this.tradeInventory.getContainerSize(); i++)
+                Containers.dropItemStack(this.level, getX(), getY(), getZ(), this.tradeInventory.getItem(i));
+        }
     }
 
     public enum State{

@@ -13,7 +13,7 @@ public class WorkersModConfig {
     private static final ForgeConfigSpec.Builder BUILDER = new ForgeConfigSpec.Builder();
     public static ForgeConfigSpec CONFIG;
     public static ForgeConfigSpec.IntValue VERSION;
-    public static final int NEW_VERSION = 3;
+    public static final int NEW_VERSION = 4;
 
 
     public static ForgeConfigSpec.BooleanValue PlayVillagerAmbientSound;
@@ -138,6 +138,14 @@ public class WorkersModConfig {
                         \tdefault: 10""")
                 .worldRestart()
                 .defineInRange("SwineherdCost", 19, 0, 999);
+
+        MerchantCost = BUILDER.comment("""
+
+                        The amount of currency required to hire a merchant.
+                        \t(takes effect after restart)
+                        \tdefault: 12""")
+                .worldRestart()
+                .defineInRange("MerchantCost", 12, 0, 999);
 
         /*
         BeekeeperCost = BUILDER.comment("""

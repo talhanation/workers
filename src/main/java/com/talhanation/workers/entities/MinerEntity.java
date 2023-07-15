@@ -116,7 +116,7 @@ public class MinerEntity extends AbstractWorkerEntity {
     @Override
     public void initSpawn() {
         super.initSpawn();
-        Component name = Component.translatable("entity.workers.miner");
+        Component name = Component.literal("Miner");
         this.setProfessionName(name.getString());
         this.setCustomName(name);
     }

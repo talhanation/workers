@@ -124,7 +124,7 @@ public class ChickenFarmerEntity extends AbstractAnimalFarmerEntity {
     @Override
     public void initSpawn() {
         super.initSpawn();
-        Component name = Component.translatable("entity.workers.chicken_farmer");
+        Component name = Component.literal("Chicken Farmer");
 
         this.setProfessionName(name.getString());
         this.setCustomName(name);
