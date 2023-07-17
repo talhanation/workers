@@ -58,7 +58,7 @@ public class ControlBoatAI extends Goal {
     }
 
     public void tick() {
-        if(this.worker instanceof IBoatController sailor && this.worker.getNavigation() instanceof SailorPathNavigation sailorPathNavigation) {
+        if(this.worker instanceof IBoatController sailor && this.worker.getNavigation() instanceof SailorPathNavigation sailorPathNavigation && worker.getStartPos() != null) {
             if (sailor.getSailPos() != null) {
                 Main.LOGGER.info("Sate: " + state);
                 switch (state) {

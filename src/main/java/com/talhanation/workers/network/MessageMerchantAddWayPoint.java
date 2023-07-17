@@ -1,5 +1,6 @@
 package com.talhanation.workers.network;
 
+import com.talhanation.workers.Main;
 import com.talhanation.workers.entities.MerchantEntity;
 import de.maxhenkel.corelib.net.Message;
 import net.minecraft.core.BlockPos;
@@ -8,6 +9,7 @@ import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.network.NetworkEvent;
+import net.minecraftforge.network.PacketDistributor;
 
 import java.util.UUID;
 
@@ -41,9 +43,11 @@ public class MessageMerchantAddWayPoint implements Message<MessageMerchantAddWay
     private void addWayPoint(ServerPlayer player, MerchantEntity merchant){
         BlockPos pos = merchant.getOnPos();
 
-        merchant.tellPlayer(player, Component.literal("Pos: " + pos + " was added."));
+        //merchant.tellPlayer(player, Component.literal("Pos: " + pos + " was added."));
 
         merchant.WAYPOINTS.add(pos);
+
+        Main.SIMPLE_CHANNEL.send(PacketDistributor.PLAYER.with(() -> (ServerPlayer) player), new MessageToClientUpdateMerchantScreen(merchant.WAYPOINTS));
     }
 
     public MessageMerchantAddWayPoint fromBytes(FriendlyByteBuf buf) {

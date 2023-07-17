@@ -97,7 +97,7 @@ public class MerchantAI extends Goal {
                     merchant.tellPlayer(merchant.getOwner(), Component.literal("I've arrived at my last waypoint."));
                     arrivedMessage = true;
                 }
-                if(merchant.isReturnTimeElapsed()){
+                if(merchant.isReturnTimeElapsed() || merchant.getReturning()){
                     merchant.setReturning(true);
                     merchant.setCurrentReturningTime(0);
                     if(!returningMessage && merchant.getOwner() != null){
@@ -161,7 +161,7 @@ public class MerchantAI extends Goal {
     }
 
     private void moveToPos(BlockPos pos) {
-        if(pos != null) {
+        if(pos != null && !merchant.isTrading) {
             //Move to Pos -> normal movement
             if (!pos.closerThan(merchant.getOnPos(), 4F)) {
                 this.merchant.walkTowards(pos, 1F);

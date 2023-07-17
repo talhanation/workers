@@ -83,6 +83,7 @@ public class MerchantTradeContainer extends ContainerBase {
 
     @Override
     public void removed(Player playerIn) {
+        this.merchant.isTrading = false;
         super.removed(playerIn);
     }
 }

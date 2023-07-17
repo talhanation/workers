@@ -1,14 +1,13 @@
 package com.talhanation.workers.network;
 
+import com.talhanation.workers.Main;
 import com.talhanation.workers.entities.MerchantEntity;
 import de.maxhenkel.corelib.net.Message;
-import net.minecraft.commands.Commands;
-import net.minecraft.core.BlockPos;
 import net.minecraft.network.FriendlyByteBuf;
-import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.network.NetworkEvent;
+import net.minecraftforge.network.PacketDistributor;
 
 import java.util.UUID;
 
@@ -40,11 +39,12 @@ public class MessageMerchantRemoveWayPoint implements Message<MessageMerchantRem
     }
 
     private void removeLastWayPoint(ServerPlayer player, MerchantEntity merchant){
-        BlockPos pos = merchant.WAYPOINTS.get(merchant.WAYPOINTS.size() - 1);
+        //BlockPos pos = merchant.WAYPOINTS.get(merchant.WAYPOINTS.size() - 1);
 
-        merchant.tellPlayer(player, Component.literal("Pos: " + pos + " was removed."));
+        //merchant.tellPlayer(player, Component.literal("Pos: " + pos + " was removed."));
 
         merchant.WAYPOINTS.remove(merchant.WAYPOINTS.size() - 1);
+        Main.SIMPLE_CHANNEL.send(PacketDistributor.PLAYER.with(() -> (ServerPlayer) player), new MessageToClientUpdateMerchantScreen(merchant.WAYPOINTS));
     }
 
 

@@ -40,39 +40,45 @@ public class MerchantOwnerScreen extends ScreenBase<MerchantInventoryContainer> 
     protected void init() {
         super.init();
         this.returnTime = merchant.getReturningTime();
-        this.setButtons();
-    }
-
-    public void setButtons(){
+        this.setUpdatableButtons();
         int zeroLeftPos = leftPos + 180;
         int zeroTopPos = topPos - 30;
         int mirror = 240 - 60;
 
+        addRenderableWidget(new Button(zeroLeftPos - mirror + 180, zeroTopPos + 60, 41, 20, Component.literal("Return"), button -> {
+            Main.SIMPLE_CHANNEL.sendToServer(new MessageMerchantTravel(merchant.getUUID(), true, true));
+            this.setUpdatableButtons();
+        }));
         addRenderableWidget(new Button(zeroLeftPos - mirror + 180, zeroTopPos + 85, 41, 20, Component.literal("Travel"), button -> {
-            Main.SIMPLE_CHANNEL.sendToServer(new MessageMerchantTravel(merchant.getUUID(), !merchant.getTraveling()));
-        }));
-
-        addRenderableWidget(new Button(zeroLeftPos - mirror + 180, zeroTopPos + 106, 20, 20, Component.literal("+"), button -> {
-            Main.SIMPLE_CHANNEL.sendToServer(new MessageMerchantAddWayPoint(merchant.getUUID()));
-        }));
-
-        addRenderableWidget(new Button(zeroLeftPos - mirror + 201, zeroTopPos + 106, 20, 20, Component.literal("-"), button -> {
-            Main.SIMPLE_CHANNEL.sendToServer(new MessageMerchantRemoveWayPoint(merchant.getUUID()));
+            Main.SIMPLE_CHANNEL.sendToServer(new MessageMerchantTravel(merchant.getUUID(),  !merchant.getTraveling(), false));
+            this.setUpdatableButtons();
         }));
 
         if(this.player.isCreative() && this.player.createCommandSourceStack().hasPermission(4)){
             createCreativeButton(zeroLeftPos - mirror + 180, zeroTopPos + 127);
         }
+    }
+
+    public void setUpdatableButtons(){
+        int zeroLeftPos = leftPos + 180;
+        int zeroTopPos = topPos - 30;
+        int mirror = 240 - 60;
+
+        //Add Waypoint
+        Button addWaypointButton = createAddWaypointButton(zeroLeftPos - mirror + 180, zeroTopPos + 106);
+        addWaypointButton.active =  !merchant.getTraveling() || !merchant.getReturning();
+
+        Button removeWaypointButton = createRemoveWaypointButton(zeroLeftPos - mirror + 201, zeroTopPos + 106);
+        removeWaypointButton.active =  !merchant.getTraveling() || !merchant.getReturning();
 
         // ReturnTime
-        addRenderableWidget(new Button(zeroLeftPos - mirror + 20, zeroTopPos - 60, 8, 12, Component.literal("+"), button -> {
+        addRenderableWidget(new Button(zeroLeftPos - mirror + 180, zeroTopPos + 36, 20, 20, Component.literal("+"), button -> {
             this.returnTime = merchant.getReturningTime();
             this.returnTime++;
             Main.SIMPLE_CHANNEL.sendToServer(new MessageMerchantReturnTime(this.returnTime, merchant.getUUID()));
-
         }));
 
-        addRenderableWidget(new Button(zeroLeftPos - mirror, zeroTopPos - 60, 8, 12, Component.literal("-"), button -> {
+        addRenderableWidget(new Button(zeroLeftPos - mirror + 201, zeroTopPos + 36, 20, 20, Component.literal("-"), button -> {
             this.returnTime = merchant.getReturningTime();
             if (this.returnTime > 0) {
                 this.returnTime--;
@@ -87,6 +93,18 @@ public class MerchantOwnerScreen extends ScreenBase<MerchantInventoryContainer> 
         }));
     }
 
+    private Button createAddWaypointButton(int x, int y){
+        return addRenderableWidget(new Button(x, y, 20, 20, Component.literal("+"), button -> {
+            Main.SIMPLE_CHANNEL.sendToServer(new MessageMerchantAddWayPoint(merchant.getUUID()));
+        }));
+    }
+
+    private Button createRemoveWaypointButton(int x, int y){
+        return addRenderableWidget(new Button(x, y, 20, 20, Component.literal("-"), button -> {
+            Main.SIMPLE_CHANNEL.sendToServer(new MessageMerchantRemoveWayPoint(merchant.getUUID()));
+        }));
+    }
+
     @Override
     protected void renderLabels(PoseStack matrixStack, int mouseX, int mouseY) {
         super.renderLabels(matrixStack, mouseX, mouseY);
@@ -97,10 +115,10 @@ public class MerchantOwnerScreen extends ScreenBase<MerchantInventoryContainer> 
         int currentReturningTime = merchant.getCurrentReturningTime();
 
         if(waypoints != null) {
-            font.draw(matrixStack, "WP: " + currentWayPoint + "/" + waypoints.size(), 70, 6, FONT_COLOR);
+            font.draw(matrixStack, "Waypoints: " + currentWayPoint + "/" + waypoints.size(), 70, 6, FONT_COLOR);
             for (int i = 0; i < waypoints.size(); i++) {
                 BlockPos pos = waypoints.get(i);
-                font.draw(matrixStack, i + ": " + " x: " + pos.getX() + " y: " + pos.getY() + " z: " + pos.getZ(), 170, i * 13, FONT_COLOR_WHITE);
+                font.draw(matrixStack, i + ": " + " x: " + pos.getX() + " y: " + pos.getY() + " z: " + pos.getZ(), -160, i * 13, FONT_COLOR_WHITE);
             }
         }
         font.draw(matrixStack, "Days: " + currentReturningTime +"/" + returnTime, 120, 6, FONT_COLOR);
