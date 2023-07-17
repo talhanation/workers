@@ -3,6 +3,7 @@ package com.talhanation.workers.entities.ai;
 import com.talhanation.workers.Main;
 import com.talhanation.workers.entities.MerchantEntity;
 import net.minecraft.core.BlockPos;
+import net.minecraft.network.chat.Component;
 import net.minecraft.world.entity.ai.goal.Goal;
 import net.minecraft.world.entity.vehicle.Boat;
 import net.minecraft.world.level.block.Blocks;
@@ -18,6 +19,10 @@ public class MerchantAI extends Goal {
     private final MerchantEntity merchant;
     private MerchantEntity.State state;
 
+    private boolean arrivedMessage;
+    private boolean homeMessage;
+    private boolean returningMessage;
+
     private Boat boat;
 
     public MerchantAI(MerchantEntity merchant) {
@@ -26,7 +31,7 @@ public class MerchantAI extends Goal {
     }
 
     public boolean canUse() {
-        return merchant.getIsWorking();
+        return merchant.getIsWorking() && !merchant.getFollow();
     }
 
     @Override
@@ -48,6 +53,9 @@ public class MerchantAI extends Goal {
         switch (state){
             case IDLE -> {
                 if(merchant.getTraveling()){
+                    returningMessage = false;
+                    homeMessage = false;
+                    arrivedMessage = false;
                     int index = this.merchant.getCurrentWayPointIndex();
 
                     if (index >= 0 && index < this.merchant.WAYPOINTS.size()) {
@@ -56,6 +64,7 @@ public class MerchantAI extends Goal {
                     this.changeTravelType();
                 }
             }
+
             case MOVE_TO_BOAT -> {
                 this.searchForBoat();
                 if(boat != null) {
@@ -84,15 +93,29 @@ public class MerchantAI extends Goal {
             }
 
             case ARRIVED -> {
-                if(!merchant.level.isDay()){//Returning time elapsed
+                if(!arrivedMessage && merchant.getOwner() != null){
+                    merchant.tellPlayer(merchant.getOwner(), Component.literal("I've arrived at my last waypoint."));
+                    arrivedMessage = true;
+                }
+                if(merchant.isReturnTimeElapsed()){
                     merchant.setReturning(true);
+                    merchant.setCurrentReturningTime(0);
+                    if(!returningMessage && merchant.getOwner() != null){
+                        merchant.tellPlayer(merchant.getOwner(), Component.literal("I'm returning now."));
+                        returningMessage = true;
+                    }
                     this.setWorkState(IDLE);
                 }
             }
 
             case HOME -> {
+                if(!homeMessage && merchant.getOwner() != null){
+                    merchant.tellPlayer(merchant.getOwner(), Component.literal("I've arrived where i've started."));
+                    homeMessage = true;
+                }
                 merchant.setTraveling(false);
                 merchant.setReturning(false);
+
                 this.setWorkState(IDLE);
             }
         }
@@ -101,7 +124,6 @@ public class MerchantAI extends Goal {
     private void setWorkState(MerchantEntity.State state) {
         this.state = state;
         this.merchant.setState(state.getIndex());
-
     }
 
     private void moveToWayPoint(int indexChange, MerchantEntity.State nextState, boolean condition, boolean isSailing) {

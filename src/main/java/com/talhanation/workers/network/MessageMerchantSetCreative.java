@@ -36,16 +36,25 @@ public class MessageMerchantSetCreative implements Message<MessageMerchantSetCre
                 .stream()
                 .filter(MerchantEntity::isAlive)
                 .findAny()
-                .ifPresent(merchant -> merchant.setCreative(creative));
+                .ifPresent(merchant -> this.setCreative(player, merchant, creative));
+
+    }
+
+    private void setCreative(ServerPlayer player, MerchantEntity merchant, boolean creative){
+        merchant.setCreative(creative);
+        if(creative) merchant.tellPlayer(player, Component.literal("Im now a Creative Merchant."));
+        else merchant.tellPlayer(player, Component.literal("Im back a Survival Merchant."));
     }
 
     public MessageMerchantSetCreative fromBytes(FriendlyByteBuf buf) {
         this.worker = buf.readUUID();
+        this.creative = buf.readBoolean();
         return this;
     }
 
     public void toBytes(FriendlyByteBuf buf) {
         buf.writeUUID(this.worker);
+        buf.writeBoolean(this.creative);
     }
 
 }

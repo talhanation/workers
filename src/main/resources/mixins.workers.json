@@ -1,0 +1,15 @@
+{
+  "required": true,
+  "minVersion": "0.8",
+  "package": "com.talhanation.workers.mixin",
+  "compatibilityLevel": "JAVA_17",
+  "refmap": "mixins.workers.refmap.json",
+  "mixins": [
+  "AbstractHorseMixin"
+  ],
+  "client": [
+  ],
+  "injectors": {
+  "defaultRequire": 1
+  }
+}

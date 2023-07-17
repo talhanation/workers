@@ -1,24 +1,25 @@
 package com.talhanation.workers.network;
 
-import com.talhanation.workers.CommandEvents;
-import com.talhanation.workers.entities.AbstractWorkerEntity;
 import com.talhanation.workers.entities.MerchantEntity;
 import de.maxhenkel.corelib.net.Message;
 import net.minecraft.network.FriendlyByteBuf;
+import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.network.NetworkEvent;
 
 import java.util.UUID;
 
-public class MessageTravel implements Message<MessageTravel> {
+public class MessageMerchantTravel implements Message<MessageMerchantTravel> {
     private UUID worker;
+    private boolean travel;
 
-    public MessageTravel() {
+    public MessageMerchantTravel() {
     }
 
-    public MessageTravel(UUID recruit) {
+    public MessageMerchantTravel(UUID recruit, boolean travel) {
         this.worker = recruit;
+        this.travel = travel;
     }
 
     public Dist getExecutingSide() {
@@ -35,22 +36,31 @@ public class MessageTravel implements Message<MessageTravel> {
                 .stream()
                 .filter(MerchantEntity::isAlive)
                 .findAny()
-                .ifPresent(this::onButton);
+                .ifPresent(merchant -> this.setCreative(player, merchant, travel));
 
     }
-    private void onButton(MerchantEntity merchant){
-        merchant.setTraveling(!merchant.getTraveling());
-        merchant.setIsWorking(true);
+
+    private void setCreative(ServerPlayer player, MerchantEntity merchant, boolean travel) {
+        merchant.setTraveling(travel);
         merchant.setCurrentWayPointIndex(0);
+        if (travel){
+            merchant.setIsWorking(true); // to activate the AI
+            merchant.tellPlayer(player, Component.literal("Im now traveling."));
+        }
+        else {
+            merchant.setIsWorking(false);
+            merchant.tellPlayer(player, Component.literal("I stopped traveling."));
+        }
     }
 
-    public MessageTravel fromBytes(FriendlyByteBuf buf) {
+    public MessageMerchantTravel fromBytes(FriendlyByteBuf buf) {
         this.worker = buf.readUUID();
+        this.travel = buf.readBoolean();
         return this;
     }
 
     public void toBytes(FriendlyByteBuf buf) {
         buf.writeUUID(this.worker);
+        buf.writeBoolean(this.travel);
     }
-
 }

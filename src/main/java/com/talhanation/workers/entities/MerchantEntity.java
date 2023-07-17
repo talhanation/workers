@@ -6,9 +6,9 @@ import com.talhanation.workers.entities.ai.ControlBoatAI;
 import com.talhanation.workers.entities.ai.MerchantAI;
 import com.talhanation.workers.inventory.MerchantInventoryContainer;
 import com.talhanation.workers.inventory.MerchantTradeContainer;
-import com.talhanation.workers.entities.ai.WorkerFollowOwnerGoal;
 import com.talhanation.workers.network.MessageOpenGuiMerchant;
 import com.talhanation.workers.network.MessageOpenGuiWorker;
+import com.talhanation.workers.network.MessageToClientUpdateMerchantScreen;
 import net.minecraft.core.BlockPos;
 import net.minecraft.network.syncher.EntityDataAccessor;
 import net.minecraft.network.syncher.EntityDataSerializers;
@@ -45,8 +45,8 @@ import java.util.Optional;
 import java.util.function.Predicate;
 
 import net.minecraft.world.entity.AgeableMob;
-import net.minecraft.world.entity.ai.goal.FloatGoal;
 import net.minecraft.world.entity.ai.goal.PanicGoal;
+import net.minecraftforge.network.PacketDistributor;
 import org.jetbrains.annotations.NotNull;
 
 import static com.talhanation.workers.Translatable.TEXT_HELLO;
@@ -58,10 +58,12 @@ public class MerchantEntity extends AbstractWorkerEntity implements IBoatControl
     private static final EntityDataAccessor<Integer> STATE = SynchedEntityData.defineId(MerchantEntity.class, EntityDataSerializers.INT);
     private static final EntityDataAccessor<Optional<BlockPos>> CURRENT_WAYPOINT = SynchedEntityData.defineId(MerchantEntity.class, EntityDataSerializers.OPTIONAL_BLOCK_POS);
     private static final EntityDataAccessor<Integer> CURRENT_WAYPOINT_INDEX = SynchedEntityData.defineId(MerchantEntity.class, EntityDataSerializers.INT);
+    private static final EntityDataAccessor<Integer> CURRENT_RETURNING_TIME = SynchedEntityData.defineId(MerchantEntity.class, EntityDataSerializers.INT);
     private static final EntityDataAccessor<Integer> RETURNING_TIME = SynchedEntityData.defineId(MerchantEntity.class, EntityDataSerializers.INT);
     private static final EntityDataAccessor<Optional<BlockPos>> SAIL_POS = SynchedEntityData.defineId(MerchantEntity.class, EntityDataSerializers.OPTIONAL_BLOCK_POS);
     private static final EntityDataAccessor<Boolean> RETURNING = SynchedEntityData.defineId(MerchantEntity.class, EntityDataSerializers.BOOLEAN);
     private static final EntityDataAccessor<Boolean> IS_CREATIVE = SynchedEntityData.defineId(MerchantEntity.class, EntityDataSerializers.BOOLEAN);
+    private static final EntityDataAccessor<Boolean> IS_DAY_COUNTED = SynchedEntityData.defineId(MerchantEntity.class, EntityDataSerializers.BOOLEAN);
     private final SimpleContainer tradeInventory = new SimpleContainer(8);
     public boolean isTrading;
 
@@ -77,11 +79,13 @@ public class MerchantEntity extends AbstractWorkerEntity implements IBoatControl
         this.entityData.define(TRAVELING, false);
         this.entityData.define(RETURNING, false);
         this.entityData.define(RETURNING_TIME, 1);
+        this.entityData.define(CURRENT_RETURNING_TIME, 0);
         this.entityData.define(CURRENT_WAYPOINT_INDEX, 0);
         this.entityData.define(STATE, 0);
         this.entityData.define(CURRENT_WAYPOINT, Optional.empty());
         this.entityData.define(SAIL_POS, Optional.empty());
         this.entityData.define(IS_CREATIVE, false);
+        this.entityData.define(IS_DAY_COUNTED, false);
     }
 
     @Override
@@ -107,30 +111,51 @@ public class MerchantEntity extends AbstractWorkerEntity implements IBoatControl
     public InteractionResult mobInteract(Player player, InteractionHand hand) {
         if (this.level.isClientSide) {
             return InteractionResult.CONSUME;
-        } else {
-            if (this.isTame() && player.getUUID().equals(this.getOwnerUUID())) {
-                if (player.isCrouching()) {
-                    openGUI(player);
+        }
+        else {
+            if (isCreative()) {
+                if (player.isCreative() && player.createCommandSourceStack().hasPermission(4)) {
+                    if (player.isCrouching()) {
+                        openGUI(player);
+                    }
+                    else {
+                        setFollow(!getFollow());
+                        return InteractionResult.SUCCESS;
+                    }
                 }
-                if (!player.isCrouching()) {
-                    setFollow(!getFollow());
-                    return InteractionResult.SUCCESS;
-                }
-            } else if (this.isTame() && !player.getUUID().equals(this.getOwnerUUID())) {
-                this.tellPlayer(player, TEXT_HELLO_OWNED(this.getProfessionName(), this.getOwnerName()));
-                if (!player.isCrouching()) {
+                else {
                     openTradeGUI(player);
                     return InteractionResult.SUCCESS;
                 }
-            } else if (!this.isTame()) {
-                this.tellPlayer(player, TEXT_HELLO(this.getProfessionName()));
-                this.openHireGUI(player);
-                this.navigation.stop();
-                return InteractionResult.SUCCESS;
             }
-            return super.mobInteract(player, hand);
+            else {
+                if (this.isTame() && (player.getUUID().equals(this.getOwnerUUID()))) {
+                    if (player.isCrouching()) {
+                        openGUI(player);
+                    }
+                    if (!player.isCrouching()) {
+                        setFollow(!getFollow());
+                        return InteractionResult.SUCCESS;
+                    }
+                }
+                else if (this.isTame() && !player.getUUID().equals(this.getOwnerUUID())) {
+                    this.tellPlayer(player, TEXT_HELLO_OWNED(this.getProfessionName(), this.getOwnerName()));
+                    if (!player.isCrouching()) {
+                        openTradeGUI(player);
+                        return InteractionResult.SUCCESS;
+                    }
+                }
+                else if (!this.isTame()) {
+                    this.tellPlayer(player, TEXT_HELLO(this.getProfessionName()));
+                    this.openHireGUI(player);
+                    this.navigation.stop();
+                    return InteractionResult.SUCCESS;
+                }
+            }
         }
+        return InteractionResult.PASS;
     }
+
 
     public void openTradeGUI(Player player) {
         if (player instanceof ServerPlayer) {
@@ -171,6 +196,10 @@ public class MerchantEntity extends AbstractWorkerEntity implements IBoatControl
         } else {
             Main.SIMPLE_CHANNEL.sendToServer(new MessageOpenGuiWorker(player, this.getUUID()));
         }
+
+        if (player instanceof ServerPlayer) {
+            Main.SIMPLE_CHANNEL.send(PacketDistributor.PLAYER.with(() -> (ServerPlayer) player), new MessageToClientUpdateMerchantScreen(this.WAYPOINTS));
+        }
     }
 
     // ATTRIBUTES
@@ -186,8 +215,7 @@ public class MerchantEntity extends AbstractWorkerEntity implements IBoatControl
     protected void registerGoals() {
         super.registerGoals();
         this.goalSelector.addGoal(0, new ControlBoatAI(this));
-        this.goalSelector.addGoal(1, new FloatGoal(this));
-        this.goalSelector.addGoal(2, new WorkerFollowOwnerGoal(this, 1.2D, 7.F, 1.0F));
+        //this.goalSelector.addGoal(1, new FloatGoal(this));
         this.goalSelector.addGoal(3, new PanicGoal(this, 2D));
         this.goalSelector.addGoal(4, new MerchantAI(this));
     }
@@ -203,7 +231,7 @@ public class MerchantEntity extends AbstractWorkerEntity implements IBoatControl
     public SpawnGroupData finalizeSpawn(@NotNull ServerLevelAccessor world, @NotNull DifficultyInstance difficultyInstance, @NotNull MobSpawnType reason, @Nullable SpawnGroupData data, @Nullable CompoundTag nbt) {
         SpawnGroupData ilivingentitydata = super.finalizeSpawn(world, difficultyInstance, reason, data, nbt);
         this.populateDefaultEquipmentEnchantments(random, difficultyInstance);
-
+        this.createNavigation(world.getLevel());
         this.initSpawn();
 
         return ilivingentitydata;
@@ -253,8 +281,9 @@ public class MerchantEntity extends AbstractWorkerEntity implements IBoatControl
         nbt.putBoolean("Returning", this.getReturning());
         nbt.putInt("CurrentWayPointIndex", this.getCurrentWayPointIndex());
         nbt.putInt("ReturningTime", this.getReturningTime());
-
+        nbt.putInt("CurrentReturningTime", this.getCurrentReturningTime());
         nbt.putBoolean("isCreative", this.isCreative());
+        nbt.putBoolean("isDayCounted", this.isDayCounted());
 
         BlockPos currentWayPoint = this.getCurrentWayPoint();
         if (currentWayPoint != null) this.setNbtPosition(nbt, "CurrentWayPoint", currentWayPoint);
@@ -290,8 +319,10 @@ public class MerchantEntity extends AbstractWorkerEntity implements IBoatControl
         this.setReturning(nbt.getBoolean("Returning"));
         this.setCurrentWayPointIndex(nbt.getInt("CurrentWayPointIndex"));
         this.setReturningTime(nbt.getInt("ReturningTime"));
+        this.setCurrentReturningTime(nbt.getInt("CurrentReturningTime"));
 
         this.setCreative(nbt.getBoolean("isCreative"));
+        this.setIsDayCounted(nbt.getBoolean("isDayCounted"));
 
         BlockPos startPos = this.getNbtPosition(nbt, "CurrentWayPoint");
         if (startPos != null) this.setCurrentWayPoint(startPos);
@@ -312,12 +343,35 @@ public class MerchantEntity extends AbstractWorkerEntity implements IBoatControl
         this.setState(nbt.getInt("State"));
     }
 
+    public boolean isReturnTimeElapsed(){
+        int maxDays = this.getReturningTime();
+        boolean isDayCounted = this.isDayCounted();
+
+        if(this.level.isNight() && !isDayCounted){
+            this.setCurrentReturningTime(this.getCurrentReturningTime() + 1);
+            this.setIsDayCounted(true);
+        }
+        else if(this.level.isDay())
+            this.setIsDayCounted(false);
+
+        int currentDays = this.getCurrentReturningTime();
+        return currentDays >= maxDays && this.level.isDay();
+    }
+
     public boolean isCreative() {
         return this.entityData.get(IS_CREATIVE);
     }
 
     public void setCreative(boolean creative){
         this.entityData.set(IS_CREATIVE, creative);
+    }
+
+    public boolean isDayCounted() {
+        return this.entityData.get(IS_DAY_COUNTED);
+    }
+
+    public void setIsDayCounted(boolean counted){
+        this.entityData.set(IS_DAY_COUNTED, counted);
     }
     @Override
     public void setStartPos(BlockPos pos) {
@@ -368,6 +422,14 @@ public class MerchantEntity extends AbstractWorkerEntity implements IBoatControl
         entityData.set(RETURNING_TIME, x);
     }
 
+    public int getCurrentReturningTime() { //MC Days
+        return entityData.get(CURRENT_RETURNING_TIME);
+    }
+
+    public void setCurrentReturningTime(int x) {
+        entityData.set(CURRENT_RETURNING_TIME, x);
+    }
+
     @Override
     @Nullable
     public BlockPos getSailPos() {
@@ -398,6 +460,11 @@ public class MerchantEntity extends AbstractWorkerEntity implements IBoatControl
             for (int i = 0; i < this.tradeInventory.getContainerSize(); i++)
                 Containers.dropItemStack(this.level, getX(), getY(), getZ(), this.tradeInventory.getItem(i));
         }
+    }
+    @Override
+    public boolean hurt(DamageSource dmg, float amt) {
+        if(!isCreative()) return super.hurt(dmg, amt);
+        else return false;
     }
 
     public enum State{

@@ -45,8 +45,6 @@ public class CommandScreen extends ScreenBase<CommandMenu> {
         imageWidth = 201;
         imageHeight = 170;
         player = playerInventory.player;
-
-
     }
 
     @Override

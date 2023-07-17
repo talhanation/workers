@@ -5,14 +5,15 @@ import net.minecraft.world.entity.ai.navigation.GroundPathNavigation;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.pathfinder.PathFinder;
 import net.minecraft.world.level.pathfinder.WalkNodeEvaluator;
+import org.jetbrains.annotations.NotNull;
 
 public class WorkersPathNavigation extends GroundPathNavigation {
 
-    public WorkersPathNavigation(AbstractWorkerEntity recruit, Level world) {
-        super(recruit, world);
+    public WorkersPathNavigation(AbstractWorkerEntity worker, Level world) {
+        super(worker, world);
     }
 
-    protected PathFinder createPathFinder(int range) {
+    protected @NotNull PathFinder createPathFinder(int range) {
         this.nodeEvaluator = new WalkNodeEvaluator();
         this.nodeEvaluator.setCanOpenDoors(true);
         this.nodeEvaluator.setCanPassDoors(true);

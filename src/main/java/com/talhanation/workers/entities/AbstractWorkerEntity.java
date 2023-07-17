@@ -119,7 +119,7 @@ public abstract class AbstractWorkerEntity extends AbstractChunkLoaderEntity {
         this.goalSelector.addGoal(0, new OpenDoorGoal(this, true));
         this.goalSelector.addGoal(1, new TransferItemsInChestGoal(this));
         this.goalSelector.addGoal(1, new WorkerMoveToHomeGoal<>(this));
-        this.goalSelector.addGoal(2, new WorkerFollowOwnerGoal(this, 1.2D, 5.0F, 1.0F));
+        this.goalSelector.addGoal(2, new WorkerFollowOwnerGoal(this, 1.0F, 15.0F));
 
         this.goalSelector.addGoal(9, new MoveBackToVillageGoal(this, 0.6D, false));
         this.goalSelector.addGoal(10, new GolemRandomStrollInVillageGoal(this, 0.6D));
@@ -223,11 +223,13 @@ public abstract class AbstractWorkerEntity extends AbstractChunkLoaderEntity {
 
     @Nullable
     public SpawnGroupData finalizeSpawn(@NotNull ServerLevelAccessor world, @NotNull DifficultyInstance diff, @NotNull MobSpawnType reason, @Nullable SpawnGroupData spawnData, @Nullable CompoundTag nbt) {
+        this.createNavigation(world.getLevel());
         return spawnData;
     }
     public void setDropEquipment() {
         this.dropEquipment();
     }
+
 
     //////////////////////////////////// REGISTER////////////////////////////////////
 
@@ -758,7 +760,7 @@ public abstract class AbstractWorkerEntity extends AbstractChunkLoaderEntity {
                 this.navigation.stop();
                 return InteractionResult.SUCCESS;
             }
-            return super.mobInteract(player, hand);
+            return InteractionResult.PASS;
         }
     }
 
