@@ -189,11 +189,6 @@ public class MinerEntity extends AbstractWorkerEntity {
         this.setChecked(nbt.getBoolean("Checked"));
     }
 
-    @Override
-    protected boolean shouldLoadChunk() {
-        return true;
-    }
-
     public void setMineDirection(Direction dir) {
         entityData.set(DIRECTION, dir);
     }

@@ -15,7 +15,7 @@ public class WorkersModConfig {
     public static ForgeConfigSpec.IntValue VERSION;
     public static final int NEW_VERSION = 4;
 
-
+    public static ForgeConfigSpec.BooleanValue WorkerChunkLoading;
     public static ForgeConfigSpec.BooleanValue PlayVillagerAmbientSound;
     public static ForgeConfigSpec.BooleanValue WorkersLookLikeVillagers;
     public static ForgeConfigSpec.IntValue MinerCost;
@@ -62,10 +62,21 @@ public class WorkersModConfig {
                 .worldRestart()
                 .define("CommandScreenToggle", false);
         /*
-        Recruits Config
+        Workers Config
          */
         BUILDER.pop();
         BUILDER.comment("Workers Config:").push("Workers");
+
+        WorkerChunkLoading = BUILDER.comment("""
+                        
+                        ----WorkerChunkLoading----
+                        \t(takes effect after restart)
+                        \t
+                        Should workers load the chunk they are in?""
+                        default: true""")
+
+                .worldRestart()
+                .define("WorkerChunkLoading", true);
 
         WorkersCurrency = BUILDER.comment("""
 
@@ -97,7 +108,7 @@ public class WorkersModConfig {
                         \t(takes effect after restart)
                         \tdefault: 25""")
                 .worldRestart()
-                .defineInRange("LumberjackCost", 25, 0, 999);
+                .defineInRange("FishermanCost", 25, 0, 999);
 
         FarmerCost = BUILDER.comment("""
 

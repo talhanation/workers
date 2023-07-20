@@ -48,10 +48,6 @@ public class ShepherdEntity extends AbstractAnimalFarmerEntity {
         super.tick();
     }
 
-    @Override
-    protected boolean shouldLoadChunk() {
-        return true;
-    }
 
     @Override
     public int workerCosts() {

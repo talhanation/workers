@@ -68,11 +68,6 @@ public class CattleFarmerEntity extends AbstractAnimalFarmerEntity {
     }
 
     @Override
-    protected boolean shouldLoadChunk() {
-        return true;
-    }
-
-    @Override
     public int workerCosts() {
         return WorkersModConfig.CattleFarmerCost.get();
     }

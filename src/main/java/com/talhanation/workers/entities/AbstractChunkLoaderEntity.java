@@ -1,6 +1,7 @@
 package com.talhanation.workers.entities;
 
 import com.talhanation.workers.Main;
+import com.talhanation.workers.config.WorkersModConfig;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.damagesource.DamageSource;
 import net.minecraft.world.entity.EntityType;
@@ -12,7 +13,6 @@ import org.jetbrains.annotations.NotNull;
 import java.util.*;
 
 public abstract class AbstractChunkLoaderEntity extends AbstractInventoryEntity {
-    protected abstract boolean shouldLoadChunk();
     public AbstractChunkLoaderEntity(EntityType<? extends AbstractChunkLoaderEntity> entityType, Level world) {
         super(entityType, world);
     }
@@ -28,7 +28,7 @@ public abstract class AbstractChunkLoaderEntity extends AbstractInventoryEntity 
     }
 
     public void updateChunkLoading() {
-        if (this.shouldLoadChunk() && isAlive() && !this.level.isClientSide) {
+        if (WorkersModConfig.WorkerChunkLoading.get() && isAlive() && !this.level.isClientSide) {
             this.currentChunk = new WorkersChunk(this.chunkPosition());
 
             if(!initChunkLoad){

@@ -83,15 +83,9 @@ public class FishermanEntity extends AbstractWorkerEntity implements IBoatContro
         return this.entityData.get(STATE);
     }
 
-
     @Override
     public void tick() {
         super.tick();
-    }
-
-    @Override
-    protected boolean shouldLoadChunk() {
-        return true;
     }
 
     @Override

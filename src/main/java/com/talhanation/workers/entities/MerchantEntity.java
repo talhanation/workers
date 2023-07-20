@@ -231,7 +231,6 @@ public class MerchantEntity extends AbstractWorkerEntity implements IBoatControl
     public SpawnGroupData finalizeSpawn(@NotNull ServerLevelAccessor world, @NotNull DifficultyInstance difficultyInstance, @NotNull MobSpawnType reason, @Nullable SpawnGroupData data, @Nullable CompoundTag nbt) {
         SpawnGroupData ilivingentitydata = super.finalizeSpawn(world, difficultyInstance, reason, data, nbt);
         this.populateDefaultEquipmentEnchantments(random, difficultyInstance);
-        this.createNavigation(world.getLevel());
         this.initSpawn();
 
         return ilivingentitydata;
