@@ -167,12 +167,4 @@ public class FarmerEntity extends AbstractWorkerEntity {
         this.updateInventory(0, initialTool);
         this.equipTool(initialTool);
     }
-
-    @Override
-    public boolean shouldDirectNavigation() {
-        return false;
-    }
-
-
-
 }

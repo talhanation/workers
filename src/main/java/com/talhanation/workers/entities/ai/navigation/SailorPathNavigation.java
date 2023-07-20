@@ -23,7 +23,7 @@ public class SailorPathNavigation extends WaterBoundPathNavigation {
         this.worker = sailor.getWorker();
     }
 
-    protected PathFinder createPathFinder(int maxVisitedNodes) {
+    protected @NotNull PathFinder createPathFinder(int maxVisitedNodes) {
         this.nodeEvaluator = new SailorNodeEvaluator();
         return new PathFinder(this.nodeEvaluator, maxVisitedNodes);
     }

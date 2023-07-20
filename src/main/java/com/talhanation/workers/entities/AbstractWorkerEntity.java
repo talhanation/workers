@@ -76,25 +76,14 @@ public abstract class AbstractWorkerEntity extends AbstractChunkLoaderEntity {
     public static final EntityDataAccessor<Integer> FARMED_ITEMS = SynchedEntityData.defineId(AbstractWorkerEntity.class, EntityDataSerializers.INT);
 
     int hurtTimeStamp = 0;
-    
-    protected PathNavigation navigation;
-
 
     public AbstractWorkerEntity(EntityType<? extends AbstractWorkerEntity> entityType, Level world) {
         super(entityType, world);
         this.setOwned(false);
-        this.navigation = this.createNavigation(world);
         this.xpReward = 2;
         this.maxUpStep = 1.25F;
     }
 
-    /*
-     * @Override
-     * 
-     * @NotNull protected PathNavigation createNavigation(@NotNull Level level) { if(this.getIsWorking()
-     * && this.shouldDirectNavigation() && !this.getIsPickingUp() && !this.getFollow()){ return new
-     * DirectPathNavigation(this, level); } else return new GroundPathNavigation(this, level); }
-     */
     @Override
     @NotNull
     protected PathNavigation createNavigation(@NotNull Level level) {
@@ -108,7 +97,7 @@ public abstract class AbstractWorkerEntity extends AbstractChunkLoaderEntity {
             return new SailorPathNavigation(sailor, level);
         }
         else
-            return new WorkersPathNavigation(this, level);
+            return super.getNavigation();
     }
 
     @Override
@@ -119,7 +108,7 @@ public abstract class AbstractWorkerEntity extends AbstractChunkLoaderEntity {
         this.goalSelector.addGoal(0, new OpenDoorGoal(this, true));
         this.goalSelector.addGoal(1, new TransferItemsInChestGoal(this));
         this.goalSelector.addGoal(1, new WorkerMoveToHomeGoal<>(this));
-        this.goalSelector.addGoal(2, new WorkerFollowOwnerGoal(this, 1.0F, 15.0F));
+        this.goalSelector.addGoal(0, new WorkerFollowOwnerGoal(this, 1.0F, 20.0F));
 
         this.goalSelector.addGoal(9, new MoveBackToVillageGoal(this, 0.6D, false));
         this.goalSelector.addGoal(10, new GolemRandomStrollInVillageGoal(this, 0.6D));
@@ -223,7 +212,6 @@ public abstract class AbstractWorkerEntity extends AbstractChunkLoaderEntity {
 
     @Nullable
     public SpawnGroupData finalizeSpawn(@NotNull ServerLevelAccessor world, @NotNull DifficultyInstance diff, @NotNull MobSpawnType reason, @Nullable SpawnGroupData spawnData, @Nullable CompoundTag nbt) {
-        this.createNavigation(world.getLevel());
         return spawnData;
     }
     public void setDropEquipment() {
@@ -626,6 +614,7 @@ public abstract class AbstractWorkerEntity extends AbstractChunkLoaderEntity {
     }
 
     public void die(@NotNull DamageSource dmg) {
+
         // TODO: Liberate POI on death.
         super.die(dmg);
 
@@ -812,18 +801,11 @@ public abstract class AbstractWorkerEntity extends AbstractChunkLoaderEntity {
     public abstract void openGUI(Player player);
 
     public void initSpawn(){
-        GroundPathNavigation navigation = (GroundPathNavigation) this.getNavigation();
-        navigation.setCanOpenDoors(true);
-        navigation.setCanPassDoors(true);
-        navigation.setCanFloat(true);
-
         this.setEquipment();
         this.setDropEquipment();
         this.setPersistenceRequired();
         this.setCanPickUpLoot(true);
     }
-
-    public abstract boolean shouldDirectNavigation();
 
     public void openHireGUI(Player player) {
         this.navigation.stop();

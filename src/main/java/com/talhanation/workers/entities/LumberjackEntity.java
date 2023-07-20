@@ -113,11 +113,6 @@ public class LumberjackEntity extends AbstractWorkerEntity {
     }
 
     @Override
-    public boolean shouldDirectNavigation() {
-        return true;
-    }
-
-    @Override
     public boolean wantsToPickUp(ItemStack itemStack) {
         return (
             itemStack.is(ItemTags.LOGS) ||

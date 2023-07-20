@@ -132,9 +132,4 @@ public class ShepherdEntity extends AbstractAnimalFarmerEntity {
         return tool.getItem() instanceof AxeItem;
     }
 
-    @Override
-    public boolean shouldDirectNavigation() {
-        return false;
-    }
-
 }

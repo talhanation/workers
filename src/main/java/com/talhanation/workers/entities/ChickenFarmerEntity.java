@@ -124,12 +124,6 @@ public class ChickenFarmerEntity extends AbstractAnimalFarmerEntity {
         this.setProfessionName(name.getString());
         this.setCustomName(name);
     }
-
-    @Override
-    public boolean shouldDirectNavigation() {
-        return false;
-    }
-
     @Override
     public boolean wantsToPickUp(ItemStack itemStack) {
         Item item = itemStack.getItem();

@@ -94,11 +94,6 @@ public class MerchantEntity extends AbstractWorkerEntity implements IBoatControl
     }
 
     @Override
-    protected boolean shouldLoadChunk() {
-        return true;
-    }
-
-    @Override
     public int workerCosts() {
         return WorkersModConfig.MerchantCost.get();
     }
@@ -245,11 +240,6 @@ public class MerchantEntity extends AbstractWorkerEntity implements IBoatControl
         this.setCustomName(name);
 
         this.heal(100);
-    }
-
-    @Override
-    public boolean shouldDirectNavigation() {
-        return false;
     }
 
     @Override

@@ -122,11 +122,6 @@ public class MinerEntity extends AbstractWorkerEntity {
     }
 
     @Override
-    public boolean shouldDirectNavigation() {
-        return this.getMineType() != 3;
-    }
-
-    @Override
     public boolean wantsToPickUp(ItemStack itemStack) {
         Item item = itemStack.getItem();
         return (WANTED_ITEMS.contains(item));

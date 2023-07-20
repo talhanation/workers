@@ -118,11 +118,6 @@ public class SwineherdEntity extends AbstractAnimalFarmerEntity {
     }
 
     @Override
-    public boolean shouldDirectNavigation() {
-        return false;
-    }
-
-    @Override
     public boolean wantsToPickUp(ItemStack itemStack) {
         Item item = itemStack.getItem();
         return (WANTED_ITEMS.contains(item));

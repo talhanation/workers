@@ -30,6 +30,7 @@ public class WorkerFollowOwnerGoal extends Goal {
     public void tick() {
         if (this.worker.getOwner() != null){
             if(worker.getOwner().distanceToSqr(worker) > within) {
+                this.worker.getLookControl().setLookAt(worker.getOwner());
                 this.worker.getNavigation().moveTo(worker.getOwner().getX(), worker.getOwner().getY(), worker.getOwner().getZ(), this.speedModifier);
             }
         }
