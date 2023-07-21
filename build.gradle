@@ -36,7 +36,7 @@ mixin{
     overwriteErrorLevel = 'error'
 }
 
-version = '1.6.6'
+version = '1.7.0'
 group = 'com.talhanation.workers' // http://maven.apache.org/guides/mini/guide-naming-conventions.html
 archivesBaseName = 'workers-1.19.2'
 
@@ -107,7 +107,7 @@ dependencies {
     runtimeOnly fg.deobf("de.maxhenkel.corelib:corelib:1.19.2-1.0.0")
     runtimeOnly fg.deobf("de.maxhenkel.corelib:corelib:1.19.2-1.0.0:javadoc")
 
-    annotationProcessor 'org.spongepowered:mixin:0.8.2:processor'
+    annotationProcessor 'org.spongepowered:mixin:0.8.5:processor'
 }
 
 

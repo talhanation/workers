@@ -42,6 +42,7 @@ import javax.annotation.Nullable;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
+import java.util.UUID;
 import java.util.function.Predicate;
 
 import net.minecraft.world.entity.AgeableMob;
@@ -64,6 +65,7 @@ public class MerchantEntity extends AbstractWorkerEntity implements IBoatControl
     private static final EntityDataAccessor<Boolean> RETURNING = SynchedEntityData.defineId(MerchantEntity.class, EntityDataSerializers.BOOLEAN);
     private static final EntityDataAccessor<Boolean> IS_CREATIVE = SynchedEntityData.defineId(MerchantEntity.class, EntityDataSerializers.BOOLEAN);
     private static final EntityDataAccessor<Boolean> IS_DAY_COUNTED = SynchedEntityData.defineId(MerchantEntity.class, EntityDataSerializers.BOOLEAN);
+    private static final EntityDataAccessor<Optional<UUID>> HORSE_ID = SynchedEntityData.defineId(MerchantEntity.class, EntityDataSerializers.OPTIONAL_UUID);
     private final SimpleContainer tradeInventory = new SimpleContainer(8);
     public boolean isTrading;
 
@@ -84,6 +86,7 @@ public class MerchantEntity extends AbstractWorkerEntity implements IBoatControl
         this.entityData.define(STATE, 0);
         this.entityData.define(CURRENT_WAYPOINT, Optional.empty());
         this.entityData.define(SAIL_POS, Optional.empty());
+        this.entityData.define(HORSE_ID, Optional.empty());
         this.entityData.define(IS_CREATIVE, false);
         this.entityData.define(IS_DAY_COUNTED, false);
     }
@@ -266,6 +269,10 @@ public class MerchantEntity extends AbstractWorkerEntity implements IBoatControl
         }
         nbt.put("TradeInventory", list);
 
+        if(this.getHorseUUID() != null){
+            nbt.putUUID("HorseUUID", this.getHorseUUID());
+        }
+
         nbt.putBoolean("Traveling", this.getTraveling());
         nbt.putBoolean("Returning", this.getReturning());
         nbt.putInt("CurrentWayPointIndex", this.getCurrentWayPointIndex());
@@ -302,6 +309,11 @@ public class MerchantEntity extends AbstractWorkerEntity implements IBoatControl
             int j = compoundnbt.getByte("TradeSlot") & 255;
 
             this.tradeInventory.setItem(j, ItemStack.of(compoundnbt));
+        }
+
+        if (nbt.contains("HorseUUID")){
+            Optional<UUID> uuid = Optional.of(nbt.getUUID("HorseUUID"));
+            this.setHorseUUID(uuid);
         }
 
         this.setTraveling(nbt.getBoolean("Traveling"));
@@ -417,6 +429,15 @@ public class MerchantEntity extends AbstractWorkerEntity implements IBoatControl
 
     public void setCurrentReturningTime(int x) {
         entityData.set(CURRENT_RETURNING_TIME, x);
+    }
+
+    @Nullable
+    public UUID getHorseUUID() {
+        return this.entityData.get(HORSE_ID).orElse(null);
+    }
+
+    public void setHorseUUID(Optional<UUID> id) {
+        this.entityData.set(HORSE_ID, id);
     }
 
     @Override

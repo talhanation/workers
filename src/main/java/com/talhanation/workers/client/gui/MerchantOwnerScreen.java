@@ -55,7 +55,7 @@ public class MerchantOwnerScreen extends ScreenBase<MerchantInventoryContainer> 
         }));
 
         if(this.player.isCreative() && this.player.createCommandSourceStack().hasPermission(4)){
-            createCreativeButton(zeroLeftPos - mirror + 180, zeroTopPos + 127);
+            createCreativeButton(zeroLeftPos - mirror + 180, zeroTopPos + 148);
         }
     }
 
@@ -85,6 +85,21 @@ public class MerchantOwnerScreen extends ScreenBase<MerchantInventoryContainer> 
                 Main.SIMPLE_CHANNEL.sendToServer(new MessageMerchantReturnTime(this.returnTime, merchant.getUUID()));
             }
         }));
+
+        createHorseButton(zeroLeftPos - mirror + 180, zeroTopPos + 127);
+    }
+
+    private void createHorseButton(int x, int y) {
+        String dis_mount;
+        if(merchant.getVehicle() != null) dis_mount = "Dismount";
+        else dis_mount = "Mount Horse";
+
+        addRenderableWidget(new Button(x, y, 41, 20, Component.literal(dis_mount),
+                button -> {
+                    Main.SIMPLE_CHANNEL.sendToServer(new MessageMerchantHorse(merchant.getUUID()));
+                }));
+
+        this.setUpdatableButtons();
     }
     private void createCreativeButton(int x, int y) {
         addRenderableWidget(new Button(x, y, 41, 20, Component.literal("Creative"),

@@ -1,6 +1,7 @@
 package com.talhanation.workers;
 
 import com.talhanation.workers.entities.AbstractWorkerEntity;
+import com.talhanation.workers.entities.ai.horse.HorseRiddenByMerchantGoal;
 import com.talhanation.workers.init.ModBlocks;
 import com.talhanation.workers.init.ModEntityTypes;
 import com.talhanation.workers.init.ModProfessions;
@@ -8,6 +9,7 @@ import com.talhanation.workers.init.ModProfessions;
 import net.minecraft.util.RandomSource;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EntityType;
+import net.minecraft.world.entity.animal.horse.AbstractHorse;
 import net.minecraft.world.entity.npc.Villager;
 import net.minecraft.world.entity.npc.VillagerProfession;
 import net.minecraft.world.entity.npc.VillagerTrades;
@@ -18,6 +20,7 @@ import net.minecraft.world.item.Items;
 import net.minecraft.world.item.trading.MerchantOffer;
 import net.minecraft.world.level.ItemLike;
 import net.minecraft.world.level.block.Block;
+import net.minecraftforge.event.entity.EntityJoinLevelEvent;
 import net.minecraftforge.event.entity.living.LivingEvent.LivingTickEvent;
 import net.minecraftforge.event.village.VillagerTradesEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
@@ -27,10 +30,8 @@ import java.util.List;
 public class VillagerEvents {
     @SubscribeEvent
     public void onVillagerLivingUpdate(LivingTickEvent event) {
-        HashMap<
-            VillagerProfession, 
-            EntityType<? extends AbstractWorkerEntity>
-        > entitiesByProfession = new HashMap<>(){{
+        HashMap<VillagerProfession, EntityType<? extends AbstractWorkerEntity>> entitiesByProfession = new HashMap<>(){{
+
             put(ModProfessions.MINER.get(), ModEntityTypes.MINER.get());
             put(ModProfessions.LUMBERJACK.get(), ModEntityTypes.LUMBERJACK.get());
             put(ModProfessions.FISHER.get(), ModEntityTypes.FISHERMAN.get());
@@ -64,6 +65,14 @@ public class VillagerEvents {
         }
     }
 
+    @SubscribeEvent
+    public void onHorseJoinWorld(EntityJoinLevelEvent event) {
+        Entity entity = event.getEntity();
+
+        if (entity instanceof AbstractHorse horse) {
+            horse.goalSelector.addGoal(0, new HorseRiddenByMerchantGoal(horse));
+        }
+    }
 
     @SubscribeEvent
     public void WanderingVillagerTrades(VillagerTradesEvent event) {

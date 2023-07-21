@@ -20,9 +20,9 @@ public abstract class AbstractHorseMixin extends Animal {
     protected AbstractHorseMixin(EntityType<? extends Animal> p_20966_, Level p_20967_) {
         super(p_20966_, p_20967_);
     }
-    /*
+
     @SuppressWarnings("ConstantValue")
-     @Inject(method = "isImmobile", at = @At(value = "HEAD", target = "Lnet/minecraft/world/entity/animal/horse/AbstractHorse;isImmobile()Z"), cancellable = true)
+    @Inject(method = "isImmobile", at = @At(value = "HEAD", target = "Lnet/minecraft/world/entity/animal/horse/AbstractHorse;isImmobile()Z"), cancellable = true)
     private void horseIsMobileWhenWorkerRides(CallbackInfoReturnable<Boolean> callback) {
         if(getControllingPassenger() instanceof MerchantEntity){
             callback.setReturnValue(false);
@@ -46,6 +46,4 @@ public abstract class AbstractHorseMixin extends Animal {
             ci.cancel();
         }
     }
-
-     */
 }

@@ -88,7 +88,8 @@ public class Main {
             MessageMerchantRemoveWayPoint.class,
             MessageMerchantSetCreative.class,
             MessageMerchantReturnTime.class,
-            MessageToClientUpdateMerchantScreen.class
+            MessageToClientUpdateMerchantScreen.class,
+            MessageMerchantHorse.class
 
         };
         for (int i = 0; i < messages.length; i++) CommonRegistry.registerMessage(SIMPLE_CHANNEL, i, messages[i]);
