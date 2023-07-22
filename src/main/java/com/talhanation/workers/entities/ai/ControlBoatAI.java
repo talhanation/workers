@@ -104,7 +104,7 @@ public class ControlBoatAI extends Goal {
                     }
 
                     case DONE -> {
-                        sailor.setSailPos(null);
+                        //sailor.setSailPos(null);
                         state = IDLE;
                     }
                 }
