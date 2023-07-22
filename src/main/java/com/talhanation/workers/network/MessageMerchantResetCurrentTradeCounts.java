@@ -11,14 +11,14 @@ import net.minecraftforge.network.PacketDistributor;
 
 import java.util.UUID;
 
-public class MessageMerchantRemoveWayPoint implements Message<MessageMerchantRemoveWayPoint> {
+public class MessageMerchantResetCurrentTradeCounts implements Message<MessageMerchantResetCurrentTradeCounts> {
     private UUID worker;
 
-    public MessageMerchantRemoveWayPoint() {
+    public MessageMerchantResetCurrentTradeCounts() {
     }
 
-    public MessageMerchantRemoveWayPoint(UUID recruit) {
-        this.worker = recruit;
+    public MessageMerchantResetCurrentTradeCounts(UUID worker) {
+        this.worker = worker;
     }
 
     public Dist getExecutingSide() {
@@ -35,21 +35,17 @@ public class MessageMerchantRemoveWayPoint implements Message<MessageMerchantRem
                 .stream()
                 .filter(MerchantEntity::isAlive)
                 .findAny()
-                .ifPresent(merchant -> this.removeLastWayPoint(player, merchant));
+                .ifPresent(merchant -> this.resetCurrent(player, merchant));
     }
 
-    private void removeLastWayPoint(ServerPlayer player, MerchantEntity merchant){
-        //BlockPos pos = merchant.WAYPOINTS.get(merchant.WAYPOINTS.size() - 1);
+    private void resetCurrent(ServerPlayer player, MerchantEntity merchant){
+        for(int i = 0; i < 4; i++)
+            merchant.setCurrentTrades(i, 0);
 
-        //merchant.tellPlayer(player, Component.literal("Pos: " + pos + " was removed."));
-
-        merchant.WAYPOINTS.remove(merchant.WAYPOINTS.size() - 1);
         Main.SIMPLE_CHANNEL.send(PacketDistributor.PLAYER.with(() -> (ServerPlayer) player), new MessageToClientUpdateMerchantScreen(merchant.WAYPOINTS, merchant.CURRENT_TRADES, merchant.TRADE_LIMITS));
     }
 
-
-
-    public MessageMerchantRemoveWayPoint fromBytes(FriendlyByteBuf buf) {
+    public MessageMerchantResetCurrentTradeCounts fromBytes(FriendlyByteBuf buf) {
         this.worker = buf.readUUID();
         return this;
     }

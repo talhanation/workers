@@ -12,12 +12,15 @@ import java.util.List;
 
 public class MessageToClientUpdateMerchantScreen implements Message<MessageToClientUpdateMerchantScreen> {
     public List<BlockPos> waypoints;
-
+    public List<Integer> currentTrades;
+    public List<Integer> limits;
     public MessageToClientUpdateMerchantScreen() {
     }
 
-    public MessageToClientUpdateMerchantScreen(List<BlockPos> waypoints) {
+    public MessageToClientUpdateMerchantScreen(List<BlockPos> waypoints, List<Integer> currentTrades, List<Integer> limits) {
         this.waypoints = waypoints;
+        this.currentTrades = currentTrades;
+        this.limits = limits;
     }
 
     @Override
@@ -28,16 +31,22 @@ public class MessageToClientUpdateMerchantScreen implements Message<MessageToCli
     @Override
     public void executeClientSide(NetworkEvent.Context context) {
         MerchantOwnerScreen.waypoints = this.waypoints;
+        MerchantOwnerScreen.currentTrades = this.currentTrades;
+        MerchantOwnerScreen.limits = this.limits;
     }
 
     @Override
     public MessageToClientUpdateMerchantScreen fromBytes(FriendlyByteBuf buf) {
         this.waypoints = buf.readList(FriendlyByteBuf::readBlockPos);
+        this.currentTrades = buf.readList(FriendlyByteBuf::readInt);
+        this.limits = buf.readList(FriendlyByteBuf::readInt);
         return this;
     }
 
     @Override
     public void toBytes(FriendlyByteBuf buf) {
         buf.writeCollection(waypoints, FriendlyByteBuf::writeBlockPos);
+        buf.writeCollection(currentTrades, FriendlyByteBuf::writeInt);
+        buf.writeCollection(limits, FriendlyByteBuf::writeInt);
     }
 }

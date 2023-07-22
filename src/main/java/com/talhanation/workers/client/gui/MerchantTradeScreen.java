@@ -60,9 +60,15 @@ public class MerchantTradeScreen extends ScreenBase<MerchantTradeContainer> {
     @Override
     protected void renderLabels(PoseStack matrixStack, int mouseX, int mouseY) {
         super.renderLabels(matrixStack, mouseX, mouseY);
+
+        matrixStack.pushPose();
+        matrixStack.scale(0.5F,0.5F,0.5F);
+
         font.draw(matrixStack, merchant.getDisplayName().getVisualOrderText(), 8, 6, FONT_COLOR);
         font.draw(matrixStack, playerInventory.getDisplayName().getVisualOrderText(), 8, imageHeight - 152 + 25,
                 FONT_COLOR);
+
+        matrixStack.popPose();
     }
 
     @Override

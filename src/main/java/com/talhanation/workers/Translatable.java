@@ -56,6 +56,10 @@ public class Translatable {
     public static Component TEXT_NEED(int sollPrice, Item emerald) {
         return Component.translatable("chat.workers.text.need", sollPrice, emerald);
     }
+
+    public static Component TEXT_NO_NEED(Item emerald) {
+        return Component.translatable("chat.workers.text.noNeed", emerald);
+    }
     public static final Component TEXT_FISHER_NO_WATER = Component.translatable("chat.workers.text.fisherNoWater");
     public static final Component TEXT_OUT_OF_STOCK = Component.translatable("chat.workers.text.outOfStock");
     public static final Component TEXT_OUT_OF_STOCK_OWNER = Component.translatable("chat.workers.text.outOfStockOwner");

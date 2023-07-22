@@ -50,7 +50,7 @@ public class MerchantInventoryContainer extends ContainerBase {
 
     public void addWorkerPriceSlots() {
         for (int k = 0; k < 4; ++k) {
-            this.addSlot(new Slot(workerTradeInventory, PRICE_ID[k], 27 + 8 + 18, 18 - 2 + k * 18) {
+            this.addSlot(new Slot(workerTradeInventory, PRICE_ID[k], 8 + 18, 16 + k * 18) {
                 @Override
                 public boolean mayPlace(ItemStack itemStack) {
                     return true;
@@ -66,7 +66,7 @@ public class MerchantInventoryContainer extends ContainerBase {
 
     public void addWorkerTradeSlots() {
         for (int k = 0; k < 4; ++k) {
-            this.addSlot(new Slot(workerTradeInventory, TRADE_ID[k], 27 + 8 + 18 * 4, 18 - 2 + k * 18) {
+            this.addSlot(new Slot(workerTradeInventory, TRADE_ID[k], 8 + 18 * 4, 16 + k * 18) {
                 @Override
                 public boolean mayPlace(ItemStack itemStack) {
                     return true;

@@ -47,7 +47,7 @@ public class MessageMerchantAddWayPoint implements Message<MessageMerchantAddWay
 
         merchant.WAYPOINTS.add(pos);
 
-        Main.SIMPLE_CHANNEL.send(PacketDistributor.PLAYER.with(() -> (ServerPlayer) player), new MessageToClientUpdateMerchantScreen(merchant.WAYPOINTS));
+        Main.SIMPLE_CHANNEL.send(PacketDistributor.PLAYER.with(() -> (ServerPlayer) player), new MessageToClientUpdateMerchantScreen(merchant.WAYPOINTS, merchant.CURRENT_TRADES, merchant.TRADE_LIMITS));
     }
 
     public MessageMerchantAddWayPoint fromBytes(FriendlyByteBuf buf) {

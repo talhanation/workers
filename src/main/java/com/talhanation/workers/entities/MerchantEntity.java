@@ -39,10 +39,7 @@ import net.minecraft.server.level.ServerLevel;
 import net.minecraftforge.network.NetworkHooks;
 
 import javax.annotation.Nullable;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Optional;
-import java.util.UUID;
+import java.util.*;
 import java.util.function.Predicate;
 
 import net.minecraft.world.entity.AgeableMob;
@@ -68,12 +65,14 @@ public class MerchantEntity extends AbstractWorkerEntity implements IBoatControl
     private static final EntityDataAccessor<Optional<UUID>> HORSE_ID = SynchedEntityData.defineId(MerchantEntity.class, EntityDataSerializers.OPTIONAL_UUID);
     private final SimpleContainer tradeInventory = new SimpleContainer(8);
     public boolean isTrading;
-
+    public List<Integer> TRADE_LIMITS = new ArrayList<>(Arrays.asList(16,16,16,16));
+    public List<Integer> CURRENT_TRADES = new ArrayList<>(Arrays.asList(0,0,0,0));
     public List<BlockPos> WAYPOINTS = new ArrayList<>();
 
     public MerchantEntity(EntityType<? extends AbstractWorkerEntity> entityType, Level world) {
         super(entityType, world);
         this.initSpawn();
+
     }
 
     protected void defineSynchedData() {
@@ -196,7 +195,7 @@ public class MerchantEntity extends AbstractWorkerEntity implements IBoatControl
         }
 
         if (player instanceof ServerPlayer) {
-            Main.SIMPLE_CHANNEL.send(PacketDistributor.PLAYER.with(() -> (ServerPlayer) player), new MessageToClientUpdateMerchantScreen(this.WAYPOINTS));
+            Main.SIMPLE_CHANNEL.send(PacketDistributor.PLAYER.with(() -> (ServerPlayer) player), new MessageToClientUpdateMerchantScreen(this.WAYPOINTS, this.CURRENT_TRADES, this.TRADE_LIMITS));
         }
     }
 
@@ -243,6 +242,7 @@ public class MerchantEntity extends AbstractWorkerEntity implements IBoatControl
         this.setCustomName(name);
 
         this.heal(100);
+
     }
 
     @Override
@@ -273,6 +273,7 @@ public class MerchantEntity extends AbstractWorkerEntity implements IBoatControl
             nbt.putUUID("HorseUUID", this.getHorseUUID());
         }
 
+        nbt.putInt("State", this.getState());
         nbt.putBoolean("Traveling", this.getTraveling());
         nbt.putBoolean("Returning", this.getReturning());
         nbt.putInt("CurrentWayPointIndex", this.getCurrentWayPointIndex());
@@ -298,7 +299,33 @@ public class MerchantEntity extends AbstractWorkerEntity implements IBoatControl
         }
         nbt.put("Waypoints", waypoints);
 
-        nbt.putInt("State", this.getState());
+
+
+
+        ListTag limits = new ListTag();
+        for(int i = 0; i < 4; i++) {
+            CompoundTag compoundnbt = new CompoundTag();
+            compoundnbt.putByte("TradeLimit_" + i, (byte) i);
+            int limit = TRADE_LIMITS.get(i);
+            compoundnbt.putInt("Limit", limit);
+
+            limits.add(compoundnbt);
+        }
+        nbt.put("TradeLimits", limits);
+
+
+
+        ListTag trades = new ListTag();
+        for(int i = 0; i < 4; i++) {
+            CompoundTag compoundnbt = new CompoundTag();
+            compoundnbt.putByte("Trade_" + i, (byte) i);
+            int trade = CURRENT_TRADES.get(i);
+            compoundnbt.putInt("Trade", trade);
+
+            trades.add(compoundnbt);
+        }
+        nbt.put("Trades", trades);
+
     }
 
     public void readAdditionalSaveData(@NotNull CompoundTag nbt) {
@@ -339,6 +366,22 @@ public class MerchantEntity extends AbstractWorkerEntity implements IBoatControl
 
 
             this.WAYPOINTS.add(pos);
+        }
+
+        ListTag limits = nbt.getList("TradeLimits", 10);
+        for (int i = 0; i < 4; ++i) {
+            CompoundTag compoundnbt = limits.getCompound(i);
+            int limit = compoundnbt.getInt("Limit");
+
+            this.TRADE_LIMITS.add(limit);
+        }
+
+        ListTag trades = nbt.getList("Trades", 10);
+        for (int i = 0; i < 4; ++i) {
+            CompoundTag compoundnbt = trades.getCompound(i);
+            int trade = compoundnbt.getInt("Trade");
+
+            this.CURRENT_TRADES.add(trade);
         }
 
         this.setState(nbt.getInt("State"));
@@ -457,6 +500,22 @@ public class MerchantEntity extends AbstractWorkerEntity implements IBoatControl
 
     public void setState(int x) {
         entityData.set(STATE, x);
+    }
+
+    public void setTradeLimit(int index, int limit) {
+        this.TRADE_LIMITS.set(index, limit);
+    }
+
+    public int getTradeLimit(int index){
+        return this.TRADE_LIMITS.get(index);
+    }
+
+    public int getCurrentTrades(int index){
+        return this.CURRENT_TRADES.get(index);
+    }
+
+    public void setCurrentTrades(int index, int current) {
+        this.TRADE_LIMITS.set(index, current);
     }
 
     @Override
