@@ -307,7 +307,7 @@ public class CommandEvents {
                 ItemStack emeraldsLeft = emeraldItemStack.copy();
                 emeraldsLeft.setCount(playerEmeralds);// später merchantEmeralds wenn ich alle s löschen tu
                 playerInv.add(emeraldsLeft);
-                merchant.setCurrentTrades(tradeID, merchant.getCurrentTrades(tradeID));
+                merchant.setCurrentTrades(tradeID, merchant.getCurrentTrades(tradeID) + 1);
 
                 // debug
                 // player.sendMessage(new StringTextComponent("###########################"),
@@ -464,7 +464,7 @@ public class CommandEvents {
                  ItemStack emeraldsLeft = emeraldItemStack.copy();
                  emeraldsLeft.setCount(playerEmeralds);// später merchantEmeralds wenn ich alle s löschen tu
                  playerInv.add(emeraldsLeft);
-                 merchant.setCurrentTrades(tradeID, merchant.getCurrentTrades(tradeID));
+                 merchant.setCurrentTrades(tradeID, merchant.getCurrentTrades(tradeID) + 1);
 
              } else {
                  merchant.tellPlayer(player, TEXT_NEED(sollPrice, emerald));
