@@ -22,9 +22,6 @@ import static com.talhanation.workers.entities.ai.ControlBoatAI.State.*;
 public class ControlBoatAI extends Goal {
 
     private final AbstractWorkerEntity worker;
-    private BlockPos waterPos;
-    private BlockPos avoidPos;
-    private BlockPos toSailPos;
     private State state;
     private Path path;
     private Node node;
@@ -58,13 +55,13 @@ public class ControlBoatAI extends Goal {
     }
 
     public void tick() {
-        if(this.worker instanceof IBoatController sailor && this.worker.getNavigation() instanceof SailorPathNavigation sailorPathNavigation && worker.getStartPos() != null) {
+        if(this.worker instanceof IBoatController sailor && this.worker.getNavigation() instanceof SailorPathNavigation sailorPathNavigation) {
             if (sailor.getSailPos() != null) {
                 Main.LOGGER.info("Sate: " + state);
                 switch (state) {
 
                     case IDLE -> {
-                        if (sailor.getSailPos() != null && !worker.getStartPos().closerThan(worker.getOnPos(), 6F)) {
+                        if (sailor.getSailPos() != null) {
                             this.state = State.CREATING_PATH;
                         }
                     }
@@ -93,7 +90,7 @@ public class ControlBoatAI extends Goal {
                             updateBoatControl(node.x, node.z);
                         } else {
                             path.advance();
-                            if(path.getNodeCount() == path.getNextNodeIndex() - 1 && !this.worker.getStartPos().closerThan(this.worker.getOnPos(), 3)){
+                            if(path.getNodeCount() == path.getNextNodeIndex() - 1){
                                 state = CREATING_PATH;
                                 return;
                             }
@@ -193,7 +190,7 @@ public class ControlBoatAI extends Goal {
         for (BlockPos pos : BlockPos.betweenClosed(boatPos.offset(-2, -0, -2), boatPos.offset(2, 0, 2))) {
             BlockState state = worker.level.getBlockState(pos);
             if (!state.is(Blocks.WATER)) {
-                this.avoidPos = pos;
+                //this.avoidPos = pos;
                 return true;
             }
         }
