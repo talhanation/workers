@@ -42,7 +42,9 @@ public class MessageMerchantResetCurrentTradeCounts implements Message<MessageMe
         for(int i = 0; i < 4; i++)
             merchant.setCurrentTrades(i, 0);
 
-        Main.SIMPLE_CHANNEL.send(PacketDistributor.PLAYER.with(() -> (ServerPlayer) player), new MessageToClientUpdateMerchantScreen(merchant.WAYPOINTS, merchant.CURRENT_TRADES, merchant.TRADE_LIMITS));
+
+
+        Main.SIMPLE_CHANNEL.send(PacketDistributor.PLAYER.with(() -> (ServerPlayer) player), new MessageToClientUpdateMerchantScreen(merchant.WAYPOINTS, merchant.getCurrentTrades(), merchant.getTradeLimits()));
     }
 
     public MessageMerchantResetCurrentTradeCounts fromBytes(FriendlyByteBuf buf) {

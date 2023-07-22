@@ -51,6 +51,7 @@ public class MerchantOwnerScreen extends ScreenBase<MerchantInventoryContainer> 
             Main.SIMPLE_CHANNEL.sendToServer(new MessageMerchantTravel(merchant.getUUID(), true, true));
             this.setUpdatableButtons();
         }));
+
         addRenderableWidget(new Button(zeroLeftPos - mirror + 180, zeroTopPos + 85, 41, 20, Component.literal("Travel"), button -> {
             Main.SIMPLE_CHANNEL.sendToServer(new MessageMerchantTravel(merchant.getUUID(),  !merchant.getTraveling(), false));
             this.setUpdatableButtons();
@@ -131,13 +132,13 @@ public class MerchantOwnerScreen extends ScreenBase<MerchantInventoryContainer> 
 
     private void createTradeLimitButtons(int x, int y, int index){
         addRenderableWidget(new Button(x, y + 18 * index, 12, 12, Component.literal("+"), button -> {
-            int limit = merchant.getTradeLimit(index);
+            int limit = limits.get(index);
              limit++;
             Main.SIMPLE_CHANNEL.sendToServer(new MessageMerchantTradeLimitButton(index, limit, merchant.getUUID()));
         }));
 
         addRenderableWidget(new Button(13 + x, y + 18 * index, 12, 12, Component.literal("-"), button -> {
-            int limit = merchant.getTradeLimit(index);
+            int limit = limits.get(index);
             if(limit > -1){
                 limit--;
                 Main.SIMPLE_CHANNEL.sendToServer(new MessageMerchantTradeLimitButton(index, limit, merchant.getUUID()));

@@ -63,12 +63,11 @@ public class MerchantTradeScreen extends ScreenBase<MerchantTradeContainer> {
 
         matrixStack.pushPose();
         matrixStack.scale(0.5F,0.5F,0.5F);
-
         font.draw(matrixStack, merchant.getDisplayName().getVisualOrderText(), 8, 6, FONT_COLOR);
+        matrixStack.popPose();
+
         font.draw(matrixStack, playerInventory.getDisplayName().getVisualOrderText(), 8, imageHeight - 152 + 25,
                 FONT_COLOR);
-
-        matrixStack.popPose();
     }
 
     @Override
