@@ -9,6 +9,8 @@ import net.minecraft.server.level.ServerLevel;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.entity.ai.goal.Goal;
+import net.minecraft.world.entity.ai.goal.WaterAvoidingRandomStrollGoal;
+import net.minecraft.world.entity.monster.EnderMan;
 import net.minecraft.world.entity.vehicle.Boat;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.block.Blocks;
@@ -19,7 +21,10 @@ import net.minecraft.world.level.storage.loot.LootTable;
 import net.minecraft.world.level.storage.loot.parameters.LootContextParamSets;
 import net.minecraft.world.level.storage.loot.parameters.LootContextParams;
 
+import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.List;
+import java.util.Optional;
 
 import static com.talhanation.workers.entities.FishermanEntity.State.*;
 
@@ -32,6 +37,7 @@ public class FishermanAI extends Goal {
     private BlockPos coastPos;
     private Boat boat;
     private FishermanEntity.State state;
+    private List<BlockPos> waterBlocks;
 
 
     public FishermanAI(FishermanEntity fishermanEntity) {
@@ -60,7 +66,7 @@ public class FishermanAI extends Goal {
 
     @Override
     public void tick() {
-        //Main.LOGGER.info("State: " + state);
+        Main.LOGGER.info("State: " + state);
         if(state == null)
             state = FishermanEntity.State.fromIndex(fisherman.getState());
 
@@ -68,29 +74,34 @@ public class FishermanAI extends Goal {
             case IDLE -> {
                 if(fisherman.getStartPos() != null && fisherman.canWork()){
 
-                    //this.setWorkState(MOVING_COAST);
+                    this.setWorkState(MOVING_COAST);
                 }
             }
 
             case MOVING_COAST -> {
-                if (coastPos == null) coastPos = fisherman.getStartPos();// ändern
+                if(fisherman.getVehicle() != null) fisherman.stopRiding();
+
+                if (coastPos == null) coastPos = fisherman.getStartPos();
 
                 this.moveToPos(coastPos);
 
                 if (coastPos.closerThan(fisherman.getOnPos(), 3F)) {
                     List<Boat> list =  fisherman.level.getEntitiesOfClass(Boat.class, fisherman.getBoundingBox().inflate(8D));
+                    list.sort(Comparator.comparing(boatInList -> boatInList.distanceTo(fisherman)));
                     if(!list.isEmpty()){
                         boat = list.get(0);
-                        this.setWorkState(MOVING_TO_BOAT);
                         fishingRange = 30;
+                        this.setWorkState(MOVING_TO_BOAT);
                     }
                     else {
                         fishingRange = 5;
                         this.setWorkState(FISHING);
                     }
 
-                    fishingPos = findWaterBlock();
+                    this.findWaterBlocks();
+                    fishingPos = waterBlocks.get(fisherman.getRandom().nextInt(waterBlocks.size()));
                     if(fishingPos == null) this.setWorkState(STOPPING);
+
                 }
 
             }
@@ -114,7 +125,8 @@ public class FishermanAI extends Goal {
 
                 this.fisherman.setSailPos(fishingPos);
 
-                if (coastPos.closerThan(fisherman.getOnPos(), 8F)) {
+                if (coastPos.closerThan(fisherman.getOnPos(), 5F)) {
+
                     this.setWorkState(FISHING);
                 }
             }
@@ -133,7 +145,7 @@ public class FishermanAI extends Goal {
                     } else
                         this.moveToPos(coastPos);
 
-                    if (coastPos.closerThan(fisherman.getOnPos(), 3F)) {
+                    if (coastPos.closerThan(fisherman.getOnPos(), 4.5F)) {
                         fisherman.stopRiding();
                         this.setWorkState(STOP);
                     }
@@ -151,7 +163,6 @@ public class FishermanAI extends Goal {
     private void setWorkState(FishermanEntity.State state) {
         this.state = state;
         this.fisherman.setState(state.getIndex());
-
     }
 
     private void moveToPos(BlockPos pos) {
@@ -182,38 +193,44 @@ public class FishermanAI extends Goal {
     }
 
     // Find a water block to fish
-    private BlockPos findWaterBlock() {
+    private void findWaterBlocks() {
+        this.waterBlocks = new ArrayList<>();
         for (int x = -this.fishingRange; x < this.fishingRange; ++x) {
             for (int y = -2; y < 2; ++y) {
                 for (int z = -this.fishingRange; z < this.fishingRange; ++z) {
                     if (coastPos != null) {
                         BlockPos pos = this.coastPos.offset(x, y, z);
                         BlockState targetBlock = this.fisherman.level.getBlockState(pos);
-                        if (targetBlock.is(Blocks.WATER) && fisherman.distanceToSqr(pos.getX(), pos.getY(), pos.getZ()) > 10F) {
-                            return pos;
+                        if (targetBlock.is(Blocks.WATER) && fisherman.distanceToSqr(pos.getX(), pos.getY(), pos.getZ()) > fishingRange) {
+                            this.waterBlocks.add(pos);
                         }
                     }
                 }
             }
         }
-        //No water nearby
-        if (fisherman.getOwner() != null){
-            fisherman.tellPlayer(fisherman.getOwner(), Translatable.TEXT_FISHER_NO_WATER);
-            this.fisherman.setIsWorking(false, true);
-            this.fisherman.clearStartPos();
-            this.stop();
+        this.waterBlocks.sort(Comparator.comparing(this::getWaterDepth));
+
+        if(waterBlocks.isEmpty()){
+            //No water nearby
+            if (fisherman.getOwner() != null){
+                fisherman.tellPlayer(fisherman.getOwner(), Translatable.TEXT_FISHER_NO_WATER);
+                this.fisherman.setIsWorking(false, true);
+                this.fisherman.clearStartPos();
+                this.stop();
+
+            }
         }
-        return null;
     }
 
     public void spawnFishingLoot() {
         //TODO: When water depth is deep, reduce timer
-        this.fishingTimer = 500 + fisherman.getRandom().nextInt(4000);
+        this.fishingTimer = 750 + fisherman.getRandom().nextInt(4000);
         double luck = 0.1D;
         LootContext.Builder lootcontext$builder = (new LootContext.Builder((ServerLevel)fisherman.level))
                 .withParameter(LootContextParams.ORIGIN, fisherman.position())
                 .withParameter(LootContextParams.TOOL, this.fisherman.getItemInHand(InteractionHand.MAIN_HAND))
                 .withLuck((float) luck);
+
 
         MinecraftServer server = fisherman.getServer();
         if (server == null) return;
@@ -226,14 +243,9 @@ public class FishermanAI extends Goal {
     }
 
     private void fishing(){
-        /*
-        // When near work pos, find a water block to fish
-        if (this.fishingPos == null) {
-            this.fishingPos = this.findWaterBlock();
-            return;
+        if (this.fisherman.getVehicle() == null && !coastPos.closerThan(fisherman.getOnPos(), 5F)) {
+            this.moveToPos(coastPos);
         }
-         */
-
         // Look at the water block
         if (fishingPos != null) {
             this.fisherman.getLookControl().setLookAt(
@@ -263,8 +275,22 @@ public class FishermanAI extends Goal {
                 this.fisherman.increaseFarmedItems();
                 this.fisherman.consumeToolDurability();
                 this.resetTask();
+
             }
         }
         if (throwTimer > 0) throwTimer--;
+    }
+
+
+    private int getWaterDepth(BlockPos pos){
+        int depth = 0;
+        for(int i = 0; i < 10; i++){
+            BlockState state = fisherman.level.getBlockState(pos.below(i));
+            if(state.is(Blocks.WATER)){
+                depth++;
+            }
+            else break;
+        }
+        return depth;
     }
 }

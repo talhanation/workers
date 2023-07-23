@@ -1,6 +1,7 @@
 package com.talhanation.workers.entities.ai;
 
 import com.talhanation.workers.Main;
+import com.talhanation.workers.Translatable;
 import com.talhanation.workers.entities.AbstractWorkerEntity;
 import com.talhanation.workers.entities.IBoatController;
 import com.talhanation.workers.entities.ai.navigation.SailorPathNavigation;
@@ -10,11 +11,12 @@ import net.minecraft.world.entity.ai.goal.Goal;
 import net.minecraft.world.entity.vehicle.Boat;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.state.BlockState;
-import net.minecraft.world.level.pathfinder.BlockPathTypes;
 import net.minecraft.world.level.pathfinder.Node;
 import net.minecraft.world.level.pathfinder.Path;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Comparator;
+import java.util.List;
 
 import static com.talhanation.workers.entities.ai.ControlBoatAI.State.*;
 
@@ -25,6 +27,9 @@ public class ControlBoatAI extends Goal {
     private State state;
     private Path path;
     private Node node;
+
+    private BlockPos maneuverPos;
+    private boolean calculateManeuverDone;
 
     public ControlBoatAI(IBoatController worker) {
         this.worker = worker.getWorker();
@@ -68,7 +73,6 @@ public class ControlBoatAI extends Goal {
 
                     case CREATING_PATH -> {
                         if (sailor.getSailPos() != null) {
-                            worker.setPathfindingMalus(BlockPathTypes.WATER, 0.0F);
                             this.path = sailorPathNavigation.createPath(sailor.getSailPos(), 16, false, 1);
 
                             if (path != null && path.getNodeCount() > 1) {
@@ -76,7 +80,7 @@ public class ControlBoatAI extends Goal {
                                 state = MOVING_PATH;
                             } else {
                                 Main.LOGGER.info("Path null or has 1 node");
-                                state = IDLE;
+                                state = MANEUVER;
                             }
                         }
                         else
@@ -85,8 +89,8 @@ public class ControlBoatAI extends Goal {
 
                     case MOVING_PATH -> {
 
-                        if (!(node.distanceToSqr(worker.getOnPos()) < 6F)) {
-                            this.worker.getLookControl().setLookAt(node.x,node.y, node.z);
+                        if (!(node.distanceToSqr(worker.getOnPos()) < 8F)) {
+                            //this.worker.getLookControl().setLookAt(node.x,node.y, node.z);
                             updateBoatControl(node.x, node.z);
                         } else {
                             path.advance();
@@ -107,8 +111,21 @@ public class ControlBoatAI extends Goal {
                         //sailor.setSailPos(null);
                         state = IDLE;
                     }
-                }
 
+                    case MANEUVER -> {
+                        if(!calculateManeuverDone){
+                            maneuverPos = worker.getOnPos();
+                            calculateManeuverDone = true;
+                        }
+
+                         updateBoatControl(sailor.getSailPos().getX(), sailor.getSailPos().getY());
+
+                        if(worker.distanceToSqr(maneuverPos.getX(), maneuverPos.getY(), maneuverPos.getZ()) > 3){
+                            calculateManeuverDone = false;
+                            state = CREATING_PATH;
+                        }
+                    }
+                }
             }
 
             /*
@@ -142,8 +159,21 @@ public class ControlBoatAI extends Goal {
                         }
                     }
                 }
+                case MANEUVER -> {
+                        if(!calculateManeuverDone){
+                            maneuverPos = findValidWaterBlock(sailor);
+                            calculateManeuverDone = true;
+                        }
+                        if(maneuverPos != null){
+                            updateBoatControl(maneuverPos.getX(), maneuverPos.getZ());
 
-
+                            if(worker.distanceToSqr(maneuverPos.getX(), maneuverPos.getY(), maneuverPos.getZ()) <= 3){
+                                state = CREATING_PATH;
+                            }
+                        }
+                        else
+                            calculateManeuverDone = false;
+                    }
             }
     */
         }
@@ -196,15 +226,38 @@ public class ControlBoatAI extends Goal {
         }
         return false;
     }
+    /*
+    private BlockPos findValidWaterBlock(IBoatController sailor) {
+        List<BlockPos> waterBlocks = new ArrayList<>();
+        int range = 3;
+        for (int x = -range; x < range; ++x) {
+            for (int y = -2; y < 2; ++y) {
+                for (int z = -range; z < range; ++z) {
+                    if (sailor.getSailPos() != null) {
+                        BlockPos pos = sailor.getSailPos().offset(x, y, z);
+                        BlockState targetBlock = this.worker.level.getBlockState(pos);
+                        if (targetBlock.is(Blocks.WATER) && worker.distanceToSqr(pos.getX(), pos.getY(), pos.getZ()) > range) {
+                            waterBlocks.add(pos);
+                        }
+                    }
+                }
+            }
+        }
+        waterBlocks.sort(Comparator.comparing(pos -> pos.distSqr(worker.getOnPos())));
+        waterBlocks.sort(Comparator.reverseOrder());
 
+        return waterBlocks.get(worker.getRandom().nextInt(waterBlocks.size()));
+    }
 
+     */
 
 
     enum State{
         IDLE,
         CREATING_PATH,
         MOVING_PATH,
-        DONE
+        DONE,
+        MANEUVER
         //MOVING_TO_SAIL_POS,
         //AVOIDING,
         //MOVING_TO_WATER_POS,

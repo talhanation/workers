@@ -8,6 +8,7 @@ import net.minecraft.world.entity.ai.attributes.Attributes;
 import net.minecraft.world.entity.ai.navigation.WaterBoundPathNavigation;
 import net.minecraft.world.entity.vehicle.Boat;
 import net.minecraft.world.level.Level;
+import net.minecraft.world.level.pathfinder.BlockPathTypes;
 import net.minecraft.world.level.pathfinder.Path;
 import net.minecraft.world.level.pathfinder.PathFinder;
 import org.jetbrains.annotations.NotNull;
@@ -21,6 +22,7 @@ public class SailorPathNavigation extends WaterBoundPathNavigation {
     public SailorPathNavigation(IBoatController sailor, Level level) {
         super(sailor.getWorker(), level);
         this.worker = sailor.getWorker();
+        worker.setPathfindingMalus(BlockPathTypes.WATER, 16.0F);
     }
 
     protected @NotNull PathFinder createPathFinder(int maxVisitedNodes) {
