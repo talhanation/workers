@@ -66,7 +66,7 @@ public class ControlBoatAI extends Goal {
                 switch (state) {
 
                     case IDLE -> {
-                        if (sailor.getSailPos() != null) {
+                        if (sailor.getSailPos() != null ) { //TODO: dist check with dest pos and assign dest pos = fishing pos
                             this.state = State.CREATING_PATH;
                         }
                     }
@@ -117,7 +117,7 @@ public class ControlBoatAI extends Goal {
                             maneuverPos = worker.getOnPos();
                             calculateManeuverDone = true;
                         }
-
+                        //TODO: leichter schubs in richtung wasser weg vom coast
                          updateBoatControl(sailor.getSailPos().getX(), sailor.getSailPos().getY());
 
                         if(worker.distanceToSqr(maneuverPos.getX(), maneuverPos.getY(), maneuverPos.getZ()) > 3){
