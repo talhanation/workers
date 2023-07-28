@@ -9,8 +9,6 @@ import net.minecraft.server.level.ServerLevel;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.entity.ai.goal.Goal;
-import net.minecraft.world.entity.ai.goal.WaterAvoidingRandomStrollGoal;
-import net.minecraft.world.entity.monster.EnderMan;
 import net.minecraft.world.entity.vehicle.Boat;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.block.Blocks;
@@ -24,7 +22,6 @@ import net.minecraft.world.level.storage.loot.parameters.LootContextParams;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
-import java.util.Optional;
 
 import static com.talhanation.workers.entities.FishermanEntity.State.*;
 
@@ -100,6 +97,7 @@ public class FishermanAI extends Goal {
 
                     this.findWaterBlocks();
                     fishingPos = waterBlocks.get(fisherman.getRandom().nextInt(waterBlocks.size()));
+                    this.fisherman.setDestPos(fishingPos);
                     if(fishingPos == null) this.setWorkState(STOPPING);
 
                 }

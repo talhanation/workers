@@ -548,7 +548,7 @@ public class MerchantEntity extends AbstractWorkerEntity implements IBoatControl
 
     @Override
     public double getBoatControlAccuracy() {
-        return 1.5D;
+        return 5D;// higher values less accuracy with sail pos / higher range to reach the pos
     }
 
     public void die(@NotNull DamageSource dmg) {

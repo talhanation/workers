@@ -3,7 +3,6 @@ package com.talhanation.workers.network;
 import com.talhanation.workers.entities.MerchantEntity;
 import de.maxhenkel.corelib.net.Message;
 import net.minecraft.network.FriendlyByteBuf;
-import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.animal.horse.AbstractHorse;
 import net.minecraftforge.api.distmarker.Dist;

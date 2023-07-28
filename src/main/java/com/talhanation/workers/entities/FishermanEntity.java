@@ -194,7 +194,7 @@ public class FishermanEntity extends AbstractWorkerEntity implements IBoatContro
 
     @Override
     public double getBoatControlAccuracy() {
-        return 3.5D;
+        return 2.5D;// higher values less accuracy with sail pos / higher range to reach the pos
     }
 
     public enum State{

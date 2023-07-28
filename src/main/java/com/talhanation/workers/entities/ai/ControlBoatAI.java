@@ -1,7 +1,6 @@
 package com.talhanation.workers.entities.ai;
 
 import com.talhanation.workers.Main;
-import com.talhanation.workers.Translatable;
 import com.talhanation.workers.entities.AbstractWorkerEntity;
 import com.talhanation.workers.entities.IBoatController;
 import com.talhanation.workers.entities.ai.navigation.SailorPathNavigation;
@@ -13,10 +12,6 @@ import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.pathfinder.Node;
 import net.minecraft.world.level.pathfinder.Path;
-
-import java.util.ArrayList;
-import java.util.Comparator;
-import java.util.List;
 
 import static com.talhanation.workers.entities.ai.ControlBoatAI.State.*;
 
@@ -66,8 +61,11 @@ public class ControlBoatAI extends Goal {
                 switch (state) {
 
                     case IDLE -> {
-                        if (sailor.getSailPos() != null ) { //TODO: dist check with dest pos and assign dest pos = fishing pos
-                            this.state = State.CREATING_PATH;
+
+                        if (sailor.getSailPos() != null) { //TODO: dist check with sail pos wegen performance
+                            double distance = sailor.getSailPos().distToCenterSqr(worker.position());
+
+                            if(distance > sailor.getBoatControlAccuracy()) this.state = State.CREATING_PATH;
                         }
                     }
 
@@ -88,8 +86,8 @@ public class ControlBoatAI extends Goal {
                     }
 
                     case MOVING_PATH -> {
-
-                        if (!(node.distanceToSqr(worker.getOnPos()) < 8F)) {
+                        double distance = node.distanceTo(worker.getOnPos()); //valid value example: distance = 6.5
+                        if (! (distance <= sailor.getBoatControlAccuracy())) {
                             //this.worker.getLookControl().setLookAt(node.x,node.y, node.z);
                             updateBoatControl(node.x, node.z);
                         } else {
@@ -113,16 +111,40 @@ public class ControlBoatAI extends Goal {
                     }
 
                     case MANEUVER -> {
-                        if(!calculateManeuverDone){
-                            maneuverPos = worker.getOnPos();
-                            calculateManeuverDone = true;
-                        }
                         //TODO: leichter schubs in richtung wasser weg vom coast
-                         updateBoatControl(sailor.getSailPos().getX(), sailor.getSailPos().getY());
 
-                        if(worker.distanceToSqr(maneuverPos.getX(), maneuverPos.getY(), maneuverPos.getZ()) > 3){
-                            calculateManeuverDone = false;
-                            state = CREATING_PATH;
+                        if(!calculateManeuverDone){
+                            BlockPos north = worker.getOnPos().above().north(1);
+                            if(!worker.level.getBlockState(north).is(Blocks.WATER)){
+                                maneuverPos = north.south(3);
+                            }
+
+                            BlockPos east = worker.getOnPos().above().east(1);
+                            if(!worker.level.getBlockState(east).is(Blocks.WATER)){
+                                maneuverPos = east.west(3);
+                            }
+
+                            BlockPos south = worker.getOnPos().above().south(1);
+                            if(!worker.level.getBlockState(south).is(Blocks.WATER)){
+                                maneuverPos = south.north(3);
+                            }
+
+                            BlockPos west = worker.getOnPos().above().west(1);
+                            if(!worker.level.getBlockState(west).is(Blocks.WATER)){
+                                maneuverPos = west.east(3);
+                            }
+
+                        }
+
+                        if(maneuverPos != null){
+                            calculateManeuverDone = true;
+                            updateBoatControl(maneuverPos.getX(), maneuverPos.getZ());
+                            double distance = worker.distanceToSqr(maneuverPos.getX(), maneuverPos.getY(), maneuverPos.getZ());
+
+                            if(distance < 3){ //valid value example: distance = 3.2
+                                calculateManeuverDone = false;
+                                state = CREATING_PATH;
+                            }
                         }
                     }
                 }
