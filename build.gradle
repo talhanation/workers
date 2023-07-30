@@ -97,6 +97,15 @@ repositories {
     mavenLocal()
 }
 
+repositories {
+    maven {
+        url "https://cursemaven.com"
+        content {
+            includeGroup "curse.maven"
+        }
+    }
+}
+
 sourceSets.main.resources {
     srcDir 'src/generated/resources'
 }
@@ -106,6 +115,8 @@ dependencies {
     shadow fg.deobf("de.maxhenkel.corelib:corelib:1.19.2-1.0.0:api")
     runtimeOnly fg.deobf("de.maxhenkel.corelib:corelib:1.19.2-1.0.0")
     runtimeOnly fg.deobf("de.maxhenkel.corelib:corelib:1.19.2-1.0.0:javadoc")
+
+    //implementation fg.deobf('curse.maven:smallships-450659:4575301')
 
     annotationProcessor 'org.spongepowered:mixin:0.8.5:processor'
 }

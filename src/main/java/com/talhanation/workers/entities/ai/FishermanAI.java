@@ -114,6 +114,7 @@ public class FishermanAI extends Goal {
                 }
 
                 if(boat.getFirstPassenger() != null && this.fisherman.equals(boat.getFirstPassenger())){
+                    this.fisherman.setSailPos(fishingPos);
                     this.setWorkState(SAILING);
                 }
             }
@@ -121,12 +122,11 @@ public class FishermanAI extends Goal {
             case SAILING -> {
                 if(!fisherman.canWork()) this.setWorkState(STOPPING);
 
-                this.fisherman.setSailPos(fishingPos);
-
-                if (coastPos.closerThan(fisherman.getOnPos(), 5F)) {
-
+                double distance = fisherman.distanceToSqr(fishingPos.getX(), fishingPos.getY(), fishingPos.getZ());
+                if(distance < 3) { //valid value example: distance = 3.2
                     this.setWorkState(FISHING);
                 }
+
             }
 
             case FISHING -> {

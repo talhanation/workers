@@ -394,9 +394,6 @@ public class MerchantEntity extends AbstractWorkerEntity implements IBoatControl
             }
         }
 
-
-
-
         this.setState(nbt.getInt("State"));
     }
 
@@ -548,7 +545,7 @@ public class MerchantEntity extends AbstractWorkerEntity implements IBoatControl
 
     @Override
     public double getBoatControlAccuracy() {
-        return 5D;// higher values less accuracy with sail pos / higher range to reach the pos
+        return 4D;// higher values less accuracy with sail pos / higher range to reach the pos
     }
 
     public void die(@NotNull DamageSource dmg) {

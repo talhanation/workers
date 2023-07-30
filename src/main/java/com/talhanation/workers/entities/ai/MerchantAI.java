@@ -125,7 +125,7 @@ public class MerchantAI extends Goal {
         this.state = state;
         this.merchant.setState(state.getIndex());
     }
-
+    @SuppressWarnings("all")
     private void moveToWayPoint(int indexChange, MerchantEntity.State nextState, boolean condition, boolean isSailing) {
         int index = merchant.getCurrentWayPointIndex();
         if(index >= this.merchant.WAYPOINTS.size()) index = this.merchant.WAYPOINTS.size() - 1;
@@ -174,10 +174,12 @@ public class MerchantAI extends Goal {
     }
 
     private boolean isWaterBlockPos(BlockPos pos){
-        for(int i = 0; i < 5; i++){
+        for(int i = 0; i < 3; i++){
             BlockPos pos1 = pos.below(i);
-            BlockState state = this.merchant.level.getBlockState(pos1);
-            if(state.is(Blocks.WATER)){
+            BlockPos pos2 = pos.above(i);
+            BlockState state1 = this.merchant.level.getBlockState(pos1);
+            BlockState state2 = this.merchant.level.getBlockState(pos2);
+            if(state1.is(Blocks.WATER) || state2.is(Blocks.WATER)){
                 return true;
             }
         }
