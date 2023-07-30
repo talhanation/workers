@@ -28,10 +28,8 @@ import net.minecraft.world.damagesource.DamageSource;
 import net.minecraft.world.entity.*;
 import net.minecraft.world.entity.ai.attributes.Attributes;
 import net.minecraft.world.entity.ai.goal.*;
-import net.minecraft.world.entity.ai.navigation.GroundPathNavigation;
 import net.minecraft.world.entity.ai.navigation.PathNavigation;
 import net.minecraft.world.entity.ai.village.ReputationEventType;
-import net.minecraft.world.entity.animal.AbstractFish;
 import net.minecraft.world.entity.item.ItemEntity;
 import net.minecraft.world.entity.npc.Villager;
 import net.minecraft.world.entity.player.Inventory;
@@ -42,7 +40,6 @@ import net.minecraft.world.inventory.AbstractContainerMenu;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.ServerLevelAccessor;
-import net.minecraft.world.level.pathfinder.BlockPathTypes;
 import net.minecraftforge.event.ForgeEventFactory;
 import net.minecraftforge.network.NetworkHooks;
 import org.jetbrains.annotations.NotNull;
@@ -76,6 +73,7 @@ public abstract class AbstractWorkerEntity extends AbstractChunkLoaderEntity {
     private static final EntityDataAccessor<String> OWNER_NAME = SynchedEntityData.defineId(AbstractWorkerEntity.class, EntityDataSerializers.STRING);
     private static final EntityDataAccessor<String> PROFESSION_NAME = SynchedEntityData.defineId(AbstractWorkerEntity.class, EntityDataSerializers.STRING);
     public static final EntityDataAccessor<Integer> FARMED_ITEMS = SynchedEntityData.defineId(AbstractWorkerEntity.class, EntityDataSerializers.INT);
+    private static final EntityDataAccessor<Boolean> NEEDS_TOOL = SynchedEntityData.defineId(AbstractWorkerEntity.class, EntityDataSerializers.BOOLEAN);
 
     int hurtTimeStamp = 0;
 
@@ -237,6 +235,7 @@ public abstract class AbstractWorkerEntity extends AbstractChunkLoaderEntity {
         this.entityData.define(NEEDS_HOME, false);
         this.entityData.define(NEEDS_CHEST, false);
         this.entityData.define(NEEDS_BED, false);
+        this.entityData.define(NEEDS_TOOL, false);
         this.entityData.define(breakingTime, 0);
         this.entityData.define(currentTimeBreak, -1);
         this.entityData.define(previousTimeBreak, -1);
@@ -253,6 +252,7 @@ public abstract class AbstractWorkerEntity extends AbstractChunkLoaderEntity {
         nbt.putBoolean("isPickingUp", this.getIsPickingUp());
         nbt.putBoolean("needsHome", this.needsHome());
         nbt.putBoolean("needsChest", this.needsChest());
+        nbt.putBoolean("needsTool", this.needsTool());
         nbt.putInt("breakTime", this.getBreakingTime());
         nbt.putInt("currentTimeBreak", this.getCurrentTimeBreak());
         nbt.putInt("previousTimeBreak", this.getPreviousTimeBreak());
@@ -285,6 +285,7 @@ public abstract class AbstractWorkerEntity extends AbstractChunkLoaderEntity {
         this.setFollow(nbt.getBoolean("Follow"));
         this.setBreakingTime(nbt.getInt("breakTime"));
         this.setIsPickingUp(nbt.getBoolean("isPickingUp"));
+        this.setNeedsTool(nbt.getBoolean("needsTool"));
         this.setCurrentTimeBreak(nbt.getInt("currentTimeBreak"));
         this.setPreviousTimeBreak(nbt.getInt("previousTimeBreak"));
         this.setIsWorking(nbt.getBoolean("isWorking"), true);
@@ -343,6 +344,9 @@ public abstract class AbstractWorkerEntity extends AbstractChunkLoaderEntity {
         return this.entityData.get(NEEDS_HOME);
     }
 
+    public boolean needsTool() {
+        return this.entityData.get(NEEDS_TOOL);
+    }
     @Nullable
     public BlockPos getChestPos() {
         return this.entityData.get(CHEST).orElse(null);
@@ -501,6 +505,10 @@ public abstract class AbstractWorkerEntity extends AbstractChunkLoaderEntity {
 
     public void setNeedsHome(boolean bool) {
         this.entityData.set(NEEDS_HOME, bool);
+    }
+
+    public void setNeedsTool(boolean bool) {
+        this.entityData.set(NEEDS_TOOL, bool);
     }
 
     public void setNeedsChest(boolean bool) {
@@ -697,7 +705,7 @@ public abstract class AbstractWorkerEntity extends AbstractChunkLoaderEntity {
     }
 
     public boolean needsToDeposit(){
-        return this.getFarmedItems() >= 16 && getChestPos() != null && !this.getFollow() && !this.needsChest() && !this.needsToSleep(); //TODO: configurable amount
+        return (this.needsTool() || this.getFarmedItems() >= 1) && getChestPos() != null && !this.getFollow() && !this.needsChest() && !this.needsToSleep(); //TODO: configurable amount
     }
 
     public void increaseFarmedItems(){
@@ -847,4 +855,7 @@ public abstract class AbstractWorkerEntity extends AbstractChunkLoaderEntity {
     public double getDistanceToOwner(){
         return this.getOwner() != null ? this.distanceToSqr(this.getOwner()) : 1D;
     }
+
+    public abstract boolean isRequiredMainTool(ItemStack tool);
+    public abstract boolean isRequiredSecondTool(ItemStack tool);
 }

@@ -281,4 +281,9 @@ public class MinerEntity extends AbstractWorkerEntity {
     public boolean isRequiredMainTool(ItemStack tool) {
         return tool.getItem() instanceof PickaxeItem;
     }
+
+    @Override
+    public boolean isRequiredSecondTool(ItemStack tool) {
+        return false;
+    }
 }

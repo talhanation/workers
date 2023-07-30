@@ -51,7 +51,6 @@ import static com.talhanation.workers.Translatable.TEXT_HELLO;
 import static com.talhanation.workers.Translatable.TEXT_HELLO_OWNED;
 
 public class MerchantEntity extends AbstractWorkerEntity implements IBoatController {
-
     private static final EntityDataAccessor<Boolean> TRAVELING = SynchedEntityData.defineId(MerchantEntity.class, EntityDataSerializers.BOOLEAN);
     private static final EntityDataAccessor<Integer> STATE = SynchedEntityData.defineId(MerchantEntity.class, EntityDataSerializers.INT);
     private static final EntityDataAccessor<Optional<BlockPos>> CURRENT_WAYPOINT = SynchedEntityData.defineId(MerchantEntity.class, EntityDataSerializers.OPTIONAL_BLOCK_POS);
@@ -252,6 +251,16 @@ public class MerchantEntity extends AbstractWorkerEntity implements IBoatControl
         this.setCustomName(name);
 
         this.heal(100);
+    }
+
+    @Override
+    public boolean isRequiredMainTool(ItemStack tool) {
+        return false;
+    }
+
+    @Override
+    public boolean isRequiredSecondTool(ItemStack tool) {
+        return false;
     }
 
     @Override

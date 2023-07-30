@@ -150,6 +150,16 @@ public class FarmerEntity extends AbstractWorkerEntity {
     }
 
     @Override
+    public boolean isRequiredMainTool(ItemStack tool) {
+        return false;
+    }
+
+    @Override
+    public boolean isRequiredSecondTool(ItemStack tool) {
+        return false;
+    }
+
+    @Override
     public boolean wantsToPickUp(ItemStack itemStack) {
         Item item = itemStack.getItem();
         return (WANTED_ITEMS.contains(item) || WANTED_SEEDS.contains(item));

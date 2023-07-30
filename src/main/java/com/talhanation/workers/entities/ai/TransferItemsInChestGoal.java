@@ -4,42 +4,40 @@ import com.talhanation.workers.Main;
 import com.talhanation.workers.Translatable;
 import com.talhanation.workers.entities.AbstractWorkerEntity;
 import net.minecraft.core.BlockPos;
-import net.minecraft.network.chat.Component;
-import net.minecraft.network.chat.MutableComponent;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.world.Container;
 import net.minecraft.world.SimpleContainer;
-import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.ai.goal.Goal;
-import net.minecraft.world.entity.ai.navigation.GroundPathNavigation;
 import net.minecraft.world.item.ItemStack;
-import net.minecraft.world.level.block.state.BlockState;
-import net.minecraftforge.common.Tags.Blocks;
+import net.minecraft.world.level.block.entity.BlockEntity;
+import net.minecraft.world.level.block.entity.ChestBlockEntity;
+import net.minecraft.world.level.gameevent.GameEvent;
 
 public class TransferItemsInChestGoal extends Goal {
     private final AbstractWorkerEntity worker;
-    private GroundPathNavigation pathFinder;
+    public BlockPos chestPos;
+    public Container container;
+    public boolean message;
 
     public TransferItemsInChestGoal(AbstractWorkerEntity worker) {
         this.worker = worker;
-        this.pathFinder = (GroundPathNavigation) this.worker.getNavigation();
     }
 
     @Override
     public boolean canUse() {
         return this.worker.needsToDeposit();
-        // SimpleContainer inventory = this.worker.getInventory();
-        // if (inventory == null) {
-        //     return false;
-        // }
-        // for (ItemStack item : inventory.items) {
-        //     // If there's at least one item that the worker wants to save in the chest
-        //     if (this.worker.wantsToPickUp(item) && !this.worker.wantsToKeep(item)) {
-        //         Main.LOGGER.debug("Saving {} in chest", item.getDisplayName().getString());
-        //         return true;
-        //     }
-        // }
-        // return false;
+    }
+
+    @Override
+    public void start() {
+        super.start();
+        message = false;
+    }
+
+    @Override
+    public void stop() {
+        super.stop();
+        if(container != null) this.interactChest(container,false);
     }
 
     public boolean canContinueToUse() {
@@ -48,65 +46,56 @@ public class TransferItemsInChestGoal extends Goal {
 
     @Override
     public void tick() {
-        LivingEntity owner = worker.getOwner();
-        if (owner == null) return;
-        if (worker.needsToSleep()) return;
-        
-        BlockPos chestPos = this.worker.getChestPos();
-        if (chestPos == null) {
-            this.worker.tellPlayer(owner, Translatable.TEXT_CANT_FIND_CHEST);
+        this.chestPos = worker.getChestPos();
+
+        if (chestPos != null) {
+            BlockEntity entity = worker.level.getBlockEntity(chestPos);
+            if (entity instanceof Container containerEntity) {
+                this.container = containerEntity;
+            }
+            else message = true;
+
+            this.worker.getNavigation().moveTo(chestPos.getX(), chestPos.getY(), chestPos.getZ(), 1.1D);
+
+            if (chestPos.closerThan(worker.getOnPos(), 2.5) && container != null) {
+                this.worker.getNavigation().stop();
+                this.worker.getLookControl().setLookAt(chestPos.getX(), chestPos.getY() + 1, chestPos.getZ(), 10.0F, (float) this.worker.getMaxHeadXRot());
+                this.interactChest(container, true);
+                this.depositItems(container);
+                this.reequipTool();
+            }
+        }
+        else message = true;
+
+        if(message && worker.getOwner() != null){
+            this.worker.tellPlayer(worker.getOwner(), Translatable.TEXT_CANT_FIND_CHEST);
             this.worker.setNeedsChest(true);
-            return;
-        }
-        
-        Container containerEntity = null;
-        BlockState chest = worker.level.getBlockState(this.worker.getChestPos());
-        if (worker.level.getBlockEntity(chestPos) instanceof Container container) {
-            containerEntity = container;
-        }
-        if (containerEntity == null || (!chest.is(Blocks.CHESTS) && !chest.is(Blocks.BARRELS))) {
-            this.worker.tellPlayer(owner, Translatable.TEXT_CANT_FIND_CHEST);
-            this.worker.setNeedsChest(true);
-            return;
         }
 
 
-        //Main.LOGGER.debug("Moving to chest");
-        pathFinder.setCanOpenDoors(true);
-        pathFinder.moveTo(chestPos.getX(), chestPos.getY(), chestPos.getZ(), 1.1D);
+    }
 
-        if (chestPos.closerThan(worker.getOnPos(), 2.5D)) {
-            pathFinder.stop();
-            this.worker.getLookControl().setLookAt(
-                chestPos.getX(),
-                chestPos.getY() + 1,
-                chestPos.getZ(),
-                10.0F,
-                (float) this.worker.getMaxHeadXRot()
-            );
-
-            //Main.LOGGER.debug("Depositing to chest");
-            worker.level.playSound(
-                null, 
-                chestPos,
-                SoundEvents.CHEST_OPEN,
-                worker.getSoundSource(),
-                0.7F, 
-                0.8F + 0.4F * worker.getRandom().nextFloat()
-            );
-            //TODO: actually open the chest visually
-            this.depositItems(containerEntity);
-            worker.level.playSound(
-                null,
-                chestPos,
-                SoundEvents.CHEST_CLOSE,
-                worker.getSoundSource(),
-                0.7F,
-                0.8F + 0.4F * worker.getRandom().nextFloat()
-            );
+    public void interactChest(Container container, boolean open) {
+        if (container instanceof ChestBlockEntity chest) {
+            if (open) {
+                this.worker.getLevel().blockEvent(this.chestPos, chest.getBlockState().getBlock(), 1, 1);
+                this.worker.level.playSound(null, chestPos, SoundEvents.CHEST_OPEN, worker.getSoundSource(), 0.7F, 0.8F + 0.4F * worker.getRandom().nextFloat());
+            }
+            else {
+                this.worker.getLevel().blockEvent(this.chestPos, chest.getBlockState().getBlock(), 1, 0);
+                worker.level.playSound(null, chestPos, SoundEvents.CHEST_CLOSE, worker.getSoundSource(), 0.7F, 0.8F + 0.4F * worker.getRandom().nextFloat());
+            }
+            this.worker.getLevel().gameEvent(this.worker, open ? GameEvent.BLOCK_OPEN : GameEvent.BLOCK_CLOSE, chestPos);
         }
     }
-    
+
+    private void reequipTool() {
+        if(worker.needsTool()){
+
+        }
+    }
+
+
 
     private void depositItems(Container container) {
         SimpleContainer inventory = worker.getInventory();
@@ -197,4 +186,6 @@ public class TransferItemsInChestGoal extends Goal {
         // Return the remainder.
         return stack;
     }
+
+
 }

@@ -80,8 +80,6 @@ public abstract class AbstractAnimalFarmerEntity extends AbstractWorkerEntity {
             }
         }
     }
-    public abstract boolean isRequiredMainTool(ItemStack tool);
-    public abstract boolean isRequiredSecondTool(ItemStack tool);
 
     public void openGUI(Player player) {
         if (player instanceof ServerPlayer) {

@@ -113,6 +113,16 @@ public class LumberjackEntity extends AbstractWorkerEntity {
     }
 
     @Override
+    public boolean isRequiredMainTool(ItemStack tool) {
+        return false;
+    }
+
+    @Override
+    public boolean isRequiredSecondTool(ItemStack tool) {
+        return false;
+    }
+
+    @Override
     public boolean wantsToPickUp(ItemStack itemStack) {
         return (
             itemStack.is(ItemTags.LOGS) ||

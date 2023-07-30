@@ -143,6 +143,17 @@ public class FishermanEntity extends AbstractWorkerEntity implements IBoatContro
         this.setProfessionName(name.getString());
         this.setCustomName(name);
     }
+
+    @Override
+    public boolean isRequiredMainTool(ItemStack tool) {
+        return false;
+    }
+
+    @Override
+    public boolean isRequiredSecondTool(ItemStack tool) {
+        return false;
+    }
+
     @Override
     public boolean wantsToPickUp(ItemStack itemStack) {
         return !itemStack.isEmpty();
