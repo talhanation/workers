@@ -9,17 +9,20 @@ import net.minecraft.world.Container;
 import net.minecraft.world.SimpleContainer;
 import net.minecraft.world.entity.ai.goal.Goal;
 import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.Items;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.entity.ChestBlockEntity;
 import net.minecraft.world.level.gameevent.GameEvent;
 
-public class TransferItemsInChestGoal extends Goal {
+public class DepositItemsInChestGoal extends Goal {
     private final AbstractWorkerEntity worker;
     public BlockPos chestPos;
     public Container container;
     public boolean message;
+    public int timer = 0;
+    public boolean setTimer = false;
 
-    public TransferItemsInChestGoal(AbstractWorkerEntity worker) {
+    public DepositItemsInChestGoal(AbstractWorkerEntity worker) {
         this.worker = worker;
     }
 
@@ -32,12 +35,16 @@ public class TransferItemsInChestGoal extends Goal {
     public void start() {
         super.start();
         message = false;
+        this.chestPos = worker.getChestPos();
     }
 
     @Override
     public void stop() {
         super.stop();
         if(container != null) this.interactChest(container,false);
+        timer = 0;
+        setTimer = false;
+        this.worker.resetFarmedItems();
     }
 
     public boolean canContinueToUse() {
@@ -60,9 +67,15 @@ public class TransferItemsInChestGoal extends Goal {
             if (chestPos.closerThan(worker.getOnPos(), 2.5) && container != null) {
                 this.worker.getNavigation().stop();
                 this.worker.getLookControl().setLookAt(chestPos.getX(), chestPos.getY() + 1, chestPos.getZ(), 10.0F, (float) this.worker.getMaxHeadXRot());
-                this.interactChest(container, true);
-                this.depositItems(container);
-                this.reequipTool();
+
+                if(!setTimer){
+                    this.interactChest(container, true);
+                    this.depositItems(container);
+                    this.reequipTool();
+
+                    timer = 50;
+                    setTimer = true;
+                }
             }
         }
         else message = true;
@@ -72,6 +85,10 @@ public class TransferItemsInChestGoal extends Goal {
             this.worker.setNeedsChest(true);
         }
 
+        if(setTimer){
+            if(timer > 0) timer--;
+            if(timer == 0) stop();
+        }
 
     }
 
@@ -89,17 +106,44 @@ public class TransferItemsInChestGoal extends Goal {
         }
     }
 
-    private void reequipTool() {
+    private void reequipTool(){
         if(worker.needsTool()){
+            boolean hasMainHand = worker.getInventory().hasAnyMatching(worker::isRequiredMainTool);
+            boolean hasOffHand = worker.getInventory().hasAnyMatching(worker::isRequiredSecondTool);
 
+            for (int i = 0; i < container.getContainerSize(); i++) {
+                ItemStack stack = container.getItem(i);
+
+                if((!hasMainHand && worker.isRequiredMainTool(stack))){
+                    take(stack);
+                }
+                if(!hasOffHand && worker.isRequiredSecondTool(stack)){
+                    take(stack);
+                }
+            }
+            worker.setNeedsTool(false);
         }
+    }
+
+    private void take(ItemStack stack){
+        ItemStack tool = stack.copy();
+        worker.getInventory().addItem(tool);
+        stack.shrink(1);
     }
 
 
 
     private void depositItems(Container container) {
         SimpleContainer inventory = worker.getInventory();
-        boolean couldDepositSomething = false;
+
+        if (this.isContainerFull(container)) {
+            this.worker.setNeedsChest(true);
+
+            if(worker.getOwner() != null) {
+                this.worker.tellPlayer(worker.getOwner(), Translatable.TEXT_CHEST_FULL);
+            }
+            return;
+        }
 
         for (int i = 0; i < inventory.getContainerSize(); i++) {
             ItemStack stack = inventory.getItem(i);
@@ -107,41 +151,17 @@ public class TransferItemsInChestGoal extends Goal {
             // This avoids depositing items such as tools, food, 
             // or anything the workers wouldn't pick up while they're working.
             // It also avoids depositing items that the worker needs to continue working.
-            if (stack.isEmpty() || !worker.wantsToPickUp(stack) || worker.wantsToKeep(stack)) {
+            if (stack.is(Items.AIR) || stack.isEmpty() || !worker.wantsToPickUp(stack) || worker.wantsToKeep(stack)) {
                 continue;
             }
-            int originalAmount = stack.getCount();
             // Attempt to deposit the stack in the container, keep the remainder
             ItemStack remainder = this.deposit(stack, container);
             inventory.setItem(i, remainder);
-            if (originalAmount != remainder.getCount()) {
-                couldDepositSomething = true;
-            }
 
-            Main.LOGGER.debug(
-                "Stored {} x {}",
-                stack.getCount() - remainder.getCount(),
-                stack.getDisplayName().getString()
-            );
-            Main.LOGGER.debug(
-                "Kept {} x ", 
-                remainder.getCount(), 
-                stack.getDisplayName().getString()
-            );
+
+            //Main.LOGGER.debug("Stored {} x {}", stack.getCount() - remainder.getCount(), stack.getDisplayName().getString());
+            //Main.LOGGER.debug("Kept {} x {}", remainder.getCount(), stack.getDisplayName().getString());
         }
-        if (!couldDepositSomething) {
-            this.worker.setNeedsChest(true);
-
-            if(worker.getOwner() != null) {
-                if (this.isContainerFull(container)) {
-                    this.worker.tellPlayer(worker.getOwner(), Translatable.TEXT_CHEST_FULL);
-                }
-                else
-                    this.worker.tellPlayer(worker.getOwner(), Translatable.TEXT_COULD_NOT_DEPOSIT);
-            }
-        }
-
-        this.worker.resetFarmedItems();
     }
 
     private boolean isContainerFull(Container container){
@@ -160,10 +180,8 @@ public class TransferItemsInChestGoal extends Goal {
         for (int i = 0; i < container.getContainerSize(); i++) {
             ItemStack targetStack = container.getItem(i);
             if (targetStack.sameItem(stack)) {
-                int amountToDeposit = Math.min(
-                    stack.getCount(), 
-                    targetStack.getMaxStackSize() - targetStack.getCount()
-                );
+                int amountToDeposit = Math.min(stack.getCount(), targetStack.getMaxStackSize() - targetStack.getCount());
+
                 targetStack.grow(amountToDeposit);
                 stack.shrink(amountToDeposit);
 

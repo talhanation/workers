@@ -7,6 +7,7 @@ import com.talhanation.workers.entities.ai.*;
 import com.talhanation.workers.network.MessageOpenGuiWorker;
 import net.minecraft.network.chat.MutableComponent;
 import net.minecraft.world.entity.*;
+import net.minecraft.world.item.AxeItem;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.entity.ai.attributes.AttributeSupplier;
@@ -114,7 +115,7 @@ public class LumberjackEntity extends AbstractWorkerEntity {
 
     @Override
     public boolean isRequiredMainTool(ItemStack tool) {
-        return false;
+        return tool.getItem() instanceof AxeItem;
     }
 
     @Override

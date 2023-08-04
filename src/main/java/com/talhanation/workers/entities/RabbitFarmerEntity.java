@@ -18,6 +18,7 @@ import net.minecraft.world.entity.ai.goal.RandomLookAroundGoal;
 import net.minecraft.world.entity.ai.goal.WaterAvoidingRandomStrollGoal;
 import net.minecraft.world.entity.item.ItemEntity;
 import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.item.AxeItem;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
@@ -136,7 +137,7 @@ public class RabbitFarmerEntity extends AbstractAnimalFarmerEntity {
 
     @Override
     public boolean isRequiredMainTool(ItemStack tool) {
-        return false;
+        return tool.getItem() instanceof AxeItem;
     }
 
     @Override

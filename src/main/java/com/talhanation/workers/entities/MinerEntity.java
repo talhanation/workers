@@ -284,6 +284,6 @@ public class MinerEntity extends AbstractWorkerEntity {
 
     @Override
     public boolean isRequiredSecondTool(ItemStack tool) {
-        return false;
+        return tool.getItem() instanceof ShovelItem;
     }
 }

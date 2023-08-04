@@ -25,6 +25,7 @@ import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.inventory.AbstractContainerMenu;
 import net.minecraft.world.MenuProvider;
+import net.minecraft.world.item.FishingRodItem;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
 import net.minecraft.nbt.CompoundTag;
@@ -146,7 +147,7 @@ public class FishermanEntity extends AbstractWorkerEntity implements IBoatContro
 
     @Override
     public boolean isRequiredMainTool(ItemStack tool) {
-        return false;
+        return tool.getItem() instanceof FishingRodItem;
     }
 
     @Override

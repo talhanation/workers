@@ -106,7 +106,7 @@ public abstract class AbstractWorkerEntity extends AbstractChunkLoaderEntity {
         this.goalSelector.addGoal(0, new SleepGoal(this));
         this.goalSelector.addGoal(0, new WorkerFloatGoal(this));
         this.goalSelector.addGoal(0, new OpenDoorGoal(this, true));
-        this.goalSelector.addGoal(1, new TransferItemsInChestGoal(this));
+        this.goalSelector.addGoal(1, new DepositItemsInChestGoal(this));
         this.goalSelector.addGoal(1, new WorkerMoveToHomeGoal<>(this));
         this.goalSelector.addGoal(0, new WorkerFollowOwnerGoal(this, 1.0F, 20.0F));
 
@@ -138,7 +138,7 @@ public abstract class AbstractWorkerEntity extends AbstractChunkLoaderEntity {
         ) {
             List<ItemEntity> nearbyItems = this.level.getEntitiesOfClass(
                 ItemEntity.class,
-                this.getBoundingBox().inflate(2.5D, 2.5D, 2.5D)
+                this.getBoundingBox().inflate(2.5D, 0.5D, 2.5D)
             );
             for (ItemEntity itementity : nearbyItems) {
                 if (
@@ -180,12 +180,13 @@ public abstract class AbstractWorkerEntity extends AbstractChunkLoaderEntity {
         heldItem.hurtAndBreak(1, this,(worker) -> {
             worker.broadcastBreakEvent(EquipmentSlot.MAINHAND);
             worker.setItemInHand(InteractionHand.MAIN_HAND, ItemStack.EMPTY);
+
             worker.stopUsingItem();
 
             if (worker.getItemInHand(InteractionHand.MAIN_HAND).isEmpty()) {
                 LivingEntity owner = worker.getOwner();
                 if (owner != null) worker.tellPlayer(owner, TEXT_OUT_OF_TOOLS(heldItem));
-                // TODO: Change to setNeedsToGetTool
+                worker.setNeedsTool(true);
             }
 
             worker.upgradeTool();
@@ -674,7 +675,7 @@ public abstract class AbstractWorkerEntity extends AbstractChunkLoaderEntity {
         return this.needsToEat() && (isChest);
     }
     public boolean needsToEat() {
-        return (getHunger() <= 20F || getHealth() < getMaxHealth() * 0.2) || isStarving();
+        return (getHunger() <= 50F || getHealth() < getMaxHealth() * 0.2) || isStarving();
     }
 
     public boolean isStarving() {
@@ -705,7 +706,7 @@ public abstract class AbstractWorkerEntity extends AbstractChunkLoaderEntity {
     }
 
     public boolean needsToDeposit(){
-        return (this.needsTool() || this.getFarmedItems() >= 1) && getChestPos() != null && !this.getFollow() && !this.needsChest() && !this.needsToSleep(); //TODO: configurable amount
+        return (this.needsTool() || this.getFarmedItems() >= 64) && getChestPos() != null && !this.getFollow() && !this.needsChest() && !this.needsToSleep(); //TODO: configurable amount
     }
 
     public void increaseFarmedItems(){

@@ -8,6 +8,7 @@ import com.talhanation.workers.entities.ai.FarmerAI;
 import com.talhanation.workers.entities.ai.WorkerPickupWantedItemGoal;
 import com.talhanation.workers.network.MessageOpenGuiWorker;
 import net.minecraft.world.entity.*;
+import net.minecraft.world.item.HoeItem;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.entity.AgeableMob;
@@ -151,7 +152,7 @@ public class FarmerEntity extends AbstractWorkerEntity {
 
     @Override
     public boolean isRequiredMainTool(ItemStack tool) {
-        return false;
+        return tool.getItem() instanceof HoeItem;
     }
 
     @Override
