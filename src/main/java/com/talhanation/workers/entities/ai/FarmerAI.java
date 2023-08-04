@@ -2,11 +2,14 @@ package com.talhanation.workers.entities.ai;
 
 import com.talhanation.workers.entities.FarmerEntity;
 import net.minecraft.core.BlockPos;
+import net.minecraft.server.level.ServerLevel;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.sounds.SoundSource;
 import net.minecraft.tags.BlockTags;
 import net.minecraft.world.SimpleContainer;
 import net.minecraft.world.entity.ai.goal.Goal;
+import net.minecraft.world.entity.vehicle.Boat;
+import net.minecraft.world.item.BoneMealItem;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
 import net.minecraft.world.level.block.*;
@@ -27,6 +30,7 @@ public class FarmerAI extends Goal {
     private enum State {
         PLOWING,
         PLANTING,
+        FERTILIZING,
         HARVESTING
     };
     private State state;
@@ -87,12 +91,12 @@ public class FarmerAI extends Goal {
                 }
                 case PLANTING -> {
                     if (!hasSeedInInv()) {
-                        state = State.HARVESTING;
+                        state = State.FERTILIZING;
                         break;
                     }
                     this.workPos = getPlantPos();
                     if (this.workPos == null) {
-                        state = State.HARVESTING;
+                        state = State.FERTILIZING;
                         break;
                     }
                     this.farmer.walkTowards(workPos, 0.7);
@@ -101,6 +105,23 @@ public class FarmerAI extends Goal {
                         this.plantSeedsFromInv(workPos);
                     }
                 }
+                case FERTILIZING -> {
+                    if(hasBone()){
+                        state = State.HARVESTING;
+                        break;
+                    }
+                    this.workPos = getFertilizePos();
+                    if (this.workPos == null) {
+                        state = State.HARVESTING;
+                        break;
+                    }
+                    this.farmer.walkTowards(workPos, 0.7);
+                    if (workPos.closerThan(farmer.blockPosition(), 3)) {
+                        farmer.workerSwingArm();
+                        this.fertilizeSeeds(workPos);
+                    }
+                }
+
                 case HARVESTING -> {
                     if (hasSpaceInInv())
                         this.workPos = getHarvestPos();
@@ -116,6 +137,25 @@ public class FarmerAI extends Goal {
                         }
                     } else
                         state = State.PLOWING;
+                }
+            }
+        }
+    }
+
+    private boolean hasBone() {
+        SimpleContainer inventory = farmer.getInventory();
+        return inventory.hasAnyMatching(item -> item.getItem() instanceof BoneMealItem);
+    }
+
+    private void fertilizeSeeds(BlockPos workPos) {
+        BlockState state = farmer.getLevel().getBlockState(workPos);
+        Block block = state.getBlock();
+        if(block instanceof BonemealableBlock crop && !this.farmer.getLevel().isClientSide()){
+            crop.performBonemeal((ServerLevel) farmer.getLevel(), farmer.getRandom(), workPos, state);
+            if(crop.isBonemealSuccess((ServerLevel) farmer.getLevel(), farmer.getRandom(), workPos, state)){
+                for (int i = 0; i < farmer.getInventory().getContainerSize(); ++i) {
+                    ItemStack itemstack = farmer.getInventory().getItem(i);
+                    if(itemstack.getItem() instanceof BoneMealItem) itemstack.shrink(1);
                 }
             }
         }
@@ -262,6 +302,30 @@ public class FarmerAI extends Goal {
                     if (block instanceof CropBlock crop && belowBlockState.is(Blocks.FARMLAND)) {
 
                         if (crop.isMaxAge(blockState)) {
+                            return blockPos;
+                        }
+                    }
+                }
+            }
+        }
+        return null;
+    }
+
+    public BlockPos getFertilizePos() {
+        // int range = 8;
+        for (int j = 0; j <= 8; j++) {
+            for (int i = 0; i <= 8; i++) {
+                BlockPos blockPos = waterPos.offset(j - 4, 1, i - 4);
+                BlockState blockState = this.farmer.level.getBlockState(blockPos);
+                Block block = blockState.getBlock();
+
+                if (CROP_BLOCKS.contains(block)) {
+                    BlockPos belowBlockPos = blockPos.below();
+                    BlockState belowBlockState = this.farmer.level.getBlockState(belowBlockPos);
+
+                    if (block instanceof CropBlock crop && belowBlockState.is(Blocks.FARMLAND)) {
+
+                        if (!crop.isMaxAge(blockState)) {
                             return blockPos;
                         }
                     }
