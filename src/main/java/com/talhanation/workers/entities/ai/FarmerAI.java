@@ -106,7 +106,7 @@ public class FarmerAI extends Goal {
                     }
                 }
                 case FERTILIZING -> {
-                    if(hasBone()){
+                    if(!hasBone()){
                         state = State.HARVESTING;
                         break;
                     }
