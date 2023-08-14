@@ -63,7 +63,8 @@ public class FishermanAI extends Goal {
 
     @Override
     public void tick() {
-        Main.LOGGER.info("State: " + state);
+        /*
+        /Main.LOGGER.info("State: " + state);
         if(state == null)
             state = FishermanEntity.State.fromIndex(fisherman.getState());
 
@@ -114,7 +115,7 @@ public class FishermanAI extends Goal {
                 }
 
                 if(boat.getFirstPassenger() != null && this.fisherman.equals(boat.getFirstPassenger())){
-                    this.fisherman.setSailPos(fishingPos);
+                    //this.fisherman.setSailPos(fishingPos);
                     this.setWorkState(SAILING);
                 }
             }
@@ -156,6 +157,8 @@ public class FishermanAI extends Goal {
                 stop();
             }
         }
+
+         */
     }
 
     private void setWorkState(FishermanEntity.State state) {
