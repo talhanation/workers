@@ -24,8 +24,8 @@ public class MinerAI extends Goal {
     private final MinerEntity miner;
     private BlockPos minePos;
     private MineType mineType;
+    private WorkState workState;
     private boolean messageNoPickaxe;
-
     public MinerAI(MinerEntity miner) {
         this.miner = miner;
         this.setFlags(EnumSet.of(Goal.Flag.MOVE));
@@ -45,27 +45,26 @@ public class MinerAI extends Goal {
         this.miner.resetWorkerParameters();
         this.miner.resetCounts();
         this.mineType = getMineType();
+        this.workState = WorkState.IDLE;
         this.messageNoPickaxe = false;
     }
 
     public void resetGoal(){
         miner.resetCounts();
+        miner.setIsWorking(false);
+        this.miner.setIsPickingUp(false);
 
-        if(!this.miner.getChecked()){
-            this.miner.setChecked(true);
-
-        }
-        else {
-            miner.setIsWorking(false);
-            miner.clearStartPos();
-            this.miner.setIsPickingUp(false);
-            this.miner.setChecked(false);
-            this.stop();
-        }
+        this.miner.setChecked(false);
+        this.stop();
     }
 
-    private enum MineType {
+    private enum WorkState {
         IDLE,
+        TO_WORK_POS,
+        WORKING,
+        DONE,
+    }
+    private enum MineType {
         TUNNEL_1X2,
         TUNNEL_3X3,
         PIT_8X8X8,
@@ -74,146 +73,181 @@ public class MinerAI extends Goal {
     }
 
     public void tick() {
-        if(miner.getStartPos() != null){
-
-            //Handle Direction and assign minePos
-            if (miner.getMineDirection().equals(Direction.EAST)) {
-                this.minePos = new BlockPos(miner.getStartPos().getX() + miner.blocks, miner.getStartPos().getY() - miner.depth, miner.getStartPos().getZ() - miner.side);
-
-            } else if (miner.getMineDirection().equals(Direction.WEST)) {
-                this.minePos = new BlockPos(miner.getStartPos().getX() - miner.blocks, miner.getStartPos().getY() - miner.depth, miner.getStartPos().getZ() + miner.side);
-
-            } else if (miner.getMineDirection().equals(Direction.NORTH)) {
-                this.minePos = new BlockPos(miner.getStartPos().getX() - miner.side, miner.getStartPos().getY() - miner.depth, miner.getStartPos().getZ() - miner.blocks);
-
-            } else if (miner.getMineDirection().equals(Direction.SOUTH)) {
-                this.minePos = new BlockPos(miner.getStartPos().getX() + miner.side, miner.getStartPos().getY() - miner.depth, miner.getStartPos().getZ() + miner.blocks);
+        switch (workState){
+            case IDLE -> {
+                if(miner.getStartPos() != null) {
+                    workState = WorkState.TO_WORK_POS;
+                }
             }
 
-            //Move to minePos -> normal movement
-            if(!minePos.closerThan(miner.getOnPos(), 12)){
-                this.miner.walkTowards(minePos, 1F);
-            }
-            //Near Mine Pos -> presice movement
-            if (!minePos.closerThan(miner.getOnPos(), 3.5F)) {
-                this.miner.getMoveControl().setWantedPosition(minePos.getX(), miner.getStartPos().getY(), minePos.getZ(), 1);
-            }
-            else
-                miner.getNavigation().stop();
+            case TO_WORK_POS -> {
+                miner.getNavigation().moveTo(miner.getStartPos().getX(), miner.getStartPos().getY(), miner.getStartPos().getZ(), 1.0F);
 
-            if (minePos.closerThan(miner.getOnPos(), 3)){
-                this.miner.getLookControl().setLookAt(minePos.getX(), minePos.getY() + 1, minePos.getZ(), 10.0F, (float) this.miner.getMaxHeadXRot());
-            }
-            BlockState blockstate = miner.level.getBlockState(minePos);
-            Block block1 = blockstate.getBlock();
-            AttributeInstance movSpeed = this.miner.getAttribute(Attributes.MOVEMENT_SPEED);
-            if (movSpeed != null) movSpeed.setBaseValue(0.3D);
-
-            //break block if close enough
-            if (minePos.closerThan(miner.getOnPos(), 6)){
-                boolean needsPickaxe = blockstate.is(BlockTags.MINEABLE_WITH_PICKAXE);
-
-                if(needsPickaxe && !hasMainToolInInv()) {
-                    if(!messageNoPickaxe && this.miner.getOwner() != null){
-                        this.miner.tellPlayer(miner.getOwner(), Translatable.TEXT_NO_PICKAXE);
-                        messageNoPickaxe = true;
-                    }
-                    return;
+                if (miner.getStartPos().closerThan(miner.getOnPos(), 3)) {
+                    workState = WorkState.WORKING;
                 }
-
-                if (this.mineBlock(minePos)) this.miner.increaseFarmedItems();
             }
 
-            switch (mineType) {
-                case PIT_8X8X8 -> {
-                    if (miner.shouldIgnoreBlock(block1) || block1 == Blocks.OAK_PLANKS) {
-                        miner.blocks++;
-                        if (block1 != Blocks.OAK_PLANKS) placePlanks();
-                    }
+            case WORKING -> {
+                this.working();
+            }
 
-                    if (miner.blocks == 8) {
-                        miner.blocks = 0;
-                        miner.side++;
-                    }
+            case DONE -> {
+                if(!this.miner.getChecked()){
+                    miner.resetCounts();
+                    this.miner.setChecked(true);
+                    workState = WorkState.WORKING;
+                }
+                else {
+                    miner.getNavigation().moveTo(miner.getStartPos().getX(), miner.getStartPos().getY(), miner.getStartPos().getZ(), 1.0F);
 
-                    if (miner.side == 8) {
-                        miner.side = 0;
-                        miner.depth++;
-                    }
-
-                    if (miner.depth >= 8) {
-                        this.resetGoal();
+                    if (miner.getStartPos().closerThan(miner.getOnPos(), 3)) {
+                        resetGoal();
+                        workState = WorkState.IDLE;
                     }
                 }
+            }
+        }
+    }
 
-                case ROOM_8X8X3 -> {
-                    if (miner.shouldIgnoreBlock(block1)) {
-                        miner.depth--;
-                    }
+    private void working(){
+        //Handle Direction and assign minePos
+        if (miner.getMineDirection().equals(Direction.EAST)) {
+            this.minePos = new BlockPos(miner.getStartPos().getX() + miner.blocks, miner.getStartPos().getY() - miner.depth, miner.getStartPos().getZ() - miner.side);
 
-                    if (miner.depth == -3) {
-                        miner.depth = 0;
-                        miner.side++;
-                    }
+        } else if (miner.getMineDirection().equals(Direction.WEST)) {
+            this.minePos = new BlockPos(miner.getStartPos().getX() - miner.blocks, miner.getStartPos().getY() - miner.depth, miner.getStartPos().getZ() + miner.side);
 
-                    if (miner.side == 8) {
-                        miner.side = 0;
-                        miner.blocks++;
-                    }
+        } else if (miner.getMineDirection().equals(Direction.NORTH)) {
+            this.minePos = new BlockPos(miner.getStartPos().getX() - miner.side, miner.getStartPos().getY() - miner.depth, miner.getStartPos().getZ() - miner.blocks);
 
-                    if (miner.blocks == 8) {
-                        this.resetGoal();
-                    }
+        } else if (miner.getMineDirection().equals(Direction.SOUTH)) {
+            this.minePos = new BlockPos(miner.getStartPos().getX() + miner.side, miner.getStartPos().getY() - miner.depth, miner.getStartPos().getZ() + miner.blocks);
+        }
+
+        //Move to minePos -> normal movement
+        if(!minePos.closerThan(miner.getOnPos(), 12)){
+            this.miner.walkTowards(minePos, 1F);
+        }
+        //Near Mine Pos -> presice movement
+        if (!minePos.closerThan(miner.getOnPos(), 3.5F)) {
+            this.miner.getMoveControl().setWantedPosition(minePos.getX(), miner.getStartPos().getY(), minePos.getZ(), 1);
+        }
+        else
+            miner.getNavigation().stop();
+
+        if (minePos.closerThan(miner.getOnPos(), 3)){
+            this.miner.getLookControl().setLookAt(minePos.getX(), minePos.getY() + 1, minePos.getZ(), 10.0F, (float) this.miner.getMaxHeadXRot());
+        }
+        BlockState blockstate = miner.level.getBlockState(minePos);
+        Block block1 = blockstate.getBlock();
+        AttributeInstance movSpeed = this.miner.getAttribute(Attributes.MOVEMENT_SPEED);
+        if (movSpeed != null) movSpeed.setBaseValue(0.3D);
+
+        //break block if close enough
+        if (minePos.closerThan(miner.getOnPos(), 6)){
+            boolean needsPickaxe = blockstate.is(BlockTags.MINEABLE_WITH_PICKAXE);
+
+            if(needsPickaxe && !hasMainToolInInv()) {
+                if(!messageNoPickaxe && this.miner.getOwner() != null){
+                    this.miner.tellPlayer(miner.getOwner(), Translatable.TEXT_NO_PICKAXE);
+                    messageNoPickaxe = true;
+                }
+                return;
+            }
+
+            if (this.mineBlock(minePos)) this.miner.increaseFarmedItems();
+        }
+
+        switch (mineType) {
+            case PIT_8X8X8 -> {
+                if (miner.shouldIgnoreBlock(block1) || block1 == Blocks.OAK_PLANKS) {
+                    miner.blocks++;
+                    if (block1 != Blocks.OAK_PLANKS) placePlanks();
                 }
 
-                case FLAT_8X8X1 -> {
-                    if (miner.shouldIgnoreBlock(block1)) {
-                        miner.blocks++;
-                    }
-
-                    if (miner.blocks == 8) {
-                        miner.blocks = 0;
-                        miner.side++;
-                    }
-
-                    if (miner.side == 8) {
-                        this.resetGoal();
-                    }
+                if (miner.blocks == 8) {
+                    miner.blocks = 0;
+                    miner.side++;
                 }
 
-                case TUNNEL_3X3 -> {
-                    if (miner.shouldIgnoreBlock(block1)) {
-                        miner.depth--;
-                    }
-
-                    if (miner.depth == -3) {
-                        miner.depth = 0;
-                        miner.side++;
-                    }
-
-                    if (miner.side == 3) {
-                        miner.side = 0;
-                        miner.blocks++;
-                    }
-
-                    if (miner.blocks == miner.getMineDepth()) {
-                        this.resetGoal();
-                    }
+                if (miner.side == 8) {
+                    miner.side = 0;
+                    miner.depth++;
                 }
 
-                case TUNNEL_1X2 -> {
-                    if (miner.shouldIgnoreBlock(block1)) {
-                        miner.depth--;
-                    }
+                if (miner.depth >= 8) {
+                    this.workState = WorkState.DONE;
+                }
+            }
 
-                    if (miner.depth == -2) {
-                        miner.depth = 0;
-                        miner.blocks++;
-                    }
+            case ROOM_8X8X3 -> {
+                if (miner.shouldIgnoreBlock(block1)) {
+                    miner.depth--;
+                }
 
-                    if (miner.blocks == miner.getMineDepth()) {
-                        this.resetGoal();
-                    }
+                if (miner.depth == -3) {
+                    miner.depth = 0;
+                    miner.side++;
+                }
+
+                if (miner.side == 8) {
+                    miner.side = 0;
+                    miner.blocks++;
+                }
+
+                if (miner.blocks == 8) {
+                    this.workState = WorkState.DONE;
+                }
+            }
+
+            case FLAT_8X8X1 -> {
+                if (miner.shouldIgnoreBlock(block1)) {
+                    miner.blocks++;
+                }
+
+                if (miner.blocks == 8) {
+                    miner.blocks = 0;
+                    miner.side++;
+                }
+
+                if (miner.side == 8) {
+                    this.workState = WorkState.DONE;
+                }
+            }
+
+            case TUNNEL_3X3 -> {
+                if (miner.shouldIgnoreBlock(block1)) {
+                    miner.depth--;
+                }
+
+                if (miner.depth == -3) {
+                    miner.depth = 0;
+                    miner.side++;
+                }
+
+                if (miner.side == 3) {
+                    miner.side = 0;
+                    miner.blocks++;
+                }
+
+                if (miner.blocks == miner.getMineDepth()) {
+                    this.workState = WorkState.DONE;
+                }
+            }
+
+            case TUNNEL_1X2 -> {
+                if (miner.shouldIgnoreBlock(block1)) {
+                    miner.depth--;
+                }
+
+                if (miner.depth == -2) {
+                    miner.depth = 0;
+                    miner.blocks++;
+                }
+
+                if (miner.blocks == miner.getMineDepth()) {
+                    this.workState = WorkState.DONE;
                 }
             }
         }
@@ -226,7 +260,7 @@ public class MinerAI extends Goal {
             case 3 -> MineType.PIT_8X8X8;
             case 4 -> MineType.FLAT_8X8X1;
             case 5 -> MineType.ROOM_8X8X3;
-            default -> MineType.IDLE;
+            default -> throw new IllegalStateException("Unexpected value: " + miner.getMineType());
         };
     }
 
