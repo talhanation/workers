@@ -49,7 +49,7 @@ public class SleepGoal extends Goal {
 
         LivingEntity owner = worker.getOwner();
         if (owner == null) {
-            this.goToBed(this.grabRandomBed());
+            //this.goToBed(this.grabRandomBed());
             return;
         }
 
@@ -73,7 +73,7 @@ public class SleepGoal extends Goal {
         }
         
         if (bedEntity.getBlockState().getValue(BlockStateProperties.OCCUPIED)) {
-            this.goToBed(this.grabRandomBed());
+            //this.goToBed(this.grabRandomBed());
         } else {
             this.goToBed(sleepPos);
         }
@@ -109,24 +109,22 @@ public class SleepGoal extends Goal {
      * Find a bed to sleep in.
      * @return The position of the bed.
      */
+
+    /*
     @Nullable
     private BlockPos grabRandomBed() {
-        BlockPos workerPos = this.worker.getOnPos();
-        if (workerPos == null) return null;
         BlockPos bedPos;
         int range = 16;
 
         for (int x = -range; x < range; x++) {
             for (int y = -range; y < range; y++) {
                 for (int z = -range; z < range; z++) {
-                    bedPos = workerPos.offset(x, y, z);
+                    bedPos = worker.getOnPos().offset(x, y, z);
                     BlockState state = worker.level.getBlockState(bedPos);
 
-                    if (
-                        state.isBed(worker.level, bedPos, this.worker) && 
+                    if (state.isBed(worker.level, bedPos, this.worker) &&
                         state.getValue(BlockStateProperties.BED_PART) == BedPart.HEAD &&
-                        !state.getValue(BlockStateProperties.OCCUPIED)
-                    ) {
+                        !state.getValue(BlockStateProperties.OCCUPIED)) {
                         return bedPos;
                     }
                 }
@@ -134,4 +132,6 @@ public class SleepGoal extends Goal {
         }
         return null;
     }
+
+     */
 }
