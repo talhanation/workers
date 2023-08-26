@@ -55,18 +55,13 @@ public class FishermanAI extends Goal {
     @Override
     public void start() {
         this.coastPos = fisherman.getStartPos();
-        //this.fishingPos = this.findWaterBlock();
-        this.setWorkState(IDLE);
+        this.setWorkState(FishermanEntity.State.fromIndex(fisherman.getState()));
         super.start();
     }
 
 
     @Override
     public void tick() {
-        /*
-        /Main.LOGGER.info("State: " + state);
-        if(state == null)
-            state = FishermanEntity.State.fromIndex(fisherman.getState());
 
         switch (state){
             case IDLE -> {
@@ -77,6 +72,7 @@ public class FishermanAI extends Goal {
             }
 
             case MOVING_COAST -> {
+                if(!fisherman.canWork()) this.setWorkState(STOPPING);
                 if(fisherman.getVehicle() != null) fisherman.stopRiding();
 
                 if (coastPos == null) coastPos = fisherman.getStartPos();
@@ -88,7 +84,7 @@ public class FishermanAI extends Goal {
                     list.sort(Comparator.comparing(boatInList -> boatInList.distanceTo(fisherman)));
                     if(!list.isEmpty()){
                         boat = list.get(0);
-                        fishingRange = 30;
+                        fishingRange = 20;
                         this.setWorkState(MOVING_TO_BOAT);
                     }
                     else {
@@ -99,6 +95,7 @@ public class FishermanAI extends Goal {
                     this.findWaterBlocks();
                     fishingPos = waterBlocks.get(fisherman.getRandom().nextInt(waterBlocks.size()));
                     this.fisherman.setDestPos(fishingPos);
+
                     if(fishingPos == null) this.setWorkState(STOPPING);
 
                 }
@@ -106,25 +103,29 @@ public class FishermanAI extends Goal {
             }
 
             case MOVING_TO_BOAT -> {
-                if(!fisherman.canWork()) this.setWorkState(STOPPING);
+                if(boat != null){
+                    if(!fisherman.canWork()) this.setWorkState(STOPPING);
 
-                this.moveToPos(boat.getOnPos());
+                    this.moveToPos(boat.getOnPos());
 
-                if (coastPos.closerThan(fisherman.getOnPos(), 4F)) {
-                    fisherman.startRiding(boat);
+                    if (coastPos.closerThan(fisherman.getOnPos(), 10F)) {
+                        fisherman.startRiding(boat);
+                    }
+
+                    if(boat.getFirstPassenger() != null && this.fisherman.equals(boat.getFirstPassenger())){
+                        this.fisherman.setSailPos(fishingPos);
+                        this.setWorkState(SAILING);
+                    }
                 }
+                else this.setWorkState(IDLE);
 
-                if(boat.getFirstPassenger() != null && this.fisherman.equals(boat.getFirstPassenger())){
-                    //this.fisherman.setSailPos(fishingPos);
-                    this.setWorkState(SAILING);
-                }
             }
 
             case SAILING -> {
                 if(!fisherman.canWork()) this.setWorkState(STOPPING);
 
                 double distance = fisherman.distanceToSqr(fishingPos.getX(), fishingPos.getY(), fishingPos.getZ());
-                if(distance < 3) { //valid value example: distance = 3.2
+                if(distance < 7.5F) { //valid value example: distance = 3.2
                     this.setWorkState(FISHING);
                 }
 
@@ -141,10 +142,12 @@ public class FishermanAI extends Goal {
                 if(coastPos != null) {
                     if (boat != null && boat.getFirstPassenger() != null && this.fisherman.equals(boat.getFirstPassenger())) {
                         this.fisherman.setSailPos(coastPos);
-                    } else
+                    } else{
                         this.moveToPos(coastPos);
+                        fisherman.stopRiding();
+                    }
 
-                    if (coastPos.closerThan(fisherman.getOnPos(), 4.5F)) {
+                    if (coastPos.closerThan(fisherman.getOnPos(), 3.0F)) {
                         fisherman.stopRiding();
                         this.setWorkState(STOP);
                     }
@@ -154,11 +157,13 @@ public class FishermanAI extends Goal {
             }
 
             case STOP -> {
-                stop();
+                this.moveToPos(coastPos);
+                fisherman.stopRiding();
+                if (coastPos.closerThan(fisherman.getOnPos(), 1.5F)){
+                    stop();
+                }
             }
         }
-
-         */
     }
 
     private void setWorkState(FishermanEntity.State state) {
@@ -173,7 +178,7 @@ public class FishermanAI extends Goal {
                 this.fisherman.walkTowards(pos, 1F);
             }
             //Near Pos -> presice movement
-            if (!pos.closerThan(fisherman.getOnPos(), 1F)) {
+            if (!pos.closerThan(fisherman.getOnPos(), 2F)) {
                 this.fisherman.getMoveControl().setWantedPosition(pos.getX(), fisherman.getStartPos().getY(), pos.getZ(), 1);
             }
         }
@@ -203,7 +208,12 @@ public class FishermanAI extends Goal {
                         BlockPos pos = this.coastPos.offset(x, y, z);
                         BlockState targetBlock = this.fisherman.level.getBlockState(pos);
                         if (targetBlock.is(Blocks.WATER) && fisherman.distanceToSqr(pos.getX(), pos.getY(), pos.getZ()) > fishingRange) {
-                            this.waterBlocks.add(pos);
+                            for( int i = 0; i < 4 ;i++){
+                                if(this.fisherman.level.getBlockState(pos.above(i)).isAir() && i == 3){
+                                    this.waterBlocks.add(pos);
+                                    break;
+                                }
+                            }
                         }
                     }
                 }
@@ -225,7 +235,7 @@ public class FishermanAI extends Goal {
 
     public void spawnFishingLoot() {
         //TODO: When water depth is deep, reduce timer
-        this.fishingTimer = 750 + fisherman.getRandom().nextInt(4000);
+        this.fishingTimer = 5 * 750 + fisherman.getRandom().nextInt(4000) / fishingRange;
         double luck = 0.1D;
         LootContext.Builder lootcontext$builder = (new LootContext.Builder((ServerLevel)fisherman.level))
                 .withParameter(LootContextParams.ORIGIN, fisherman.position())

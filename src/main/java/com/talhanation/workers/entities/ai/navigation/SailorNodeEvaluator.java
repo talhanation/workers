@@ -15,22 +15,24 @@ import org.jetbrains.annotations.NotNull;
 import javax.annotation.Nullable;
 
 public class SailorNodeEvaluator extends WalkNodeEvaluator {
-
-    private float oldWalkableCost;
-    private float oldWaterBorderCost;
+    private float oldWaterMalus;
+    private float oldWalkableMalus;
+    private float oldWaterBorderMalus;
 
     public void prepare(@NotNull PathNavigationRegion region, @NotNull Mob mob) {
         super.prepare(region, mob);
+        this.oldWaterMalus = mob.getPathfindingMalus(BlockPathTypes.WATER);
         mob.setPathfindingMalus(BlockPathTypes.WATER, 0.0F);
-        this.oldWalkableCost = mob.getPathfindingMalus(BlockPathTypes.WALKABLE);
+        this.oldWalkableMalus = mob.getPathfindingMalus(BlockPathTypes.WALKABLE);
         mob.setPathfindingMalus(BlockPathTypes.WALKABLE, -1F);
-        this.oldWaterBorderCost = mob.getPathfindingMalus(BlockPathTypes.WATER_BORDER);
+        this.oldWaterBorderMalus = mob.getPathfindingMalus(BlockPathTypes.WATER_BORDER);
         mob.setPathfindingMalus(BlockPathTypes.WATER_BORDER, 16.0F);
     }
 
     public void done() {
-        this.mob.setPathfindingMalus(BlockPathTypes.WALKABLE, this.oldWalkableCost);
-        this.mob.setPathfindingMalus(BlockPathTypes.WATER_BORDER, this.oldWaterBorderCost);
+        this.mob.setPathfindingMalus(BlockPathTypes.WATER, this.oldWaterMalus);
+        this.mob.setPathfindingMalus(BlockPathTypes.WALKABLE, this.oldWalkableMalus);
+        this.mob.setPathfindingMalus(BlockPathTypes.WATER_BORDER, this.oldWaterBorderMalus);
         super.done();
     }
 

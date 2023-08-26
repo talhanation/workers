@@ -37,33 +37,4 @@ public class SailorPathNavigation extends WaterBoundPathNavigation {
     public Path createPath(@NotNull BlockPos blockPos, int additionalOffsetXYZ, boolean targetBlockAbove, int accuracy) {
         return this.createPath(ImmutableSet.of(blockPos), additionalOffsetXYZ, targetBlockAbove, accuracy, (float)this.mob.getAttributeValue(Attributes.FOLLOW_RANGE));
     }
-    /*
-    @Nullable
-    protected Path createPath(Set<BlockPos> blockPosSet, int additionalOffsetXYZ, boolean targetBlockAbove, int reachRange, float FOLLOW_RANGE) {
-        if (blockPosSet.isEmpty()) {
-            return null;
-        } else if (this.mob.getY() < (double)this.level.getMinBuildHeight()) {
-            return null;
-        } else if (!this.canUpdatePath()) {
-            return null;
-        } else if (this.path != null && !this.path.isDone() && blockPosSet.contains(this.targetPos)) {
-            return this.path;
-        } else {
-            this.level.getProfiler().push("pathfind");
-            BlockPos blockpos = targetBlockAbove ? this.mob.blockPosition().above() : this.mob.blockPosition();
-            int i = (int)(FOLLOW_RANGE + (float)additionalOffsetXYZ);
-            PathNavigationRegion pathnavigationregion = new PathNavigationRegion(this.level, blockpos.offset(-i, -i, -i), blockpos.offset(i, i, i));
-            Path path = this.pathFinder.findPath(pathnavigationregion, this.mob, blockPosSet, FOLLOW_RANGE, reachRange, this.maxVisitedNodesMultiplier);
-            this.level.getProfiler().pop();
-            if (path != null && path.getTarget() != null) {
-                this.targetPos = path.getTarget();
-                this.reachRange = reachRange;
-                this.resetStuckTimeout();
-            }
-
-            return path;
-        }
-    }
-
-     */
 }
