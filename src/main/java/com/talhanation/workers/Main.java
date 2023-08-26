@@ -91,7 +91,8 @@ public class Main {
             MessageToClientUpdateMerchantScreen.class,
             MessageMerchantHorse.class,
             MessageMerchantResetCurrentTradeCounts.class,
-            MessageMerchantTradeLimitButton.class
+            MessageMerchantTradeLimitButton.class,
+            MessageOpenWaypointsGuiMerchant.class
 
         };
         for (int i = 0; i < messages.length; i++) CommonRegistry.registerMessage(SIMPLE_CHANNEL, i, messages[i]);

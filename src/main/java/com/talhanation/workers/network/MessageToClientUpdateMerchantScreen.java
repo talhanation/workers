@@ -1,6 +1,7 @@
 package com.talhanation.workers.network;
 
 import com.talhanation.workers.client.gui.MerchantOwnerScreen;
+import com.talhanation.workers.client.gui.MerchantWaypointScreen;
 import de.maxhenkel.corelib.net.Message;
 import net.minecraft.core.BlockPos;
 import net.minecraft.network.FriendlyByteBuf;
@@ -30,7 +31,7 @@ public class MessageToClientUpdateMerchantScreen implements Message<MessageToCli
 
     @Override
     public void executeClientSide(NetworkEvent.Context context) {
-        MerchantOwnerScreen.waypoints = this.waypoints;
+        MerchantWaypointScreen.waypoints = this.waypoints;
         MerchantOwnerScreen.currentTrades = this.currentTrades;
         MerchantOwnerScreen.limits = this.limits;
     }

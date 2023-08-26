@@ -6,6 +6,7 @@ import com.talhanation.workers.entities.ai.ControlBoatAI;
 import com.talhanation.workers.entities.ai.MerchantAI;
 import com.talhanation.workers.inventory.MerchantInventoryContainer;
 import com.talhanation.workers.inventory.MerchantTradeContainer;
+import com.talhanation.workers.inventory.MerchantWaypointContainer;
 import com.talhanation.workers.network.MessageOpenGuiMerchant;
 import com.talhanation.workers.network.MessageOpenGuiWorker;
 import com.talhanation.workers.network.MessageToClientUpdateMerchantScreen;
@@ -180,6 +181,30 @@ public class MerchantEntity extends AbstractWorkerEntity implements IBoatControl
             });
         } else {
             Main.SIMPLE_CHANNEL.sendToServer(new MessageOpenGuiMerchant(player, this.getUUID()));
+        }
+    }
+
+    public void openWaypointsGUI(Player player) {
+        if (player instanceof ServerPlayer) {
+            NetworkHooks.openScreen((ServerPlayer) player, new MenuProvider() {
+                @Override
+                public @NotNull Component getDisplayName() {
+                    return getName();
+                }
+
+                @Override
+                public @NotNull AbstractContainerMenu createMenu(int i, @NotNull Inventory playerInventory, @NotNull Player playerEntity) {
+                    return new MerchantWaypointContainer(i, player, MerchantEntity.this, playerInventory);
+                }
+            }, packetBuffer -> {
+                packetBuffer.writeUUID(getUUID());
+            });
+        } else {
+            Main.SIMPLE_CHANNEL.sendToServer(new MessageOpenGuiMerchant(player, this.getUUID()));
+        }
+
+        if (player instanceof ServerPlayer) {
+            Main.SIMPLE_CHANNEL.send(PacketDistributor.PLAYER.with(() -> (ServerPlayer) player), new MessageToClientUpdateMerchantScreen(this.WAYPOINTS, getCurrentTrades(), getTradeLimits()));
         }
     }
 

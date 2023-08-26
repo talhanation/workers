@@ -105,6 +105,28 @@ public class ModMenuTypes {
                 return new CommandMenu(windowId, player);
             }));
 
+    public static final RegistryObject<MenuType<MerchantWaypointContainer>> WAYPOINT_CONTAINER_TYPE =
+            MENU_TYPES.register("waypoint_container", () -> IForgeMenuType.create((windowId, inv, data) -> {
+                try {
+                    UUID workerId = data.readUUID();
+                    logger.info("{} is opening waypoint container for {}", inv.player.getDisplayName().getString(),
+                            workerId);
+
+                    AbstractWorkerEntity rec = getRecruitByUUID(inv.player, workerId);
+                    logger.info("worker is {}", rec);
+                    if (rec == null) {
+                        return null;
+                    }
+
+                    return new MerchantWaypointContainer(windowId, inv.player, rec, inv);
+                } catch (Exception e) {
+                    logger.error("Error in hire container: ");
+                    logger.error(e.getMessage());
+                    logger.error(Arrays.toString(e.getStackTrace()));
+                    return null;
+                }
+            }));
+
     public static void registerMenus() {
         registerMenu(MINER_CONTAINER_TYPE.get(), MinerInventoryScreen::new);
         registerMenu(WORKER_CONTAINER_TYPE.get(), WorkerInventoryScreen::new);
@@ -112,6 +134,7 @@ public class ModMenuTypes {
         registerMenu(MERCHANT_OWNER_CONTAINER_TYPE.get(), MerchantOwnerScreen::new);
         registerMenu(ANIMAL_FARMER_CONTAINER_TYPE.get(), AnimalFarmerInventoryScreen::new);
         registerMenu(HIRE_CONTAINER_TYPE.get(), WorkerHireScreen::new);
+        registerMenu(WAYPOINT_CONTAINER_TYPE.get(), MerchantWaypointScreen::new);
         registerMenu(COMMAND_CONTAINER_TYPE.get(), CommandScreen::new);
         logger.info("MenuScreens registered");
     }
