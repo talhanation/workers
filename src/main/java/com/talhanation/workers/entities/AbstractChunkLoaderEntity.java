@@ -30,7 +30,7 @@ public abstract class AbstractChunkLoaderEntity extends AbstractInventoryEntity 
     }
 
     public void updateChunkLoading(){
-        if (!this.level.isClientSide) {
+        if (WorkersModConfig.WorkerChunkLoading.get() && !this.level.isClientSide) {
             WorkersChunk currentChunk = new WorkersChunk(this.chunkPosition().x, this.chunkPosition().z);
             if (loadedChunk.isEmpty()) {
                 this.setForceChunk(currentChunk, true);
