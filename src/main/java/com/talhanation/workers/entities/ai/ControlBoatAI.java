@@ -100,7 +100,7 @@ public class ControlBoatAI extends Goal {
                     if ((distance > 2F)) updateBoatControl(node.x, node.z);
 
 
-                    if(distance < 6.5F){
+                    if(distance <= 4F){
                         path.advance();
                         if (path.getNodeCount() == path.getNextNodeIndex() - 1) {
                             state = CREATING_PATH;
