@@ -123,10 +123,10 @@ public class MerchantOwnerScreen extends ScreenBase<MerchantInventoryContainer> 
             for (int i = 0; i < limits.size(); i++) {
                 int limit = limits.get(i);
                 if(limit != -1){
-                    font.draw(matrixStack, currentTrades.get(i) +"/" + limits.get(i), 100,  22 + i * 18, FONT_COLOR);
+                    font.draw(matrixStack, currentTrades.get(i) +"/" + limits.get(i), 100,  21 + i * 18, FONT_COLOR);
                 }
                 else
-                    font.draw(matrixStack, currentTrades.get(i) +"/" +"∞", 100,  22 + i * 18, FONT_COLOR);
+                    font.draw(matrixStack, currentTrades.get(i) +"/" +"\u221E", 100,  21 + i * 18, FONT_COLOR);
             }
         }
     }

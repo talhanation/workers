@@ -47,6 +47,7 @@ public class MessageMerchantTravel implements Message<MessageMerchantTravel> {
 
         if(!returning){
             merchant.setTraveling(travel);
+            merchant.setFollow(false);
             merchant.setCurrentWayPointIndex(0);
             if (travel){
                 merchant.setIsWorking(true); // to activate the AI
@@ -54,6 +55,7 @@ public class MessageMerchantTravel implements Message<MessageMerchantTravel> {
             }
             else{
                 merchant.setIsWorking(false);
+                merchant.setTraveling(false);
                 merchant.tellPlayer(player, Component.literal("I stopped traveling."));
             }
         }
@@ -61,6 +63,7 @@ public class MessageMerchantTravel implements Message<MessageMerchantTravel> {
             merchant.setIsWorking(true); // to activate the AI
             merchant.setReturning(true);
             merchant.setTraveling(true);
+            merchant.setFollow(false);
             merchant.setCurrentWayPointIndex(merchant.WAYPOINTS.size() -1);
             merchant.tellPlayer(player, Component.literal("Im now returning to start position."));
         }
