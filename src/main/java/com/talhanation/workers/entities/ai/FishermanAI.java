@@ -58,7 +58,8 @@ public class FishermanAI extends Goal {
 
     @Override
     public void start() {
-        this.coastPos = this.getCoastPos(); fisherman.getStartPos();
+        this.coastPos =  this.fisherman.getStartPos();
+
         this.setWorkState(FishermanEntity.State.fromIndex(fisherman.getState()));
         super.start();
     }
@@ -109,7 +110,6 @@ public class FishermanAI extends Goal {
 
             case MOVING_TO_BOAT -> {
                 if(boat != null){
-                    this.fisherman.setPathfindingMalus(BlockPathTypes.WATER, 0.0F);
                     if(!fisherman.canWork()) {
                         this.setWorkState(STOPPING);
                     }
@@ -202,7 +202,6 @@ public class FishermanAI extends Goal {
         this.fishingTimer = 0;
         this.resetTask();
         this.setWorkState(IDLE);
-        this.fisherman.setPathfindingMalus(BlockPathTypes.WATER, -1.0F);
         super.stop();
     }
 

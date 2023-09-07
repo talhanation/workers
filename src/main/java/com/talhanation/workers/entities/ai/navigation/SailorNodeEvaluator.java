@@ -26,7 +26,7 @@ public class SailorNodeEvaluator extends WalkNodeEvaluator {
         this.oldWalkableMalus = mob.getPathfindingMalus(BlockPathTypes.WALKABLE);
         mob.setPathfindingMalus(BlockPathTypes.WALKABLE, -1F);
         this.oldWaterBorderMalus = mob.getPathfindingMalus(BlockPathTypes.WATER_BORDER);
-        mob.setPathfindingMalus(BlockPathTypes.WATER_BORDER, 16.0F);
+        mob.setPathfindingMalus(BlockPathTypes.WATER_BORDER, 32.0F);
     }
 
     public void done() {

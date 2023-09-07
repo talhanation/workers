@@ -11,8 +11,8 @@ import org.jetbrains.annotations.NotNull;
 public class WorkersPathNavigation extends GroundPathNavigation {
     public WorkersPathNavigation(AbstractWorkerEntity worker, Level world) {
         super(worker, world);
-        worker.setPathfindingMalus(BlockPathTypes.WATER, -1.0F);
-        worker.setPathfindingMalus(BlockPathTypes.WATER_BORDER, 16F);
+        worker.setPathfindingMalus(BlockPathTypes.WATER, 32.0F);
+        worker.setPathfindingMalus(BlockPathTypes.WATER_BORDER, 16.0F);
         worker.setPathfindingMalus(BlockPathTypes.TRAPDOOR, 16.0F);
     }
 
