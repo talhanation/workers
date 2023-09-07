@@ -107,12 +107,12 @@ public abstract class AbstractWorkerEntity extends AbstractChunkLoaderEntity {
         this.goalSelector.addGoal(0, new WorkerFloatGoal(this));
         this.goalSelector.addGoal(0, new OpenDoorGoal(this, true));
         this.goalSelector.addGoal(1, new DepositItemsInChestGoal(this));
-        this.goalSelector.addGoal(1, new WorkerMoveToHomeGoal<>(this));
+        this.goalSelector.addGoal(10, new WorkerMoveToHomeGoal<>(this));
         this.goalSelector.addGoal(0, new WorkerFollowOwnerGoal(this, 1.0F, 20.0F));
 
-        this.goalSelector.addGoal(9, new MoveBackToVillageGoal(this, 0.6D, false));
-        this.goalSelector.addGoal(10, new GolemRandomStrollInVillageGoal(this, 0.6D));
-        this.goalSelector.addGoal(10, new WaterAvoidingRandomStrollGoal(this, 1.0D, 0F));
+        //this.goalSelector.addGoal(14, new MoveBackToVillageGoal(this, 0.6D, false));
+        //this.goalSelector.addGoal(10, new GolemRandomStrollInVillageGoal(this, 0.6D));
+        //this.goalSelector.addGoal(10, new WaterAvoidingRandomStrollGoal(this, 1.0D, 0F));
         this.goalSelector.addGoal(11, new WorkerLookAtPlayerGoal(this, Player.class, 8.0F));
         this.goalSelector.addGoal(12, new WorkerRandomLookAroundGoal(this));
         this.goalSelector.addGoal(10, new WorkerLookAtPlayerGoal(this, LivingEntity.class, 8.0F));
@@ -706,7 +706,7 @@ public abstract class AbstractWorkerEntity extends AbstractChunkLoaderEntity {
     }
 
     public boolean needsToDeposit(){
-        return (this.needsTool() || this.getFarmedItems() >= 64) && getChestPos() != null && !this.getFollow() && !this.needsChest() && !this.needsToSleep(); //TODO: configurable amount
+        return (this.needsTool() || this.getFarmedItems() >= 1) && getChestPos() != null && !this.getFollow() && !this.needsChest() && !this.needsToSleep(); //TODO: configurable amount
     }
 
     public void increaseFarmedItems(){

@@ -13,6 +13,7 @@ import net.minecraft.world.InteractionHand;
 import net.minecraft.world.entity.ai.goal.Goal;
 import net.minecraft.world.entity.vehicle.Boat;
 import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.pathfinder.BlockPathTypes;
@@ -21,6 +22,7 @@ import net.minecraft.world.level.storage.loot.LootContext;
 import net.minecraft.world.level.storage.loot.LootTable;
 import net.minecraft.world.level.storage.loot.parameters.LootContextParamSets;
 import net.minecraft.world.level.storage.loot.parameters.LootContextParams;
+import net.minecraft.world.phys.Vec3;
 
 import java.util.ArrayList;
 import java.util.Comparator;
@@ -56,11 +58,10 @@ public class FishermanAI extends Goal {
 
     @Override
     public void start() {
-        this.coastPos = fisherman.getStartPos();
+        this.coastPos = this.getCoastPos(); fisherman.getStartPos();
         this.setWorkState(FishermanEntity.State.fromIndex(fisherman.getState()));
         super.start();
     }
-
 
     @Override
     public void tick() {
@@ -108,6 +109,7 @@ public class FishermanAI extends Goal {
 
             case MOVING_TO_BOAT -> {
                 if(boat != null){
+                    this.fisherman.setPathfindingMalus(BlockPathTypes.WATER, 0.0F);
                     if(!fisherman.canWork()) {
                         this.setWorkState(STOPPING);
                     }
@@ -133,7 +135,7 @@ public class FishermanAI extends Goal {
                 if(!fisherman.canWork()) this.setWorkState(STOPPING);
 
                 double distance = fisherman.distanceToSqr(fishingPos.getX(), fishingPos.getY(), fishingPos.getZ());
-                if(distance < 7.5F) { //valid value example: distance = 3.2
+                if(distance < 6.5F) { //valid value example: distance = 3.2
                     this.setWorkState(FISHING);
                 }
 
@@ -155,9 +157,9 @@ public class FishermanAI extends Goal {
                         fisherman.stopRiding();
                     }
 
-                    if (coastPos.closerThan(fisherman.getOnPos(), 3.0F)) {
+                    double distance = fisherman.distanceToSqr(coastPos.getX(), coastPos.getY(), coastPos.getZ());
+                    if(distance < 6.0F) { //valid value example: distance = 3.2
                         fisherman.stopRiding();
-
                         this.setWorkState(STOP);
                     }
                 }
@@ -166,15 +168,15 @@ public class FishermanAI extends Goal {
             }
 
             case STOP -> {
-                this.moveToPos(coastPos);
+                this.fisherman.walkTowards(coastPos, 1);
                 fisherman.stopRiding();
-                if (coastPos.closerThan(fisherman.getOnPos(), 1.5F)){
+                double distance = fisherman.distanceToSqr(coastPos.getX(), coastPos.getY(), coastPos.getZ());
+                if(distance < 4.5F) { //valid value example: distance = 3.2
                     stop();
                 }
             }
         }
     }
-
 
     private void setWorkState(FishermanEntity.State state) {
         this.state = state;
@@ -200,6 +202,7 @@ public class FishermanAI extends Goal {
         this.fishingTimer = 0;
         this.resetTask();
         this.setWorkState(IDLE);
+        this.fisherman.setPathfindingMalus(BlockPathTypes.WATER, -1.0F);
         super.stop();
     }
 
@@ -244,8 +247,14 @@ public class FishermanAI extends Goal {
     }
 
     public void spawnFishingLoot() {
-        //TODO: When water depth is deep, reduce timer
-        this.fishingTimer = 5 * 750 + fisherman.getRandom().nextInt(4000) / fishingRange;
+        int depth;
+        if (fishingPos != null) {
+            depth = 1 + ((this.getWaterDepth(fishingPos) + fishingRange) / 10);
+        }
+        else
+            depth = 1;
+
+        this.fishingTimer = 500 + fisherman.getRandom().nextInt(1000) / depth;
         double luck = 0.1D;
         LootContext.Builder lootcontext$builder = (new LootContext.Builder((ServerLevel)fisherman.level))
                 .withParameter(LootContextParams.ORIGIN, fisherman.position())
@@ -314,5 +323,31 @@ public class FishermanAI extends Goal {
             else break;
         }
         return depth;
+    }
+
+    private BlockPos getCoastPos() {
+        List<BlockPos> list = new ArrayList<>();
+        for(int i = 0; i < 10; i++){
+            for(int k = 0; k < 10; k++) {
+                BlockPos pos = fisherman.getStartPos().offset(i, 0, k);
+                BlockState targetBlockN = this.fisherman.level.getBlockState(pos.north());
+                BlockState targetBlockE = this.fisherman.level.getBlockState(pos.east());
+                BlockState targetBlockS = this.fisherman.level.getBlockState(pos.south());
+                BlockState targetBlockW = this.fisherman.level.getBlockState(pos.west());
+
+                if (targetBlockN.is(Blocks.WATER) || targetBlockE.is(Blocks.WATER) || targetBlockS.is(Blocks.WATER) || targetBlockW.is(Blocks.WATER) ) {
+                    list.add(pos);
+                }
+            }
+        }
+
+
+        if(list.isEmpty()) {
+            return fisherman.getStartPos();
+        }
+        else {
+            list.sort(Comparator.comparing(blockPos -> blockPos.distSqr(fisherman.getStartPos())));
+            return list.get(0);
+        }
     }
 }
