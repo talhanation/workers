@@ -9,11 +9,16 @@ import com.talhanation.workers.network.MessageMerchantRemoveWayPoint;
 import com.talhanation.workers.network.MessageMerchantReturnTime;
 import com.talhanation.workers.network.MessageMerchantTravel;
 import de.maxhenkel.corelib.inventory.ScreenBase;
-import net.minecraft.client.gui.components.Button;
 import net.minecraft.core.BlockPos;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
+import net.minecraft.tags.BlockTags;
 import net.minecraft.world.entity.player.Inventory;
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.Items;
+import net.minecraft.world.level.block.Blocks;
+import net.minecraft.world.level.block.state.BlockState;
 import net.minecraftforge.client.gui.widget.ExtendedButton;
 
 import java.util.List;
@@ -26,6 +31,7 @@ public class MerchantWaypointScreen extends ScreenBase<MerchantWaypointContainer
     private int page = 1;
     public static List<BlockPos> waypoints;
     private final MerchantEntity merchant;
+    private final Player player;
     private int returnTime;
 
     public MerchantWaypointScreen(MerchantWaypointContainer container, Inventory playerInventory, Component title) {
@@ -33,6 +39,7 @@ public class MerchantWaypointScreen extends ScreenBase<MerchantWaypointContainer
         imageWidth = 197;
         imageHeight = 250;
         this.merchant = (MerchantEntity) container.getWorkerEntity();
+        this.player = playerInventory.player;
     }
 
     @Override
@@ -41,74 +48,85 @@ public class MerchantWaypointScreen extends ScreenBase<MerchantWaypointContainer
         this.leftPos = (this.width - this.imageWidth) / 2;
         this.topPos = (this.height - this.imageHeight) / 2;
         this.returnTime = merchant.getReturningTime();
-
         this.setPageButtons();
-
-
+        this.setWaypointButtons();
+        this.setStartButtons();
+        this.setDaysButtons();
     }
 
-    public void setPageButtons() {
-        this.clearWidgets();
+    public void setStartButtons(){
+        //this.clearWidgets();
+
         boolean isStarted = merchant.getTraveling();
         boolean isReturning = merchant.getReturning();
 
         ExtendedButton start = createTravelStartButton();
-        //start.active = !isStarted || ! isReturning;
+        start.active = (!isStarted || ! isReturning) && waypoints.size() > 1;
 
         ExtendedButton stop = createTravelStopButton();
-        //stop.active = isStarted || isReturning;
+        stop.active = (isStarted || isReturning) && waypoints.size() > 1;
 
         ExtendedButton returnButton = createTravelReturnButton();
-        //returnButton.active = !isReturning;
+        returnButton.active = !isReturning && !isStarted && waypoints.size() > 1;
+    }
 
-        if(waypoints.size() > 10) createPageForwardButton();
-        if (page > 1) createPageBackButton();
+    public void setPageButtons() {
+        ExtendedButton forwardButton = createPageForwardButton();
+        forwardButton.active = waypoints.size() > 10;
 
+        ExtendedButton backButton = createPageBackButton();
+        backButton.active = page != 1;
+    }
 
-        if(waypoints.size() - 1 < 10){
-            ExtendedButton addWaypointButton = createAddWaypointButton(this.leftPos + 16, this.topPos + 45 + 17 * waypoints.size());
-        }
-        if(!waypoints.isEmpty()){
-            ExtendedButton removeWaypointButton = createRemoveWaypointButton(this.leftPos + 16, this.topPos + 45 + 17 * (waypoints.size() - 1));
-            //removeWaypointButton.active = !waypoints.isEmpty();
-        }
+    public void setWaypointButtons() {
+        ExtendedButton addButton = createAddWaypointButton(this.leftPos + 173, this.topPos + 19);
+        ExtendedButton removeButton = createRemoveWaypointButton(this.leftPos + 162, this.topPos + 19);
 
+        removeButton.active = !waypoints.isEmpty();
 
+        this.setPageButtons();
+    }
 
+    public void setDaysButtons(){
         // ReturnTime
-        addRenderableWidget(new Button(leftPos + 180, topPos + 36, 20, 20, Component.literal("+"), button -> {
-            this.returnTime = merchant.getReturningTime();
-            this.returnTime++;
-            Main.SIMPLE_CHANNEL.sendToServer(new MessageMerchantReturnTime(this.returnTime, merchant.getUUID()));
-        }));
+        ExtendedButton addButton =
+                addRenderableWidget(new ExtendedButton(leftPos + 173, topPos + 8, 9, 9, Component.literal("+"), button -> {
+                    this.returnTime = merchant.getReturningTime();
+                    this.returnTime++;
+                    Main.SIMPLE_CHANNEL.sendToServer(new MessageMerchantReturnTime(this.returnTime, merchant.getUUID()));
+                    this.setDaysButtons();
+                }));
+        ExtendedButton removeButton =
+                addRenderableWidget(new ExtendedButton(leftPos + 162, topPos + 8, 9, 9, Component.literal("-"), button -> {
+                    this.returnTime = merchant.getReturningTime();
+                    if (this.returnTime > 0) {
+                        this.returnTime--;
+                        Main.SIMPLE_CHANNEL.sendToServer(new MessageMerchantReturnTime(this.returnTime, merchant.getUUID()));
+                    }
+                    this.setDaysButtons();
+                }));
 
-        addRenderableWidget(new Button(leftPos + 201, topPos + 36, 20, 20, Component.literal("-"), button -> {
-            this.returnTime = merchant.getReturningTime();
-            if (this.returnTime > 0) {
-                this.returnTime--;
-                Main.SIMPLE_CHANNEL.sendToServer(new MessageMerchantReturnTime(this.returnTime, merchant.getUUID()));
-            }
-        }));
+        removeButton.active = returnTime > 0;
     }
 
     private ExtendedButton createTravelStartButton() {
-        return addRenderableWidget(new ExtendedButton(leftPos + 39, topPos + 29, 41, 20, Component.literal("Start"), button -> {
+        return addRenderableWidget(new ExtendedButton(leftPos + 36, topPos + 32, 40, 20, Component.literal("Start"), button -> {
             Main.SIMPLE_CHANNEL.sendToServer(new MessageMerchantTravel(merchant.getUUID(),  true, false));
-            this.setPageButtons();
+            this.setStartButtons();
         }));
     }
 
     private ExtendedButton createTravelStopButton() {
-        return addRenderableWidget(new ExtendedButton(leftPos + 80, topPos + 29, 41, 20, Component.literal("Stop"), button -> {
+        return addRenderableWidget(new ExtendedButton(leftPos + 79, topPos + 32, 40, 20, Component.literal("Stop"), button -> {
             Main.SIMPLE_CHANNEL.sendToServer(new MessageMerchantTravel(merchant.getUUID(),  false, false));
-            this.setPageButtons();
+            this.setStartButtons();
         }));
     }
 
     private ExtendedButton createTravelReturnButton() {
-        return addRenderableWidget(new ExtendedButton(leftPos + 102, topPos + 29, 41, 20, Component.literal("Return"), button -> {
+        return addRenderableWidget(new ExtendedButton(leftPos + 122, topPos + 32, 40, 20, Component.literal("Return"), button -> {
             Main.SIMPLE_CHANNEL.sendToServer(new MessageMerchantTravel(merchant.getUUID(), true, true));
-            this.setPageButtons();
+            this.setStartButtons();
         }));
     }
 
@@ -117,36 +135,54 @@ public class MerchantWaypointScreen extends ScreenBase<MerchantWaypointContainer
         super.renderLabels(matrixStack, mouseX, mouseY);
         // Info
         int fontColor = 4210752;
-        int waypointsPerPage = 15;
+        int waypointsPerPage = 10;
         this.returnTime = merchant.getReturningTime();
         int currentReturningTime = merchant.getCurrentReturningTime();
-        int daysleft = returnTime - currentReturningTime;
-        font.draw(matrixStack, "Days until Return: " + daysleft, 38, 9, FONT_COLOR);
 
-        if(waypoints.size() > waypointsPerPage)
-            font.draw(matrixStack, "Page: " + page, 80, 230, fontColor);
-
+        font.draw(matrixStack, "Days:", 20, 9, FONT_COLOR);
+        font.draw(matrixStack, "" + currentReturningTime + " / " + merchant.getReturningTime(), 100, 9, FONT_COLOR);
 
         int startIndex = (page - 1) * waypointsPerPage;
         int endIndex = Math.min(startIndex + waypointsPerPage, waypoints.size());
-        int currentWayPoint =  waypoints.size() == 0 ? 0 : merchant.getCurrentWayPointIndex() + 1;
+        int currentWayPoint = waypoints.size() == 0 ? 0 : merchant.getCurrentWayPointIndex() + 1;
 
-        font.draw(matrixStack, "Current Waypoint: " + currentWayPoint + " of " + waypoints.size(), 38, 19, FONT_COLOR);
+        font.draw(matrixStack, "Waypoints:", 20, 20, FONT_COLOR);
+        font.draw(matrixStack, "" + currentWayPoint + " / " + waypoints.size(), 100, 20, FONT_COLOR);
 
         if (!waypoints.isEmpty()) {
             for (int i = startIndex; i < endIndex; i++) {
+                BlockPos pos = waypoints.get(i % waypointsPerPage); // Modulo to loop through pages
 
-                BlockPos pos = waypoints.get(i);
+                int x = pos.getX();
+                int y = pos.getY();
+                int z = pos.getZ();
 
-                font.draw(matrixStack, i + 1 + ": " + "x: " + pos.getX() + " y: " + pos.getY() + " z: " + pos.getZ(), 35, 48 + (i * 17), fontColor);
+                BlockState state = player.level.getBlockState(pos);
+                ItemStack itemStack = null;
+                if(state.is(Blocks.WATER)) new ItemStack(Items.WATER_BUCKET);
+                else itemStack = new ItemStack(state.getBlock().asItem());
+
+                String coordinates = String.format("%d:  (%d,  %d,  %d)", i+1, x, y, z);
+
+                renderItemAt(itemStack, 15, 58 + (i % waypointsPerPage * 17));
+
+                font.draw(matrixStack, coordinates, 35, 60 + (i % waypointsPerPage * 17), fontColor);
             }
+
+            if (waypoints.size() > waypointsPerPage)
+                font.draw(matrixStack, "Page: " + page, 80, 230, fontColor);
+
         }
+    }
+
+    private void renderItemAt(ItemStack itemStack, int x, int y) {
+        itemRenderer.renderAndDecorateItem(itemStack, x, y);
     }
 
     public ExtendedButton createPageBackButton() {
         return addRenderableWidget(new ExtendedButton(leftPos + 15, topPos + 227, 12, 12, Component.literal("<"),
                 button -> {
-                    if(this.page > 0) page--;
+                    if(this.page > 1) page--;
                     this.setPageButtons();
                 }
         ));
@@ -162,20 +198,24 @@ public class MerchantWaypointScreen extends ScreenBase<MerchantWaypointContainer
     }
 
     private ExtendedButton createAddWaypointButton(int x, int y){
-        return addRenderableWidget(new ExtendedButton(x, y, 15, 15, Component.literal("+"),
-            button -> {
-                Main.SIMPLE_CHANNEL.sendToServer(new MessageMerchantAddWayPoint(merchant.getUUID()));
-                this.setPageButtons();
-            }
+        return addRenderableWidget(new ExtendedButton(x, y, 9, 9, Component.literal("+"),
+                button -> {
+                    Main.SIMPLE_CHANNEL.sendToServer(new MessageMerchantAddWayPoint(merchant.getUUID()));
+
+                    this.setWaypointButtons();
+                    this.setPageButtons();
+                }
         ));
     }
 
     private ExtendedButton createRemoveWaypointButton(int x, int y){
-        return addRenderableWidget(new ExtendedButton(x, y, 15, 15, Component.literal("-"),
-            button -> {
-                Main.SIMPLE_CHANNEL.sendToServer(new MessageMerchantRemoveWayPoint(merchant.getUUID()));
-                this.setPageButtons();
-            }
+        return addRenderableWidget(new ExtendedButton(x, y, 9, 9, Component.literal("-"),
+                button -> {
+                    Main.SIMPLE_CHANNEL.sendToServer(new MessageMerchantRemoveWayPoint(merchant.getUUID()));
+
+                    this.setWaypointButtons();
+                    this.setPageButtons();
+                }
         ));
     }
 }
