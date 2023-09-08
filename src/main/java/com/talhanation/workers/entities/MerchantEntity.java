@@ -87,6 +87,10 @@ public class MerchantEntity extends AbstractWorkerEntity implements IBoatControl
         this.entityData.define(IS_CREATIVE, false);
         this.entityData.define(IS_DAY_COUNTED, false);
     }
+    @Override
+    public boolean needsToSleep() {
+        return !this.getTraveling() && super.needsToSleep();
+    }
 
     private void initTradeLimits() {
         if(TRADE_LIMITS.isEmpty()){
