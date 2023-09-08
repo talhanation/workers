@@ -13,7 +13,7 @@ public class WorkersModConfig {
     private static final ForgeConfigSpec.Builder BUILDER = new ForgeConfigSpec.Builder();
     public static ForgeConfigSpec CONFIG;
     public static ForgeConfigSpec.IntValue VERSION;
-    public static final int NEW_VERSION = 4;
+    public static final int NEW_VERSION = 5;
 
     public static ForgeConfigSpec.BooleanValue WorkerChunkLoading;
     public static ForgeConfigSpec.BooleanValue PlayVillagerAmbientSound;
@@ -29,12 +29,15 @@ public class WorkersModConfig {
     public static ForgeConfigSpec.IntValue SwineherdCost;
     public static ForgeConfigSpec.ConfigValue<String> WorkersCurrency;
     public static ForgeConfigSpec.BooleanValue CommandScreenToggle;
+    public static ForgeConfigSpec.BooleanValue MonsterAttackWorkers;
+    public static ForgeConfigSpec.BooleanValue PillagerAttackWorkers;
+
 
     static{
         VERSION = BUILDER.comment("\n" +"##Version, do not change!##")
                 .defineInRange("Version", 0, 0, Integer.MAX_VALUE);
 
-        BUILDER.comment("Workers Config Client Side:").push("RecruitsClientSide");
+        BUILDER.comment("Workers Config Client Side:").push("WorkersClientSide");
 
         PlayVillagerAmbientSound = BUILDER.comment("""
                         
@@ -157,6 +160,22 @@ public class WorkersModConfig {
                         \tdefault: 12""")
                 .worldRestart()
                 .defineInRange("MerchantCost", 12, 0, 999);
+
+        MonsterAttackWorkers = BUILDER.comment("""
+
+                        Should Hostile Mobs attack Workers?
+                        \t(takes effect after restart)
+                        \tdefault: true""")
+                .worldRestart()
+                .define("MonsterAttackWorkers", true);
+
+        PillagerAttackWorkers = BUILDER.comment("""
+
+                        Should Pillagers attack Workers?
+                        \t(takes effect after restart)
+                        \tdefault: true""")
+                .worldRestart()
+                .define("PillagerAttackWorkers", true);
 
         /*
         BeekeeperCost = BUILDER.comment("""

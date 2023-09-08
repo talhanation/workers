@@ -1,5 +1,6 @@
 package com.talhanation.workers;
 
+import com.talhanation.workers.config.WorkersModConfig;
 import com.talhanation.workers.entities.AbstractWorkerEntity;
 import com.talhanation.workers.entities.ai.horse.HorseRiddenByMerchantGoal;
 import com.talhanation.workers.init.ModBlocks;
@@ -9,7 +10,9 @@ import com.talhanation.workers.init.ModProfessions;
 import net.minecraft.util.RandomSource;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EntityType;
+import net.minecraft.world.entity.ai.goal.target.NearestAttackableTargetGoal;
 import net.minecraft.world.entity.animal.horse.AbstractHorse;
+import net.minecraft.world.entity.monster.*;
 import net.minecraft.world.entity.npc.Villager;
 import net.minecraft.world.entity.npc.VillagerProfession;
 import net.minecraft.world.entity.npc.VillagerTrades;
@@ -28,6 +31,22 @@ import java.util.HashMap;
 import java.util.List;
 
 public class VillagerEvents {
+
+    @SubscribeEvent
+    public void attackWorkers(EntityJoinLevelEvent event) {
+        Entity entity = event.getEntity();
+
+        if (WorkersModConfig.PillagerAttackWorkers.get() && entity instanceof AbstractIllager illager) {
+            illager.targetSelector.addGoal(4, new NearestAttackableTargetGoal<>(illager, AbstractWorkerEntity.class, true));
+        }
+
+        if (WorkersModConfig.MonsterAttackWorkers.get() && entity instanceof Monster) {
+            Monster monster = (Monster) entity;
+            if (!(monster instanceof Creeper))
+                monster.targetSelector.addGoal(4, new NearestAttackableTargetGoal<>(monster, AbstractWorkerEntity.class, true));
+        }
+
+    }
     @SubscribeEvent
     public void onVillagerLivingUpdate(LivingTickEvent event) {
         HashMap<VillagerProfession, EntityType<? extends AbstractWorkerEntity>> entitiesByProfession = new HashMap<>(){{
