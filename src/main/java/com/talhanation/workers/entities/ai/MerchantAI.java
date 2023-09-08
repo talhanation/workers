@@ -9,6 +9,8 @@ import net.minecraft.world.entity.vehicle.Boat;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.state.BlockState;
 
+import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.EnumSet;
 import java.util.List;
 
@@ -135,6 +137,7 @@ public class MerchantAI extends Goal {
             BlockPos pos = merchant.getCurrentWayPoint();
 
             if(isSailing){
+                //BlockPos pos1 = this.getCoastPos(pos);
                 merchant.setSailPos(pos);
             } else {
                 moveToPos(pos);
@@ -155,6 +158,8 @@ public class MerchantAI extends Goal {
     }
     private void searchForBoat() {
         List<Boat> list = merchant.level.getEntitiesOfClass(Boat.class, merchant.getBoundingBox().inflate(16D));
+        list.removeIf(boat -> !boat.getPassengers().isEmpty());
+        list.sort(Comparator.comparing(boatInList -> boatInList.distanceTo(merchant)));
         if (!list.isEmpty()) {
             this.boat = list.get(0);
         }
