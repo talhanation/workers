@@ -76,6 +76,7 @@ public abstract class AbstractWorkerEntity extends AbstractChunkLoaderEntity {
     private static final EntityDataAccessor<Boolean> NEEDS_TOOL = SynchedEntityData.defineId(AbstractWorkerEntity.class, EntityDataSerializers.BOOLEAN);
 
     int hurtTimeStamp = 0;
+    public boolean startPosChanged;
 
     public AbstractWorkerEntity(EntityType<? extends AbstractWorkerEntity> entityType, Level world) {
         super(entityType, world);
@@ -497,6 +498,9 @@ public abstract class AbstractWorkerEntity extends AbstractChunkLoaderEntity {
     }
 
     public void setStartPos(BlockPos pos) {
+        if(this.getStartPos() != pos){
+            this.startPosChanged = true;
+        }
         this.entityData.set(START_POS, Optional.ofNullable(pos));
     }
 
@@ -698,7 +702,8 @@ public abstract class AbstractWorkerEntity extends AbstractChunkLoaderEntity {
         // Stop AI to at night, so SleepGoal can start.
         // Stop AI if work position is not set.
         // Stop AI if inventory is full, so TransferItemsInChestGoal can start.
-        if(this.getStartPos() == null || this.needsToSleep() || this.getFollow() || this.needsToDeposit() || this.needsToGetFood()) {
+        if(this.getStartPos() == null || this.needsToSleep() || this.getFollow() || this.needsToDeposit() || this.needsToGetFood() || startPosChanged) {
+            startPosChanged = false;
             return false;
         }
         // Start AI if should working
