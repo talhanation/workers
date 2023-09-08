@@ -176,7 +176,7 @@ public class MerchantWaypointScreen extends ScreenBase<MerchantWaypointContainer
     }
 
     private void renderItemAt(ItemStack itemStack, int x, int y) {
-        itemRenderer.renderAndDecorateItem(itemStack, x, y);
+        if(itemStack != null) itemRenderer.renderAndDecorateItem(itemStack, x, y);
     }
 
     public ExtendedButton createPageBackButton() {
