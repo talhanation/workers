@@ -10,6 +10,8 @@ import net.minecraft.world.level.pathfinder.BlockPathTypes;
 import net.minecraft.world.level.pathfinder.Node;
 import net.minecraft.world.level.pathfinder.Target;
 import net.minecraft.world.level.pathfinder.WalkNodeEvaluator;
+import net.minecraft.world.phys.AABB;
+import net.minecraft.world.phys.Vec3;
 import org.jetbrains.annotations.NotNull;
 
 import javax.annotation.Nullable;
@@ -18,6 +20,7 @@ public class SailorNodeEvaluator extends WalkNodeEvaluator {
     private float oldWaterMalus;
     private float oldWalkableMalus;
     private float oldWaterBorderMalus;
+    private float oldBreachMalus;
 
     public void prepare(@NotNull PathNavigationRegion region, @NotNull Mob mob) {
         super.prepare(region, mob);
@@ -26,14 +29,33 @@ public class SailorNodeEvaluator extends WalkNodeEvaluator {
         this.oldWalkableMalus = mob.getPathfindingMalus(BlockPathTypes.WALKABLE);
         mob.setPathfindingMalus(BlockPathTypes.WALKABLE, -1F);
         this.oldWaterBorderMalus = mob.getPathfindingMalus(BlockPathTypes.WATER_BORDER);
-        mob.setPathfindingMalus(BlockPathTypes.WATER_BORDER, 32.0F);
+        mob.setPathfindingMalus(BlockPathTypes.WATER_BORDER, 32F);
+        this.oldBreachMalus = mob.getPathfindingMalus(BlockPathTypes.BREACH);
+        mob.setPathfindingMalus(BlockPathTypes.BREACH, -1F);
     }
 
     public void done() {
         this.mob.setPathfindingMalus(BlockPathTypes.WATER, this.oldWaterMalus);
         this.mob.setPathfindingMalus(BlockPathTypes.WALKABLE, this.oldWalkableMalus);
         this.mob.setPathfindingMalus(BlockPathTypes.WATER_BORDER, this.oldWaterBorderMalus);
+        this.mob.setPathfindingMalus(BlockPathTypes.BREACH, this.oldBreachMalus);
         super.done();
+    }
+    @Override
+    public boolean canReachWithoutCollision(Node p_77625_) {
+        AABB aabb = this.mob.getBoundingBox().inflate(15);
+        Vec3 vec3 = new Vec3((double)p_77625_.x - this.mob.getX() + aabb.getXsize() / 2.0D, (double)p_77625_.y - this.mob.getY() + aabb.getYsize() / 2.0D, (double)p_77625_.z - this.mob.getZ() + aabb.getZsize() / 2.0D);
+        int i = Mth.ceil(vec3.length() / aabb.getSize());
+        vec3 = vec3.scale((double)(1.0F / (float)i));
+
+        for(int j = 1; j <= i; ++j) {
+            aabb = aabb.move(vec3);
+            if (this.hasCollisions(aabb)) {
+                return false;
+            }
+        }
+
+        return true;
     }
 
     @Nullable
@@ -97,10 +119,6 @@ public class SailorNodeEvaluator extends WalkNodeEvaluator {
 
     protected double getFloorLevel(@NotNull BlockPos p_164674_) {
         return this.mob.getLevel().getSeaLevel();
-    }
-
-    protected boolean isAmphibious() {
-        return true;
     }
 
     public @NotNull BlockPathTypes getBlockPathType(@NotNull BlockGetter blockGetter, int x, int y, int z) {
