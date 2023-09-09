@@ -56,12 +56,12 @@ public class ControlBoatAI extends Goal {
 
     public void tick() {
         if (this.worker instanceof IBoatController sailor && !worker.getLevel().isClientSide() && worker.getNavigation() instanceof SailorPathNavigation sailorPathNavigation) {
-
+/*
             if (this.worker.getOwner() != null && worker.getOwner().isInWater()) {
                 sailor.setSailPos(worker.getOwner().getOnPos());
                 this.state = IDLE;
             }
-
+*/
 
 
             switch (state) {
@@ -81,11 +81,11 @@ public class ControlBoatAI extends Goal {
 
                         if (path != null) {
                             this.node = this.path.getNextNode();
-
+                        /*
                             for(Node node : this.path.nodes) {
                                 worker.level.setBlock(new BlockPos(node.x, worker.getY() + 2, node.z), Blocks.ICE.defaultBlockState(), 3);
                             }
-
+                         */
 
 
                             state = MOVING_PATH;
