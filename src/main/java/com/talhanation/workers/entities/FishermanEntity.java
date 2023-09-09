@@ -211,12 +211,14 @@ public class FishermanEntity extends AbstractWorkerEntity implements IBoatContro
 
     public enum State{
         IDLE(0),
-        MOVING_COAST(0),
-        MOVING_TO_BOAT(0),
-        SAILING(0), // fährt zum fishing pos
-        FISHING(0),
-        STOPPING(0), // Wenn boat dann coast und eject
-        STOP(0); //
+        MOVING_COAST(1),
+        MOVING_TO_BOAT(2),
+        SAILING(3), // fährt zum fishing pos
+        FISHING(4),
+        STOPPING(5), // Wenn boat dann coast und eject
+        DEPOSIT(6),
+        STOP(7);
+
 
 
         private final int index;
