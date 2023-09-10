@@ -98,7 +98,8 @@ public class ControlBoatAI extends Goal {
                     double turnFactor = 0.8F;
                     double precision = 7.0F;
 
-                    if(isSensitiveNeeded(path.getEndNode())){
+
+                    if(sailor.getBoatControlSensitiveMode() || isSensitiveNeeded(path.getEndNode())){
                         speedFactor = 0.8F;
                         turnFactor = 1.75F;
                         precision = 3.5F;

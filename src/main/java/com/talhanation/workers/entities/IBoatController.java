@@ -13,4 +13,6 @@ public interface IBoatController {
     void setSailPos(BlockPos pos);
 
     double getBoatControlAccuracy();
+
+    boolean getBoatControlSensitiveMode();
 }

@@ -209,6 +209,11 @@ public class FishermanEntity extends AbstractWorkerEntity implements IBoatContro
         return 2.5D;// higher values less accuracy with sail pos and higher range to reach the pos
     }
 
+    @Override
+    public boolean getBoatControlSensitiveMode() {
+        return true;
+    }
+
     public enum State{
         IDLE(0),
         MOVING_COAST(1),
@@ -236,7 +241,7 @@ public class FishermanEntity extends AbstractWorkerEntity implements IBoatContro
                     return state;
                 }
             }
-            throw new IllegalArgumentException("Invalid State index: " + index);
+            return IDLE;
         }
     }
 

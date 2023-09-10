@@ -586,6 +586,11 @@ public class MerchantEntity extends AbstractWorkerEntity implements IBoatControl
         return 4D;// higher values less accuracy with sail pos / higher range to reach the pos
     }
 
+    @Override
+    public boolean getBoatControlSensitiveMode() {
+        return false;
+    }
+
     public void die(@NotNull DamageSource dmg) {
         super.die(dmg);
         if(!isCreative()){
