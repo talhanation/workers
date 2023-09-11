@@ -143,7 +143,9 @@ public class MerchantAI extends Goal {
                 moveToPos(pos);
             }
 
-            if (merchant.distanceToSqr(pos.getX(), pos.getY(), pos.getZ()) < 4.5F) {
+            double distance = merchant.distanceToSqr(pos.getX(), pos.getY(), pos.getZ());
+            double threshold = isSailing ? 30F : 10F;
+            if (distance <= threshold) {
                 if (condition) {
                     this.setWorkState(nextState);
                 } else{

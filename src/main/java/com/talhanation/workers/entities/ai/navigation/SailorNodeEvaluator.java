@@ -105,7 +105,7 @@ public class SailorNodeEvaluator extends WalkNodeEvaluator {
                 return false;
             } else if (node2.y <= node.y && node1.y <= node.y) {
                 if (node1.type != BlockPathTypes.WALKABLE_DOOR && node2.type != BlockPathTypes.WALKABLE_DOOR && node3.type != BlockPathTypes.WALKABLE_DOOR) {
-                    double width = this.mob.getVehicle() != null ? this.mob.getVehicle().getBbWidth() : this.mob.getBbWidth();
+                    double width = this.mob.getVehicle() != null ? this.mob.getVehicle().getBbWidth() * 1.5 : this.mob.getBbWidth();
                     boolean flag = node2.type == BlockPathTypes.FENCE && node1.type == BlockPathTypes.FENCE && width < 0.5D;
                     return node3.costMalus >= 0.0F && (node2.y < node.y || node2.costMalus >= 0.0F || flag) && (node1.y < node.y || node1.costMalus >= 0.0F || flag);
                 } else {
