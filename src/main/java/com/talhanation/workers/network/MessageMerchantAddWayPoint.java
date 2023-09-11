@@ -45,7 +45,7 @@ public class MessageMerchantAddWayPoint implements Message<MessageMerchantAddWay
 
         //merchant.tellPlayer(player, Component.literal("Pos: " + pos + " was added."));
 
-        merchant.WAYPOINTS.add(pos);
+        merchant.setStartPos(pos); // adds waypoint without starting work
 
         Main.SIMPLE_CHANNEL.send(PacketDistributor.PLAYER.with(() -> (ServerPlayer) player), new MessageToClientUpdateMerchantScreen(merchant.WAYPOINTS, merchant.getCurrentTrades(), merchant.getTradeLimits()));
     }

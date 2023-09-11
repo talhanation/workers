@@ -1,6 +1,7 @@
 package com.talhanation.workers.entities;
 
 import com.talhanation.workers.Main;
+import com.talhanation.workers.Translatable;
 import com.talhanation.workers.config.WorkersModConfig;
 import com.talhanation.workers.entities.ai.ControlBoatAI;
 import com.talhanation.workers.entities.ai.MerchantAI;
@@ -37,6 +38,8 @@ import net.minecraft.world.DifficultyInstance;
 import net.minecraft.world.level.ServerLevelAccessor;
 import net.minecraft.world.level.Level;
 import net.minecraft.server.level.ServerLevel;
+import net.minecraft.world.level.block.Blocks;
+import net.minecraft.world.level.block.state.BlockState;
 import net.minecraftforge.network.NetworkHooks;
 
 import javax.annotation.Nullable;
@@ -467,7 +470,22 @@ public class MerchantEntity extends AbstractWorkerEntity implements IBoatControl
     }
     @Override
     public void setStartPos(BlockPos pos) {
-        WAYPOINTS.add(pos);
+        if(!WAYPOINTS.isEmpty()){
+            BlockPos prevPos = this.WAYPOINTS.get(WAYPOINTS.size() -1);
+            double distance = pos.distSqr(prevPos);
+
+            boolean notNearFromCoastToWater = !isWaterBlockPos(prevPos) && isWaterBlockPos(pos) && distance >= 50F;
+            boolean notNearInWater = isWaterBlockPos(prevPos) && isWaterBlockPos(pos) && distance >= 4000F;
+            boolean notNearFromWaterToCoat = isWaterBlockPos(prevPos) && !isWaterBlockPos(pos) && distance >= 50F;
+
+            if(notNearFromCoastToWater || notNearInWater || notNearFromWaterToCoat){
+                if(this.getOwner() != null) this.tellPlayer(this.getOwner(), Translatable.TEXT_WAYPOINT_NOT_NEAR_TO_PREV);
+            }
+            else
+                WAYPOINTS.add(pos);
+        }
+        else
+            WAYPOINTS.add(pos);
     }
 
     public SimpleContainer getTradeInventory() {
@@ -602,6 +620,19 @@ public class MerchantEntity extends AbstractWorkerEntity implements IBoatControl
     public boolean hurt(DamageSource dmg, float amt) {
         if(!isCreative()) return super.hurt(dmg, amt);
         else return false;
+    }
+
+    public boolean isWaterBlockPos(BlockPos pos){
+        for(int i = 0; i < 3; i++){
+            BlockPos pos1 = pos.below(i);
+            BlockPos pos2 = pos.above(i);
+            BlockState state1 = this.level.getBlockState(pos1);
+            BlockState state2 = this.level.getBlockState(pos2);
+            if(state1.is(Blocks.WATER) || state2.is(Blocks.WATER)){
+                return true;
+            }
+        }
+        return false;
     }
 
     public enum State{

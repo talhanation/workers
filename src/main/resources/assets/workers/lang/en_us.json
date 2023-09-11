@@ -88,6 +88,8 @@
   "chat.workers.text.fisherNoWater": "I could not find any water source nearby.",
   "chat.workers.text.noFoodInUpkeep": "I could not find any food in my chest.",
 
+  "chat.workers.text.waypointNotNearToPrev": "This waypoint needs to be closer to the previous one!",
+
   "key.workers.open_command_screen": "Open Command Screen",
 
   "chat.workers.controls.assign_bed_key": "Press \"%s\" to assign me a bed.",
