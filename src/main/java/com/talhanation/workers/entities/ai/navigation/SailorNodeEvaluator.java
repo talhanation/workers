@@ -3,6 +3,7 @@ package com.talhanation.workers.entities.ai.navigation;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.util.Mth;
+import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.Mob;
 import net.minecraft.world.level.BlockGetter;
 import net.minecraft.world.level.PathNavigationRegion;
@@ -20,7 +21,6 @@ public class SailorNodeEvaluator extends WalkNodeEvaluator {
     private float oldWaterMalus;
     private float oldWalkableMalus;
     private float oldWaterBorderMalus;
-    private float oldBreachMalus;
 
     public void prepare(@NotNull PathNavigationRegion region, @NotNull Mob mob) {
         super.prepare(region, mob);
@@ -29,34 +29,16 @@ public class SailorNodeEvaluator extends WalkNodeEvaluator {
         this.oldWalkableMalus = mob.getPathfindingMalus(BlockPathTypes.WALKABLE);
         mob.setPathfindingMalus(BlockPathTypes.WALKABLE, -1F);
         this.oldWaterBorderMalus = mob.getPathfindingMalus(BlockPathTypes.WATER_BORDER);
-        mob.setPathfindingMalus(BlockPathTypes.WATER_BORDER, 32F);
-        this.oldBreachMalus = mob.getPathfindingMalus(BlockPathTypes.BREACH);
-        mob.setPathfindingMalus(BlockPathTypes.BREACH, -1F);
+        mob.setPathfindingMalus(BlockPathTypes.WATER_BORDER, 16F);
     }
 
     public void done() {
         this.mob.setPathfindingMalus(BlockPathTypes.WATER, this.oldWaterMalus);
         this.mob.setPathfindingMalus(BlockPathTypes.WALKABLE, this.oldWalkableMalus);
         this.mob.setPathfindingMalus(BlockPathTypes.WATER_BORDER, this.oldWaterBorderMalus);
-        this.mob.setPathfindingMalus(BlockPathTypes.BREACH, this.oldBreachMalus);
         super.done();
     }
-    @Override
-    public boolean canReachWithoutCollision(Node p_77625_) {
-        AABB aabb = this.mob.getBoundingBox().inflate(15);
-        Vec3 vec3 = new Vec3((double)p_77625_.x - this.mob.getX() + aabb.getXsize() / 2.0D, (double)p_77625_.y - this.mob.getY() + aabb.getYsize() / 2.0D, (double)p_77625_.z - this.mob.getZ() + aabb.getZsize() / 2.0D);
-        int i = Mth.ceil(vec3.length() / aabb.getSize());
-        vec3 = vec3.scale((double)(1.0F / (float)i));
 
-        for(int j = 1; j <= i; ++j) {
-            aabb = aabb.move(vec3);
-            if (this.hasCollisions(aabb)) {
-                return false;
-            }
-        }
-
-        return true;
-    }
 
     @Nullable
     public Node getStart() {
@@ -115,6 +97,26 @@ public class SailorNodeEvaluator extends WalkNodeEvaluator {
         }
 
         return i;
+    }
+    @Override
+    protected boolean isDiagonalValid(Node node, @Nullable Node node1, @Nullable Node node2, @Nullable Node node3) {
+        if (node3 != null && node2 != null && node1 != null) {
+            if (node3.closed) {
+                return false;
+            } else if (node2.y <= node.y && node1.y <= node.y) {
+                if (node1.type != BlockPathTypes.WALKABLE_DOOR && node2.type != BlockPathTypes.WALKABLE_DOOR && node3.type != BlockPathTypes.WALKABLE_DOOR) {
+                    double width = this.mob.getVehicle() != null ? this.mob.getVehicle().getBbWidth() : this.mob.getBbWidth();
+                    boolean flag = node2.type == BlockPathTypes.FENCE && node1.type == BlockPathTypes.FENCE && width < 0.5D;
+                    return node3.costMalus >= 0.0F && (node2.y < node.y || node2.costMalus >= 0.0F || flag) && (node1.y < node.y || node1.costMalus >= 0.0F || flag);
+                } else {
+                    return false;
+                }
+            } else {
+                return false;
+            }
+        } else {
+            return false;
+        }
     }
 
     protected double getFloorLevel(@NotNull BlockPos p_164674_) {
