@@ -40,6 +40,7 @@ import net.minecraft.world.level.Level;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.level.pathfinder.Node;
 import net.minecraftforge.network.NetworkHooks;
 
 import javax.annotation.Nullable;
@@ -599,16 +600,6 @@ public class MerchantEntity extends AbstractWorkerEntity implements IBoatControl
         this.getCurrentTrades().set(index, current);
     }
 
-    @Override
-    public double getBoatControlAccuracy() {
-        return 4D;// higher values less accuracy with sail pos / higher range to reach the pos
-    }
-
-    @Override
-    public boolean getBoatControlSensitiveMode() {
-        return false;
-    }
-
     public void die(@NotNull DamageSource dmg) {
         super.die(dmg);
         if(!isCreative()){
@@ -633,6 +624,18 @@ public class MerchantEntity extends AbstractWorkerEntity implements IBoatControl
             }
         }
         return false;
+    }
+
+    public boolean isFreeWater(double x, double y, double z){
+        for(int i = -2; i <= 2; i++) {
+            for (int k = -2; k <= 2; k++) {
+                BlockPos pos = new BlockPos(x, y, z).offset(i, 0, k);
+                BlockState state = this.level.getBlockState(pos);
+
+                if(!state.is(Blocks.WATER)) return false;
+            }
+        }
+        return true;
     }
 
     public enum State{

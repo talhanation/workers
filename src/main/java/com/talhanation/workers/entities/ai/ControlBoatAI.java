@@ -6,6 +6,7 @@ import com.talhanation.workers.entities.IBoatController;
 import com.talhanation.workers.entities.ai.navigation.SailorPathNavigation;
 import net.minecraft.core.BlockPos;
 import net.minecraft.util.Mth;
+import net.minecraft.world.entity.ai.control.MoveControl;
 import net.minecraft.world.entity.ai.goal.Goal;
 import net.minecraft.world.entity.vehicle.Boat;
 import net.minecraft.world.level.block.Blocks;
@@ -24,7 +25,8 @@ public class ControlBoatAI extends Goal {
     private State state;
     private Path path;
     private Node node;
-    private byte timer;
+    private int timer;
+    private float precision;
 
     public ControlBoatAI(IBoatController sailor) {
         this.worker = sailor.getWorker();
@@ -46,6 +48,7 @@ public class ControlBoatAI extends Goal {
 
     public void start(){
         state = State.IDLE;
+        precision = 100F;
     }
 
     public void stop(){
@@ -57,32 +60,31 @@ public class ControlBoatAI extends Goal {
 
     public void tick() {
         if (this.worker instanceof IBoatController sailor && !worker.getLevel().isClientSide() && worker.getNavigation() instanceof SailorPathNavigation sailorPathNavigation && worker.getIsWorking()) {
-
+            /*
             if (this.worker.getOwner() != null && worker.getOwner().isInWater()) {
                 sailor.setSailPos(worker.getOwner().getOnPos());
                 this.state = IDLE;
             }
+            */
 
             switch (state) {
 
                 case IDLE -> {
 
                     if (sailor.getSailPos() != null) {
-                        double distance = sailor.getSailPos().distToCenterSqr(worker.position());
-                        if (distance > 2) this.state = State.CREATING_PATH;
+                        this.state = State.CREATING_PATH;
                     }
                 }
 
-
                 case CREATING_PATH -> {
                     if (sailor.getSailPos() != null) {
-                        this.path = sailorPathNavigation.createPath(sailor.getSailPos(), 16, false, 0);
+                        this.path = sailorPathNavigation.createPath(sailor.getSailPos(), 32, false, 0);
 
                         if (path != null) {
                             this.node = this.path.getNextNode();
 
                             for(Node node : this.path.nodes) {
-                                worker.level.setBlock(new BlockPos(node.x, worker.getY() + 3, node.z), Blocks.ICE.defaultBlockState(), 3);
+                                worker.level.setBlock(new BlockPos(node.x, worker.getY() + 4, node.z), Blocks.ICE.defaultBlockState(), 3);
                             }
 
                             state = MOVING_PATH;
@@ -92,39 +94,53 @@ public class ControlBoatAI extends Goal {
                 }
                 case MOVING_PATH -> {
                     double speedFactor = 0.9F;
-                    double turnFactor = 1.0F;
-
-
-
-                    if(sailor.getBoatControlSensitiveMode() || isSensitiveNeeded(path.getEndNode())){
-                        speedFactor = 0.7F;
-                        turnFactor = 2.00F;
-                    }
-                    double precision = 40F;
-                    if(!isFreeWater(node)) precision = 15F;
+                    double turnFactor = 1.1F;
 
                     double distance = this.worker.distanceToSqr(node.x, node.y, node.z);
+                    /*
+                    Main.LOGGER.info("################################");
+                    Main.LOGGER.info("State: " + this.state);
+                    Main.LOGGER.info("Precision: " + precision);
+                    Main.LOGGER.info("distance to node: " + distance);
+                    Main.LOGGER.info("################################");
+                     */
+                    if(!isFreeWater(node)){
+                        speedFactor = 0.8F;
+                        turnFactor = 1.2F;
+                        precision = 50F;
+                    }
+                    else precision = 150F;
+
                     if ((distance > 5F)) {
                         updateBoatControl(node.x, node.z, speedFactor, turnFactor);
                     }
 
                     if(distance <= precision){// default = 4.5F
                         path.advance();
+                        this.timer = 0;
                         if (path.getNodeCount() == path.getNextNodeIndex() - 1) {
                             state = CREATING_PATH;
-                            return;
+
                         }
 
                         if (path.getNodeCount() == path.getNextNodeIndex() - 1 || node.equals(path.getEndNode())) {
                             state = State.DONE;
-                            return;
+
                         }
-                        this.node = path.getNextNode(); //TODO: fix crash here: "Index 1 out of bounds for length 1"
+
+                        try {
+                            this.node = path.getNextNode();// FIX for "IndexOutOfBoundsException: Index 23 out of bounds for length 23" or "Index 1 out of bounds for length 1"
+
+                        } catch (IndexOutOfBoundsException e) {
+                            this.node = path.nodes.get(path.nodes.size() - 1);
+                        }
                     }
                     else if (++timer > 100){
-                        state = CREATING_PATH;
-                        this.path = null;
-                        this.node = null;
+                        if(precision < 225) precision += 25;
+                        else{
+                            precision = 100F;
+                            state = CREATING_PATH;
+                        }
                         this.timer = 0;
                     }
                 }
@@ -140,10 +156,11 @@ public class ControlBoatAI extends Goal {
     private boolean isFreeWater(Node node){
         for(int i = -1; i <= 1; i++) {
             for (int k = -1; k <= 1; k++) {
-                BlockPos pos = new BlockPos(node.x, node.y, node.z).offset(i, 0, k);
+                BlockPos pos = new BlockPos(node.x, this.worker.getY(), node.z).offset(i, 0, k);
                 BlockState state = this.worker.level.getBlockState(pos);
 
-                if(!state.is(Blocks.WATER)) return false;
+                if(!state.is(Blocks.WATER))
+                    return false;
             }
         }
         return true;
@@ -184,18 +201,18 @@ public class ControlBoatAI extends Goal {
             float angle = Mth.wrapDegrees((float) (Mth.atan2(dz, dx) * 180.0D / 3.14D) - 90.0F);
             float drot = angle - Mth.wrapDegrees(boat.getYRot());
 
-            boolean inputLeft = (drot < 0.0F && Math.abs(drot) >= 1F);
-            boolean inputRight = (drot > 0.0F && Math.abs(drot) >= 1F);
-            boolean inputUp = (Math.abs(drot) < 15.0F);
+            boolean inputLeft = (drot < 0.0F && Math.abs(drot) >= 2.5F);
+            boolean inputRight = (drot > 0.0F && Math.abs(drot) >= 2.5F);
+            boolean inputUp = (Math.abs(drot) < 25.0F);
 
             float f = 0.0F;
 
             if (inputLeft) {
-                boat.setYRot((float) (boat.getYRot() - 2.5F * turnFactor));
+                boat.setYRot((float) (boat.getYRot() - 2.5F));
             }
 
             if (inputRight) {
-                boat.setYRot((float) (boat.getYRot() + 2.5F * turnFactor));
+                boat.setYRot((float) (boat.getYRot() + 2.5F));
             }
 
 

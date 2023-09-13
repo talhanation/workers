@@ -22,6 +22,7 @@ public class EatGoal extends Goal{
 
     @Override
     public boolean canUse() {
+        worker.updateHunger();
         return hasFoodInInv() && worker.needsToEat() && !worker.getIsEating() && !worker.isUsingItem();
     }
 
@@ -62,10 +63,9 @@ public class EatGoal extends Goal{
 
     @Override
     public void stop() {
-        worker.setIsEating(false);
         worker.stopUsingItem();
-
         resetItemInHand();
+        worker.setIsEating(false);
         /*
         Main.LOGGER.debug("Stop--------------: ");
         Main.LOGGER.debug("beforeFoodItem: " + beforeFoodItem);

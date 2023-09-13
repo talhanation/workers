@@ -158,8 +158,8 @@ public class MerchantWaypointScreen extends ScreenBase<MerchantWaypointContainer
                 int z = pos.getZ();
 
                 BlockState state = player.level.getBlockState(pos);
-                ItemStack itemStack = null;
-                if(state.is(Blocks.WATER)) new ItemStack(Items.WATER_BUCKET);
+                ItemStack itemStack;
+                if(state.is(Blocks.WATER)) itemStack = new ItemStack(Items.OAK_BOAT);
                 else itemStack = new ItemStack(state.getBlock().asItem());
 
                 String coordinates = String.format("%d:  (%d,  %d,  %d)", i+1, x, y, z);

@@ -15,6 +15,7 @@ import java.util.EnumSet;
 import java.util.List;
 
 import static com.talhanation.workers.entities.MerchantEntity.State.*;
+import static com.talhanation.workers.entities.ai.ControlBoatAI.State.CREATING_PATH;
 
 public class MerchantAI extends Goal {
 
@@ -24,7 +25,8 @@ public class MerchantAI extends Goal {
     private boolean arrivedMessage;
     private boolean homeMessage;
     private boolean returningMessage;
-
+    private float precision;
+    private int timer;
     private Boat boat;
 
     public MerchantAI(MerchantEntity merchant) {
@@ -43,7 +45,7 @@ public class MerchantAI extends Goal {
 
     @Override
     public void tick() {
-        Main.LOGGER.info("State: " + state);
+        //Main.LOGGER.info("State: " + state);
 
         if(state == null)
             state = MerchantEntity.State.fromIndex(merchant.getState());
@@ -58,6 +60,7 @@ public class MerchantAI extends Goal {
                     returningMessage = false;
                     homeMessage = false;
                     arrivedMessage = false;
+                    precision = 10F;
                     int index = this.merchant.getCurrentWayPointIndex();
 
                     if (index >= 0 && index < this.merchant.WAYPOINTS.size()) {
@@ -139,20 +142,30 @@ public class MerchantAI extends Goal {
             if(isSailing){
                 //BlockPos pos1 = this.getCoastPos(pos);
                 merchant.setSailPos(pos);
+                if(!merchant.isFreeWater(pos.getX(), pos.getY(), pos.getZ())) precision = 10F;
+                else precision = 75F;
+
             } else {
                 moveToPos(pos);
             }
 
             double distance = merchant.distanceToSqr(pos.getX(), pos.getY(), pos.getZ());
-            double threshold = isSailing ? 30F : 10F;
-            if (distance <= threshold) {
+            //Main.LOGGER.info("distance to waypoint: " + distance);
+
+            if (distance <= precision) {
                 if (condition) {
                     this.setWorkState(nextState);
                 } else{
                     if(index <= this.merchant.WAYPOINTS.size() - 1) {
                         merchant.setCurrentWayPointIndex(index + indexChange);
+
                     }
                 }
+            }
+            else if (++timer > 200){
+                if(precision < 150) precision += 25;
+
+                this.timer = 0;
             }
         }
 
@@ -179,9 +192,6 @@ public class MerchantAI extends Goal {
             }
         }
     }
-
-
-
     private void changeTravelType(){
         if(merchant.isWaterBlockPos(merchant.getCurrentWayPoint())){
             if(boat != null && boat.getFirstPassenger() != null && this.merchant.equals(boat.getFirstPassenger())){

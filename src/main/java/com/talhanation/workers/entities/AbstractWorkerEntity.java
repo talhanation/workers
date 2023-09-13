@@ -198,7 +198,8 @@ public abstract class AbstractWorkerEntity extends AbstractChunkLoaderEntity {
         super.tick();
         updateSwingTime();
         updateSwimming();
-        updateHunger();
+
+        //Main.LOGGER.info("Hunger: " + this.getHunger());
 
         if (hurtTimeStamp > 0)
             hurtTimeStamp--;
@@ -209,7 +210,6 @@ public abstract class AbstractWorkerEntity extends AbstractChunkLoaderEntity {
         if (this.getVehicle() instanceof PathfinderMob creatureentity) {
             this.yBodyRot = creatureentity.yBodyRot;
         }
-
     }
 
     @Nullable
@@ -646,8 +646,7 @@ public abstract class AbstractWorkerEntity extends AbstractChunkLoaderEntity {
          if(getHunger() > 0) {
              setHunger((getHunger() - 0.0001F));
 
-             if (getIsWorking())
-                 setHunger((getHunger() - 0.0002F));
+             if (getIsWorking()) setHunger((getHunger() - 0.0002F));
 
              if(getBedPos() == null) setHunger((getHunger() - 0.0002F));
          }

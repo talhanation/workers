@@ -30,7 +30,7 @@ public class SailorPathNavigation extends WaterBoundPathNavigation {
 
     @Override
     protected boolean canUpdatePath() {
-        return worker.getVehicle() instanceof Boat;
+        return true;
     }
 
     @Nullable
