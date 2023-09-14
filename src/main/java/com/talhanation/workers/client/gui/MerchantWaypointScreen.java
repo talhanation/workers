@@ -73,19 +73,19 @@ public class MerchantWaypointScreen extends ScreenBase<MerchantWaypointContainer
 
     public void setPageButtons() {
         ExtendedButton pageForwardButton = createPageForwardButton();
-        pageForwardButton.active = waypoints.size() > 11;
+        pageForwardButton.active = waypoints.size() > 10;
 
         ExtendedButton pageBackButton = createPageBackButton();
         pageBackButton.active = page != 1;
     }
 
     public void setWaypointButtons() {
-        ExtendedButton addButton = createAddWaypointButton(this.leftPos + 148, this.topPos + 32);
-        ExtendedButton removeButton = createRemoveWaypointButton(this.leftPos + 171, this.topPos + 32);
+        ExtendedButton addButton = createAddWaypointButton(this.leftPos + 171, this.topPos + 32);
+        ExtendedButton removeButton = createRemoveWaypointButton(this.leftPos + 148, this.topPos + 32);
 
         removeButton.active = !waypoints.isEmpty();
 
-        Button info = createTravelInfoButton(this.leftPos - 20, this.topPos + 5);
+        Button info = createTravelInfoButton(this.leftPos + 215, this.topPos + 32);
     }
 
     public void setDaysButtons(){
