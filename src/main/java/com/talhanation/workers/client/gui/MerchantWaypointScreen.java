@@ -8,8 +8,11 @@ import com.talhanation.workers.inventory.MerchantWaypointContainer;
 import com.talhanation.workers.network.*;
 import de.maxhenkel.corelib.inventory.ScreenBase;
 import net.minecraft.client.gui.components.Button;
+import net.minecraft.client.gui.screens.VideoSettingsScreen;
 import net.minecraft.core.BlockPos;
 import net.minecraft.network.chat.Component;
+import net.minecraft.network.chat.ComponentContents;
+import net.minecraft.network.chat.MutableComponent;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.entity.player.Player;
@@ -144,15 +147,18 @@ public class MerchantWaypointScreen extends ScreenBase<MerchantWaypointContainer
         Button button = addRenderableWidget(new Button(x, y, 20, 20, Component.literal("i"),
                 press -> {
                     this.setButtons();
+                    this.player.sendSystemMessage(Translatable.TOOLTIP_TRAVEL_INFO);
+                    this.onClose();
                },
                 (button1, poseStack, i, i1) -> {
-                    this.renderTooltip(poseStack, Translatable.TOOLTIP_TRAVEL_INFO, i, i1);
+                    this.renderTooltip(poseStack, Translatable.TEXT_TRAVEL_INFO, i, i1);
                 }
         ));
 
-        //button.setMessage(Translatable.TOOLTIP_TRAVEL_INFO);
         return button;
     }
+
+
 
     @Override
     protected void renderLabels(PoseStack matrixStack, int mouseX, int mouseY) {

@@ -11,6 +11,7 @@ import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.MutableComponent;
+import net.minecraftforge.client.gui.widget.ExtendedButton;
 
 public class MerchantTradeScreen extends ScreenBase<MerchantTradeContainer> {
 
@@ -36,22 +37,22 @@ public class MerchantTradeScreen extends ScreenBase<MerchantTradeContainer> {
         super.init();
         // CAMP POS
 
-        addRenderableWidget(new Button(leftPos + 110, topPos + 20 + 18 * 0, 48, 12, TRADE_TEXT, button -> {
+        addRenderableWidget(new ExtendedButton(leftPos + 110, topPos + 20 + 18 * 0, 48, 12, TRADE_TEXT, button -> {
             Main.SIMPLE_CHANNEL
                     .sendToServer(new MessageTradeButton(merchant.getUUID(), playerInventory.player.getUUID(), 0));
         }));
 
-        addRenderableWidget(new Button(leftPos + 110, topPos + 20 + 18 * 1, 48, 12, TRADE_TEXT, button -> {
+        addRenderableWidget(new ExtendedButton(leftPos + 110, topPos + 20 + 18 * 1, 48, 12, TRADE_TEXT, button -> {
             Main.SIMPLE_CHANNEL
                     .sendToServer(new MessageTradeButton(merchant.getUUID(), playerInventory.player.getUUID(), 1));
         }));
 
-        addRenderableWidget(new Button(leftPos + 110, topPos + 20 + 18 * 2, 48, 12, TRADE_TEXT, button -> {
+        addRenderableWidget(new ExtendedButton(leftPos + 110, topPos + 20 + 18 * 2, 48, 12, TRADE_TEXT, button -> {
             Main.SIMPLE_CHANNEL
                     .sendToServer(new MessageTradeButton(merchant.getUUID(), playerInventory.player.getUUID(), 2));
         }));
 
-        addRenderableWidget(new Button(leftPos + 110, topPos + 20 + 18 * 3, 48, 12, TRADE_TEXT, button -> {
+        addRenderableWidget(new ExtendedButton(leftPos + 110, topPos + 20 + 18 * 3, 48, 12, TRADE_TEXT, button -> {
             Main.SIMPLE_CHANNEL
                     .sendToServer(new MessageTradeButton(merchant.getUUID(), playerInventory.player.getUUID(), 3));
         }));
@@ -61,8 +62,6 @@ public class MerchantTradeScreen extends ScreenBase<MerchantTradeContainer> {
     protected void renderLabels(PoseStack matrixStack, int mouseX, int mouseY) {
         super.renderLabels(matrixStack, mouseX, mouseY);
 
-        matrixStack.pushPose();
-        matrixStack.scale(0.5F,0.5F,0.5F);
         font.draw(matrixStack, merchant.getDisplayName().getVisualOrderText(), 8, 6, FONT_COLOR);
         matrixStack.popPose();
 

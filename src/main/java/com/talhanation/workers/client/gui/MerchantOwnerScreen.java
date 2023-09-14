@@ -52,7 +52,7 @@ public class MerchantOwnerScreen extends ScreenBase<MerchantInventoryContainer> 
         }));
 
         if(this.player.isCreative() && this.player.createCommandSourceStack().hasPermission(4)){
-            createCreativeButton(zeroLeftPos - mirror - 50, zeroTopPos + 35);
+            createCreativeButton(zeroLeftPos - mirror - 45, zeroTopPos + 35);
         }
         createTradeLimitButtons(zeroLeftPos - mirror + 130, zeroTopPos + 48, 0);
         createTradeLimitButtons(zeroLeftPos - mirror + 130, zeroTopPos + 48, 1);
@@ -71,7 +71,7 @@ public class MerchantOwnerScreen extends ScreenBase<MerchantInventoryContainer> 
     private void createHorseButton(int x, int y) {
         String dis_mount;
         if(merchant.getVehicle() != null) dis_mount = "Dismount";
-        else dis_mount = "Mount Horse";
+        else dis_mount = "Mount";
 
         addRenderableWidget(new Button(x, y, 41, 20, Component.literal(dis_mount),
             button -> {
@@ -84,7 +84,7 @@ public class MerchantOwnerScreen extends ScreenBase<MerchantInventoryContainer> 
         addRenderableWidget(new Button(x, y, 41, 20, Component.literal("Creative"),
             button -> {
                 Main.SIMPLE_CHANNEL.sendToServer(new MessageMerchantSetCreative(merchant.getUUID(), !merchant.isCreative()));
-                setUpdatableButtons();
+                this.setUpdatableButtons();
         }));
     }
 
