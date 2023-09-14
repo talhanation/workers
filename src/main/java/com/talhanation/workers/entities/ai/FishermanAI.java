@@ -1,6 +1,5 @@
 package com.talhanation.workers.entities.ai;
 
-import com.talhanation.workers.Main;
 import com.talhanation.workers.Translatable;
 import com.talhanation.workers.entities.FishermanEntity;
 import net.minecraft.core.BlockPos;
@@ -67,8 +66,8 @@ public class FishermanAI extends Goal {
 
     @Override
     public void tick() {
-        Main.LOGGER.info("timer: " + timer);
-        Main.LOGGER.info("State: " + state);
+        //Main.LOGGER.info("timer: " + timer);
+        //Main.LOGGER.info("State: " + state);
         switch (state){
             case IDLE -> {
                 if(fisherman.getStartPos() != null && fisherman.canWork()){
@@ -213,7 +212,7 @@ public class FishermanAI extends Goal {
             }
 
             case DEPOSIT -> {
-                //Seperate AI doing stuff
+                //Separate AI doing stuff
                 fisherman.stopRiding();
                 if(!fisherman.needsToDeposit()){
                     setWorkState(STOP);
@@ -292,35 +291,6 @@ public class FishermanAI extends Goal {
     }
 
      */
-
-    private boolean hasWaterConnection(BlockPos start, BlockPos end) {
-        // Calculate the horizontal distance between start and end
-        int dx = Math.abs(start.getX() - end.getX());
-        int dz = Math.abs(start.getZ() - end.getZ());
-
-        // Check if the horizontal distance is within your desired range
-        int maxHorizontalDistance = fishingRange; // Adjust this range as needed
-        if (dx <= maxHorizontalDistance && dz <= maxHorizontalDistance) {
-            // Now, check for vertical clearance (air blocks)
-            int startY = Math.min(start.getY(), end.getY());
-            int endY = Math.max(start.getY(), end.getY());
-
-            for (int y = startY + 1; y < endY; y++) {
-                BlockPos checkPos = new BlockPos(start.getX(), y, start.getZ());
-                BlockState checkState = this.fisherman.level.getBlockState(checkPos);
-
-                if (!checkState.is(Blocks.WATER)) {
-                    return false; // There's an obstacle in the way
-                }
-            }
-
-            // If no obstacles were found, there is a water connection
-            return true;
-        }
-
-        return false; // Horizontal distance too far for a connection
-    }
-
 
     public void spawnFishingLoot() {
         int depth;

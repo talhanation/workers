@@ -27,6 +27,7 @@ public class ControlBoatAI extends Goal {
     private Node node;
     private int timer;
     private float precision;
+    private final boolean DEBUG = false;
 
     public ControlBoatAI(IBoatController sailor) {
         this.worker = sailor.getWorker();
@@ -60,12 +61,12 @@ public class ControlBoatAI extends Goal {
 
     public void tick() {
         if (this.worker instanceof IBoatController sailor && !worker.getLevel().isClientSide() && worker.getNavigation() instanceof SailorPathNavigation sailorPathNavigation && worker.getIsWorking()) {
-            /*
-            if (this.worker.getOwner() != null && worker.getOwner().isInWater()) {
-                sailor.setSailPos(worker.getOwner().getOnPos());
-                this.state = IDLE;
+            if(DEBUG) {
+                if (this.worker.getOwner() != null && worker.getOwner().isInWater()) {
+                    sailor.setSailPos(worker.getOwner().getOnPos());
+                    this.state = IDLE;
+                }
             }
-            */
 
             switch (state) {
 
@@ -83,9 +84,12 @@ public class ControlBoatAI extends Goal {
                         if (path != null) {
                             this.node = this.path.getNextNode();
 
-                            for(Node node : this.path.nodes) {
-                                worker.level.setBlock(new BlockPos(node.x, worker.getY() + 4, node.z), Blocks.ICE.defaultBlockState(), 3);
+                            if(DEBUG){
+                                for(Node node : this.path.nodes) {
+                                    worker.level.setBlock(new BlockPos(node.x, worker.getY() + 4, node.z), Blocks.ICE.defaultBlockState(), 3);
+                                }
                             }
+
 
                             state = MOVING_PATH;
                         }
@@ -97,13 +101,13 @@ public class ControlBoatAI extends Goal {
                     double turnFactor = 1.1F;
 
                     double distance = this.worker.distanceToSqr(node.x, node.y, node.z);
-                    /*
-                    Main.LOGGER.info("################################");
-                    Main.LOGGER.info("State: " + this.state);
-                    Main.LOGGER.info("Precision: " + precision);
-                    Main.LOGGER.info("distance to node: " + distance);
-                    Main.LOGGER.info("################################");
-                     */
+                    if(DEBUG) {
+                        Main.LOGGER.info("################################");
+                        Main.LOGGER.info("State: " + this.state);
+                        Main.LOGGER.info("Precision: " + precision);
+                        Main.LOGGER.info("distance to node: " + distance);
+                        Main.LOGGER.info("################################");
+                    }
 
 
                     if ((distance > 5F)) {
@@ -146,7 +150,7 @@ public class ControlBoatAI extends Goal {
                 }
 
                 case DONE -> {
-                    //sailor.setSailPos(null);
+                    sailor.setSailPos(null);
                     state = IDLE;
                 }
             }
@@ -165,7 +169,7 @@ public class ControlBoatAI extends Goal {
         }
         return true;
     }
-
+/*
     private boolean isSensitiveNeeded(Node node) {
         BlockPos pos = new BlockPos(node.x, this.worker.getY(), node.z);
 
@@ -192,7 +196,7 @@ public class ControlBoatAI extends Goal {
                 stateSouthEast.is(Blocks.WATER) &&
                 stateSouthWest.is(Blocks.WATER));
     }
-
+*/
     private void updateBoatControl(double posX, double posZ, double speedFactor, double turnFactor) {
         if(this.worker.getVehicle() instanceof Boat boat && boat.getPassengers().get(0).equals(this.worker)) {
             double dx = posX - this.worker.getX();
