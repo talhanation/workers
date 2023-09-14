@@ -16,6 +16,8 @@ import net.minecraft.world.level.pathfinder.Node;
 import net.minecraft.world.level.pathfinder.Path;
 import net.minecraft.world.phys.Vec3;
 
+import java.util.Optional;
+
 import static com.talhanation.workers.entities.ai.ControlBoatAI.State.*;
 
 
