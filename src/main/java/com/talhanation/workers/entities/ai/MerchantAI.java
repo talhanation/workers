@@ -142,8 +142,6 @@ public class MerchantAI extends Goal {
             if(isSailing){
                 //BlockPos pos1 = this.getCoastPos(pos);
                 merchant.setSailPos(pos);
-                if(!merchant.isFreeWater(pos.getX(), pos.getY(), pos.getZ())) precision = 10F;
-                else precision = 75F;
 
             } else {
                 moveToPos(pos);
@@ -159,11 +157,13 @@ public class MerchantAI extends Goal {
                     if(index <= this.merchant.WAYPOINTS.size() - 1) {
                         merchant.setCurrentWayPointIndex(index + indexChange);
 
+                        if(!merchant.isFreeWater(pos.getX(), pos.getY(), pos.getZ())) precision = 10F;
+                        else precision = 75F;
                     }
                 }
             }
-            else if (++timer > 200){
-                if(precision < 150) precision += 25;
+            else if (++timer > 100){
+                if(precision < 250) precision += 25;
 
                 this.timer = 0;
             }

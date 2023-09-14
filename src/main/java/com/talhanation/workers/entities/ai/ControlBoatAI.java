@@ -104,12 +104,7 @@ public class ControlBoatAI extends Goal {
                     Main.LOGGER.info("distance to node: " + distance);
                     Main.LOGGER.info("################################");
                      */
-                    if(!isFreeWater(node)){
-                        speedFactor = 0.8F;
-                        turnFactor = 1.2F;
-                        precision = 50F;
-                    }
-                    else precision = 150F;
+
 
                     if ((distance > 5F)) {
                         updateBoatControl(node.x, node.z, speedFactor, turnFactor);
@@ -117,6 +112,11 @@ public class ControlBoatAI extends Goal {
 
                     if(distance <= precision){// default = 4.5F
                         path.advance();
+                        if(!isFreeWater(node)){
+                            precision = 50F;
+                        }
+                        else precision = 150F;
+
                         this.timer = 0;
                         if (path.getNodeCount() == path.getNextNodeIndex() - 1) {
                             state = CREATING_PATH;
@@ -135,10 +135,10 @@ public class ControlBoatAI extends Goal {
                             this.node = path.nodes.get(path.nodes.size() - 1);
                         }
                     }
-                    else if (++timer > 100){
-                        if(precision < 225) precision += 25;
+                    else if (++timer > 50){
+                        if(precision < 300) precision += 25;
                         else{
-                            precision = 100F;
+                            precision = 50F;
                             state = CREATING_PATH;
                         }
                         this.timer = 0;
