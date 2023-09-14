@@ -52,7 +52,7 @@ public class MerchantOwnerScreen extends ScreenBase<MerchantInventoryContainer> 
         }));
 
         if(this.player.isCreative() && this.player.createCommandSourceStack().hasPermission(4)){
-            createCreativeButton(zeroLeftPos - mirror - 180, zeroTopPos + 35);
+            createCreativeButton(zeroLeftPos - mirror - 50, zeroTopPos + 35);
         }
         createTradeLimitButtons(zeroLeftPos - mirror + 130, zeroTopPos + 48, 0);
         createTradeLimitButtons(zeroLeftPos - mirror + 130, zeroTopPos + 48, 1);
