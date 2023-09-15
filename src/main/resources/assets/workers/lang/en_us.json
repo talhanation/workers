@@ -102,7 +102,7 @@
   "gui.workers.tooltip.travel_stop": "Stops the current travel and sets the current waypoint to 1",
   "gui.workers.tooltip.travel_return": "Starts the traveling beginning from the last waypoint.",
   "gui.workers.tooltip.travel_start": "Starts the traveling beginning from first waypoint.",
-  "chat.workers.text.travel_info": "Traveling over water is in experimental stage and should be used in free waters like rivers and oceans. \\nThe pathfinder works better if the waypoints are close to each other."
+  "chat.workers.text.travel_info": "Water travel is still in an experimental phase. It is recommended to use it in open waters such as rivers and oceans. Make sure to place a boat near the first water waypoint. Each water waypoint should have a clear and direct water connection to the previous one. Also, keep in mind to supervise the path during the fist journey."
 
 
 }

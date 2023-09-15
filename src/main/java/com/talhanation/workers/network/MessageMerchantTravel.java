@@ -1,5 +1,6 @@
 package com.talhanation.workers.network;
 
+import com.talhanation.workers.Main;
 import com.talhanation.workers.entities.MerchantEntity;
 import de.maxhenkel.corelib.net.Message;
 import net.minecraft.network.FriendlyByteBuf;
@@ -7,6 +8,7 @@ import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.network.NetworkEvent;
+import net.minecraftforge.network.PacketDistributor;
 
 import java.util.UUID;
 
@@ -43,8 +45,6 @@ public class MessageMerchantTravel implements Message<MessageMerchantTravel> {
     }
 
     private void setTraveling(ServerPlayer player, MerchantEntity merchant, boolean travel, boolean returning) {
-
-
         if(!returning){
             merchant.setTraveling(travel);
             merchant.setFollow(false);
@@ -54,8 +54,9 @@ public class MessageMerchantTravel implements Message<MessageMerchantTravel> {
                 merchant.tellPlayer(player, Component.literal("Im now traveling."));
             }
             else{
-                merchant.setIsWorking(false);
                 merchant.setTraveling(false);
+                merchant.setReturning(false);
+                merchant.setIsWorking(false);
                 merchant.tellPlayer(player, Component.literal("I stopped traveling."));
             }
         }
@@ -67,6 +68,8 @@ public class MessageMerchantTravel implements Message<MessageMerchantTravel> {
             merchant.setCurrentWayPointIndex(merchant.WAYPOINTS.size() -1);
             merchant.tellPlayer(player, Component.literal("Im now returning to start position."));
         }
+
+        Main.SIMPLE_CHANNEL.send(PacketDistributor.PLAYER.with(() -> (ServerPlayer) player), new MessageToClientUpdateMerchantScreen(merchant.WAYPOINTS, merchant.getCurrentTrades(), merchant.getTradeLimits(), merchant.getTraveling(), merchant.getReturning()));
     }
 
     public MessageMerchantTravel fromBytes(FriendlyByteBuf buf) {

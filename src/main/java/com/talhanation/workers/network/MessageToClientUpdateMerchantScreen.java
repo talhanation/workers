@@ -15,13 +15,19 @@ public class MessageToClientUpdateMerchantScreen implements Message<MessageToCli
     public List<BlockPos> waypoints;
     public List<Integer> currentTrades;
     public List<Integer> limits;
+    public boolean isStarted;
+    public boolean isReturning;
+    public boolean isStopped;
     public MessageToClientUpdateMerchantScreen() {
     }
 
-    public MessageToClientUpdateMerchantScreen(List<BlockPos> waypoints, List<Integer> currentTrades, List<Integer> limits) {
+    public MessageToClientUpdateMerchantScreen(List<BlockPos> waypoints, List<Integer> currentTrades, List<Integer> limits, boolean isStarted, boolean isReturning) {
         this.waypoints = waypoints;
         this.currentTrades = currentTrades;
         this.limits = limits;
+        this.isStarted = isStarted;
+        this.isStopped = !isReturning && !isStarted;
+        this.isReturning = isReturning;
     }
 
     @Override
@@ -34,6 +40,9 @@ public class MessageToClientUpdateMerchantScreen implements Message<MessageToCli
         MerchantWaypointScreen.waypoints = this.waypoints;
         MerchantOwnerScreen.currentTrades = this.currentTrades;
         MerchantOwnerScreen.limits = this.limits;
+        MerchantWaypointScreen.isReturning = this.isReturning;
+        MerchantWaypointScreen.isStarted = this.isStarted;
+        MerchantWaypointScreen.isStopped = this.isStopped;
     }
 
     @Override
@@ -41,6 +50,9 @@ public class MessageToClientUpdateMerchantScreen implements Message<MessageToCli
         this.waypoints = buf.readList(FriendlyByteBuf::readBlockPos);
         this.currentTrades = buf.readList(FriendlyByteBuf::readInt);
         this.limits = buf.readList(FriendlyByteBuf::readInt);
+        this.isReturning = buf.readBoolean();
+        this.isStarted = buf.readBoolean();
+        this.isStopped = buf.readBoolean();
         return this;
     }
 
@@ -49,5 +61,8 @@ public class MessageToClientUpdateMerchantScreen implements Message<MessageToCli
         buf.writeCollection(waypoints, FriendlyByteBuf::writeBlockPos);
         buf.writeCollection(currentTrades, FriendlyByteBuf::writeInt);
         buf.writeCollection(limits, FriendlyByteBuf::writeInt);
+        buf.writeBoolean(this.isStarted);
+        buf.writeBoolean(this.isStopped);
+        buf.writeBoolean(this.isReturning);
     }
 }

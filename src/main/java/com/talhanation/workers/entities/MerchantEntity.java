@@ -212,7 +212,7 @@ public class MerchantEntity extends AbstractWorkerEntity implements IBoatControl
         }
 
         if (player instanceof ServerPlayer) {
-            Main.SIMPLE_CHANNEL.send(PacketDistributor.PLAYER.with(() -> (ServerPlayer) player), new MessageToClientUpdateMerchantScreen(this.WAYPOINTS, getCurrentTrades(), getTradeLimits()));
+            Main.SIMPLE_CHANNEL.send(PacketDistributor.PLAYER.with(() -> (ServerPlayer) player), new MessageToClientUpdateMerchantScreen(this.WAYPOINTS, getCurrentTrades(), getTradeLimits(), this.getTraveling(), this.getReturning()));
         }
     }
 
@@ -237,7 +237,7 @@ public class MerchantEntity extends AbstractWorkerEntity implements IBoatControl
         }
 
         if (player instanceof ServerPlayer) {
-            Main.SIMPLE_CHANNEL.send(PacketDistributor.PLAYER.with(() -> (ServerPlayer) player), new MessageToClientUpdateMerchantScreen(this.WAYPOINTS, getCurrentTrades(), getTradeLimits()));
+            Main.SIMPLE_CHANNEL.send(PacketDistributor.PLAYER.with(() -> (ServerPlayer) player), new MessageToClientUpdateMerchantScreen(this.WAYPOINTS, getCurrentTrades(), getTradeLimits(), this.getTraveling(), this.getReturning()));
         }
     }
 

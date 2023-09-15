@@ -34,6 +34,9 @@ public class MerchantWaypointScreen extends ScreenBase<MerchantWaypointContainer
     private final MerchantEntity merchant;
     private final Player player;
     private int returnTime;
+    public static boolean isStarted;
+    public static boolean isReturning;
+    public static boolean isStopped;
 
     public MerchantWaypointScreen(MerchantWaypointContainer container, Inventory playerInventory, Component title) {
         super(RESOURCE_LOCATION, container, playerInventory, Component.literal(""));
@@ -61,22 +64,20 @@ public class MerchantWaypointScreen extends ScreenBase<MerchantWaypointContainer
     }
     public void setStartButtons(){
         //START BUTTONS//
-        boolean isStarted = merchant.getTraveling();
-        boolean isReturning = merchant.getReturning();
 
         Button start = createTravelStartButton();
-        start.active = (!isStarted || ! isReturning) && waypoints.size() > 1;
+        start.active = true;//!isStarted;
 
         Button stop = createTravelStopButton();
-        stop.active = (isStarted || isReturning) && waypoints.size() > 1;
+        stop.active = true;//isStarted;
 
         Button returnButton = createTravelReturnButton();
-        returnButton.active = !isReturning && !isStarted && waypoints.size() > 1;
+        returnButton.active = true;//!isStarted;
     }
 
     public void setPageButtons() {
         ExtendedButton pageForwardButton = createPageForwardButton();
-        pageForwardButton.active = waypoints.size() > 10;
+        pageForwardButton.active = waypoints.size() > 9;
 
         ExtendedButton pageBackButton = createPageBackButton();
         pageBackButton.active = page != 1;
@@ -85,8 +86,8 @@ public class MerchantWaypointScreen extends ScreenBase<MerchantWaypointContainer
     public void setWaypointButtons() {
         ExtendedButton addButton = createAddWaypointButton(this.leftPos + 171, this.topPos + 32);
         ExtendedButton removeButton = createRemoveWaypointButton(this.leftPos + 148, this.topPos + 32);
-
-        removeButton.active = !waypoints.isEmpty();
+        addButton.active =  true;//!isStarted && !isReturning;
+        removeButton.active = true;//!waypoints.isEmpty() && !isStarted && !isReturning;
 
         Button info = createTravelInfoButton(this.leftPos + 215, this.topPos + 32);
     }
@@ -147,17 +148,16 @@ public class MerchantWaypointScreen extends ScreenBase<MerchantWaypointContainer
         Button button = addRenderableWidget(new Button(x, y, 20, 20, Component.literal("i"),
                 press -> {
                     this.setButtons();
-                    this.player.sendSystemMessage(Translatable.TOOLTIP_TRAVEL_INFO);
+                    this.player.sendSystemMessage(Translatable.TEXT_TRAVEL_INFO);
                     this.onClose();
                },
                 (button1, poseStack, i, i1) -> {
-                    this.renderTooltip(poseStack, Translatable.TEXT_TRAVEL_INFO, i, i1);
+                    this.renderTooltip(poseStack, Translatable.TOOLTIP_TRAVEL_INFO, i, i1);
                 }
         ));
 
         return button;
     }
-
 
 
     @Override
@@ -172,16 +172,17 @@ public class MerchantWaypointScreen extends ScreenBase<MerchantWaypointContainer
         font.draw(matrixStack, "Days:", 20, 9, FONT_COLOR);
         font.draw(matrixStack, "" + currentReturningTime + " / " + merchant.getReturningTime(), 110, 9, FONT_COLOR);
 
-        int startIndex = (page - 1) * waypointsPerPage;
-        int endIndex = Math.min(startIndex + waypointsPerPage, waypoints.size());
         int currentWayPoint = waypoints.size() == 0 ? 0 : merchant.getCurrentWayPointIndex() + 1;
 
         font.draw(matrixStack, "Waypoints:", 20, 20, FONT_COLOR);
         font.draw(matrixStack, "" + currentWayPoint + " / " + waypoints.size(), 110, 20, FONT_COLOR);
 
+        int startIndex = (page - 1) * waypointsPerPage;
+        int endIndex = Math.min(startIndex + waypointsPerPage, waypoints.size());
+
         if (!waypoints.isEmpty()) {
             for (int i = startIndex; i < endIndex; i++) {
-                BlockPos pos = waypoints.get(i % waypointsPerPage); // Modulo to loop through pages
+                BlockPos pos = waypoints.get(i);
 
                 int x = pos.getX();
                 int y = pos.getY();
@@ -189,20 +190,20 @@ public class MerchantWaypointScreen extends ScreenBase<MerchantWaypointContainer
 
                 BlockState state = player.level.getBlockState(pos);
                 ItemStack itemStack;
-                if(state.is(Blocks.WATER)) itemStack = new ItemStack(Items.OAK_BOAT);
+                if (state.is(Blocks.WATER)) itemStack = new ItemStack(Items.OAK_BOAT);
                 else itemStack = new ItemStack(state.getBlock().asItem());
 
-                String coordinates = String.format("%d:  (%d,  %d,  %d)", i+1, x, y, z);
+                String coordinates = String.format("%d:  (%d,  %d,  %d)", i + 1, x, y, z);
 
-                renderItemAt(itemStack, 15, 58 + (i % waypointsPerPage * 17));
+                renderItemAt(itemStack, 15, 58 + ((i - startIndex) * 17)); // Adjust the Y position here
 
-                font.draw(matrixStack, coordinates, 35, 60 + (i % waypointsPerPage * 17), fontColor);
+                font.draw(matrixStack, coordinates, 35, 60 + ((i - startIndex) * 17), fontColor);
             }
 
             if (waypoints.size() > waypointsPerPage)
                 font.draw(matrixStack, "Page: " + page, 90, 230, fontColor);
-
         }
+
     }
 
     private void renderItemAt(ItemStack itemStack, int x, int y) {
