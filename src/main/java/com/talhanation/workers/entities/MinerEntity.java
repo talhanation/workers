@@ -175,6 +175,7 @@ public class MinerEntity extends AbstractWorkerEntity {
         nbt.putInt("MineType", this.getMineType());
         nbt.putInt("Depth", this.getMineDepth());
         nbt.putBoolean("Checked", this.getChecked());
+        nbt.putString("MineDirection", this.getMineDirection().getName());
     }
 
     public void readAdditionalSaveData(@NotNull CompoundTag nbt) {
@@ -182,6 +183,7 @@ public class MinerEntity extends AbstractWorkerEntity {
         this.setMineType(nbt.getInt("MineType"));
         this.setMineDepth(nbt.getInt("Depth"));
         this.setChecked(nbt.getBoolean("Checked"));
+        this.setMineDirection(Direction.byName(nbt.getString("MineDirection")));
     }
 
     public void setMineDirection(Direction dir) {

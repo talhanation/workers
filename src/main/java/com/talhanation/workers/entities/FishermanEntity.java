@@ -8,6 +8,7 @@ import com.talhanation.workers.entities.ai.FishermanAI;
 import com.talhanation.workers.entities.ai.WorkerPickupWantedItemGoal;
 import com.talhanation.workers.network.MessageOpenGuiWorker;
 import net.minecraft.core.BlockPos;
+import net.minecraft.core.Direction;
 import net.minecraft.network.syncher.EntityDataAccessor;
 import net.minecraft.network.syncher.EntityDataSerializers;
 import net.minecraft.network.syncher.SynchedEntityData;
@@ -46,6 +47,7 @@ public class FishermanEntity extends AbstractWorkerEntity implements IBoatContro
     private static final EntityDataAccessor<Integer> STATE = SynchedEntityData.defineId(FishermanEntity.class, EntityDataSerializers.INT);
     private static final EntityDataAccessor<Optional<BlockPos>> SAIL_POS = SynchedEntityData.defineId(FishermanEntity.class, EntityDataSerializers.OPTIONAL_BLOCK_POS);
 
+    private static final EntityDataAccessor<Direction> DIRECTION = SynchedEntityData.defineId(FishermanEntity.class, EntityDataSerializers.DIRECTION);
     private final Predicate<ItemEntity> ALLOWED_ITEMS = (item) -> {
         return (
             !item.hasPickUpDelay() && 
@@ -61,6 +63,7 @@ public class FishermanEntity extends AbstractWorkerEntity implements IBoatContro
 
     protected void defineSynchedData() {
         super.defineSynchedData();
+        this.entityData.define(DIRECTION, Direction.NORTH);
         this.entityData.define(STATE, 0);
         this.entityData.define(SAIL_POS, Optional.empty());
     }
@@ -68,12 +71,22 @@ public class FishermanEntity extends AbstractWorkerEntity implements IBoatContro
     public void addAdditionalSaveData(@NotNull CompoundTag nbt) {
         super.addAdditionalSaveData(nbt);
         nbt.putInt("State", this.getState());
+        nbt.putString("FishingDirection", this.getFishingDirection().getName());
     }
 
     //Boat
     public void readAdditionalSaveData(@NotNull CompoundTag nbt) {
         super.readAdditionalSaveData(nbt);
         this.setState(nbt.getInt("State"));
+        this.setFishingDirection(Direction.byName(nbt.getString("FishingDirection")));
+    }
+
+    public void setFishingDirection(Direction dir) {
+        entityData.set(DIRECTION, dir);
+    }
+
+    public Direction getFishingDirection() {
+        return entityData.get(DIRECTION);
     }
 
     public void setState(int state) {
@@ -206,13 +219,16 @@ public class FishermanEntity extends AbstractWorkerEntity implements IBoatContro
 
     public enum State{
         IDLE(0),
-        MOVING_COAST(1),
-        MOVING_TO_BOAT(2),
-        SAILING(3), // fährt zum fishing pos
-        FISHING(4),
-        STOPPING(5), // Wenn boat dann coast und eject
-        DEPOSIT(6),
-        STOP(7);
+        CALC_COAST(1),
+        MOVING_COAST(2),
+        MOVING_TO_BOAT(3),
+        SAILING(4), // fährt zum fishing pos
+        FISHING(5),
+        STOPPING(6), // Wenn boat dann coast und eject
+        DEPOSIT(7),
+        UPKEEP(8),
+
+        STOP(9);
 
 
 

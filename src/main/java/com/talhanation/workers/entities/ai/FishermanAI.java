@@ -72,15 +72,27 @@ public class FishermanAI extends Goal {
             case IDLE -> {
                 if(fisherman.getStartPos() != null && fisherman.canWork()){
 
-                    this.setWorkState(MOVING_COAST);
+                    this.setWorkState(CALC_COAST);
                 }
+            }
+
+            case CALC_COAST -> {
+                if(!fisherman.canWork()) this.setWorkState(STOPPING);
+                if(fisherman.getVehicle() != null) fisherman.stopRiding();
+
+                coastPos = getCoastPos();
+                if (coastPos != null){
+                    setWorkState(MOVING_COAST);
+                }
+                else coastPos = fisherman.getStartPos();
+
             }
 
             case MOVING_COAST -> {
                 if(!fisherman.canWork()) this.setWorkState(STOPPING);
                 if(fisherman.getVehicle() != null) fisherman.stopRiding();
 
-                if (coastPos == null) coastPos = fisherman.getStartPos();
+                if (coastPos == null) setWorkState(CALC_COAST);
                 else
                     this.moveToPos(coastPos);
 
@@ -99,7 +111,7 @@ public class FishermanAI extends Goal {
                         this.setWorkState(FISHING);
                     }
 
-                    fishingPos = this.getWaterField();
+                    fishingPos = this.findWaterBlocks();
                     if(fishingPos == null) this.setWorkState(STOPPING);
 
                 }
@@ -140,7 +152,6 @@ public class FishermanAI extends Goal {
                     break;
                 }
                 double distance = fisherman.distanceToSqr(fishingPos.getX(), fisherman.getY(), fishingPos.getZ());
-                if(distance < 12F) { //valid value example: distance = 3.2
                     this.setWorkState(FISHING);
                 }
                 else if(++timer > 200){
@@ -152,7 +163,7 @@ public class FishermanAI extends Goal {
                         timer = 0;
                     }
                     else {
-                        if(fishingPos != null) fishingPos = getWaterField();
+                        if(fishingPos != null) fishingPos = findWaterBlocks();
                         else {
                             this.setWorkState(STOPPING);
                             break;
@@ -201,6 +212,10 @@ public class FishermanAI extends Goal {
                 if(fisherman.needsToDeposit()){
                     setWorkState(DEPOSIT);
                 }
+
+                if(fisherman.needsToGetFood()){
+                    setWorkState(UPKEEP);
+                }
                 else{
                     this.fisherman.walkTowards(coastPos, 1);
 
@@ -218,10 +233,18 @@ public class FishermanAI extends Goal {
                     setWorkState(STOP);
                 }
             }
+
+            case UPKEEP -> {
+                //Separate AI doing stuff
+                fisherman.stopRiding();
+                if(!fisherman.needsToGetFood()){
+                    setWorkState(STOP);
+                }
+            }
         }
     }
 
-    private void setWorkState(FishermanEntity.State state) {
+    private void setWorkState(FishermanEntity.@NotNull State state) {
         timer = 0;
         this.state = state;
         this.fisherman.setState(state.getIndex());
@@ -255,39 +278,85 @@ public class FishermanAI extends Goal {
     }
 
 
-    /*
-    private void findWaterBlocks() {
-        this.waterBlocks = new ArrayList<>();
 
-        for (int x = -this.fishingRange; x < this.fishingRange; ++x) {
-            for (int y = -2; y < 2; ++y) {
-                for (int z = -this.fishingRange; z < this.fishingRange; ++z) {
-                    if (coastPos != null) {
-                        BlockPos pos = this.coastPos.offset(x, y, z);
-                        BlockState targetBlock = this.fisherman.level.getBlockState(pos);
+    private BlockPos findWaterBlocks() {
+        List<BlockPos> waterBlocks = new ArrayList<>();
+        Direction direction = this.fisherman.getFishingDirection();
+        Direction directionR = direction.getClockWise();
+        Direction directionL = direction.getCounterClockWise();
 
-                        if (targetBlock.is(Blocks.WATER) && fisherman.distanceToSqr(pos.getX(), pos.getY(), pos.getZ()) > fishingRange) {
-                            for( int i = 0; i < 4 ;i++){
-                                if(this.fisherman.level.getBlockState(pos.above(i)).isAir() && i == 3){
-                                    if(hasWaterConnection(coastPos, pos)) this.waterBlocks.add(pos);
-                                    break;
-                                }
+        if (coastPos != null) {
+            int length = getDistanceWithWater(coastPos, direction);
+            int lengthR = getDistanceWithWater(coastPos, directionR);
+            int lengthL = getDistanceWithWater(coastPos, directionL);
+
+            for (int x = 0; x <= length; ++x) {
+                    BlockPos pos = this.coastPos.relative(direction, x);
+                    BlockState targetBlock = this.fisherman.level.getBlockState(pos);
+                    fisherman.level.setBlock(pos.above(4), Blocks.ICE.defaultBlockState(), 3);
+
+                    double distance = fisherman.distanceToSqr(pos.getX(), pos.getY(), pos.getZ());
+                    if (targetBlock.is(Blocks.WATER) && distance > fishingRange) {
+                        for (int i = 0; i < 4; i++) {
+                            if (this.fisherman.level.getBlockState(pos.above(i)).isAir() && i == 3) {
+                                waterBlocks.add(pos);
+                                break;
                             }
+                        }
+                    }
+                }
+
+            for (int x = 0; x <= lengthR; ++x) {
+                BlockPos pos = this.coastPos.relative(directionR, x);
+                BlockState targetBlock = this.fisherman.level.getBlockState(pos);
+                fisherman.level.setBlock(pos.above(4), Blocks.ICE.defaultBlockState(), 3);
+
+                double distance = fisherman.distanceToSqr(pos.getX(), pos.getY(), pos.getZ());
+                if (targetBlock.is(Blocks.WATER) && distance > fishingRange) {
+                    for (int i = 0; i < 4; i++) {
+                        if (this.fisherman.level.getBlockState(pos.above(i)).isAir() && i == 3) {
+                            waterBlocks.add(pos);
+                            break;
+                        }
+                    }
+                }
+            }
+
+            for (int x = 0; x <= lengthL; ++x) {
+                BlockPos pos = this.coastPos.relative(directionL, x);
+                BlockState targetBlock = this.fisherman.level.getBlockState(pos);
+                fisherman.level.setBlock(pos.above(4), Blocks.ICE.defaultBlockState(), 3);
+
+                double distance = fisherman.distanceToSqr(pos.getX(), pos.getY(), pos.getZ());
+                if (targetBlock.is(Blocks.WATER) && distance > fishingRange) {
+                    for (int i = 0; i < 4; i++) {
+                        if (this.fisherman.level.getBlockState(pos.above(i)).isAir() && i == 3) {
+                            waterBlocks.add(pos);
+                            break;
                         }
                     }
                 }
             }
         }
-        this.waterBlocks.sort(Comparator.comparing(this::getWaterDepth));
-        if (waterBlocks.isEmpty()) {
-            // No water nearby
-            if (fisherman.getOwner() != null) {
-                fisherman.tellPlayer(fisherman.getOwner(), Translatable.TEXT_FISHER_NO_WATER);
-                this.fisherman.setIsWorking(false, true);
-                this.fisherman.clearStartPos();
-                this.stop();
+
+        waterBlocks.sort(Comparator.comparing(this::getWaterDepth).reversed());
+
+        List<BlockPos> validWaterSpots = new ArrayList<>();
+        for(BlockPos pos : waterBlocks){
+            if(isValidFishingSpot(pos, fishingRange < 10)){
+                validWaterSpots.add(pos);
             }
         }
+
+        BlockPos fishingSpot;
+        if(validWaterSpots.isEmpty()){
+            fishingSpot = waterBlocks.get((waterBlocks.size() / 2));
+        }
+        else fishingSpot = validWaterSpots.get(0);
+
+        fisherman.level.setBlock(new BlockPos(fishingSpot.getX(), fishingSpot.getY() + 5, fishingSpot.getZ()), Blocks.PACKED_ICE.defaultBlockState(), 3);
+
+        return fishingSpot;
     }
 
      */
@@ -358,6 +427,22 @@ public class FishermanAI extends Goal {
         if (throwTimer > 0) throwTimer--;
     }
 
+    private boolean isValidFishingSpot(BlockPos pos1, boolean coastFishing){
+        int range = coastFishing ? 2 : 4;
+
+        for(int i = -range; i <= range; i++){
+            for(int k = -range; k <= range; k++) {
+                BlockPos pos = pos1.offset(i, 0, k);
+                BlockState state = this.fisherman.level.getBlockState(pos);
+
+                if (state.is(Blocks.WATER)){
+                    return true;
+                }
+            }
+        }
+        return false;
+    }
+
     private int getWaterDepth(BlockPos pos){
         int depth = 0;
         for(int i = 0; i < 10; i++){
@@ -404,7 +489,7 @@ public class FishermanAI extends Goal {
 
     private int getDistanceWithWater(BlockPos pos, Direction direction){
         int distance = 0;
-        for(int i = 0; i < 20; i++){
+        for(int i = 0; i < fishingRange; i++){
             BlockState targetBlockN = this.fisherman.level.getBlockState(pos.relative(direction, i));
             if (targetBlockN.is(Blocks.WATER)){
                 distance++;
@@ -413,6 +498,7 @@ public class FishermanAI extends Goal {
         }
         return distance;
     }
+
     @Nullable
     private BlockPos getWaterField() {
         List<BlockPos> list = new ArrayList<>();

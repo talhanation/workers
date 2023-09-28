@@ -1,10 +1,7 @@
 package com.talhanation.workers;
 
 import com.talhanation.workers.config.WorkersModConfig;
-import com.talhanation.workers.entities.AbstractWorkerEntity;
-import com.talhanation.workers.entities.IBoatController;
-import com.talhanation.workers.entities.MerchantEntity;
-import com.talhanation.workers.entities.MinerEntity;
+import com.talhanation.workers.entities.*;
 import com.talhanation.workers.inventory.CommandMenu;
 import com.talhanation.workers.network.MessageOpenCommandScreen;
 import com.talhanation.workers.network.MessageToClientUpdateCommandScreen;
@@ -51,6 +48,11 @@ public class CommandEvents {
                 if (worker instanceof MinerEntity miner) {
                     Direction playerDirection = owner.getDirection();
                     miner.setMineDirection(playerDirection);
+                }
+
+                if (worker instanceof FishermanEntity fisherman) {
+                    Direction playerDirection = owner.getDirection();
+                    fisherman.setFishingDirection(playerDirection);
                 }
             }
             worker.setStartPos(blockpos);
