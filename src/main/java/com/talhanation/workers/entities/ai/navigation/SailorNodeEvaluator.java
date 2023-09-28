@@ -24,12 +24,21 @@ public class SailorNodeEvaluator extends WalkNodeEvaluator {
 
     public void prepare(@NotNull PathNavigationRegion region, @NotNull Mob mob) {
         super.prepare(region, mob);
+
         this.oldWaterMalus = mob.getPathfindingMalus(BlockPathTypes.WATER);
         mob.setPathfindingMalus(BlockPathTypes.WATER, 0.0F);
         this.oldWalkableMalus = mob.getPathfindingMalus(BlockPathTypes.WALKABLE);
         mob.setPathfindingMalus(BlockPathTypes.WALKABLE, -1F);
         this.oldWaterBorderMalus = mob.getPathfindingMalus(BlockPathTypes.WATER_BORDER);
         mob.setPathfindingMalus(BlockPathTypes.WATER_BORDER, 0.0F);
+
+        Entity vehicle = this.mob.getVehicle();
+        float width = vehicle != null ? vehicle.getBbWidth() + 3.0F : mob.getBbWidth() + 1.0F;
+        float depth = vehicle != null ? vehicle.getBbWidth() + 3.0F : mob.getBbWidth() + 1.0F;
+        float height = vehicle != null ? vehicle.getBbHeight() + 1.0F : mob.getBbHeight() + 1.0F;
+        this.entityWidth = Mth.floor(width);
+        this.entityDepth = Mth.floor(depth);
+        this.entityHeight = Mth.floor(height);
     }
 
     public void done() {
@@ -105,7 +114,7 @@ public class SailorNodeEvaluator extends WalkNodeEvaluator {
                 return false;
             } else if (node2.y <= node.y && node1.y <= node.y) {
                 if (node1.type != BlockPathTypes.WALKABLE_DOOR && node2.type != BlockPathTypes.WALKABLE_DOOR && node3.type != BlockPathTypes.WALKABLE_DOOR) {
-                    double width = this.mob.getVehicle() != null ? this.mob.getVehicle().getBbWidth() * 1.5 : this.mob.getBbWidth();
+                    double width = this.mob.getVehicle() != null ? this.mob.getVehicle().getBbWidth() * 20 : this.mob.getBbWidth();
                     boolean flag = node2.type == BlockPathTypes.FENCE && node1.type == BlockPathTypes.FENCE && width < 0.5D;
                     return node3.costMalus >= 0.0F && (node2.y < node.y || node2.costMalus >= 0.0F || flag) && (node1.y < node.y || node1.costMalus >= 0.0F || flag);
                 } else {
