@@ -23,7 +23,7 @@ public class EatGoal extends Goal{
     @Override
     public boolean canUse() {
         worker.updateHunger();
-        return hasFoodInInv() && worker.needsToEat() && !worker.getIsEating() && !worker.isUsingItem();
+        return hasFoodInInv() && worker.needsToEat() && !worker.isUsingItem();
     }
 
     @Override
@@ -43,7 +43,6 @@ public class EatGoal extends Goal{
     public void start() {
         slotID = 0;
         beforeItem = worker.getOffhandItem().copy();
-        worker.setIsEating(true);
         this.foodStack = getAndRemoveFoodInInv().copy();
         /*
         Main.LOGGER.debug("Start--------------: ");
@@ -55,7 +54,7 @@ public class EatGoal extends Goal{
 
         worker.heal(Objects.requireNonNull(foodStack.getItem().getFoodProperties(foodStack, worker)).getSaturationModifier() * 1);
         if (!worker.isSaturated())
-            worker.setHunger(worker.getHunger() + Objects.requireNonNull(foodStack.getItem().getFoodProperties(foodStack, worker)).getSaturationModifier() * 10);
+            worker.setHunger(worker.getHunger() + Objects.requireNonNull(foodStack.getItem().getFoodProperties(foodStack, worker)).getSaturationModifier() * 20);
 
         worker.setItemInHand(InteractionHand.OFF_HAND, foodStack);
         worker.startUsingItem(InteractionHand.OFF_HAND);
@@ -65,7 +64,6 @@ public class EatGoal extends Goal{
     public void stop() {
         worker.stopUsingItem();
         resetItemInHand();
-        worker.setIsEating(false);
         /*
         Main.LOGGER.debug("Stop--------------: ");
         Main.LOGGER.debug("beforeFoodItem: " + beforeFoodItem);

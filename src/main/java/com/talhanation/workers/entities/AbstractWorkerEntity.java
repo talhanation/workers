@@ -66,7 +66,6 @@ public abstract class AbstractWorkerEntity extends AbstractChunkLoaderEntity {
     private static final EntityDataAccessor<Integer> currentTimeBreak = SynchedEntityData.defineId(AbstractWorkerEntity.class, EntityDataSerializers.INT);
     private static final EntityDataAccessor<Integer> previousTimeBreak = SynchedEntityData.defineId(AbstractWorkerEntity.class, EntityDataSerializers.INT);
     private static final EntityDataAccessor<Float> HUNGER = SynchedEntityData.defineId(AbstractWorkerEntity.class, EntityDataSerializers.FLOAT);
-    private static final EntityDataAccessor<Boolean> IS_EATING = SynchedEntityData.defineId(AbstractWorkerEntity.class, EntityDataSerializers.BOOLEAN);
     private static final EntityDataAccessor<Boolean> NEEDS_HOME = SynchedEntityData.defineId(AbstractWorkerEntity.class, EntityDataSerializers.BOOLEAN);
     private static final EntityDataAccessor<Boolean> NEEDS_CHEST = SynchedEntityData.defineId(AbstractWorkerEntity.class, EntityDataSerializers.BOOLEAN);
     private static final EntityDataAccessor<Boolean> NEEDS_BED = SynchedEntityData.defineId(AbstractWorkerEntity.class, EntityDataSerializers.BOOLEAN);
@@ -233,7 +232,6 @@ public abstract class AbstractWorkerEntity extends AbstractChunkLoaderEntity {
         this.entityData.define(IS_WORKING, false);
         this.entityData.define(IS_PICKING_UP, false);
         this.entityData.define(FOLLOW, false);
-        this.entityData.define(IS_EATING, false);
         this.entityData.define(NEEDS_HOME, false);
         this.entityData.define(NEEDS_CHEST, false);
         this.entityData.define(NEEDS_BED, false);
@@ -403,10 +401,6 @@ public abstract class AbstractWorkerEntity extends AbstractChunkLoaderEntity {
         return this.entityData.get(IS_WORKING);
     }
 
-    public boolean getIsEating() {
-        return this.entityData.get(IS_EATING);
-    }
-
     public boolean getIsPickingUp() {
         return this.entityData.get(IS_PICKING_UP);
     }
@@ -573,10 +567,6 @@ public abstract class AbstractWorkerEntity extends AbstractChunkLoaderEntity {
         entityData.set(IS_PICKING_UP, bool);
     }
 
-    public void setIsEating(boolean bool) {
-        entityData.set(IS_EATING, bool);
-    }
-
     public void setOwned(boolean owned) {
         super.setTame(owned);
     }
@@ -635,8 +625,8 @@ public abstract class AbstractWorkerEntity extends AbstractChunkLoaderEntity {
 
     }
 
-    //////////////////////////////////// OTHER
-    //////////////////////////////////// FUNCTIONS////////////////////////////////////
+    //////////////////////////////////// OTHER     ////////////////////////////////////
+    //////////////////////////////////// FUNCTIONS ////////////////////////////////////
 
     public boolean needsToSleep() {
         return !this.level.isDay();
