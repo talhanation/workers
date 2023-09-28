@@ -700,7 +700,7 @@ public abstract class AbstractWorkerEntity extends AbstractChunkLoaderEntity {
     }
 
     public boolean needsToDeposit(){
-        return (this.needsTool() || this.getFarmedItems() >= 1) && getChestPos() != null && !this.getFollow() && !this.needsChest() && !this.needsToSleep(); //TODO: configurable amount
+        return (this.needsTool() || this.getFarmedItems() >= 64) && getChestPos() != null && !this.getFollow() && !this.needsChest() && !this.needsToSleep(); //TODO: configurable amount
     }
 
     public void increaseFarmedItems(){
