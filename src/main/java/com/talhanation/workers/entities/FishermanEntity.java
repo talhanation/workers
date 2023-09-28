@@ -235,8 +235,9 @@ public class FishermanEntity extends AbstractWorkerEntity implements IBoatContro
         STOPPING(6), // Wenn boat dann coast und eject
         DEPOSIT(7),
         UPKEEP(8),
+        SLEEP(9),
 
-        STOP(9);
+        STOP(10);
 
 
 
