@@ -92,7 +92,9 @@ public class Main {
             MessageMerchantHorse.class,
             MessageMerchantResetCurrentTradeCounts.class,
             MessageMerchantTradeLimitButton.class,
-            MessageOpenWaypointsGuiMerchant.class
+            MessageOpenWaypointsGuiMerchant.class,
+            MessageMerchantSetTravelSpeed.class,
+            MessageMerchantSetAutoStartTravel.class
 
         };
         for (int i = 0; i < messages.length; i++) CommonRegistry.registerMessage(SIMPLE_CHANNEL, i, messages[i]);

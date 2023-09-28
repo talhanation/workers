@@ -6,6 +6,9 @@ import net.minecraft.world.item.ItemStack;
 
 public class Translatable {
     public static final Component TOOLTIP_TRAVEL_INFO =  Component.translatable("gui.workers.tooltip.travel_info");
+    public static final Component TOOLTIP_AUTO_START_TRAVEL =  Component.translatable("gui.workers.tooltip.autoStartTravel");
+
+    public static final Component TOOLTIP_TRAVEL_SPEED =  Component.translatable("gui.workers.tooltip.travelSpeed");
     public static final Component TEXT_TRAVEL_INFO =  Component.translatable("chat.workers.text.travel_info");
     public static final Component TOOLTIP_TRAVEL_START =  Component.translatable("gui.workers.tooltip.travel_start");
     public static final Component TOOLTIP_TRAVEL_STOP =  Component.translatable("gui.workers.tooltip.travel_stop");

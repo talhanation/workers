@@ -37,6 +37,8 @@ public class MerchantWaypointScreen extends ScreenBase<MerchantWaypointContainer
     public static boolean isStarted;
     public static boolean isReturning;
     public static boolean isStopped;
+    public boolean autoStart;
+    public int travelSpeedState;
 
     public MerchantWaypointScreen(MerchantWaypointContainer container, Inventory playerInventory, Component title) {
         super(RESOURCE_LOCATION, container, playerInventory, Component.literal(""));
@@ -52,6 +54,8 @@ public class MerchantWaypointScreen extends ScreenBase<MerchantWaypointContainer
         this.leftPos = (this.width - this.imageWidth) / 2;
         this.topPos = (this.height - this.imageHeight) / 2;
         this.returnTime = merchant.getReturningTime();
+        this.autoStart = merchant.getAutoStartTravel();
+        this.travelSpeedState = merchant.getTravelSpeedState();
         this.setButtons();
     }
     private void setButtons(){
@@ -61,7 +65,44 @@ public class MerchantWaypointScreen extends ScreenBase<MerchantWaypointContainer
         this.setPageButtons();
         this.setWaypointButtons();
         this.setDaysButtons();
+
+        String s = "";
+        switch (travelSpeedState){
+            case 0 -> s = "Slow";
+            case 1 -> s = "Medium";
+            case 2 -> s = "Fast";
+        }
+        this.createSetTravelSpeedButton(s);
+
+        String ss = autoStart ? "True" : "False";
+        this.createSetAutoStartTravelButton(ss);
     }
+
+    private void createSetTravelSpeedButton(String s) {
+        addRenderableWidget(new Button(leftPos + 240, topPos + 32, 40, 20, Component.literal(s), button -> {
+            travelSpeedState++;
+            if(travelSpeedState > 2) travelSpeedState = 0;
+
+            Main.SIMPLE_CHANNEL.sendToServer(new MessageMerchantSetTravelSpeed(merchant.getUUID(), travelSpeedState));
+            this.setButtons();
+        },
+            (button1, poseStack, i, i1) -> {
+        this.renderTooltip(poseStack, Translatable.TOOLTIP_TRAVEL_SPEED, i, i1);
+        }));
+    }
+
+    private void createSetAutoStartTravelButton(String ss) {
+        addRenderableWidget(new Button(leftPos + 240, topPos + 57, 40, 20, Component.literal(ss), button -> {
+            this.autoStart = !autoStart;
+
+            Main.SIMPLE_CHANNEL.sendToServer(new MessageMerchantSetAutoStartTravel(merchant.getUUID(), autoStart));
+            this.setButtons();
+        },
+                (button1, poseStack, i, i1) -> {
+                    this.renderTooltip(poseStack, Translatable.TOOLTIP_AUTO_START_TRAVEL, i, i1);
+                }));
+    }
+
     public void setStartButtons(){
         //START BUTTONS//
 
@@ -76,16 +117,16 @@ public class MerchantWaypointScreen extends ScreenBase<MerchantWaypointContainer
     }
 
     public void setPageButtons() {
-        ExtendedButton pageForwardButton = createPageForwardButton();
+        Button pageForwardButton = createPageForwardButton();
         pageForwardButton.active = waypoints.size() > 9;
 
-        ExtendedButton pageBackButton = createPageBackButton();
+        Button pageBackButton = createPageBackButton();
         pageBackButton.active = page != 1;
     }
 
     public void setWaypointButtons() {
-        ExtendedButton addButton = createAddWaypointButton(this.leftPos + 171, this.topPos + 32);
-        ExtendedButton removeButton = createRemoveWaypointButton(this.leftPos + 148, this.topPos + 32);
+        Button addButton = createAddWaypointButton(this.leftPos + 171, this.topPos + 32);
+        Button removeButton = createRemoveWaypointButton(this.leftPos + 148, this.topPos + 32);
         addButton.active =  true;//!isStarted && !isReturning;
         removeButton.active = true;//!waypoints.isEmpty() && !isStarted && !isReturning;
 
@@ -216,8 +257,8 @@ public class MerchantWaypointScreen extends ScreenBase<MerchantWaypointContainer
         if(itemStack != null) itemRenderer.renderAndDecorateItem(itemStack, x, y);
     }
 
-    public ExtendedButton createPageBackButton() {
-        return addRenderableWidget(new ExtendedButton(leftPos + 15, topPos + 230, 12, 12, Component.literal("<"),
+    public Button createPageBackButton() {
+        return addRenderableWidget(new Button(leftPos + 15, topPos + 230, 12, 12, Component.literal("<"),
                 button -> {
                     if(this.page > 1) page--;
                     this.setButtons();
@@ -225,8 +266,8 @@ public class MerchantWaypointScreen extends ScreenBase<MerchantWaypointContainer
         ));
     }
 
-    public ExtendedButton createPageForwardButton() {
-        return addRenderableWidget(new ExtendedButton(leftPos + 184, topPos + 230, 12, 12, Component.literal(">"),
+    public Button createPageForwardButton() {
+        return addRenderableWidget(new Button(leftPos + 184, topPos + 230, 12, 12, Component.literal(">"),
                 button -> {
                     page++;
                     this.setButtons();
@@ -234,8 +275,8 @@ public class MerchantWaypointScreen extends ScreenBase<MerchantWaypointContainer
         ));
     }
 
-    private ExtendedButton createAddWaypointButton(int x, int y){
-        return addRenderableWidget(new ExtendedButton(x, y, 20, 20, Component.literal("+"),
+    private Button createAddWaypointButton(int x, int y){
+        return addRenderableWidget(new Button(x, y, 20, 20, Component.literal("+"),
                 button -> {
                     Main.SIMPLE_CHANNEL.sendToServer(new MessageMerchantAddWayPoint(merchant.getUUID()));
 
@@ -244,8 +285,8 @@ public class MerchantWaypointScreen extends ScreenBase<MerchantWaypointContainer
         ));
     }
 
-    private ExtendedButton createRemoveWaypointButton(int x, int y){
-        return addRenderableWidget(new ExtendedButton(x, y, 20, 20, Component.literal("-"),
+    private Button createRemoveWaypointButton(int x, int y){
+        return addRenderableWidget(new Button(x, y, 20, 20, Component.literal("-"),
                 button -> {
                     Main.SIMPLE_CHANNEL.sendToServer(new MessageMerchantRemoveWayPoint(merchant.getUUID()));
 

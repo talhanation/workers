@@ -15,6 +15,7 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.network.syncher.EntityDataAccessor;
 import net.minecraft.network.syncher.EntityDataSerializers;
 import net.minecraft.network.syncher.SynchedEntityData;
+import net.minecraft.tags.BiomeTags;
 import net.minecraft.world.entity.*;
 import net.minecraft.world.entity.ai.attributes.AttributeSupplier;
 import net.minecraft.world.entity.ai.attributes.Attributes;
@@ -58,6 +59,7 @@ import static com.talhanation.workers.Translatable.TEXT_HELLO_OWNED;
 public class MerchantEntity extends AbstractWorkerEntity implements IBoatController {
     private static final EntityDataAccessor<Boolean> TRAVELING = SynchedEntityData.defineId(MerchantEntity.class, EntityDataSerializers.BOOLEAN);
     private static final EntityDataAccessor<Integer> STATE = SynchedEntityData.defineId(MerchantEntity.class, EntityDataSerializers.INT);
+    private static final EntityDataAccessor<Integer> TRAVEL_SPEED_STATE = SynchedEntityData.defineId(MerchantEntity.class, EntityDataSerializers.INT);
     private static final EntityDataAccessor<Optional<BlockPos>> CURRENT_WAYPOINT = SynchedEntityData.defineId(MerchantEntity.class, EntityDataSerializers.OPTIONAL_BLOCK_POS);
     private static final EntityDataAccessor<Integer> CURRENT_WAYPOINT_INDEX = SynchedEntityData.defineId(MerchantEntity.class, EntityDataSerializers.INT);
     private static final EntityDataAccessor<Integer> CURRENT_RETURNING_TIME = SynchedEntityData.defineId(MerchantEntity.class, EntityDataSerializers.INT);
@@ -67,6 +69,7 @@ public class MerchantEntity extends AbstractWorkerEntity implements IBoatControl
     private static final EntityDataAccessor<Boolean> IS_CREATIVE = SynchedEntityData.defineId(MerchantEntity.class, EntityDataSerializers.BOOLEAN);
     private static final EntityDataAccessor<Boolean> IS_DAY_COUNTED = SynchedEntityData.defineId(MerchantEntity.class, EntityDataSerializers.BOOLEAN);
     private static final EntityDataAccessor<Optional<UUID>> HORSE_ID = SynchedEntityData.defineId(MerchantEntity.class, EntityDataSerializers.OPTIONAL_UUID);
+    private static final EntityDataAccessor<Boolean> AUTO_START_TRAVEL = SynchedEntityData.defineId(MerchantEntity.class, EntityDataSerializers.BOOLEAN);
 
     private final SimpleContainer tradeInventory = new SimpleContainer(8);
     public boolean isTrading;
@@ -82,6 +85,7 @@ public class MerchantEntity extends AbstractWorkerEntity implements IBoatControl
         this.entityData.define(TRAVELING, false);
         this.entityData.define(RETURNING, false);
         this.entityData.define(RETURNING_TIME, 1);
+        this.entityData.define(TRAVEL_SPEED_STATE, 0);
         this.entityData.define(CURRENT_RETURNING_TIME, 0);
         this.entityData.define(CURRENT_WAYPOINT_INDEX, 0);
         this.entityData.define(STATE, 0);
@@ -90,6 +94,7 @@ public class MerchantEntity extends AbstractWorkerEntity implements IBoatControl
         this.entityData.define(HORSE_ID, Optional.empty());
         this.entityData.define(IS_CREATIVE, false);
         this.entityData.define(IS_DAY_COUNTED, false);
+        this.entityData.define(AUTO_START_TRAVEL, false);
     }
     @Override
     public boolean needsToSleep() {
@@ -324,8 +329,8 @@ public class MerchantEntity extends AbstractWorkerEntity implements IBoatControl
             nbt.putUUID("HorseUUID", this.getHorseUUID());
         }
 
-        nbt.putInt("State", this.getState());
         nbt.putBoolean("Traveling", this.getTraveling());
+        nbt.putBoolean("AutoStartTravel", this.getAutoStartTravel());
         nbt.putBoolean("Returning", this.getReturning());
         nbt.putInt("CurrentWayPointIndex", this.getCurrentWayPointIndex());
         nbt.putInt("ReturningTime", this.getReturningTime());
@@ -373,6 +378,9 @@ public class MerchantEntity extends AbstractWorkerEntity implements IBoatControl
             trades.add(compoundnbt);
         }
         nbt.put("Trades", trades);
+
+        nbt.putInt("State", this.getState());
+        nbt.putInt("TravelSpeedState", this.getTravelSpeedState());
     }
 
     public void readAdditionalSaveData(@NotNull CompoundTag nbt) {
@@ -391,6 +399,7 @@ public class MerchantEntity extends AbstractWorkerEntity implements IBoatControl
         }
 
         this.setTraveling(nbt.getBoolean("Traveling"));
+        this.setAutoStartTravel(nbt.getBoolean("AutoStartTravel"));
         this.setReturning(nbt.getBoolean("Returning"));
         this.setCurrentWayPointIndex(nbt.getInt("CurrentWayPointIndex"));
         this.setReturningTime(nbt.getInt("ReturningTime"));
@@ -437,6 +446,7 @@ public class MerchantEntity extends AbstractWorkerEntity implements IBoatControl
         }
 
         this.setState(nbt.getInt("State"));
+        this.setTravelSpeedState(nbt.getInt("TravelSpeedState"));
     }
 
     public boolean isReturnTimeElapsed(){
@@ -487,6 +497,14 @@ public class MerchantEntity extends AbstractWorkerEntity implements IBoatControl
         }
         else
             WAYPOINTS.add(pos);
+    }
+
+    public boolean getAutoStartTravel() {
+        return this.entityData.get(AUTO_START_TRAVEL);
+    }
+
+    public void setAutoStartTravel(boolean bool){
+        this.entityData.set(AUTO_START_TRAVEL, bool);
     }
 
     public SimpleContainer getTradeInventory() {
@@ -561,12 +579,20 @@ public class MerchantEntity extends AbstractWorkerEntity implements IBoatControl
         this.entityData.set(SAIL_POS, Optional.ofNullable(pos));
     }
 
-    public int getState() {
+    public int  getState() {
         return entityData.get(STATE);
     }
 
     public void setState(int x) {
         entityData.set(STATE, x);
+    }
+
+    public int  getTravelSpeedState() {
+        return entityData.get(TRAVEL_SPEED_STATE);
+    }
+
+    public void setTravelSpeedState(int x) {
+        entityData.set(TRAVEL_SPEED_STATE, x);
     }
 
     public void setTradeLimit(int index, int limit) {

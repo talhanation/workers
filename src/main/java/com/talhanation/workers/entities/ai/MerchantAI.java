@@ -73,7 +73,7 @@ public class MerchantAI extends Goal {
             case MOVE_TO_BOAT -> {
                 this.searchForBoat();
                 if(boat != null) {
-                    this.moveToPos(boat.getOnPos());
+                    this.moveToPos(boat.getOnPos(), 1F);
 
                     if (boat.getOnPos().closerThan(merchant.getOnPos(), 4F)) {
                         merchant.startRiding(boat);
@@ -121,7 +121,14 @@ public class MerchantAI extends Goal {
                 merchant.setTraveling(false);
                 merchant.setReturning(false);
 
-                this.setWorkState(IDLE);
+                if(merchant.getAutoStartTravel()){
+                    if(merchant.isReturnTimeElapsed()){
+                        merchant.setTraveling(true);
+                        this.setWorkState(IDLE);
+                    }
+                }
+                else
+                    this.setWorkState(IDLE);
             }
         }
     }
@@ -142,9 +149,15 @@ public class MerchantAI extends Goal {
             if(isSailing){
                 //BlockPos pos1 = this.getCoastPos(pos);
                 merchant.setSailPos(pos);
-
             } else {
-                moveToPos(pos);
+                float speed = 0F;
+                switch (merchant.getTravelSpeedState()){
+                    default -> speed = 0.8F;
+                    case 0 -> speed = 0.5F;
+                    case 2 -> speed = 1.1F;
+                }
+
+                moveToPos(pos, speed);
             }
 
             double distance = merchant.distanceToSqr(pos.getX(), pos.getY(), pos.getZ());
@@ -180,15 +193,17 @@ public class MerchantAI extends Goal {
         }
     }
 
-    private void moveToPos(BlockPos pos) {
+    private void moveToPos(BlockPos pos, float speed) {
         if(pos != null && !merchant.isTrading) {
             //Move to Pos -> normal movement
             if (!pos.closerThan(merchant.getOnPos(), 4F)) {
-                this.merchant.walkTowards(pos, 1F);
+
+                this.merchant.walkTowards(pos, speed);
             }
             //Near Pos -> precise movement
             if (!pos.closerThan(merchant.getOnPos(), 1F)) {
-                this.merchant.getMoveControl().setWantedPosition(pos.getX(), pos.getY(), pos.getZ(), 1F);
+                this.merchant.getMoveControl().setWantedPosition(
+                        pos.getX(), pos.getY(), pos.getZ(), speed);
             }
         }
     }
