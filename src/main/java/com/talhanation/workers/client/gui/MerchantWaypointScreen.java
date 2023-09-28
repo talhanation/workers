@@ -97,17 +97,23 @@ public class MerchantWaypointScreen extends ScreenBase<MerchantWaypointContainer
         ExtendedButton addButton =
                 addRenderableWidget(new ExtendedButton(leftPos + 186, topPos + 8, 9, 9, Component.literal("+"), button -> {
                     this.returnTime = merchant.getReturningTime();
-                    this.returnTime++;
+
+                    if(player.isShiftKeyDown()) returnTime = returnTime + 5;
+                    else returnTime++;
+
                     Main.SIMPLE_CHANNEL.sendToServer(new MessageMerchantReturnTime(this.returnTime, merchant.getUUID()));
                     this.setButtons();
                 }));
         ExtendedButton removeButton =
                 addRenderableWidget(new ExtendedButton(leftPos + 175, topPos + 8, 9, 9, Component.literal("-"), button -> {
                     this.returnTime = merchant.getReturningTime();
-                    if (this.returnTime > 0) {
-                        this.returnTime--;
-                        Main.SIMPLE_CHANNEL.sendToServer(new MessageMerchantReturnTime(this.returnTime, merchant.getUUID()));
-                    }
+
+                    if(player.isShiftKeyDown()) returnTime = returnTime - 5;
+                    else returnTime--;
+
+                    if(returnTime < 0) returnTime = 0;
+
+                    Main.SIMPLE_CHANNEL.sendToServer(new MessageMerchantReturnTime(this.returnTime, merchant.getUUID()));
                     this.setButtons();
                 }));
 

@@ -91,18 +91,23 @@ public class MerchantOwnerScreen extends ScreenBase<MerchantInventoryContainer> 
     private void createTradeLimitButtons(int x, int y, int index){
         addRenderableWidget(new ExtendedButton(x, y + 18 * index, 12, 12, Component.literal("+"), button -> {
             int limit = limits.get(index);
-             limit++;
+
+             if(player.isShiftKeyDown()) limit = limit + 5;
+             else limit++;
+
             Main.SIMPLE_CHANNEL.sendToServer(new MessageMerchantTradeLimitButton(index, limit, merchant.getUUID()));
         }));
 
         addRenderableWidget(new ExtendedButton(13 + x, y + 18 * index, 12, 12, Component.literal("-"), button -> {
             int limit = limits.get(index);
-            if(limit > -1){
-                limit--;
-                Main.SIMPLE_CHANNEL.sendToServer(new MessageMerchantTradeLimitButton(index, limit, merchant.getUUID()));
-            }
-        }));
 
+            if(player.isShiftKeyDown()) limit = limit - 5;
+            else limit--;
+
+            if(limit < -1) limit = -1;
+            
+            Main.SIMPLE_CHANNEL.sendToServer(new MessageMerchantTradeLimitButton(index, limit, merchant.getUUID()));
+        }));
         addRenderableWidget(new ExtendedButton(26 + x, y + 18 * index, 12, 12, Component.literal("0"),
             button -> {
                 Main.SIMPLE_CHANNEL.sendToServer(new MessageMerchantResetCurrentTradeCounts(merchant.getUUID()));

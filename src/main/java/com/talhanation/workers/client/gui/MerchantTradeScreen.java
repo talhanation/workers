@@ -4,9 +4,8 @@ import com.mojang.blaze3d.vertex.PoseStack;
 import com.talhanation.workers.Main;
 import com.talhanation.workers.entities.MerchantEntity;
 import com.talhanation.workers.inventory.MerchantTradeContainer;
-import com.talhanation.workers.network.MessageTradeButton;
+import com.talhanation.workers.network.MessageMerchantTradeButton;
 import de.maxhenkel.corelib.inventory.ScreenBase;
-import net.minecraft.client.gui.components.Button;
 import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.network.chat.Component;
@@ -39,22 +38,22 @@ public class MerchantTradeScreen extends ScreenBase<MerchantTradeContainer> {
 
         addRenderableWidget(new ExtendedButton(leftPos + 110, topPos + 20 + 18 * 0, 48, 12, TRADE_TEXT, button -> {
             Main.SIMPLE_CHANNEL
-                    .sendToServer(new MessageTradeButton(merchant.getUUID(), playerInventory.player.getUUID(), 0));
+                    .sendToServer(new MessageMerchantTradeButton(merchant.getUUID(), playerInventory.player.getUUID(), 0));
         }));
 
         addRenderableWidget(new ExtendedButton(leftPos + 110, topPos + 20 + 18 * 1, 48, 12, TRADE_TEXT, button -> {
             Main.SIMPLE_CHANNEL
-                    .sendToServer(new MessageTradeButton(merchant.getUUID(), playerInventory.player.getUUID(), 1));
+                    .sendToServer(new MessageMerchantTradeButton(merchant.getUUID(), playerInventory.player.getUUID(), 1));
         }));
 
         addRenderableWidget(new ExtendedButton(leftPos + 110, topPos + 20 + 18 * 2, 48, 12, TRADE_TEXT, button -> {
             Main.SIMPLE_CHANNEL
-                    .sendToServer(new MessageTradeButton(merchant.getUUID(), playerInventory.player.getUUID(), 2));
+                    .sendToServer(new MessageMerchantTradeButton(merchant.getUUID(), playerInventory.player.getUUID(), 2));
         }));
 
         addRenderableWidget(new ExtendedButton(leftPos + 110, topPos + 20 + 18 * 3, 48, 12, TRADE_TEXT, button -> {
             Main.SIMPLE_CHANNEL
-                    .sendToServer(new MessageTradeButton(merchant.getUUID(), playerInventory.player.getUUID(), 3));
+                    .sendToServer(new MessageMerchantTradeButton(merchant.getUUID(), playerInventory.player.getUUID(), 3));
         }));
     }
 
