@@ -152,6 +152,7 @@ public class FishermanAI extends Goal {
                     break;
                 }
                 double distance = fisherman.distanceToSqr(fishingPos.getX(), fisherman.getY(), fishingPos.getZ());
+                if(distance < 50F) { //valid value example: distance = 3.2
                     this.setWorkState(FISHING);
                 }
                 else if(++timer > 200){

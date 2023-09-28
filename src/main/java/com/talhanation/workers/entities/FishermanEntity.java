@@ -217,6 +217,14 @@ public class FishermanEntity extends AbstractWorkerEntity implements IBoatContro
         this.entityData.set(SAIL_POS, Optional.ofNullable(pos));
     }
 
+    public float getPrecisionMin(){
+        return 20;
+    }
+
+    public float getPrecisionMax(){
+        return 20;
+    }
+
     public enum State{
         IDLE(0),
         CALC_COAST(1),

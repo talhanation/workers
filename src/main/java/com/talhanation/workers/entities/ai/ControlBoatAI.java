@@ -5,18 +5,14 @@ import com.talhanation.workers.entities.AbstractWorkerEntity;
 import com.talhanation.workers.entities.IBoatController;
 import com.talhanation.workers.entities.ai.navigation.SailorPathNavigation;
 import net.minecraft.core.BlockPos;
+import net.minecraft.tags.BiomeTags;
 import net.minecraft.util.Mth;
-import net.minecraft.world.entity.ai.control.MoveControl;
 import net.minecraft.world.entity.ai.goal.Goal;
 import net.minecraft.world.entity.vehicle.Boat;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.state.BlockState;
-import net.minecraft.world.level.pathfinder.BlockPathTypes;
 import net.minecraft.world.level.pathfinder.Node;
 import net.minecraft.world.level.pathfinder.Path;
-import net.minecraft.world.phys.Vec3;
-
-import java.util.Optional;
 
 import static com.talhanation.workers.entities.ai.ControlBoatAI.State.*;
 
@@ -29,7 +25,7 @@ public class ControlBoatAI extends Goal {
     private Node node;
     private int timer;
     private float precision;
-    private final boolean DEBUG = false;
+    private final boolean DEBUG = true;
 
     public ControlBoatAI(IBoatController sailor) {
         this.worker = sailor.getWorker();
@@ -113,15 +109,15 @@ public class ControlBoatAI extends Goal {
 
 
                     if ((distance > 5F)) {
-                        updateBoatControl(node.x, node.z, speedFactor, turnFactor);
+                        sailor.updateBoatControl(node.x, node.z, speedFactor, turnFactor);
                     }
 
                     if(distance <= precision){// default = 4.5F
                         path.advance();
                         if(!isFreeWater(node)){
-                            precision = 50F;
+                            precision = sailor.getPrecisionMin();
                         }
-                        else precision = 150F;
+                        else precision = sailor.getPrecisionMax();
 
                         this.timer = 0;
                         if (path.getNodeCount() == path.getNextNodeIndex() - 1) {
@@ -199,41 +195,6 @@ public class ControlBoatAI extends Goal {
                 stateSouthWest.is(Blocks.WATER));
     }
 */
-    private void updateBoatControl(double posX, double posZ, double speedFactor, double turnFactor) {
-        if(this.worker.getVehicle() instanceof Boat boat && boat.getPassengers().get(0).equals(this.worker)) {
-            double dx = posX - this.worker.getX();
-            double dz = posZ - this.worker.getZ();
-
-            float angle = Mth.wrapDegrees((float) (Mth.atan2(dz, dx) * 180.0D / 3.14D) - 90.0F);
-            float drot = angle - Mth.wrapDegrees(boat.getYRot());
-
-            boolean inputLeft = (drot < 0.0F && Math.abs(drot) >= 2.5F);
-            boolean inputRight = (drot > 0.0F && Math.abs(drot) >= 2.5F);
-            boolean inputUp = (Math.abs(drot) < 25.0F);
-
-            float f = 0.0F;
-
-            if (inputLeft) {
-                boat.setYRot((float) (boat.getYRot() - 2.5F));
-            }
-
-            if (inputRight) {
-                boat.setYRot((float) (boat.getYRot() + 2.5F));
-            }
-
-
-            if (inputRight != inputLeft && !inputUp) {
-                f += 0.005F * speedFactor;
-            }
-
-            if (inputUp) {
-                f += 0.02F * speedFactor;
-            }
-
-            boat.setDeltaMovement(boat.getDeltaMovement().add((double)(Mth.sin(-boat.getYRot() * ((float)Math.PI / 180F)) * f), 0.0D, (double)(Mth.cos(boat.getYRot() * ((float)Math.PI / 180F)) * f)));
-            boat.setPaddleState(inputRight || inputUp, inputLeft || inputUp);
-        }
-    }
 
     enum State{
         IDLE,
