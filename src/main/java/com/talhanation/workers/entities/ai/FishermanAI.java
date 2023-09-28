@@ -1,5 +1,6 @@
 package com.talhanation.workers.entities.ai;
 
+import com.talhanation.workers.Main;
 import com.talhanation.workers.Translatable;
 import com.talhanation.workers.entities.FishermanEntity;
 import net.minecraft.core.BlockPos;
@@ -18,6 +19,7 @@ import net.minecraft.world.level.storage.loot.LootContext;
 import net.minecraft.world.level.storage.loot.LootTable;
 import net.minecraft.world.level.storage.loot.parameters.LootContextParamSets;
 import net.minecraft.world.level.storage.loot.parameters.LootContextParams;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
@@ -189,8 +191,21 @@ public class FishermanAI extends Goal {
                     if (boat != null && boat.getFirstPassenger() != null && this.fisherman.equals(boat.getFirstPassenger())) {
                         this.fisherman.setSailPos(coastPos);
                     } else{
-                        this.moveToPos(coastPos);
-                        fisherman.stopRiding();
+                        if(fisherman.needsToSleep()){
+                            setWorkState(SLEEP);
+                        }
+
+                        else if(fisherman.needsToDeposit()){
+                            setWorkState(DEPOSIT);
+                        }
+
+                        else if(fisherman.needsToGetFood()){
+                            setWorkState(UPKEEP);
+                        }
+                        else {
+                            this.moveToPos(coastPos);
+                            fisherman.stopRiding();
+                        }
                     }
 
                     double distance = fisherman.distanceToSqr(coastPos.getX(), coastPos.getY(), coastPos.getZ());
@@ -210,11 +225,15 @@ public class FishermanAI extends Goal {
 
             case STOP -> {
                 fisherman.stopRiding();
-                if(fisherman.needsToDeposit()){
+                if(fisherman.needsToSleep()){
+                    setWorkState(SLEEP);
+                }
+
+                else if(fisherman.needsToDeposit()){
                     setWorkState(DEPOSIT);
                 }
 
-                if(fisherman.needsToGetFood()){
+                else if(fisherman.needsToGetFood()){
                     setWorkState(UPKEEP);
                 }
                 else{
@@ -239,6 +258,14 @@ public class FishermanAI extends Goal {
                 //Separate AI doing stuff
                 fisherman.stopRiding();
                 if(!fisherman.needsToGetFood()){
+                    setWorkState(STOP);
+                }
+            }
+
+            case SLEEP -> {
+                //Separate AI doing stuff
+                fisherman.stopRiding();
+                if(!fisherman.needsToSleep()){
                     setWorkState(STOP);
                 }
             }
@@ -360,7 +387,6 @@ public class FishermanAI extends Goal {
         return fishingSpot;
     }
 
-     */
 
     public void spawnFishingLoot() {
         int depth;

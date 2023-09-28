@@ -6,6 +6,9 @@ import com.talhanation.workers.inventory.WorkerInventoryContainer;
 import com.talhanation.workers.entities.ai.*;
 import com.talhanation.workers.network.MessageOpenGuiWorker;
 import net.minecraft.network.chat.MutableComponent;
+import net.minecraft.network.syncher.EntityDataAccessor;
+import net.minecraft.network.syncher.EntityDataSerializers;
+import net.minecraft.network.syncher.SynchedEntityData;
 import net.minecraft.world.entity.*;
 import net.minecraft.world.item.AxeItem;
 import net.minecraft.world.level.block.Block;
@@ -31,6 +34,7 @@ import net.minecraft.server.level.ServerLevel;
 import net.minecraftforge.network.NetworkHooks;
 
 import javax.annotation.Nullable;
+import java.util.Optional;
 import java.util.function.Predicate;
 
 import net.minecraft.world.entity.AgeableMob;
@@ -47,6 +51,8 @@ public class LumberjackEntity extends AbstractWorkerEntity {
 
     public final Predicate<ItemEntity> ALLOWED_ITEMS = (
             item) -> (!item.hasPickUpDelay() && item.isAlive() && this.wantsToPickUp(item.getItem()));
+
+    private static final EntityDataAccessor<Integer> STATE = SynchedEntityData.defineId(LumberjackEntity.class, EntityDataSerializers.INT);
 
     public LumberjackEntity(EntityType<? extends AbstractWorkerEntity> entityType, Level world) {
         super(entityType, world);
@@ -84,8 +90,22 @@ public class LumberjackEntity extends AbstractWorkerEntity {
         this.goalSelector.addGoal(3, new LumberjackAI(this));
         this.goalSelector.addGoal(1, new PanicGoal(this, 1.3D));
     }
-   
 
+    protected void defineSynchedData() {
+        super.defineSynchedData();
+        this.entityData.define(STATE, 0);
+    }
+
+    public void addAdditionalSaveData(@NotNull CompoundTag nbt) {
+        super.addAdditionalSaveData(nbt);
+        nbt.putInt("State", this.getState());
+    }
+
+    //Boat
+    public void readAdditionalSaveData(@NotNull CompoundTag nbt) {
+        super.readAdditionalSaveData(nbt);
+        this.setState(nbt.getInt("State"));
+    }
 
     @Override
     public AgeableMob getBreedOffspring(@NotNull ServerLevel p_241840_1_, @NotNull AgeableMob p_241840_2_) {
@@ -138,6 +158,14 @@ public class LumberjackEntity extends AbstractWorkerEntity {
         return super.wantsToKeep(itemStack) || itemStack.is(ItemTags.SAPLINGS);
     }
 
+    public void setState(int state) {
+        this.entityData.set(STATE, state);
+    }
+
+    public int getState() {
+        return this.entityData.get(STATE);
+    }
+
 
     public boolean wantsToBreak(Block block) {
         //TODO: Maybe actually find a structure that is a tree?
@@ -169,6 +197,38 @@ public class LumberjackEntity extends AbstractWorkerEntity {
             }, packetBuffer -> packetBuffer.writeUUID(getUUID()));
         } else {
             Main.SIMPLE_CHANNEL.sendToServer(new MessageOpenGuiWorker(player, this.getUUID()));
+        }
+    }
+
+    public enum State{
+        IDLE(0),
+        CALC_WORK_POS(1),
+        WORKING(2),
+        STOPPING(3),
+        DEPOSIT(7),
+        UPKEEP(8),
+
+        SLEEP(9),
+        STOP(10);
+
+
+
+        private final int index;
+        State(int index){
+            this.index = index;
+        }
+
+        public int getIndex(){
+            return this.index;
+        }
+
+        public static State fromIndex(int index) {
+            for (State state : State.values()) {
+                if (state.getIndex() == index) {
+                    return state;
+                }
+            }
+            return IDLE;
         }
     }
 }

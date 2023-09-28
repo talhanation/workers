@@ -1,11 +1,11 @@
 package com.talhanation.workers.entities.ai;
 
+import com.talhanation.workers.Main;
 import com.talhanation.workers.entities.LumberjackEntity;
 import net.minecraft.tags.BlockTags;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.block.Blocks;
-import net.minecraft.world.level.block.LeavesBlock;
 import net.minecraft.world.entity.ai.goal.Goal;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.SimpleContainer;
@@ -16,12 +16,18 @@ import net.minecraft.sounds.SoundEvents;
 import net.minecraft.world.phys.AABB;
 import net.minecraft.core.BlockPos;
 import net.minecraftforge.event.ForgeEventFactory;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.EnumSet;
+
+import static com.talhanation.workers.entities.FishermanEntity.State.MOVING_COAST;
+import static com.talhanation.workers.entities.FishermanEntity.State.STOPPING;
+import static com.talhanation.workers.entities.LumberjackEntity.State.*;
 
 public class LumberjackAI extends Goal {
     private final LumberjackEntity lumber;
     private BlockPos workPos;
+    private LumberjackEntity.State state;
 
     public LumberjackAI(LumberjackEntity lumber) {
         this.lumber = lumber;
@@ -30,7 +36,7 @@ public class LumberjackAI extends Goal {
 
     public boolean canUse() {
         // Start AI if there are trees near the work place.
-        return lumber.canWork();//TODO: Better solution for getWoodPos because performance
+        return lumber.isTame() && lumber.getStartPos() != null;
     }
 
     public boolean canContinueToUse() {
@@ -42,48 +48,131 @@ public class LumberjackAI extends Goal {
         super.start();
         this.workPos = this.lumber.getStartPos();
         this.lumber.resetWorkerParameters();
+        this.state = LumberjackEntity.State.fromIndex(lumber.getState());
     }
 
     public void tick() {
         this.breakLeaves();
         //TODO: Add memories of initial saplings/trees around the work position.
         //TODO: Replant if the blocks are AIR.
-
+        Main.LOGGER.info("LumberState: " +state);
         // Go back to assigned work position.
+        switch (state){
+            case IDLE -> {
+                if(lumber.getStartPos() != null && lumber.canWork()){
+                    setWorkState(CALC_WORK_POS);
+                }
+            }
 
-        if (workPos != null){
-            //Move to minePos -> normal movement
-            if(!workPos.closerThan(lumber.getOnPos(), 12)){
-                this.lumber.walkTowards(workPos, 1F);
+            case CALC_WORK_POS ->  {
+                if(!lumber.canWork()) this.setWorkState(STOP);
+                if(lumber.getVehicle() != null) lumber.stopRiding();
+
+                workPos = lumber.getStartPos();
+                if (workPos != null){
+                    setWorkState(WORKING);
+                }
+                else setWorkState(STOP);;
+
             }
-            //Near Mine Pos -> presice movement
-            if (!workPos.closerThan(lumber.getOnPos(), 3.5F)) {
-                this.lumber.getMoveControl().setWantedPosition(workPos.getX(), lumber.getStartPos().getY(), workPos.getZ(), 1);
+
+            case WORKING -> {
+                if(!lumber.canWork()) this.setWorkState(STOP);
+                if(lumber.getVehicle() != null) lumber.stopRiding();
+
+                if (workPos != null){
+                    //Move to minePos -> normal movement
+                    if(!workPos.closerThan(lumber.getOnPos(), 12)){
+                        this.lumber.walkTowards(workPos, 1F);
+                    }
+                    //Near Mine Pos -> presice movement
+                    if (!workPos.closerThan(lumber.getOnPos(), 3.5F)) {
+                        this.lumber.getMoveControl().setWantedPosition(workPos.getX(), lumber.getStartPos().getY(), workPos.getZ(), 1);
+                    }
+                    else
+                        lumber.getNavigation().stop();
+                }
+                else setWorkState(CALC_WORK_POS);
+                // If near wood position, start chopping.
+                BlockPos chopPos = getWoodPos();
+                if (chopPos == null) return;
+
+                BlockPos lumberPos = lumber.blockPosition();
+                //this.lumber.walkTowards(chopPos, 1);
+                this.lumber.getMoveControl().setWantedPosition(chopPos.getX(), chopPos.getY(), chopPos.getZ(), 1);
+                boolean standingBelowChopPos = (
+                        lumberPos.getX() == chopPos.getX() &&
+                                lumberPos.getZ() == chopPos.getZ() &&
+                                lumberPos.getY() < chopPos.getY());
+
+                if (chopPos.closerThan(lumber.blockPosition(), 9) || standingBelowChopPos) {
+                    if (this.mineBlock(chopPos))
+                        this.lumber.increaseFarmedItems();
+
+                    if (lumber.level.getBlockState(chopPos.below()).is(Blocks.DIRT) && this.lumber.level.isEmptyBlock(chopPos)) {
+                        plantSaplingFromInv(chopPos);
+                    }
+                }
             }
-            else
-                lumber.getNavigation().stop();
+
+            case STOP -> {
+                lumber.stopRiding();
+                if(lumber.needsToSleep()){
+                    setWorkState(SLEEP);
+                }
+
+                else if(lumber.needsToDeposit()){
+                    setWorkState(DEPOSIT);
+                }
+
+                else if(lumber.needsToGetFood()){
+                    setWorkState(UPKEEP);
+                }
+                else{
+                    this.lumber.walkTowards(workPos, 1);
+
+                    double distance = lumber.distanceToSqr(lumber.getX(), lumber.getY(), lumber.getZ());
+                    if(distance < 5.5F) { //valid value example: distance = 3.2
+                        stop();
+                    }
+                }
+            }
+
+            case DEPOSIT -> {
+                //Separate AI doing stuff
+                lumber.stopRiding();
+                if(!lumber.needsToDeposit()){
+                    setWorkState(IDLE);
+                }
+            }
+
+            case UPKEEP -> {
+                //Separate AI doing stuff
+                lumber.stopRiding();
+                if(!lumber.needsToGetFood()){
+                    setWorkState(IDLE);
+                }
+            }
+
+            case SLEEP -> {
+                //Separate AI doing stuff
+                lumber.stopRiding();
+                if(!lumber.needsToSleep()){
+                    setWorkState(IDLE);
+                }
+            }
         }
+    }
 
-        // If near wood position, start chopping.
-        BlockPos chopPos = getWoodPos();
-        if (chopPos == null) return;
+    @Override
+    public void stop() {
+        this.setWorkState(IDLE);
+        super.stop();
+    }
 
-        BlockPos lumberPos = lumber.blockPosition();
-        //this.lumber.walkTowards(chopPos, 1);
-        this.lumber.getMoveControl().setWantedPosition(chopPos.getX(), chopPos.getY(), chopPos.getZ(), 1);
-        boolean standingBelowChopPos = (
-            lumberPos.getX() == chopPos.getX() &&
-            lumberPos.getZ() == chopPos.getZ() && 
-            lumberPos.getY() < chopPos.getY());
-
-        if (chopPos.closerThan(lumber.blockPosition(), 9) || standingBelowChopPos) {
-            if (this.mineBlock(chopPos))
-                this.lumber.increaseFarmedItems();
-
-            if (lumber.level.getBlockState(chopPos.below()).is(Blocks.DIRT) && this.lumber.level.isEmptyBlock(chopPos)) {
-                plantSaplingFromInv(chopPos);
-            }
-        }
+    private void setWorkState(LumberjackEntity.@NotNull State state) {
+        this.state = state;
+        this.lumber.setState(state.getIndex());
     }
 
     @SuppressWarnings("deprecation")
@@ -121,7 +210,7 @@ public class LumberjackAI extends Goal {
         for (int j = 0; j < range; j++) {
             for (int i = 0; i < range; i++) {
                 for(int k = 0; k < range * 2; k++){
-                    BlockPos blockPos = this.lumber.getStartPos().offset(j - range / 2F, k, i - range / 2F);
+                    BlockPos blockPos = workPos.offset(j - range / 2F, k, i - range / 2F);
 
                     BlockState blockState = this.lumber.level.getBlockState(blockPos);
                     if (this.lumber.wantsToBreak(blockState.getBlock())) {
