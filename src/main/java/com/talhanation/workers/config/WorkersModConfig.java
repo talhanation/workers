@@ -13,7 +13,7 @@ public class WorkersModConfig {
     private static final ForgeConfigSpec.Builder BUILDER = new ForgeConfigSpec.Builder();
     public static ForgeConfigSpec CONFIG;
     public static ForgeConfigSpec.IntValue VERSION;
-    public static final int NEW_VERSION = 5;
+    public static final int NEW_VERSION = 6;
 
     public static ForgeConfigSpec.BooleanValue WorkerChunkLoading;
     public static ForgeConfigSpec.BooleanValue PlayVillagerAmbientSound;
