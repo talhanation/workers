@@ -14,6 +14,6 @@ public class WorkerRandomLookAroundGoal extends RandomLookAroundGoal {
 
     @Override
     public boolean canUse() {
-        return !worker.getIsWorking() && super.canUse();
+        return !worker.getIsWorking() && !worker.isSleeping() && super.canUse();
     }
 }

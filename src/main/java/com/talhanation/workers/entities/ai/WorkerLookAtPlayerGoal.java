@@ -13,6 +13,6 @@ public class WorkerLookAtPlayerGoal extends LookAtPlayerGoal {
 
     @Override
     public boolean canUse() {
-        return !worker.getIsWorking() && super.canUse();
+        return !worker.getIsWorking() && !worker.isSleeping() && super.canUse();
     }
 }
