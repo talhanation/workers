@@ -238,7 +238,7 @@ public class CommandEvents {
         boolean merchantHasItems = merchantTradeItem >= tradeCount;
         boolean playerCanPay = playerEmeralds >= sollPrice;
         boolean canAddItemToInv = merchantInv.canAddItem(emeraldItemStack);
-        boolean merchantWantsTrade = merchant.getTradeLimit(tradeID) != -1 && merchant.getCurrentTrades(tradeID) < merchant.getTradeLimit(tradeID);
+        boolean merchantWantsTrade = merchant.getTradeLimit(tradeID) == -1 ||  merchant.getCurrentTrades(tradeID) < merchant.getTradeLimit(tradeID);
 
         if(merchantWantsTrade){
             if (canAddItemToInv && merchantHasItems && playerCanPay) {
@@ -432,7 +432,7 @@ public class CommandEvents {
          }
 
          boolean playerCanPay = playerEmeralds >= sollPrice;
-         boolean merchantWantsTrade = merchant.getTradeLimit(tradeID) != -1 && merchant.getCurrentTrades(tradeID) < merchant.getTradeLimit(tradeID);
+         boolean merchantWantsTrade = merchant.getTradeLimit(tradeID) == -1 || merchant.getCurrentTrades(tradeID) < merchant.getTradeLimit(tradeID);
 
          if(merchantWantsTrade) {
              if (playerCanPay) {

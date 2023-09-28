@@ -11,17 +11,17 @@ import java.util.List;
 import java.util.Objects;
 import java.util.UUID;
 
-public class MessageTradeButton implements Message<MessageTradeButton> {
+public class MessageMerchantTradeButton implements Message<MessageMerchantTradeButton> {
 
     private UUID uuid;
     private UUID merchant;
     private int trade;
 
-    public MessageTradeButton() {
+    public MessageMerchantTradeButton() {
         this.uuid = new UUID(0, 0);
     }
 
-    public MessageTradeButton(UUID merchant, UUID player, int trade) {
+    public MessageMerchantTradeButton(UUID merchant, UUID player, int trade) {
         this.trade = trade;
         this.uuid = player;
         this.merchant = merchant;
@@ -47,7 +47,7 @@ public class MessageTradeButton implements Message<MessageTradeButton> {
     }
 
     @Override
-    public MessageTradeButton fromBytes(FriendlyByteBuf buf) {
+    public MessageMerchantTradeButton fromBytes(FriendlyByteBuf buf) {
         this.trade = buf.readInt();
         this.uuid = buf.readUUID();
         this.merchant = buf.readUUID();
