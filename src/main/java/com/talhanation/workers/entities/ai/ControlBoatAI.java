@@ -42,7 +42,7 @@ public class ControlBoatAI extends Goal {
     }
 
     public boolean isInterruptable() {
-        return true;
+        return false;
     }
 
     public void start(){

@@ -3,6 +3,7 @@ package com.talhanation.workers;
 import com.talhanation.workers.config.WorkersModConfig;
 import com.talhanation.workers.network.*;
 import net.minecraftforge.fml.DistExecutor;
+import net.minecraftforge.fml.ModList;
 import net.minecraftforge.fml.ModLoadingContext;
 import net.minecraftforge.fml.config.ModConfig;
 import net.minecraftforge.fml.loading.FMLPaths;
@@ -35,6 +36,7 @@ public class Main {
     public static final String MOD_ID = "workers";
     public static final Logger LOGGER = LogManager.getLogger(MOD_ID);
     public static SimpleChannel SIMPLE_CHANNEL;
+    public static boolean isSmallShipsInstalled;
 
     public Main() {
         ModLoadingContext.get().registerConfig(ModConfig.Type.COMMON, WorkersModConfig.CONFIG);
@@ -99,6 +101,8 @@ public class Main {
         };
         for (int i = 0; i < messages.length; i++) CommonRegistry.registerMessage(SIMPLE_CHANNEL, i, messages[i]);
         LOGGER.info("Messages registered");
+
+        isSmallShipsInstalled = ModList.get().isLoaded("smallships");//Smallships mod
     }
 
     @SubscribeEvent
