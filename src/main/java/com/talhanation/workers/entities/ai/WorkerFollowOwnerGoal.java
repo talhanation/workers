@@ -1,7 +1,10 @@
 package com.talhanation.workers.entities.ai;
 
 import com.talhanation.workers.entities.AbstractWorkerEntity;
+import com.talhanation.workers.entities.IBoatController;
+import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.ai.goal.Goal;
+import net.minecraft.world.entity.vehicle.Boat;
 
 public class WorkerFollowOwnerGoal extends Goal {
     private final AbstractWorkerEntity worker;
@@ -28,10 +31,17 @@ public class WorkerFollowOwnerGoal extends Goal {
     }
 
     public void tick() {
-        if (this.worker.getOwner() != null){
-            if(worker.getOwner().distanceToSqr(worker) > within) {
-                this.worker.getLookControl().setLookAt(worker.getOwner());
-                this.worker.getNavigation().moveTo(worker.getOwner().getX(), worker.getOwner().getY(), worker.getOwner().getZ(), this.speedModifier);
+        LivingEntity owner =this.worker.getOwner();
+        if (owner != null){
+            if(owner.distanceToSqr(worker) > within) {
+                if(worker instanceof IBoatController sailor && worker.getVehicle() instanceof Boat){
+                    sailor.setSailPos(owner.getOnPos());
+                }
+                else {
+
+                    this.worker.getNavigation().moveTo(owner.getX(), owner.getY(), owner.getZ(), this.speedModifier);
+                }
+                this.worker.getLookControl().setLookAt(owner);
             }
         }
     }
