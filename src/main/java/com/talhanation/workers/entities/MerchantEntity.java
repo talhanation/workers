@@ -362,7 +362,7 @@ public class MerchantEntity extends AbstractWorkerEntity implements IBoatControl
             CompoundTag compoundnbt = new CompoundTag();
             compoundnbt.putByte("WaypointItem", (byte) i);
             ItemStack item = WAYPOINT_ITEMS.get(i);
-            compoundnbt.put("ItemTag", item.getTag());
+            compoundnbt.put("ItemTag", item.getOrCreateTag());
 
             waypointItems.add(compoundnbt);
         }
