@@ -44,10 +44,9 @@ public class MessageMerchantRemoveWayPoint implements Message<MessageMerchantRem
         //merchant.tellPlayer(player, Component.literal("Pos: " + pos + " was removed."));
 
         merchant.WAYPOINTS.remove(merchant.WAYPOINTS.size() - 1);
+        merchant.WAYPOINT_ITEMS.remove(merchant.WAYPOINT_ITEMS.size() - 1);
         Main.SIMPLE_CHANNEL.send(PacketDistributor.PLAYER.with(() -> (ServerPlayer) player), new MessageToClientUpdateMerchantScreen(merchant.WAYPOINTS, merchant.WAYPOINT_ITEMS, merchant.getCurrentTrades(), merchant.getTradeLimits(), merchant.getTraveling(), merchant.getReturning()));
     }
-
-
 
     public MessageMerchantRemoveWayPoint fromBytes(FriendlyByteBuf buf) {
         this.worker = buf.readUUID();
