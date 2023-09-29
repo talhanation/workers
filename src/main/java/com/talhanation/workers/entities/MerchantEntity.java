@@ -27,6 +27,7 @@ import net.minecraft.world.SimpleContainer;
 import net.minecraft.world.Containers;
 import net.minecraft.world.inventory.AbstractContainerMenu;
 import net.minecraft.world.MenuProvider;
+import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
 import net.minecraft.nbt.CompoundTag;
@@ -76,6 +77,7 @@ public class MerchantEntity extends AbstractWorkerEntity implements IBoatControl
     private List<Integer> TRADE_LIMITS = new ArrayList<>();
     private List<Integer> CURRENT_TRADES = new ArrayList<>();
     public List<BlockPos> WAYPOINTS = new ArrayList<>();
+    public List<ItemStack> WAYPOINT_ITEMS = new ArrayList<>();
     public MerchantEntity(EntityType<? extends AbstractWorkerEntity> entityType, Level world) {
         super(entityType, world);
     }
@@ -217,7 +219,7 @@ public class MerchantEntity extends AbstractWorkerEntity implements IBoatControl
         }
 
         if (player instanceof ServerPlayer) {
-            Main.SIMPLE_CHANNEL.send(PacketDistributor.PLAYER.with(() -> (ServerPlayer) player), new MessageToClientUpdateMerchantScreen(this.WAYPOINTS, getCurrentTrades(), getTradeLimits(), this.getTraveling(), this.getReturning()));
+            Main.SIMPLE_CHANNEL.send(PacketDistributor.PLAYER.with(() -> (ServerPlayer) player), new MessageToClientUpdateMerchantScreen(this.WAYPOINTS, this.WAYPOINT_ITEMS, getCurrentTrades(), getTradeLimits(), this.getTraveling(), this.getReturning()));
         }
     }
 
@@ -242,7 +244,7 @@ public class MerchantEntity extends AbstractWorkerEntity implements IBoatControl
         }
 
         if (player instanceof ServerPlayer) {
-            Main.SIMPLE_CHANNEL.send(PacketDistributor.PLAYER.with(() -> (ServerPlayer) player), new MessageToClientUpdateMerchantScreen(this.WAYPOINTS, getCurrentTrades(), getTradeLimits(), this.getTraveling(), this.getReturning()));
+            Main.SIMPLE_CHANNEL.send(PacketDistributor.PLAYER.with(() -> (ServerPlayer) player), new MessageToClientUpdateMerchantScreen(this.WAYPOINTS, this.WAYPOINT_ITEMS, getCurrentTrades(), getTradeLimits(), this.getTraveling(), this.getReturning()));
         }
     }
 
@@ -355,6 +357,17 @@ public class MerchantEntity extends AbstractWorkerEntity implements IBoatControl
         }
         nbt.put("Waypoints", waypoints);
 
+        ListTag waypointItems = new ListTag();
+        for(int i = 0; i < WAYPOINT_ITEMS.size(); i++) {
+            CompoundTag compoundnbt = new CompoundTag();
+            compoundnbt.putByte("WaypointItem", (byte) i);
+            ItemStack item = WAYPOINT_ITEMS.get(i);
+            compoundnbt.put("ItemTag", item.getTag());
+
+            waypointItems.add(compoundnbt);
+        }
+        nbt.put("WaypointItems", waypointItems);
+
 
         ListTag limits = new ListTag();
         for(int i = 0; i < 4; i++) {
@@ -422,7 +435,15 @@ public class MerchantEntity extends AbstractWorkerEntity implements IBoatControl
             this.WAYPOINTS.add(pos);
         }
 
+        ListTag waypointItems = nbt.getList("WaypointItems", 10);
+        if(!waypointItems.isEmpty()){
+            for (int i = 0; i < WAYPOINT_ITEMS.size(); ++i) {
+                CompoundTag compoundnbt = waypointItems.getCompound(i);
+                ItemStack item = ItemStack.of(compoundnbt) ;
 
+                this.WAYPOINT_ITEMS.set(i, item);
+            }
+        }
 
         ListTag limits = nbt.getList("TradeLimits", 10);
         if(!limits.isEmpty()){
@@ -481,6 +502,12 @@ public class MerchantEntity extends AbstractWorkerEntity implements IBoatControl
     }
     @Override
     public void setStartPos(BlockPos pos) {
+        BlockState state = this.level.getBlockState(pos);
+        ItemStack itemStack;
+        if (state.is(Blocks.WATER)) itemStack = new ItemStack(Items.OAK_BOAT);
+        else if (state.is(Blocks.AIR) || state.is(Blocks.CAVE_AIR)) itemStack = new ItemStack(Items.GRASS_BLOCK);
+        else itemStack = new ItemStack(state.getBlock().asItem());
+
         if(!WAYPOINTS.isEmpty()){
             BlockPos prevPos = this.WAYPOINTS.get(WAYPOINTS.size() -1);
             double distance = pos.distSqr(prevPos);
@@ -492,11 +519,16 @@ public class MerchantEntity extends AbstractWorkerEntity implements IBoatControl
             if(notNearFromCoastToWater || notNearInRiverWater || notNearFromWaterToCoast){
                 if(this.getOwner() != null) this.tellPlayer(this.getOwner(), Translatable.TEXT_WAYPOINT_NOT_NEAR_TO_PREV);
             }
-            else
+            else{
+                WAYPOINT_ITEMS.add(itemStack);
                 WAYPOINTS.add(pos);
+            }
         }
-        else
+        else{
+            WAYPOINT_ITEMS.add(itemStack);
             WAYPOINTS.add(pos);
+        }
+
     }
 
     public boolean getAutoStartTravel() {

@@ -38,7 +38,7 @@ public class MessageMerchantTradeLimitButton implements Message<MessageMerchantT
 
             if (merchant.getUUID().equals(this.uuid)) {
                 merchant.setTradeLimit(this.index, this.limit);
-                Main.SIMPLE_CHANNEL.send(PacketDistributor.PLAYER.with(context::getSender), new MessageToClientUpdateMerchantScreen(merchant.WAYPOINTS, merchant.getCurrentTrades(), merchant.getTradeLimits(), merchant.getTraveling(), merchant.getReturning()));
+                Main.SIMPLE_CHANNEL.send(PacketDistributor.PLAYER.with(context::getSender), new MessageToClientUpdateMerchantScreen(merchant.WAYPOINTS, merchant.WAYPOINT_ITEMS, merchant.getCurrentTrades(), merchant.getTradeLimits(), merchant.getTraveling(), merchant.getReturning()));
             }
         }
 

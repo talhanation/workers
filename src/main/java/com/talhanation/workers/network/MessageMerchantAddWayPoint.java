@@ -47,7 +47,7 @@ public class MessageMerchantAddWayPoint implements Message<MessageMerchantAddWay
 
         merchant.setStartPos(pos); // adds waypoint without starting work
 
-        Main.SIMPLE_CHANNEL.send(PacketDistributor.PLAYER.with(() -> (ServerPlayer) player), new MessageToClientUpdateMerchantScreen(merchant.WAYPOINTS, merchant.getCurrentTrades(), merchant.getTradeLimits(), merchant.getTraveling(), merchant.getReturning()));
+        Main.SIMPLE_CHANNEL.send(PacketDistributor.PLAYER.with(() -> (ServerPlayer) player), new MessageToClientUpdateMerchantScreen(merchant.WAYPOINTS, merchant.WAYPOINT_ITEMS, merchant.getCurrentTrades(), merchant.getTradeLimits(), merchant.getTraveling(), merchant.getReturning()));
     }
 
     public MessageMerchantAddWayPoint fromBytes(FriendlyByteBuf buf) {

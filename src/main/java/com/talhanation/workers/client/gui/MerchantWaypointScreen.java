@@ -31,6 +31,7 @@ public class MerchantWaypointScreen extends ScreenBase<MerchantWaypointContainer
     private int topPos;
     private int page = 1;
     public static List<BlockPos> waypoints;
+    public static List<ItemStack> waypointItems;
     private final MerchantEntity merchant;
     private final Player player;
     private int returnTime;
@@ -235,14 +236,11 @@ public class MerchantWaypointScreen extends ScreenBase<MerchantWaypointContainer
                 int y = pos.getY();
                 int z = pos.getZ();
 
-                BlockState state = player.level.getBlockState(pos);
-                ItemStack itemStack;
-                if (state.is(Blocks.WATER)) itemStack = new ItemStack(Items.OAK_BOAT);
-                else itemStack = new ItemStack(state.getBlock().asItem());
+
 
                 String coordinates = String.format("%d:  (%d,  %d,  %d)", i + 1, x, y, z);
 
-                renderItemAt(itemStack, 15, 58 + ((i - startIndex) * 17)); // Adjust the Y position here
+                renderItemAt(waypointItems.get(i), 15, 58 + ((i - startIndex) * 17)); // Adjust the Y position here
 
                 font.draw(matrixStack, coordinates, 35, 60 + ((i - startIndex) * 17), fontColor);
             }

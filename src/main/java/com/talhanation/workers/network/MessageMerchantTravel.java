@@ -51,12 +51,14 @@ public class MessageMerchantTravel implements Message<MessageMerchantTravel> {
             merchant.setCurrentWayPointIndex(0);
             if (travel){
                 merchant.setIsWorking(true); // to activate the AI
+                merchant.setCurrentReturningTime(0);
                 merchant.tellPlayer(player, Component.literal("Im now traveling."));
             }
             else{
                 merchant.setTraveling(false);
                 merchant.setReturning(false);
                 merchant.setIsWorking(false);
+                merchant.setCurrentReturningTime(0);
                 merchant.tellPlayer(player, Component.literal("I stopped traveling."));
             }
         }
@@ -69,7 +71,7 @@ public class MessageMerchantTravel implements Message<MessageMerchantTravel> {
             merchant.tellPlayer(player, Component.literal("Im now returning to start position."));
         }
 
-        Main.SIMPLE_CHANNEL.send(PacketDistributor.PLAYER.with(() -> (ServerPlayer) player), new MessageToClientUpdateMerchantScreen(merchant.WAYPOINTS, merchant.getCurrentTrades(), merchant.getTradeLimits(), merchant.getTraveling(), merchant.getReturning()));
+        Main.SIMPLE_CHANNEL.send(PacketDistributor.PLAYER.with(() -> (ServerPlayer) player), new MessageToClientUpdateMerchantScreen(merchant.WAYPOINTS, merchant.WAYPOINT_ITEMS, merchant.getCurrentTrades(), merchant.getTradeLimits(), merchant.getTraveling(), merchant.getReturning()));
     }
 
     public MessageMerchantTravel fromBytes(FriendlyByteBuf buf) {
