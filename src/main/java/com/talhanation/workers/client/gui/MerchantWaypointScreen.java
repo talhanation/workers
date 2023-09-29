@@ -240,7 +240,7 @@ public class MerchantWaypointScreen extends ScreenBase<MerchantWaypointContainer
 
                 String coordinates = String.format("%d:  (%d,  %d,  %d)", i + 1, x, y, z);
 
-                renderItemAt(waypointItems.get(i), 15, 58 + ((i - startIndex) * 17)); // Adjust the Y position here
+                if(!waypointItems.isEmpty()) renderItemAt(waypointItems.get(i), 15, 58 + ((i - startIndex) * 17)); // Adjust the Y position here
 
                 font.draw(matrixStack, coordinates, 35, 60 + ((i - startIndex) * 17), fontColor);
             }
