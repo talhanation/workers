@@ -321,7 +321,7 @@ public class FishermanAI extends Goal {
             for (int x = 0; x <= length; ++x) {
                     BlockPos pos = this.coastPos.relative(direction, x);
                     BlockState targetBlock = this.fisherman.level.getBlockState(pos);
-                    fisherman.level.setBlock(pos.above(4), Blocks.ICE.defaultBlockState(), 3);
+                    //fisherman.level.setBlock(pos.above(4), Blocks.ICE.defaultBlockState(), 3);
 
                     double distance = fisherman.distanceToSqr(pos.getX(), pos.getY(), pos.getZ());
                     if (targetBlock.is(Blocks.WATER) && distance > fishingRange) {
@@ -337,7 +337,7 @@ public class FishermanAI extends Goal {
             for (int x = 0; x <= lengthR; ++x) {
                 BlockPos pos = this.coastPos.relative(directionR, x);
                 BlockState targetBlock = this.fisherman.level.getBlockState(pos);
-                fisherman.level.setBlock(pos.above(4), Blocks.ICE.defaultBlockState(), 3);
+                //fisherman.level.setBlock(pos.above(4), Blocks.ICE.defaultBlockState(), 3);
 
                 double distance = fisherman.distanceToSqr(pos.getX(), pos.getY(), pos.getZ());
                 if (targetBlock.is(Blocks.WATER) && distance > fishingRange) {
@@ -353,7 +353,7 @@ public class FishermanAI extends Goal {
             for (int x = 0; x <= lengthL; ++x) {
                 BlockPos pos = this.coastPos.relative(directionL, x);
                 BlockState targetBlock = this.fisherman.level.getBlockState(pos);
-                fisherman.level.setBlock(pos.above(4), Blocks.ICE.defaultBlockState(), 3);
+                //fisherman.level.setBlock(pos.above(4), Blocks.ICE.defaultBlockState(), 3);
 
                 double distance = fisherman.distanceToSqr(pos.getX(), pos.getY(), pos.getZ());
                 if (targetBlock.is(Blocks.WATER) && distance > fishingRange) {
@@ -382,7 +382,7 @@ public class FishermanAI extends Goal {
         }
         else fishingSpot = validWaterSpots.get(0);
 
-        fisherman.level.setBlock(new BlockPos(fishingSpot.getX(), fishingSpot.getY() + 5, fishingSpot.getZ()), Blocks.PACKED_ICE.defaultBlockState(), 3);
+        //fisherman.level.setBlock(new BlockPos(fishingSpot.getX(), fishingSpot.getY() + 5, fishingSpot.getZ()), Blocks.PACKED_ICE.defaultBlockState(), 3);
 
         return fishingSpot;
     }

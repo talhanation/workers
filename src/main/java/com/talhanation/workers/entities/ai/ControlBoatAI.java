@@ -25,7 +25,7 @@ public class ControlBoatAI extends Goal {
     private Node node;
     private int timer;
     private float precision;
-    private final boolean DEBUG = true;
+    private final boolean DEBUG = false;
 
     public ControlBoatAI(IBoatController sailor) {
         this.worker = sailor.getWorker();

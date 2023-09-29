@@ -20,8 +20,6 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.EnumSet;
 
-import static com.talhanation.workers.entities.FishermanEntity.State.MOVING_COAST;
-import static com.talhanation.workers.entities.FishermanEntity.State.STOPPING;
 import static com.talhanation.workers.entities.LumberjackEntity.State.*;
 
 public class LumberjackAI extends Goal {
@@ -55,7 +53,7 @@ public class LumberjackAI extends Goal {
         this.breakLeaves();
         //TODO: Add memories of initial saplings/trees around the work position.
         //TODO: Replant if the blocks are AIR.
-        Main.LOGGER.info("LumberState: " +state);
+        //Main.LOGGER.info("LumberState: " +state);
         // Go back to assigned work position.
         switch (state){
             case IDLE -> {
