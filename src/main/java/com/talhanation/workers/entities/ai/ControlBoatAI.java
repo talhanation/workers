@@ -25,7 +25,7 @@ public class ControlBoatAI extends Goal {
     private Node node;
     private int timer;
     private float precision;
-    private final boolean DEBUG = false;
+    private final boolean DEBUG = true;
 
     public ControlBoatAI(IBoatController sailor) {
         this.worker = sailor.getWorker();
@@ -66,6 +66,10 @@ public class ControlBoatAI extends Goal {
                 }
             }
 
+            if(node != null){
+                sailor.updateBoatControl(node.x, node.z, 0.9F, 1.1F);
+            }
+
             switch (state) {
 
                 case IDLE -> {
@@ -95,11 +99,10 @@ public class ControlBoatAI extends Goal {
                         state = IDLE;
                 }
                 case MOVING_PATH -> {
-                    double speedFactor = 0.9F;
-                    double turnFactor = 1.1F;
+
 
                     double distance = this.worker.distanceToSqr(node.x, node.y, node.z);
-                    if(DEBUG) {
+                    if(false) {
                         Main.LOGGER.info("################################");
                         Main.LOGGER.info("State: " + this.state);
                         Main.LOGGER.info("Precision: " + precision);
@@ -107,12 +110,8 @@ public class ControlBoatAI extends Goal {
                         Main.LOGGER.info("################################");
                     }
 
-
-                    if ((distance > 5F)) {
-                        sailor.updateBoatControl(node.x, node.z, speedFactor, turnFactor);
-                    }
-
                     if(distance <= precision){// default = 4.5F
+                        node.closed = true;
                         path.advance();
                         if(!isFreeWater(node)){
                             precision = sailor.getPrecisionMin();
