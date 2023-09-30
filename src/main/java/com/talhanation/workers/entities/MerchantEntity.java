@@ -87,7 +87,7 @@ public class MerchantEntity extends AbstractWorkerEntity implements IBoatControl
         this.entityData.define(TRAVELING, false);
         this.entityData.define(RETURNING, false);
         this.entityData.define(RETURNING_TIME, 1);
-        this.entityData.define(TRAVEL_SPEED_STATE, 0);
+        this.entityData.define(TRAVEL_SPEED_STATE, 1);
         this.entityData.define(CURRENT_RETURNING_TIME, 0);
         this.entityData.define(CURRENT_WAYPOINT_INDEX, 0);
         this.entityData.define(STATE, 0);
@@ -96,7 +96,7 @@ public class MerchantEntity extends AbstractWorkerEntity implements IBoatControl
         this.entityData.define(HORSE_ID, Optional.empty());
         this.entityData.define(IS_CREATIVE, false);
         this.entityData.define(IS_DAY_COUNTED, false);
-        this.entityData.define(AUTO_START_TRAVEL, false);
+        this.entityData.define(AUTO_START_TRAVEL, true);
     }
     @Override
     public boolean needsToSleep() {
@@ -437,11 +437,11 @@ public class MerchantEntity extends AbstractWorkerEntity implements IBoatControl
 
         ListTag waypointItems = nbt.getList("WaypointItems", 10);
         if(!waypointItems.isEmpty()){
-            for (int i = 0; i < WAYPOINT_ITEMS.size(); ++i) {
+            for (int i = 0; i < waypointItems.size(); ++i) {
                 CompoundTag compoundnbt = waypointItems.getCompound(i);
-                ItemStack item = ItemStack.of(compoundnbt) ;
+                ItemStack item = ItemStack.of(compoundnbt).copy() ;
 
-                this.WAYPOINT_ITEMS.set(i, item);
+                this.WAYPOINT_ITEMS.add(item);
             }
         }
 
@@ -697,11 +697,11 @@ public class MerchantEntity extends AbstractWorkerEntity implements IBoatControl
     }
 
     public float getPrecisionMin(){
-        return 50;
+        return 40;
     }
 
     public float getPrecisionMax(){
-        return 150;
+        return 60;
     }
 
     public enum State{
