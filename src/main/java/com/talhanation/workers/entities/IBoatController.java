@@ -3,7 +3,10 @@ package com.talhanation.workers.entities;
 import com.talhanation.workers.Main;
 import net.minecraft.core.BlockPos;
 import net.minecraft.util.Mth;
+import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.vehicle.Boat;
+import net.minecraft.world.phys.Vec2;
+import net.minecraft.world.phys.Vec3;
 
 public interface IBoatController {
 
@@ -29,15 +32,17 @@ public interface IBoatController {
     }
 
     default void updateVanillaBoatControl(Boat boat, double posX, double posZ, double speedFactor, double turnFactor){
-        double dx = posX - boat.getX();
-        double dz = posZ - boat.getZ();
+        Vec3 forward = boat.getForward().yRot(-90).normalize();
+        Vec3 target = new Vec3(posX, 0, posZ);
+        Vec3 toTarget = boat.position().subtract(target).normalize();
 
-        float angle = Mth.wrapDegrees((float) (Mth.atan2(dz, dx) * 180.0D / 3.14D) - 90.0F);
-        float drot = angle - Mth.wrapDegrees(boat.getYRot());
-
-        boolean inputLeft = (drot < 0.0F && Math.abs(drot) >= 2.5F);
-        boolean inputRight = (drot > 0.0F && Math.abs(drot) >= 2.5F);
-        boolean inputUp = (Math.abs(drot) < 25.0F);
+        double phi = horizontalAngleBetweenVectors(forward, toTarget);
+        Main.LOGGER.info("phi: " + phi);
+        double reff = 63.5F;
+        boolean inputLeft =  (phi < reff);
+        boolean inputRight = (phi > reff);
+        boolean inputUp = Math.abs(phi - reff) <= reff * 0.15F;
+        boolean input = inputLeft || inputUp || inputRight;
 
         float f = 0.0F;
 
@@ -185,5 +190,15 @@ public interface IBoatController {
             }
         }
         return erg;
+    }
+
+    private double horizontalAngleBetweenVectors(Vec3 vector1, Vec3 vector2) {
+        double dotProduct = vector1.x * vector2.x + vector1.z * vector2.z;
+        double magnitude1 = Math.sqrt(vector1.x * vector1.x + vector1.z * vector1.z);
+        double magnitude2 = Math.sqrt(vector2.x * vector2.x + vector2.z * vector2.z);
+
+        double cosTheta = dotProduct / (magnitude1 * magnitude2);
+
+        return Math.toDegrees(Math.acos(cosTheta));
     }
 }
