@@ -37,12 +37,11 @@ public interface IBoatController {
         Vec3 toTarget = boat.position().subtract(target).normalize();
 
         double phi = horizontalAngleBetweenVectors(forward, toTarget);
-        Main.LOGGER.info("phi: " + phi);
+        //Main.LOGGER.info("phi: " + phi);
         double reff = 63.5F;
         boolean inputLeft =  (phi < reff);
         boolean inputRight = (phi > reff);
         boolean inputUp = Math.abs(phi - reff) <= reff * 0.15F;
-        boolean input = inputLeft || inputUp || inputRight;
 
         float f = 0.0F;
 
@@ -53,7 +52,6 @@ public interface IBoatController {
         if (inputRight) {
             boat.setYRot((float) (boat.getYRot() + 2.5F));
         }
-
 
         if (inputRight != inputLeft && !inputUp) {
             f += 0.005F * speedFactor;

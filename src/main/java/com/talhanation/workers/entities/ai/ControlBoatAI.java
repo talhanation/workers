@@ -25,7 +25,7 @@ public class ControlBoatAI extends Goal {
     private Node node;
     private int timer;
     private float precision;
-    private final boolean DEBUG = true;
+    private final boolean DEBUG = false;
 
     public ControlBoatAI(IBoatController sailor) {
         this.worker = sailor.getWorker();
@@ -66,10 +66,6 @@ public class ControlBoatAI extends Goal {
                 }
             }
 
-            if(node != null){
-                sailor.updateBoatControl(node.x, node.z, 0.9F, 1.1F);
-            }
-
             switch (state) {
 
                 case IDLE -> {
@@ -102,7 +98,7 @@ public class ControlBoatAI extends Goal {
 
 
                     double distance = this.worker.distanceToSqr(node.x, node.y, node.z);
-                    if(false) {
+                    if(DEBUG) {
                         Main.LOGGER.info("################################");
                         Main.LOGGER.info("State: " + this.state);
                         Main.LOGGER.info("Precision: " + precision);
@@ -110,8 +106,11 @@ public class ControlBoatAI extends Goal {
                         Main.LOGGER.info("################################");
                     }
 
+                    if(distance >= 5F){
+                        sailor.updateBoatControl(node.x, node.z, 0.9F, 1.1F);
+                    }
+
                     if(distance <= precision){// default = 4.5F
-                        node.closed = true;
                         path.advance();
                         if(!isFreeWater(node)){
                             precision = sailor.getPrecisionMin();
@@ -121,12 +120,11 @@ public class ControlBoatAI extends Goal {
                         this.timer = 0;
                         if (path.getNodeCount() == path.getNextNodeIndex() - 1) {
                             state = CREATING_PATH;
-
                         }
 
                         if (path.getNodeCount() == path.getNextNodeIndex() - 1 || node.equals(path.getEndNode())) {
+                            node = null;
                             state = State.DONE;
-
                         }
 
                         try {
