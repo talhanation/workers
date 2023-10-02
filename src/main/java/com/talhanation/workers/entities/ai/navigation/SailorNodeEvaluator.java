@@ -129,7 +129,7 @@ public class SailorNodeEvaluator extends WalkNodeEvaluator {
     }
 
     protected double getFloorLevel(@NotNull BlockPos p_164674_) {
-        return this.mob.getLevel().getSeaLevel();
+        return this.mob.getY();
     }
 
     public @NotNull BlockPathTypes getBlockPathType(@NotNull BlockGetter blockGetter, int x, int y, int z) {
@@ -137,6 +137,7 @@ public class SailorNodeEvaluator extends WalkNodeEvaluator {
         BlockPathTypes blockpathtypes = getBlockPathTypeRaw(blockGetter, mutableBlockPos.set(x, y, z));
         if (blockpathtypes == BlockPathTypes.WATER) {
             for(Direction direction : Direction.values()) {
+                if(direction.equals(Direction.UP) || direction.equals(Direction.DOWN)) continue;
                 BlockPathTypes blockPathTypes = getBlockPathTypeRaw(blockGetter, mutableBlockPos.set(x, y, z).move(direction));
                 if (blockPathTypes == BlockPathTypes.BLOCKED) {
                     return BlockPathTypes.WATER_BORDER;
