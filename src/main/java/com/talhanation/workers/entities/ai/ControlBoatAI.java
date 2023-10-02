@@ -7,12 +7,16 @@ import com.talhanation.workers.entities.ai.navigation.SailorPathNavigation;
 import net.minecraft.core.BlockPos;
 import net.minecraft.tags.BiomeTags;
 import net.minecraft.util.Mth;
+import net.minecraft.world.entity.ai.behavior.RandomSwim;
 import net.minecraft.world.entity.ai.goal.Goal;
+import net.minecraft.world.entity.ai.goal.RandomSwimmingGoal;
 import net.minecraft.world.entity.vehicle.Boat;
 import net.minecraft.world.level.block.Blocks;
+import net.minecraft.world.level.block.SimpleWaterloggedBlock;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.pathfinder.Node;
 import net.minecraft.world.level.pathfinder.Path;
+import net.minecraftforge.common.Tags;
 
 import static com.talhanation.workers.entities.ai.ControlBoatAI.State.*;
 
@@ -77,7 +81,7 @@ public class ControlBoatAI extends Goal {
 
                 case CREATING_PATH -> {
                     if (sailor.getSailPos() != null) {
-                        this.path = sailorPathNavigation.createPath(sailor.getSailPos(), 32, false, 0);
+                        this.path = sailorPathNavigation.createPath(sailor.getSailPos(), 16, false, 0);
 
                         if (path != null) {
                             this.node = this.path.getNextNode();
@@ -95,7 +99,9 @@ public class ControlBoatAI extends Goal {
                         state = IDLE;
                 }
                 case MOVING_PATH -> {
-
+                    if(getWaterDepth(worker.getOnPos()) >= 7 && path.getEndNode() != null) {
+                        this.node = path.getEndNode();
+                    }
 
                     double distance = this.worker.distanceToSqr(node.x, node.y, node.z);
                     if(DEBUG) {
@@ -106,8 +112,9 @@ public class ControlBoatAI extends Goal {
                         Main.LOGGER.info("################################");
                     }
 
+
                     if(distance >= 5F){
-                        sailor.updateBoatControl(node.x, node.z, 0.9F, 1.1F);
+                        sailor.updateBoatControl(node.x, node.z, 0.9F, 1.1F, node);
                     }
 
                     if(distance <= precision){// default = 4.5F
@@ -152,13 +159,25 @@ public class ControlBoatAI extends Goal {
         }
     }
 
+    private int getWaterDepth(BlockPos pos){
+        int depth = 0;
+        for(int i = 0; i < 10; i++){
+            BlockState state = worker.level.getBlockState(pos.below(i));
+            if(state.is(Blocks.WATER)){
+                depth++;
+            }
+            else break;
+        }
+        return depth;
+    }
+
     private boolean isFreeWater(Node node){
-        for(int i = -1; i <= 1; i++) {
-            for (int k = -1; k <= 1; k++) {
+        for(int i = -2; i <= 2; i++) {
+            for (int k = -2; k <= 2; k++) {
                 BlockPos pos = new BlockPos(node.x, this.worker.getY(), node.z).offset(i, 0, k);
                 BlockState state = this.worker.level.getBlockState(pos);
 
-                if(!state.is(Blocks.WATER))
+                if(!state.is(Blocks.WATER) || (!state.is(Blocks.KELP_PLANT) || !state.is(Blocks.KELP)))
                     return false;
             }
         }

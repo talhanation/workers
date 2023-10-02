@@ -170,8 +170,12 @@ public class MerchantAI extends Goal {
                     if(index <= this.merchant.WAYPOINTS.size() - 1) {
                         merchant.setCurrentWayPointIndex(index + indexChange);
 
-                        if(!merchant.isFreeWater(pos.getX(), pos.getY(), pos.getZ())) precision = 10F;
-                        else precision = 75F;
+                        if(!merchant.isFreeWater(pos.getX(), pos.getY(), pos.getZ()))
+                            precision = 10F;
+                        else
+                            precision = 75F;
+
+
                     }
                 }
             }

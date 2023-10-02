@@ -513,7 +513,7 @@ public class MerchantEntity extends AbstractWorkerEntity implements IBoatControl
             double distance = pos.distSqr(prevPos);
 
             boolean notNearFromCoastToWater = !isWaterBlockPos(prevPos) && isWaterBlockPos(pos) && distance >= 50F;
-            boolean notNearInRiverWater = !this.getLevel().getBiome(pos).is(BiomeTags.IS_RIVER) && isWaterBlockPos(prevPos) && isWaterBlockPos(pos) && distance >= 4000F;
+            boolean notNearInRiverWater = this.getLevel().getBiome(pos).is(BiomeTags.IS_RIVER) && isWaterBlockPos(prevPos) && isWaterBlockPos(pos) && distance >= 4000F;
             boolean notNearFromWaterToCoast = isWaterBlockPos(prevPos) && !isWaterBlockPos(pos) && distance >= 50F;
 
             if(notNearFromCoastToWater || notNearInRiverWater || notNearFromWaterToCoast){
@@ -697,11 +697,20 @@ public class MerchantEntity extends AbstractWorkerEntity implements IBoatControl
     }
 
     public float getPrecisionMin(){
-        return 40;
+        int base = 50;
+        if(this.getVehicle().getEncodeId().contains("smallships")){
+            base = 100;
+        }
+        return base;
     }
 
     public float getPrecisionMax(){
-        return 60;
+        int base = 150;
+        if(this.getVehicle().getEncodeId().contains("smallships")){
+            base = 200;
+        }
+
+        return base;
     }
 
     public enum State{

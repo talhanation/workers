@@ -1,12 +1,21 @@
 package com.talhanation.workers.entities;
 
+import com.talhanation.smallships.math.Kalkuel;
+import com.talhanation.smallships.world.entity.ship.Ship;
+import com.talhanation.smallships.world.entity.ship.abilities.Sailable;
 import com.talhanation.workers.Main;
 import net.minecraft.core.BlockPos;
 import net.minecraft.util.Mth;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.vehicle.Boat;
+import net.minecraft.world.level.block.Blocks;
+import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.level.pathfinder.Node;
 import net.minecraft.world.phys.Vec2;
 import net.minecraft.world.phys.Vec3;
+
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
 
 public interface IBoatController {
 
@@ -20,11 +29,15 @@ public interface IBoatController {
     float getPrecisionMax();
     void setSailPos(BlockPos pos);
 
-    default void updateBoatControl(double posX, double posZ, double speedFactor, double turnFactor){
+    default void updateBoatControl(double posX, double posZ, double speedFactor, double turnFactor, Node node){
         if(this.getWorker().getVehicle() instanceof Boat boat && boat.getPassengers().get(0).equals(this.getWorker())) {
             String string = boat.getEncodeId();
-            if(Main.isSmallShipsInstalled && (string.equals("smallships:cog") || string.equals("smallships:brigg"))){
-                updateSmallShipsBoatControl(boat, posX, posZ);
+            if(Main.isSmallShipsInstalled && (string.contains("smallships"))){
+                if(this.getWorker() instanceof MerchantEntity merchant && getWaterDepth(boat.getOnPos()) >= 7 && merchant.getCurrentWayPoint() != null && !merchant.getFollow() && !boat.horizontalCollision){
+                    updateSmallShipsBoatControl(boat, merchant.getCurrentWayPoint().getX(), merchant.getCurrentWayPoint().getZ());
+                }
+                else
+                    updateSmallShipsBoatControl(boat, posX, posZ);
             }
             else
                 updateVanillaBoatControl(boat, posX, posZ, speedFactor, turnFactor);
@@ -67,82 +80,127 @@ public interface IBoatController {
 
 
     default void updateSmallShipsBoatControl(Boat boat, double posX, double posZ) {
+        Vec3 forward = boat.getForward().yRot(-90).normalize();
+        Vec3 target = new Vec3(posX, 0, posZ);
+        Vec3 toTarget = boat.position().subtract(target).normalize();
+
+        double phi = horizontalAngleBetweenVectors(forward, toTarget);
+        //Main.LOGGER.info("phi: " + phi);
+        double reff = 63.5F;
+        boolean inputLeft =  (phi < reff);
+        boolean inputRight = (phi > reff);
+        boolean inputUp = Math.abs(phi - reff) <= reff * 0.35F;
+
+        float boatSpeed = 0;
+        float boatRotSpeed = 0;
+        float maxRotSp = 2.0F;
+        float rotAcceleration = 0.35F;
+        float acceleration = 0.005F;
+        float setPoint = 0;
+
         /*
-        double dx = posX - boat.getX();
-        double dz = posZ - boat.getZ();
+        try {
+            Class<?> shipClass = Class.forName("talhnation.smallships.world.entity.ship.Ship");
+            if(shipClass.isInstance(boat)){
+                Object ship = shipClass.cast(boat);
 
-        float angle = Mth.wrapDegrees((float) (Mth.atan2(dz, dx) * 180.0D / 3.14D) - 90.0F);
-        float drot = angle - Mth.wrapDegrees(boat.getYRot());
-
-        boolean inputLeft = (drot < 0.0F && Math.abs(drot) >= 2.5F);
-        boolean inputRight = (drot > 0.0F && Math.abs(drot) >= 2.5F);
-        boolean inputUp = (Math.abs(drot) < 25.0F);
-
-        float boatSpeed = boat.getSpeed();//TODO: REFLECTION NEEDED
-        float maxRotSp = 0.5F;
-        float rotAcceleration = 0.1F;
-        //TODO Sync ship state:  updateControls(((BoatAccessor) this).isInputUp(),((BoatAccessor) this).isInputDown(), ((BoatAccessor) this).isInputLeft(), ((BoatAccessor) this).isInputRight(), player);
-
-        //TODO if(this.isInWater() && !((BoatLeashAccess) this).isLeashed()){
-
-        if (inputUp) {
-            float acceleration = 0.1F;
-            float setPoint = 4F; //SET POINT DEPENDENT ON DISTANCE TO NEXT WAYPOINT;
-        }
-        this.calculateSpeed(boat, boatSpeed, acceleration, setPoint);
-        //TODO: SET SAIL STATE DEPENDENT ON SPEED
-
-        //switch (speed){
-
-        //}
-
-
-
-        //CALCULATE ROTATION SPEED//
-        float rotationSpeed = subtractToZero(getRotSpeed(), getVelocityResistance() * 2.5F);
-
-
-        if (inputRight) {
-            if (rotationSpeed < maxRotSp) {
-                rotationSpeed = Math.min(rotationSpeed + rotAcceleration * 1 / 8, maxRotSp);
+                Method getSpeedMethod = ship.getClass().getMethod("getSpeed", float.class);
+                boatSpeed = getSpeedMethod.
             }
+        } catch (ClassNotFoundException e) {
+            Main.LOGGER.info("smallShipsShipClass was not found");
+        } catch (NoSuchMethodException e) {
+            Main.LOGGER.info("setSpeedMethod was not found");
+        } catch (InvocationTargetException | IllegalAccessException e) {
+            Main.LOGGER.info("setSpeedMethod could not invocation");
         }
+        */
 
-        if (inputLeft) {
-            if (rotationSpeed > -maxRotSp) {
-                rotationSpeed = Math.max(rotationSpeed - rotAcceleration * 1 / 8, -maxRotSp);
+        if(boat instanceof Ship ship) {
+            boatSpeed = ship.getSpeed();
+            boatRotSpeed = ship.getRotSpeed();
+
+            //TODO Sync ship state:  updateControls(((BoatAccessor) this).isInputUp(),((BoatAccessor) this).isInputDown(), ((BoatAccessor) this).isInputLeft(), ((BoatAccessor) this).isInputRight(), player);
+            ship.updateControls(inputUp, false, inputLeft, inputRight, null); //Player parameter can be null because its not client side
+
+            //TODO if(this.isInWater() && !((BoatLeashAccess) this).isLeashed()){
+
+
+            if (inputUp) {
+                double distance = toTarget.distanceToSqr(boat.position());
+                byte state = 4;
+                if(distance > 20){
+                    setPoint = 0.12F;
+                }
+                else{
+                    setPoint = 0.075F;
+                }
+                if(ship instanceof Sailable sailable){
+                    //float speedInKmH = Kalkuel.getKilometerPerHour(boatSpeed);
+                    byte currentSail = sailable.getSailState();
+                    if(currentSail != state) sailable.setSailState((byte) state);
+                }
             }
+            else {
+                if(ship instanceof Sailable sailable){
+                    //float speedInKmH = Kalkuel.getKilometerPerHour(boatSpeed);
+                    byte currentSail = sailable.getSailState();
+                    if(currentSail != 1) sailable.setSailState((byte) 1);
+                }
+                setPoint = 0.025F;
+            }
+
+            this.calculateSpeed(boat, boatSpeed, acceleration, setPoint);
+
+            //CALCULATE ROTATION SPEED//
+            float rotationSpeed = subtractToZero(boatRotSpeed, getVelocityResistance() * 2.5F);
+
+
+            if (inputRight) {
+                if (rotationSpeed < maxRotSp) {
+                    rotationSpeed = Math.min(rotationSpeed + rotAcceleration * 1 / 8, maxRotSp);
+                }
+            }
+
+            if (inputLeft) {
+                if (rotationSpeed > -maxRotSp) {
+                    rotationSpeed = Math.max(rotationSpeed - rotAcceleration * 1 / 8, -maxRotSp);
+                }
+            }
+
+
+            ship.setRotSpeed(rotationSpeed);
+
+            boat.deltaRotation = rotationSpeed;
+            boat.setYRot(boat.getYRot() + boat.deltaRotation);
+
+            //SET
+            boat.setDeltaMovement(calculateMotionX(boatSpeed, boat.getYRot()), 0.0F, calculateMotionZ(boatSpeed, boat.getYRot()));
+            //}
+
         }
+    }
 
+    default float getVelocityResistance(){
 
+        return 0.007F;
 
-        //boat.setRotSpeed(rotationSpeed);
-
-        boat.setDeltaRotation(rotationSpeed);
-        boat.setYRot(boat.getYRot() + boat.getDeltaRotation());
-
-        //SET
-        boat.setDeltaMovement(calculateMotionX(boatSpeed, this.getYRot()), 0.0F, calculateMotionZ(boatSpeed, this.getYRot()));
-        //}
-
-
-         */
     }
 
     //Taken from Smallships/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     private void calculateSpeed(Boat boat, float speed, float acceleration, float setPoint) {
-        // If there is no interaction the speed should get reduced
-
-        if(speed < setPoint){
+        if (speed < setPoint) {
             speed = addToSetPoint(speed, acceleration, setPoint);
-        }
-        //else
-          //  speed = subtractToZero(speed, getVelocityResistance() * 0.8F);//TODO: REFLECTION NEEDED
+        } else
+            speed = subtractToZero(speed, getVelocityResistance() * 2.2F);
 
-        //boat.setSpeed(speed);//TODO: REFLECTION NEEDED
+        if(boat instanceof Ship ship) {
+            ship.setSpeed(speed);
+        }
+
     }
 
-    /**
+        /**
      * Adds from the provided number, but does not cross the set point
      *
      * @param current the current number
@@ -198,5 +256,17 @@ public interface IBoatController {
         double cosTheta = dotProduct / (magnitude1 * magnitude2);
 
         return Math.toDegrees(Math.acos(cosTheta));
+    }
+
+    private int getWaterDepth(BlockPos pos){
+        int depth = 0;
+        for(int i = 0; i < 10; i++){
+            BlockState state = getWorker().level.getBlockState(pos.below(i));
+            if(state.is(Blocks.WATER)){
+                depth++;
+            }
+            else break;
+        }
+        return depth;
     }
 }
