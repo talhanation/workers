@@ -17,6 +17,7 @@ public class WorkerUpkeepPosGoal extends Goal {
     //public Entity mobInv;
     public Container container;
     public boolean message;
+    public boolean noSpaceInvMessage;
 
     public WorkerUpkeepPosGoal(AbstractWorkerEntity worker) {
         this.worker = worker;
@@ -54,6 +55,7 @@ public class WorkerUpkeepPosGoal extends Goal {
     public void start() {
         super.start();
         message = true;
+        noSpaceInvMessage = true;
     }
 
     @Override
@@ -77,13 +79,23 @@ public class WorkerUpkeepPosGoal extends Goal {
                     for (int i = 0; i < 3; i++) {
                         ItemStack foodItem = this.getFoodFromInv(container);
                         ItemStack food;
-                        if (foodItem != null && canAddFood()){
-
-                            food = foodItem.copy();
-                            food.setCount(1);
-                            worker.getInventory().addItem(food);
-                            foodItem.shrink(1);
+                        canAddFood();
+                        if (foodItem != null){
+                            if(canAddFood()){
+                                food = foodItem.copy();
+                                food.setCount(1);
+                                worker.getInventory().addItem(food);
+                                foodItem.shrink(1);
+                            }
+                            else{
+                                if(worker.getOwner() != null && noSpaceInvMessage){
+                                    worker.tellPlayer(worker.getOwner(), Translatable.TEXT_NO_SPACE_INV);
+                                    noSpaceInvMessage = false;
+                                    stop();
+                                }
+                            }
                         }
+
                     }
                 }
                 else {

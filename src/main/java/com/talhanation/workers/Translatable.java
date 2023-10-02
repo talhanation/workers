@@ -83,6 +83,8 @@ public class Translatable {
     public static final Component TEXT_BED_ERROR = Component.translatable("chat.workers.text.bedError");
 
     public static final Component TEXT_NO_FOOD = Component.translatable("chat.workers.text.noFoodInUpkeep");
+    public static final Component TEXT_NO_SPACE_INV = Component.translatable("chat.workers.text.noSpaceInvForUpkeep");
+
     public static final Component TEXT_NO_PICKAXE = Component.translatable("chat.workers.text.noPickaxe");
 
     public static final Component TEXT_BUTTON_WORK_POS = Component.translatable("gui.workers.button.workPos");
