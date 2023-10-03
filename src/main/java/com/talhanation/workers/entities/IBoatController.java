@@ -1,21 +1,16 @@
 package com.talhanation.workers.entities;
 
-import com.talhanation.smallships.math.Kalkuel;
 import com.talhanation.smallships.world.entity.ship.Ship;
 import com.talhanation.smallships.world.entity.ship.abilities.Sailable;
 import com.talhanation.workers.Main;
 import net.minecraft.core.BlockPos;
 import net.minecraft.util.Mth;
-import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.vehicle.Boat;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.pathfinder.Node;
-import net.minecraft.world.phys.Vec2;
 import net.minecraft.world.phys.Vec3;
 
-import java.lang.reflect.InvocationTargetException;
-import java.lang.reflect.Method;
 
 public interface IBoatController {
 
@@ -33,11 +28,14 @@ public interface IBoatController {
         if(this.getWorker().getVehicle() instanceof Boat boat && boat.getPassengers().get(0).equals(this.getWorker())) {
             String string = boat.getEncodeId();
             if(Main.isSmallShipsInstalled && (string.contains("smallships"))){
-                if(this.getWorker() instanceof MerchantEntity merchant && getWaterDepth(boat.getOnPos()) >= 7 && merchant.getCurrentWayPoint() != null && !merchant.getFollow() && !boat.horizontalCollision){
-                    updateSmallShipsBoatControl(boat, merchant.getCurrentWayPoint().getX(), merchant.getCurrentWayPoint().getZ());
+                if(this.getWorker() instanceof MerchantEntity merchant && getWaterDepth(boat.getOnPos()) >= 7 && merchant.getCurrentWayPoint() != null && getWaterDepth(merchant.getCurrentWayPoint()) >= 7 && !merchant.getFollow() && !boat.horizontalCollision){
+                    updateSmallShipsBoatControl(boat, merchant.getCurrentWayPoint().getX(), merchant.getCurrentWayPoint().getZ(), true);
+                }
+                else if(this.getWorker() instanceof MerchantEntity merchant && getWaterDepth(boat.getOnPos()) >= 7 && merchant.getCurrentWayPoint() != null  && !merchant.getFollow() && !boat.horizontalCollision){
+                    updateSmallShipsBoatControl(boat, merchant.getCurrentWayPoint().getX(), merchant.getCurrentWayPoint().getZ(), false);
                 }
                 else
-                    updateSmallShipsBoatControl(boat, posX, posZ);
+                    updateSmallShipsBoatControl(boat, posX, posZ, false);
             }
             else
                 updateVanillaBoatControl(boat, posX, posZ, speedFactor, turnFactor);
@@ -79,7 +77,7 @@ public interface IBoatController {
     }
 
 
-    default void updateSmallShipsBoatControl(Boat boat, double posX, double posZ) {
+    default void updateSmallShipsBoatControl(Boat boat, double posX, double posZ, boolean fast) {
         Vec3 forward = boat.getForward().yRot(-90).normalize();
         Vec3 target = new Vec3(posX, 0, posZ);
         Vec3 toTarget = boat.position().subtract(target).normalize();
@@ -128,9 +126,13 @@ public interface IBoatController {
 
             if (inputUp) {
                 double distance = toTarget.distanceToSqr(boat.position());
-                byte state = 4;
-                if(distance > 20){
-                    setPoint = 0.12F;
+                byte state = 3;
+                if(fast){
+                    state = 4;
+                    setPoint = 0.3F;
+                }
+                else if(distance > 20){
+                    setPoint = 0.15F;
                 }
                 else{
                     setPoint = 0.075F;

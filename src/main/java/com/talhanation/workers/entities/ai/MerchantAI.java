@@ -1,21 +1,16 @@
 package com.talhanation.workers.entities.ai;
 
-import com.talhanation.workers.Main;
 import com.talhanation.workers.entities.MerchantEntity;
 import net.minecraft.core.BlockPos;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.entity.ai.goal.Goal;
 import net.minecraft.world.entity.vehicle.Boat;
-import net.minecraft.world.level.block.Blocks;
-import net.minecraft.world.level.block.state.BlockState;
 
-import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.EnumSet;
 import java.util.List;
 
 import static com.talhanation.workers.entities.MerchantEntity.State.*;
-import static com.talhanation.workers.entities.ai.ControlBoatAI.State.CREATING_PATH;
 
 public class MerchantAI extends Goal {
 
