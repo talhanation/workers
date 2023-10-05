@@ -12,6 +12,7 @@ import com.talhanation.workers.network.MessageOpenGuiMerchant;
 import com.talhanation.workers.network.MessageOpenGuiWorker;
 import com.talhanation.workers.network.MessageToClientUpdateMerchantScreen;
 import net.minecraft.core.BlockPos;
+import net.minecraft.nbt.Tag;
 import net.minecraft.network.syncher.EntityDataAccessor;
 import net.minecraft.network.syncher.EntityDataSerializers;
 import net.minecraft.network.syncher.SynchedEntityData;
@@ -344,6 +345,18 @@ public class MerchantEntity extends AbstractWorkerEntity implements IBoatControl
         if (currentWayPoint != null) this.setNbtPosition(nbt, "CurrentWayPoint", currentWayPoint);
 
 
+        ListTag waypointItems = new ListTag();
+        for (int i = 0; i < WAYPOINT_ITEMS.size(); ++i) {
+            ItemStack itemstack = WAYPOINT_ITEMS.get(i);
+            if (!itemstack.isEmpty()) {
+                CompoundTag compoundnbt = new CompoundTag();
+                compoundnbt.putByte("WaypointItem", (byte) i);
+                itemstack.save(compoundnbt);
+                waypointItems.add(compoundnbt);
+            }
+        }
+        nbt.put("WaypointItems", waypointItems);
+
         ListTag waypoints = new ListTag();
         for(int i = 0; i < WAYPOINTS.size(); i++){
             CompoundTag compoundnbt = new CompoundTag();
@@ -357,22 +370,11 @@ public class MerchantEntity extends AbstractWorkerEntity implements IBoatControl
         }
         nbt.put("Waypoints", waypoints);
 
-        ListTag waypointItems = new ListTag();
-        for(int i = 0; i < WAYPOINT_ITEMS.size(); i++) {
-            CompoundTag compoundnbt = new CompoundTag();
-            compoundnbt.putByte("WaypointItem", (byte) i);
-            ItemStack item = WAYPOINT_ITEMS.get(i);
-            compoundnbt.put("ItemTag", item.getOrCreateTag());
-
-            waypointItems.add(compoundnbt);
-        }
-        nbt.put("WaypointItems", waypointItems);
-
-
         ListTag limits = new ListTag();
         for(int i = 0; i < 4; i++) {
             CompoundTag compoundnbt = new CompoundTag();
             compoundnbt.putByte("TradeLimit_" + i, (byte) i);
+
             int limit = getTradeLimits().get(i);
             compoundnbt.putInt("Limit", limit);
 
@@ -398,9 +400,9 @@ public class MerchantEntity extends AbstractWorkerEntity implements IBoatControl
 
     public void readAdditionalSaveData(@NotNull CompoundTag nbt) {
         super.readAdditionalSaveData(nbt);
-        ListTag list = nbt.getList("TradeInventory", 10);
-        for (int i = 0; i < list.size(); ++i) {
-            CompoundTag compoundnbt = list.getCompound(i);
+        ListTag tradeList = nbt.getList("TradeInventory", 10);
+        for (int i = 0; i < tradeList.size(); ++i) {
+            CompoundTag compoundnbt = tradeList.getCompound(i);
             int j = compoundnbt.getByte("TradeSlot") & 255;
 
             this.tradeInventory.setItem(j, ItemStack.of(compoundnbt));
@@ -424,6 +426,13 @@ public class MerchantEntity extends AbstractWorkerEntity implements IBoatControl
         BlockPos startPos = this.getNbtPosition(nbt, "CurrentWayPoint");
         if (startPos != null) this.setCurrentWayPoint(startPos);
 
+        ListTag waypointItems = nbt.getList("WaypointItems", 10);
+        for (int i = 0; i < waypointItems.size(); ++i) {
+            CompoundTag compoundnbt = waypointItems.getCompound(i);
+
+            ItemStack itemStack = ItemStack.of(compoundnbt);
+            this.WAYPOINT_ITEMS.add(itemStack);
+        }
 
         ListTag waypoints = nbt.getList("Waypoints", 10);
         for (int i = 0; i < waypoints.size(); ++i) {
@@ -433,16 +442,6 @@ public class MerchantEntity extends AbstractWorkerEntity implements IBoatControl
                     compoundnbt.getDouble("PosY"),
                     compoundnbt.getDouble("PosZ"));
             this.WAYPOINTS.add(pos);
-        }
-
-        ListTag waypointItems = nbt.getList("WaypointItems", 10);
-        if(!waypointItems.isEmpty()){
-            for (int i = 0; i < waypointItems.size(); ++i) {
-                CompoundTag compoundnbt = waypointItems.getCompound(i);
-                ItemStack item = ItemStack.of(compoundnbt).copy() ;
-
-                this.WAYPOINT_ITEMS.add(item);
-            }
         }
 
         ListTag limits = nbt.getList("TradeLimits", 10);
