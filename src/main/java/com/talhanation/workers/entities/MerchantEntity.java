@@ -502,11 +502,7 @@ public class MerchantEntity extends AbstractWorkerEntity implements IBoatControl
     }
     @Override
     public void setStartPos(BlockPos pos) {
-        BlockState state = this.level.getBlockState(pos);
-        ItemStack itemStack;
-        if (state.is(Blocks.WATER)) itemStack = new ItemStack(Items.OAK_BOAT);
-        else if (state.is(Blocks.AIR) || state.is(Blocks.CAVE_AIR)) itemStack = new ItemStack(Items.GRASS_BLOCK);
-        else itemStack = new ItemStack(state.getBlock().asItem());
+        ItemStack itemStack = this.getItemStackToRender(pos);
 
         if(!WAYPOINTS.isEmpty()){
             BlockPos prevPos = this.WAYPOINTS.get(WAYPOINTS.size() -1);
@@ -529,6 +525,16 @@ public class MerchantEntity extends AbstractWorkerEntity implements IBoatControl
             WAYPOINTS.add(pos);
         }
 
+    }
+
+    public ItemStack getItemStackToRender(BlockPos pos){
+        BlockState state = this.level.getBlockState(pos);
+        ItemStack itemStack;
+        if (state.is(Blocks.WATER) || state.is(Blocks.KELP) || state.is(Blocks.KELP_PLANT)) itemStack = new ItemStack(Items.OAK_BOAT);
+        else if (state.is(Blocks.AIR) || state.is(Blocks.CAVE_AIR)) itemStack = new ItemStack(Items.GRASS_BLOCK);
+        else itemStack = new ItemStack(state.getBlock().asItem());
+
+        return itemStack;
     }
 
     public boolean getAutoStartTravel() {
@@ -677,7 +683,7 @@ public class MerchantEntity extends AbstractWorkerEntity implements IBoatControl
             BlockPos pos2 = pos.above(i);
             BlockState state1 = this.level.getBlockState(pos1);
             BlockState state2 = this.level.getBlockState(pos2);
-            if(state1.is(Blocks.WATER) || state2.is(Blocks.WATER)){
+            if(state1.is(Blocks.WATER) || state1.is(Blocks.KELP) || state1.is(Blocks.KELP_PLANT) || state2.is(Blocks.KELP) || state2.is(Blocks.KELP_PLANT) || state2.is(Blocks.WATER)){
                 return true;
             }
         }

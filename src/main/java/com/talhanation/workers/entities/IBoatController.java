@@ -170,7 +170,6 @@ public interface IBoatController {
                 }
             }
 
-
             ship.setRotSpeed(rotationSpeed);
 
             boat.deltaRotation = rotationSpeed;
@@ -264,7 +263,7 @@ public interface IBoatController {
         int depth = 0;
         for(int i = 0; i < 10; i++){
             BlockState state = getWorker().level.getBlockState(pos.below(i));
-            if(state.is(Blocks.WATER)){
+            if(state.is(Blocks.WATER) || state.is(Blocks.KELP_PLANT) || state.is(Blocks.KELP)){
                 depth++;
             }
             else break;
