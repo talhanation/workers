@@ -118,6 +118,7 @@ public class MerchantAI extends Goal {
 
                 if(merchant.getAutoStartTravel()){
                     if(merchant.isReturnTimeElapsed()){
+                        merchant.setCurrentReturningTime(0);
                         merchant.setTraveling(true);
                         this.setWorkState(IDLE);
                     }
