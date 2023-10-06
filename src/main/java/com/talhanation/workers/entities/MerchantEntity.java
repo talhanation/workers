@@ -71,6 +71,7 @@ public class MerchantEntity extends AbstractWorkerEntity implements IBoatControl
     private static final EntityDataAccessor<Boolean> IS_CREATIVE = SynchedEntityData.defineId(MerchantEntity.class, EntityDataSerializers.BOOLEAN);
     private static final EntityDataAccessor<Boolean> IS_DAY_COUNTED = SynchedEntityData.defineId(MerchantEntity.class, EntityDataSerializers.BOOLEAN);
     private static final EntityDataAccessor<Optional<UUID>> HORSE_ID = SynchedEntityData.defineId(MerchantEntity.class, EntityDataSerializers.OPTIONAL_UUID);
+    private static final EntityDataAccessor<Optional<UUID>> BOAT_ID = SynchedEntityData.defineId(MerchantEntity.class, EntityDataSerializers.OPTIONAL_UUID);
     private static final EntityDataAccessor<Boolean> AUTO_START_TRAVEL = SynchedEntityData.defineId(MerchantEntity.class, EntityDataSerializers.BOOLEAN);
 
     private final SimpleContainer tradeInventory = new SimpleContainer(8);
@@ -95,6 +96,7 @@ public class MerchantEntity extends AbstractWorkerEntity implements IBoatControl
         this.entityData.define(CURRENT_WAYPOINT, Optional.empty());
         this.entityData.define(SAIL_POS, Optional.empty());
         this.entityData.define(HORSE_ID, Optional.empty());
+        this.entityData.define(BOAT_ID, Optional.empty());
         this.entityData.define(IS_CREATIVE, false);
         this.entityData.define(IS_DAY_COUNTED, false);
         this.entityData.define(AUTO_START_TRAVEL, true);
@@ -332,6 +334,10 @@ public class MerchantEntity extends AbstractWorkerEntity implements IBoatControl
             nbt.putUUID("HorseUUID", this.getHorseUUID());
         }
 
+        if(this.getBoatUUID() != null){
+            nbt.putUUID("BoatUUID", this.getBoatUUID());
+        }
+
         nbt.putBoolean("Traveling", this.getTraveling());
         nbt.putBoolean("AutoStartTravel", this.getAutoStartTravel());
         nbt.putBoolean("Returning", this.getReturning());
@@ -411,6 +417,11 @@ public class MerchantEntity extends AbstractWorkerEntity implements IBoatControl
         if (nbt.contains("HorseUUID")){
             Optional<UUID> uuid = Optional.of(nbt.getUUID("HorseUUID"));
             this.setHorseUUID(uuid);
+        }
+
+        if (nbt.contains("BoatUUID")){
+            Optional<UUID> uuid = Optional.of(nbt.getUUID("BoatUUID"));
+            this.setBoatUUID(uuid);
         }
 
         this.setTraveling(nbt.getBoolean("Traveling"));
@@ -603,6 +614,15 @@ public class MerchantEntity extends AbstractWorkerEntity implements IBoatControl
 
     public void setHorseUUID(Optional<UUID> id) {
         this.entityData.set(HORSE_ID, id);
+    }
+
+    @Nullable
+    public UUID getBoatUUID() {
+        return this.entityData.get(BOAT_ID).orElse(null);
+    }
+
+    public void setBoatUUID(Optional<UUID> id) {
+        this.entityData.set(BOAT_ID, id);
     }
 
     @Override

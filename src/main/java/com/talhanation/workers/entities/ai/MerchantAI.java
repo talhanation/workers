@@ -4,11 +4,13 @@ import com.talhanation.workers.entities.MerchantEntity;
 import net.minecraft.core.BlockPos;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.entity.ai.goal.Goal;
+import net.minecraft.world.entity.animal.horse.AbstractHorse;
 import net.minecraft.world.entity.vehicle.Boat;
 
 import java.util.Comparator;
 import java.util.EnumSet;
 import java.util.List;
+import java.util.Optional;
 
 import static com.talhanation.workers.entities.MerchantEntity.State.*;
 
@@ -188,8 +190,21 @@ public class MerchantAI extends Goal {
         List<Boat> list = merchant.level.getEntitiesOfClass(Boat.class, merchant.getBoundingBox().inflate(16D));
         list.removeIf(boat -> !boat.getPassengers().isEmpty());
         list.sort(Comparator.comparing(boatInList -> boatInList.distanceTo(merchant)));
-        if (!list.isEmpty()) {
-            this.boat = list.get(0);
+
+        if(merchant.getBoatUUID() == null){
+            for (Boat boat : list) {
+                merchant.setHorseUUID(Optional.of(boat.getUUID()));
+                merchant.startRiding(boat);
+                this.boat = boat;
+            }
+        }
+        else{
+            for (Boat boat : list){
+                if(merchant.getBoatUUID() != null && boat.getUUID().equals(merchant.getBoatUUID())){
+                    merchant.startRiding(boat);
+                    this.boat = boat;
+                }
+            }
         }
     }
 
