@@ -3,13 +3,11 @@ package com.talhanation.workers.entities.ai;
 import com.talhanation.workers.entities.MerchantEntity;
 import net.minecraft.core.BlockPos;
 import net.minecraft.network.chat.Component;
+import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.ai.goal.Goal;
 import net.minecraft.world.entity.vehicle.Boat;
 
-import java.util.Comparator;
-import java.util.EnumSet;
-import java.util.List;
-import java.util.Optional;
+import java.util.*;
 
 import static com.talhanation.workers.entities.MerchantEntity.State.*;
 
@@ -193,16 +191,33 @@ public class MerchantAI extends Goal {
         if(merchant.getBoatUUID() == null){
             for (Boat boat : list) {
                 merchant.setBoatUUID(Optional.of(boat.getUUID()));
-                merchant.startRiding(boat);
-                this.boat = boat;
+                this.boardBoat(boat);
             }
         }
         else{
             for (Boat boat : list){
                 if(merchant.getBoatUUID() != null && boat.getUUID().equals(merchant.getBoatUUID())){
-                    merchant.startRiding(boat);
-                    this.boat = boat;
+                    this.boardBoat(boat);
                 }
+            }
+        }
+    }
+
+    private void boardBoat(Boat boat){
+        List<Entity> passengers = new ArrayList<>();
+        if(!boat.getPassengers().isEmpty()){
+            passengers = boat.getPassengers();
+            for (Entity passenger : passengers){
+                passenger.startRiding(boat);
+            }
+        }
+
+        merchant.startRiding(boat);
+        this.boat = boat;
+
+        if(Objects.equals(merchant.getVehicle(), this.boat) && !passengers.isEmpty()){
+            for (Entity passenger : passengers){
+                passenger.startRiding(boat);
             }
         }
     }
