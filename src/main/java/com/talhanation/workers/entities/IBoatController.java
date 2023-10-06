@@ -28,14 +28,27 @@ public interface IBoatController {
         if(this.getWorker().getVehicle() instanceof Boat boat && boat.getPassengers().get(0).equals(this.getWorker())) {
             String string = boat.getEncodeId();
             if(Main.isSmallShipsInstalled && (string.contains("smallships"))){
-                if(this.getWorker() instanceof MerchantEntity merchant && getWaterDepth(boat.getOnPos()) >= 7 && merchant.getCurrentWayPoint() != null && getWaterDepth(merchant.getCurrentWayPoint()) >= 7 && !merchant.getFollow() && !boat.horizontalCollision){
-                    updateSmallShipsBoatControl(boat, merchant.getCurrentWayPoint().getX(), merchant.getCurrentWayPoint().getZ(), true);
+                if(this.getWorker() instanceof MerchantEntity merchant){
+                    boolean onPosIsDeep = getWaterDepth(boat.getOnPos()) >= 7;
+                    boolean wayPointIsDeep = merchant.getCurrentWayPoint() != null && getWaterDepth(merchant.getCurrentWayPoint()) >= 7;
+
+                    if(onPosIsDeep && merchant.getCurrentWayPoint() != null && !boat.horizontalCollision){
+                        // if waypoint is deep control shall be fast
+                        if(!merchant.getFollow())
+                            updateSmallShipsBoatControl(merchant, boat, merchant.getCurrentWayPoint().getX(), merchant.getCurrentWayPoint().getZ(), wayPointIsDeep);
+
+                        else if(merchant.getOwner() != null){
+                            boolean ownerOnPosIsDeep = getWaterDepth(merchant.getOwner().getOnPos()) >= 7;
+                            boolean ownerFar = merchant.distanceToSqr(merchant.getOwner()) > 30;
+                            if(ownerOnPosIsDeep)
+                                updateSmallShipsBoatControl(merchant, boat, merchant.getOwner().getX(), merchant.getOwner().getZ(), ownerFar);
+                            else
+                                updateSmallShipsBoatControl(merchant, boat, posX, posZ, ownerFar);
+                        }
+                    }
+                    else
+                        updateSmallShipsBoatControl(merchant, boat, posX, posZ, false);
                 }
-                else if(this.getWorker() instanceof MerchantEntity merchant && getWaterDepth(boat.getOnPos()) >= 7 && merchant.getCurrentWayPoint() != null  && !merchant.getFollow() && !boat.horizontalCollision){
-                    updateSmallShipsBoatControl(boat, merchant.getCurrentWayPoint().getX(), merchant.getCurrentWayPoint().getZ(), false);
-                }
-                else
-                    updateSmallShipsBoatControl(boat, posX, posZ, false);
             }
             else
                 updateVanillaBoatControl(boat, posX, posZ, speedFactor, turnFactor);
@@ -77,17 +90,17 @@ public interface IBoatController {
     }
 
 
-    default void updateSmallShipsBoatControl(Boat boat, double posX, double posZ, boolean fast) {
+    default void updateSmallShipsBoatControl(MerchantEntity merchant, Boat boat, double posX, double posZ, boolean fast) {
         Vec3 forward = boat.getForward().yRot(-90).normalize();
         Vec3 target = new Vec3(posX, 0, posZ);
         Vec3 toTarget = boat.position().subtract(target).normalize();
 
         double phi = horizontalAngleBetweenVectors(forward, toTarget);
         //Main.LOGGER.info("phi: " + phi);
-        double reff = 63.5F;
-        boolean inputLeft =  (phi < reff);
-        boolean inputRight = (phi > reff);
-        boolean inputUp = Math.abs(phi - reff) <= reff * 0.35F;
+        double ref = 63.5F;
+        boolean inputLeft =  (phi < ref);
+        boolean inputRight = (phi > ref);
+        boolean inputUp = Math.abs(phi - ref) <= ref * 0.35F;
 
         float boatSpeed = 0;
         float boatRotSpeed = 0;
@@ -143,13 +156,21 @@ public interface IBoatController {
                     if(currentSail != state) sailable.setSailState((byte) state);
                 }
             }
-            else {
+            else if(merchant.getTraveling() || merchant.getReturning() || merchant.getFollow()) {
                 if(ship instanceof Sailable sailable){
                     //float speedInKmH = Kalkuel.getKilometerPerHour(boatSpeed);
                     byte currentSail = sailable.getSailState();
                     if(currentSail != 1) sailable.setSailState((byte) 1);
                 }
                 setPoint = 0.025F;
+            }
+            else{
+                if(ship instanceof Sailable sailable){
+                    //float speedInKmH = Kalkuel.getKilometerPerHour(boatSpeed);
+                    byte currentSail = sailable.getSailState();
+                    if(currentSail != 0) sailable.setSailState((byte) 0);
+                }
+                setPoint = 0.0F;
             }
 
             this.calculateSpeed(boat, boatSpeed, acceleration, setPoint);
