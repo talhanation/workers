@@ -702,11 +702,12 @@ public class MerchantEntity extends AbstractWorkerEntity implements IBoatControl
             BlockPos pos2 = pos.above(i);
             BlockState state1 = this.level.getBlockState(pos1);
             BlockState state2 = this.level.getBlockState(pos2);
-            if(state1.is(Blocks.WATER) || state1.is(Blocks.KELP) || state1.is(Blocks.KELP_PLANT) || state2.is(Blocks.KELP) || state2.is(Blocks.KELP_PLANT) || state2.is(Blocks.WATER)){
-                return true;
+
+            if(!state1.is(Blocks.WATER) && !state1.is(Blocks.KELP) && !state1.is(Blocks.KELP_PLANT) && !state1.is(Blocks.SEAGRASS) && !state1.is(Blocks.TALL_SEAGRASS) && !state2.is(Blocks.KELP) && !state2.is(Blocks.KELP_PLANT) && !state2.is(Blocks.WATER) && !state2.is(Blocks.SEAGRASS) && !state2.is(Blocks.TALL_SEAGRASS)){
+                return false;
             }
         }
-        return false;
+        return true;
     }
 
     public boolean isFreeWater(double x, double y, double z){
@@ -715,7 +716,8 @@ public class MerchantEntity extends AbstractWorkerEntity implements IBoatControl
                 BlockPos pos = new BlockPos(x, y, z).offset(i, 0, k);
                 BlockState state = this.level.getBlockState(pos);
 
-                if(!state.is(Blocks.WATER)) return false;
+                if(!state.is(Blocks.WATER) && !state.is(Blocks.KELP) && !state.is(Blocks.KELP_PLANT) && !state.is(Blocks.SEAGRASS) && !state.is(Blocks.TALL_SEAGRASS))
+                    return false;
             }
         }
         return true;
