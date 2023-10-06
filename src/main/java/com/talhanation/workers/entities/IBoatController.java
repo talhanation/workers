@@ -101,6 +101,7 @@ public interface IBoatController {
         boolean inputLeft =  (phi < ref);
         boolean inputRight = (phi > ref);
         boolean inputUp = Math.abs(phi - ref) <= ref * 0.35F;
+        boolean inAngleForSail = Math.abs(phi - ref) <= ref * 0.80;
 
         float boatSpeed = 0;
         float boatRotSpeed = 0;
@@ -136,8 +137,11 @@ public interface IBoatController {
 
             //TODO if(this.isInWater() && !((BoatLeashAccess) this).isLeashed()){
 
-
-            if (inputUp) {
+            if(!inAngleForSail){
+                setSmallShipsSailState(ship,0);
+                setPoint = 0.02F;
+            }
+            else if (inputUp) {
                 double distance = toTarget.distanceToSqr(boat.position());
                 byte state = 3;
                 if(fast){
@@ -150,26 +154,14 @@ public interface IBoatController {
                 else{
                     setPoint = 0.075F;
                 }
-                if(ship instanceof Sailable sailable){
-                    //float speedInKmH = Kalkuel.getKilometerPerHour(boatSpeed);
-                    byte currentSail = sailable.getSailState();
-                    if(currentSail != state) sailable.setSailState((byte) state);
-                }
+                setSmallShipsSailState(ship,state);
             }
             else if(merchant.getTraveling() || merchant.getReturning() || merchant.getFollow()) {
-                if(ship instanceof Sailable sailable){
-                    //float speedInKmH = Kalkuel.getKilometerPerHour(boatSpeed);
-                    byte currentSail = sailable.getSailState();
-                    if(currentSail != 1) sailable.setSailState((byte) 1);
-                }
+                setSmallShipsSailState(ship,1);
                 setPoint = 0.025F;
             }
             else{
-                if(ship instanceof Sailable sailable){
-                    //float speedInKmH = Kalkuel.getKilometerPerHour(boatSpeed);
-                    byte currentSail = sailable.getSailState();
-                    if(currentSail != 0) sailable.setSailState((byte) 0);
-                }
+                setSmallShipsSailState(ship,0);
                 setPoint = 0.0F;
             }
 
@@ -200,6 +192,14 @@ public interface IBoatController {
             boat.setDeltaMovement(calculateMotionX(boatSpeed, boat.getYRot()), 0.0F, calculateMotionZ(boatSpeed, boat.getYRot()));
             //}
 
+        }
+    }
+
+    default void setSmallShipsSailState(Ship ship, int state){
+        if(ship instanceof Sailable sailable){
+            //float speedInKmH = Kalkuel.getKilometerPerHour(boatSpeed);
+            byte currentSail = sailable.getSailState();
+            if(currentSail != state) sailable.setSailState((byte) state);
         }
     }
 
