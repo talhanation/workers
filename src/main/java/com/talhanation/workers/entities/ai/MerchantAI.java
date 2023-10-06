@@ -4,7 +4,6 @@ import com.talhanation.workers.entities.MerchantEntity;
 import net.minecraft.core.BlockPos;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.entity.ai.goal.Goal;
-import net.minecraft.world.entity.animal.horse.AbstractHorse;
 import net.minecraft.world.entity.vehicle.Boat;
 
 import java.util.Comparator;
@@ -193,7 +192,7 @@ public class MerchantAI extends Goal {
 
         if(merchant.getBoatUUID() == null){
             for (Boat boat : list) {
-                merchant.setHorseUUID(Optional.of(boat.getUUID()));
+                merchant.setBoatUUID(Optional.of(boat.getUUID()));
                 merchant.startRiding(boat);
                 this.boat = boat;
             }
