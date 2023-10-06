@@ -22,6 +22,7 @@ public class MerchantAI extends Goal {
     private float precision;
     private int timer;
     private Boat boat;
+    private List<Entity> prevPassengers;
 
     public MerchantAI(MerchantEntity merchant) {
         this.merchant = merchant;
@@ -70,10 +71,18 @@ public class MerchantAI extends Goal {
                     this.moveToPos(boat.getOnPos(), 1F);
 
                     if (boat.getOnPos().closerThan(merchant.getOnPos(), 4F)) {
-                        merchant.startRiding(boat);
+                        boardBoat(boat);
                     }
 
                     if (boat.getFirstPassenger() != null && this.merchant.equals(boat.getFirstPassenger())) {
+
+                        if(prevPassengers != null && !prevPassengers.isEmpty()){
+                            for (Entity passenger : prevPassengers){
+                                passenger.startRiding(boat, true);
+                            }
+                            prevPassengers = null;
+                        }
+
                         this.setWorkState(SAILING);
                     }
                 }
@@ -185,41 +194,43 @@ public class MerchantAI extends Goal {
     }
     private void searchForBoat() {
         List<Boat> list = merchant.level.getEntitiesOfClass(Boat.class, merchant.getBoundingBox().inflate(16D));
-        list.removeIf(boat -> !boat.getPassengers().isEmpty());
+        //list.removeIf(boat -> !boat.getPassengers().isEmpty());
         list.sort(Comparator.comparing(boatInList -> boatInList.distanceTo(merchant)));
-
-        if(merchant.getBoatUUID() == null){
-            for (Boat boat : list) {
-                merchant.setBoatUUID(Optional.of(boat.getUUID()));
-                this.boardBoat(boat);
+        boolean getClosest = false;
+        if(merchant.getBoatUUID() != null){
+            if(list.isEmpty()){
+                getClosest = true;
             }
-        }
-        else{
-            for (Boat boat : list){
-                if(merchant.getBoatUUID() != null && boat.getUUID().equals(merchant.getBoatUUID())){
-                    this.boardBoat(boat);
+            else {
+                for (Boat boat : list){
+                    if(merchant.getBoatUUID() != null && boat.getUUID().equals(merchant.getBoatUUID())){
+                        this.boat = boat;
+                    }
+                }
+                if(boat == null){
+                    getClosest = true;
                 }
             }
+        }
+        else getClosest = true;
+
+        if(getClosest){
+            merchant.setBoatUUID(Optional.of(list.get(0).getUUID()));
+            this.boat = list.get(0);
         }
     }
 
     private void boardBoat(Boat boat){
-        List<Entity> passengers = new ArrayList<>();
+        this.prevPassengers = new ArrayList<>();
         if(!boat.getPassengers().isEmpty()){
-            passengers = boat.getPassengers();
-            for (Entity passenger : passengers){
-                passenger.startRiding(boat);
+            prevPassengers = boat.getPassengers();
+            for (Entity passenger : prevPassengers){
+                passenger.stopRiding();
             }
         }
 
         merchant.startRiding(boat);
         this.boat = boat;
-
-        if(Objects.equals(merchant.getVehicle(), this.boat) && !passengers.isEmpty()){
-            for (Entity passenger : passengers){
-                passenger.startRiding(boat);
-            }
-        }
     }
 
     private void moveToPos(BlockPos pos, float speed) {
