@@ -86,7 +86,7 @@ public class Translatable {
     public static final Component TEXT_NO_SPACE_INV = Component.translatable("chat.workers.text.noSpaceInvForUpkeep");
 
     public static final Component TEXT_NO_PICKAXE = Component.translatable("chat.workers.text.noPickaxe");
-
+    public static final Component TEXT_NO_FISHING_ROD = Component.translatable("chat.workers.text.noFishingRod");
     public static final Component TEXT_BUTTON_WORK_POS = Component.translatable("gui.workers.button.workPos");
     public static final Component TEXT_BUTTON_CHEST_POS = Component.translatable("gui.workers.button.chestPos");
     public static final Component TEXT_BUTTON_SLEEP_POS = Component.translatable("gui.workers.button.sleepPos");

@@ -148,7 +148,7 @@ public class MinerAI extends Goal {
         if (minePos.closerThan(miner.getOnPos(), 6)){
             boolean needsPickaxe = blockstate.is(BlockTags.MINEABLE_WITH_PICKAXE);
 
-            if(needsPickaxe && !hasMainToolInInv()) {
+            if(needsPickaxe && !miner.hasMainToolInInv()) {
                 if(!messageNoPickaxe && this.miner.getOwner() != null){
                     this.miner.tellPlayer(miner.getOwner(), Translatable.TEXT_NO_PICKAXE);
                     messageNoPickaxe = true;
@@ -319,14 +319,5 @@ public class MinerAI extends Goal {
             miner.level.setBlock(this.minePos, Blocks.OAK_PLANKS.defaultBlockState(), 3);
             miner.level.playSound(null, this.minePos.getX(), this.minePos.getY(), this.minePos.getZ(), SoundEvents.WOOD_PLACE, SoundSource.BLOCKS, 1.0F, 1.0F);
         }
-    }
-
-    public boolean hasMainToolInInv() {
-        SimpleContainer inventory = this.miner.getInventory();
-        for (int i = 0; i < inventory.getContainerSize(); i++) {
-            ItemStack itemStack = inventory.getItem(i);
-            if (this.miner.isRequiredMainTool(itemStack)) return true;
-        }
-        return false;
     }
 }

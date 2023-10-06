@@ -88,6 +88,10 @@ public class MinerEntity extends AbstractWorkerEntity {
 
     }
 
+    public boolean canWorkWithoutTool(){
+        return false;
+    }
+
     // ATTRIBUTES
     public static AttributeSupplier.Builder setAttributes() {
         return createMobAttributes().add(Attributes.MAX_HEALTH, 20.0D).add(Attributes.MOVEMENT_SPEED, 0.3D)

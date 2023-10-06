@@ -158,6 +158,10 @@ public class FishermanEntity extends AbstractWorkerEntity implements IBoatContro
         this.setCustomName(name);
     }
 
+    public boolean canWorkWithoutTool(){
+        return false;
+    }
+
     @Override
     public boolean isRequiredMainTool(ItemStack tool) {
         return tool.getItem() instanceof FishingRodItem;

@@ -9,6 +9,7 @@ import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.world.InteractionHand;
+import net.minecraft.world.SimpleContainer;
 import net.minecraft.world.entity.ai.goal.Goal;
 import net.minecraft.world.entity.vehicle.Boat;
 import net.minecraft.world.item.ItemStack;
@@ -36,7 +37,7 @@ public class FishermanAI extends Goal {
     private Boat boat;
     private FishermanEntity.State state;
     private boolean DEBUG = false;
-
+    private boolean messageNoFishingRod = false;
     private int timer;
     private byte fails;
 
@@ -190,6 +191,15 @@ public class FishermanAI extends Goal {
                 if(!fisherman.canWork()) this.setWorkState(STOPPING);
 
                 if(fishingPos == null) this.setWorkState(STOPPING);
+
+                if(!fisherman.hasMainToolInInv()) {
+                    if(!messageNoFishingRod && this.fisherman.getOwner() != null){
+                        this.fisherman.tellPlayer(fisherman.getOwner(), Translatable.TEXT_NO_FISHING_ROD);
+                        messageNoFishingRod = true;
+                    }
+                    fisherman.setNeedsTool(true);
+                }
+
                 fishing();
             }
 

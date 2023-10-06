@@ -36,7 +36,9 @@ public class ShepherdEntity extends AbstractAnimalFarmerEntity {
         return !item.hasPickUpDelay() && item.isAlive() && this.wantsToPickUp(item.getItem());
     };
 
-
+    public boolean canWorkWithoutTool(){
+        return false;
+    }
 
     public ShepherdEntity(EntityType<? extends AbstractWorkerEntity> entityType, Level world) {
         super(entityType, world);

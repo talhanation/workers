@@ -70,6 +70,10 @@ public class FarmerEntity extends AbstractWorkerEntity {
         this.initSpawn();
     }
 
+    public boolean canWorkWithoutTool(){
+        return false;
+    }
+
     @Override
     public void tick() {
         super.tick();

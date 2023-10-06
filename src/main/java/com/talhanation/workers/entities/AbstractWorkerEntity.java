@@ -188,9 +188,12 @@ public abstract class AbstractWorkerEntity extends AbstractChunkLoaderEntity {
                 if (owner != null) worker.tellPlayer(owner, TEXT_OUT_OF_TOOLS(heldItem));
                 worker.setNeedsTool(true);
             }
-
-            worker.upgradeTool();
         });
+        this.upgradeTool();
+    }
+
+    public boolean canWorkWithoutTool(){
+        return true;
     }
 
     public void tick() {
@@ -507,6 +510,7 @@ public abstract class AbstractWorkerEntity extends AbstractChunkLoaderEntity {
     }
 
     public void setNeedsTool(boolean bool) {
+        if(bool) setFarmedItems(64);
         this.entityData.set(NEEDS_TOOL, bool);
     }
 
@@ -687,11 +691,13 @@ public abstract class AbstractWorkerEntity extends AbstractChunkLoaderEntity {
     }
 
     public boolean canWork(){
+         boolean canNotWorkWithTool = needsTool() && !canWorkWithoutTool();
         // Stop AI while following the player.
         // Stop AI to at night, so SleepGoal can start.
         // Stop AI if work position is not set.
         // Stop AI if inventory is full, so TransferItemsInChestGoal can start.
-        if(this.getStartPos() == null || this.needsToSleep() || this.getFollow() || this.needsToDeposit() || this.needsToGetFood() || startPosChanged) {
+        // Stop AI if can not work wotihout tool;
+        if(canNotWorkWithTool || this.getStartPos() == null || this.needsToSleep() || this.getFollow() || this.needsToDeposit() || this.needsToGetFood() || startPosChanged) {
             startPosChanged = false;
             return false;
         }
@@ -853,4 +859,13 @@ public abstract class AbstractWorkerEntity extends AbstractChunkLoaderEntity {
 
     public abstract boolean isRequiredMainTool(ItemStack tool);
     public abstract boolean isRequiredSecondTool(ItemStack tool);
+
+    public boolean hasMainToolInInv() {
+        SimpleContainer inventory = this.getInventory();
+        for (int i = 0; i < inventory.getContainerSize(); i++) {
+            ItemStack itemStack = inventory.getItem(i);
+            if (this.isRequiredMainTool(itemStack)) return true;
+        }
+        return false;
+    }
 }
