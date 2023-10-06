@@ -248,7 +248,7 @@ public class MerchantAI extends Goal {
         }
     }
     private void changeTravelType(){
-        if(merchant.isWaterBlockPos(merchant.getCurrentWayPoint())){
+        if(merchant.getCurrentWayPoint() != null && merchant.isWaterBlockPos(merchant.getCurrentWayPoint())){
             if(boat != null && boat.getFirstPassenger() != null && this.merchant.equals(boat.getFirstPassenger())){
                 this.setWorkState(SAILING);
             }
