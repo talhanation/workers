@@ -214,7 +214,7 @@ public class MerchantAI extends Goal {
         }
         else getClosest = true;
 
-        if(getClosest){
+        if(!list.isEmpty() && getClosest){
             merchant.setBoatUUID(Optional.of(list.get(0).getUUID()));
             this.boat = list.get(0);
         }
