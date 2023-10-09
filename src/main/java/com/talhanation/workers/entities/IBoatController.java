@@ -1,15 +1,17 @@
 package com.talhanation.workers.entities;
 
-import com.talhanation.smallships.world.entity.ship.Ship;
-import com.talhanation.smallships.world.entity.ship.abilities.Sailable;
 import com.talhanation.workers.Main;
 import net.minecraft.core.BlockPos;
 import net.minecraft.util.Mth;
+import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.entity.vehicle.Boat;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.pathfinder.Node;
 import net.minecraft.world.phys.Vec3;
+
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
 
 
 public interface IBoatController {
@@ -128,79 +130,107 @@ public interface IBoatController {
         }
         */
 
-        if(boat instanceof Ship ship) {
-            boatSpeed = ship.getSpeed();
-            boatRotSpeed = ship.getRotSpeed();
+        try{
+            Class<?> shipClass = Class.forName("com.talhanation.smallships.world.entity.ship.Ship");
+            if(shipClass.isInstance(boat)) {
+                Object ship = shipClass.cast(boat);
 
-            //TODO Sync ship state:  updateControls(((BoatAccessor) this).isInputUp(),((BoatAccessor) this).isInputDown(), ((BoatAccessor) this).isInputLeft(), ((BoatAccessor) this).isInputRight(), player);
-            ship.updateControls(inputUp, false, inputLeft, inputRight, null); //Player parameter can be null because its not client side
+                Method shipClassSetRotSpeed = ship.getClass().getMethod("setRotSpeed", float.class);
+                Method shipClassGetSpeed = ship.getClass().getMethod("getSpeed");
+                Method shipClassGetRotSpeed = ship.getClass().getMethod("getRotSpeed");
+                Method shipClassUpdateControls = ship.getClass().getMethod("updateControls", boolean.class, boolean.class, boolean.class, boolean.class, Player.class);
 
-            //TODO if(this.isInWater() && !((BoatLeashAccess) this).isLeashed()){
+                boatSpeed = (float) shipClassGetSpeed.invoke(ship);
+                boatRotSpeed = (float) shipClassGetRotSpeed.invoke(ship);
 
-            if(!inAngleForSail){
-                setSmallShipsSailState(ship,0);
-                setPoint = 0.02F;
-            }
-            else if (inputUp) {
-                double distance = toTarget.distanceToSqr(boat.position());
-                byte state = 3;
-                if(fast){
-                    state = 4;
-                    setPoint = 0.3F;
+                //TODO Sync ship state:  updateControls(((BoatAccessor) this).isInputUp(),((BoatAccessor) this).isInputDown(), ((BoatAccessor) this).isInputLeft(), ((BoatAccessor) this).isInputRight(), player);
+                shipClassUpdateControls.invoke(ship,inputUp, false, inputLeft, inputRight, null);
+
+                //TODO if(this.isInWater() && !((BoatLeashAccess) this).isLeashed()){
+
+                if(!inAngleForSail){
+                    setSmallShipsSailState((Boat) ship,0);
+                    setPoint = 0.02F;
                 }
-                else if(distance > 20){
-                    setPoint = 0.15F;
+                else if (inputUp) {
+                    double distance = toTarget.distanceToSqr(boat.position());
+                    byte state = 3;
+                    if(fast){
+                        state = 4;
+                        setPoint = 0.3F;
+                    }
+                    else if(distance > 20){
+                        setPoint = 0.15F;
+                    }
+                    else{
+                        setPoint = 0.075F;
+                    }
+                    setSmallShipsSailState((Boat) ship,state);
+                }
+                else if(merchant.getTraveling() || merchant.getReturning() || merchant.getFollow()) {
+                    setSmallShipsSailState((Boat) ship,1);
+                    setPoint = 0.025F;
                 }
                 else{
-                    setPoint = 0.075F;
+                    setSmallShipsSailState((Boat) ship,0);
+                    setPoint = 0.0F;
                 }
-                setSmallShipsSailState(ship,state);
-            }
-            else if(merchant.getTraveling() || merchant.getReturning() || merchant.getFollow()) {
-                setSmallShipsSailState(ship,1);
-                setPoint = 0.025F;
-            }
-            else{
-                setSmallShipsSailState(ship,0);
-                setPoint = 0.0F;
-            }
 
-            this.calculateSpeed(boat, boatSpeed, acceleration, setPoint);
+                this.calculateSpeed(boat, boatSpeed, acceleration, setPoint);
 
-            //CALCULATE ROTATION SPEED//
-            float rotationSpeed = subtractToZero(boatRotSpeed, getVelocityResistance() * 2.5F);
+                //CALCULATE ROTATION SPEED//
+                float rotationSpeed = subtractToZero(boatRotSpeed, getVelocityResistance() * 2.5F);
 
 
-            if (inputRight) {
-                if (rotationSpeed < maxRotSp) {
-                    rotationSpeed = Math.min(rotationSpeed + rotAcceleration * 1 / 8, maxRotSp);
+                if (inputRight) {
+                    if (rotationSpeed < maxRotSp) {
+                        rotationSpeed = Math.min(rotationSpeed + rotAcceleration * 1 / 8, maxRotSp);
+                    }
                 }
-            }
 
-            if (inputLeft) {
-                if (rotationSpeed > -maxRotSp) {
-                    rotationSpeed = Math.max(rotationSpeed - rotAcceleration * 1 / 8, -maxRotSp);
+                if (inputLeft) {
+                    if (rotationSpeed > -maxRotSp) {
+                        rotationSpeed = Math.max(rotationSpeed - rotAcceleration * 1 / 8, -maxRotSp);
+                    }
                 }
+
+                //ship.setRotSpeed(rotationSpeed);
+
+                boat.deltaRotation = rotationSpeed;
+                boat.setYRot(boat.getYRot() + boat.deltaRotation);
+
+                //SET
+                boat.setDeltaMovement(calculateMotionX(boatSpeed, boat.getYRot()), 0.0F, calculateMotionZ(boatSpeed, boat.getYRot()));
+                //}
+
+
+                 shipClassSetRotSpeed.invoke(ship, rotationSpeed);
+
             }
-
-            ship.setRotSpeed(rotationSpeed);
-
-            boat.deltaRotation = rotationSpeed;
-            boat.setYRot(boat.getYRot() + boat.deltaRotation);
-
-            //SET
-            boat.setDeltaMovement(calculateMotionX(boatSpeed, boat.getYRot()), 0.0F, calculateMotionZ(boatSpeed, boat.getYRot()));
-            //}
-
+        } catch (ClassNotFoundException | NoSuchMethodException | IllegalAccessException | InvocationTargetException e) {
+            Main.LOGGER.info("shipClass was not found");
         }
     }
 
-    default void setSmallShipsSailState(Ship ship, int state){
-        if(ship instanceof Sailable sailable){
-            //float speedInKmH = Kalkuel.getKilometerPerHour(boatSpeed);
-            byte currentSail = sailable.getSailState();
-            if(currentSail != state) sailable.setSailState((byte) state);
+    default void setSmallShipsSailState(Boat boat, int state){
+        try{
+            Class<?> sailableClass = Class.forName("com.talhanation.smallships.world.entity.ship.abilities.Sailable");
+            if(sailableClass.isInstance(boat)){
+                Object sailable = sailableClass.cast(boat);
+
+                Method sailableClassSetSailState = sailable.getClass().getMethod("setSailState", byte.class);
+                Method sailableClassGetSailState = sailable.getClass().getMethod("getSailState");
+
+                byte currentSail = (byte) sailableClassGetSailState.invoke(sailable);
+                if(currentSail != (byte) state) sailableClassSetSailState.invoke(sailable, (byte) state);
+            }
+
         }
+        catch (ClassNotFoundException | IllegalAccessException | NoSuchMethodException | InvocationTargetException e) {
+            Main.LOGGER.info("SailableClass was not found");
+        }
+
+
     }
 
     default float getVelocityResistance(){
@@ -216,10 +246,18 @@ public interface IBoatController {
         } else
             speed = subtractToZero(speed, getVelocityResistance() * 2.2F);
 
-        if(boat instanceof Ship ship) {
-            ship.setSpeed(speed);
-        }
+        try{
+            Class<?> shipClass = Class.forName("com.talhanation.smallships.world.entity.ship.Ship");
+            if(shipClass.isInstance(boat)) {
+                Object ship = shipClass.cast(boat);
 
+                Method shipClassSetSpeed = ship.getClass().getMethod("setSpeed", float.class);
+                shipClassSetSpeed.invoke(ship, speed);
+
+            }
+        } catch (ClassNotFoundException | NoSuchMethodException | IllegalAccessException | InvocationTargetException e) {
+            Main.LOGGER.info("shipClass was not found");
+        }
     }
 
         /**
