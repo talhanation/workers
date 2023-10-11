@@ -540,7 +540,10 @@ public class MerchantEntity extends AbstractWorkerEntity implements IBoatControl
     public ItemStack getItemStackToRender(BlockPos pos){
         BlockState state = this.level.getBlockState(pos);
         ItemStack itemStack;
-        if (state.is(Blocks.WATER) || state.is(Blocks.KELP) || state.is(Blocks.KELP_PLANT)) itemStack = new ItemStack(Items.OAK_BOAT);
+        if (state.is(Blocks.WATER) || state.is(Blocks.KELP) || state.is(Blocks.KELP_PLANT)){
+            //TODO: add item when smallships is installed
+            itemStack = new ItemStack(Items.OAK_BOAT);
+        }
         else if (state.is(Blocks.AIR) || state.is(Blocks.CAVE_AIR)) itemStack = new ItemStack(Items.GRASS_BLOCK);
         else itemStack = new ItemStack(state.getBlock().asItem());
 

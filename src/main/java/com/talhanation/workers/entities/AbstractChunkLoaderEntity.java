@@ -1,12 +1,10 @@
 package com.talhanation.workers.entities;
 
-import com.mojang.datafixers.util.Pair;
 import com.talhanation.workers.Main;
 import com.talhanation.workers.config.WorkersModConfig;
 import net.minecraft.core.Direction;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.server.level.ServerLevel;
-import net.minecraft.world.damagesource.DamageSource;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.level.ChunkPos;
 import net.minecraft.world.level.Level;
