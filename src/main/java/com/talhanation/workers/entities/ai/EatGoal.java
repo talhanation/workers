@@ -53,9 +53,11 @@ public class EatGoal extends Goal{
         */
 
         worker.heal(Objects.requireNonNull(foodStack.getItem().getFoodProperties(foodStack, worker)).getSaturationModifier() * 1);
-        if (!worker.isSaturated())
-            worker.setHunger(worker.getHunger() + Objects.requireNonNull(foodStack.getItem().getFoodProperties(foodStack, worker)).getSaturationModifier() * 20);
-
+        if (!worker.isSaturated()) {
+            float saturation = Objects.requireNonNull(foodStack.getItem().getFoodProperties(foodStack, worker)).getSaturationModifier() * 10;
+            float nutrition = Objects.requireNonNull(foodStack.getItem().getFoodProperties(foodStack, worker)).getNutrition() * 10;
+            worker.setHunger(worker.getHunger() + saturation + nutrition);
+        }
         worker.setItemInHand(InteractionHand.OFF_HAND, foodStack);
         worker.startUsingItem(InteractionHand.OFF_HAND);
     }
@@ -75,7 +77,6 @@ public class EatGoal extends Goal{
 
     public void resetItemInHand() {
         worker.setItemInHand(InteractionHand.OFF_HAND, ItemStack.EMPTY);
-        worker.getInventory().setItem(4, ItemStack.EMPTY);
 
         worker.setItemInHand(InteractionHand.OFF_HAND, this.beforeItem.copy());
         if(worker.getInventory().getItem(slotID).isEmpty()){
