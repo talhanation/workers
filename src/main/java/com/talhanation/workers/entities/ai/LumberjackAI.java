@@ -19,6 +19,7 @@ import net.minecraftforge.event.ForgeEventFactory;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.EnumSet;
+import java.util.Random;
 
 import static com.talhanation.workers.entities.LumberjackEntity.State.*;
 
@@ -77,6 +78,10 @@ public class LumberjackAI extends Goal {
             case WORKING -> {
                 if(!lumber.canWork()) this.setWorkState(STOP);
                 if(lumber.getVehicle() != null) lumber.stopRiding();
+
+                if(isInSapling()) {
+                    lumber.walkTowards(lumber.getStartPos(), 1F);
+                }
 
                 if (workPos != null){
                     //Move to minePos -> normal movement
@@ -160,6 +165,18 @@ public class LumberjackAI extends Goal {
                 }
             }
         }
+    }
+
+    public boolean isInSapling() {
+        for(int i = -1; i <= 1; i++){
+            BlockPos blockPos = lumber.getOnPos();
+
+            if(this.lumber.level.getBlockState(blockPos.above()).is(BlockTags.SAPLINGS)){
+                return true;
+            }
+        }
+
+        return false;
     }
 
     @Override
