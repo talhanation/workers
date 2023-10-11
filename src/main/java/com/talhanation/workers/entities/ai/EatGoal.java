@@ -78,7 +78,19 @@ public class EatGoal extends Goal{
         worker.getInventory().setItem(4, ItemStack.EMPTY);
 
         worker.setItemInHand(InteractionHand.OFF_HAND, this.beforeItem.copy());
-        worker.getInventory().setItem(slotID, foodStack.copy());
+        if(worker.getInventory().getItem(slotID).isEmpty()){
+            worker.getInventory().setItem(slotID, foodStack.copy());
+        }
+        else{
+            for(int i = 0; i < worker.getInventory().getContainerSize(); i++){
+                if(worker.getInventory().getItem(i).isEmpty()){
+                    worker.getInventory().setItem(i, foodStack.copy());
+                    return;
+                }
+            }
+            //if the method is not returned there is no space in inv, therefor spawn it in world
+            worker.spawnAtLocation(foodStack.copy());
+        }
 
     }
 
