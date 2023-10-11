@@ -7,6 +7,9 @@ import com.talhanation.workers.entities.ai.WorkerPickupWantedItemGoal;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.MutableComponent;
+import net.minecraft.network.syncher.EntityDataAccessor;
+import net.minecraft.network.syncher.EntityDataSerializers;
+import net.minecraft.network.syncher.SynchedEntityData;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.DifficultyInstance;
 import net.minecraft.world.SimpleContainer;
@@ -34,6 +37,9 @@ import java.util.Set;
 import java.util.function.Predicate;
 
 public class ChickenFarmerEntity extends AbstractAnimalFarmerEntity {
+
+    private static final EntityDataAccessor<Boolean> USE_EGGS = SynchedEntityData.defineId(ChickenFarmerEntity.class, EntityDataSerializers.BOOLEAN);
+
     private final Predicate<ItemEntity> ALLOWED_ITEMS = (item) -> {
         return !item.hasPickUpDelay() && item.isAlive() && this.wantsToPickUp(item.getItem());
     };
@@ -54,6 +60,7 @@ public class ChickenFarmerEntity extends AbstractAnimalFarmerEntity {
     }
 
     protected void defineSynchedData() {
+        this.entityData.define(USE_EGGS, true);
         super.defineSynchedData();
     }
 
@@ -158,5 +165,13 @@ public class ChickenFarmerEntity extends AbstractAnimalFarmerEntity {
                 || itemStack.getItem().equals(Items.MELON_SEEDS)
                 || itemStack.getItem().equals(Items.BEETROOT_SEEDS)
                 || itemStack.getItem().equals(Items.PUMPKIN_SEEDS);
+    }
+
+    public void setUseEggs(boolean useEggs) {
+        entityData.set(USE_EGGS, useEggs);
+    }
+
+    public boolean getUseEggs() {
+        return entityData.get(USE_EGGS);
     }
 }

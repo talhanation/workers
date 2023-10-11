@@ -97,7 +97,8 @@ public class Main {
             MessageOpenWaypointsGuiMerchant.class,
             MessageMerchantSetTravelSpeed.class,
             MessageMerchantSetAutoStartTravel.class,
-            MessageFollow.class
+            MessageFollow.class,
+            MessageChickenFarmerUseEggs.class
 
         };
         for (int i = 0; i < messages.length; i++) CommonRegistry.registerMessage(SIMPLE_CHANNEL, i, messages[i]);

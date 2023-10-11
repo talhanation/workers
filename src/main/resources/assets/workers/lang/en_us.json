@@ -105,6 +105,7 @@
   "gui.workers.tooltip.travel_start": "Starts the traveling beginning from first waypoint.",
   "chat.workers.text.travel_info": "Water travel is still in an experimental phase. It is recommended to use it in open waters such as rivers and oceans. Make sure to place a boat near the first water waypoint. Each water waypoint should have a clear and direct water connection to the previous one. Also, keep in mind to supervise the path during the fist journey.",
   "gui.workers.tooltip.autoStartTravel": "Should the travel restart when arrived at first waypoint.",
+  "gui.workers.tooltip.farmerUseEggs": "Should the Farmer throw collected eggs?",
   "gui.workers.tooltip.travelSpeed": "Set the travel speed.",
   "chat.workers.text.noSpaceInvForUpkeep": "I have no space in my inventory to resupply food.",
   "chat.workers.text.noFishingRod": "I need a Fishing Rod to continue my work!",
