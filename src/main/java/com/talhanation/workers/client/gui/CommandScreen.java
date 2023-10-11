@@ -5,9 +5,7 @@ import com.talhanation.workers.Main;
 import com.talhanation.workers.Translatable;
 import com.talhanation.workers.config.WorkersModConfig;
 import com.talhanation.workers.inventory.CommandMenu;
-import com.talhanation.workers.network.MessageBedPos;
-import com.talhanation.workers.network.MessageChestPos;
-import com.talhanation.workers.network.MessageStartPos;
+import com.talhanation.workers.network.*;
 import de.maxhenkel.corelib.inventory.ScreenBase;
 import net.minecraft.client.gui.components.Button;
 import net.minecraft.core.BlockPos;
@@ -21,6 +19,7 @@ import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.HitResult;
 import net.minecraftforge.client.gui.widget.ExtendedButton;
 
+import java.util.Comparator;
 import java.util.List;
 import java.util.UUID;
 
@@ -37,9 +36,13 @@ public class CommandScreen extends ScreenBase<CommandMenu> {
     private Button rightButton;
     private Button leftButton;
     private Button workPosButton;
+    private Button followButton;
+    private Button startTravelButton;
+    private Button stopTravelButton;
+    private Button returnTravelButton;
     private Button sleepPosButton;
     private Button chestPosButton;
-
+    //TODO: add worker type as integer
     public CommandScreen(CommandMenu commandContainer, Inventory playerInventory, Component title) {
         super(RESOURCE_LOCATION, commandContainer, playerInventory, Component.literal(""));
         imageWidth = 201;
@@ -50,26 +53,28 @@ public class CommandScreen extends ScreenBase<CommandMenu> {
     @Override
     public boolean keyReleased(int x, int y, int z) {
         super.keyReleased(x, y, z);
-        if(!WorkersModConfig.CommandScreenToggle.get())this.onClose();
+        if(!WorkersModConfig.CommandScreenToggle.get()) this.onClose();
         return true;
     }
 
     @Override
     protected void init() {
         super.init();
-        this.name = worker_names.get(index);
         this.setButtons();
     }
 
     private void setButtons(){
+        this.clearWidgets();
+        this.name = worker_names.get(index);
         int zeroLeftPos = leftPos + 150;
-        int zeroTopPos = topPos + 10;
+        int zeroTopPos = topPos - 40;
 
         this.rightButton = cycleButtonRight(zeroLeftPos, zeroTopPos);
         this.leftButton = cycleButtonLeft(zeroLeftPos, zeroTopPos);
 
         this.blockpos = getBlockPos();
 
+        this.followButton = setFollow(zeroLeftPos, zeroTopPos);
         this.workPosButton = setWorkPosition(blockpos, zeroLeftPos, zeroTopPos);
         this.sleepPosButton = setSleepPosition(blockpos, zeroLeftPos, zeroTopPos);
         this.chestPosButton = setChestPosition(blockpos, zeroLeftPos, zeroTopPos);
@@ -82,6 +87,14 @@ public class CommandScreen extends ScreenBase<CommandMenu> {
         this.chestPosButton.active = blockpos != null && player.level.getBlockEntity(blockpos) instanceof Container;
 
         this.name = worker_names.get(index);
+
+        //Buttons for special workers
+        if(name.contains("Merchant")){
+            this.startTravelButton = this.setStartTravel(zeroLeftPos, zeroTopPos);
+            this.stopTravelButton = this.setStopTravel(zeroLeftPos, zeroTopPos);
+            this.returnTravelButton = this.setReturnTravel(zeroLeftPos, zeroTopPos);
+        }
+
     }
 
     @Override
@@ -95,17 +108,53 @@ public class CommandScreen extends ScreenBase<CommandMenu> {
 
         int size = worker_ids == null ? 0 : worker_ids.size() ;
 
-
         int k = 85;//rechst links
         int l = 65;//höhe
         String workers = "Workers: ";
         String worker = this.index + 1 + ": " + this.name;
-
-        font.draw(matrixStack, workers + size, k - workers.length(), l, fontColor);
-        font.draw(matrixStack, worker, k - worker.length() - 15, l + 25, fontColor);
+        if(size > 0){
+            font.draw(matrixStack, workers + size, k - workers.length(), l, fontColor);
+            font.draw(matrixStack, worker, k - worker.length() - 15, l + 25, fontColor);
+        }
     }
+
+    private Button setFollow(int x, int y){
+        return addRenderableWidget(new ExtendedButton(x - 90, y + 160, 80, 18, Translatable.TEXT_BUTTON_FOLLOW,
+            button -> {
+                Main.SIMPLE_CHANNEL.sendToServer(new MessageFollow(this.player.getUUID(), getCurrentWorker()));
+            }
+        ));
+    }
+
+    private Button setReturnTravel(int x, int y){
+        return addRenderableWidget(new ExtendedButton(x - 20, y + 180, 40, 18, Translatable.TEXT_BUTTON_TRAVEL_RETURN,
+                button -> {
+                    Main.SIMPLE_CHANNEL.sendToServer(new MessageMerchantTravel(getCurrentWorker(), true, true));
+                }
+        ));
+    }
+
+    private Button setStopTravel(int x, int y){
+        return addRenderableWidget(new ExtendedButton(x - 70, y + 180, 40, 18, Translatable.TEXT_BUTTON_TRAVEL_STOP,
+            button -> {
+                Main.SIMPLE_CHANNEL.sendToServer(new MessageMerchantTravel(getCurrentWorker(), false, false));
+            }
+        ));
+    }
+
+    private Button setStartTravel(int x, int y){
+        return addRenderableWidget(new ExtendedButton(x - 120, y + 180, 40, 18, Translatable.TEXT_BUTTON_TRAVEL_START,
+            button -> {
+                Main.SIMPLE_CHANNEL.sendToServer(new MessageMerchantTravel(getCurrentWorker(), true, false));
+            }
+        ));
+    }
+
     private Button setWorkPosition(BlockPos pos, int x, int y){
-        return addRenderableWidget(new ExtendedButton(x - 90, y + 140, 80, 18, Translatable.TEXT_BUTTON_WORK_POS,
+        //TODO: add worker type
+        Component component = name.contains("Merchant") ? Translatable.TEXT_BUTTON_ADD_WAYPOINT : Translatable.TEXT_BUTTON_WORK_POS;
+
+        return addRenderableWidget(new ExtendedButton(x - 90, y + 140, 80, 18, component,
             button -> {
                 Main.SIMPLE_CHANNEL.sendToServer(new MessageStartPos(this.player.getUUID(), pos, getCurrentWorker()));
             }
@@ -139,7 +188,6 @@ public class CommandScreen extends ScreenBase<CommandMenu> {
         ));
     }
 
-
     private Button cycleButtonRight(int x, int y){
         return addRenderableWidget(new ExtendedButton(x, y + 50, 50, 18, Component.literal(">"),
             button -> {
@@ -162,10 +210,11 @@ public class CommandScreen extends ScreenBase<CommandMenu> {
     }
 
     private BlockPos getBlockPos() {
-        HitResult rayTraceResult = player.pick(50, 1F, false);
+        HitResult rayTraceResult = player.pick(50, 1F, true);
         if (rayTraceResult != null) {
             if (rayTraceResult.getType() == HitResult.Type.BLOCK) {
                 BlockHitResult blockraytraceresult = (BlockHitResult) rayTraceResult;
+
                 return blockraytraceresult.getBlockPos();
             }
         }

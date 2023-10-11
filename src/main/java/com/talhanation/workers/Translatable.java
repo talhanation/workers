@@ -13,6 +13,11 @@ public class Translatable {
     public static final Component TOOLTIP_TRAVEL_START =  Component.translatable("gui.workers.tooltip.travel_start");
     public static final Component TOOLTIP_TRAVEL_STOP =  Component.translatable("gui.workers.tooltip.travel_stop");
     public static final Component TOOLTIP_TRAVEL_RETURN =  Component.translatable("gui.workers.tooltip.travel_return");
+    public static final Component TEXT_BUTTON_ADD_WAYPOINT = Component.translatable("gui.workers.button.travel_add_waypoint");
+    public static final Component TEXT_BUTTON_TRAVEL_RETURN = Component.translatable("gui.workers.button.travel_return");
+    public static final Component TEXT_BUTTON_TRAVEL_START = Component.translatable("gui.workers.button.travel_start");
+    public static final Component TEXT_BUTTON_TRAVEL_STOP = Component.translatable("gui.workers.button.travel_stop");
+    public static final Component TEXT_BUTTON_FOLLOW = Component.translatable("gui.workers.button.follow");;
 
     public static Component TEXT_HELLO(String job) {
         return Component.translatable("chat.workers.text.hello", job);

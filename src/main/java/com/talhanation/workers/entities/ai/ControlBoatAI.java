@@ -38,7 +38,7 @@ public class ControlBoatAI extends Goal {
 
     @Override
     public boolean canUse() {
-        return  this.worker.getVehicle() instanceof Boat boat && boat.getPassengers().get(0).equals(this.worker) && !worker.getFollow();
+        return  this.worker.getVehicle() instanceof Boat boat && boat.getPassengers().get(0).equals(this.worker);
     }
 
     public boolean canContinueToUse() {
@@ -62,7 +62,7 @@ public class ControlBoatAI extends Goal {
     }
 
     public void tick() {
-        if (this.worker instanceof IBoatController sailor && !worker.getLevel().isClientSide() && worker.getNavigation() instanceof SailorPathNavigation sailorPathNavigation && worker.getIsWorking()) {
+        if (this.worker instanceof IBoatController sailor && !worker.getLevel().isClientSide() && worker.getNavigation() instanceof SailorPathNavigation sailorPathNavigation) {
             if(DEBUG) {
                 if (this.worker.getOwner() != null && worker.getOwner().isInWater()) {
                     sailor.setSailPos(worker.getOwner().getOnPos());

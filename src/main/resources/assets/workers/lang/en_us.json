@@ -46,6 +46,7 @@
   "gui.workers.shepherd.max_animals": "max.",
 
   "gui.workers.button.workPos": "Work Pos.",
+  "gui.workers.button.travel_add_waypoint": "Add Waypoint",
   "gui.workers.button.sleepPos": "Sleep Pos.",
   "gui.workers.button.chestPos": "Chest Pos.",
 
@@ -106,7 +107,12 @@
   "gui.workers.tooltip.autoStartTravel": "Should the travel restart when arrived at first waypoint.",
   "gui.workers.tooltip.travelSpeed": "Set the travel speed.",
   "chat.workers.text.noSpaceInvForUpkeep": "I have no space in my inventory to resupply food.",
-  "chat.workers.text.noFishingRod": "I need a Fishing Rod to continue my work!"
+  "chat.workers.text.noFishingRod": "I need a Fishing Rod to continue my work!",
+  "gui.workers.button.travel_stop": "Stop",
+  "gui.workers.button.travel_start": "Start",
+  "gui.workers.button.travel_return": "Return",
+  "gui.workers.button.follow": "Follow",
+  "controls.open_command_screen": "Open Command Screen"
 
 
 }

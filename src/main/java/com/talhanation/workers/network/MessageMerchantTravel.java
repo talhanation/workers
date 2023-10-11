@@ -46,24 +46,23 @@ public class MessageMerchantTravel implements Message<MessageMerchantTravel> {
 
     private void setTraveling(ServerPlayer player, MerchantEntity merchant, boolean travel, boolean returning) {
         if(!returning){
-            merchant.setTraveling(travel);
             merchant.setFollow(false);
             merchant.setCurrentWayPointIndex(0);
             if (travel){
-                merchant.setIsWorking(true); // to activate the AI
+                merchant.setIsWorking(true, true); // to activate the AI
                 merchant.setCurrentReturningTime(0);
                 merchant.tellPlayer(player, Component.literal("Im now traveling."));
             }
             else{
-                merchant.setTraveling(false);
+                merchant.setIsWorking(false, true);
                 merchant.setReturning(false);
-                merchant.setIsWorking(false);
                 merchant.setCurrentReturningTime(0);
                 merchant.tellPlayer(player, Component.literal("I stopped traveling."));
             }
+            merchant.setTraveling(travel);
         }
         else{
-            merchant.setIsWorking(true); // to activate the AI
+            merchant.setIsWorking(true, true); // to activate the AI
             merchant.setReturning(true);
             merchant.setTraveling(true);
             merchant.setFollow(false);

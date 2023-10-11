@@ -163,7 +163,7 @@ public class MerchantWaypointScreen extends ScreenBase<MerchantWaypointContainer
     }
 
     private Button createTravelStartButton() {
-        return addRenderableWidget(new Button(leftPos + 19, topPos + 32, 40, 20, Component.literal("Start"), button -> {
+        return addRenderableWidget(new Button(leftPos + 19, topPos + 32, 40, 20, Translatable.TEXT_BUTTON_TRAVEL_START, button -> {
             Main.SIMPLE_CHANNEL.sendToServer(new MessageMerchantTravel(merchant.getUUID(),  true, false));
             this.setButtons();
         },
@@ -173,7 +173,7 @@ public class MerchantWaypointScreen extends ScreenBase<MerchantWaypointContainer
     }
 
     private Button createTravelStopButton() {
-        return addRenderableWidget(new Button(leftPos + 62, topPos + 32, 40, 20, Component.literal("Stop"), button -> {
+        return addRenderableWidget(new Button(leftPos + 62, topPos + 32, 40, 20, Translatable.TEXT_BUTTON_TRAVEL_STOP, button -> {
             Main.SIMPLE_CHANNEL.sendToServer(new MessageMerchantTravel(merchant.getUUID(),  false, false));
             this.setButtons();
         },
@@ -183,7 +183,7 @@ public class MerchantWaypointScreen extends ScreenBase<MerchantWaypointContainer
     }
 
     private Button createTravelReturnButton() {
-        return addRenderableWidget(new Button(leftPos + 105, topPos + 32, 40, 20, Component.literal("Return"), button -> {
+        return addRenderableWidget(new Button(leftPos + 105, topPos + 32, 40, 20, Translatable.TEXT_BUTTON_TRAVEL_RETURN, button -> {
             Main.SIMPLE_CHANNEL.sendToServer(new MessageMerchantTravel(merchant.getUUID(), true, true));
             this.setButtons();
         },
