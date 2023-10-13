@@ -51,8 +51,12 @@ public class CommandEvents {
                 }
             }
             worker.setStartPos(blockpos);
-            worker.setFollow(false);
-            worker.setIsWorking(true);
+
+            if( !(worker instanceof  MerchantEntity)){
+                worker.setFollow(false);
+                worker.setIsWorking(true);
+            }
+
 
             if (worker instanceof IBoatController sailor) sailor.setSailPos(blockpos);
         }
