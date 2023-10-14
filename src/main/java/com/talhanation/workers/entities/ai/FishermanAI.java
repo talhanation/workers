@@ -106,12 +106,12 @@ public class FishermanAI extends Goal {
                     list.sort(Comparator.comparing(boatInList -> boatInList.distanceTo(fisherman)));
                     if(!list.isEmpty()){
                         boat = list.get(0);
-                        fishingRange = 20;
+                        fishingRange = 40;
 
                         this.setWorkState(MOVING_TO_BOAT);
                     }
                     else {
-                        fishingRange = 5;
+                        fishingRange = 2;
                         this.setWorkState(FISHING);
                     }
 
@@ -403,6 +403,7 @@ public class FishermanAI extends Goal {
         }
 
         waterBlocks.sort(Comparator.comparing(this::getWaterDepth).reversed());
+
         if(!waterBlocks.isEmpty()){
             List<BlockPos> validWaterSpots = new ArrayList<>();
             for(BlockPos pos : waterBlocks){
