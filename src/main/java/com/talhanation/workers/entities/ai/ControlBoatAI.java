@@ -2,6 +2,7 @@ package com.talhanation.workers.entities.ai;
 
 import com.talhanation.workers.Main;
 import com.talhanation.workers.entities.AbstractWorkerEntity;
+import com.talhanation.workers.entities.FishermanEntity;
 import com.talhanation.workers.entities.IBoatController;
 import com.talhanation.workers.entities.ai.navigation.SailorPathNavigation;
 import net.minecraft.core.BlockPos;
@@ -42,7 +43,7 @@ public class ControlBoatAI extends Goal {
     }
 
     public boolean canContinueToUse() {
-        return true;
+        return !(this.worker instanceof FishermanEntity && worker.getFollow());
     }
 
     public boolean isInterruptable() {
@@ -99,7 +100,7 @@ public class ControlBoatAI extends Goal {
                         state = IDLE;
                 }
                 case MOVING_PATH -> {
-                    if(getWaterDepth(worker.getOnPos()) >= 7 && path.getEndNode() != null) {
+                    if(!worker.getVehicle().horizontalCollision && getWaterDepth(worker.getOnPos()) >= 7 && path.getEndNode() != null) {
                         this.node = path.getEndNode();
                     }
 
