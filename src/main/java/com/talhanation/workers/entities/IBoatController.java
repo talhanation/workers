@@ -143,10 +143,9 @@ public interface IBoatController {
                 boatSpeed = (float) shipClassGetSpeed.invoke(ship);
                 boatRotSpeed = (float) shipClassGetRotSpeed.invoke(ship);
 
-                //TODO Sync ship state:  updateControls(((BoatAccessor) this).isInputUp(),((BoatAccessor) this).isInputDown(), ((BoatAccessor) this).isInputLeft(), ((BoatAccessor) this).isInputRight(), player);
                 shipClassUpdateControls.invoke(ship,inputUp, false, inputLeft, inputRight, null);
 
-                //TODO if(this.isInWater() && !((BoatLeashAccess) this).isLeashed()){
+                //TODO if(this.isInWater() && !((BoatLeashAccess) this).isLeashed()){ need smallsips update
 
                 if(!inAngleForSail){
                     setSmallShipsSailState((Boat) ship,0);
