@@ -135,10 +135,11 @@ public interface IBoatController {
             if(shipClass.isInstance(boat)) {
                 Object ship = shipClass.cast(boat);
 
-                Method shipClassSetRotSpeed = ship.getClass().getMethod("setRotSpeed", float.class);
-                Method shipClassGetSpeed = ship.getClass().getMethod("getSpeed");
-                Method shipClassGetRotSpeed = ship.getClass().getMethod("getRotSpeed");
-                Method shipClassUpdateControls = ship.getClass().getMethod("updateControls", boolean.class, boolean.class, boolean.class, boolean.class, Player.class);
+
+                Method shipClassSetRotSpeed = shipClass.getMethod("setRotSpeed", float.class);
+                Method shipClassGetSpeed = shipClass.getMethod("getSpeed");
+                Method shipClassGetRotSpeed = shipClass.getMethod("getRotSpeed");
+                Method shipClassUpdateControls = shipClass.getMethod("updateControls", boolean.class, boolean.class, boolean.class, boolean.class, Player.class);
 
                 boatSpeed = (float) shipClassGetSpeed.invoke(ship);
                 boatRotSpeed = (float) shipClassGetRotSpeed.invoke(ship);
@@ -217,8 +218,8 @@ public interface IBoatController {
             if(sailableClass.isInstance(boat)){
                 Object sailable = sailableClass.cast(boat);
 
-                Method sailableClassSetSailState = sailable.getClass().getMethod("setSailState", byte.class);
-                Method sailableClassGetSailState = sailable.getClass().getMethod("getSailState");
+                Method sailableClassSetSailState = sailableClass.getMethod("setSailState", byte.class);
+                Method sailableClassGetSailState = sailableClass.getMethod("getSailState");
 
                 byte currentSail = (byte) sailableClassGetSailState.invoke(sailable);
                 if(currentSail != (byte) state) sailableClassSetSailState.invoke(sailable, (byte) state);
@@ -250,7 +251,7 @@ public interface IBoatController {
             if(shipClass.isInstance(boat)) {
                 Object ship = shipClass.cast(boat);
 
-                Method shipClassSetSpeed = ship.getClass().getMethod("setSpeed", float.class);
+                Method shipClassSetSpeed = shipClass.getMethod("setSpeed", float.class);
                 shipClassSetSpeed.invoke(ship, speed);
 
             }
