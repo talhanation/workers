@@ -95,7 +95,7 @@ public class ChickenFarmerAI extends AnimalFarmerAI {
                         chicken.get().kill();
 
                         animalFarmer.workerSwingArm();
-                        animalFarmer.playSound(SoundEvents.PLAYER_ATTACK_STRONG);
+                        animalFarmer.playSound(SoundEvents.PLAYER_ATTACK_STRONG, 1F, 1F);
 
                         this.animalFarmer.consumeToolDurability();
                         animalFarmer.increaseFarmedItems();

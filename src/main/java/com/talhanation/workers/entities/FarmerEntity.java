@@ -7,6 +7,7 @@ import com.talhanation.workers.inventory.WorkerInventoryContainer;
 import com.talhanation.workers.entities.ai.FarmerAI;
 import com.talhanation.workers.entities.ai.WorkerPickupWantedItemGoal;
 import com.talhanation.workers.network.MessageOpenGuiWorker;
+import net.minecraft.network.chat.TextComponent;
 import net.minecraft.world.entity.*;
 import net.minecraft.world.item.HoeItem;
 import net.minecraft.world.level.block.Block;
@@ -92,7 +93,7 @@ public class FarmerEntity extends AbstractWorkerEntity {
     @Override
     public void openGUI(Player player) {
         if (player instanceof ServerPlayer) {
-            NetworkHooks.openScreen((ServerPlayer) player, new MenuProvider() {
+            NetworkHooks.openGui((ServerPlayer) player, new MenuProvider() {
                 @Override
                 public @NotNull Component getDisplayName() {
                     return getName();
@@ -139,7 +140,7 @@ public class FarmerEntity extends AbstractWorkerEntity {
     public SpawnGroupData finalizeSpawn(@NotNull ServerLevelAccessor world, @NotNull DifficultyInstance difficultyInstance,
                                         @NotNull MobSpawnType reason, @Nullable SpawnGroupData data, @Nullable CompoundTag nbt) {
         SpawnGroupData ilivingentitydata = super.finalizeSpawn(world, difficultyInstance, reason, data, nbt);
-        this.populateDefaultEquipmentEnchantments(random, difficultyInstance);
+        this.populateDefaultEquipmentEnchantments(difficultyInstance);
 
         this.initSpawn();
 
@@ -149,7 +150,7 @@ public class FarmerEntity extends AbstractWorkerEntity {
     @Override
     public void initSpawn() {
         super.initSpawn();
-        Component name = Component.literal("Farmer");
+        TextComponent name = new TextComponent("Farmer");
 
         this.setProfessionName(name.getString());
         this.setCustomName(name);

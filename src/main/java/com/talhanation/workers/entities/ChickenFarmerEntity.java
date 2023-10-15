@@ -7,6 +7,7 @@ import com.talhanation.workers.entities.ai.WorkerPickupWantedItemGoal;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.MutableComponent;
+import net.minecraft.network.chat.TextComponent;
 import net.minecraft.network.syncher.EntityDataAccessor;
 import net.minecraft.network.syncher.EntityDataSerializers;
 import net.minecraft.network.syncher.SynchedEntityData;
@@ -116,7 +117,7 @@ public class ChickenFarmerEntity extends AbstractAnimalFarmerEntity {
             MobSpawnType reason, @Nullable SpawnGroupData data, @Nullable CompoundTag nbt) {
         SpawnGroupData ilivingentitydata = super.finalizeSpawn(world, difficultyInstance, reason, data, nbt);
 
-        this.populateDefaultEquipmentEnchantments(random, difficultyInstance);
+        this.populateDefaultEquipmentEnchantments(difficultyInstance);
 
         this.initSpawn();
 
@@ -126,7 +127,7 @@ public class ChickenFarmerEntity extends AbstractAnimalFarmerEntity {
     @Override
     public void initSpawn() {
         super.initSpawn();
-        Component name = Component.literal("Chicken Farmer");
+        TextComponent name = new TextComponent("Chicken Farmer");
 
         this.setProfessionName(name.getString());
         this.setCustomName(name);

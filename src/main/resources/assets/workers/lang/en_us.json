@@ -96,7 +96,7 @@
   "chat.workers.controls.assign_bed_key": "Press \"%s\" to assign me a bed.",
   "chat.workers.controls.assign_chest_key": "Press \"%s\" to assign me a chest.",
   "chat.workers.controls.assign_workspace_key": "Press \"%s\" to send me to assign me a place to work.",
-  "Workers": "Workers",
+  "category.workers": "Workers",
 
 
   "gui.workers.tooltip.travel_info": "Info to Traveling.",

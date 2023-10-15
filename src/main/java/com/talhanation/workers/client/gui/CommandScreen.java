@@ -10,6 +10,7 @@ import de.maxhenkel.corelib.inventory.ScreenBase;
 import net.minecraft.client.gui.components.Button;
 import net.minecraft.core.BlockPos;
 import net.minecraft.network.chat.Component;
+import net.minecraft.network.chat.TextComponent;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.Container;
 import net.minecraft.world.entity.player.Inventory;
@@ -44,7 +45,7 @@ public class CommandScreen extends ScreenBase<CommandMenu> {
     private Button chestPosButton;
     //TODO: add worker type as integer
     public CommandScreen(CommandMenu commandContainer, Inventory playerInventory, Component title) {
-        super(RESOURCE_LOCATION, commandContainer, playerInventory, Component.literal(""));
+        super(RESOURCE_LOCATION, commandContainer, playerInventory, new TextComponent(""));
         imageWidth = 201;
         imageHeight = 170;
         player = playerInventory.player;
@@ -178,7 +179,7 @@ public class CommandScreen extends ScreenBase<CommandMenu> {
     }
 
     private Button cycleButtonLeft(int x, int y){
-        return addRenderableWidget(new ExtendedButton(x - 150, y + 50, 50, 18, Component.literal("<"),
+        return addRenderableWidget(new ExtendedButton(x - 150, y + 50, 50, 18,  new TextComponent("<"),
             button -> {
                 if(canCycleLeft()){
                     index--;
@@ -189,7 +190,7 @@ public class CommandScreen extends ScreenBase<CommandMenu> {
     }
 
     private Button cycleButtonRight(int x, int y){
-        return addRenderableWidget(new ExtendedButton(x, y + 50, 50, 18, Component.literal(">"),
+        return addRenderableWidget(new ExtendedButton(x, y + 50, 50, 18, new TextComponent(">"),
             button -> {
                 if(canCycleRight()){
                     index++;

@@ -7,6 +7,7 @@ import com.talhanation.workers.inventory.MerchantInventoryContainer;
 import com.talhanation.workers.network.*;
 import de.maxhenkel.corelib.inventory.ScreenBase;
 import net.minecraft.client.gui.components.Button;
+import net.minecraft.network.chat.TextComponent;
 import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.network.chat.Component;
@@ -27,7 +28,7 @@ public class MerchantOwnerScreen extends ScreenBase<MerchantInventoryContainer> 
     private final Player player;
 
     public MerchantOwnerScreen(MerchantInventoryContainer container, Inventory playerInventory, Component title) {
-        super(GUI_TEXTURE_3, container, playerInventory, Component.literal(""));
+        super(GUI_TEXTURE_3, container, playerInventory, new TextComponent(""));
         this.merchant = (MerchantEntity) container.getWorker();
         this.playerInventory = playerInventory;
         this.player = playerInventory.player;
@@ -44,7 +45,7 @@ public class MerchantOwnerScreen extends ScreenBase<MerchantInventoryContainer> 
         int mirror = 240 - 60;
 
 
-        addRenderableWidget(new Button(zeroLeftPos - mirror + 180, zeroTopPos + 35, 41, 20, Component.literal("Travel"), button -> {
+        addRenderableWidget(new Button(zeroLeftPos - mirror + 180, zeroTopPos + 35, 41, 20, new TextComponent("Travel"), button -> {
             Main.SIMPLE_CHANNEL.sendToServer(new MessageOpenWaypointsGuiMerchant(this.player, this.merchant.getUUID()));
         }));
 
@@ -70,7 +71,7 @@ public class MerchantOwnerScreen extends ScreenBase<MerchantInventoryContainer> 
         if(merchant.getVehicle() != null) dis_mount = "Dismount";
         else dis_mount = "Mount";
 
-        addRenderableWidget(new Button(x, y, 41, 20, Component.literal(dis_mount),
+        addRenderableWidget(new Button(x, y, 41, 20, new TextComponent(dis_mount),
             button -> {
                 Main.SIMPLE_CHANNEL.sendToServer(new MessageMerchantHorse(merchant.getUUID()));
                 this.setUpdatableButtons();
@@ -78,7 +79,7 @@ public class MerchantOwnerScreen extends ScreenBase<MerchantInventoryContainer> 
 
     }
     private void createCreativeButton(int x, int y) {
-        addRenderableWidget(new Button(x, y, 41, 20, Component.literal("Creative"),
+        addRenderableWidget(new Button(x, y, 41, 20, new TextComponent("Creative"),
             button -> {
                 Main.SIMPLE_CHANNEL.sendToServer(new MessageMerchantSetCreative(merchant.getUUID(), !merchant.isCreative()));
                 this.setUpdatableButtons();
@@ -86,7 +87,7 @@ public class MerchantOwnerScreen extends ScreenBase<MerchantInventoryContainer> 
     }
 
     private void createTradeLimitButtons(int x, int y, int index){
-        addRenderableWidget(new ExtendedButton(x, y + 18 * index, 12, 12, Component.literal("+"), button -> {
+        addRenderableWidget(new ExtendedButton(x, y + 18 * index, 12, 12, new TextComponent("+"), button -> {
             int limit = limits.get(index);
 
              if(player.isShiftKeyDown()) limit = limit + 5;
@@ -95,7 +96,7 @@ public class MerchantOwnerScreen extends ScreenBase<MerchantInventoryContainer> 
             Main.SIMPLE_CHANNEL.sendToServer(new MessageMerchantTradeLimitButton(index, limit, merchant.getUUID()));
         }));
 
-        addRenderableWidget(new ExtendedButton(13 + x, y + 18 * index, 12, 12, Component.literal("-"), button -> {
+        addRenderableWidget(new ExtendedButton(13 + x, y + 18 * index, 12, 12, new TextComponent("-"), button -> {
             int limit = limits.get(index);
 
             if(player.isShiftKeyDown()) limit = limit - 5;
@@ -105,7 +106,7 @@ public class MerchantOwnerScreen extends ScreenBase<MerchantInventoryContainer> 
 
             Main.SIMPLE_CHANNEL.sendToServer(new MessageMerchantTradeLimitButton(index, limit, merchant.getUUID()));
         }));
-        addRenderableWidget(new ExtendedButton(26 + x, y + 18 * index, 12, 12, Component.literal("0"),
+        addRenderableWidget(new ExtendedButton(26 + x, y + 18 * index, 12, 12, new TextComponent("0"),
             button -> {
                 Main.SIMPLE_CHANNEL.sendToServer(new MessageMerchantResetCurrentTradeCounts(merchant.getUUID()));
         }));

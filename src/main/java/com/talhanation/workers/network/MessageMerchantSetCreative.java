@@ -5,6 +5,7 @@ import de.maxhenkel.corelib.net.Message;
 import net.minecraft.core.BlockPos;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.network.chat.Component;
+import net.minecraft.network.chat.TextComponent;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.network.NetworkEvent;
@@ -42,8 +43,8 @@ public class MessageMerchantSetCreative implements Message<MessageMerchantSetCre
 
     private void setCreative(ServerPlayer player, MerchantEntity merchant, boolean creative){
         merchant.setCreative(creative);
-        if(creative) merchant.tellPlayer(player, Component.literal("Im now a Creative Merchant."));
-        else merchant.tellPlayer(player, Component.literal("Im back a Survival Merchant."));
+        if(creative) merchant.tellPlayer(player, new TextComponent("Im now a Creative Merchant."));
+        else merchant.tellPlayer(player, new TextComponent("Im back a Survival Merchant."));
     }
 
     public MessageMerchantSetCreative fromBytes(FriendlyByteBuf buf) {

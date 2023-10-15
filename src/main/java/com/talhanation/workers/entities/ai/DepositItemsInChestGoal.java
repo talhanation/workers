@@ -14,6 +14,8 @@ import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.entity.ChestBlockEntity;
 import net.minecraft.world.level.gameevent.GameEvent;
 
+import java.util.function.Predicate;
+
 public class DepositItemsInChestGoal extends Goal {
     private final AbstractWorkerEntity worker;
     public BlockPos chestPos;
@@ -108,8 +110,8 @@ public class DepositItemsInChestGoal extends Goal {
 
     private void reequipTool(){
         if(worker.needsTool()){
-            boolean hasMainHand = worker.getInventory().hasAnyMatching(worker::isRequiredMainTool);
-            boolean hasOffHand = worker.getInventory().hasAnyMatching(worker::isRequiredSecondTool);
+            boolean hasMainHand = this.hasAnyMatching(worker::isRequiredMainTool);
+            boolean hasOffHand = this.hasAnyMatching(worker::isRequiredSecondTool);
 
             for (int i = 0; i < container.getContainerSize(); i++) {
                 ItemStack stack = container.getItem(i);
@@ -123,6 +125,17 @@ public class DepositItemsInChestGoal extends Goal {
             }
             worker.setNeedsTool(false);
         }
+    }
+
+    private boolean hasAnyMatching(Predicate<ItemStack> p_216875_) {
+        for(int i = 0; i < worker.getInventory().getContainerSize(); ++i) {
+            ItemStack itemstack = worker.getInventory().getItem(i);
+            if (p_216875_.test(itemstack)) {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     private void take(ItemStack stack){

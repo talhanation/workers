@@ -10,6 +10,7 @@ import de.maxhenkel.corelib.inventory.ScreenBase;
 import net.minecraft.client.gui.components.Button;
 import net.minecraft.core.BlockPos;
 import net.minecraft.network.chat.Component;
+import net.minecraft.network.chat.TextComponent;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.entity.player.Player;
@@ -36,7 +37,7 @@ public class MerchantWaypointScreen extends ScreenBase<MerchantWaypointContainer
     public int travelSpeedState;
 
     public MerchantWaypointScreen(MerchantWaypointContainer container, Inventory playerInventory, Component title) {
-        super(RESOURCE_LOCATION, container, playerInventory, Component.literal(""));
+        super(RESOURCE_LOCATION, container, playerInventory, new TextComponent(""));
         imageWidth = 211;
         imageHeight = 250;
         this.merchant = (MerchantEntity) container.getWorkerEntity();
@@ -74,7 +75,7 @@ public class MerchantWaypointScreen extends ScreenBase<MerchantWaypointContainer
     }
 
     private void createSetTravelSpeedButton(String s) {
-        addRenderableWidget(new Button(leftPos + 240, topPos + 32, 40, 20, Component.literal(s), button -> {
+        addRenderableWidget(new Button(leftPos + 240, topPos + 32, 40, 20, new TextComponent(s), button -> {
             travelSpeedState++;
             if(travelSpeedState > 2) travelSpeedState = 0;
 
@@ -87,7 +88,7 @@ public class MerchantWaypointScreen extends ScreenBase<MerchantWaypointContainer
     }
 
     private void createSetAutoStartTravelButton(String ss) {
-        addRenderableWidget(new Button(leftPos + 240, topPos + 57, 40, 20, Component.literal(ss), button -> {
+        addRenderableWidget(new Button(leftPos + 240, topPos + 57, 40, 20, new TextComponent(ss), button -> {
             this.autoStart = !autoStart;
 
             Main.SIMPLE_CHANNEL.sendToServer(new MessageMerchantSetAutoStartTravel(merchant.getUUID(), autoStart));
@@ -131,7 +132,7 @@ public class MerchantWaypointScreen extends ScreenBase<MerchantWaypointContainer
     public void setDaysButtons(){
         // ReturnTime
         ExtendedButton addButton =
-                addRenderableWidget(new ExtendedButton(leftPos + 186, topPos + 8, 9, 9, Component.literal("+"), button -> {
+                addRenderableWidget(new ExtendedButton(leftPos + 186, topPos + 8, 9, 9, new TextComponent("+"), button -> {
                     this.returnTime = merchant.getReturningTime();
 
                     if(player.isShiftKeyDown()) returnTime = returnTime + 5;
@@ -141,7 +142,7 @@ public class MerchantWaypointScreen extends ScreenBase<MerchantWaypointContainer
                     this.setButtons();
                 }));
         ExtendedButton removeButton =
-                addRenderableWidget(new ExtendedButton(leftPos + 175, topPos + 8, 9, 9, Component.literal("-"), button -> {
+                addRenderableWidget(new ExtendedButton(leftPos + 175, topPos + 8, 9, 9, new TextComponent("-"), button -> {
                     this.returnTime = merchant.getReturningTime();
 
                     if(player.isShiftKeyDown()) returnTime = returnTime - 5;
@@ -187,10 +188,10 @@ public class MerchantWaypointScreen extends ScreenBase<MerchantWaypointContainer
     }
 
     private Button createTravelInfoButton(int x, int y) {
-        Button button = addRenderableWidget(new Button(x, y, 20, 20, Component.literal("i"),
+        Button button = addRenderableWidget(new Button(x, y, 20, 20, new TextComponent("i"),
                 press -> {
                     this.setButtons();
-                    this.player.sendSystemMessage(Translatable.TEXT_TRAVEL_INFO);
+                    this.player.sendMessage(Translatable.TEXT_TRAVEL_INFO, player.getUUID());
                     this.onClose();
                },
                 (button1, poseStack, i, i1) -> {
@@ -255,7 +256,7 @@ public class MerchantWaypointScreen extends ScreenBase<MerchantWaypointContainer
     }
 
     public Button createPageBackButton() {
-        return addRenderableWidget(new Button(leftPos + 15, topPos + 230, 12, 12, Component.literal("<"),
+        return addRenderableWidget(new Button(leftPos + 15, topPos + 230, 12, 12, new TextComponent("<"),
                 button -> {
                     if(this.page > 1) page--;
                     this.setButtons();
@@ -264,7 +265,7 @@ public class MerchantWaypointScreen extends ScreenBase<MerchantWaypointContainer
     }
 
     public Button createPageForwardButton() {
-        return addRenderableWidget(new Button(leftPos + 184, topPos + 230, 12, 12, Component.literal(">"),
+        return addRenderableWidget(new Button(leftPos + 184, topPos + 230, 12, 12, new TextComponent(">"),
                 button -> {
                     page++;
                     this.setButtons();
@@ -273,7 +274,7 @@ public class MerchantWaypointScreen extends ScreenBase<MerchantWaypointContainer
     }
 
     private Button createAddWaypointButton(int x, int y){
-        return addRenderableWidget(new Button(x, y, 20, 20, Component.literal("+"),
+        return addRenderableWidget(new Button(x, y, 20, 20, new TextComponent("+"),
                 button -> {
                     Main.SIMPLE_CHANNEL.sendToServer(new MessageMerchantAddWayPoint(merchant.getUUID()));
 
@@ -283,7 +284,7 @@ public class MerchantWaypointScreen extends ScreenBase<MerchantWaypointContainer
     }
 
     private Button createRemoveWaypointButton(int x, int y){
-        return addRenderableWidget(new Button(x, y, 20, 20, Component.literal("-"),
+        return addRenderableWidget(new Button(x, y, 20, 20, new TextComponent("-"),
                 button -> {
                     Main.SIMPLE_CHANNEL.sendToServer(new MessageMerchantRemoveWayPoint(merchant.getUUID()));
 

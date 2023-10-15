@@ -5,6 +5,7 @@ import com.talhanation.workers.entities.MerchantEntity;
 import de.maxhenkel.corelib.net.Message;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.network.chat.Component;
+import net.minecraft.network.chat.TextComponent;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.network.NetworkEvent;
@@ -51,13 +52,13 @@ public class MessageMerchantTravel implements Message<MessageMerchantTravel> {
             if (travel){
                 merchant.setIsWorking(true, true); // to activate the AI
                 merchant.setCurrentReturningTime(0);
-                merchant.tellPlayer(player, Component.literal("Im now traveling."));
+                merchant.tellPlayer(player, new TextComponent("Im now traveling."));
             }
             else{
                 merchant.setIsWorking(false, true);
                 merchant.setReturning(false);
                 merchant.setCurrentReturningTime(0);
-                merchant.tellPlayer(player, Component.literal("I stopped traveling."));
+                merchant.tellPlayer(player, new TextComponent("I stopped traveling."));
             }
             merchant.setTraveling(travel);
         }
@@ -67,7 +68,7 @@ public class MessageMerchantTravel implements Message<MessageMerchantTravel> {
             merchant.setTraveling(true);
             merchant.setFollow(false);
             merchant.setCurrentWayPointIndex(merchant.WAYPOINTS.size() -1);
-            merchant.tellPlayer(player, Component.literal("Im now returning to start position."));
+            merchant.tellPlayer(player, new TextComponent("Im now returning to start position."));
         }
 
         Main.SIMPLE_CHANNEL.send(PacketDistributor.PLAYER.with(() -> (ServerPlayer) player), new MessageToClientUpdateMerchantScreen(merchant.WAYPOINTS, merchant.WAYPOINT_ITEMS, merchant.getCurrentTrades(), merchant.getTradeLimits(), merchant.getTraveling(), merchant.getReturning()));

@@ -108,7 +108,7 @@ public class ShepherdAI extends AnimalFarmerAI{
                         animalFarmer.workerSwingArm();
 
                         sheep.get().kill();
-                        animalFarmer.playSound(SoundEvents.PLAYER_ATTACK_STRONG);
+                        animalFarmer.playSound(SoundEvents.PLAYER_ATTACK_STRONG, 1F, 1F);
 
                         this.animalFarmer.consumeToolDurability();
                         animalFarmer.increaseFarmedItems();

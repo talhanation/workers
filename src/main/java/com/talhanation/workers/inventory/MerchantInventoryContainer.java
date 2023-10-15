@@ -1,8 +1,8 @@
 package com.talhanation.workers.inventory;
 
+import com.talhanation.workers.Main;
 import com.talhanation.workers.entities.AbstractWorkerEntity;
 import com.talhanation.workers.entities.MerchantEntity;
-import com.talhanation.workers.init.ModMenuTypes;
 
 import de.maxhenkel.corelib.inventory.ContainerBase;
 import net.minecraft.world.entity.player.Player;
@@ -25,7 +25,7 @@ public class MerchantInventoryContainer extends ContainerBase {
     };
 
     public MerchantInventoryContainer(int id, MerchantEntity merchant, Inventory playerInventory) {
-        super(ModMenuTypes.MERCHANT_OWNER_CONTAINER_TYPE.get(), id, playerInventory, merchant.getInventory());
+        super(Main.MERCHANT_OWNER_CONTAINER_TYPE, id, playerInventory, merchant.getInventory());
         this.merchant = merchant;
         this.workerTradeInventory = merchant.getTradeInventory();
         this.workerInventory = merchant.getInventory();

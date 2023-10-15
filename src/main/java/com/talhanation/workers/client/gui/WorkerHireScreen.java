@@ -11,6 +11,8 @@ import net.minecraft.client.gui.components.Button;
 import net.minecraft.client.gui.screens.inventory.InventoryScreen;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.MutableComponent;
+import net.minecraft.network.chat.TextComponent;
+import net.minecraft.network.chat.TranslatableComponent;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.util.Mth;
 import net.minecraft.world.entity.ai.attributes.Attributes;
@@ -26,7 +28,7 @@ public class WorkerHireScreen extends ScreenBase<WorkerHireContainer> {
     private static final ResourceLocation RESOURCE_LOCATION = new ResourceLocation(Main.MOD_ID,
             "textures/gui/hire_gui.png");
 
-    private static final MutableComponent TEXT_HIRE = Component.translatable("gui.workers.hire_gui.text.hire");
+    private static final MutableComponent TEXT_HIRE = new TranslatableComponent("gui.workers.hire_gui.text.hire");
 
     private static final int fontColor = 4210752;
 
@@ -34,7 +36,7 @@ public class WorkerHireScreen extends ScreenBase<WorkerHireContainer> {
     private final Player player;
 
     public WorkerHireScreen(WorkerHireContainer recruitContainer, Inventory playerInventory, Component title) {
-        super(RESOURCE_LOCATION, recruitContainer, playerInventory, Component.literal(""));
+        super(RESOURCE_LOCATION, recruitContainer, playerInventory, new TextComponent(""));
         this.worker = recruitContainer.getWorkerEntity();
         this.player = playerInventory.player;
         imageWidth = 176;

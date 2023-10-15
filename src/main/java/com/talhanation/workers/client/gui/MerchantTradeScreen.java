@@ -6,6 +6,8 @@ import com.talhanation.workers.entities.MerchantEntity;
 import com.talhanation.workers.inventory.MerchantTradeContainer;
 import com.talhanation.workers.network.MessageMerchantTradeButton;
 import de.maxhenkel.corelib.inventory.ScreenBase;
+import net.minecraft.network.chat.TextComponent;
+import net.minecraft.network.chat.TranslatableComponent;
 import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.network.chat.Component;
@@ -20,10 +22,10 @@ public class MerchantTradeScreen extends ScreenBase<MerchantTradeContainer> {
     private final MerchantEntity merchant;
     private final Inventory playerInventory;
 
-    private final MutableComponent TRADE_TEXT = Component.translatable("gui.workers.merchant.trade");
+    private final MutableComponent TRADE_TEXT = new TranslatableComponent("gui.workers.merchant.trade");
 
     public MerchantTradeScreen(MerchantTradeContainer container, Inventory playerInventory, Component title) {
-        super(GUI_TEXTURE_3, container, playerInventory, Component.literal(""));
+        super(GUI_TEXTURE_3, container, playerInventory, new TextComponent(""));
         this.merchant = (MerchantEntity) container.getWorker();
         this.playerInventory = playerInventory;
 

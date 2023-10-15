@@ -1,106 +1,106 @@
 package com.talhanation.workers;
-import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.MutableComponent;
+import net.minecraft.network.chat.TranslatableComponent;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 
 public class Translatable {
-    public static final Component TOOLTIP_TRAVEL_INFO =  Component.translatable("gui.workers.tooltip.travel_info");
-    public static final Component TOOLTIP_AUTO_START_TRAVEL =  Component.translatable("gui.workers.tooltip.autoStartTravel");
+    public static final MutableComponent TOOLTIP_TRAVEL_INFO =  new TranslatableComponent("gui.workers.tooltip.travel_info");
+    public static final MutableComponent TOOLTIP_AUTO_START_TRAVEL =  new TranslatableComponent("gui.workers.tooltip.autoStartTravel");
 
-    public static final Component TOOLTIP_TRAVEL_SPEED =  Component.translatable("gui.workers.tooltip.travelSpeed");
-    public static final Component TEXT_TRAVEL_INFO =  Component.translatable("chat.workers.text.travel_info");
-    public static final Component TOOLTIP_TRAVEL_START =  Component.translatable("gui.workers.tooltip.travel_start");
-    public static final Component TOOLTIP_TRAVEL_STOP =  Component.translatable("gui.workers.tooltip.travel_stop");
-    public static final Component TOOLTIP_TRAVEL_RETURN =  Component.translatable("gui.workers.tooltip.travel_return");
-    public static final Component TOOLTIP_FARMER_USE_EGGS = Component.translatable("gui.workers.tooltip.farmerUseEggs");;
-    public static final Component TEXT_BUTTON_ADD_WAYPOINT = Component.translatable("gui.workers.button.travel_add_waypoint");
-    public static final Component TEXT_BUTTON_TRAVEL_RETURN = Component.translatable("gui.workers.button.travel_return");
-    public static final Component TEXT_BUTTON_TRAVEL_START = Component.translatable("gui.workers.button.travel_start");
-    public static final Component TEXT_BUTTON_TRAVEL_STOP = Component.translatable("gui.workers.button.travel_stop");
-    public static final Component TEXT_BUTTON_FOLLOW = Component.translatable("gui.workers.button.follow");;
+    public static final MutableComponent TOOLTIP_TRAVEL_SPEED =  new TranslatableComponent("gui.workers.tooltip.travelSpeed");
+    public static final MutableComponent TEXT_TRAVEL_INFO =  new TranslatableComponent("chat.workers.text.travel_info");
+    public static final MutableComponent TOOLTIP_TRAVEL_START =  new TranslatableComponent("gui.workers.tooltip.travel_start");
+    public static final MutableComponent TOOLTIP_TRAVEL_STOP =  new TranslatableComponent("gui.workers.tooltip.travel_stop");
+    public static final MutableComponent TOOLTIP_TRAVEL_RETURN =  new TranslatableComponent("gui.workers.tooltip.travel_return");
+    public static final MutableComponent TOOLTIP_FARMER_USE_EGGS = new TranslatableComponent("gui.workers.tooltip.farmerUseEggs");;
+    public static final MutableComponent TEXT_BUTTON_ADD_WAYPOINT = new TranslatableComponent("gui.workers.button.travel_add_waypoint");
+    public static final MutableComponent TEXT_BUTTON_TRAVEL_RETURN = new TranslatableComponent("gui.workers.button.travel_return");
+    public static final MutableComponent TEXT_BUTTON_TRAVEL_START = new TranslatableComponent("gui.workers.button.travel_start");
+    public static final MutableComponent TEXT_BUTTON_TRAVEL_STOP = new TranslatableComponent("gui.workers.button.travel_stop");
+    public static final MutableComponent TEXT_BUTTON_FOLLOW = new TranslatableComponent("gui.workers.button.follow");;
 
 
-    public static Component TEXT_HELLO(String job) {
-        return Component.translatable("chat.workers.text.hello", job);
+    public static MutableComponent TEXT_HELLO(String job) {
+        return new TranslatableComponent("chat.workers.text.hello", job);
     }
 
-    public static Component TEXT_HELLO_OWNED(String job, String owner) {
-        return Component.translatable("chat.workers.text.hello_owned", job, owner);
+    public static MutableComponent TEXT_HELLO_OWNED(String job, String owner) {
+        return new TranslatableComponent("chat.workers.text.hello_owned", job, owner);
     }
 
     // TODO: Use these only when work starts
-    public static final Component TEXT_RECRUITED1 = Component.translatable("chat.workers.text.recruited1");
-    public static final Component TEXT_RECRUITED2 = Component.translatable("chat.workers.text.recruited2");
-    public static final Component TEXT_RECRUITED3 = Component.translatable("chat.workers.text.recruited3");
+    public static final MutableComponent TEXT_RECRUITED1 = new TranslatableComponent("chat.workers.text.recruited1");
+    public static final MutableComponent TEXT_RECRUITED2 = new TranslatableComponent("chat.workers.text.recruited2");
+    public static final MutableComponent TEXT_RECRUITED3 = new TranslatableComponent("chat.workers.text.recruited3");
 
-    public static Component TEXT_ATTACKED(String job, String attacker) {
-        return Component.translatable("chat.workers.text.attacked", job, attacker);
+    public static MutableComponent TEXT_ATTACKED(String job, String attacker) {
+        return new TranslatableComponent("chat.workers.text.attacked", job, attacker);
     }
 
-    public static final Component TEXT_WORKING = Component.translatable("chat.workers.text.working");
-    public static final Component TEXT_DONE = Component.translatable("chat.workers.text.done");
-    public static final Component TEXT_STARVING = Component.translatable("chat.workers.text.starving");
+    public static final MutableComponent TEXT_WORKING = new TranslatableComponent("chat.workers.text.working");
+    public static final MutableComponent TEXT_DONE = new TranslatableComponent("chat.workers.text.done");
+    public static final MutableComponent TEXT_STARVING = new TranslatableComponent("chat.workers.text.starving");
 
-    public static final Component TEXT_FOLLOW = Component.translatable("chat.workers.text.follow");
-    public static final Component TEXT_CONTINUE = Component.translatable("chat.workers.text.continue");
-    public static final Component TEXT_WANDER = Component.translatable("chat.workers.text.wander");
+    public static final MutableComponent TEXT_FOLLOW = new TranslatableComponent("chat.workers.text.follow");
+    public static final MutableComponent TEXT_CONTINUE = new TranslatableComponent("chat.workers.text.continue");
+    public static final MutableComponent TEXT_WANDER = new TranslatableComponent("chat.workers.text.wander");
 
     /*
-    public static Component TEXT_BED_KEY() {
-        Component currentMapping = ModShortcuts.ASSIGN_BED_KEY.getTranslatedKeyMessage();
-        return Component.translatable("chat.workers.controls.assign_bed_key", currentMapping);
+    public static MutableComponent TEXT_BED_KEY() {
+        MutableComponent currentMapping = ModShortcuts.ASSIGN_BED_KEY.getTranslatedKeyMessage();
+        return new TranslatableComponent()("chat.workers.controls.assign_bed_key", currentMapping);
     }
-    public static Component TEXT_CHEST_KEY() {
-        Component currentMapping = ModShortcuts.ASSIGN_CHEST_KEY.getTranslatedKeyMessage();
-        return Component.translatable("chat.workers.controls.assign_chest_key", currentMapping);
+    public static MutableComponent TEXT_CHEST_KEY() {
+        MutableComponent currentMapping = ModShortcuts.ASSIGN_CHEST_KEY.getTranslatedKeyMessage();
+        return new TranslatableComponent()("chat.workers.controls.assign_chest_key", currentMapping);
     }
-    public static Component TEXT_WORKSPACE_KEY() {
-        Component currentMapping = ModShortcuts.ASSIGN_WORKSPACE_KEY.getTranslatedKeyMessage();
-        return Component.translatable("chat.workers.controls.assign_workspace_key", currentMapping);
+    public static MutableComponent TEXT_WORKSPACE_KEY() {
+        MutableComponent currentMapping = ModShortcuts.ASSIGN_WORKSPACE_KEY.getTranslatedKeyMessage();
+        return new TranslatableComponent()("chat.workers.controls.assign_workspace_key", currentMapping);
     }
 
      */
-    public static Component TEXT_OUT_OF_TOOLS(ItemStack lastItem) {
-        return Component.translatable("chat.workers.text.outOfTools", lastItem.getDisplayName().getString());
+    public static MutableComponent TEXT_OUT_OF_TOOLS(ItemStack lastItem) {
+        return new TranslatableComponent("chat.workers.text.outOfTools", lastItem.getDisplayName().getString());
     }
 
-    public static Component TEXT_HIRE_COSTS(int cost, String item) {
-        return Component.translatable("chat.workers.text.hire_costs", cost);
+    public static MutableComponent TEXT_HIRE_COSTS(int cost, String item) {
+        return new TranslatableComponent("chat.workers.text.hire_costs", cost);
     }
-    public static Component TEXT_NEED(int sollPrice, Item emerald) {
-        return Component.translatable("chat.workers.text.need", sollPrice, emerald);
+    public static MutableComponent TEXT_NEED(int sollPrice, Item emerald) {
+        return new TranslatableComponent("chat.workers.text.need", sollPrice, emerald);
     }
 
-    public static Component TEXT_NO_NEED(Item emerald) {
-        return Component.translatable("chat.workers.text.noNeed", emerald);
+    public static MutableComponent TEXT_NO_NEED(Item emerald) {
+        return new TranslatableComponent("chat.workers.text.noNeed");
     }
-    public static final Component TEXT_FISHER_NO_WATER = Component.translatable("chat.workers.text.fisherNoWater");
-    public static final Component TEXT_OUT_OF_STOCK = Component.translatable("chat.workers.text.outOfStock");
-    public static final Component TEXT_OUT_OF_STOCK_OWNER = Component.translatable("chat.workers.text.outOfStockOwner");
-    public static final Component TEXT_INV_FULL = Component.translatable("chat.workers.text.invFull");
-    public static final Component TEXT_INV_FULL_OWNER = Component.translatable("chat.workers.text.invFullOwner");
-    public static final Component TEXT_HOME = Component.translatable("chat.workers.text.home");
+    public static final MutableComponent TEXT_FISHER_NO_WATER = new TranslatableComponent("chat.workers.text.fisherNoWater");
+    public static final MutableComponent TEXT_OUT_OF_STOCK = new TranslatableComponent("chat.workers.text.outOfStock");
+    public static final MutableComponent TEXT_OUT_OF_STOCK_OWNER = new TranslatableComponent("chat.workers.text.outOfStockOwner");
+    public static final MutableComponent TEXT_INV_FULL = new TranslatableComponent("chat.workers.text.invFull");
+    public static final MutableComponent TEXT_INV_FULL_OWNER = new TranslatableComponent("chat.workers.text.invFullOwner");
+    public static final MutableComponent TEXT_HOME = new TranslatableComponent("chat.workers.text.home");
 
-    public static final Component NEED_CHEST = Component.translatable("chat.workers.needChest");
-    public static final Component TEXT_CHEST = Component.translatable("chat.workers.text.chest");
-    public static final Component TEXT_CHEST_ERROR = Component.translatable("chat.workers.text.chestError");
-    public static final Component NEED_BED = Component.translatable("chat.workers.needBed");
-    public static final Component TEXT_BED = Component.translatable("chat.workers.text.bed");
-    public static final Component TEXT_BED_ERROR = Component.translatable("chat.workers.text.bedError");
+    public static final MutableComponent NEED_CHEST = new TranslatableComponent("chat.workers.needChest");
+    public static final MutableComponent TEXT_CHEST = new TranslatableComponent("chat.workers.text.chest");
+    public static final MutableComponent TEXT_CHEST_ERROR = new TranslatableComponent("chat.workers.text.chestError");
+    public static final MutableComponent NEED_BED = new TranslatableComponent("chat.workers.needBed");
+    public static final MutableComponent TEXT_BED = new TranslatableComponent("chat.workers.text.bed");
+    public static final MutableComponent TEXT_BED_ERROR = new TranslatableComponent("chat.workers.text.bedError");
 
-    public static final Component TEXT_NO_FOOD = Component.translatable("chat.workers.text.noFoodInUpkeep");
-    public static final Component TEXT_NO_SPACE_INV = Component.translatable("chat.workers.text.noSpaceInvForUpkeep");
+    public static final MutableComponent TEXT_NO_FOOD = new TranslatableComponent("chat.workers.text.noFoodInUpkeep");
+    public static final MutableComponent TEXT_NO_SPACE_INV = new TranslatableComponent("chat.workers.text.noSpaceInvForUpkeep");
 
-    public static final Component TEXT_NO_PICKAXE = Component.translatable("chat.workers.text.noPickaxe");
-    public static final Component TEXT_NO_FISHING_ROD = Component.translatable("chat.workers.text.noFishingRod");
-    public static final Component TEXT_BUTTON_WORK_POS = Component.translatable("gui.workers.button.workPos");
-    public static final Component TEXT_BUTTON_CHEST_POS = Component.translatable("gui.workers.button.chestPos");
-    public static final Component TEXT_BUTTON_SLEEP_POS = Component.translatable("gui.workers.button.sleepPos");
+    public static final MutableComponent TEXT_NO_PICKAXE = new TranslatableComponent("chat.workers.text.noPickaxe");
+    public static final MutableComponent TEXT_NO_FISHING_ROD = new TranslatableComponent("chat.workers.text.noFishingRod");
+    public static final MutableComponent TEXT_BUTTON_WORK_POS = new TranslatableComponent("gui.workers.button.workPos");
+    public static final MutableComponent TEXT_BUTTON_CHEST_POS = new TranslatableComponent("gui.workers.button.chestPos");
+    public static final MutableComponent TEXT_BUTTON_SLEEP_POS = new TranslatableComponent("gui.workers.button.sleepPos");
 
-    public static final MutableComponent TEXT_CANT_FIND_CHEST = Component.translatable("chat.workers.cantFindChest");
-    public static final MutableComponent TEXT_CHEST_FULL = Component.translatable("chat.workers.chestFull");
-    public static final MutableComponent TEXT_COULD_NOT_DEPOSIT = Component.translatable("chat.workers.couldNotDeposit");
-    public static final Component TEXT_WAYPOINT_NOT_NEAR_TO_PREV = Component.translatable("chat.workers.text.waypointNotNearToPrev");
+    public static final MutableComponent TEXT_CANT_FIND_CHEST = new TranslatableComponent("chat.workers.cantFindChest");
+    public static final MutableComponent TEXT_CHEST_FULL = new TranslatableComponent("chat.workers.chestFull");
+    public static final MutableComponent TEXT_COULD_NOT_DEPOSIT = new TranslatableComponent("chat.workers.couldNotDeposit");
+    public static final MutableComponent TEXT_WAYPOINT_NOT_NEAR_TO_PREV = new TranslatableComponent("chat.workers.text.waypointNotNearToPrev");
 
 }

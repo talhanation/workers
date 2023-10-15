@@ -8,6 +8,8 @@ import com.talhanation.workers.inventory.WorkerInventoryContainer;
 import com.talhanation.workers.network.MessageAnimalCount;
 import com.talhanation.workers.network.MessageChickenFarmerUseEggs;
 import net.minecraft.client.gui.components.Button;
+import net.minecraft.network.chat.TextComponent;
+import net.minecraft.network.chat.TranslatableComponent;
 import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.MutableComponent;
@@ -21,7 +23,7 @@ public class AnimalFarmerInventoryScreen extends WorkerInventoryScreen {
     private static final int fontColor = 4210752;
 
     public AnimalFarmerInventoryScreen(WorkerInventoryContainer container, Inventory playerInventory, Component title) {
-        super(container, playerInventory, Component.literal(""));
+        super(container, playerInventory,  new TextComponent(""));
         this.animalFarmer = (AbstractAnimalFarmerEntity) container.getWorker();
     }
 
@@ -35,7 +37,7 @@ public class AnimalFarmerInventoryScreen extends WorkerInventoryScreen {
     private void setButtons(){
         this.clearWidgets();
         // Count
-        addRenderableWidget(new Button(leftPos + 10, topPos + 60, 8, 12, Component.literal("<"), button -> {
+        addRenderableWidget(new Button(leftPos + 10, topPos + 60, 8, 12,  new TextComponent("<"), button -> {
             this.count = animalFarmer.getMaxAnimalCount();
             if (this.count != 0) {
                 this.count--;
@@ -44,7 +46,7 @@ public class AnimalFarmerInventoryScreen extends WorkerInventoryScreen {
             }
         }));
 
-        addRenderableWidget(new Button(leftPos + 10 + 30, topPos + 60, 8, 12, Component.literal(">"), button -> {
+        addRenderableWidget(new Button(leftPos + 10 + 30, topPos + 60, 8, 12,  new TextComponent(">"), button -> {
             this.count = animalFarmer.getMaxAnimalCount();
             if (this.count != 32) {
                 this.count++;
@@ -68,10 +70,10 @@ public class AnimalFarmerInventoryScreen extends WorkerInventoryScreen {
         font.draw(matrixStack, count, k - 55, l + 45, fontColor);
     }
 
-    private final MutableComponent MAX_ANIMALS = Component.translatable("gui.workers.shepherd.max_animals");
+    private final MutableComponent MAX_ANIMALS = new TranslatableComponent("gui.workers.shepherd.max_animals");
 
     private void setUseEggsButton(String string) {
-        addRenderableWidget(new Button(leftPos + 190, topPos + 57, 40, 20, Component.literal(string), button -> {
+        addRenderableWidget(new Button(leftPos + 190, topPos + 57, 40, 20,  new TextComponent(string), button -> {
             this.useEggs = !useEggs;
 
             Main.SIMPLE_CHANNEL.sendToServer(new MessageChickenFarmerUseEggs(animalFarmer.getUUID(), useEggs));

@@ -7,6 +7,7 @@ import com.talhanation.workers.entities.ai.WorkerPickupWantedItemGoal;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.MutableComponent;
+import net.minecraft.network.chat.TextComponent;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.DifficultyInstance;
 import net.minecraft.world.SimpleContainer;
@@ -105,7 +106,7 @@ public class CattleFarmerEntity extends AbstractAnimalFarmerEntity {
     public SpawnGroupData finalizeSpawn(ServerLevelAccessor world, DifficultyInstance difficultyInstance,
             MobSpawnType reason, @Nullable SpawnGroupData data, @Nullable CompoundTag nbt) {
         SpawnGroupData ilivingentitydata = super.finalizeSpawn(world, difficultyInstance, reason, data, nbt);
-        this.populateDefaultEquipmentEnchantments(random, difficultyInstance);
+        this.populateDefaultEquipmentEnchantments(difficultyInstance);
 
         this.initSpawn();
 
@@ -115,7 +116,7 @@ public class CattleFarmerEntity extends AbstractAnimalFarmerEntity {
     @Override
     public void initSpawn() {
         super.initSpawn();
-        Component name = Component.literal("Cattle Farmer");
+        TextComponent name = new TextComponent("Cattle Farmer");
 
         this.setProfessionName(name.getString());
         this.setCustomName(name);

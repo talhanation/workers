@@ -3,6 +3,8 @@ package com.talhanation.workers.entities.ai;
 import com.talhanation.workers.entities.MerchantEntity;
 import net.minecraft.core.BlockPos;
 import net.minecraft.network.chat.Component;
+import net.minecraft.network.chat.TextComponent;
+import net.minecraft.network.chat.TranslatableComponent;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.ai.goal.Goal;
 import net.minecraft.world.entity.vehicle.Boat;
@@ -102,14 +104,14 @@ public class MerchantAI extends Goal {
 
             case ARRIVED -> {
                 if(!arrivedMessage && merchant.getOwner() != null){
-                    merchant.tellPlayer(merchant.getOwner(), Component.literal("I've arrived at my last waypoint."));
+                    merchant.tellPlayer(merchant.getOwner(), new TextComponent("I've arrived at my last waypoint."));
                     arrivedMessage = true;
                 }
                 if(merchant.isReturnTimeElapsed() || merchant.getReturning()){
                     merchant.setReturning(true);
                     merchant.setCurrentReturningTime(0);
                     if(!returningMessage && merchant.getOwner() != null){
-                        merchant.tellPlayer(merchant.getOwner(), Component.literal("I'm returning now."));
+                        merchant.tellPlayer(merchant.getOwner(), new TextComponent("I'm returning now."));
                         returningMessage = true;
                     }
                     this.setWorkState(IDLE);
@@ -118,7 +120,7 @@ public class MerchantAI extends Goal {
 
             case HOME -> {
                 if(!homeMessage && merchant.getOwner() != null){
-                    merchant.tellPlayer(merchant.getOwner(), Component.literal("I've arrived where i've started."));
+                    merchant.tellPlayer(merchant.getOwner(), new TextComponent("I've arrived where i've started."));
                     homeMessage = true;
                 }
                 merchant.setTraveling(false);

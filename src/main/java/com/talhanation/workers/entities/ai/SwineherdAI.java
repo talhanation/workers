@@ -87,7 +87,7 @@ public class SwineherdAI extends AnimalFarmerAI {
                         pig.get().kill();
 
                         this.animalFarmer.workerSwingArm();
-                        this.animalFarmer.playSound(SoundEvents.PLAYER_ATTACK_STRONG);
+                        this.animalFarmer.playSound(SoundEvents.PLAYER_ATTACK_STRONG,1.0F, 1.0F);
                         this.animalFarmer.consumeToolDurability();
                         this.animalFarmer.increaseFarmedItems();
                     }

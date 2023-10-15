@@ -12,6 +12,8 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.network.chat.Component;
+import net.minecraft.network.chat.MutableComponent;
+import net.minecraft.network.chat.TextComponent;
 import net.minecraft.network.syncher.EntityDataAccessor;
 import net.minecraft.network.syncher.EntityDataSerializers;
 import net.minecraft.network.syncher.SynchedEntityData;
@@ -650,11 +652,11 @@ public abstract class AbstractWorkerEntity extends AbstractChunkLoaderEntity {
         }
     }
 
-    public void tellPlayer(LivingEntity player, Component message) {
-        Component dialogue = Component.literal(this.getName().getString())
+    public void tellPlayer(LivingEntity player, MutableComponent message) {
+        MutableComponent dialogue = new TextComponent(this.getName().getString())
             .append(": ")
             .append(message);
-        player.sendSystemMessage(dialogue);
+        player.sendMessage(dialogue, player.getUUID());
     }
 
     public void walkTowards(BlockPos pos, double speed) {
@@ -847,7 +849,7 @@ public abstract class AbstractWorkerEntity extends AbstractChunkLoaderEntity {
                 packetBuffer.writeUUID(getUUID());
             };
 
-            NetworkHooks.openScreen((ServerPlayer) player, containerSupplier, extraDataWriter);
+            NetworkHooks.openGui((ServerPlayer) player, containerSupplier, extraDataWriter);
         } else {
             Main.SIMPLE_CHANNEL.sendToServer(new MessageHireGui(player, this.getUUID()));
         }

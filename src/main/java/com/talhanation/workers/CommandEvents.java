@@ -7,6 +7,7 @@ import com.talhanation.workers.network.MessageOpenCommandScreen;
 import com.talhanation.workers.network.MessageToClientUpdateCommandScreen;
 import net.minecraft.core.Holder;
 import net.minecraft.network.chat.Component;
+import net.minecraft.network.chat.TextComponent;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
@@ -477,11 +478,11 @@ public class CommandEvents {
 
     public static void openCommandScreen(Player player) {
         if (player instanceof ServerPlayer) {
-            NetworkHooks.openScreen((ServerPlayer) player, new MenuProvider() {
+            NetworkHooks.openGui((ServerPlayer) player, new MenuProvider() {
 
                 @Override
                 public @NotNull Component getDisplayName() {
-                    return Component.literal("command_screen");
+                    return new TextComponent("command_screen");
                 }
                 @Override
                 public @NotNull AbstractContainerMenu createMenu(int i, @NotNull Inventory playerInventory, @NotNull Player playerEntity) {

@@ -1,5 +1,6 @@
 package com.talhanation.workers.entities.ai;
 
+import com.google.common.collect.ImmutableSet;
 import com.talhanation.workers.entities.FarmerEntity;
 import net.minecraft.core.BlockPos;
 import net.minecraft.server.level.ServerLevel;
@@ -10,6 +11,7 @@ import net.minecraft.world.SimpleContainer;
 import net.minecraft.world.entity.ai.goal.Goal;
 import net.minecraft.world.entity.vehicle.Boat;
 import net.minecraft.world.item.BoneMealItem;
+import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
 import net.minecraft.world.level.block.*;
@@ -20,6 +22,8 @@ import net.minecraftforge.event.ForgeEventFactory;
 
 import java.util.EnumSet;
 import java.util.Random;
+import java.util.Set;
+
 import static com.talhanation.workers.entities.FarmerEntity.CROP_BLOCKS;
 import static com.talhanation.workers.entities.FarmerEntity.WANTED_SEEDS;
 
@@ -144,7 +148,7 @@ public class FarmerAI extends Goal {
 
     private boolean hasBone() {
         SimpleContainer inventory = farmer.getInventory();
-        return inventory.hasAnyMatching(item -> item.getItem() instanceof BoneMealItem);
+        return inventory.hasAnyOf(ImmutableSet.of(Items.BONE_MEAL));
     }
 
     private void fertilizeSeeds(BlockPos workPos) {

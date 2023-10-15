@@ -10,6 +10,7 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.chat.Component;
+import net.minecraft.network.chat.TextComponent;
 import net.minecraft.network.syncher.EntityDataAccessor;
 import net.minecraft.network.syncher.EntityDataSerializers;
 import net.minecraft.network.syncher.SynchedEntityData;
@@ -110,7 +111,7 @@ public class MinerEntity extends AbstractWorkerEntity {
     public SpawnGroupData finalizeSpawn(@NotNull ServerLevelAccessor world, @NotNull DifficultyInstance difficultyInstance,
                                         @NotNull MobSpawnType reason, @Nullable SpawnGroupData data, @Nullable CompoundTag nbt) {
         SpawnGroupData ilivingentitydata = super.finalizeSpawn(world, difficultyInstance, reason, data, nbt);
-        this.populateDefaultEquipmentEnchantments(random, difficultyInstance);
+        this.populateDefaultEquipmentEnchantments(difficultyInstance);
 
         this.initSpawn();
 
@@ -120,7 +121,7 @@ public class MinerEntity extends AbstractWorkerEntity {
     @Override
     public void initSpawn() {
         super.initSpawn();
-        Component name = Component.literal("Miner");
+        TextComponent name = new TextComponent("Miner");
         this.setProfessionName(name.getString());
         this.setCustomName(name);
     }
@@ -248,7 +249,7 @@ public class MinerEntity extends AbstractWorkerEntity {
 
     public void openGUI(Player player) {
         if (player instanceof ServerPlayer) {
-            NetworkHooks.openScreen((ServerPlayer) player, new MenuProvider() {
+            NetworkHooks.openGui((ServerPlayer) player, new MenuProvider() {
                 @Override
                 public @NotNull Component getDisplayName() {
                     return getName();

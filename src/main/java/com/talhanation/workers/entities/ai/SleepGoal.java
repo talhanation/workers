@@ -5,6 +5,7 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.core.Vec3i;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.MutableComponent;
+import net.minecraft.network.chat.TranslatableComponent;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.ai.goal.Goal;
 import net.minecraft.world.entity.ai.navigation.PathNavigation;
@@ -16,8 +17,8 @@ import org.jetbrains.annotations.Nullable;
 
 public class SleepGoal extends Goal {
     private final AbstractWorkerEntity worker;
-    private final MutableComponent NEED_BED = Component.translatable("chat.workers.needBed");
-    private final MutableComponent CANT_FIND_BED = Component.translatable("chat.workers.cantFindBed");
+    private final MutableComponent NEED_BED = new TranslatableComponent("chat.workers.needBed");
+    private final MutableComponent CANT_FIND_BED = new TranslatableComponent("chat.workers.cantFindBed");
 
     public SleepGoal(AbstractWorkerEntity worker) {
         this.worker = worker;

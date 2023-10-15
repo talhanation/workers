@@ -8,7 +8,6 @@ import net.minecraft.network.protocol.game.ClientboundAddEntityPacket;
 import net.minecraft.network.syncher.EntityDataAccessor;
 import net.minecraft.tags.FluidTags;
 import net.minecraft.util.Mth;
-import net.minecraft.util.RandomSource;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.MoverType;
@@ -31,7 +30,7 @@ import javax.annotation.Nullable;
 public class WorkersFishingHook extends Projectile {
 
     private static final Logger LOGGER = LogUtils.getLogger();
-    private final RandomSource syncronizedRandom = RandomSource.create();
+    //private final RandomSource syncronizedRandom = RandomSource.create();
     private boolean biting;
     private int outOfWaterTime;
     private int life;

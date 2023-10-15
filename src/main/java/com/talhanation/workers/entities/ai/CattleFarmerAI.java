@@ -112,7 +112,7 @@ public class CattleFarmerAI extends AnimalFarmerAI {
                     this.animalFarmer.getNavigation().moveTo(cow.get().getX(), cow.get().getY(), cow.get().getZ(), 1);
                     if (cow.get().closerThan(this.animalFarmer, 2)) {
                         cow.get().kill();
-                        animalFarmer.playSound(SoundEvents.PLAYER_ATTACK_STRONG);
+                        animalFarmer.playSound(SoundEvents.PLAYER_ATTACK_STRONG, 1F, 1F);
 
                         this.animalFarmer.consumeToolDurability();
                         animalFarmer.increaseFarmedItems();

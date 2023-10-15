@@ -13,6 +13,7 @@ import com.talhanation.workers.network.MessageOpenGuiWorker;
 import com.talhanation.workers.network.MessageToClientUpdateMerchantScreen;
 import net.minecraft.core.BlockPos;
 import net.minecraft.nbt.Tag;
+import net.minecraft.network.chat.TextComponent;
 import net.minecraft.network.syncher.EntityDataAccessor;
 import net.minecraft.network.syncher.EntityDataSerializers;
 import net.minecraft.network.syncher.SynchedEntityData;
@@ -184,7 +185,7 @@ public class MerchantEntity extends AbstractWorkerEntity implements IBoatControl
 
     public void openTradeGUI(Player player) {
         if (player instanceof ServerPlayer) {
-            NetworkHooks.openScreen((ServerPlayer) player, new MenuProvider() {
+            NetworkHooks.openGui((ServerPlayer) player, new MenuProvider() {
                 @Override
                 public @NotNull Component getDisplayName() {
                     return getName();
@@ -204,7 +205,7 @@ public class MerchantEntity extends AbstractWorkerEntity implements IBoatControl
 
     public void openWaypointsGUI(Player player) {
         if (player instanceof ServerPlayer) {
-            NetworkHooks.openScreen((ServerPlayer) player, new MenuProvider() {
+            NetworkHooks.openGui((ServerPlayer) player, new MenuProvider() {
                 @Override
                 public @NotNull Component getDisplayName() {
                     return getName();
@@ -229,7 +230,7 @@ public class MerchantEntity extends AbstractWorkerEntity implements IBoatControl
     @Override
     public void openGUI(Player player) {
         if (player instanceof ServerPlayer) {
-            NetworkHooks.openScreen((ServerPlayer) player, new MenuProvider() {
+            NetworkHooks.openGui((ServerPlayer) player, new MenuProvider() {
                 @Override
                 public @NotNull Component getDisplayName() {
                     return getName();
@@ -279,7 +280,7 @@ public class MerchantEntity extends AbstractWorkerEntity implements IBoatControl
     @Nullable
     public SpawnGroupData finalizeSpawn(@NotNull ServerLevelAccessor world, @NotNull DifficultyInstance difficultyInstance, @NotNull MobSpawnType reason, @Nullable SpawnGroupData data, @Nullable CompoundTag nbt) {
         SpawnGroupData ilivingentitydata = super.finalizeSpawn(world, difficultyInstance, reason, data, nbt);
-        this.populateDefaultEquipmentEnchantments(random, difficultyInstance);
+        this.populateDefaultEquipmentEnchantments(difficultyInstance);
         this.initSpawn();
 
         return ilivingentitydata;
@@ -288,7 +289,7 @@ public class MerchantEntity extends AbstractWorkerEntity implements IBoatControl
     @Override
     public void initSpawn() {
         super.initSpawn();
-        Component name = Component.literal("Merchant");
+        TextComponent name = new TextComponent("Merchant");
 
         this.setProfessionName(name.getString());
         this.setCustomName(name);

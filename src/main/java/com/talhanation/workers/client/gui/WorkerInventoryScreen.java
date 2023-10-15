@@ -5,6 +5,7 @@ import com.talhanation.workers.Main;
 import com.talhanation.workers.inventory.WorkerInventoryContainer;
 import com.talhanation.workers.entities.AbstractWorkerEntity;
 import de.maxhenkel.corelib.inventory.ScreenBase;
+import net.minecraft.network.chat.TextComponent;
 import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.network.chat.Component;
@@ -18,7 +19,7 @@ public class WorkerInventoryScreen extends ScreenBase<WorkerInventoryContainer> 
     private final Inventory playerInventory;
 
     public WorkerInventoryScreen(WorkerInventoryContainer container, Inventory playerInventory, Component title) {
-        super(GUI_TEXTURE_3, container, playerInventory, Component.literal(""));
+        super(GUI_TEXTURE_3, container, playerInventory, new TextComponent(""));
         Main.LOGGER.info("WorkerInventoryScreen loaded");
         this.worker = container.getWorker();
         this.playerInventory = playerInventory;

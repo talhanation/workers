@@ -5,9 +5,7 @@ import com.talhanation.workers.entities.AbstractWorkerEntity;
 import com.talhanation.workers.entities.ai.horse.HorseRiddenByMerchantGoal;
 import com.talhanation.workers.init.ModBlocks;
 import com.talhanation.workers.init.ModEntityTypes;
-import com.talhanation.workers.init.ModProfessions;
 
-import net.minecraft.util.RandomSource;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.ai.goal.target.NearestAttackableTargetGoal;
@@ -23,18 +21,19 @@ import net.minecraft.world.item.Items;
 import net.minecraft.world.item.trading.MerchantOffer;
 import net.minecraft.world.level.ItemLike;
 import net.minecraft.world.level.block.Block;
-import net.minecraftforge.event.entity.EntityJoinLevelEvent;
-import net.minecraftforge.event.entity.living.LivingEvent.LivingTickEvent;
+import net.minecraftforge.event.entity.EntityJoinWorldEvent;
+import net.minecraftforge.event.entity.living.LivingEvent;
 import net.minecraftforge.event.village.VillagerTradesEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Random;
 
 public class VillagerEvents {
 
 
     @SubscribeEvent
-    public void attackWorkers(EntityJoinLevelEvent event) {
+    public void attackWorkers(EntityJoinWorldEvent event) {
         Entity entity = event.getEntity();
 
         if (WorkersModConfig.PillagerAttackWorkers.get() && entity instanceof AbstractIllager illager) {
@@ -49,18 +48,18 @@ public class VillagerEvents {
 
     }
     @SubscribeEvent
-    public void onVillagerLivingUpdate(LivingTickEvent event) {
+    public void onVillagerLivingUpdate(LivingEvent.LivingUpdateEvent event) {
         HashMap<VillagerProfession, EntityType<? extends AbstractWorkerEntity>> entitiesByProfession = new HashMap<>(){{
 
-            put(ModProfessions.MINER.get(), ModEntityTypes.MINER.get());
-            put(ModProfessions.LUMBERJACK.get(), ModEntityTypes.LUMBERJACK.get());
-            put(ModProfessions.FISHER.get(), ModEntityTypes.FISHERMAN.get());
-            put(ModProfessions.SHEPHERD.get(), ModEntityTypes.SHEPHERD.get());
-            put(ModProfessions.FARMER.get(), ModEntityTypes.FARMER.get());
-            put(ModProfessions.MERCHANT.get(), ModEntityTypes.MERCHANT.get());
-            put(ModProfessions.CHICKEN_FARMER.get(), ModEntityTypes.CHICKEN_FARMER.get());
-            put(ModProfessions.CATTLE_FARMER.get(), ModEntityTypes.CATTLE_FARMER.get());
-            put(ModProfessions.SWINEHERD.get(), ModEntityTypes.SWINEHERD.get());
+            put(Main.MINER, ModEntityTypes.MINER.get());
+            put(Main.LUMBERJACK, ModEntityTypes.LUMBERJACK.get());
+            put(Main.FISHER, ModEntityTypes.FISHERMAN.get());
+            put(Main.SHEPHERD, ModEntityTypes.SHEPHERD.get());
+            put(Main.FARMER, ModEntityTypes.FARMER.get());
+            put(Main.MERCHANT, ModEntityTypes.MERCHANT.get());
+            put(Main.CHICKEN_FARMER, ModEntityTypes.CHICKEN_FARMER.get());
+            put(Main.CATTLE_FARMER, ModEntityTypes.CATTLE_FARMER.get());
+            put(Main.SWINEHERD, ModEntityTypes.SWINEHERD.get());
         }};
 
         Entity entity = event.getEntity();
@@ -86,7 +85,7 @@ public class VillagerEvents {
     }
 
     @SubscribeEvent
-    public void onHorseJoinWorld(EntityJoinLevelEvent event) {
+    public void onHorseJoinWorld(EntityJoinWorldEvent event) {
         Entity entity = event.getEntity();
 
         if (entity instanceof AbstractHorse horse) {
@@ -209,7 +208,7 @@ public class VillagerEvents {
             this.priceMultiplier = 0.05F;
         }
 
-        public MerchantOffer getOffer(Entity entity, RandomSource random) {
+        public MerchantOffer getOffer(Entity entity, Random random) {
             return new MerchantOffer(new ItemStack(this.buyingItem, this.buyingAmount),
                     new ItemStack(sellingItem, sellingAmount), maxUses, givenExp, priceMultiplier);
         }
@@ -252,7 +251,7 @@ public class VillagerEvents {
             this.priceMultiplier = p_i50532_6_;
         }
 
-        public MerchantOffer getOffer(Entity p_221182_1_, RandomSource p_221182_2_) {
+        public MerchantOffer getOffer(Entity p_221182_1_, Random p_221182_2_) {
             return new MerchantOffer(new ItemStack(Items.EMERALD, this.emeraldCost),
                     new ItemStack(this.itemStack.getItem(), this.numberOfItems), this.maxUses, this.villagerXp,
                     this.priceMultiplier);

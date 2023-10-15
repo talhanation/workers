@@ -7,6 +7,8 @@ import com.talhanation.workers.entities.MinerEntity;
 import com.talhanation.workers.network.MessageMineDepth;
 import com.talhanation.workers.network.MessageMineType;
 import net.minecraft.client.gui.components.Button;
+import net.minecraft.network.chat.TextComponent;
+import net.minecraft.network.chat.TranslatableComponent;
 import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.MutableComponent;
@@ -20,7 +22,7 @@ public class MinerInventoryScreen extends WorkerInventoryScreen {
     private static final int fontColor = 4210752;
 
     public MinerInventoryScreen(WorkerInventoryContainer container, Inventory playerInventory, Component title) {
-        super(container, playerInventory, Component.literal(""));
+        super(container, playerInventory, new TextComponent(""));
         this.miner = (MinerEntity) container.getWorker();
     }
 
@@ -28,7 +30,7 @@ public class MinerInventoryScreen extends WorkerInventoryScreen {
     protected void init() {
         super.init();
         // MINETYPE
-        addRenderableWidget(new Button(leftPos + 90, topPos + 60, 8, 12, Component.literal("<"), button -> {
+        addRenderableWidget(new Button(leftPos + 90, topPos + 60, 8, 12,  new TextComponent("<"), button -> {
             this.mineType = miner.getMineType();
             if (this.mineType != 0) {
                 this.mineType--;
@@ -36,7 +38,7 @@ public class MinerInventoryScreen extends WorkerInventoryScreen {
             }
         }));
 
-        addRenderableWidget(new Button(leftPos + 90 + 70, topPos + 60, 8, 12, Component.literal(">"), button -> {
+        addRenderableWidget(new Button(leftPos + 90 + 70, topPos + 60, 8, 12,  new TextComponent(">"), button -> {
             this.mineType = miner.getMineType();
             if (this.mineType != 5) {
                 this.mineType++;
@@ -45,7 +47,7 @@ public class MinerInventoryScreen extends WorkerInventoryScreen {
         }));
 
         // MINEDEPTH
-        addRenderableWidget(new Button(leftPos + 10, topPos + 60, 8, 12, Component.literal("<"), button -> {
+        addRenderableWidget(new Button(leftPos + 10, topPos + 60, 8, 12,  new TextComponent("<"), button -> {
             if (miner.getMineType() != 3 && miner.getMineType() != 5 && miner.getMineType() != 4) {
                 this.mineDepth = miner.getMineDepth();
                 if (this.mineDepth != 0) {
@@ -55,7 +57,7 @@ public class MinerInventoryScreen extends WorkerInventoryScreen {
             }
         }));
 
-        addRenderableWidget(new Button(leftPos + 10 + 30, topPos + 60, 8, 12, Component.literal(">"), button -> {
+        addRenderableWidget(new Button(leftPos + 10 + 30, topPos + 60, 8, 12,  new TextComponent(">"), button -> {
             if (miner.getMineType() != 3 && miner.getMineType() != 5 && miner.getMineType() != 4) {
                 this.mineDepth = miner.getMineDepth();
                 if (this.mineDepth != miner.getMaxMineDepth()) {
@@ -110,14 +112,14 @@ public class MinerInventoryScreen extends WorkerInventoryScreen {
         font.draw(matrixStack, type, k + 25, l + 45, fontColor);
     }
 
-    private final MutableComponent MINEMODE = Component.translatable("gui.workers.miner.mine_mode");
-    private final MutableComponent TUNNEL = Component.translatable("gui.workers.miner.tunnel");
-    private final MutableComponent TUNNEL3x3 = Component.translatable("gui.workers.miner.tunnel3x3");
-    private final MutableComponent PIT8x8x8 = Component.translatable("gui.workers.miner.pit8x8x8");
-    private final MutableComponent FLAT8x8x1 = Component.translatable("gui.workers.miner.flat8x8x1");
-    private final MutableComponent ROOM8x8x3 = Component.translatable("gui.workers.miner.room8x8x3");
-    private final MutableComponent DEPTH = Component.translatable("gui.workers.miner.depth");
-    private final MutableComponent WANDERING = Component.translatable("gui.workers.following");
-    private final MutableComponent FOLLOWING = Component.translatable("gui.workers.wandering");
+    private final MutableComponent MINEMODE =  new TranslatableComponent("gui.workers.miner.mine_mode");
+    private final MutableComponent TUNNEL = new TranslatableComponent("gui.workers.miner.tunnel");
+    private final MutableComponent TUNNEL3x3 = new TranslatableComponent("gui.workers.miner.tunnel3x3");
+    private final MutableComponent PIT8x8x8 = new TranslatableComponent("gui.workers.miner.pit8x8x8");
+    private final MutableComponent FLAT8x8x1 = new TranslatableComponent("gui.workers.miner.flat8x8x1");
+    private final MutableComponent ROOM8x8x3 = new TranslatableComponent("gui.workers.miner.room8x8x3");
+    private final MutableComponent DEPTH = new TranslatableComponent("gui.workers.miner.depth");
+    private final MutableComponent WANDERING = new TranslatableComponent("gui.workers.following");
+    private final MutableComponent FOLLOWING = new TranslatableComponent("gui.workers.wandering");
 
 }
