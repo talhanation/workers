@@ -48,15 +48,12 @@ public class SailorNodeEvaluator extends WalkNodeEvaluator {
         super.done();
     }
 
-
-    @Nullable
-    public Node getStart() {
-        return this.getStartNode(new BlockPos(Mth.floor(this.mob.getBoundingBox().minX), Mth.floor(this.mob.getBoundingBox().minY + 0.5D), Mth.floor(this.mob.getBoundingBox().minZ)));
+    public @NotNull Node getStart() {
+        return this.getNode(Mth.floor(this.mob.getVehicle().getBoundingBox().minX), Mth.floor(this.mob.getVehicle().getBoundingBox().minY + 0.5D), Mth.floor(this.mob.getVehicle().getBoundingBox().minZ));
     }
 
-    @Nullable
-    public Target getGoal(double p_164662_, double p_164663_, double p_164664_) {
-        return this.getTargetFromNode(this.getNode(Mth.floor(p_164662_), Mth.floor(p_164663_ + 0.5D), Mth.floor(p_164664_)));
+    public @NotNull Target getGoal(double p_164662_, double p_164663_, double p_164664_) {
+        return new Target(this.getNode(Mth.floor(p_164662_ + 1.5), Mth.floor(p_164663_ + + 1.5), Mth.floor(p_164664_ + 1.5)));
     }
 
     public int getNeighbors(Node @NotNull [] nodes, Node nodeIn) {
