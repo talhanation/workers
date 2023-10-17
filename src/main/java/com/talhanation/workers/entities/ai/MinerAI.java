@@ -1,4 +1,5 @@
 package com.talhanation.workers.entities.ai;
+import com.google.common.collect.ImmutableSet;
 import com.talhanation.workers.Translatable;
 import com.talhanation.workers.entities.MinerEntity;
 import net.minecraft.core.BlockPos;
@@ -12,11 +13,14 @@ import net.minecraft.world.entity.ai.attributes.AttributeInstance;
 import net.minecraft.world.entity.ai.attributes.Attributes;
 import net.minecraft.world.entity.ai.goal.Goal;
 import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.Items;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.Blocks;
+import net.minecraft.world.level.block.TorchBlock;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraftforge.event.ForgeEventFactory;
 
+import javax.annotation.concurrent.Immutable;
 import java.util.EnumSet;
 
 public class MinerAI extends Goal {
@@ -26,6 +30,8 @@ public class MinerAI extends Goal {
     private MineType mineType;
     private WorkState workState;
     private boolean messageNoPickaxe;
+    private int torchCounter;
+
     public MinerAI(MinerEntity miner) {
         this.miner = miner;
         this.setFlags(EnumSet.of(Goal.Flag.MOVE));
@@ -69,7 +75,10 @@ public class MinerAI extends Goal {
         TUNNEL_3X3,
         PIT_8X8X8,
         FLAT_8X8X1,
-        ROOM_8X8X3
+        ROOM_8X8X3,
+        PIT_16X16X16,
+        FLAT_16X16X1,
+        ROOM_16X16X3
     }
 
     public void tick() {
@@ -161,9 +170,10 @@ public class MinerAI extends Goal {
 
         switch (mineType) {
             case PIT_8X8X8 -> {
-                if (miner.shouldIgnoreBlock(block1) || block1 == Blocks.OAK_PLANKS) {
+                if (miner.canBreakBlock(blockstate) && miner.shouldIgnoreBlock(block1) || block1 == Blocks.OAK_PLANKS) {
                     miner.blocks++;
                     if (block1 != Blocks.OAK_PLANKS) placePlanks();
+                    if(shouldPlaceTorch(0, 4)) placeTorch();
                 }
 
                 if (miner.blocks == 8) {
@@ -189,6 +199,7 @@ public class MinerAI extends Goal {
                 if (miner.depth == -3) {
                     miner.depth = 0;
                     miner.side++;
+                    if(shouldPlaceTorch(miner.side / 2, 2)) placeTorch();
                 }
 
                 if (miner.side == 8) {
@@ -204,6 +215,7 @@ public class MinerAI extends Goal {
             case FLAT_8X8X1 -> {
                 if (miner.shouldIgnoreBlock(block1)) {
                     miner.blocks++;
+                    if(shouldPlaceTorch(miner.blocks / 2, 2)) placeTorch();
                 }
 
                 if (miner.blocks == 8) {
@@ -212,6 +224,63 @@ public class MinerAI extends Goal {
                 }
 
                 if (miner.side == 8) {
+                    this.workState = WorkState.DONE;
+                }
+            }
+
+            case PIT_16X16X16 -> {
+                if (miner.shouldIgnoreBlock(block1) || block1 == Blocks.OAK_PLANKS) {
+                    miner.blocks++;
+                    if (block1 != Blocks.OAK_PLANKS) placePlanks();
+                    if(shouldPlaceTorch(0, 4)) placeTorch();
+                }
+
+                if (miner.blocks == 16) {
+                    miner.blocks = 0;
+                    miner.side++;
+                }
+
+                if (miner.side == 16) {
+                    miner.side = 0;
+                    miner.depth++;
+                }
+
+                if (miner.depth >= 16) {
+                    this.workState = WorkState.DONE;
+                }
+            }
+
+            case ROOM_16X16X3 -> {
+                if (miner.shouldIgnoreBlock(block1)) {
+                    miner.depth--;
+                }
+
+                if (miner.depth == -3) {
+                    miner.depth = 0;
+                    miner.side++;
+                }
+
+                if (miner.side == 16) {
+                    miner.side = 0;
+                    miner.blocks++;
+                }
+
+                if (miner.blocks == 16) {
+                    this.workState = WorkState.DONE;
+                }
+            }
+
+            case FLAT_16X16X1 -> {
+                if (miner.shouldIgnoreBlock(block1)) {
+                    miner.blocks++;
+                }
+
+                if (miner.blocks == 16) {
+                    miner.blocks = 0;
+                    miner.side++;
+                }
+
+                if (miner.side == 16) {
                     this.workState = WorkState.DONE;
                 }
             }
@@ -308,7 +377,20 @@ public class MinerAI extends Goal {
     }
     public boolean shouldPlacePlanks(){
         if (miner.side == 0) {
-            return (miner.blocks -1) == miner.depth;
+            return (miner.blocks - 1) == miner.depth;
+
+        }
+        return false;
+    }
+
+    public boolean shouldPlaceTorch(int x, int y){
+
+        if (miner.side == x) {//Pit = 0
+            torchCounter++;
+            if(miner.blocks == miner.depth && torchCounter == y){
+                torchCounter = 0;
+                return true;
+            }
 
         }
         return false;
@@ -319,5 +401,21 @@ public class MinerAI extends Goal {
             miner.level.setBlock(this.minePos, Blocks.OAK_PLANKS.defaultBlockState(), 3);
             miner.level.playSound(null, this.minePos.getX(), this.minePos.getY(), this.minePos.getZ(), SoundEvents.WOOD_PLACE, SoundSource.BLOCKS, 1.0F, 1.0F);
         }
+    }
+
+    public void placeTorch(){
+        if (hasTorchInInv()){
+            miner.level.setBlock(this.minePos, Blocks.OAK_PLANKS.defaultBlockState(), 3);
+            miner.level.playSound(null, this.minePos.getX(), this.minePos.getY(), this.minePos.getZ(), SoundEvents.WOOD_PLACE, SoundSource.BLOCKS, 1.0F, 1.0F);
+
+            for (int i = 0; i < miner.getInventory().getContainerSize(); ++i) {
+                ItemStack itemstack = miner.getInventory().getItem(i);
+                if(itemstack.is(Items.TORCH)) itemstack.shrink(1);
+            }
+        }
+    }
+
+    public boolean hasTorchInInv(){
+        return miner.getInventory().hasAnyOf(ImmutableSet.of(Items.TORCH));
     }
 }
