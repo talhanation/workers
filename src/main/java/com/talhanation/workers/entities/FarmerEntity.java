@@ -7,7 +7,6 @@ import com.talhanation.workers.inventory.WorkerInventoryContainer;
 import com.talhanation.workers.entities.ai.FarmerAI;
 import com.talhanation.workers.entities.ai.WorkerPickupWantedItemGoal;
 import com.talhanation.workers.network.MessageOpenGuiWorker;
-import net.minecraft.network.chat.TextComponent;
 import net.minecraft.world.entity.*;
 import net.minecraft.world.item.HoeItem;
 import net.minecraft.world.level.block.Block;
@@ -35,6 +34,8 @@ import net.minecraftforge.network.NetworkHooks;
 import org.jetbrains.annotations.NotNull;
 
 import javax.annotation.Nullable;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Set;
 import java.util.function.Predicate;
 
@@ -69,6 +70,15 @@ public class FarmerEntity extends AbstractWorkerEntity {
     public FarmerEntity(EntityType<? extends AbstractWorkerEntity> entityType, Level world) {
         super(entityType, world);
         this.initSpawn();
+    }
+
+    public void addAdditionalSaveData(@NotNull CompoundTag nbt) {
+        super.addAdditionalSaveData(nbt);
+
+    }
+
+    public void readAdditionalSaveData(@NotNull CompoundTag nbt) {
+        super.readAdditionalSaveData(nbt);
     }
 
     public boolean canWorkWithoutTool(){
