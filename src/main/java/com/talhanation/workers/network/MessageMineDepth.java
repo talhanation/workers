@@ -28,7 +28,7 @@ public class MessageMineDepth implements Message<MessageMineDepth> {
     }
 
     public void executeServerSide(NetworkEvent.Context context){
-        List<MinerEntity> list = Objects.requireNonNull(context.getSender()).level.getEntitiesOfClass(MinerEntity.class, context.getSender().getBoundingBox().inflate(16.0D));
+        List<MinerEntity> list = Objects.requireNonNull(context.getSender()).getCommandSenderWorld().getEntitiesOfClass(MinerEntity.class, context.getSender().getBoundingBox().inflate(16.0D));
         for (MinerEntity recruits : list){
 
             if (recruits.getUUID().equals(this.uuid))

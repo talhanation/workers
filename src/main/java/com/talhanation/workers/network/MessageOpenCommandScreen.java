@@ -3,6 +3,7 @@ package com.talhanation.workers.network;
 import com.talhanation.workers.CommandEvents;
 import de.maxhenkel.corelib.net.Message;
 import net.minecraft.network.FriendlyByteBuf;
+import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.player.Player;
 import net.minecraftforge.api.distmarker.Dist;
@@ -32,7 +33,7 @@ public class MessageOpenCommandScreen implements Message<MessageOpenCommandScree
         if (!player.getUUID().equals(uuid)) {
             return;
         }
-        CommandEvents.updateCommandScreen(player, player.getLevel());
+        CommandEvents.updateCommandScreen(player, (ServerLevel) player.getCommandSenderWorld());
         CommandEvents.openCommandScreen(player);
     }
 

@@ -30,7 +30,7 @@ public class MessageFollow implements Message<MessageFollow> {
     }
 
     public void executeServerSide(NetworkEvent.Context context) {
-        List<AbstractWorkerEntity> workers = Objects.requireNonNull(context.getSender()).level.getEntitiesOfClass(AbstractWorkerEntity.class, context.getSender().getBoundingBox().inflate(64D));
+        List<AbstractWorkerEntity> workers = Objects.requireNonNull(context.getSender()).getCommandSenderWorld().getEntitiesOfClass(AbstractWorkerEntity.class, context.getSender().getBoundingBox().inflate(64D));
         for (AbstractWorkerEntity worker : workers) {
             if(Objects.equals(worker.getUUID(), this.worker)) {
                 worker.setFollow(!worker.getFollow());

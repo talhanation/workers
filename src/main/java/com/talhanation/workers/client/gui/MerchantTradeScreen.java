@@ -1,11 +1,11 @@
 package com.talhanation.workers.client.gui;
 
-import com.mojang.blaze3d.vertex.PoseStack;
 import com.talhanation.workers.Main;
 import com.talhanation.workers.entities.MerchantEntity;
 import com.talhanation.workers.inventory.MerchantTradeContainer;
 import com.talhanation.workers.network.MessageMerchantTradeButton;
 import de.maxhenkel.corelib.inventory.ScreenBase;
+import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.network.chat.Component;
@@ -19,6 +19,7 @@ public class MerchantTradeScreen extends ScreenBase<MerchantTradeContainer> {
 
     private final MerchantEntity merchant;
     private final Inventory playerInventory;
+    private static final int fontColor = 4210752;
 
     private final MutableComponent TRADE_TEXT = Component.translatable("gui.workers.merchant.trade");
 
@@ -58,14 +59,11 @@ public class MerchantTradeScreen extends ScreenBase<MerchantTradeContainer> {
     }
 
     @Override
-    protected void renderLabels(PoseStack matrixStack, int mouseX, int mouseY) {
-        super.renderLabels(matrixStack, mouseX, mouseY);
+    protected void renderLabels(GuiGraphics guiGraphics, int mouseX, int mouseY) {
+        super.renderLabels(guiGraphics, mouseX, mouseY);
 
-        font.draw(matrixStack, merchant.getDisplayName().getVisualOrderText(), 8, 6, FONT_COLOR);
-        matrixStack.popPose();
-
-        font.draw(matrixStack, playerInventory.getDisplayName().getVisualOrderText(), 8, imageHeight - 152 + 25,
-                FONT_COLOR);
+        guiGraphics.drawString(font, merchant.getDisplayName().getVisualOrderText(), 8, 6, fontColor, false);
+        guiGraphics.drawString(font, playerInventory.getDisplayName().getVisualOrderText(), 8, imageHeight - 152 + 25, fontColor, false);
     }
 
     @Override
@@ -73,7 +71,7 @@ public class MerchantTradeScreen extends ScreenBase<MerchantTradeContainer> {
         return false;
     }
 
-    protected void renderBg(PoseStack matrixStack, float partialTicks, int mouseX, int mouseY) {
-        super.renderBg(matrixStack, partialTicks, mouseX, mouseY);
+    protected void renderBg(GuiGraphics guiGraphics, float partialTicks, int mouseX, int mouseY) {
+        super.renderBg(guiGraphics, partialTicks, mouseX, mouseY);
     }
 }

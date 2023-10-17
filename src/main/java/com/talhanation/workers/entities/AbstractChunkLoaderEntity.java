@@ -28,7 +28,7 @@ public abstract class AbstractChunkLoaderEntity extends AbstractInventoryEntity 
     }
 
     public void updateChunkLoading(){
-        if (WorkersModConfig.WorkerChunkLoading.get() && !this.level.isClientSide) {
+        if (WorkersModConfig.WorkerChunkLoading.get() && !this.getCommandSenderWorld().isClientSide) {
             WorkersChunk currentChunk = new WorkersChunk(this.chunkPosition().x, this.chunkPosition().z);
             if (loadedChunk.isEmpty()) {
                 this.setForceChunk(currentChunk, true);
@@ -87,12 +87,12 @@ public abstract class AbstractChunkLoaderEntity extends AbstractInventoryEntity 
     ////////////////////////////////////SET////////////////////////////////////
 
     private void setForceChunk(WorkersChunk chunk, boolean add) {
-        ForgeChunkManager.forceChunk((ServerLevel) this.level, Main.MOD_ID, this, chunk.x, chunk.z, add, false);
+        ForgeChunkManager.forceChunk((ServerLevel) this.getCommandSenderWorld(), Main.MOD_ID, this, chunk.x, chunk.z, add, false);
     }
 
     public void kill(){
         super.kill();
-        if(!this.level.isClientSide) loadedChunk.ifPresent(chunk -> this.getSetOfChunks(chunk).forEach(chunk1 -> this.setForceChunk(chunk1, false)));
+        if(!this.getCommandSenderWorld().isClientSide) loadedChunk.ifPresent(chunk -> this.getSetOfChunks(chunk).forEach(chunk1 -> this.setForceChunk(chunk1, false)));
     }
 
     public static class WorkersChunk{

@@ -105,7 +105,7 @@ public class SwineherdAI extends AnimalFarmerAI {
 
     }
     private Optional<Pig> findPigBreeding() {
-        return  this.animalFarmer.level.getEntitiesOfClass(Pig.class, this.animalFarmer.getBoundingBox()
+        return  this.animalFarmer.getCommandSenderWorld().getEntitiesOfClass(Pig.class, this.animalFarmer.getBoundingBox()
                 .inflate(8D), Pig::isAlive)
                 .stream()
                 .filter(not(Pig::isBaby))
@@ -113,7 +113,7 @@ public class SwineherdAI extends AnimalFarmerAI {
                 .findAny();
     }
     private List<Pig> findPigSlaughtering() {
-        return this.animalFarmer.level.getEntitiesOfClass(Pig.class, this.animalFarmer.getBoundingBox()
+        return this.animalFarmer.getCommandSenderWorld().getEntitiesOfClass(Pig.class, this.animalFarmer.getBoundingBox()
                         .inflate(8D), Pig::isAlive)
                 .stream()
                 .filter(not(Pig::isBaby))

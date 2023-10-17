@@ -3,6 +3,7 @@ package com.talhanation.workers.entities.ai.horse;
 import com.talhanation.workers.entities.MerchantEntity;
 import net.minecraft.world.entity.ai.attributes.Attributes;
 import net.minecraft.world.entity.ai.goal.Goal;
+import net.minecraft.world.entity.animal.camel.Camel;
 import net.minecraft.world.entity.animal.horse.AbstractHorse;
 
 public class HorseRiddenByMerchantGoal extends Goal {
@@ -38,8 +39,8 @@ public class HorseRiddenByMerchantGoal extends Goal {
             speed = this.horse.getAttribute(Attributes.MOVEMENT_SPEED).getValue();
             this.horse.getPersistentData().putDouble("oldSpeed", speed);
         }
-
-        this.horse.getAttribute(Attributes.MOVEMENT_SPEED).setBaseValue((0.225  + speed) * merchantSpeed);
+        if(this.horse instanceof Camel) this.horse.getAttribute(Attributes.MOVEMENT_SPEED).setBaseValue((0.110  + speed) * merchantSpeed);
+        else this.horse.getAttribute(Attributes.MOVEMENT_SPEED).setBaseValue((0.225  + speed) * merchantSpeed);
         speedApplied = true;
     }
 

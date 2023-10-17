@@ -1,12 +1,12 @@
 package com.talhanation.workers.client.gui;
 
-import com.mojang.blaze3d.vertex.PoseStack;
 import com.talhanation.workers.Main;
 import com.talhanation.workers.Translatable;
 import com.talhanation.workers.config.WorkersModConfig;
 import com.talhanation.workers.inventory.CommandMenu;
 import com.talhanation.workers.network.*;
 import de.maxhenkel.corelib.inventory.ScreenBase;
+import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.components.Button;
 import net.minecraft.core.BlockPos;
 import net.minecraft.network.chat.Component;
@@ -83,8 +83,8 @@ public class CommandScreen extends ScreenBase<CommandMenu> {
         this.rightButton.active = canCycleRight();
 
         this.workPosButton.active = blockpos != null;
-        this.sleepPosButton.active = blockpos != null && getBlockState().isBed(player.level, blockpos, player);
-        this.chestPosButton.active = blockpos != null && player.level.getBlockEntity(blockpos) instanceof Container;
+        this.sleepPosButton.active = blockpos != null && getBlockState().isBed(player.getCommandSenderWorld(), blockpos, player);
+        this.chestPosButton.active = blockpos != null && player.getCommandSenderWorld().getBlockEntity(blockpos) instanceof Container;
 
         this.name = worker_names.get(index);
 
@@ -103,8 +103,8 @@ public class CommandScreen extends ScreenBase<CommandMenu> {
     }
 
     @Override
-    protected void renderLabels(PoseStack matrixStack, int mouseX, int mouseY) {
-        super.renderLabels(matrixStack, mouseX, mouseY);
+    protected void renderLabels(GuiGraphics guiGraphics, int mouseX, int mouseY) {
+        super.renderLabels(guiGraphics, mouseX, mouseY);
 
         int size = worker_ids == null ? 0 : worker_ids.size() ;
 
@@ -113,8 +113,8 @@ public class CommandScreen extends ScreenBase<CommandMenu> {
         String workers = "Workers: ";
         String worker = this.index + 1 + ": " + this.name;
         if(size > 0){
-            font.draw(matrixStack, workers + size, k - workers.length(), l, fontColor);
-            font.draw(matrixStack, worker, k - worker.length() - 15, l + 25, fontColor);
+            guiGraphics.drawString(font, workers + size, k - workers.length(), l, fontColor, false);
+            guiGraphics.drawString(font, worker, k - worker.length() - 15, l + 25, fontColor, false);
         }
     }
 
@@ -222,6 +222,6 @@ public class CommandScreen extends ScreenBase<CommandMenu> {
     }
 
     private BlockState getBlockState(){
-        return player.level.getBlockState(blockpos);
+        return player.getCommandSenderWorld().getBlockState(blockpos);
     }
 }

@@ -28,7 +28,7 @@ public class MessageMerchantRemoveWayPoint implements Message<MessageMerchantRem
     public void executeServerSide(NetworkEvent.Context context) {
 
         ServerPlayer player = context.getSender();
-        player.level.getEntitiesOfClass(MerchantEntity.class, player.getBoundingBox()
+        player.getCommandSenderWorld().getEntitiesOfClass(MerchantEntity.class, player.getBoundingBox()
                         .inflate(16.0D), v -> v
                         .getUUID()
                         .equals(this.worker))

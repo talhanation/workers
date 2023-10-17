@@ -7,7 +7,6 @@ import net.minecraft.sounds.SoundEvents;
 import net.minecraft.sounds.SoundSource;
 import net.minecraft.tags.BlockTags;
 import net.minecraft.world.InteractionHand;
-import net.minecraft.world.SimpleContainer;
 import net.minecraft.world.entity.ai.attributes.AttributeInstance;
 import net.minecraft.world.entity.ai.attributes.Attributes;
 import net.minecraft.world.entity.ai.goal.Goal;
@@ -139,7 +138,7 @@ public class MinerAI extends Goal {
         if (minePos.closerThan(miner.getOnPos(), 3)){
             this.miner.getLookControl().setLookAt(minePos.getX(), minePos.getY() + 1, minePos.getZ(), 10.0F, (float) this.miner.getMaxHeadXRot());
         }
-        BlockState blockstate = miner.level.getBlockState(minePos);
+        BlockState blockstate = miner.getCommandSenderWorld().getBlockState(minePos);
         Block block1 = blockstate.getBlock();
         AttributeInstance movSpeed = this.miner.getAttribute(Attributes.MOVEMENT_SPEED);
         if (movSpeed != null) movSpeed.setBaseValue(0.3D);
@@ -265,8 +264,8 @@ public class MinerAI extends Goal {
     }
 
     private boolean mineBlock(BlockPos blockPos){
-        if (this.miner.isAlive() && ForgeEventFactory.getMobGriefingEvent(this.miner.level, this.miner) && !miner.getFollow()) {
-            BlockState blockstate = this.miner.level.getBlockState(blockPos);
+        if (this.miner.isAlive() && ForgeEventFactory.getMobGriefingEvent(this.miner.getCommandSenderWorld(), this.miner) && !miner.getFollow()) {
+            BlockState blockstate = this.miner.getCommandSenderWorld().getBlockState(blockPos);
             Block block = blockstate.getBlock();
 
             this.miner.changeTool(blockstate);
@@ -275,11 +274,11 @@ public class MinerAI extends Goal {
 
             if (!miner.shouldIgnoreBlock(block)){
                 if (miner.getCurrentTimeBreak() % 5 == 4) {
-                    miner.level.playLocalSound(blockPos.getX(), blockPos.getY(), blockPos.getZ(), blockstate.getSoundType().getHitSound(), SoundSource.BLOCKS, 1F, 0.75F, false);
+                    miner.getCommandSenderWorld().playLocalSound(blockPos.getX(), blockPos.getY(), blockPos.getZ(), blockstate.getSoundType().getHitSound(), SoundSource.BLOCKS, 1F, 0.75F, false);
                 }
 
                 //set max destroy speed
-                int bp = (int) (blockstate.getDestroySpeed(this.miner.level, blockPos) * 30);
+                int bp = (int) (blockstate.getDestroySpeed(this.miner.getCommandSenderWorld(), blockPos) * 30);
                 this.miner.setBreakingTime(bp);
 
                 //increase current
@@ -289,13 +288,13 @@ public class MinerAI extends Goal {
                 int i = (int) (f * 10);
 
                 if (i != this.miner.getPreviousTimeBreak()) {
-                    this.miner.level.destroyBlockProgress(1, blockPos, i);
+                    this.miner.getCommandSenderWorld().destroyBlockProgress(1, blockPos, i);
                     this.miner.setPreviousTimeBreak(i);
                 }
 
                 if (this.miner.getCurrentTimeBreak() >= this.miner.getBreakingTime()) {
                     // Break the target block
-                    this.miner.level.destroyBlock(blockPos, true, this.miner);
+                    this.miner.getCommandSenderWorld().destroyBlock(blockPos, true, this.miner);
                     this.miner.setCurrentTimeBreak(-1);
                     this.miner.setBreakingTime(0);
                     this.miner.consumeToolDurability();
@@ -316,8 +315,8 @@ public class MinerAI extends Goal {
 
     public void placePlanks(){
         if (shouldPlacePlanks()) {// && hasPlanksInInv()){
-            miner.level.setBlock(this.minePos, Blocks.OAK_PLANKS.defaultBlockState(), 3);
-            miner.level.playSound(null, this.minePos.getX(), this.minePos.getY(), this.minePos.getZ(), SoundEvents.WOOD_PLACE, SoundSource.BLOCKS, 1.0F, 1.0F);
+            miner.getCommandSenderWorld().setBlock(this.minePos, Blocks.OAK_PLANKS.defaultBlockState(), 3);
+            miner.getCommandSenderWorld().playSound(null, this.minePos.getX(), this.minePos.getY(), this.minePos.getZ(), SoundEvents.WOOD_PLACE, SoundSource.BLOCKS, 1.0F, 1.0F);
         }
     }
 }

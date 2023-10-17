@@ -8,7 +8,6 @@ import net.minecraft.sounds.SoundSource;
 import net.minecraft.tags.BlockTags;
 import net.minecraft.world.SimpleContainer;
 import net.minecraft.world.entity.ai.goal.Goal;
-import net.minecraft.world.entity.vehicle.Boat;
 import net.minecraft.world.item.BoneMealItem;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
@@ -19,7 +18,7 @@ import net.minecraft.world.level.material.Fluids;
 import net.minecraftforge.event.ForgeEventFactory;
 
 import java.util.EnumSet;
-import java.util.Random;
+
 import static com.talhanation.workers.entities.FarmerEntity.CROP_BLOCKS;
 import static com.talhanation.workers.entities.FarmerEntity.WANTED_SEEDS;
 
@@ -148,11 +147,11 @@ public class FarmerAI extends Goal {
     }
 
     private void fertilizeSeeds(BlockPos workPos) {
-        BlockState state = farmer.getLevel().getBlockState(workPos);
+        BlockState state = farmer.getCommandSenderWorld().getBlockState(workPos);
         Block block = state.getBlock();
-        if(block instanceof BonemealableBlock crop && !this.farmer.getLevel().isClientSide()){
-            crop.performBonemeal((ServerLevel) farmer.getLevel(), farmer.getRandom(), workPos, state);
-            if(crop.isBonemealSuccess((ServerLevel) farmer.getLevel(), farmer.getRandom(), workPos, state)){
+        if(block instanceof BonemealableBlock crop && !this.farmer.getCommandSenderWorld().isClientSide()){
+            crop.performBonemeal((ServerLevel) farmer.getCommandSenderWorld(), farmer.getRandom(), workPos, state);
+            if(crop.isBonemealSuccess((ServerLevel) farmer.getCommandSenderWorld(), farmer.getRandom(), workPos, state)){
                 for (int i = 0; i < farmer.getInventory().getContainerSize(); ++i) {
                     ItemStack itemstack = farmer.getInventory().getItem(i);
                     if(itemstack.getItem() instanceof BoneMealItem) itemstack.shrink(1);
@@ -173,7 +172,7 @@ public class FarmerAI extends Goal {
 
     private boolean startPosIsWater() {
         if (this.waterPos != null) {
-            FluidState waterBlockState = this.farmer.level.getFluidState(this.waterPos);
+            FluidState waterBlockState = this.farmer.getCommandSenderWorld().getFluidState(this.waterPos);
             return waterBlockState.is(Fluids.WATER) || waterBlockState.is(Fluids.FLOWING_WATER);
         }
         return false;
@@ -187,25 +186,25 @@ public class FarmerAI extends Goal {
             boolean flag = false;
             if (!itemstack.isEmpty()) {
                 if (itemstack.getItem() == Items.CARROT) {
-                    farmer.level.setBlock(blockPos, Blocks.CARROTS.defaultBlockState(), 3);
+                    farmer.getCommandSenderWorld().setBlock(blockPos, Blocks.CARROTS.defaultBlockState(), 3);
                     flag = true;
 
                 } else if (itemstack.getItem() == Items.POTATO) {
-                    this.farmer.level.setBlock(blockPos, Blocks.POTATOES.defaultBlockState(), 3);
+                    this.farmer.getCommandSenderWorld().setBlock(blockPos, Blocks.POTATOES.defaultBlockState(), 3);
                     flag = true;
 
                 } else if (itemstack.getItem() == Items.WHEAT_SEEDS) {
-                    this.farmer.level.setBlock(blockPos, Blocks.WHEAT.defaultBlockState(), 3);
+                    this.farmer.getCommandSenderWorld().setBlock(blockPos, Blocks.WHEAT.defaultBlockState(), 3);
                     flag = true;
 
                 } else if (itemstack.getItem() == Items.BEETROOT_SEEDS) {
-                    this.farmer.level.setBlock(blockPos, Blocks.BEETROOTS.defaultBlockState(), 3);
+                    this.farmer.getCommandSenderWorld().setBlock(blockPos, Blocks.BEETROOTS.defaultBlockState(), 3);
                     flag = true;
                 }
             }
 
             if (flag) {
-                farmer.level.playSound(null, (double) blockPos.getX(), (double) blockPos.getY(), (double) blockPos.getZ(), SoundEvents.GRASS_PLACE, SoundSource.BLOCKS, 1.0F, 1.0F);
+                farmer.getCommandSenderWorld().playSound(null, (double) blockPos.getX(), (double) blockPos.getY(), (double) blockPos.getZ(), SoundEvents.GRASS_PLACE, SoundSource.BLOCKS, 1.0F, 1.0F);
                 itemstack.shrink(1);
                 if (itemstack.isEmpty()) {
                     inventory.setItem(i, ItemStack.EMPTY);
@@ -216,11 +215,11 @@ public class FarmerAI extends Goal {
     }
     private void prepareWaterPos(){
         if (waterPos != null) {
-            FluidState waterBlockState = this.farmer.level.getFluidState(waterPos);
+            FluidState waterBlockState = this.farmer.getCommandSenderWorld().getFluidState(waterPos);
 
             if (waterBlockState != Fluids.WATER.defaultFluidState() || waterBlockState != Fluids.FLOWING_WATER.defaultFluidState()){
-                farmer.level.setBlock(waterPos, Blocks.WATER.defaultBlockState(), 3);
-                farmer.level.playSound(null, waterPos.getX(), waterPos.getY(), waterPos.getZ(),
+                farmer.getCommandSenderWorld().setBlock(waterPos, Blocks.WATER.defaultBlockState(), 3);
+                farmer.getCommandSenderWorld().playSound(null, waterPos.getX(), waterPos.getY(), waterPos.getZ(),
                         SoundEvents.BUCKET_EMPTY, SoundSource.BLOCKS, 1.0F, 1.0F);
             }
             farmer.workerSwingArm();
@@ -230,16 +229,16 @@ public class FarmerAI extends Goal {
         // Make sure the center block remains waterlogged.
 
         if(blockPos != waterPos) {
-            farmer.level.setBlock(blockPos, Blocks.FARMLAND.defaultBlockState(), 3);
-            farmer.level.playSound(null, blockPos.getX(), blockPos.getY(), blockPos.getZ(), SoundEvents.HOE_TILL,
+            farmer.getCommandSenderWorld().setBlock(blockPos, Blocks.FARMLAND.defaultBlockState(), 3);
+            farmer.getCommandSenderWorld().playSound(null, blockPos.getX(), blockPos.getY(), blockPos.getZ(), SoundEvents.HOE_TILL,
                     SoundSource.BLOCKS, 1.0F, 1.0F);
-            BlockState blockState = this.farmer.level.getBlockState(blockPos.above());
+            BlockState blockState = this.farmer.getCommandSenderWorld().getBlockState(blockPos.above());
             Block block = blockState.getBlock();
             farmer.workerSwingArm();
 
             if (block instanceof BushBlock || block instanceof GrowingPlantBlock) {
-                farmer.level.destroyBlock(blockPos.above(), false);
-                farmer.level.playSound(null, blockPos.getX(), blockPos.getY(), blockPos.getZ(), SoundEvents.GRASS_BREAK,
+                farmer.getCommandSenderWorld().destroyBlock(blockPos.above(), false);
+                farmer.getCommandSenderWorld().playSound(null, blockPos.getX(), blockPos.getY(), blockPos.getZ(), SoundEvents.GRASS_BREAK,
                         SoundSource.BLOCKS, 1.0F, 1.0F);
             }
         }
@@ -252,13 +251,13 @@ public class FarmerAI extends Goal {
             for (int i = 0; i <= 8; i++) {
                 BlockPos blockPos = this.waterPos.offset(j - 4, 0, i - 4);
                 BlockPos aboveBlockPos = blockPos.above();
-                BlockState blockState = this.farmer.level.getBlockState(blockPos);
-                BlockState aboveBlockState = this.farmer.level.getBlockState(aboveBlockPos);
+                BlockState blockState = this.farmer.getCommandSenderWorld().getBlockState(blockPos);
+                BlockState aboveBlockState = this.farmer.getCommandSenderWorld().getBlockState(aboveBlockPos);
 
                 Block block = blockState.getBlock();
 
                 boolean canSustainSeeds = block == Blocks.GRASS_BLOCK || block == Blocks.DIRT;
-                boolean hasSpaceAbove = (aboveBlockState.is(Blocks.AIR) || aboveBlockState.is(BlockTags.REPLACEABLE_PLANTS));
+                boolean hasSpaceAbove = (aboveBlockState.is(Blocks.AIR) || aboveBlockState.is(BlockTags.REPLACEABLE));
 
                 if (canSustainSeeds && hasSpaceAbove) {
                     return blockPos;
@@ -274,8 +273,8 @@ public class FarmerAI extends Goal {
             for (int i = 0; i <= 8; i++) {
                 BlockPos blockPos = this.waterPos.offset(j - 4, 0, i - 4);
                 BlockPos aboveBlockPos = blockPos.above();
-                BlockState blockState = this.farmer.level.getBlockState(blockPos);
-                BlockState aboveBlockState = this.farmer.level.getBlockState(aboveBlockPos);
+                BlockState blockState = this.farmer.getCommandSenderWorld().getBlockState(blockPos);
+                BlockState aboveBlockState = this.farmer.getCommandSenderWorld().getBlockState(aboveBlockPos);
 
                 Block block = blockState.getBlock();
                 Block aboveBlock = aboveBlockState.getBlock();
@@ -292,12 +291,12 @@ public class FarmerAI extends Goal {
         for (int j = 0; j <= 8; j++) {
             for (int i = 0; i <= 8; i++) {
                 BlockPos blockPos = waterPos.offset(j - 4, 1, i - 4);
-                BlockState blockState = this.farmer.level.getBlockState(blockPos);
+                BlockState blockState = this.farmer.getCommandSenderWorld().getBlockState(blockPos);
                 Block block = blockState.getBlock();
 
                 if (CROP_BLOCKS.contains(block)) {
                     BlockPos belowBlockPos = blockPos.below();
-                    BlockState belowBlockState = this.farmer.level.getBlockState(belowBlockPos);
+                    BlockState belowBlockState = this.farmer.getCommandSenderWorld().getBlockState(belowBlockPos);
 
                     if (block instanceof CropBlock crop && belowBlockState.is(Blocks.FARMLAND)) {
 
@@ -316,12 +315,12 @@ public class FarmerAI extends Goal {
         for (int j = 0; j <= 8; j++) {
             for (int i = 0; i <= 8; i++) {
                 BlockPos blockPos = waterPos.offset(j - 4, 1, i - 4);
-                BlockState blockState = this.farmer.level.getBlockState(blockPos);
+                BlockState blockState = this.farmer.getCommandSenderWorld().getBlockState(blockPos);
                 Block block = blockState.getBlock();
 
                 if (CROP_BLOCKS.contains(block)) {
                     BlockPos belowBlockPos = blockPos.below();
-                    BlockState belowBlockState = this.farmer.level.getBlockState(belowBlockPos);
+                    BlockState belowBlockState = this.farmer.getCommandSenderWorld().getBlockState(belowBlockPos);
 
                     if (block instanceof CropBlock crop && belowBlockState.is(Blocks.FARMLAND)) {
 
@@ -336,20 +335,20 @@ public class FarmerAI extends Goal {
     }
 
     private boolean mineBlock(BlockPos blockPos) {
-        if (this.farmer.isAlive() && ForgeEventFactory.getMobGriefingEvent(this.farmer.level, this.farmer)
+        if (this.farmer.isAlive() && ForgeEventFactory.getMobGriefingEvent(this.farmer.getCommandSenderWorld(), this.farmer)
                 && !farmer.getFollow()) {
 
-            BlockState blockstate = this.farmer.level.getBlockState(blockPos);
+            BlockState blockstate = this.farmer.getCommandSenderWorld().getBlockState(blockPos);
             Block block = blockstate.getBlock();
 
             if ((block != Blocks.AIR)) {
                 if (farmer.getCurrentTimeBreak() % 5 == 4) {
-                    farmer.level.playLocalSound(blockPos.getX(), blockPos.getY(), blockPos.getZ(),
+                    farmer.getCommandSenderWorld().playLocalSound(blockPos.getX(), blockPos.getY(), blockPos.getZ(),
                             blockstate.getSoundType().getHitSound(), SoundSource.BLOCKS, 1F, 0.75F, false);
                 }
 
                 // set max destroy speed
-                int bp = (int) (blockstate.getDestroySpeed(this.farmer.level, blockPos) * 30);
+                int bp = (int) (blockstate.getDestroySpeed(this.farmer.getCommandSenderWorld(), blockPos) * 30);
                 this.farmer.setBreakingTime(bp);
 
                 // increase current
@@ -360,12 +359,12 @@ public class FarmerAI extends Goal {
                 int i = (int) (f * 10);
 
                 if (i != this.farmer.getPreviousTimeBreak()) {
-                    this.farmer.level.destroyBlockProgress(1, blockPos, i);
+                    this.farmer.getCommandSenderWorld().destroyBlockProgress(1, blockPos, i);
                     this.farmer.setPreviousTimeBreak(i);
                 }
 
                 if (this.farmer.getCurrentTimeBreak() == this.farmer.getBreakingTime()) {
-                    this.farmer.level.destroyBlock(blockPos, true, this.farmer);
+                    this.farmer.getCommandSenderWorld().destroyBlock(blockPos, true, this.farmer);
                     this.farmer.setCurrentTimeBreak(-1);
                     this.farmer.setBreakingTime(0);
                     return true;

@@ -134,7 +134,7 @@ public class MerchantEntity extends AbstractWorkerEntity implements IBoatControl
     }
     @Override
     public InteractionResult mobInteract(Player player, InteractionHand hand) {
-        if (this.level.isClientSide) {
+        if (this.getCommandSenderWorld().isClientSide) {
             return InteractionResult.CONSUME;
         }
         else {
@@ -368,9 +368,9 @@ public class MerchantEntity extends AbstractWorkerEntity implements IBoatControl
             CompoundTag compoundnbt = new CompoundTag();
             compoundnbt.putByte("Waypoint", (byte) i);
             BlockPos pos = WAYPOINTS.get(i);
-            compoundnbt.putDouble("PosX", pos.getX());
-            compoundnbt.putDouble("PosY", pos.getY());
-            compoundnbt.putDouble("PosZ", pos.getZ());
+            compoundnbt.putInt("PosX", pos.getX());
+            compoundnbt.putInt("PosY", pos.getY());
+            compoundnbt.putInt("PosZ", pos.getZ());
 
             waypoints.add(compoundnbt);
         }
@@ -449,9 +449,9 @@ public class MerchantEntity extends AbstractWorkerEntity implements IBoatControl
         for (int i = 0; i < waypoints.size(); ++i) {
             CompoundTag compoundnbt = waypoints.getCompound(i);
             BlockPos pos = new BlockPos(
-                    compoundnbt.getDouble("PosX"),
-                    compoundnbt.getDouble("PosY"),
-                    compoundnbt.getDouble("PosZ"));
+                    compoundnbt.getInt("PosX"),
+                    compoundnbt.getInt("PosY"),
+                    compoundnbt.getInt("PosZ"));
             this.WAYPOINTS.add(pos);
         }
 
@@ -484,15 +484,15 @@ public class MerchantEntity extends AbstractWorkerEntity implements IBoatControl
         int maxDays = this.getReturningTime();
         boolean isDayCounted = this.isDayCounted();
 
-        if(this.level.isNight() && !isDayCounted){
+        if(this.getCommandSenderWorld().isNight() && !isDayCounted){
             this.setCurrentReturningTime(this.getCurrentReturningTime() + 1);
             this.setIsDayCounted(true);
         }
-        else if(this.level.isDay())
+        else if(this.getCommandSenderWorld().isDay())
             this.setIsDayCounted(false);
 
         int currentDays = this.getCurrentReturningTime();
-        return currentDays >= maxDays && this.level.isDay();
+        return currentDays >= maxDays && this.getCommandSenderWorld().isDay();
     }
 
     public boolean isCreative() {
@@ -519,7 +519,7 @@ public class MerchantEntity extends AbstractWorkerEntity implements IBoatControl
             double distance = pos.distSqr(prevPos);
 
             boolean notNearFromCoastToWater = !isWaterBlockPos(prevPos) && isWaterBlockPos(pos) && distance >= 50F;
-            boolean notNearInRiverWater = this.getLevel().getBiome(pos).is(BiomeTags.IS_RIVER) && isWaterBlockPos(prevPos) && isWaterBlockPos(pos) && distance >= 4000F;
+            boolean notNearInRiverWater = this.getCommandSenderWorld().getBiome(pos).is(BiomeTags.IS_RIVER) && isWaterBlockPos(prevPos) && isWaterBlockPos(pos) && distance >= 4000F;
             boolean notNearFromWaterToCoast = isWaterBlockPos(prevPos) && !isWaterBlockPos(pos) && distance >= 50F;
 
             if(notNearFromCoastToWater || notNearInRiverWater || notNearFromWaterToCoast){
@@ -538,7 +538,7 @@ public class MerchantEntity extends AbstractWorkerEntity implements IBoatControl
     }
 
     public ItemStack getItemStackToRender(BlockPos pos){
-        BlockState state = this.level.getBlockState(pos);
+        BlockState state = this.getCommandSenderWorld().getBlockState(pos);
         ItemStack itemStack;
         if (state.is(Blocks.WATER) || state.is(Blocks.KELP) || state.is(Blocks.KELP_PLANT)){
             //TODO: add item when smallships is installed
@@ -690,7 +690,7 @@ public class MerchantEntity extends AbstractWorkerEntity implements IBoatControl
         super.die(dmg);
         if(!isCreative()){
             for (int i = 0; i < this.tradeInventory.getContainerSize(); i++)
-                Containers.dropItemStack(this.level, getX(), getY(), getZ(), this.tradeInventory.getItem(i));
+                Containers.dropItemStack(this.getCommandSenderWorld(), getX(), getY(), getZ(), this.tradeInventory.getItem(i));
         }
     }
     @Override
@@ -703,8 +703,8 @@ public class MerchantEntity extends AbstractWorkerEntity implements IBoatControl
         for(int i = 0; i < 3; i++){
             BlockPos pos1 = pos.below(i);
             BlockPos pos2 = pos.above(i);
-            BlockState state1 = this.level.getBlockState(pos1);
-            BlockState state2 = this.level.getBlockState(pos2);
+            BlockState state1 = this.getCommandSenderWorld().getBlockState(pos1);
+            BlockState state2 = this.getCommandSenderWorld().getBlockState(pos2);
 
             if(!state1.is(Blocks.WATER) && !state1.is(Blocks.KELP) && !state1.is(Blocks.KELP_PLANT) && !state1.is(Blocks.SEAGRASS) && !state1.is(Blocks.TALL_SEAGRASS) && !state2.is(Blocks.KELP) && !state2.is(Blocks.KELP_PLANT) && !state2.is(Blocks.WATER) && !state2.is(Blocks.SEAGRASS) && !state2.is(Blocks.TALL_SEAGRASS)){
                 return false;
@@ -716,8 +716,8 @@ public class MerchantEntity extends AbstractWorkerEntity implements IBoatControl
     public boolean isFreeWater(double x, double y, double z){
         for(int i = -2; i <= 2; i++) {
             for (int k = -2; k <= 2; k++) {
-                BlockPos pos = new BlockPos(x, y, z).offset(i, 0, k);
-                BlockState state = this.level.getBlockState(pos);
+                BlockPos pos = new BlockPos((int) x, (int) y, (int) z).offset(i, 0, k);
+                BlockState state = this.getCommandSenderWorld().getBlockState(pos);
 
                 if(!state.is(Blocks.WATER) && !state.is(Blocks.KELP) && !state.is(Blocks.KELP_PLANT) && !state.is(Blocks.SEAGRASS) && !state.is(Blocks.TALL_SEAGRASS))
                     return false;

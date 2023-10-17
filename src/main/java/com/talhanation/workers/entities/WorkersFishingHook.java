@@ -90,11 +90,11 @@ public class WorkersFishingHook extends Projectile {
     }
 
     public void tick() {
-        this.syncronizedRandom.setSeed(this.getUUID().getLeastSignificantBits() ^ this.level.getGameTime());
+        this.syncronizedRandom.setSeed(this.getUUID().getLeastSignificantBits() ^ .getCommandSenderWorld().getGameTime());
         super.tick();
         if (fisherman == null) {
             this.discard();
-        } else if (this.level.isClientSide) {
+        } else if (.getCommandSenderWorld().isClientSide) {
             if (this.onGround) {
                 ++this.life;
                 if (this.life >= 1200) {
@@ -107,7 +107,7 @@ public class WorkersFishingHook extends Projectile {
 
             float f = 0.0F;
             BlockPos blockpos = this.blockPosition();
-            FluidState fluidstate = this.level.getFluidState(blockpos);
+            FluidState fluidstate = .getCommandSenderWorld().getFluidState(blockpos);
             if (fluidstate.is(FluidTags.WATER)) {
                 f = fluidstate.getHeight(this.level, blockpos);
             }
@@ -214,7 +214,7 @@ public class WorkersFishingHook extends Projectile {
     }
 
     private FishingHook.OpenWaterType getOpenWaterTypeForBlock(BlockPos p_37164_) {
-        BlockState blockstate = this.level.getBlockState(p_37164_);
+        BlockState blockstate = .getCommandSenderWorld().getBlockState(p_37164_);
         if (!blockstate.isAir() && !blockstate.is(Blocks.LILY_PAD)) {
             FluidState fluidstate = blockstate.getFluidState();
             return fluidstate.is(FluidTags.WATER) && fluidstate.isSource() && blockstate.getCollisionShape(this.level, p_37164_).isEmpty() ? FishingHook.OpenWaterType.INSIDE_WATER : FishingHook.OpenWaterType.INVALID;

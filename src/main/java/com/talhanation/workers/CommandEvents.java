@@ -69,7 +69,7 @@ public class CommandEvents {
             return;
         }
         if (expectedOwnerUuid.equals(player_uuid)) {
-            BlockState selectedBlock = worker.level.getBlockState(blockpos);
+            BlockState selectedBlock = worker.getCommandSenderWorld().getBlockState(blockpos);
             if (selectedBlock.is(Blocks.CHEST) || selectedBlock.is(Blocks.BARREL)) {
                 worker.setChestPos(blockpos);
                 worker.setNeedsChest(false);
@@ -87,8 +87,8 @@ public class CommandEvents {
             return;
         }
         if (expectedOwnerUuid.equals(player_uuid)) {
-            BlockState selectedBlock = worker.level.getBlockState(blockpos);
-            if (selectedBlock.isBed(worker.level, blockpos, owner)) {
+            BlockState selectedBlock = worker.getCommandSenderWorld().getBlockState(blockpos);
+            if (selectedBlock.isBed(worker.getCommandSenderWorld(), blockpos, owner)) {
                 BlockPos bedHead;
                 if (selectedBlock.getValue(BlockStateProperties.BED_PART) == BedPart.HEAD) {
                     bedHead = blockpos;
@@ -127,7 +127,7 @@ public class CommandEvents {
             for (int y = -range; y < range; y++) {
                 for (int z = -range; z < range; z++) {
                     BlockPos chestPos = homePos.offset(x, y, z);
-                    BlockState block = worker.level.getBlockState(chestPos);
+                    BlockState block = worker.getCommandSenderWorld().getBlockState(chestPos);
                     if (block == null) continue;
                     if (block.is(Blocks.CHEST) || block.is(Blocks.BARREL)) {
                         worker.setChestPos(chestPos);
@@ -148,10 +148,10 @@ public class CommandEvents {
             for (int y = -range; y < range; y++) {
                 for (int z = -range; z < range; z++) {
                     BlockPos bedPos = homePos.offset(x, y, z);
-                    BlockState block = worker.level.getBlockState(bedPos);
+                    BlockState block = worker.getCommandSenderWorld().getBlockState(bedPos);
                     if (block == null) continue;
                     if (
-                        block.isBed(worker.level, bedPos, worker) && 
+                        block.isBed(worker.getCommandSenderWorld(), bedPos, worker) &&
                         block.getValue(BlockStateProperties.BED_PART) == BedPart.HEAD
                     ) {
                         worker.setBedPos(bedPos);
@@ -495,7 +495,7 @@ public class CommandEvents {
 
     public static void updateCommandScreen(ServerPlayer player, ServerLevel level){
         //TODO: Blockstate
-        List<AbstractWorkerEntity> list = Objects.requireNonNull(player.level.getEntitiesOfClass(AbstractWorkerEntity.class, player.getBoundingBox().inflate(64D)));
+        List<AbstractWorkerEntity> list = Objects.requireNonNull(player.getCommandSenderWorld().getEntitiesOfClass(AbstractWorkerEntity.class, player.getBoundingBox().inflate(64D)));
         List<UUID> workers = new ArrayList<>();
         List<String> names = new ArrayList<>();
 

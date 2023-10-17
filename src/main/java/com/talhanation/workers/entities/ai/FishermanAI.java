@@ -12,11 +12,13 @@ import net.minecraft.world.InteractionHand;
 import net.minecraft.world.SimpleContainer;
 import net.minecraft.world.entity.ai.goal.Goal;
 import net.minecraft.world.entity.vehicle.Boat;
+import net.minecraft.world.item.FishingRodItem;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.storage.loot.BuiltInLootTables;
 import net.minecraft.world.level.storage.loot.LootContext;
+import net.minecraft.world.level.storage.loot.LootParams;
 import net.minecraft.world.level.storage.loot.LootTable;
 import net.minecraft.world.level.storage.loot.parameters.LootContextParamSets;
 import net.minecraft.world.level.storage.loot.parameters.LootContextParams;
@@ -101,7 +103,7 @@ public class FishermanAI extends Goal {
                     this.moveToPos(coastPos);
 
                 if (coastPos.closerThan(fisherman.getOnPos(), 3F)) {
-                    List<Boat> list =  fisherman.level.getEntitiesOfClass(Boat.class, fisherman.getBoundingBox().inflate(8D));
+                    List<Boat> list =  fisherman.getCommandSenderWorld().getEntitiesOfClass(Boat.class, fisherman.getBoundingBox().inflate(8D));
                     list.removeIf(boat -> !boat.getPassengers().isEmpty());
                     list.sort(Comparator.comparing(boatInList -> boatInList.distanceTo(fisherman)));
                     if(!list.isEmpty()){
@@ -339,13 +341,13 @@ public class FishermanAI extends Goal {
 
             for (int x = 0; x <= length; ++x) {
                 BlockPos pos = this.coastPos.relative(direction, x);
-                BlockState targetBlock = this.fisherman.level.getBlockState(pos);
-                if(DEBUG) fisherman.level.setBlock(pos.above(4), Blocks.ICE.defaultBlockState(), 3);
+                BlockState targetBlock = this.fisherman.getCommandSenderWorld().getBlockState(pos);
+                if(DEBUG) fisherman.getCommandSenderWorld().setBlock(pos.above(4), Blocks.ICE.defaultBlockState(), 3);
 
                 double distance = fisherman.distanceToSqr(pos.getX(), pos.getY(), pos.getZ());
                 if (targetBlock.is(Blocks.WATER) && distance > fishingRange) {
                     for (int i = 0; i < 4; i++) {
-                        if (this.fisherman.level.getBlockState(pos.above(i)).isAir() && i == 3) {
+                        if (this.fisherman.getCommandSenderWorld().getBlockState(pos.above(i)).isAir() && i == 3) {
                             waterBlocks.add(pos);
                             break;
                         }
@@ -355,13 +357,13 @@ public class FishermanAI extends Goal {
 
             for (int x = 0; x <= lengthR; ++x) {
                 BlockPos pos = this.coastPos.relative(directionR, x);
-                BlockState targetBlock = this.fisherman.level.getBlockState(pos);
-                if(DEBUG) fisherman.level.setBlock(pos.above(4), Blocks.ICE.defaultBlockState(), 3);
+                BlockState targetBlock = this.fisherman.getCommandSenderWorld().getBlockState(pos);
+                if(DEBUG) fisherman.getCommandSenderWorld().setBlock(pos.above(4), Blocks.ICE.defaultBlockState(), 3);
 
                 double distance = fisherman.distanceToSqr(pos.getX(), pos.getY(), pos.getZ());
                 if (targetBlock.is(Blocks.WATER) && distance > fishingRange) {
                     for (int i = 0; i < 4; i++) {
-                        if (this.fisherman.level.getBlockState(pos.above(i)).isAir() && i == 3) {
+                        if (this.fisherman.getCommandSenderWorld().getBlockState(pos.above(i)).isAir() && i == 3) {
                             waterBlocks.add(pos);
                             break;
                         }
@@ -371,13 +373,13 @@ public class FishermanAI extends Goal {
 
             for (int x = 0; x <= lengthL; ++x) {
                 BlockPos pos = this.coastPos.relative(directionL, x);
-                BlockState targetBlock = this.fisherman.level.getBlockState(pos);
-                if(DEBUG) fisherman.level.setBlock(pos.above(4), Blocks.ICE.defaultBlockState(), 3);
+                BlockState targetBlock = this.fisherman.getCommandSenderWorld().getBlockState(pos);
+                if(DEBUG) fisherman.getCommandSenderWorld().setBlock(pos.above(4), Blocks.ICE.defaultBlockState(), 3);
 
                 double distance = fisherman.distanceToSqr(pos.getX(), pos.getY(), pos.getZ());
                 if (targetBlock.is(Blocks.WATER) && distance > fishingRange) {
                     for (int i = 0; i < 4; i++) {
-                        if (this.fisherman.level.getBlockState(pos.above(i)).isAir() && i == 3) {
+                        if (this.fisherman.getCommandSenderWorld().getBlockState(pos.above(i)).isAir() && i == 3) {
                             waterBlocks.add(pos);
                             break;
                         }
@@ -387,13 +389,13 @@ public class FishermanAI extends Goal {
 
             for (int x = 0; x <= lengthB; ++x) {
                 BlockPos pos = this.coastPos.relative(direction.getOpposite(), x);
-                BlockState targetBlock = this.fisherman.level.getBlockState(pos);
-                if(DEBUG) fisherman.level.setBlock(pos.above(4), Blocks.ICE.defaultBlockState(), 3);
+                BlockState targetBlock = this.fisherman.getCommandSenderWorld().getBlockState(pos);
+                if(DEBUG) fisherman.getCommandSenderWorld().setBlock(pos.above(4), Blocks.ICE.defaultBlockState(), 3);
 
                 double distance = fisherman.distanceToSqr(pos.getX(), pos.getY(), pos.getZ());
                 if (targetBlock.is(Blocks.WATER) && distance > fishingRange) {
                     for (int i = 0; i < 4; i++) {
-                        if (this.fisherman.level.getBlockState(pos.above(i)).isAir() && i == 3) {
+                        if (this.fisherman.getCommandSenderWorld().getBlockState(pos.above(i)).isAir() && i == 3) {
                             waterBlocks.add(pos);
                             break;
                         }
@@ -418,7 +420,7 @@ public class FishermanAI extends Goal {
             }
             else fishingSpot = validWaterSpots.get(0);
 
-            if(DEBUG)fisherman.level.setBlock(new BlockPos(fishingSpot.getX(), fishingSpot.getY() + 5, fishingSpot.getZ()), Blocks.PACKED_ICE.defaultBlockState(), 3);
+            if(DEBUG)fisherman.getCommandSenderWorld().setBlock(new BlockPos(fishingSpot.getX(), fishingSpot.getY() + 5, fishingSpot.getZ()), Blocks.PACKED_ICE.defaultBlockState(), 3);
 
             return fishingSpot;
         }
@@ -437,16 +439,18 @@ public class FishermanAI extends Goal {
 
         this.fishingTimer = 500 + fisherman.getRandom().nextInt(1000) / depth;
         double luck = 0.1D;
-        LootContext.Builder lootcontext$builder = (new LootContext.Builder((ServerLevel)fisherman.level))
-                .withParameter(LootContextParams.ORIGIN, fisherman.position())
-                .withParameter(LootContextParams.TOOL, this.fisherman.getItemInHand(InteractionHand.MAIN_HAND))
-                .withLuck((float) luck);
-
+        LootParams lootparams = (new LootParams.Builder((ServerLevel)this.fisherman.getCommandSenderWorld()))
+                .withParameter(LootContextParams.ORIGIN, this.fisherman.position())
+                .withParameter(LootContextParams.TOOL, fisherman.getMainHandItem())
+                .withParameter(LootContextParams.KILLER_ENTITY, this.fisherman)
+                .withLuck((float)luck)
+                .create(LootContextParamSets.FISHING);
+        LootTable loottable = this.fisherman.getCommandSenderWorld().getServer().getLootData().getLootTable(BuiltInLootTables.FISHING);
+        List<ItemStack> list = loottable.getRandomItems(lootparams);
 
         MinecraftServer server = fisherman.getServer();
         if (server == null) return;
-        LootTable loottable = server.getLootTables().get(BuiltInLootTables.FISHING);
-        List<ItemStack> list = loottable.getRandomItems(lootcontext$builder.create(LootContextParamSets.FISHING));
+
 
         for (ItemStack itemstack : list) {
             fisherman.getInventory().addItem(itemstack);
@@ -474,7 +478,7 @@ public class FishermanAI extends Goal {
                 throwTimer = fisherman.getRandom().nextInt(400);
                 // TODO: Create FishingBobberEntity compatible with AbstractEntityWorker.
                 // WorkersFishingHook fishingHook = new WorkersFishingHook(this.fisherman, fisherman.level, fishingPos);
-                // fisherman.level.addFreshEntity(fishingHook);
+                // fisherman.getCommandSenderWorld().addFreshEntity(fishingHook);
             }
 
             if (fishingTimer > 0) fishingTimer--;
@@ -499,7 +503,7 @@ public class FishermanAI extends Goal {
         for(int i = -range; i <= range; i++){
             for(int k = -range; k <= range; k++) {
                 BlockPos pos = pos1.offset(i, 0, k);
-                BlockState state = this.fisherman.level.getBlockState(pos);
+                BlockState state = this.fisherman.getCommandSenderWorld().getBlockState(pos);
 
                 if (state.is(Blocks.WATER)){
                     return true;
@@ -512,7 +516,7 @@ public class FishermanAI extends Goal {
     private int getWaterDepth(BlockPos pos){
         int depth = 0;
         for(int i = 0; i < 10; i++){
-            BlockState state = fisherman.level.getBlockState(pos.below(i));
+            BlockState state = fisherman.getCommandSenderWorld().getBlockState(pos.below(i));
             if(state.is(Blocks.WATER)){
                 depth++;
             }
@@ -526,11 +530,11 @@ public class FishermanAI extends Goal {
         for(int i = -10; i <= 10; i++){
             for(int k = -10; k <= 10; k++) {
                 BlockPos pos = fisherman.getStartPos().offset(i, 0, k);
-                BlockState state = this.fisherman.level.getBlockState(pos);
-                BlockState targetBlockN = this.fisherman.level.getBlockState(pos.north());
-                BlockState targetBlockE = this.fisherman.level.getBlockState(pos.east());
-                BlockState targetBlockS = this.fisherman.level.getBlockState(pos.south());
-                BlockState targetBlockW = this.fisherman.level.getBlockState(pos.west());
+                BlockState state = this.fisherman.getCommandSenderWorld().getBlockState(pos);
+                BlockState targetBlockN = this.fisherman.getCommandSenderWorld().getBlockState(pos.north());
+                BlockState targetBlockE = this.fisherman.getCommandSenderWorld().getBlockState(pos.east());
+                BlockState targetBlockS = this.fisherman.getCommandSenderWorld().getBlockState(pos.south());
+                BlockState targetBlockW = this.fisherman.getCommandSenderWorld().getBlockState(pos.west());
 
                 if (state.is(Blocks.WATER) && (targetBlockN.is(Blocks.WATER) || targetBlockE.is(Blocks.WATER) || targetBlockS.is(Blocks.WATER) || targetBlockW.is(Blocks.WATER))){
                     list.add(pos);
@@ -556,7 +560,7 @@ public class FishermanAI extends Goal {
     private int getDistanceWithWater(BlockPos pos, Direction direction){
         int distance = 0;
         for(int i = 0; i < fishingRange; i++){
-            BlockState targetBlockN = this.fisherman.level.getBlockState(pos.relative(direction, i));
+            BlockState targetBlockN = this.fisherman.getCommandSenderWorld().getBlockState(pos.relative(direction, i));
             if (targetBlockN.is(Blocks.WATER)){
                 distance++;
             }
@@ -587,7 +591,7 @@ public class FishermanAI extends Goal {
 
                 BlockPos pos = this.coastPos.offset(x1, 0, z1);
 
-                BlockState targetBlock = this.fisherman.level.getBlockState(pos);
+                BlockState targetBlock = this.fisherman.getCommandSenderWorld().getBlockState(pos);
 
                 if (targetBlock.is(Blocks.WATER)) {
                     list.add(pos);
@@ -595,7 +599,7 @@ public class FishermanAI extends Goal {
             }
         }
 
-        //if(!list.isEmpty()) for(BlockPos pos: list) fisherman.level.setBlock(new BlockPos(pos.getX(), pos.getY() + 2, pos.getZ()), Blocks.ICE.defaultBlockState(), 3);
+        //if(!list.isEmpty()) for(BlockPos pos: list) fisherman.getCommandSenderWorld().setBlock(new BlockPos(pos.getX(), pos.getY() + 2, pos.getZ()), Blocks.ICE.defaultBlockState(), 3);
 
         list.sort(Comparator.comparing(blockPos -> blockPos.distSqr(fisherman.getStartPos())));
         //list.sort(Comparator.comparing(this::getWaterDepth));
@@ -609,7 +613,7 @@ public class FishermanAI extends Goal {
 
             pos = list.get(index);
 
-            //fisherman.level.setBlock(new BlockPos(pos.getX(), pos.getY() + 3, pos.getZ()), Blocks.ICE.defaultBlockState(), 3);
+            //fisherman.getCommandSenderWorld().setBlock(new BlockPos(pos.getX(), pos.getY() + 3, pos.getZ()), Blocks.ICE.defaultBlockState(), 3);
         }
         return pos;
     }

@@ -54,7 +54,7 @@ public class BeekeeperAI extends Goal {
     }
 
     private Optional<Bee> findBeeBreeding() {
-        return beekeeper.level.getEntitiesOfClass(Bee.class, beekeeper.getBoundingBox()
+        return beekeeper.getCommandSenderWorld().getEntitiesOfClass(Bee.class, beekeeper.getBoundingBox()
                 .inflate(8D), Bee::isAlive)
                 .stream()
                 .filter(not(Bee::isBaby))
@@ -81,8 +81,8 @@ public class BeekeeperAI extends Goal {
                 for (int k = -3; k <= 3; k++) {
                     BlockPos blockPos = this.beekeeper.getStartPos().offset(j - 4, k, i - 4);
                     BlockPos aboveBlockPos = blockPos.above();
-                    BlockState blockState = this.beekeeper.level.getBlockState(blockPos);
-                    BlockState aboveBlockState = this.beekeeper.level.getBlockState(aboveBlockPos);
+                    BlockState blockState = this.beekeeper.getCommandSenderWorld().getBlockState(blockPos);
+                    BlockState aboveBlockState = this.beekeeper.getCommandSenderWorld().getBlockState(aboveBlockPos);
 
                     Block block = blockState.getBlock();
                     Block aboveBlock = aboveBlockState.getBlock();
@@ -101,7 +101,7 @@ public class BeekeeperAI extends Goal {
             for (int i = 0; i <= 8; i++) {
                 for (int k = -3; k <= 3; k++) {
                     BlockPos blockPos = this.beekeeper.getStartPos().offset(j - 4, k, i - 4);
-                    BlockState blockState = this.beekeeper.level.getBlockState(blockPos);
+                    BlockState blockState = this.beekeeper.getCommandSenderWorld().getBlockState(blockPos);
 
                     Block block = blockState.getBlock();
                     if (block == Blocks.BEE_NEST || block == Blocks.BEEHIVE) {
@@ -122,59 +122,59 @@ public class BeekeeperAI extends Goal {
                 boolean flag = false;
                 if (!itemstack.isEmpty()) {
                     if (itemstack.getItem() == Items.DANDELION) {
-                        beekeeper.level.setBlock(blockPos, Blocks.DANDELION.defaultBlockState(), 3);
+                        beekeeper.getCommandSenderWorld().setBlock(blockPos, Blocks.DANDELION.defaultBlockState(), 3);
                         flag = true;
                     } else if (itemstack.getItem() == Items.POPPY) {
-                        this.beekeeper.level.setBlock(blockPos, Blocks.POPPY.defaultBlockState(), 3);
+                        this.beekeeper.getCommandSenderWorld().setBlock(blockPos, Blocks.POPPY.defaultBlockState(), 3);
                         flag = true;
 
                     } else if (itemstack.getItem() == Items.BLUE_ORCHID) {
-                        this.beekeeper.level.setBlock(blockPos, Blocks.BLUE_ORCHID.defaultBlockState(), 3);
+                        this.beekeeper.getCommandSenderWorld().setBlock(blockPos, Blocks.BLUE_ORCHID.defaultBlockState(), 3);
                         flag = true;
 
                     } else if (itemstack.getItem() == Items.ALLIUM) {
-                        this.beekeeper.level.setBlock(blockPos, Blocks.ALLIUM.defaultBlockState(), 3);
+                        this.beekeeper.getCommandSenderWorld().setBlock(blockPos, Blocks.ALLIUM.defaultBlockState(), 3);
                         flag = true;
 
                     } else if (itemstack.getItem() == Items.AZURE_BLUET) {
-                        this.beekeeper.level.setBlock(blockPos, Blocks.AZURE_BLUET.defaultBlockState(), 3);
+                        this.beekeeper.getCommandSenderWorld().setBlock(blockPos, Blocks.AZURE_BLUET.defaultBlockState(), 3);
                         flag = true;
 
                     } else if (itemstack.getItem() == Items.RED_TULIP) {
-                        this.beekeeper.level.setBlock(blockPos, Blocks.RED_TULIP.defaultBlockState(), 3);
+                        this.beekeeper.getCommandSenderWorld().setBlock(blockPos, Blocks.RED_TULIP.defaultBlockState(), 3);
                         flag = true;
                     } else if (itemstack.getItem() == Items.ORANGE_TULIP) {
-                        this.beekeeper.level.setBlock(blockPos, Blocks.ORANGE_TULIP.defaultBlockState(), 3);
+                        this.beekeeper.getCommandSenderWorld().setBlock(blockPos, Blocks.ORANGE_TULIP.defaultBlockState(), 3);
                         flag = true;
                     } else if (itemstack.getItem() == Items.WHITE_TULIP) {
-                        this.beekeeper.level.setBlock(blockPos, Blocks.WHITE_TULIP.defaultBlockState(), 3);
+                        this.beekeeper.getCommandSenderWorld().setBlock(blockPos, Blocks.WHITE_TULIP.defaultBlockState(), 3);
                         flag = true;
                     } else if (itemstack.getItem() == Items.PINK_TULIP) {
-                        this.beekeeper.level.setBlock(blockPos, Blocks.PINK_TULIP.defaultBlockState(), 3);
+                        this.beekeeper.getCommandSenderWorld().setBlock(blockPos, Blocks.PINK_TULIP.defaultBlockState(), 3);
                         flag = true;
                     } else if (itemstack.getItem() == Items.OXEYE_DAISY) {
-                        this.beekeeper.level.setBlock(blockPos, Blocks.OXEYE_DAISY.defaultBlockState(), 3);
+                        this.beekeeper.getCommandSenderWorld().setBlock(blockPos, Blocks.OXEYE_DAISY.defaultBlockState(), 3);
                         flag = true;
                     } else if (itemstack.getItem() == Items.LILY_OF_THE_VALLEY) {
-                        this.beekeeper.level.setBlock(blockPos, Blocks.LILY_OF_THE_VALLEY.defaultBlockState(), 3);
+                        this.beekeeper.getCommandSenderWorld().setBlock(blockPos, Blocks.LILY_OF_THE_VALLEY.defaultBlockState(), 3);
                         flag = true;
                     } else if (itemstack.getItem() == Items.SUNFLOWER) {
-                        this.beekeeper.level.setBlock(blockPos, Blocks.SUNFLOWER.defaultBlockState(), 3);
+                        this.beekeeper.getCommandSenderWorld().setBlock(blockPos, Blocks.SUNFLOWER.defaultBlockState(), 3);
                         flag = true;
                     } else if (itemstack.getItem() == Items.LILAC) {
-                        this.beekeeper.level.setBlock(blockPos, Blocks.LILAC.defaultBlockState(), 3);
+                        this.beekeeper.getCommandSenderWorld().setBlock(blockPos, Blocks.LILAC.defaultBlockState(), 3);
                         flag = true;
                     } else if (itemstack.getItem() == Items.ROSE_BUSH) {
-                        this.beekeeper.level.setBlock(blockPos, Blocks.ROSE_BUSH.defaultBlockState(), 3);
+                        this.beekeeper.getCommandSenderWorld().setBlock(blockPos, Blocks.ROSE_BUSH.defaultBlockState(), 3);
                         flag = true;
                     } else if (itemstack.getItem() == Items.PEONY) {
-                        this.beekeeper.level.setBlock(blockPos, Blocks.PEONY.defaultBlockState(), 3);
+                        this.beekeeper.getCommandSenderWorld().setBlock(blockPos, Blocks.PEONY.defaultBlockState(), 3);
                         flag = true;
                     }
                 }
 
                 if (flag) {
-                    beekeeper.level.playSound(null, (double) blockPos.getX(), (double) blockPos.getY(),
+                    beekeeper.getCommandSenderWorld().playSound(null, (double) blockPos.getX(), (double) blockPos.getY(),
                             (double) blockPos.getZ(), SoundEvents.GRASS_PLACE, SoundSource.BLOCKS, 1.0F, 1.0F);
                     itemstack.shrink(1);
                     if (itemstack.isEmpty()) {

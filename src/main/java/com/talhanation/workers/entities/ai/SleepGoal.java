@@ -65,8 +65,8 @@ public class SleepGoal extends Goal {
             return;
         }
 
-        BlockEntity bedEntity = worker.level.getBlockEntity(sleepPos);
-        if (bedEntity == null || !bedEntity.getBlockState().isBed(worker.level, sleepPos, worker)) {
+        BlockEntity bedEntity = worker.getCommandSenderWorld().getBlockEntity(sleepPos);
+        if (bedEntity == null || !bedEntity.getBlockState().isBed(worker.getCommandSenderWorld(), sleepPos, worker)) {
             worker.tellPlayer(owner, CANT_FIND_BED);
             worker.setNeedsBed(true);
             return;
@@ -120,7 +120,7 @@ public class SleepGoal extends Goal {
             for (int y = -range; y < range; y++) {
                 for (int z = -range; z < range; z++) {
                     bedPos = worker.getOnPos().offset(x, y, z);
-                    BlockState state = worker.level.getBlockState(bedPos);
+                    BlockState state = worker.getCommandSenderWorld().getBlockState(bedPos);
 
                     if (state.isBed(worker.level, bedPos, this.worker) &&
                         state.getValue(BlockStateProperties.BED_PART) == BedPart.HEAD &&

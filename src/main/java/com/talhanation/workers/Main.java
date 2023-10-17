@@ -2,6 +2,8 @@ package com.talhanation.workers;
 
 import com.talhanation.workers.config.WorkersModConfig;
 import com.talhanation.workers.network.*;
+import net.minecraft.world.item.CreativeModeTabs;
+import net.minecraftforge.event.BuildCreativeModeTabContentsEvent;
 import net.minecraftforge.fml.DistExecutor;
 import net.minecraftforge.fml.ModList;
 import net.minecraftforge.fml.ModLoadingContext;
@@ -51,6 +53,8 @@ public class Main {
         // ModSounds.SOUNDS.register(modEventBus);
         ModItems.ITEMS.register(modEventBus);
         ModEntityTypes.ENTITY_TYPES.register(modEventBus);
+
+        FMLJavaModLoadingContext.get().getModEventBus().addListener(this::addCreativeTabs);
 
         DistExecutor.unsafeRunWhenOn(Dist.CLIENT, () -> () -> {
             FMLJavaModLoadingContext.get().getModEventBus().addListener(Main.this::clientSetup);
@@ -112,5 +116,31 @@ public class Main {
     public void clientSetup(FMLClientSetupEvent event) {
         event.enqueueWork(ModMenuTypes::registerMenus);
         MinecraftForge.EVENT_BUS.register(new KeyEvents());
+    }
+
+    private void addCreativeTabs(BuildCreativeModeTabContentsEvent event) {
+        if (event.getTabKey().equals(CreativeModeTabs.SPAWN_EGGS)) {
+            event.accept(ModItems.MINER_SPAWN_EGG.get());
+            event.accept(ModItems.LUMBER_SPAWN_EGG.get());
+            event.accept(ModItems.FISHERMAN_SPAWN_EGG.get());
+            event.accept(ModItems.MERCHANT_SPAWN_EGG.get());
+            event.accept(ModItems.SHEPHERD_SPAWN_EGG.get());
+            event.accept(ModItems.SWINEHERD_SPAWN_EGG.get());
+            event.accept(ModItems.CATTLE_FARMER_SPAWN_EGG.get());
+            event.accept(ModItems.CHICKEN_FARMER_SPAWN_EGG.get());
+            event.accept(ModItems.FARMER_SPAWN_EGG.get());
+        }
+
+        if (event.getTabKey().equals(CreativeModeTabs.FUNCTIONAL_BLOCKS)){
+            event.accept(ModBlocks.MINER_BLOCK.get());
+            event.accept(ModBlocks.LUMBERJACK_BLOCK.get());
+            event.accept(ModBlocks.FISHER_BLOCK.get());
+            event.accept(ModBlocks.MERCHANT_BLOCK.get());
+            event.accept(ModBlocks.SHEPHERD_BLOCK.get());
+            event.accept(ModBlocks.SWINEHERD_BLOCK.get());
+            event.accept(ModBlocks.CATTLE_FARMER_BLOCK.get());
+            event.accept(ModBlocks.CHICKEN_FARMER_BLOCK.get());
+            event.accept(ModBlocks.FARMER_BLOCK.get());
+        }
     }
 }

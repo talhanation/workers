@@ -160,7 +160,7 @@ public class ModMenuTypes {
     @Nullable
     private static AbstractWorkerEntity getRecruitByUUID(Player player, UUID uuid) {
         double distance = 10D;
-        return player.level.getEntitiesOfClass(AbstractWorkerEntity.class,
+        return player.getCommandSenderWorld().getEntitiesOfClass(AbstractWorkerEntity.class,
                 new AABB(player.getX() - distance, player.getY() - distance, player.getZ() - distance,
                         player.getX() + distance, player.getY() + distance, player.getZ() + distance),
                 entity -> entity.getUUID().equals(uuid)).stream().findAny().orElse(null);

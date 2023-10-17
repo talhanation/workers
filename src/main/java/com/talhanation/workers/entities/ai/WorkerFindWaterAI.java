@@ -18,7 +18,7 @@ public class WorkerFindWaterAI extends Goal {
     }
 
     public boolean canUse() {
-        if (this.worker.isOnGround() && ! worker.getFollow() && worker.getIsWorking()){
+        if (! worker.getFollow() && worker.getIsWorking()){
 
             targetPos = findBlockWater();
 
@@ -45,10 +45,10 @@ public class WorkerFindWaterAI extends Goal {
         int range = 14;
         for(int i = 0; i < 15; i++){
             BlockPos blockpos1 = this.worker.getWorkerOnPos().offset(random.nextInt(range) - range/2, 3, random.nextInt(range) - range/2);
-            while(this.worker.level.isEmptyBlock(blockpos1) && blockpos1.getY() > 1){
+            while(this.worker.getCommandSenderWorld().isEmptyBlock(blockpos1) && blockpos1.getY() > 1){
                 blockpos1 = blockpos1.below();
             }
-            if(this.worker.level.getFluidState(blockpos1).is(FluidTags.WATER)){
+            if(this.worker.getCommandSenderWorld().getFluidState(blockpos1).is(FluidTags.WATER)){
                 blockpos = blockpos1;
             }
         }

@@ -29,7 +29,7 @@ public class WorkerPickupWantedItemGoal extends Goal{
     }
 
     private List<ItemEntity> findItemsNearby() {
-        return this.worker.level.getEntitiesOfClass(
+        return this.worker.getCommandSenderWorld().getEntitiesOfClass(
             ItemEntity.class, 
             this.worker.getBoundingBox().inflate(8.0D, 4.0D, 8.0D), 
             this.worker.getAllowedItems()

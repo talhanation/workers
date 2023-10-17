@@ -76,12 +76,12 @@ public class VillagerEvents {
 
 
     private void createWorker(Villager villager, EntityType<? extends AbstractWorkerEntity> workerType) {
-        AbstractWorkerEntity worker = workerType.create(villager.level);
+        AbstractWorkerEntity worker = workerType.create(villager.getCommandSenderWorld());
         if (worker != null) {
             worker.copyPosition(villager);
             worker.initSpawn();
             villager.remove(Entity.RemovalReason.DISCARDED);
-            villager.level.addFreshEntity(worker);
+            villager.getCommandSenderWorld().addFreshEntity(worker);
         }
     }
 

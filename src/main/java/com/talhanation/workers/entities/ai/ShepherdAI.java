@@ -136,19 +136,19 @@ public class ShepherdAI extends AnimalFarmerAI{
     }
 
     private Optional<Sheep> findSheepSheering() {
-        return animalFarmer.level
+        return animalFarmer.getCommandSenderWorld()
                 .getEntitiesOfClass(Sheep.class, animalFarmer.getBoundingBox().inflate(8D), Sheep::readyForShearing)
                 .stream().filter(not(Sheep::isBaby)).findAny();
     }
 
     private Optional<Sheep> findSheepBreeding() {
-        return animalFarmer.level
+        return animalFarmer.getCommandSenderWorld()
                 .getEntitiesOfClass(Sheep.class, animalFarmer.getBoundingBox().inflate(8D), Sheep::canFallInLove).stream()
                 .filter(not(Sheep::isBaby)).filter(not(Sheep::isInLove)).findAny();
     }
 
     private List<Sheep> findSheepSlaughtering() {
-        return animalFarmer.level.getEntitiesOfClass(Sheep.class, animalFarmer.getBoundingBox().inflate(8D), Sheep::isAlive)
+        return animalFarmer.getCommandSenderWorld().getEntitiesOfClass(Sheep.class, animalFarmer.getBoundingBox().inflate(8D), Sheep::isAlive)
                 .stream().filter(not(Sheep::isBaby)).filter(not(Sheep::isInLove)).collect(Collectors.toList());
 
     }

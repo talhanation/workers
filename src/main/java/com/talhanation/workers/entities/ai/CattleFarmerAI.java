@@ -156,7 +156,7 @@ public class CattleFarmerAI extends AnimalFarmerAI {
     }
 
     private Optional<Cow> findCowMilking() {
-        return  animalFarmer.level.getEntitiesOfClass(Cow.class, animalFarmer.getBoundingBox()
+        return  animalFarmer.getCommandSenderWorld().getEntitiesOfClass(Cow.class, animalFarmer.getBoundingBox()
                 .inflate(8D), Cow::isAlive)
                 .stream()
                 .filter(not(Cow::isBaby))
@@ -165,7 +165,7 @@ public class CattleFarmerAI extends AnimalFarmerAI {
     }
 
     private List<Cow> findCowSlaughtering() {
-        return  animalFarmer.level.getEntitiesOfClass(Cow.class, animalFarmer.getBoundingBox()
+        return  animalFarmer.getCommandSenderWorld().getEntitiesOfClass(Cow.class, animalFarmer.getBoundingBox()
                         .inflate(8D), Cow::isAlive)
                 .stream()
                 .filter(not(Cow::isBaby))

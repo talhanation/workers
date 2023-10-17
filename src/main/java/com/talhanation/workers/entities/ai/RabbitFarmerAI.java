@@ -30,7 +30,7 @@ public class RabbitFarmerAI extends Goal {
 
     @Override
     public boolean canUse() {
-        if (!this.rabbitFarmer.level.isDay()) {
+        if (!this.rabbitFarmer.getCommandSenderWorld().isDay()) {
             return false;
         }
         else return rabbitFarmer.getIsWorking() && !rabbitFarmer.getFollow();
@@ -113,7 +113,7 @@ public class RabbitFarmerAI extends Goal {
 
 
     private Optional<Rabbit> findRabbitBreeding() {
-        return  rabbitFarmer.level.getEntitiesOfClass(Rabbit.class, rabbitFarmer.getBoundingBox()
+        return  rabbitFarmer.getCommandSenderWorld().getEntitiesOfClass(Rabbit.class, rabbitFarmer.getBoundingBox()
                 .inflate(8D), Rabbit::isAlive)
                 .stream()
                 .filter(((Predicate<Rabbit>) Rabbit::isBaby).negate())
@@ -122,7 +122,7 @@ public class RabbitFarmerAI extends Goal {
     }
 
     private List<Rabbit> findRabbitSlaughtering() {
-        return  rabbitFarmer.level.getEntitiesOfClass(Rabbit.class, rabbitFarmer.getBoundingBox()
+        return  rabbitFarmer.getCommandSenderWorld().getEntitiesOfClass(Rabbit.class, rabbitFarmer.getBoundingBox()
                         .inflate(8D), Rabbit::isAlive)
                 .stream()
                 .filter(((Predicate<Rabbit>) Rabbit::isBaby).negate())

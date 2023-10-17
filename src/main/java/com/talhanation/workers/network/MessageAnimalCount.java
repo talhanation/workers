@@ -28,7 +28,7 @@ public class MessageAnimalCount implements Message<MessageAnimalCount> {
     }
 
     public void executeServerSide(NetworkEvent.Context context) {
-        List<AbstractAnimalFarmerEntity> list = Objects.requireNonNull(context.getSender()).level.getEntitiesOfClass(
+        List<AbstractAnimalFarmerEntity> list = Objects.requireNonNull(context.getSender()).getCommandSenderWorld().getEntitiesOfClass(
                 AbstractAnimalFarmerEntity.class, context.getSender().getBoundingBox().inflate(16.0D));
         for (AbstractAnimalFarmerEntity recruits : list) {
 

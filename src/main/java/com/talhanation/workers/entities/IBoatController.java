@@ -321,7 +321,7 @@ public interface IBoatController {
     private int getWaterDepth(BlockPos pos){
         int depth = 0;
         for(int i = 0; i < 10; i++){
-            BlockState state = getWorker().level.getBlockState(pos.below(i));
+            BlockState state = getWorker().getCommandSenderWorld().getBlockState(pos.below(i));
             if(state.is(Blocks.WATER) || state.is(Blocks.KELP_PLANT) || state.is(Blocks.KELP)){
                 depth++;
             }

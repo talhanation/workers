@@ -6,18 +6,12 @@ import com.talhanation.workers.entities.FishermanEntity;
 import com.talhanation.workers.entities.IBoatController;
 import com.talhanation.workers.entities.ai.navigation.SailorPathNavigation;
 import net.minecraft.core.BlockPos;
-import net.minecraft.tags.BiomeTags;
-import net.minecraft.util.Mth;
-import net.minecraft.world.entity.ai.behavior.RandomSwim;
 import net.minecraft.world.entity.ai.goal.Goal;
-import net.minecraft.world.entity.ai.goal.RandomSwimmingGoal;
 import net.minecraft.world.entity.vehicle.Boat;
 import net.minecraft.world.level.block.Blocks;
-import net.minecraft.world.level.block.SimpleWaterloggedBlock;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.pathfinder.Node;
 import net.minecraft.world.level.pathfinder.Path;
-import net.minecraftforge.common.Tags;
 
 import static com.talhanation.workers.entities.ai.ControlBoatAI.State.*;
 
@@ -63,7 +57,7 @@ public class ControlBoatAI extends Goal {
     }
 
     public void tick() {
-        if (this.worker instanceof IBoatController sailor && !worker.getLevel().isClientSide() && worker.getNavigation() instanceof SailorPathNavigation sailorPathNavigation) {
+        if (this.worker instanceof IBoatController sailor && !worker.getCommandSenderWorld().isClientSide() && worker.getNavigation() instanceof SailorPathNavigation sailorPathNavigation) {
             if(DEBUG) {
                 if (this.worker.getOwner() != null && worker.getOwner().isInWater()) {
                     sailor.setSailPos(worker.getOwner().getOnPos());
@@ -89,7 +83,7 @@ public class ControlBoatAI extends Goal {
 
                             if(DEBUG){
                                 for(Node node : this.path.nodes) {
-                                    worker.level.setBlock(new BlockPos(node.x, worker.getY() + 4, node.z), Blocks.ICE.defaultBlockState(), 3);
+                                    worker.getCommandSenderWorld().setBlock(new BlockPos(node.x, (int) (worker.getY() + 4), node.z), Blocks.ICE.defaultBlockState(), 3);
                                 }
                             }
 
@@ -163,7 +157,7 @@ public class ControlBoatAI extends Goal {
     private int getWaterDepth(BlockPos pos){
         int depth = 0;
         for(int i = 0; i < 10; i++){
-            BlockState state = worker.level.getBlockState(pos.below(i));
+            BlockState state = worker.getCommandSenderWorld().getBlockState(pos.below(i));
             if(state.is(Blocks.WATER)){
                 depth++;
             }
@@ -175,8 +169,8 @@ public class ControlBoatAI extends Goal {
     private boolean isFreeWater(Node node){
         for(int i = -2; i <= 2; i++) {
             for (int k = -2; k <= 2; k++) {
-                BlockPos pos = new BlockPos(node.x, this.worker.getY(), node.z).offset(i, 0, k);
-                BlockState state = this.worker.level.getBlockState(pos);
+                BlockPos pos = new BlockPos(node.x, (int) this.worker.getY(), node.z).offset(i, 0, k);
+                BlockState state = this.worker.getCommandSenderWorld().getBlockState(pos);
 
                 if(!state.is(Blocks.WATER) || (!state.is(Blocks.KELP_PLANT) || !state.is(Blocks.KELP)))
                     return false;
@@ -188,17 +182,17 @@ public class ControlBoatAI extends Goal {
     private boolean isSensitiveNeeded(Node node) {
         BlockPos pos = new BlockPos(node.x, this.worker.getY(), node.z);
 
-        BlockState stateBelow = this.worker.getLevel().getBlockState(pos.below());
+        BlockState stateBelow = this.worker.getCommandSenderWorld().getBlockState(pos.below());
 
-        BlockState stateNorth = this.worker.getLevel().getBlockState(pos.north());
-        BlockState stateEast = this.worker.getLevel().getBlockState(pos.east());
-        BlockState stateSouth = this.worker.getLevel().getBlockState(pos.south());
-        BlockState stateWest = this.worker.getLevel().getBlockState(pos.west());
+        BlockState stateNorth = this.worker.getCommandSenderWorld().getBlockState(pos.north());
+        BlockState stateEast = this.worker.getCommandSenderWorld().getBlockState(pos.east());
+        BlockState stateSouth = this.worker.getCommandSenderWorld().getBlockState(pos.south());
+        BlockState stateWest = this.worker.getCommandSenderWorld().getBlockState(pos.west());
 
-        BlockState stateNorthEast = this.worker.getLevel().getBlockState(pos.north().east());
-        BlockState stateNorthWest = this.worker.getLevel().getBlockState(pos.north().west());
-        BlockState stateSouthEast = this.worker.getLevel().getBlockState(pos.south().east());
-        BlockState stateSouthWest = this.worker.getLevel().getBlockState(pos.south().west());
+        BlockState stateNorthEast = this.worker.getCommandSenderWorld().getBlockState(pos.north().east());
+        BlockState stateNorthWest = this.worker.getCommandSenderWorld().getBlockState(pos.north().west());
+        BlockState stateSouthEast = this.worker.getCommandSenderWorld().getBlockState(pos.south().east());
+        BlockState stateSouthWest = this.worker.getCommandSenderWorld().getBlockState(pos.south().west());
 
         return !(
                 stateBelow.is(Blocks.WATER) &&

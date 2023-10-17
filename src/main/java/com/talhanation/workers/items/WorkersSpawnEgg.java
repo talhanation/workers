@@ -1,21 +1,22 @@
 package com.talhanation.workers.items;
 
+import com.talhanation.workers.entities.AbstractWorkerEntity;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.item.SpawnEggItem;
 import net.minecraft.nbt.CompoundTag;
+import net.minecraftforge.common.ForgeSpawnEggItem;
 
 import java.util.function.Supplier;
 
 import javax.annotation.Nullable;
 
-public class WorkersSpawnEgg extends SpawnEggItem {
+public class WorkersSpawnEgg extends ForgeSpawnEggItem {
 
-    private Supplier<EntityType<?>> entityType;
+    private final Supplier<? extends EntityType<? extends AbstractWorkerEntity>> entityType;
 
     @SuppressWarnings("deprecation")
-    public WorkersSpawnEgg(Supplier<EntityType<?>> entityType, int primaryColor, int secondaryColor,
-            Properties properties) {
-        super(null, primaryColor, secondaryColor, properties);
+    public WorkersSpawnEgg(Supplier<? extends EntityType<? extends AbstractWorkerEntity>> entityType, int primaryColor, int secondaryColor, Properties properties) {
+        super(entityType, primaryColor, secondaryColor, properties);
         this.entityType = entityType;
     }
 

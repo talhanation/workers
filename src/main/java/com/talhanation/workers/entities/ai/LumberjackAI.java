@@ -112,7 +112,7 @@ public class LumberjackAI extends Goal {
                     if (this.mineBlock(chopPos))
                         this.lumber.increaseFarmedItems();
 
-                    if (lumber.level.getBlockState(chopPos.below()).is(Blocks.DIRT) && this.lumber.level.isEmptyBlock(chopPos)) {
+                    if (lumber.getCommandSenderWorld().getBlockState(chopPos.below()).is(Blocks.DIRT) && this.lumber.getCommandSenderWorld().isEmptyBlock(chopPos)) {
                         plantSaplingFromInv(chopPos);
                     }
                 }
@@ -171,7 +171,7 @@ public class LumberjackAI extends Goal {
         for(int i = -1; i <= 1; i++){
             BlockPos blockPos = lumber.getOnPos();
 
-            if(this.lumber.level.getBlockState(blockPos.above()).is(BlockTags.SAPLINGS)){
+            if(this.lumber.getCommandSenderWorld().getBlockState(blockPos.above()).is(BlockTags.SAPLINGS)){
                 return true;
             }
         }
@@ -194,18 +194,18 @@ public class LumberjackAI extends Goal {
     private void breakLeaves() {
         AABB boundingBox = this.lumber.getBoundingBox();
         double offset = 0.25D;
-        BlockPos start = new BlockPos(boundingBox.minX - offset, boundingBox.minY - offset, boundingBox.minZ - offset);
-        BlockPos end = new BlockPos(boundingBox.maxX + offset, (boundingBox.maxY + offset), boundingBox.maxZ + offset);
+        BlockPos start = new BlockPos((int) (boundingBox.minX - offset), (int) (boundingBox.minY - offset), (int) (boundingBox.minZ - offset));
+        BlockPos end = new BlockPos((int) (boundingBox.maxX + offset), (int) (boundingBox.maxY + offset), (int) (boundingBox.maxZ + offset));
         BlockPos.MutableBlockPos pos = new BlockPos.MutableBlockPos();
         boolean hasBroken = false;
-        if (this.lumber.level.hasChunksAt(start, end)) {
+        if (this.lumber.getCommandSenderWorld().hasChunksAt(start, end)) {
             for (int i = start.getX(); i <= end.getX(); ++i) {
                 for (int j = start.getY(); j <= end.getY(); ++j) {
                     for (int k = start.getZ(); k <= end.getZ(); ++k) {
                         pos.set(i, j, k);
-                        BlockState blockstate = this.lumber.level.getBlockState(pos);
+                        BlockState blockstate = this.lumber.getCommandSenderWorld().getBlockState(pos);
                         if (blockstate.is(BlockTags.LEAVES)) {
-                            this.lumber.level.destroyBlock(pos, true, this.lumber);
+                            this.lumber.getCommandSenderWorld().destroyBlock(pos, true, this.lumber);
                             hasBroken = true;
                         }
                     }
@@ -214,7 +214,7 @@ public class LumberjackAI extends Goal {
         }
 
         if (hasBroken) {
-            this.lumber.level.playSound(null, this.lumber.getX(), this.lumber.getY(), this.lumber.getZ(), SoundEvents.GRASS_BREAK, SoundSource.BLOCKS, 1F, 0.9F + 0.2F);
+            this.lumber.getCommandSenderWorld().playSound(null, this.lumber.getX(), this.lumber.getY(), this.lumber.getZ(), SoundEvents.GRASS_BREAK, SoundSource.BLOCKS, 1F, 0.9F + 0.2F);
             this.lumber.workerSwingArm();
         }
     }
@@ -225,9 +225,9 @@ public class LumberjackAI extends Goal {
         for (int j = 0; j < range; j++) {
             for (int i = 0; i < range; i++) {
                 for(int k = 0; k < range * 2; k++){
-                    BlockPos blockPos = workPos.offset(j - range / 2F, k, i - range / 2F);
+                    BlockPos blockPos = workPos.offset((int) (j - range / 2F), k, (int) (i - range / 2F));
 
-                    BlockState blockState = this.lumber.level.getBlockState(blockPos);
+                    BlockState blockState = this.lumber.getCommandSenderWorld().getBlockState(blockPos);
                     if (this.lumber.wantsToBreak(blockState.getBlock())) {
                         return blockPos;
                     }
@@ -244,7 +244,7 @@ public class LumberjackAI extends Goal {
             BlockPos blockPos = this.lumber.getStartPos().offset(random.nextInt(10) - range / 2F, 1, random.nextInt(10) - range / 2F);
 
 
-            if (this.lumber.level.isEmptyBlock(blockPos) && lumber.level.getBlockState(blockPos.below()).is(Blocks.GRASS_BLOCK)) {
+            if (this.lumber.getCommandSenderWorld().isEmptyBlock(blockPos) && lumber.getCommandSenderWorld().getBlockState(blockPos.below()).is(Blocks.GRASS_BLOCK)) {
                 return blockPos;
             }
         }
@@ -259,8 +259,8 @@ public class LumberjackAI extends Goal {
             ItemStack itemstack = inventory.getItem(i);
             if (!itemstack.isEmpty() && itemstack.is(ItemTags.SAPLINGS)) {
                 BlockState placedSaplingBlock = Block.byItem(itemstack.getItem()).defaultBlockState();
-                this.lumber.level.setBlock(blockPos, placedSaplingBlock, 3);
-                lumber.level.playSound(null, blockPos.getX(), blockPos.getY(), blockPos.getZ(), SoundEvents.GRASS_PLACE, SoundSource.BLOCKS, 1.0F, 1.0F);
+                this.lumber.getCommandSenderWorld().setBlock(blockPos, placedSaplingBlock, 3);
+                lumber.getCommandSenderWorld().playSound(null, blockPos.getX(), blockPos.getY(), blockPos.getZ(), SoundEvents.GRASS_PLACE, SoundSource.BLOCKS, 1.0F, 1.0F);
                 itemstack.shrink(1);
                 if (itemstack.isEmpty()) {
                     inventory.setItem(i, ItemStack.EMPTY);
@@ -271,19 +271,19 @@ public class LumberjackAI extends Goal {
     }
 
     private boolean mineBlock(BlockPos blockPos){
-        if (this.lumber.isAlive() && ForgeEventFactory.getMobGriefingEvent(this.lumber.level, this.lumber) && !lumber.getFollow()) {
+        if (this.lumber.isAlive() && ForgeEventFactory.getMobGriefingEvent(this.lumber.getCommandSenderWorld(), this.lumber) && !lumber.getFollow()) {
 
-            BlockState blockstate = this.lumber.level.getBlockState(blockPos);
+            BlockState blockstate = this.lumber.getCommandSenderWorld().getBlockState(blockPos);
             Block block = blockstate.getBlock();
             ItemStack heldItem = this.lumber.getItemInHand(InteractionHand.MAIN_HAND);
 
             if (lumber.wantsToBreak(block)){
                 if (lumber.getCurrentTimeBreak() % 5 == 4) {
-                    lumber.level.playLocalSound(blockPos.getX(), blockPos.getY(), blockPos.getZ(), blockstate.getSoundType().getHitSound(), SoundSource.BLOCKS, 1F, 0.75F, false);
+                    lumber.getCommandSenderWorld().playLocalSound(blockPos.getX(), blockPos.getY(), blockPos.getZ(), blockstate.getSoundType().getHitSound(), SoundSource.BLOCKS, 1F, 0.75F, false);
                 }
 
                 //set max destroy speed
-                int bp = (int) (blockstate.getDestroySpeed(this.lumber.level, blockPos) * 30);
+                int bp = (int) (blockstate.getDestroySpeed(this.lumber.getCommandSenderWorld(), blockPos) * 30);
                 this.lumber.setBreakingTime(bp);
 
                 //increase current
@@ -293,13 +293,13 @@ public class LumberjackAI extends Goal {
                 int i = (int) (f * 10);
 
                 if (i != this.lumber.getPreviousTimeBreak()) {
-                    this.lumber.level.destroyBlockProgress(1, blockPos, i);
+                    this.lumber.getCommandSenderWorld().destroyBlockProgress(1, blockPos, i);
                     this.lumber.setPreviousTimeBreak(i);
                 }
 
                 if (this.lumber.getCurrentTimeBreak() >= this.lumber.getBreakingTime()) {
                     // Break the target block
-                    this.lumber.level.destroyBlock(blockPos, true, this.lumber);
+                    this.lumber.getCommandSenderWorld().destroyBlock(blockPos, true, this.lumber);
                     this.lumber.setCurrentTimeBreak(-1);
                     this.lumber.setBreakingTime(0);
                     this.lumber.consumeToolDurability();

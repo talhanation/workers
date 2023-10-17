@@ -33,7 +33,7 @@ public class MessageMerchantTradeLimitButton implements Message<MessageMerchantT
     }
 
     public void executeServerSide(NetworkEvent.Context context){
-        List<MerchantEntity> list = Objects.requireNonNull(context.getSender()).level.getEntitiesOfClass(MerchantEntity.class, context.getSender().getBoundingBox().inflate(16.0D));
+        List<MerchantEntity> list = Objects.requireNonNull(context.getSender()).getCommandSenderWorld().getEntitiesOfClass(MerchantEntity.class, context.getSender().getBoundingBox().inflate(16.0D));
         for (MerchantEntity merchant : list){
 
             if (merchant.getUUID().equals(this.uuid)) {

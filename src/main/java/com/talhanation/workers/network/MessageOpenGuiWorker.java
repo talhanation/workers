@@ -37,7 +37,7 @@ public class MessageOpenGuiWorker implements Message<MessageOpenGuiWorker> {
         }
 
         ServerPlayer player = context.getSender();
-        player.level
+        player.getCommandSenderWorld()
                 .getEntitiesOfClass(AbstractWorkerEntity.class, player.getBoundingBox().inflate(16.0D),
                         v -> v.getUUID().equals(this.worker))
                 .stream().filter(Entity::isAlive).findAny().ifPresent(worker -> worker.openGUI(player));

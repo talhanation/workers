@@ -134,7 +134,7 @@ public abstract class AbstractInventoryEntity extends TamableAnimal {
     }
 
     public void die(@NotNull DamageSource dmg) {
-        Containers.dropContents(level, this, inventory);
+        Containers.dropContents(this.getCommandSenderWorld(), this, inventory);
         super.die(dmg);
     }
 }

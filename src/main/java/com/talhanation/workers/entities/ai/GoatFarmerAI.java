@@ -32,7 +32,7 @@ public class GoatFarmerAI extends Goal {
 
     @Override
     public boolean canUse() {
-        if (!this.shepherd.level.isDay()) {
+        if (!this.shepherd.getCommandSenderWorld().isDay()) {
             return false;
         } else
             return shepherd.getIsWorking() && !shepherd.getFollow();
@@ -165,12 +165,12 @@ public class GoatFarmerAI extends Goal {
     }
 
     private Optional<Goat> findGoatMilking() {
-        return shepherd.level.getEntitiesOfClass(Goat.class, shepherd.getBoundingBox().inflate(8D), Goat::isAlive)
+        return shepherd.getCommandSenderWorld().getEntitiesOfClass(Goat.class, shepherd.getBoundingBox().inflate(8D), Goat::isAlive)
                 .stream().filter(not(Goat::isBaby)).filter(not(Goat::isInLove)).findAny();
     }
 
     private List<Goat> findGoatSlaughtering() {
-        return shepherd.level.getEntitiesOfClass(Goat.class, shepherd.getBoundingBox().inflate(8D), Goat::isAlive)
+        return shepherd.getCommandSenderWorld().getEntitiesOfClass(Goat.class, shepherd.getBoundingBox().inflate(8D), Goat::isAlive)
                 .stream().filter(not(Goat::isBaby)).filter(not(Goat::isInLove)).collect(Collectors.toList());
     }
 

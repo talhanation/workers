@@ -38,7 +38,7 @@ public class MessageOpenGuiAnimalFarmer implements Message<MessageOpenGuiAnimalF
         }
 
         ServerPlayer player = context.getSender();
-        player.level.getEntitiesOfClass(AbstractWorkerEntity.class, player.getBoundingBox()
+        player.getCommandSenderWorld().getEntitiesOfClass(AbstractWorkerEntity.class, player.getBoundingBox()
                 .inflate(16.0D), v -> v
                 .getUUID()
                 .equals(this.worker))

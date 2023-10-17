@@ -27,7 +27,7 @@ public class MessageChickenFarmerUseEggs implements Message<MessageChickenFarmer
     public void executeServerSide(NetworkEvent.Context context) {
 
         ServerPlayer player = context.getSender();
-        player.level.getEntitiesOfClass(ChickenFarmerEntity.class, player.getBoundingBox()
+        player.getCommandSenderWorld().getEntitiesOfClass(ChickenFarmerEntity.class, player.getBoundingBox()
                         .inflate(16.0D), v -> v
                         .getUUID()
                         .equals(this.worker))

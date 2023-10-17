@@ -1,15 +1,15 @@
 package com.talhanation.workers.client.gui;
 
-import com.mojang.blaze3d.vertex.PoseStack;
 import com.talhanation.workers.Main;
 import com.talhanation.workers.inventory.WorkerInventoryContainer;
 import com.talhanation.workers.entities.MinerEntity;
 import com.talhanation.workers.network.MessageMineDepth;
 import com.talhanation.workers.network.MessageMineType;
-import net.minecraft.client.gui.components.Button;
+import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.MutableComponent;
+import net.minecraftforge.client.gui.widget.ExtendedButton;
 
 public class MinerInventoryScreen extends WorkerInventoryScreen {
 
@@ -28,7 +28,7 @@ public class MinerInventoryScreen extends WorkerInventoryScreen {
     protected void init() {
         super.init();
         // MINETYPE
-        addRenderableWidget(new Button(leftPos + 90, topPos + 60, 8, 12, Component.literal("<"), button -> {
+        addRenderableWidget(new ExtendedButton(leftPos + 90, topPos + 60, 12, 12, Component.literal("<"), button -> {
             this.mineType = miner.getMineType();
             if (this.mineType != 0) {
                 this.mineType--;
@@ -36,7 +36,7 @@ public class MinerInventoryScreen extends WorkerInventoryScreen {
             }
         }));
 
-        addRenderableWidget(new Button(leftPos + 90 + 70, topPos + 60, 8, 12, Component.literal(">"), button -> {
+        addRenderableWidget(new ExtendedButton(leftPos + 90 + 70, topPos + 60, 12, 12, Component.literal(">"), button -> {
             this.mineType = miner.getMineType();
             if (this.mineType != 5) {
                 this.mineType++;
@@ -45,7 +45,7 @@ public class MinerInventoryScreen extends WorkerInventoryScreen {
         }));
 
         // MINEDEPTH
-        addRenderableWidget(new Button(leftPos + 10, topPos + 60, 8, 12, Component.literal("<"), button -> {
+        addRenderableWidget(new ExtendedButton(leftPos + 10, topPos + 60, 12, 12, Component.literal("<"), button -> {
             if (miner.getMineType() != 3 && miner.getMineType() != 5 && miner.getMineType() != 4) {
                 this.mineDepth = miner.getMineDepth();
                 if (this.mineDepth != 0) {
@@ -55,7 +55,7 @@ public class MinerInventoryScreen extends WorkerInventoryScreen {
             }
         }));
 
-        addRenderableWidget(new Button(leftPos + 10 + 30, topPos + 60, 8, 12, Component.literal(">"), button -> {
+        addRenderableWidget(new ExtendedButton(leftPos + 10 + 30, topPos + 60, 12, 12, Component.literal(">"), button -> {
             if (miner.getMineType() != 3 && miner.getMineType() != 5 && miner.getMineType() != 4) {
                 this.mineDepth = miner.getMineDepth();
                 if (this.mineDepth != miner.getMaxMineDepth()) {
@@ -67,8 +67,8 @@ public class MinerInventoryScreen extends WorkerInventoryScreen {
     }
 
     @Override
-    protected void renderLabels(PoseStack matrixStack, int mouseX, int mouseY) {
-        super.renderLabels(matrixStack, mouseX, mouseY);
+    protected void renderLabels(GuiGraphics guiGraphics, int mouseX, int mouseY) {
+        super.renderLabels(guiGraphics, mouseX, mouseY);
         int k = 79;// right left
         int l = 19;// hight
 
@@ -78,8 +78,8 @@ public class MinerInventoryScreen extends WorkerInventoryScreen {
             depth = "-";
         } else
             depth = String.valueOf(miner.getMineDepth());
-        font.draw(matrixStack, DEPTH.getString() + ":", k - 70, l + 35, fontColor);
-        font.draw(matrixStack, depth, k - 55, l + 45, fontColor);
+        guiGraphics.drawString(font, DEPTH.getString() + ":", k - 70, l + 35, fontColor, false);
+        guiGraphics.drawString(font, depth, k - 55, l + 45, fontColor, false);
 
         String type;
         switch (miner.getMineType()) {
@@ -106,8 +106,8 @@ public class MinerInventoryScreen extends WorkerInventoryScreen {
                 type = ROOM8x8x3.getString();
                 break;
         }
-        font.draw(matrixStack, MINEMODE.getString() + ":", k + 25, l + 35, fontColor);
-        font.draw(matrixStack, type, k + 25, l + 45, fontColor);
+        guiGraphics.drawString(font, MINEMODE.getString() + ":", k + 25, l + 35, fontColor, false);
+        guiGraphics.drawString(font, type, k + 25, l + 45, fontColor, false);
     }
 
     private final MutableComponent MINEMODE = Component.translatable("gui.workers.miner.mine_mode");

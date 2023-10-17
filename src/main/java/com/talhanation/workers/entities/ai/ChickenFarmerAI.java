@@ -6,9 +6,7 @@ import net.minecraft.sounds.SoundEvents;
 import net.minecraft.sounds.SoundSource;
 import net.minecraft.world.SimpleContainer;
 import net.minecraft.world.entity.animal.Chicken;
-import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.entity.projectile.ThrownEgg;
-import net.minecraft.world.item.EggItem;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
 
@@ -114,12 +112,12 @@ public class ChickenFarmerAI extends AnimalFarmerAI {
 
                 this.animalFarmer.getLookControl().setLookAt(animalFarmer.getOnPos().getX(), animalFarmer.getOnPos().getY(), animalFarmer.getOnPos().getZ(), 10.0F, (float) this.animalFarmer.getMaxHeadXRot());
 
-                animalFarmer.level.playSound(null, animalFarmer.getX(), animalFarmer.getY(), animalFarmer.getZ(), SoundEvents.EGG_THROW, SoundSource.PLAYERS, 0.5F, 0.4F / (animalFarmer.getRandom().nextFloat() * 0.4F + 0.8F));
-                ThrownEgg thrownegg = new ThrownEgg(animalFarmer.level, animalFarmer);
+                animalFarmer.getCommandSenderWorld().playSound(null, animalFarmer.getX(), animalFarmer.getY(), animalFarmer.getZ(), SoundEvents.EGG_THROW, SoundSource.PLAYERS, 0.5F, 0.4F / (animalFarmer.getRandom().nextFloat() * 0.4F + 0.8F));
+                ThrownEgg thrownegg = new ThrownEgg(animalFarmer.getCommandSenderWorld(), animalFarmer);
                 thrownegg.setItem(new ItemStack(Items.EGG));
                 thrownegg.shootFromRotation(animalFarmer, animalFarmer.getXRot(), animalFarmer.getYRot(), 0.0F, 0.5F, 1.0F);
 
-                if(animalFarmer.level.addFreshEntity(thrownegg)){
+                if(animalFarmer.getCommandSenderWorld().addFreshEntity(thrownegg)){
                     animalFarmer.workerSwingArm();
                     consumeEggs();
                 }
@@ -165,13 +163,13 @@ public class ChickenFarmerAI extends AnimalFarmerAI {
     }
 
     private Optional<Chicken> findChickenBreeding() {
-        return animalFarmer.level
+        return animalFarmer.getCommandSenderWorld()
                 .getEntitiesOfClass(Chicken.class, animalFarmer.getBoundingBox().inflate(8D), Chicken::isAlive)
                 .stream().filter(not(Chicken::isBaby)).filter(not(Chicken::isInLove)).findAny();
     }
 
     private List<Chicken> findChickenSlaughtering() {
-        return animalFarmer.level
+        return animalFarmer.getCommandSenderWorld()
                 .getEntitiesOfClass(Chicken.class, animalFarmer.getBoundingBox().inflate(8D), Chicken::isAlive)
                 .stream().filter(not(Chicken::isBaby)).filter(not(Chicken::isInLove)).collect(Collectors.toList());
     }

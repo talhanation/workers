@@ -64,7 +64,7 @@ public class WorkerUpkeepPosGoal extends Goal {
         this.chestPos = worker.getChestPos();
 
         if (chestPos != null && !this.hasFoodInInv()){
-            BlockEntity entity = worker.level.getBlockEntity(chestPos);
+            BlockEntity entity = worker.getCommandSenderWorld().getBlockEntity(chestPos);
 
             if (entity instanceof Container containerEntity) {
                 this.container = containerEntity;

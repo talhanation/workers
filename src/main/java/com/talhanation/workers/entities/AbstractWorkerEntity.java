@@ -80,7 +80,7 @@ public abstract class AbstractWorkerEntity extends AbstractChunkLoaderEntity {
     public AbstractWorkerEntity(EntityType<? extends AbstractWorkerEntity> entityType, Level world) {
         super(entityType, world);
         this.xpReward = 2;
-        this.maxUpStep = 1.25F;
+        this.setMaxUpStep(1.25F);
     }
 
     @Override
@@ -93,7 +93,7 @@ public abstract class AbstractWorkerEntity extends AbstractChunkLoaderEntity {
     @NotNull
     public PathNavigation getNavigation() {
         if (this instanceof IBoatController sailor && this.getVehicle() instanceof Boat) {
-            return new SailorPathNavigation(sailor, level);
+            return new SailorPathNavigation(sailor, this.getCommandSenderWorld());
         }
         else
             return super.getNavigation();
@@ -128,15 +128,15 @@ public abstract class AbstractWorkerEntity extends AbstractChunkLoaderEntity {
     public void aiStep() {
         super.aiStep();
         //Main.LOGGER.debug("Running goals are: {}", this.goalSelector.getRunningGoals().map(WrappedGoal::getGoal).toArray());
-        this.level.getProfiler().push("looting");
+        this.getCommandSenderWorld().getProfiler().push("looting");
         if (
-            !this.level.isClientSide && 
+            !this.getCommandSenderWorld().isClientSide &&
             this.canPickUpLoot() && 
             this.isAlive() && 
             !this.dead && 
-            ForgeEventFactory.getMobGriefingEvent(this.level, this)
+            ForgeEventFactory.getMobGriefingEvent(this.getCommandSenderWorld(), this)
         ) {
-            List<ItemEntity> nearbyItems = this.level.getEntitiesOfClass(
+            List<ItemEntity> nearbyItems = this.getCommandSenderWorld().getEntitiesOfClass(
                 ItemEntity.class,
                 this.getBoundingBox().inflate(2.5D, 0.5D, 2.5D)
             );
@@ -612,7 +612,7 @@ public abstract class AbstractWorkerEntity extends AbstractChunkLoaderEntity {
 
     public boolean doHurtTarget(Entity entity) {
         boolean flag = entity.hurt(
-            DamageSource.mobAttack(this),
+            this.damageSources().mobAttack(this),
             (float) ((int) this.getAttributeValue(Attributes.ATTACK_DAMAGE))
         );
         if (flag) {
@@ -633,7 +633,7 @@ public abstract class AbstractWorkerEntity extends AbstractChunkLoaderEntity {
     //////////////////////////////////// FUNCTIONS ////////////////////////////////////
 
     public boolean needsToSleep() {
-        return !this.level.isDay();
+        return !this.getCommandSenderWorld().isDay();
     }
 
      public void updateHunger() {
@@ -741,7 +741,7 @@ public abstract class AbstractWorkerEntity extends AbstractChunkLoaderEntity {
     }
 
     public InteractionResult mobInteract(Player player, InteractionHand hand) {
-        if (this.level.isClientSide) {
+        if (this.getCommandSenderWorld().isClientSide) {
             return InteractionResult.CONSUME;
         } else {
             if (this.isTame() && player.getUUID().equals(this.getOwnerUUID())) {
@@ -787,7 +787,7 @@ public abstract class AbstractWorkerEntity extends AbstractChunkLoaderEntity {
     }
 
     public void makeHireSound() {
-        this.level.playSound(
+        this.getCommandSenderWorld().playSound(
             null, 
             this.getX(), 
             this.getY() + 4, 
@@ -800,7 +800,7 @@ public abstract class AbstractWorkerEntity extends AbstractChunkLoaderEntity {
     }
 
     private void tellOtherVillagersIWasHired(Player player) {
-        if (this.level instanceof ServerLevel server) {
+        if (this.getCommandSenderWorld() instanceof ServerLevel server) {
             server.getNearbyEntities(Villager.class, null, this, getBoundingBox()).forEach((villager) -> {
                 server.onReputationEvent(ReputationEventType.ZOMBIE_VILLAGER_CURED, player, villager);
             });

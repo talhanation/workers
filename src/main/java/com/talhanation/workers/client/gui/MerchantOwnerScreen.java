@@ -1,12 +1,11 @@
 package com.talhanation.workers.client.gui;
 
-import com.mojang.blaze3d.vertex.PoseStack;
 import com.talhanation.workers.Main;
 import com.talhanation.workers.entities.MerchantEntity;
 import com.talhanation.workers.inventory.MerchantInventoryContainer;
 import com.talhanation.workers.network.*;
 import de.maxhenkel.corelib.inventory.ScreenBase;
-import net.minecraft.client.gui.components.Button;
+import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.network.chat.Component;
@@ -19,7 +18,7 @@ public class MerchantOwnerScreen extends ScreenBase<MerchantInventoryContainer> 
 
     private static final ResourceLocation GUI_TEXTURE_3 = new ResourceLocation(Main.MOD_ID,
             "textures/gui/merchant_owner_gui.png");
-    public static int FONT_COLOR_WHITE= 14342874;
+    private static final int fontColor = 4210752;
     public static List<Integer> currentTrades;
     public static List<Integer> limits;
     private final MerchantEntity merchant;
@@ -44,7 +43,7 @@ public class MerchantOwnerScreen extends ScreenBase<MerchantInventoryContainer> 
         int mirror = 240 - 60;
 
 
-        addRenderableWidget(new Button(zeroLeftPos - mirror + 180, zeroTopPos + 35, 41, 20, Component.literal("Travel"), button -> {
+        addRenderableWidget(new ExtendedButton(zeroLeftPos - mirror + 180, zeroTopPos + 35, 41, 20, Component.literal("Travel"), button -> {
             Main.SIMPLE_CHANNEL.sendToServer(new MessageOpenWaypointsGuiMerchant(this.player, this.merchant.getUUID()));
         }));
 
@@ -70,7 +69,7 @@ public class MerchantOwnerScreen extends ScreenBase<MerchantInventoryContainer> 
         if(merchant.getVehicle() != null) dis_mount = "Dismount";
         else dis_mount = "Mount";
 
-        addRenderableWidget(new Button(x, y, 41, 20, Component.literal(dis_mount),
+        addRenderableWidget(new ExtendedButton(x, y, 41, 20, Component.literal(dis_mount),
             button -> {
                 Main.SIMPLE_CHANNEL.sendToServer(new MessageMerchantHorse(merchant.getUUID()));
                 this.setUpdatableButtons();
@@ -78,7 +77,7 @@ public class MerchantOwnerScreen extends ScreenBase<MerchantInventoryContainer> 
 
     }
     private void createCreativeButton(int x, int y) {
-        addRenderableWidget(new Button(x, y, 41, 20, Component.literal("Creative"),
+        addRenderableWidget(new ExtendedButton(x, y, 41, 20, Component.literal("Creative"),
             button -> {
                 Main.SIMPLE_CHANNEL.sendToServer(new MessageMerchantSetCreative(merchant.getUUID(), !merchant.isCreative()));
                 this.setUpdatableButtons();
@@ -112,19 +111,19 @@ public class MerchantOwnerScreen extends ScreenBase<MerchantInventoryContainer> 
     }
 
     @Override
-    protected void renderLabels(PoseStack matrixStack, int mouseX, int mouseY) {
-        super.renderLabels(matrixStack, mouseX, mouseY);
-        font.draw(matrixStack, merchant.getDisplayName().getVisualOrderText(), 8, 6, FONT_COLOR);
-        font.draw(matrixStack, playerInventory.getDisplayName().getVisualOrderText(), 8, imageHeight - 152 + 59, FONT_COLOR);
+    protected void renderLabels(GuiGraphics guiGraphics, int mouseX, int mouseY) {
+        super.renderLabels(guiGraphics, mouseX, mouseY);
+        guiGraphics.drawString(font, merchant.getDisplayName().getVisualOrderText(), 8, 6, fontColor, false);
+        guiGraphics.drawString(font, playerInventory.getDisplayName().getVisualOrderText(), 8, imageHeight - 152 + 59, fontColor, false);
 
         if(limits != null && currentTrades != null){
             for (int i = 0; i < limits.size(); i++) {
                 int limit = limits.get(i);
                 if(limit != -1){
-                    font.draw(matrixStack, currentTrades.get(i) +"/" + limits.get(i), 103,  21 + i * 18, FONT_COLOR);
+                    guiGraphics.drawString(font, currentTrades.get(i) +"/" + limits.get(i), 103,  21 + i * 18, fontColor, false);
                 }
                 else
-                    font.draw(matrixStack, currentTrades.get(i) +"/" +"\u221E", 103,  21 + i * 18, FONT_COLOR);
+                    guiGraphics.drawString(font, currentTrades.get(i) +"/" +"\u221E", 103,  21 + i * 18, fontColor, false);
             }
         }
     }
@@ -134,7 +133,7 @@ public class MerchantOwnerScreen extends ScreenBase<MerchantInventoryContainer> 
         return false;
     }
 
-    protected void renderBg(PoseStack matrixStack, float partialTicks, int mouseX, int mouseY) {
-        super.renderBg(matrixStack, partialTicks, mouseX, mouseY);
+    protected void renderBg(GuiGraphics guiGraphics, float partialTicks, int mouseX, int mouseY) {
+        super.renderBg(guiGraphics, partialTicks, mouseX, mouseY);
     }
 }

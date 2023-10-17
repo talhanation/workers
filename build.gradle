@@ -6,16 +6,16 @@ buildscript {
         mavenCentral()
     }
     dependencies {
-        classpath group: 'net.minecraftforge.gradle', name: 'ForgeGradle', version: '5.1.+', changing: true
+        classpath group: 'net.minecraftforge.gradle', name: 'ForgeGradle', version: '6.+', changing: true
         classpath group: 'org.spongepowered', name: 'mixingradle', version: '0.7-SNAPSHOT'
     }
 }
+// Only edit below this line, the above code adds and enables the necessary things for Forge to be setup.
 
 plugins {
     id "com.matthewprenger.cursegradle" version "1.4.0"
     id "com.github.johnrengelman.shadow" version "7.1.0"
 }
-
 apply plugin: 'net.minecraftforge.gradle'
 apply plugin: 'idea'
 apply plugin: 'com.github.johnrengelman.shadow'
@@ -37,26 +37,33 @@ mixin{
 }
 
 version = '1.7.0'
-group = 'com.talhanation.workers' // http://maven.apache.org/guides/mini/guide-naming-conventions.html
-archivesBaseName = 'workers-1.19.2'
+
+
+group = 'com.talhanation.workers'
+archivesBaseName = 'workers-1.20.1'
 
 java.toolchain.languageVersion = JavaLanguageVersion.of(17)
 
-//println('Java: ' + System.getProperty('java.version') + ' JVM: ' + System.getProperty('java.vm.version') + '(' + System.getProperty('java.vendor') + ') Arch: ' + System.getProperty('os.arch'))
 minecraft {
-    mappings channel: 'official', version: '1.19.2'
-    accessTransformer = file('src/main/resources/META-INF/accesstransformer.cfg')
+    mappings channel: 'official', version: '1.20.1'
+    accessTransformer = file('src/main/resources/META-INF/accesstransformer.cfg') // Currently, this location cannot be changed from the default.
+
     runs {
         client {
             workingDirectory project.file('run')
-            property 'forge.logging.markers', 'SCAN,REGISTRIES,REGISTRYDUMP'
+
+            property 'forge.logging.markers', 'REGISTRIES'
             property 'forge.logging.console.level', 'debug'
-            //arg "-mixin.config=recruits.general.mixin.json"//////////////////////////
-            Random random = new Random();
-            args = ['--username', 'dev' ]//+ random.nextInt(1000)]
+
+            property 'forge.enabledGameTestNamespaces', 'workers'
+
+            Random rnd = new Random()
+
+            args = ['--username', 'talhanation']
+
 
             mods {
-                examplemod {
+                'workers' {
                     source sourceSets.main
                 }
             }
@@ -64,12 +71,13 @@ minecraft {
 
         server {
             workingDirectory project.file('run')
-            property 'forge.logging.markers', 'SCAN,REGISTRIES,REGISTRYDUMP'
+            property 'forge.logging.markers', 'REGISTRIES'
             property 'forge.logging.console.level', 'debug'
-            //arg "-mixin.config=recruits.general.mixin.json"//////////////////////////
+            property 'forge.enabledGameTestNamespaces', 'workers'
+
 
             mods {
-                examplemod {
+                'workers' {
                     source sourceSets.main
                 }
             }
@@ -77,11 +85,14 @@ minecraft {
 
         data {
             workingDirectory project.file('run')
-            property 'forge.logging.markers', 'SCAN,REGISTRIES,REGISTRYDUMP'
+            property 'forge.logging.markers', 'REGISTRIES'
             property 'forge.logging.console.level', 'debug'
-            args '--mod', 'examplemod', '--all', '--output', file('src/generated/resources/'), '--existing', file('src/main/resources/')
+
+            // Specify the modid for data generation, where to output the resulting resource, and where to look for existing resources.
+            args '--mod', 'workers', '--all', '--output', file('src/generated/resources/'), '--existing', file('src/main/resources/')
+
             mods {
-                examplemod {
+                'workers' {
                     source sourceSets.main
                 }
             }
@@ -89,49 +100,47 @@ minecraft {
     }
 }
 
+
+sourceSets.main.resources { srcDir 'src/generated/resources' }
+
 repositories {
     maven {
         name = "henkelmax.public"
         url = 'https://maven.maxhenkel.de/repository/public'
     }
     mavenLocal()
-}
-
-repositories {
     maven {
-        url "https://cursemaven.com"
-        content {
-            includeGroup "curse.maven"
-        }
+
+        url "https://www.cursemaven.com"
     }
 }
 
-sourceSets.main.resources {
-    srcDir 'src/generated/resources'
-}
-
 dependencies {
-    minecraft 'net.minecraftforge:forge:1.19.2-43.2.0'
-    shadow fg.deobf("de.maxhenkel.corelib:corelib:1.19.2-1.0.0:api")
-    runtimeOnly fg.deobf("de.maxhenkel.corelib:corelib:1.19.2-1.0.0")
-    runtimeOnly fg.deobf("de.maxhenkel.corelib:corelib:1.19.2-1.0.0:javadoc")
-    implementation fg.deobf("curse.maven:worldedit-225608:3922622")
-    //implementation fg.deobf('curse.maven:smallships-450659:4575301')
+    minecraft 'net.minecraftforge:forge:1.20.1-47.1.0'
+    shadow fg.deobf("de.maxhenkel.corelib:corelib:1.20.1-1.0.0:api")
+    runtimeOnly fg.deobf("de.maxhenkel.corelib:corelib:1.20.1-1.0.0")
+    runtimeOnly fg.deobf("de.maxhenkel.corelib:corelib:1.20.1-1.0.0:javadoc")
 
     annotationProcessor 'org.spongepowered:mixin:0.8.5:processor'
+
+    implementation fg.deobf("curse.maven:small-ships-450659:4645815")
 }
 
+// Example for how to get properties into the manifest for reading at runtime.
+jar {
+
+}
+
+jar.finalizedBy('reobfJar')
 
 artifacts {
     archives shadowJar
 }
 
-jar.finalizedBy('reobfJar')
-
 shadowJar {
-    project.configurations.shadow.setTransitive(true);
+    project.configurations.shadow.setTransitive(true)
     configurations = [project.configurations.shadow]
-    classifier = ""
+    //classifier = ""
     relocate 'de.maxhenkel.corelib', "de.maxhenkel.workers.corelib"
 }
 
