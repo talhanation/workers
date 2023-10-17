@@ -9,6 +9,7 @@ import com.talhanation.workers.network.MessageOpenGuiMiner;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.nbt.CompoundTag;
+import net.minecraft.nbt.ListTag;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.syncher.EntityDataAccessor;
 import net.minecraft.network.syncher.EntityDataSerializers;
@@ -32,10 +33,14 @@ import net.minecraft.world.level.ServerLevelAccessor;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.state.BlockState;
+import net.minecraftforge.common.TierSortingRegistry;
 import net.minecraftforge.network.NetworkHooks;
 import org.jetbrains.annotations.NotNull;
 
 import javax.annotation.Nullable;
+import java.awt.image.PixelGrabber;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Set;
 import java.util.function.Predicate;
 
@@ -58,12 +63,16 @@ public class MinerEntity extends AbstractWorkerEntity {
      *  3 = 8x8x8 Pit
      *  4 = 8x8x1 Flat
      *  5 = 8x8x3 Room
+     *  6 = 16x16x16 Pit
+     *  7 = 16x16x1 Flat
+     *  8 = 16x16x3 Room
      */
 
     private static final Set<Item> WANTED_ITEMS = ImmutableSet.of(Items.COAL, Items.COPPER_ORE, Items.IRON_ORE,
             Items.GOLD_ORE, Items.DIAMOND, Items.EMERALD, Items.STONE, Items.COBBLESTONE, Items.ANDESITE, Items.GRANITE,
             Items.GRAVEL, Items.SAND, Items.SANDSTONE, Items.RED_SAND, Items.REDSTONE, Items.DIRT, Items.DIORITE,
-            Items.COARSE_DIRT, Items.RAW_COPPER, Items.RAW_IRON, Items.RAW_GOLD);
+            Items.COARSE_DIRT, Items.RAW_COPPER, Items.RAW_IRON, Items.RAW_GOLD, Items.TUFF, Items.BLACKSTONE,
+            Items.DEEPSLATE, Items.DEEPSLATE_BRICKS, Items.BASALT);
 
     public static final Set<Block> IGNORING_BLOCKS = ImmutableSet.of(Blocks.CAVE_AIR, Blocks.AIR, Blocks.TORCH,
             Blocks.WALL_TORCH, Blocks.SOUL_WALL_TORCH, Blocks.REDSTONE_WIRE, Blocks.CAMPFIRE, Blocks.CAKE,
@@ -78,7 +87,7 @@ public class MinerEntity extends AbstractWorkerEntity {
     protected void defineSynchedData() {
         super.defineSynchedData();
         this.entityData.define(DIRECTION, Direction.NORTH);
-        this.entityData.define(MINE_TYPE, 0);
+        this.entityData.define(MINE_TYPE, 1);
         this.entityData.define(DEPTH, 16);
         this.entityData.define(CHECKED, false);
     }
@@ -180,6 +189,9 @@ public class MinerEntity extends AbstractWorkerEntity {
         nbt.putInt("Depth", this.getMineDepth());
         nbt.putBoolean("Checked", this.getChecked());
         nbt.putString("MineDirection", this.getMineDirection().getName());
+
+        ListTag waypoints = new ListTag();
+
     }
 
     public void readAdditionalSaveData(@NotNull CompoundTag nbt) {
@@ -291,5 +303,14 @@ public class MinerEntity extends AbstractWorkerEntity {
     @Override
     public boolean isRequiredSecondTool(ItemStack tool) {
         return tool.getItem() instanceof ShovelItem;
+    }
+
+    public boolean canBreakBlock(BlockState state){
+        ItemStack tool = this.getMainHandItem();
+        if(tool.getItem() instanceof PickaxeItem pickaxeItem){
+            return TierSortingRegistry.isCorrectTierForDrops(pickaxeItem.getTier(), state);
+        }
+        else
+            return false;
     }
 }
