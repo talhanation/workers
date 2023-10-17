@@ -38,15 +38,15 @@ public class MinerInventoryScreen extends WorkerInventoryScreen {
 
         addRenderableWidget(new Button(leftPos + 90 + 70, topPos + 60, 8, 12, Component.literal(">"), button -> {
             this.mineType = miner.getMineType();
-            if (this.mineType != 5) {
+            if (this.mineType != 8) {
                 this.mineType++;
                 Main.SIMPLE_CHANNEL.sendToServer(new MessageMineType(this.mineType, miner.getUUID()));
             }
         }));
 
         // MINEDEPTH
-        addRenderableWidget(new Button(leftPos + 10, topPos + 60, 8, 12, Component.literal("<"), button -> {
-            if (miner.getMineType() != 3 && miner.getMineType() != 5 && miner.getMineType() != 4) {
+        Button button1 = addRenderableWidget(new Button(leftPos + 10, topPos + 60, 8, 12, Component.literal("<"), button -> {
+            if (miner.getMineType() < 3){
                 this.mineDepth = miner.getMineDepth();
                 if (this.mineDepth != 0) {
                     this.mineDepth--;
@@ -54,9 +54,10 @@ public class MinerInventoryScreen extends WorkerInventoryScreen {
                 }
             }
         }));
+        //button1.isActive = miner.getMineType() < 3;
 
-        addRenderableWidget(new Button(leftPos + 10 + 30, topPos + 60, 8, 12, Component.literal(">"), button -> {
-            if (miner.getMineType() != 3 && miner.getMineType() != 5 && miner.getMineType() != 4) {
+        Button button2 = addRenderableWidget(new Button(leftPos + 10 + 30, topPos + 60, 8, 12, Component.literal(">"), button -> {
+            if (miner.getMineType() < 3){
                 this.mineDepth = miner.getMineDepth();
                 if (this.mineDepth != miner.getMaxMineDepth()) {
                     this.mineDepth++;
@@ -64,6 +65,8 @@ public class MinerInventoryScreen extends WorkerInventoryScreen {
                 }
             }
         }));
+
+        //button2.isActive = miner.getMineType() < 3;
     }
 
     @Override
