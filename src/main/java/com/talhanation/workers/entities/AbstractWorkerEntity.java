@@ -61,7 +61,6 @@ public abstract class AbstractWorkerEntity extends AbstractChunkLoaderEntity {
     private static final EntityDataAccessor<Optional<BlockPos>> BED = SynchedEntityData.defineId(AbstractWorkerEntity.class, EntityDataSerializers.OPTIONAL_BLOCK_POS);
     private static final EntityDataAccessor<Boolean> FOLLOW = SynchedEntityData.defineId(AbstractWorkerEntity.class, EntityDataSerializers.BOOLEAN);
     public static final EntityDataAccessor<Boolean> IS_WORKING = SynchedEntityData.defineId(AbstractWorkerEntity.class, EntityDataSerializers.BOOLEAN);
-    private static final EntityDataAccessor<Boolean> IS_PICKING_UP = SynchedEntityData.defineId(AbstractWorkerEntity.class, EntityDataSerializers.BOOLEAN);
     private static final EntityDataAccessor<Integer> breakingTime = SynchedEntityData.defineId(AbstractWorkerEntity.class, EntityDataSerializers.INT);
     private static final EntityDataAccessor<Integer> currentTimeBreak = SynchedEntityData.defineId(AbstractWorkerEntity.class, EntityDataSerializers.INT);
     private static final EntityDataAccessor<Integer> previousTimeBreak = SynchedEntityData.defineId(AbstractWorkerEntity.class, EntityDataSerializers.INT);
@@ -75,6 +74,7 @@ public abstract class AbstractWorkerEntity extends AbstractChunkLoaderEntity {
     private static final EntityDataAccessor<Boolean> NEEDS_TOOL = SynchedEntityData.defineId(AbstractWorkerEntity.class, EntityDataSerializers.BOOLEAN);
 
     int hurtTimeStamp = 0;
+    public boolean isPickingUp;
     public boolean startPosChanged;
 
     public AbstractWorkerEntity(EntityType<? extends AbstractWorkerEntity> entityType, Level world) {
@@ -233,7 +233,6 @@ public abstract class AbstractWorkerEntity extends AbstractChunkLoaderEntity {
         this.entityData.define(CHEST, Optional.empty());
         this.entityData.define(BED, Optional.empty());
         this.entityData.define(IS_WORKING, false);
-        this.entityData.define(IS_PICKING_UP, false);
         this.entityData.define(FOLLOW, false);
         this.entityData.define(NEEDS_HOME, false);
         this.entityData.define(NEEDS_CHEST, false);
@@ -252,7 +251,6 @@ public abstract class AbstractWorkerEntity extends AbstractChunkLoaderEntity {
         super.addAdditionalSaveData(nbt);
         nbt.putBoolean("Follow", this.getFollow());
         nbt.putBoolean("isWorking", this.getIsWorking());
-        nbt.putBoolean("isPickingUp", this.getIsPickingUp());
         nbt.putBoolean("needsHome", this.needsHome());
         nbt.putBoolean("needsChest", this.needsChest());
         nbt.putBoolean("needsTool", this.needsTool());
@@ -287,7 +285,6 @@ public abstract class AbstractWorkerEntity extends AbstractChunkLoaderEntity {
         super.readAdditionalSaveData(nbt);
         this.setFollow(nbt.getBoolean("Follow"));
         this.setBreakingTime(nbt.getInt("breakTime"));
-        this.setIsPickingUp(nbt.getBoolean("isPickingUp"));
         this.setNeedsTool(nbt.getBoolean("needsTool"));
         this.setCurrentTimeBreak(nbt.getInt("currentTimeBreak"));
         this.setPreviousTimeBreak(nbt.getInt("previousTimeBreak"));
@@ -402,10 +399,6 @@ public abstract class AbstractWorkerEntity extends AbstractChunkLoaderEntity {
 
     public boolean getIsWorking() {
         return this.entityData.get(IS_WORKING);
-    }
-
-    public boolean getIsPickingUp() {
-        return this.entityData.get(IS_PICKING_UP);
     }
 
     public SoundEvent getHurtSound(DamageSource ds) {
@@ -565,10 +558,6 @@ public abstract class AbstractWorkerEntity extends AbstractChunkLoaderEntity {
         } else {
             this.setIsWorking(bool);
         }
-    }
-
-    public void setIsPickingUp(boolean bool) {
-        entityData.set(IS_PICKING_UP, bool);
     }
 
     public void setOwned(boolean owned) {
