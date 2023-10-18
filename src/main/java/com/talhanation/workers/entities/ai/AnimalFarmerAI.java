@@ -8,14 +8,44 @@ import net.minecraft.world.item.*;
 public abstract class AnimalFarmerAI extends Goal {
 
     public AbstractAnimalFarmerEntity animalFarmer;
-
+    public State state = State.IDLE;
     @Override
     public void tick() {
         super.tick();
         //TODO: Work Tick / Work Cooldown
-        if(!animalFarmer.swinging) {
-            performWork();
+        switch (state){
+            case IDLE ->{
+                if(animalFarmer.getStartPos() != null) state = State.WORKING;
+            }
+            case WORKING -> {
+                if(animalFarmer.getStartPos() != null && !animalFarmer.getFollow()) {
+                    double distance = animalFarmer.getStartPos().distSqr(animalFarmer.getOnPos());
+                    if (distance >= 40F) {
+                        state = State.MOVING_TO_WORK;
+                    }
+                    else if(!animalFarmer.swinging) {
+                            performWork();
+                    }
+                }
+                else state = State.IDLE;
+            }
+            case MOVING_TO_WORK -> {
+                if(animalFarmer.getStartPos() != null && !animalFarmer.getFollow()){
+                    double distance = animalFarmer.getStartPos().distSqr(animalFarmer.getOnPos());
+                    if(distance <= 10F) state = State.WORKING;
+                }
+            }
         }
+
+
+
+
+    }
+
+    private enum State {
+        IDLE,
+        WORKING,
+        MOVING_TO_WORK
     }
 
     public abstract void performWork();
