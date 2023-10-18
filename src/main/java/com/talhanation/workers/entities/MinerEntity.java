@@ -38,9 +38,6 @@ import net.minecraftforge.network.NetworkHooks;
 import org.jetbrains.annotations.NotNull;
 
 import javax.annotation.Nullable;
-import java.awt.image.PixelGrabber;
-import java.util.ArrayList;
-import java.util.List;
 import java.util.Set;
 import java.util.function.Predicate;
 
@@ -53,7 +50,6 @@ public class MinerEntity extends AbstractWorkerEntity {
     private static final EntityDataAccessor<Integer> MINE_TYPE = SynchedEntityData.defineId(MinerEntity.class, EntityDataSerializers.INT);
     private static final EntityDataAccessor<Integer> DEPTH = SynchedEntityData.defineId(MinerEntity.class, EntityDataSerializers.INT);
     private static final EntityDataAccessor<Boolean> CHECKED = SynchedEntityData.defineId(MinerEntity.class, EntityDataSerializers.BOOLEAN);
-
 
     /*
      * MINE TYPES:
