@@ -110,7 +110,7 @@ public class ChickenFarmerAI extends AnimalFarmerAI {
         if (throwEggs && animalFarmer instanceof ChickenFarmerEntity chickenFarmer && chickenFarmer.getUseEggs()){
             if(hasEggs()){
 
-                this.animalFarmer.getLookControl().setLookAt(animalFarmer.getOnPos().getX(), animalFarmer.getOnPos().getY(), animalFarmer.getOnPos().getZ(), 10.0F, (float) this.animalFarmer.getMaxHeadXRot());
+                this.animalFarmer.getLookControl().setLookAt(animalFarmer.getStartPos().getX(), animalFarmer.getStartPos().getY(), animalFarmer.getStartPos().getZ(), 10.0F, (float) this.animalFarmer.getMaxHeadXRot());
 
                 animalFarmer.getCommandSenderWorld().playSound(null, animalFarmer.getX(), animalFarmer.getY(), animalFarmer.getZ(), SoundEvents.EGG_THROW, SoundSource.PLAYERS, 0.5F, 0.4F / (animalFarmer.getRandom().nextFloat() * 0.4F + 0.8F));
                 ThrownEgg thrownegg = new ThrownEgg(animalFarmer.getCommandSenderWorld(), animalFarmer);
@@ -121,8 +121,6 @@ public class ChickenFarmerAI extends AnimalFarmerAI {
                     animalFarmer.workerSwingArm();
                     consumeEggs();
                 }
-
-
                 else{
                     slaughtering = false;
                     breeding = true;
