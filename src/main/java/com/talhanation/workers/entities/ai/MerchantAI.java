@@ -101,14 +101,14 @@ public class MerchantAI extends Goal {
             }
 
             case ARRIVED -> {
-                if(!arrivedMessage && merchant.getOwner() != null){
+                if(!arrivedMessage && merchant.getOwner() != null && !merchant.isCreative()){
                     merchant.tellPlayer(merchant.getOwner(), Component.literal("I've arrived at my last waypoint."));
                     arrivedMessage = true;
                 }
                 if(merchant.isReturnTimeElapsed() || merchant.getReturning()){
                     merchant.setReturning(true);
                     merchant.setCurrentReturningTime(0);
-                    if(!returningMessage && merchant.getOwner() != null){
+                    if(!returningMessage && merchant.getOwner() != null && !merchant.isCreative()){
                         merchant.tellPlayer(merchant.getOwner(), Component.literal("I'm returning now."));
                         returningMessage = true;
                     }
@@ -117,7 +117,7 @@ public class MerchantAI extends Goal {
             }
 
             case HOME -> {
-                if(!homeMessage && merchant.getOwner() != null){
+                if(!homeMessage && merchant.getOwner() != null && !merchant.isCreative()){
                     merchant.tellPlayer(merchant.getOwner(), Component.literal("I've arrived where i've started."));
                     homeMessage = true;
                 }
