@@ -29,18 +29,19 @@ public class WorkerPickupWantedItemGoal extends Goal{
     }
 
     private List<ItemEntity> findItemsNearby() {
-        return this.worker.level.getEntitiesOfClass(
-            ItemEntity.class, 
-            this.worker.getBoundingBox().inflate(8.0D, 4.0D, 8.0D), 
-            this.worker.getAllowedItems()
-        );
+        return this.worker.level.getEntitiesOfClass(ItemEntity.class, this.worker.getBoundingBox().inflate(8.0D, 4.0D, 8.0D), this.worker.getAllowedItems());
     }
 
     @Override
     public void tick() {
         this.itemsToPickup = this.findItemsNearby();
         if (!this.itemsToPickup.isEmpty()) {
-            worker.getNavigation().moveTo(this.itemsToPickup.get(0), 1.15F);
+            if(worker.distanceToSqr(this.itemsToPickup.get(0).position()) < 10F){
+                worker.isPickingUp = true;
+                worker.getNavigation().moveTo(this.itemsToPickup.get(0), 1.15F);
+            }
+            else worker.isPickingUp = false;
+
         }
     }
 }
