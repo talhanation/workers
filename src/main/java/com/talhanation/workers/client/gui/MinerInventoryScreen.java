@@ -77,7 +77,7 @@ public class MinerInventoryScreen extends WorkerInventoryScreen {
 
         String depth;
 
-        if (miner.getMineType() == 3 || miner.getMineType() == 4 || miner.getMineType() == 5) {
+        if (miner.getMineType() >= 3) {
             depth = "-";
         } else
             depth = String.valueOf(miner.getMineDepth());
@@ -108,6 +108,15 @@ public class MinerInventoryScreen extends WorkerInventoryScreen {
             case 5:
                 type = ROOM8x8x3.getString();
                 break;
+            case 6:
+                type = PIT16x16x16.getString();
+                break;
+            case 7:
+                type = FLAT16x16x1.getString();
+                break;
+            case 8:
+                type = ROOM16x16x3.getString();
+                break;
         }
         guiGraphics.drawString(font, MINEMODE.getString() + ":", k + 25, l + 35, fontColor, false);
         guiGraphics.drawString(font, type, k + 25, l + 45, fontColor, false);
@@ -119,6 +128,9 @@ public class MinerInventoryScreen extends WorkerInventoryScreen {
     private final MutableComponent PIT8x8x8 = Component.translatable("gui.workers.miner.pit8x8x8");
     private final MutableComponent FLAT8x8x1 = Component.translatable("gui.workers.miner.flat8x8x1");
     private final MutableComponent ROOM8x8x3 = Component.translatable("gui.workers.miner.room8x8x3");
+    private final MutableComponent PIT16x16x16 = Component.translatable("gui.workers.miner.pit16x16x16");
+    private final MutableComponent FLAT16x16x1 = Component.translatable("gui.workers.miner.flat16x16x1");
+    private final MutableComponent ROOM16x16x3 = Component.translatable("gui.workers.miner.room16x16x3");
     private final MutableComponent DEPTH = Component.translatable("gui.workers.miner.depth");
     private final MutableComponent WANDERING = Component.translatable("gui.workers.following");
     private final MutableComponent FOLLOWING = Component.translatable("gui.workers.wandering");
