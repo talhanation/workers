@@ -14,18 +14,16 @@ public class WorkerMoveToHomeGoal<T extends LivingEntity> extends Goal {
     }
 
     public boolean canUse() {
-        return (this.worker.getBedPos() != null && !worker.getFollow() && !worker.getIsWorking() && !worker.isSleeping());
+        if(this.worker.getBedPos() != null && !worker.getFollow() && !worker.getIsWorking() && !worker.isSleeping()){
+            this.home = this.worker.getBedPos();
+            return this.home.closerThan(worker.getOnPos(), 100F);
+        }
+        else
+            return false;
     }
 
     public boolean canContinueToUse() {
         return this.canUse();
-    }
-
-    @Override
-    public void start() {
-        super.start();
-
-        this.home = this.worker.getBedPos();
     }
 
     @Override
