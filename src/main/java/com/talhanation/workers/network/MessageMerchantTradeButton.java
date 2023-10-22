@@ -37,7 +37,7 @@ public class MessageMerchantTradeButton implements Message<MessageMerchantTradeB
         if (!context.getSender().getUUID().equals(uuid)) {
             return;
         }
-        List<MerchantEntity> list = Objects.requireNonNull(context.getSender()).level.getEntitiesOfClass(MerchantEntity.class, context.getSender().getBoundingBox().inflate(16.0D));
+        List<MerchantEntity> list = Objects.requireNonNull(context.getSender()).level.getEntitiesOfClass(MerchantEntity.class, context.getSender().getBoundingBox().inflate(100.0D));
         for (MerchantEntity recruits : list){
 
             if (recruits.getUUID().equals(this.merchant)) {
