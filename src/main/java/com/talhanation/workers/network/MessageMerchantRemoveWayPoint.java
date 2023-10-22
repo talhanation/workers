@@ -29,7 +29,7 @@ public class MessageMerchantRemoveWayPoint implements Message<MessageMerchantRem
 
         ServerPlayer player = context.getSender();
         player.getCommandSenderWorld().getEntitiesOfClass(MerchantEntity.class, player.getBoundingBox()
-                        .inflate(16.0D), v -> v
+                        .inflate(100.0D), v -> v
                         .getUUID()
                         .equals(this.worker))
                 .stream()
