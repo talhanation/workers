@@ -3,6 +3,7 @@ package com.talhanation.workers.client.gui;
 import com.talhanation.workers.Main;
 import com.talhanation.workers.Translatable;
 import com.talhanation.workers.entities.AbstractAnimalFarmerEntity;
+import com.talhanation.workers.entities.ChickenFarmerEntity;
 import com.talhanation.workers.inventory.WorkerInventoryContainer;
 import com.talhanation.workers.network.MessageAnimalCount;
 import com.talhanation.workers.network.MessageChickenFarmerUseEggs;
@@ -52,8 +53,10 @@ public class AnimalFarmerInventoryScreen extends WorkerInventoryScreen {
             }
         }));
 
-        String string = useEggs ? "True" : "False";
-        setUseEggsButton(string);
+        if(animalFarmer instanceof ChickenFarmerEntity){
+            String string = useEggs ? "True" : "False";
+            setUseEggsButton(string);
+        }
     }
 
     @Override
