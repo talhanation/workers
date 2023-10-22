@@ -6,6 +6,7 @@ import com.talhanation.workers.config.WorkersModConfig;
 import com.talhanation.workers.entities.ai.*;
 import com.talhanation.workers.inventory.MinerInventoryContainer;
 import com.talhanation.workers.network.MessageOpenGuiMiner;
+import de.maxhenkel.corelib.tag.ItemTag;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.nbt.CompoundTag;
@@ -34,6 +35,7 @@ import net.minecraft.world.level.ServerLevelAccessor;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.state.BlockState;
+import net.minecraftforge.common.Tags;
 import net.minecraftforge.common.TierSortingRegistry;
 import net.minecraftforge.network.NetworkHooks;
 import org.jetbrains.annotations.NotNull;
@@ -69,7 +71,7 @@ public class MinerEntity extends AbstractWorkerEntity {
             Items.GOLD_ORE, Items.DIAMOND, Items.EMERALD, Items.STONE, Items.COBBLESTONE, Items.ANDESITE, Items.GRANITE,
             Items.GRAVEL, Items.SAND, Items.SANDSTONE, Items.RED_SAND, Items.REDSTONE, Items.DIRT, Items.DIORITE,
             Items.COARSE_DIRT, Items.RAW_COPPER, Items.RAW_IRON, Items.RAW_GOLD, Items.TUFF, Items.BLACKSTONE,
-            Items.DEEPSLATE, Items.DEEPSLATE_BRICKS, Items.BASALT);
+            Items.DEEPSLATE, Items.DEEPSLATE_BRICKS, Items.BASALT, Items.TORCH);
 
     public static final Set<Block> IGNORING_BLOCKS = ImmutableSet.of(Blocks.CAVE_AIR, Blocks.AIR, Blocks.TORCH,
             Blocks.WALL_TORCH, Blocks.SOUL_WALL_TORCH, Blocks.REDSTONE_WIRE, Blocks.CAMPFIRE, Blocks.CAKE,
@@ -108,7 +110,6 @@ public class MinerEntity extends AbstractWorkerEntity {
         super.registerGoals();
         this.goalSelector.addGoal(1, new FloatGoal(this));
         this.goalSelector.addGoal(1, new PanicGoal(this, 1.3D));
-        this.goalSelector.addGoal(2, new WorkerPickupWantedItemGoal(this));
         this.goalSelector.addGoal(2, new MinerAI(this));
     }
 
@@ -134,7 +135,7 @@ public class MinerEntity extends AbstractWorkerEntity {
     @Override
     public boolean wantsToPickUp(ItemStack itemStack) {
         Item item = itemStack.getItem();
-        return (WANTED_ITEMS.contains(item));
+        return (WANTED_ITEMS.contains(item)) || itemStack.is(Tags.Items.ORES) || itemStack.is(Tags.Items.STONE);
     }
 
     @Override
@@ -142,8 +143,8 @@ public class MinerEntity extends AbstractWorkerEntity {
         return super.wantsToKeep(itemStack) || itemStack.getItem() instanceof ShovelItem || itemStack.getItem() instanceof PickaxeItem;
     }
 
-    public boolean shouldIgnoreBlock(Block block) {
-        return (IGNORING_BLOCKS.contains(block));
+    public boolean shouldIgnoreBlock(BlockState blockState) {
+        return (IGNORING_BLOCKS.contains(blockState.getBlock()) || !canBreakBlock(blockState));
     }
 
     @Override
@@ -168,7 +169,7 @@ public class MinerEntity extends AbstractWorkerEntity {
     }
 
     public int getMaxMineDepth() {
-        return 32;
+        return 64;
     }
 
     public boolean getChecked(){
@@ -304,10 +305,14 @@ public class MinerEntity extends AbstractWorkerEntity {
 
     public boolean canBreakBlock(BlockState state){
         ItemStack tool = this.getMainHandItem();
-        if(tool.getItem() instanceof PickaxeItem pickaxeItem){
-            return TierSortingRegistry.isCorrectTierForDrops(pickaxeItem.getTier(), state);
+        if(tool.getItem() instanceof DiggerItem diggerItem){
+            return TierSortingRegistry.isCorrectTierForDrops(diggerItem.getTier(), state);
         }
         else
             return false;
+    }
+    @Override
+    public boolean needsToDeposit(){
+        return (this.needsTool() || this.getFarmedItems() >= 128) && getChestPos() != null && !this.getFollow() && !this.needsChest() && !this.needsToSleep(); //TODO: configurable amount
     }
 }

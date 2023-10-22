@@ -1,6 +1,8 @@
 package com.talhanation.workers.entities;
 
-import com.talhanation.workers.Main;
+import
+
+        com.talhanation.workers.Main;
 import com.talhanation.workers.config.WorkersModConfig;
 import com.talhanation.workers.entities.ai.*;
 import com.talhanation.workers.entities.ai.navigation.SailorPathNavigation;
@@ -140,7 +142,7 @@ public abstract class AbstractWorkerEntity extends AbstractChunkLoaderEntity {
         ) {
             List<ItemEntity> nearbyItems = this.level.getEntitiesOfClass(
                 ItemEntity.class,
-                this.getBoundingBox().inflate(2.5D, 0.5D, 2.5D)
+                this.getBoundingBox().inflate(5.5D, 5.5D, 5.5D)
             );
             for (ItemEntity itementity : nearbyItems) {
                 if (
@@ -649,14 +651,16 @@ public abstract class AbstractWorkerEntity extends AbstractChunkLoaderEntity {
     }
 
     public void walkTowards(BlockPos pos, double speed) {
-        this.getNavigation().moveTo(pos.getX(), pos.getY(), pos.getZ(), speed);
-        this.getLookControl().setLookAt(
-            pos.getX(), 
-            pos.getY() + 1, 
-            pos.getZ(), 
-            10.0F,
-            this.getMaxHeadXRot()
-        );
+        if(pos != null){
+            this.getNavigation().moveTo(pos.getX(), pos.getY(), pos.getZ(), speed);
+            this.getLookControl().setLookAt(
+                    pos.getX(),
+                    pos.getY() + 1,
+                    pos.getZ(),
+                    10.0F,
+                    this.getMaxHeadXRot()
+            );
+        }
     }
     public boolean needsToGetFood(){
         boolean isChest = this.getChestPos() != null;
@@ -683,17 +687,23 @@ public abstract class AbstractWorkerEntity extends AbstractChunkLoaderEntity {
 
     public boolean canWork(){
          boolean canNotWorkWithTool = needsTool() && !canWorkWithoutTool();
+         boolean noStartPos = this.getStartPos() == null;
+         boolean needsToSleep = this.needsToSleep();
+         boolean isFollowing = this.getFollow();
+         boolean needsToDeposit = this.needsToDeposit();
+         boolean needsToGetFood = this.needsToGetFood();
+         boolean isWorkingActive = this.getIsWorking();
         // Stop AI while following the player.
         // Stop AI to at night, so SleepGoal can start.
         // Stop AI if work position is not set.
         // Stop AI if inventory is full, so TransferItemsInChestGoal can start.
-        // Stop AI if can not work wotihout tool;
-        if(canNotWorkWithTool || this.getStartPos() == null || this.needsToSleep() || this.getFollow() || this.needsToDeposit() || this.needsToGetFood() || startPosChanged) {
+        // Stop AI if can not work without tool;
+        if(canNotWorkWithTool || noStartPos || needsToSleep || isFollowing || needsToDeposit || needsToGetFood || startPosChanged) {
             startPosChanged = false;
             return false;
         }
         // Start AI if should working
-        return this.getIsWorking();
+        return isWorkingActive;
     }
 
     public boolean needsToDeposit(){
