@@ -5,15 +5,18 @@ import com.talhanation.workers.Translatable;
 import com.talhanation.workers.entities.FishermanEntity;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
+import net.minecraft.data.loot.FishingLoot;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.SimpleContainer;
 import net.minecraft.world.entity.ai.goal.Goal;
+import net.minecraft.world.entity.projectile.FishingHook;
 import net.minecraft.world.entity.vehicle.Boat;
 import net.minecraft.world.item.FishingRodItem;
 import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.enchantment.EnchantmentHelper;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.storage.loot.BuiltInLootTables;
@@ -428,7 +431,6 @@ public class FishermanAI extends Goal {
             return null;
     }
 
-
     public void spawnFishingLoot() {
         int depth;
         if (fishingPos != null) {
@@ -436,14 +438,16 @@ public class FishermanAI extends Goal {
         }
         else
             depth = 1;
-
-        this.fishingTimer = 500 + fisherman.getRandom().nextInt(1000) / depth;
+        double time = EnchantmentHelper.getFishingSpeedBonus(this.fisherman.getItemInHand(InteractionHand.MAIN_HAND));
+        this.fishingTimer = (int) (500 - 100*time + fisherman.getRandom().nextInt(1000) / depth);
         double luck = 0.1D;
+		double luckFromTool = EnchantmentHelper.getFishingLuckBonus(this.fisherman.getItemInHand(InteractionHand.MAIN_HAND));
+
         LootParams lootparams = (new LootParams.Builder((ServerLevel)this.fisherman.getCommandSenderWorld()))
                 .withParameter(LootContextParams.ORIGIN, this.fisherman.position())
                 .withParameter(LootContextParams.TOOL, fisherman.getMainHandItem())
                 .withParameter(LootContextParams.KILLER_ENTITY, this.fisherman)
-                .withLuck((float)luck)
+                .withLuck((float)(luck + luckFromTool))
                 .create(LootContextParamSets.FISHING);
         LootTable loottable = this.fisherman.getCommandSenderWorld().getServer().getLootData().getLootTable(BuiltInLootTables.FISHING);
         List<ItemStack> list = loottable.getRandomItems(lootparams);
