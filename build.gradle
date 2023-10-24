@@ -114,11 +114,12 @@ repositories {
 }
 
 dependencies {
+
     minecraft 'net.minecraftforge:forge:1.18.2-40.1.0'
     shadow fg.deobf("de.maxhenkel.corelib:corelib:1.18.2-1.0.3:api")
     runtimeOnly fg.deobf("de.maxhenkel.corelib:corelib:1.18.2-1.0.3")
     runtimeOnly fg.deobf("de.maxhenkel.corelib:corelib:1.18.2-1.0.3:javadoc")
-
+	
     annotationProcessor 'org.spongepowered:mixin:0.8.5:processor'
     implementation fg.deobf("curse.maven:small-ships-450659:4578112")
 }
