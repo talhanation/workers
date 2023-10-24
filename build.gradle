@@ -36,10 +36,11 @@ mixin{
     overwriteErrorLevel = 'error'
 }
 
-version = '1.7.0'
+version = '1.7.1'
 
 group = 'com.talhanation.workers'
 archivesBaseName = 'workers-1.18.2'
+
 
 java.toolchain.languageVersion = JavaLanguageVersion.of(17)
 
