@@ -26,6 +26,7 @@ import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.SimpleContainer;
 import net.minecraft.world.Containers;
+import net.minecraft.world.entity.vehicle.Boat;
 import net.minecraft.world.inventory.AbstractContainerMenu;
 import net.minecraft.world.MenuProvider;
 import net.minecraft.world.item.Item;
@@ -55,8 +56,7 @@ import net.minecraft.world.entity.ai.goal.PanicGoal;
 import net.minecraftforge.network.PacketDistributor;
 import org.jetbrains.annotations.NotNull;
 
-import static com.talhanation.workers.Translatable.TEXT_HELLO;
-import static com.talhanation.workers.Translatable.TEXT_HELLO_OWNED;
+import static com.talhanation.workers.Translatable.*;
 
 public class MerchantEntity extends AbstractWorkerEntity implements IBoatController {
     private static final EntityDataAccessor<Boolean> TRAVELING = SynchedEntityData.defineId(MerchantEntity.class, EntityDataSerializers.BOOLEAN);
@@ -181,6 +181,13 @@ public class MerchantEntity extends AbstractWorkerEntity implements IBoatControl
         return InteractionResult.PASS;
     }
 
+    public void setFollow(boolean bool) {
+        super.setFollow(bool);
+        if (!this.getReturning() && !this.getTraveling() && !bool && this.getVehicle() instanceof Boat boat && boat.getEncodeId().contains("smallships")) {
+            this.setSmallShipsSailState(boat, 0);
+            this.setSailPos(null);
+        }
+    }
 
     public void openTradeGUI(Player player) {
         if (player instanceof ServerPlayer) {
