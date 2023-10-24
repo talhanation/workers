@@ -6,6 +6,7 @@ import com.talhanation.workers.entities.MinerEntity;
 import com.talhanation.workers.network.MessageMineDepth;
 import com.talhanation.workers.network.MessageMineType;
 import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.client.gui.components.Button;
 import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.MutableComponent;
@@ -45,7 +46,7 @@ public class MinerInventoryScreen extends WorkerInventoryScreen {
         }));
 
         // MINEDEPTH
-        Button button1 = addRenderableWidget(new Button(leftPos + 10, topPos + 60, 8, 12, Component.literal("<"), button -> {
+        ExtendedButton button1 = addRenderableWidget(new ExtendedButton(leftPos + 10, topPos + 60, 8, 12, Component.literal("<"), button -> {
             if (miner.getMineType() < 3){
                 this.mineDepth = miner.getMineDepth();
                 if (this.mineDepth != 0) {
@@ -56,7 +57,7 @@ public class MinerInventoryScreen extends WorkerInventoryScreen {
         }));
         //button1.isActive = miner.getMineType() < 3;
 
-        Button button2 = addRenderableWidget(new Button(leftPos + 10 + 30, topPos + 60, 8, 12, Component.literal(">"), button -> {
+        ExtendedButton button2 = addRenderableWidget(new ExtendedButton(leftPos + 10 + 30, topPos + 60, 8, 12, Component.literal(">"), button -> {
             if (miner.getMineType() < 3){
                 this.mineDepth = miner.getMineDepth();
                 if (this.mineDepth != miner.getMaxMineDepth()) {

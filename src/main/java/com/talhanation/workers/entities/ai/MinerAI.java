@@ -133,8 +133,8 @@ public class MinerAI extends Goal {
 
         this.walkTowards(minePos);
 
-        if(miner.getLevel().getRawBrightness(miner.getOnPos().above(), 0) <= 7){
-            if(miner.getLevel().getBlockState(miner.getOnPos().above()).isAir()) placeTorch();
+        if(miner.getCommandSenderWorld().getRawBrightness(miner.getOnPos().above(), 0) <= 7){
+            if(miner.getCommandSenderWorld().getBlockState(miner.getOnPos().above()).isAir()) placeTorch();
         }
 
         if (minePos.closerThan(miner.getOnPos(), 3)){
@@ -401,8 +401,8 @@ public class MinerAI extends Goal {
 
     public void placeTorch(){
         if (hasTorchInInv()){
-            miner.level.setBlock(miner.getOnPos().above(), Blocks.TORCH.defaultBlockState(), 3);
-            miner.level.playSound(null, this.minePos.getX(), this.minePos.getY(), this.minePos.getZ(), SoundEvents.WOOD_PLACE, SoundSource.BLOCKS, 1.0F, 1.0F);
+            miner.getCommandSenderWorld().setBlock(miner.getOnPos().above(), Blocks.TORCH.defaultBlockState(), 3);
+            miner.getCommandSenderWorld().playSound(null, this.minePos.getX(), this.minePos.getY(), this.minePos.getZ(), SoundEvents.WOOD_PLACE, SoundSource.BLOCKS, 1.0F, 1.0F);
 
             for (int i = 0; i < miner.getInventory().getContainerSize(); ++i) {
                 ItemStack itemstack = miner.getInventory().getItem(i);
