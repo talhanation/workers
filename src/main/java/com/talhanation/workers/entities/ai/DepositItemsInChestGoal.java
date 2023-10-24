@@ -3,6 +3,7 @@ package com.talhanation.workers.entities.ai;
 import com.talhanation.workers.Main;
 import com.talhanation.workers.Translatable;
 import com.talhanation.workers.entities.AbstractWorkerEntity;
+import com.talhanation.workers.entities.MinerEntity;
 import net.minecraft.core.BlockPos;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.world.Container;
@@ -75,6 +76,10 @@ public class DepositItemsInChestGoal extends Goal {
                     this.depositItems(container);
                     this.reequipTool();
 
+                    if(this.worker instanceof MinerEntity){
+                        this.reequipTorch();
+                    }
+
                     timer = 50;
                     setTimer = true;
                 }
@@ -136,6 +141,16 @@ public class DepositItemsInChestGoal extends Goal {
         }
 
         return false;
+	}
+    
+	private void reequipTorch(){
+        for (int i = 0; i < container.getContainerSize(); i++) {
+            ItemStack stack = container.getItem(i);
+            if(stack.is(Items.TORCH)){
+                take(stack);
+                break;
+            }
+        }
     }
 
     private void take(ItemStack stack){

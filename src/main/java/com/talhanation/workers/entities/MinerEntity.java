@@ -140,7 +140,7 @@ public class MinerEntity extends AbstractWorkerEntity {
 
     @Override
     public boolean wantsToKeep(ItemStack itemStack) {
-        return super.wantsToKeep(itemStack) || itemStack.getItem() instanceof ShovelItem || itemStack.getItem() instanceof PickaxeItem;
+        return super.wantsToKeep(itemStack) || itemStack.is(Items.TORCH) || itemStack.getItem() instanceof ShovelItem || itemStack.getItem() instanceof PickaxeItem;
     }
 
     public boolean shouldIgnoreBlock(BlockState blockState) {
