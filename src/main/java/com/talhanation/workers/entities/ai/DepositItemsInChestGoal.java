@@ -147,7 +147,8 @@ public class DepositItemsInChestGoal extends Goal {
         for (int i = 0; i < container.getContainerSize(); i++) {
             ItemStack stack = container.getItem(i);
             if(stack.is(Items.TORCH)){
-                take(stack);
+                worker.getInventory().addItem(stack.copy());
+                container.removeItemNoUpdate(i);
                 break;
             }
         }
@@ -158,8 +159,6 @@ public class DepositItemsInChestGoal extends Goal {
         worker.getInventory().addItem(tool);
         stack.shrink(1);
     }
-
-
 
     private void depositItems(Container container) {
         SimpleContainer inventory = worker.getInventory();
