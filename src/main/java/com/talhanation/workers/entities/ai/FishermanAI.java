@@ -5,14 +5,17 @@ import com.talhanation.workers.Translatable;
 import com.talhanation.workers.entities.FishermanEntity;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
+import net.minecraft.data.loot.FishingLoot;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.SimpleContainer;
 import net.minecraft.world.entity.ai.goal.Goal;
+import net.minecraft.world.entity.projectile.FishingHook;
 import net.minecraft.world.entity.vehicle.Boat;
 import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.enchantment.EnchantmentHelper;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.storage.loot.BuiltInLootTables;
@@ -426,7 +429,6 @@ public class FishermanAI extends Goal {
             return null;
     }
 
-
     public void spawnFishingLoot() {
         int depth;
         if (fishingPos != null) {
@@ -434,14 +436,13 @@ public class FishermanAI extends Goal {
         }
         else
             depth = 1;
-
-        this.fishingTimer = 500 + fisherman.getRandom().nextInt(1000) / depth;
+        double time = EnchantmentHelper.getFishingSpeedBonus(this.fisherman.getItemInHand(InteractionHand.MAIN_HAND));
+        this.fishingTimer = (int) (500 - 100*time + fisherman.getRandom().nextInt(1000) / depth);
         double luck = 0.1D;
+        double luckFromTool = EnchantmentHelper.getFishingLuckBonus(this.fisherman.getItemInHand(InteractionHand.MAIN_HAND));
         LootContext.Builder lootcontext$builder = (new LootContext.Builder((ServerLevel)fisherman.level))
                 .withParameter(LootContextParams.ORIGIN, fisherman.position())
-                .withParameter(LootContextParams.TOOL, this.fisherman.getItemInHand(InteractionHand.MAIN_HAND))
-                .withLuck((float) luck);
-
+                .withParameter(LootContextParams.TOOL, this.fisherman.getItemInHand(InteractionHand.MAIN_HAND)).withLuck((float) (luck + luckFromTool));
 
         MinecraftServer server = fisherman.getServer();
         if (server == null) return;
