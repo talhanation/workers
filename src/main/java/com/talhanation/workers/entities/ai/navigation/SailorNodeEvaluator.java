@@ -51,7 +51,7 @@ public class SailorNodeEvaluator extends WalkNodeEvaluator {
 
     @Nullable
     public Node getStart() {
-        return this.getStartNode(new BlockPos(Mth.floor(this.mob.getBoundingBox().minX), Mth.floor(this.mob.getBoundingBox().minY + 0.5D), Mth.floor(this.mob.getBoundingBox().minZ)));
+        return this.getStartNode(new BlockPos(Mth.floor(this.mob.getVehicle().getBoundingBox().minX), Mth.floor(this.mob.getVehicle().getBoundingBox().minY + 0.5D), Mth.floor(this.mob.getVehicle().getBoundingBox().minZ)));
     }
 
     @Nullable
