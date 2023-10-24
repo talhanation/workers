@@ -7,6 +7,7 @@ import com.talhanation.workers.inventory.WorkerInventoryContainer;
 import com.talhanation.workers.entities.ai.FarmerAI;
 import com.talhanation.workers.entities.ai.WorkerPickupWantedItemGoal;
 import com.talhanation.workers.network.MessageOpenGuiWorker;
+import net.minecraft.network.chat.TextComponent;
 import net.minecraft.world.entity.*;
 import net.minecraft.world.item.HoeItem;
 import net.minecraft.world.level.block.Block;

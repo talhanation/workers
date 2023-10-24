@@ -110,7 +110,7 @@ public class MerchantAI extends Goal {
                 if(merchant.isReturnTimeElapsed() || merchant.getReturning()){
                     merchant.setReturning(true);
                     merchant.setCurrentReturningTime(0);
-                    if(!returningMessage && merchant.getOwner() != null && !merchant.isCreative(){
+                    if(!returningMessage && merchant.getOwner() != null && !merchant.isCreative()){
                         merchant.tellPlayer(merchant.getOwner(), new TextComponent("I'm returning now."));
                         returningMessage = true;
                     }

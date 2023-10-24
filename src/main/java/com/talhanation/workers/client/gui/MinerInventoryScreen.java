@@ -47,7 +47,7 @@ public class MinerInventoryScreen extends WorkerInventoryScreen {
         }));
 
         // MINEDEPTH
-        Button button1 = addRenderableWidget(new Button(leftPos + 10, topPos + 60, 8, 12, Component.literal("<"), button -> {
+        Button button1 = addRenderableWidget(new Button(leftPos + 10, topPos + 60, 8, 12, new TextComponent("<"), button -> {
             if (miner.getMineType() < 3){
 
                 this.mineDepth = miner.getMineDepth();
@@ -59,7 +59,7 @@ public class MinerInventoryScreen extends WorkerInventoryScreen {
         }));
         //button1.isActive = miner.getMineType() < 3;
 		
-        Button button2 = addRenderableWidget(new Button(leftPos + 10 + 30, topPos + 60, 8, 12, Component.literal(">"), button -> {
+        Button button2 = addRenderableWidget(new Button(leftPos + 10 + 30, topPos + 60, 8, 12, new TextComponent(">"), button -> {
             if (miner.getMineType() < 3){
                 this.mineDepth = miner.getMineDepth();
                 if (this.mineDepth != miner.getMaxMineDepth()) {
@@ -131,9 +131,8 @@ public class MinerInventoryScreen extends WorkerInventoryScreen {
     private final MutableComponent PIT8x8x8 = new TranslatableComponent("gui.workers.miner.pit8x8x8");
     private final MutableComponent FLAT8x8x1 = new TranslatableComponent("gui.workers.miner.flat8x8x1");
     private final MutableComponent ROOM8x8x3 = new TranslatableComponent("gui.workers.miner.room8x8x3");
-	private final MutableComponent TUNNEL3x3 = new TranslatableComponent("gui.workers.miner.tunnel3x3");
-    private final MutableComponent FLAT16x16x1 = new TranslatableComponent("gui.workers.miner.flat8x8x1");
-    private final MutableComponent PIT16x16x16 = new TranslatableComponent("gui.workers.miner.flat16x16x1");
+    private final MutableComponent FLAT16x16x1 = new TranslatableComponent("gui.workers.miner.flat16x16x1");
+    private final MutableComponent PIT16x16x16 = new TranslatableComponent("gui.workers.miner.pit16x16x16");
     private final MutableComponent ROOM16x16x3 = new TranslatableComponent("gui.workers.miner.room16x16x3");
     private final MutableComponent DEPTH = new TranslatableComponent("gui.workers.miner.depth");
     private final MutableComponent WANDERING = new TranslatableComponent("gui.workers.following");
