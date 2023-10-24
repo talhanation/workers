@@ -36,7 +36,7 @@ mixin{
     overwriteErrorLevel = 'error'
 }
 
-version = '1.7.0'
+version = '1.7.1'
 group = 'com.talhanation.workers' // http://maven.apache.org/guides/mini/guide-naming-conventions.html
 archivesBaseName = 'workers-1.19.2'
 
