@@ -4,6 +4,7 @@ import com.talhanation.workers.entities.ChickenFarmerEntity;
 import net.minecraft.core.BlockPos;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.sounds.SoundSource;
+import net.minecraft.util.Mth;
 import net.minecraft.world.SimpleContainer;
 import net.minecraft.world.entity.animal.Chicken;
 import net.minecraft.world.entity.projectile.ThrownEgg;
@@ -115,7 +116,11 @@ public class ChickenFarmerAI extends AnimalFarmerAI {
                 animalFarmer.getCommandSenderWorld().playSound(null, animalFarmer.getX(), animalFarmer.getY(), animalFarmer.getZ(), SoundEvents.EGG_THROW, SoundSource.PLAYERS, 0.5F, 0.4F / (animalFarmer.getRandom().nextFloat() * 0.4F + 0.8F));
                 ThrownEgg thrownegg = new ThrownEgg(animalFarmer.getCommandSenderWorld(), animalFarmer);
                 thrownegg.setItem(new ItemStack(Items.EGG));
-                thrownegg.shootFromRotation(animalFarmer, animalFarmer.getXRot(), animalFarmer.getYRot(), 0.0F, 0.5F, 1.0F);
+
+                double d0 = animalFarmer.getStartPos().getX() - this.animalFarmer.getX();
+                double d2 = animalFarmer.getStartPos().getZ() - this.animalFarmer.getZ();
+
+                thrownegg.shoot(d0, 0, d2, 0.1F, 0F);
 
                 if(animalFarmer.getCommandSenderWorld().addFreshEntity(thrownegg)){
                     animalFarmer.workerSwingArm();
