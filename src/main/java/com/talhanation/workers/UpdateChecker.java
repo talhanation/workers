@@ -7,6 +7,7 @@ import net.minecraft.network.chat.MutableComponent;
 import net.minecraft.network.chat.TextComponent;
 import net.minecraft.world.entity.player.Player;
 import net.minecraftforge.event.entity.player.PlayerEvent;
+import net.minecraftforge.event.server.ServerStartedEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.ModList;
 import net.minecraftforge.fml.VersionChecker;
@@ -30,6 +31,22 @@ public class UpdateChecker {
                 else{
                     Main.LOGGER.warn("Villager workers is outdated!");
                 }
+            }
+
+            case FAILED -> {
+                Main.LOGGER.error("Villager workers could not check for updates!");
+            }
+        }
+    }
+
+    @SubscribeEvent
+    public void onServerStarted(ServerStartedEvent event){
+        VersionChecker.Status status = VersionChecker.getResult((ModList.get().getModContainerById("workers").get()).getModInfo()).status();
+
+        switch (status){
+            case OUTDATED -> {
+                Main.LOGGER.warn("A new version of Villager Workers is available!");
+                Main.LOGGER.warn("Download the new update here: https://www.curseforge.com/minecraft/mc-mods/workers/files");
             }
 
             case FAILED -> {
