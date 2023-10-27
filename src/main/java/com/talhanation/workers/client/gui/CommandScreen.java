@@ -66,7 +66,7 @@ public class CommandScreen extends ScreenBase<CommandMenu> {
 
     private void setButtons(){
         this.clearWidgets();
-        this.name = worker_names.get(index);
+
         int zeroLeftPos = leftPos + 150;
         int zeroTopPos = topPos - 40;
 
@@ -87,8 +87,7 @@ public class CommandScreen extends ScreenBase<CommandMenu> {
         this.sleepPosButton.active = blockpos != null && getBlockState().isBed(player.level, blockpos, player);
         this.chestPosButton.active = blockpos != null && player.level.getBlockEntity(blockpos) instanceof Container;
 
-        this.name = worker_names.get(index);
-
+        if(!worker_names.isEmpty() && index < worker_names.size()) this.name = worker_names.get(index);
         //Buttons for special workers
         if(name.contains("Merchant")){
             this.startTravelButton = this.setStartTravel(zeroLeftPos, zeroTopPos);
