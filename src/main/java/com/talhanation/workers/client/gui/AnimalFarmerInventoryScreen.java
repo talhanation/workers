@@ -32,6 +32,12 @@ public class AnimalFarmerInventoryScreen extends WorkerInventoryScreen {
     protected void init() {
         super.init();
 
+
+        if(animalFarmer instanceof ChickenFarmerEntity chickenFarmer) {
+            this.useEggs = chickenFarmer.getUseEggs();
+        }
+
+
         this.setButtons();
     }
 
