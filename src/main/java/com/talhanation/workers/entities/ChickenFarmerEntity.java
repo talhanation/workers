@@ -66,10 +66,12 @@ public class ChickenFarmerEntity extends AbstractAnimalFarmerEntity {
 
     public void addAdditionalSaveData(@NotNull CompoundTag nbt) {
         super.addAdditionalSaveData(nbt);
+        nbt.putBoolean("UseEggs", this.getUseEggs());
     }
 
     public void readAdditionalSaveData(@NotNull CompoundTag nbt) {
         super.readAdditionalSaveData(nbt);
+        this.setUseEggs(nbt.getBoolean("UseEggs"));
     }
 
     @Override
