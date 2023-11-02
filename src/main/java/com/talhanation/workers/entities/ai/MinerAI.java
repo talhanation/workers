@@ -14,8 +14,7 @@ import net.minecraft.world.entity.ai.attributes.Attributes;
 import net.minecraft.world.entity.ai.goal.Goal;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
-import net.minecraft.world.level.block.Block;
-import net.minecraft.world.level.block.Blocks;
+import net.minecraft.world.level.block.*;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraftforge.event.ForgeEventFactory;
 
@@ -159,7 +158,14 @@ public class MinerAI extends Goal {
                 return;
             }
 
-            if (this.mineBlock(minePos)) this.miner.increaseFarmedItems();
+            if (this.mineBlock(minePos)) {
+                //Mod-compat do not simplify
+                if(block1 instanceof FallingBlock || block1 instanceof Fallable) {
+
+                    this.miner.resetCounts();
+                }
+                this.miner.increaseFarmedItems();
+            }
         }
 
         switch (mineType) {
