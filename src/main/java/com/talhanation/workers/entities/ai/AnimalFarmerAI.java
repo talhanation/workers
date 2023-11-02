@@ -32,7 +32,8 @@ public abstract class AnimalFarmerAI extends Goal {
             case MOVING_TO_WORK -> {
                 if(animalFarmer.getStartPos() != null && !animalFarmer.getFollow()){
                     double distance = animalFarmer.getStartPos().distSqr(animalFarmer.getOnPos());
-                    if(distance <= 10F) state = State.WORKING;
+                    if(distance <= 15F) state = State.WORKING;
+                    else this.animalFarmer.walkTowards(animalFarmer.getStartPos(), 1);
                 }
             }
         }
