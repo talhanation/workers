@@ -79,7 +79,7 @@ public class WorkerUpkeepPosGoal extends Goal {
                     for (int i = 0; i < 3; i++) {
                         ItemStack foodItem = this.getFoodFromInv(container);
                         ItemStack food;
-                        canAddFood();
+
                         if (foodItem != null){
                             if(canAddFood()){
                                 food = foodItem.copy();
@@ -123,7 +123,7 @@ public class WorkerUpkeepPosGoal extends Goal {
     }
 
     private boolean canAddFood(){
-        for(int i = 6; i < 14; i++){
+        for(int i = 0; i < worker.getInventory().getContainerSize(); i++){
             if(worker.getInventory().getItem(i).isEmpty())
                 return true;
         }
