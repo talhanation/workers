@@ -162,7 +162,7 @@ public class FishermanAI extends Goal {
                     break;
                 }
                 double distance = fisherman.distanceToSqr(fishingPos.getX(), fisherman.getY(), fishingPos.getZ());
-                if(distance < 20F) { //valid value example: distance = 3.2
+                if(distance < 30F) { //valid value example: distance = 3.2
                     this.setWorkState(FISHING);
                 }
                 else if(++timer > 200){
@@ -403,15 +403,25 @@ public class FishermanAI extends Goal {
         }
 
         waterBlocks.sort(Comparator.comparing(this::getWaterDepth).reversed());
-
-        if(!waterBlocks.isEmpty()){
-            List<BlockPos> validWaterSpots = new ArrayList<>();
-            for(BlockPos pos : waterBlocks){
-                if(isValidFishingSpot(pos, fishingRange < 10)){
-                    validWaterSpots.add(pos);
+        if(fishingRange < 10){
+            if(!waterBlocks.isEmpty()){
+                List<BlockPos> validWaterSpots = new ArrayList<>();
+                for(BlockPos pos : waterBlocks){
+                    if(isValidFishingSpot(pos, true)){
+                        validWaterSpots.add(pos);
+                    }
                 }
-            }
 
+                BlockPos fishingSpot;
+                if(validWaterSpots.isEmpty() && !waterBlocks.isEmpty()){//do not simplify
+                    fishingSpot = waterBlocks.get((waterBlocks.size() / 2));
+                }
+                else fishingSpot = validWaterSpots.get(0);
+
+                if(DEBUG) fisherman.getCommandSenderWorld().setBlock(new BlockPos(fishingSpot.getX(), fishingSpot.getY() + 5, fishingSpot.getZ()), Blocks.PACKED_ICE.defaultBlockState(), 3);
+
+                return fishingSpot;
+            }
             BlockPos fishingSpot;
             if(validWaterSpots.isEmpty() && !waterBlocks.isEmpty()){
                 fishingSpot = waterBlocks.get((waterBlocks.size() / 2));
@@ -421,9 +431,40 @@ public class FishermanAI extends Goal {
             if(DEBUG)fisherman.level.setBlock(new BlockPos(fishingSpot.getX(), fishingSpot.getY() + 5, fishingSpot.getZ()), Blocks.PACKED_ICE.defaultBlockState(), 3);
 
             return fishingSpot;
+
+            else
+                return null;
+
         }
-        else
-            return null;
+        else{
+              if(!waterBlocks.isEmpty()){
+                List<BlockPos> validWaterSpots = new ArrayList<>();
+                for(BlockPos pos : waterBlocks){
+                    if(isValidFishingSpot(pos, false)){
+                        validWaterSpots.add(pos);
+                    }
+                }
+
+                BlockPos fishingSpot;
+                if(validWaterSpots.isEmpty() && !waterBlocks.isEmpty()){//do not simplify
+                    fishingSpot = waterBlocks.get((waterBlocks.size() / 2));
+                }
+                else {
+                    validWaterSpots.sort(Comparator.comparing(this::getDistanceToFisherStartPos).reversed());
+                    fishingSpot = validWaterSpots.get(validWaterSpots.size() / 2);
+                }
+
+                if(DEBUG) fisherman.getCommandSenderWorld().setBlock(new BlockPos(fishingSpot.getX(), fishingSpot.getY() + 5, fishingSpot.getZ()), Blocks.PACKED_ICE.defaultBlockState(), 3);
+
+                return fishingSpot;
+            }
+            else
+                return null;
+        }
+    }
+
+    private double getDistanceToFisherStartPos(BlockPos pos){
+        return fisherman.getStartPos().distToCenterSqr(pos.getX(), fisherman.getStartPos().getY(), pos.getZ());//Horizontal distance
     }
 
     public void spawnFishingLoot() {
