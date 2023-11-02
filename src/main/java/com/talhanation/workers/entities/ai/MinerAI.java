@@ -132,9 +132,11 @@ public class MinerAI extends Goal {
         }
 
         this.walkTowards(minePos);
-
+        //Place torch
         if(miner.getCommandSenderWorld().getRawBrightness(miner.getOnPos().above(), 0) <= 7){
-            if(miner.getCommandSenderWorld().getBlockState(miner.getOnPos().above()).isAir()) placeTorch();
+            BlockState onPosState = miner.getCommandSenderWorld().getBlockState(miner.getOnPos());
+            BlockState stateAbove = miner.getCommandSenderWorld().getBlockState(miner.getOnPos().above());
+            if(stateAbove.isAir() && !onPosState.isAir()) placeTorch();
         }
 
         if (minePos.closerThan(miner.getOnPos(), 3)){
