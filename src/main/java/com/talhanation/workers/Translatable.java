@@ -67,6 +67,7 @@ public class Translatable {
 
     public static MutableComponent TEXT_HIRE_COSTS(int cost, String item) {
         return new TranslatableComponent("chat.workers.text.hire_costs", cost, item);
+    }
 
     public static MutableComponent TEXT_NEED(int sollPrice, Item emerald) {
         return new TranslatableComponent("chat.workers.text.need", sollPrice, emerald);
