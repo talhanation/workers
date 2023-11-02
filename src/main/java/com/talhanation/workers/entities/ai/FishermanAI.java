@@ -102,7 +102,7 @@ public class FishermanAI extends Goal {
 
                 if (coastPos.closerThan(fisherman.getOnPos(), 3F)) {
                     List<Boat> list =  fisherman.getCommandSenderWorld().getEntitiesOfClass(Boat.class, fisherman.getBoundingBox().inflate(8D));
-                    list.removeIf(boat -> !boat.getPassengers().isEmpty());
+                    list.removeIf(boat -> !boat.getPassengers().isEmpty() || boat.getEncodeId().contains("smallships"));
                     list.sort(Comparator.comparing(boatInList -> boatInList.distanceTo(fisherman)));
                     if(!list.isEmpty()){
                         boat = list.get(0);
@@ -121,7 +121,6 @@ public class FishermanAI extends Goal {
                         this.coastPos = null;
                         this.setWorkState(STOPPING);
                     }
-
                 }
 
             }
@@ -322,8 +321,6 @@ public class FishermanAI extends Goal {
         fisherman.getNavigation().stop();
         this.fishingTimer = fisherman.getRandom().nextInt(600);
     }
-
-
 
     private BlockPos findWaterBlocks() {
         List<BlockPos> waterBlocks = new ArrayList<>();
