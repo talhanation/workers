@@ -74,6 +74,7 @@ public class MerchantEntity extends AbstractWorkerEntity implements IBoatControl
     private static final EntityDataAccessor<Optional<UUID>> HORSE_ID = SynchedEntityData.defineId(MerchantEntity.class, EntityDataSerializers.OPTIONAL_UUID);
     private static final EntityDataAccessor<Optional<UUID>> BOAT_ID = SynchedEntityData.defineId(MerchantEntity.class, EntityDataSerializers.OPTIONAL_UUID);
     private static final EntityDataAccessor<Boolean> AUTO_START_TRAVEL = SynchedEntityData.defineId(MerchantEntity.class, EntityDataSerializers.BOOLEAN);
+    private static final EntityDataAccessor<Boolean> INFO = SynchedEntityData.defineId(MerchantEntity.class, EntityDataSerializers.BOOLEAN);
 
     private final SimpleContainer tradeInventory = new SimpleContainer(8);
     public boolean isTrading;
@@ -101,6 +102,7 @@ public class MerchantEntity extends AbstractWorkerEntity implements IBoatControl
         this.entityData.define(IS_CREATIVE, false);
         this.entityData.define(IS_DAY_COUNTED, false);
         this.entityData.define(AUTO_START_TRAVEL, true);
+        this.entityData.define(INFO, true);
     }
     @Override
     public boolean needsToSleep() {
@@ -410,6 +412,7 @@ public class MerchantEntity extends AbstractWorkerEntity implements IBoatControl
 
         nbt.putInt("State", this.getState());
         nbt.putInt("TravelSpeedState", this.getTravelSpeedState());
+        nbt.putBoolean("InfoTravel", this.getSendInfo());
     }
 
     public void readAdditionalSaveData(@NotNull CompoundTag nbt) {
@@ -486,6 +489,7 @@ public class MerchantEntity extends AbstractWorkerEntity implements IBoatControl
 
         this.setState(nbt.getInt("State"));
         this.setTravelSpeedState(nbt.getInt("TravelSpeedState"));
+        this.setSendInfo(nbt.getBoolean("InfoTravel"));
     }
 
     public boolean isReturnTimeElapsed(){
@@ -777,6 +781,13 @@ public class MerchantEntity extends AbstractWorkerEntity implements IBoatControl
             }
             throw new IllegalArgumentException("Invalid State index: " + index);
         }
+    }
 
+    public boolean getSendInfo(){
+        return entityData.get(INFO);
+    }
+
+    public void setSendInfo(boolean send){
+        entityData.set(INFO, send);
     }
 }
