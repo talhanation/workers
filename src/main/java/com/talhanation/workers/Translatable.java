@@ -19,7 +19,7 @@ public class Translatable {
     public static final Component TEXT_BUTTON_TRAVEL_START = Component.translatable("gui.workers.button.travel_start");
     public static final Component TEXT_BUTTON_TRAVEL_STOP = Component.translatable("gui.workers.button.travel_stop");
     public static final Component TEXT_BUTTON_FOLLOW = Component.translatable("gui.workers.button.follow");;
-
+    public static final Component TOOLTIP_SEND_INFO =  Component.translatable("gui.workers.tooltip.sendInfo");
 
     public static Component TEXT_HELLO(String job) {
         return Component.translatable("chat.workers.text.hello", job);

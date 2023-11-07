@@ -34,6 +34,8 @@ public class MerchantWaypointScreen extends ScreenBase<MerchantWaypointContainer
     public static boolean isReturning;
     public static boolean isStopped;
     public boolean autoStart;
+    public boolean sendInfo;
+
     public int travelSpeedState;
     private static final int fontColor = 4210752;
     public MerchantWaypointScreen(MerchantWaypointContainer container, Inventory playerInventory, Component title) {
@@ -51,6 +53,7 @@ public class MerchantWaypointScreen extends ScreenBase<MerchantWaypointContainer
         this.topPos = (this.height - this.imageHeight) / 2;
         this.returnTime = merchant.getReturningTime();
         this.autoStart = merchant.getAutoStartTravel();
+        this.sendInfo = merchant.getSendInfo();
         this.travelSpeedState = merchant.getTravelSpeedState();
         this.setButtons();
     }
@@ -72,6 +75,9 @@ public class MerchantWaypointScreen extends ScreenBase<MerchantWaypointContainer
 
         String ss = autoStart ? "True" : "False";
         this.createSetAutoStartTravelButton(ss);
+
+        String sss = sendInfo ? "True" : "False";
+        this.createSetSendInfoButton(sss);
     }
 
     private void createSetTravelSpeedButton(String s) {
@@ -95,6 +101,18 @@ public class MerchantWaypointScreen extends ScreenBase<MerchantWaypointContainer
         }));
 
         extendedButton.setTooltip(Tooltip.create(Translatable.TOOLTIP_AUTO_START_TRAVEL));
+    }
+
+    private void createSetSendInfoButton(String ss) {
+        addRenderableWidget(new Button(leftPos + 240, topPos + 82, 40, 20, Component.literal(ss), button -> {
+            this.sendInfo = !sendInfo;
+
+            Main.SIMPLE_CHANNEL.sendToServer(new MessageMerchantSetSendInfo(merchant.getUUID(), sendInfo));
+            this.setButtons();
+        },
+                (button1, poseStack, i, i1) -> {
+                    this.renderTooltip(poseStack, Translatable.TOOLTIP_SEND_INFO, i, i1);
+                }));
     }
 
     public void setStartButtons(){

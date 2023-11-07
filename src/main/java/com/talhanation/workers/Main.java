@@ -102,8 +102,8 @@ public class Main {
             MessageMerchantSetTravelSpeed.class,
             MessageMerchantSetAutoStartTravel.class,
             MessageFollow.class,
-            MessageChickenFarmerUseEggs.class
-
+            MessageChickenFarmerUseEggs.class,
+            MessageMerchantSetSendInfo.class
         };
         for (int i = 0; i < messages.length; i++) CommonRegistry.registerMessage(SIMPLE_CHANNEL, i, messages[i]);
         LOGGER.info("Messages registered");
