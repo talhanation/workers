@@ -37,10 +37,12 @@ mixin{
 }
 
 
-version = '1.7.3'
+version = '1.7.4'
 
 group = 'com.talhanation.workers'
 archivesBaseName = 'workers-1.18.2'
+
+
 
 java.toolchain.languageVersion = JavaLanguageVersion.of(17)
 
