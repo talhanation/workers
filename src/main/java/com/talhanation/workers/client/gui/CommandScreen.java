@@ -20,7 +20,6 @@ import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.HitResult;
 import net.minecraftforge.client.gui.widget.ExtendedButton;
 
-import java.util.Comparator;
 import java.util.List;
 import java.util.UUID;
 
@@ -32,7 +31,7 @@ public class CommandScreen extends ScreenBase<CommandMenu> {
     public static List<String> worker_names;
     public final Player player;
     private byte index;
-    private String name;
+    private String name = "";
     private BlockPos blockpos;
     private Button rightButton;
     private Button leftButton;
@@ -91,7 +90,7 @@ public class CommandScreen extends ScreenBase<CommandMenu> {
 
 
         //Buttons for special workers
-        if(name.contains("Merchant")){
+        if(name != null && name.contains("Merchant")){
             this.startTravelButton = this.setStartTravel(zeroLeftPos, zeroTopPos);
             this.stopTravelButton = this.setStopTravel(zeroLeftPos, zeroTopPos);
             this.returnTravelButton = this.setReturnTravel(zeroLeftPos, zeroTopPos);
@@ -154,7 +153,12 @@ public class CommandScreen extends ScreenBase<CommandMenu> {
 
     private Button setWorkPosition(BlockPos pos, int x, int y){
         //TODO: add worker type
-        Component component = name.contains("Merchant") ? Translatable.TEXT_BUTTON_ADD_WAYPOINT : Translatable.TEXT_BUTTON_WORK_POS;
+        Component component;
+        if(name != null){
+          component  = name.contains("Merchant") ? Translatable.TEXT_BUTTON_ADD_WAYPOINT : Translatable.TEXT_BUTTON_WORK_POS;
+        }
+        else
+            component = Component.literal("null");
 
         return addRenderableWidget(new ExtendedButton(x - 90, y + 140, 80, 18, component,
             button -> {
