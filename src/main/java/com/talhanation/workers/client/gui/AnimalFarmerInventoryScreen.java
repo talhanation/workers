@@ -41,7 +41,7 @@ public class AnimalFarmerInventoryScreen extends WorkerInventoryScreen {
     private void setButtons(){
         this.clearWidgets();
         // Count
-        addRenderableWidget(new ExtendedButton(leftPos + 10, topPos + 60, 8, 12, Component.literal("<"), button -> {
+        addRenderableWidget(new ExtendedButton(leftPos + 10, topPos + 60, 12, 12, Component.literal("<"), button -> {
             this.count = animalFarmer.getMaxAnimalCount();
             if (this.count != 0) {
                 this.count--;
@@ -50,7 +50,7 @@ public class AnimalFarmerInventoryScreen extends WorkerInventoryScreen {
             }
         }));
 
-        addRenderableWidget(new ExtendedButton(leftPos + 10 + 30, topPos + 60, 8, 12, Component.literal(">"), button -> {
+        addRenderableWidget(new ExtendedButton(leftPos + 10 + 30, topPos + 60, 12, 12, Component.literal(">"), button -> {
             this.count = animalFarmer.getMaxAnimalCount();
             if (this.count != 32) {
                 this.count++;
