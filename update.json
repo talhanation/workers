@@ -1,11 +1,12 @@
 {
   "homepage": "https://www.curseforge.com/minecraft/mc-mods/workers/files",
   "promos": {
-    "1.20.1-recommended": "1.7.3",
-    "1.19.2-recommended": "1.7.3",
-    "1.18.2-recommended": "1.7.3"
+    "1.20.1-recommended": "1.7.4",
+    "1.19.2-recommended": "1.7.4",
+    "1.18.2-recommended": "1.7.4"
   },
   "1.18.2": {
+    "1.7.4": "added interaction with fence gates, fixed bugs",
     "1.7.3": "fixed workers not walking to work position",
     "1.7.2": "minor fixes to chicken farmer",
     "1.7.1": "minor fixes for Traveling Merchants Update",
@@ -15,6 +16,7 @@
     "1.6.0": "Big bug fix update and added command menu."
   },
   "1.19.2": {
+    "1.7.4": "added interaction with fence gates, fixed bugs",
     "1.7.3": "fixed workers not walking to work position",
     "1.7.2": "minor fixes to chicken farmer",
     "1.7.1": "minor fixes for Traveling Merchants Update",
@@ -28,6 +30,7 @@
     "1.6.0": "Big bug fix update and added command menu."
   },
   "1.20.1": {
+    "1.7.4": "added interaction with fence gates, fixed bugs",
     "1.7.3": "fixed workers not walking to work position",
     "1.7.2": "minor fixes to chicken farmer",
     "1.7.1": "minor fixes for Traveling Merchants Update",
