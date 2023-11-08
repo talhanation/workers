@@ -166,155 +166,157 @@ public class MinerAI extends Goal {
                 }
                 this.miner.increaseFarmedItems();
             }
-        }
 
-        switch (mineType) {
-            case PIT_8X8X8 -> {
-                if (miner.shouldIgnoreBlock(blockstate) || block1 == Blocks.OAK_PLANKS) {
-                    miner.blocks++;
-                    if (block1 != Blocks.OAK_PLANKS) placePlanks();
+            switch (mineType) {
+                case PIT_8X8X8 -> {
+                    if (miner.shouldIgnoreBlock(blockstate) || block1 == Blocks.OAK_PLANKS) {
+                        miner.blocks++;
+                        if (block1 != Blocks.OAK_PLANKS) placePlanks();
+                    }
+
+                    if (miner.blocks == 8) {
+                        miner.blocks = 0;
+                        miner.side++;
+                    }
+
+                    if (miner.side == 8) {
+                        miner.side = 0;
+                        miner.depth++;
+                    }
+
+                    if (miner.depth >= 8) {
+                        this.workState = WorkState.DONE;
+                    }
                 }
 
-                if (miner.blocks == 8) {
-                    miner.blocks = 0;
-                    miner.side++;
+                case ROOM_8X8X3 -> {
+                    if (miner.shouldIgnoreBlock(blockstate)) {
+                        miner.depth--;
+                    }
+
+                    if (miner.depth == -3) {
+                        miner.depth = 0;
+                        miner.side++;
+                    }
+
+                    if (miner.side == 8) {
+                        miner.side = 0;
+                        miner.blocks++;
+
+                    }
+
+                    if (miner.blocks >= 8) {
+                        this.workState = WorkState.DONE;
+                    }
                 }
 
-                if (miner.side == 8) {
-                    miner.side = 0;
-                    miner.depth++;
+                case FLAT_8X8X1 -> {
+                    if (miner.shouldIgnoreBlock(blockstate)) {
+                        miner.blocks++;
+                    }
+
+                    if (miner.blocks == 8) {
+                        miner.blocks = 0;
+                        miner.side++;
+                    }
+
+                    if (miner.side >= 8) {
+                        this.workState = WorkState.DONE;
+                    }
                 }
 
-                if (miner.depth >= 8) {
-                    this.workState = WorkState.DONE;
-                }
-            }
+                case PIT_16X16X16 -> {
+                    boolean ignoreBlock = miner.shouldIgnoreBlock(blockstate);
+                    boolean canNotBreak = !miner.canBreakBlock(blockstate);
+                    if (ignoreBlock || canNotBreak || block1 == Blocks.OAK_PLANKS) {
+                        miner.blocks++;
+                        if (block1 != Blocks.OAK_PLANKS) placePlanks();
+                        //if(shouldPlaceTorch(1, ,4)) placeTorch();
+                    }
 
-            case ROOM_8X8X3 -> {
-                if (miner.shouldIgnoreBlock(blockstate)) {
-                    miner.depth--;
-                }
+                    if (miner.blocks == 16) {
+                        miner.blocks = 0;
+                        miner.side++;
+                    }
 
-                if (miner.depth == -3) {
-                    miner.depth = 0;
-                    miner.side++;
-                }
+                    if (miner.side == 16) {
+                        miner.side = 0;
+                        miner.depth++;
+                    }
 
-                if (miner.side == 8) {
-                    miner.side = 0;
-                    miner.blocks++;
-
-                }
-
-                if (miner.blocks >= 8) {
-                    this.workState = WorkState.DONE;
-                }
-            }
-
-            case FLAT_8X8X1 -> {
-                if (miner.shouldIgnoreBlock(blockstate)) {
-                    miner.blocks++;
+                    if (miner.depth >= 16) {
+                        this.workState = WorkState.DONE;
+                    }
                 }
 
-                if (miner.blocks == 8) {
-                    miner.blocks = 0;
-                    miner.side++;
+                case ROOM_16X16X3 -> {
+                    if (miner.shouldIgnoreBlock(blockstate)) {
+                        miner.depth--;
+                    }
+
+                    if (miner.depth == -3) {
+                        miner.depth = 0;
+                        miner.side++;
+                    }
+
+                    if (miner.side == 16) {
+                        miner.side = 0;
+                        miner.blocks++;
+                    }
+
+                    if (miner.blocks >= 16) {
+                        this.workState = WorkState.DONE;
+                    }
                 }
 
-                if (miner.side >= 8) {
-                    this.workState = WorkState.DONE;
-                }
-            }
+                case FLAT_16X16X1 -> {
+                    if (miner.shouldIgnoreBlock(blockstate)) {
+                        miner.blocks++;
+                    }
 
-            case PIT_16X16X16 -> {
-                if (miner.shouldIgnoreBlock(blockstate) || block1 == Blocks.OAK_PLANKS) {
-                    miner.blocks++;
-                    if (block1 != Blocks.OAK_PLANKS) placePlanks();
-                    //if(shouldPlaceTorch(1, ,4)) placeTorch();
-                }
+                    if (miner.blocks == 16) {
+                        miner.blocks = 0;
+                        miner.side++;
+                    }
 
-                if (miner.blocks == 16) {
-                    miner.blocks = 0;
-                    miner.side++;
+                    if (miner.side >= 16) {
+                        this.workState = WorkState.DONE;
+                    }
                 }
 
-                if (miner.side == 16) {
-                    miner.side = 0;
-                    miner.depth++;
+                case TUNNEL_3X3 -> {
+                    if (miner.shouldIgnoreBlock(blockstate)) {
+                        miner.depth--;
+                    }
+
+                    if (miner.depth == -3) {
+                        miner.depth = 0;
+                        miner.side++;
+                    }
+
+                    if (miner.side == 3) {
+                        miner.side = 0;
+                        miner.blocks++;
+                    }
+
+                    if (miner.blocks >= miner.getMineDepth()) {
+                        this.workState = WorkState.DONE;
+                    }
                 }
 
-                if (miner.depth >= 16) {
-                    this.workState = WorkState.DONE;
-                }
-            }
+                case TUNNEL_1X2 -> {
+                    if (miner.shouldIgnoreBlock(blockstate)) {
+                        miner.depth--;
+                    }
 
-            case ROOM_16X16X3 -> {
-                if (miner.shouldIgnoreBlock(blockstate)) {
-                    miner.depth--;
-                }
+                    if (miner.depth == -2) {
+                        miner.depth = 0;
+                        miner.blocks++;
+                    }
 
-                if (miner.depth == -3) {
-                    miner.depth = 0;
-                    miner.side++;
-                }
-
-                if (miner.side == 16) {
-                    miner.side = 0;
-                    miner.blocks++;
-                }
-
-                if (miner.blocks >= 16) {
-                    this.workState = WorkState.DONE;
-                }
-            }
-
-            case FLAT_16X16X1 -> {
-                if (miner.shouldIgnoreBlock(blockstate)) {
-                    miner.blocks++;
-                }
-
-                if (miner.blocks == 16) {
-                    miner.blocks = 0;
-                    miner.side++;
-                }
-
-                if (miner.side >= 16) {
-                    this.workState = WorkState.DONE;
-                }
-            }
-
-            case TUNNEL_3X3 -> {
-                if (miner.shouldIgnoreBlock(blockstate)) {
-                    miner.depth--;
-                }
-
-                if (miner.depth == -3) {
-                    miner.depth = 0;
-                    miner.side++;
-                }
-
-                if (miner.side == 3) {
-                    miner.side = 0;
-                    miner.blocks++;
-                }
-
-                if (miner.blocks >= miner.getMineDepth()) {
-                    this.workState = WorkState.DONE;
-                }
-            }
-
-            case TUNNEL_1X2 -> {
-                if (miner.shouldIgnoreBlock(blockstate)) {
-                    miner.depth--;
-                }
-
-                if (miner.depth == -2) {
-                    miner.depth = 0;
-                    miner.blocks++;
-                }
-
-                if (miner.blocks >= miner.getMineDepth()) {
-                    this.workState = WorkState.DONE;
+                    if (miner.blocks >= miner.getMineDepth()) {
+                        this.workState = WorkState.DONE;
+                    }
                 }
             }
         }
@@ -419,7 +421,7 @@ public class MinerAI extends Goal {
         }
     }
 
-    public boolean hasTorchInInv(){
+    public boolean hasTorchInInv() {
         return miner.getInventory().hasAnyOf(ImmutableSet.of(Items.TORCH));
     }
 }
