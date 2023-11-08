@@ -158,7 +158,7 @@ public class CommandScreen extends ScreenBase<CommandMenu> {
           component  = name.contains("Merchant") ? Translatable.TEXT_BUTTON_ADD_WAYPOINT : Translatable.TEXT_BUTTON_WORK_POS;
         }
         else
-            component = Component.literal("null");
+            component = new TextComponent("null");
 
         return addRenderableWidget(new ExtendedButton(x - 90, y + 140, 80, 18, component,
             button -> {

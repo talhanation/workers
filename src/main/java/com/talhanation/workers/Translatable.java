@@ -19,7 +19,7 @@ public class Translatable {
     public static final MutableComponent TEXT_BUTTON_TRAVEL_START = new TranslatableComponent("gui.workers.button.travel_start");
     public static final MutableComponent TEXT_BUTTON_TRAVEL_STOP = new TranslatableComponent("gui.workers.button.travel_stop");
     public static final MutableComponent TEXT_BUTTON_FOLLOW = new TranslatableComponent("gui.workers.button.follow");
-	public static final Component TOOLTIP_SEND_INFO =  new TranslatableComponent("gui.workers.tooltip.sendInfo");
+	public static final MutableComponent TOOLTIP_SEND_INFO =  new TranslatableComponent("gui.workers.tooltip.sendInfo");
 
 
     public static MutableComponent TEXT_HELLO(String job) {

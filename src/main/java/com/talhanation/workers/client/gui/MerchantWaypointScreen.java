@@ -106,7 +106,7 @@ public class MerchantWaypointScreen extends ScreenBase<MerchantWaypointContainer
     }
 
     private void createSetSendInfoButton(String ss) {
-        addRenderableWidget(new Button(leftPos + 240, topPos + 82, 40, 20, Component.literal(ss), button -> {
+        addRenderableWidget(new Button(leftPos + 240, topPos + 82, 40, 20, new TextComponent(ss), button -> {
             this.sendInfo = !sendInfo;
 
             Main.SIMPLE_CHANNEL.sendToServer(new MessageMerchantSetSendInfo(merchant.getUUID(), sendInfo));

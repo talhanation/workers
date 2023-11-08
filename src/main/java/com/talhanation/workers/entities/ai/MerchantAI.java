@@ -120,7 +120,7 @@ public class MerchantAI extends Goal {
             }
 
             case HOME -> {
-                if(!homeMessage && merchant.getOwner() != null && && merchant.getSendInfo()){
+                if(!homeMessage && merchant.getOwner() != null && merchant.getSendInfo()){
                     merchant.tellPlayer(merchant.getOwner(), new TextComponent("I've arrived where i've started."));
                     homeMessage = true;
                 }

@@ -46,7 +46,6 @@ public class WorkersNodeEvaluator extends NodeEvaluator {
         super.done();
     }
 
-    @Nullable
     public Node getStart() {
         BlockPos.MutableBlockPos blockpos$mutableblockpos = new BlockPos.MutableBlockPos();
         int i = this.mob.getBlockY();
@@ -85,22 +84,17 @@ public class WorkersNodeEvaluator extends NodeEvaluator {
         if (this.mob.getPathfindingMalus(blockpathtypes) < 0.0F) {
             AABB aabb = this.mob.getBoundingBox();
             if (this.hasPositiveMalus(blockpos$mutableblockpos.set(aabb.minX, (double)i, aabb.minZ)) || this.hasPositiveMalus(blockpos$mutableblockpos.set(aabb.minX, (double)i, aabb.maxZ)) || this.hasPositiveMalus(blockpos$mutableblockpos.set(aabb.maxX, (double)i, aabb.minZ)) || this.hasPositiveMalus(blockpos$mutableblockpos.set(aabb.maxX, (double)i, aabb.maxZ))) {
-                return this.getStartNode(blockpos$mutableblockpos);
+                Node node = this.getNode(blockpos$mutableblockpos);
+                node.type = this.getBlockPathType(this.mob, node.asBlockPos());
+                node.costMalus = this.mob.getPathfindingMalus(node.type);
+                return node;
             }
         }
 
-        return this.getStartNode(new BlockPos(blockpos1.getX(), i, blockpos1.getZ()));
-    }
-
-    @Nullable
-    protected Node getStartNode(BlockPos p_230632_) {
-        Node node = this.getNode(p_230632_);
-        if (node != null) {
-            node.type = this.getBlockPathType(this.mob, node.asBlockPos());
-            node.costMalus = this.mob.getPathfindingMalus(node.type);
-        }
-
-        return node;
+        Node node1 = this.getNode(blockpos1.getX(), i, blockpos1.getZ());
+        node1.type = this.getBlockPathType(this.mob, node1.asBlockPos());
+        node1.costMalus = this.mob.getPathfindingMalus(node1.type);
+        return node1;
     }
 
     private boolean hasPositiveMalus(BlockPos p_77647_) {
@@ -108,9 +102,8 @@ public class WorkersNodeEvaluator extends NodeEvaluator {
         return this.mob.getPathfindingMalus(blockpathtypes) >= 0.0F;
     }
 
-    @Nullable
     public Target getGoal(double p_77550_, double p_77551_, double p_77552_) {
-        return this.getTargetFromNode(this.getNode(Mth.floor(p_77550_), Mth.floor(p_77551_), Mth.floor(p_77552_)));
+        return new Target(this.getNode(Mth.floor(p_77550_), Mth.floor(p_77551_), Mth.floor(p_77552_)));
     }
 
     public int getNeighbors(Node[] p_77640_, Node p_77641_) {
@@ -119,7 +112,7 @@ public class WorkersNodeEvaluator extends NodeEvaluator {
         BlockPathTypes blockpathtypes = this.getCachedBlockType(this.mob, p_77641_.x, p_77641_.y + 1, p_77641_.z);
         BlockPathTypes blockpathtypes1 = this.getCachedBlockType(this.mob, p_77641_.x, p_77641_.y, p_77641_.z);
         if (this.mob.getPathfindingMalus(blockpathtypes) >= 0.0F && blockpathtypes1 != BlockPathTypes.STICKY_HONEY) {
-            j = Mth.floor(Math.max(1.0F, this.mob.getStepHeight()));
+            j = Mth.floor(Math.max(1.0F, this.mob.maxUpStep));
         }
 
         double d0 = this.getFloorLevel(new BlockPos(p_77641_.x, p_77641_.y, p_77641_.z));
@@ -189,13 +182,9 @@ public class WorkersNodeEvaluator extends NodeEvaluator {
         }
     }
 
-    private static boolean doesBlockHavePartialCollision(BlockPathTypes p_230626_) {
-        return p_230626_ == BlockPathTypes.FENCE || p_230626_ == BlockPathTypes.DOOR_WOOD_CLOSED || p_230626_ == BlockPathTypes.DOOR_IRON_CLOSED;
-    }
-
     private boolean canReachWithoutCollision(Node p_77625_) {
+        Vec3 vec3 = new Vec3((double)p_77625_.x - this.mob.getX(), (double)p_77625_.y - this.mob.getY(), (double)p_77625_.z - this.mob.getZ());
         AABB aabb = this.mob.getBoundingBox();
-        Vec3 vec3 = new Vec3((double)p_77625_.x - this.mob.getX() + aabb.getXsize() / 2.0D, (double)p_77625_.y - this.mob.getY() + aabb.getYsize() / 2.0D, (double)p_77625_.z - this.mob.getZ() + aabb.getZsize() / 2.0D);
         int i = Mth.ceil(vec3.length() / aabb.getSize());
         vec3 = vec3.scale((double)(1.0F / (float)i));
 
@@ -235,10 +224,12 @@ public class WorkersNodeEvaluator extends NodeEvaluator {
             float f = this.mob.getPathfindingMalus(blockpathtypes);
             double d1 = (double)this.mob.getBbWidth() / 2.0D;
             if (f >= 0.0F) {
-                node = this.getNodeAndUpdateCostToMax(p_164726_, p_164727_, p_164728_, blockpathtypes, f);
+                node = this.getNode(p_164726_, p_164727_, p_164728_);
+                node.type = blockpathtypes;
+                node.costMalus = Math.max(node.costMalus, f);
             }
 
-            if (doesBlockHavePartialCollision(p_164732_) && node != null && node.costMalus >= 0.0F && !this.canReachWithoutCollision(node)) {
+            if (p_164732_ == BlockPathTypes.FENCE && node != null && node.costMalus >= 0.0F && !this.canReachWithoutCollision(node)) {
                 node = null;
             }
 
@@ -267,7 +258,9 @@ public class WorkersNodeEvaluator extends NodeEvaluator {
                             return node;
                         }
 
-                        node = this.getNodeAndUpdateCostToMax(p_164726_, p_164727_, p_164728_, blockpathtypes, this.mob.getPathfindingMalus(blockpathtypes));
+                        node = this.getNode(p_164726_, p_164727_, p_164728_);
+                        node.type = blockpathtypes;
+                        node.costMalus = Math.max(node.costMalus, this.mob.getPathfindingMalus(blockpathtypes));
                     }
                 }
 
@@ -278,33 +271,42 @@ public class WorkersNodeEvaluator extends NodeEvaluator {
                     while(blockpathtypes == BlockPathTypes.OPEN) {
                         --p_164727_;
                         if (p_164727_ < this.mob.level.getMinBuildHeight()) {
-                            return this.getBlockedNode(p_164726_, i, p_164728_);
+                            Node node3 = this.getNode(p_164726_, i, p_164728_);
+                            node3.type = BlockPathTypes.BLOCKED;
+                            node3.costMalus = -1.0F;
+                            return node3;
                         }
 
                         if (j++ >= this.mob.getMaxFallDistance()) {
-                            return this.getBlockedNode(p_164726_, p_164727_, p_164728_);
+                            Node node2 = this.getNode(p_164726_, p_164727_, p_164728_);
+                            node2.type = BlockPathTypes.BLOCKED;
+                            node2.costMalus = -1.0F;
+                            return node2;
                         }
 
                         blockpathtypes = this.getCachedBlockType(this.mob, p_164726_, p_164727_, p_164728_);
                         f = this.mob.getPathfindingMalus(blockpathtypes);
                         if (blockpathtypes != BlockPathTypes.OPEN && f >= 0.0F) {
-                            node = this.getNodeAndUpdateCostToMax(p_164726_, p_164727_, p_164728_, blockpathtypes, f);
+                            node = this.getNode(p_164726_, p_164727_, p_164728_);
+                            node.type = blockpathtypes;
+                            node.costMalus = Math.max(node.costMalus, f);
                             break;
                         }
 
                         if (f < 0.0F) {
-                            return this.getBlockedNode(p_164726_, p_164727_, p_164728_);
+                            Node node1 = this.getNode(p_164726_, p_164727_, p_164728_);
+                            node1.type = BlockPathTypes.BLOCKED;
+                            node1.costMalus = -1.0F;
+                            return node1;
                         }
                     }
                 }
 
-                if (doesBlockHavePartialCollision(blockpathtypes)) {
+                if (blockpathtypes == BlockPathTypes.FENCE) {
                     node = this.getNode(p_164726_, p_164727_, p_164728_);
-                    if (node != null) {
-                        node.closed = true;
-                        node.type = blockpathtypes;
-                        node.costMalus = blockpathtypes.getMalus();
-                    }
+                    node.closed = true;
+                    node.type = blockpathtypes;
+                    node.costMalus = blockpathtypes.getMalus();
                 }
 
                 return node;
@@ -312,28 +314,6 @@ public class WorkersNodeEvaluator extends NodeEvaluator {
                 return node;
             }
         }
-    }
-
-    @Nullable
-    private Node getNodeAndUpdateCostToMax(int p_230620_, int p_230621_, int p_230622_, BlockPathTypes p_230623_, float p_230624_) {
-        Node node = this.getNode(p_230620_, p_230621_, p_230622_);
-        if (node != null) {
-            node.type = p_230623_;
-            node.costMalus = Math.max(node.costMalus, p_230624_);
-        }
-
-        return node;
-    }
-
-    @Nullable
-    private Node getBlockedNode(int p_230628_, int p_230629_, int p_230630_) {
-        Node node = this.getNode(p_230628_, p_230629_, p_230630_);
-        if (node != null) {
-            node.type = BlockPathTypes.BLOCKED;
-            node.costMalus = -1.0F;
-        }
-
-        return node;
     }
 
     private boolean hasCollisions(AABB p_77635_) {
@@ -470,11 +450,6 @@ public class WorkersNodeEvaluator extends NodeEvaluator {
                     if (l != 0 || j1 != 0) {
                         p_77609_.set(i + l, j + i1, k + j1);
                         BlockState blockstate = p_77608_.getBlockState(p_77609_);
-                        BlockPathTypes blockPathType = blockstate.getAdjacentBlockPathType(p_77608_, p_77609_, null, p_77610_);
-                        if (blockPathType != null) return blockPathType;
-                        FluidState fluidState = blockstate.getFluidState();
-                        BlockPathTypes fluidPathType = fluidState.getAdjacentBlockPathType(p_77608_, p_77609_, null, p_77610_);
-                        if (fluidPathType != null) return fluidPathType;
                         if (blockstate.is(Blocks.CACTUS)) {
                             return BlockPathTypes.DANGER_CACTUS;
                         }
@@ -500,7 +475,7 @@ public class WorkersNodeEvaluator extends NodeEvaluator {
 
     protected static BlockPathTypes getBlockPathTypeRaw(BlockGetter p_77644_, BlockPos p_77645_) {
         BlockState blockstate = p_77644_.getBlockState(p_77645_);
-        BlockPathTypes type = blockstate.getBlockPathType(p_77644_, p_77645_, null);
+        BlockPathTypes type = blockstate.getBlockPathType(p_77644_, p_77645_);
         if (type != null) return type;
         Block block = blockstate.getBlock();
         Material material = blockstate.getMaterial();
@@ -519,8 +494,6 @@ public class WorkersNodeEvaluator extends NodeEvaluator {
                 return BlockPathTypes.COCOA;
             } else {
                 FluidState fluidstate = p_77644_.getFluidState(p_77645_);
-                BlockPathTypes nonLoggableFluidPathType = fluidstate.getBlockPathType(p_77644_, p_77645_, null, false);
-                if (nonLoggableFluidPathType != null) return nonLoggableFluidPathType;
                 if (fluidstate.is(FluidTags.LAVA)) {
                     return BlockPathTypes.LAVA;
                 } else if (isBurningBlock(blockstate)) {
@@ -543,8 +516,6 @@ public class WorkersNodeEvaluator extends NodeEvaluator {
                     if (!blockstate.isPathfindable(p_77644_, p_77645_, PathComputationType.LAND)) {
                         return BlockPathTypes.BLOCKED;
                     } else {
-                        BlockPathTypes loggableFluidPathType = fluidstate.getBlockPathType(p_77644_, p_77645_, null, true);
-                        if (loggableFluidPathType != null) return loggableFluidPathType;
                         return fluidstate.is(FluidTags.WATER) ? BlockPathTypes.WATER : BlockPathTypes.OPEN;
                     }
                 } else {
