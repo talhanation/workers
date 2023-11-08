@@ -7,6 +7,7 @@ import com.talhanation.workers.config.WorkersModConfig;
 import com.talhanation.workers.entities.ai.*;
 import com.talhanation.workers.entities.ai.navigation.SailorPathNavigation;
 import com.talhanation.workers.entities.ai.navigation.WorkersPathNavigation;
+import com.talhanation.workers.entities.ai.navigation.door.WorkersOpenDoorGoal;
 import com.talhanation.workers.inventory.WorkerHireContainer;
 import com.talhanation.workers.network.MessageHireGui;
 
@@ -109,7 +110,7 @@ public abstract class AbstractWorkerEntity extends AbstractChunkLoaderEntity {
         this.goalSelector.addGoal(0, new EatGoal(this));
         this.goalSelector.addGoal(0, new SleepGoal(this));
         this.goalSelector.addGoal(0, new WorkerFloatGoal(this));
-        this.goalSelector.addGoal(0, new OpenDoorGoal(this, true));
+        this.goalSelector.addGoal(0, new WorkersOpenDoorGoal(this, true));
         this.goalSelector.addGoal(1, new DepositItemsInChestGoal(this));
         this.goalSelector.addGoal(10, new WorkerMoveToHomeGoal<>(this));
         this.goalSelector.addGoal(0, new WorkerFollowOwnerGoal(this, 1.0F, 20.0F));
