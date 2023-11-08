@@ -35,7 +35,7 @@ public abstract class WorkersDoorInteractGoal extends Goal {
         if (!this.hasDoor) {
             return false;
         } else {
-            BlockState blockstate = this.mob.level.getBlockState(this.doorPos);
+            BlockState blockstate = this.mob.getCommandSenderWorld().getBlockState(this.doorPos);
             if (!(blockstate.getBlock() instanceof DoorBlock)) {
                 this.hasDoor = false;
                 return false;
@@ -47,15 +47,15 @@ public abstract class WorkersDoorInteractGoal extends Goal {
 
     protected void setOpen(boolean p_25196_) {
         if (this.hasDoor) {
-            BlockState blockstate = this.mob.level.getBlockState(this.doorPos);
-            BlockState blockstateAbove = this.mob.level.getBlockState(this.doorPos.above());
+            BlockState blockstate = this.mob.getCommandSenderWorld().getBlockState(this.doorPos);
+            BlockState blockstateAbove = this.mob.getCommandSenderWorld().getBlockState(this.doorPos.above());
             if (blockstate.getBlock() instanceof DoorBlock) {
-                ((DoorBlock)blockstate.getBlock()).setOpen(this.mob, this.mob.level, blockstate, this.doorPos, p_25196_);
-                ((DoorBlock)blockstate.getBlock()).setOpen(this.mob, this.mob.level, blockstateAbove, this.doorPos.above(), p_25196_);
+                ((DoorBlock)blockstate.getBlock()).setOpen(this.mob, this.mob.getCommandSenderWorld(), blockstate, this.doorPos, p_25196_);
+                ((DoorBlock)blockstate.getBlock()).setOpen(this.mob, this.mob.getCommandSenderWorld(), blockstateAbove, this.doorPos.above(), p_25196_);
             }
             else if(blockstate.getBlock() instanceof FenceGateBlock){
-                useGate(blockstate, this.mob.level, doorPos, this.mob);
-                useGate(blockstateAbove, this.mob.level, doorPos.above(), this.mob);
+                useGate(blockstate, this.mob.getCommandSenderWorld(), doorPos, this.mob);
+                useGate(blockstateAbove, this.mob.getCommandSenderWorld(), doorPos.above(), this.mob);
             }
         }
 
@@ -74,7 +74,7 @@ public abstract class WorkersDoorInteractGoal extends Goal {
                     Node node = path.getNode(i);
                     this.doorPos = new BlockPos(node.x, node.y, node.z);
                     if (!(this.mob.distanceToSqr((double)this.doorPos.getX(), this.mob.getY(), (double)this.doorPos.getZ()) > 2.25D)) {
-                        this.hasDoor = DoorBlock.isWoodenDoor(this.mob.level, this.doorPos) || (this.mob.getCommandSenderWorld().getBlockState(this.doorPos).getBlock() instanceof FenceGateBlock);
+                        this.hasDoor = DoorBlock.isWoodenDoor(this.mob.getCommandSenderWorld(), this.doorPos) || (this.mob.getCommandSenderWorld().getBlockState(this.doorPos).getBlock() instanceof FenceGateBlock);
                         if (this.hasDoor) {
                             return true;
                         }
@@ -82,7 +82,7 @@ public abstract class WorkersDoorInteractGoal extends Goal {
                 }
 
                 this.doorPos = this.mob.blockPosition().above();
-                this.hasDoor = DoorBlock.isWoodenDoor(this.mob.level, this.doorPos) || (this.mob.getCommandSenderWorld().getBlockState(this.doorPos).getBlock() instanceof FenceGateBlock);
+                this.hasDoor = DoorBlock.isWoodenDoor(this.mob.getCommandSenderWorld(), this.doorPos) || (this.mob.getCommandSenderWorld().getBlockState(this.doorPos).getBlock() instanceof FenceGateBlock);
                 return this.hasDoor;
             } else {
                 return false;

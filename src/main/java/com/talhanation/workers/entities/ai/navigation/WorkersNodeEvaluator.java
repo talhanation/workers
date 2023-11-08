@@ -17,7 +17,6 @@ import net.minecraft.world.level.block.*;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.material.FluidState;
 import net.minecraft.world.level.material.Fluids;
-import net.minecraft.world.level.material.Material;
 import net.minecraft.world.level.pathfinder.*;
 import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
@@ -28,25 +27,23 @@ import java.util.EnumSet;
 
 
 public class WorkersNodeEvaluator extends NodeEvaluator {
-
     public static final double SPACE_BETWEEN_WALL_POSTS = 0.5D;
-    protected float oldWaterCost;
+    private static final double DEFAULT_MOB_JUMP_HEIGHT = 1.125D;
     private final Long2ObjectMap<BlockPathTypes> pathTypesByPosCache = new Long2ObjectOpenHashMap<>();
     private final Object2BooleanMap<AABB> collisionCache = new Object2BooleanOpenHashMap<>();
 
     public void prepare(PathNavigationRegion p_77620_, Mob p_77621_) {
         super.prepare(p_77620_, p_77621_);
-        this.oldWaterCost = p_77621_.getPathfindingMalus(BlockPathTypes.WATER);
+        p_77621_.onPathfindingStart();
     }
 
     public void done() {
-        this.mob.setPathfindingMalus(BlockPathTypes.WATER, this.oldWaterCost);
+        this.mob.onPathfindingDone();
         this.pathTypesByPosCache.clear();
         this.collisionCache.clear();
         super.done();
     }
 
-    @Nullable
     public Node getStart() {
         BlockPos.MutableBlockPos blockpos$mutableblockpos = new BlockPos.MutableBlockPos();
         int i = this.mob.getBlockY();
@@ -62,11 +59,11 @@ public class WorkersNodeEvaluator extends NodeEvaluator {
                     ++i;
                     blockstate = this.level.getBlockState(blockpos$mutableblockpos.set(this.mob.getX(), (double)i, this.mob.getZ()));
                 }
-            } else if (this.mob.isOnGround()) {
+            } else if (this.mob.onGround()) {
                 i = Mth.floor(this.mob.getY() + 0.5D);
             } else {
                 BlockPos blockpos;
-                for(blockpos = this.mob.blockPosition(); (this.level.getBlockState(blockpos).isAir() || this.level.getBlockState(blockpos).isPathfindable(this.level, blockpos, PathComputationType.LAND)) && blockpos.getY() > this.mob.level.getMinBuildHeight(); blockpos = blockpos.below()) {
+                for(blockpos = this.mob.blockPosition(); (this.level.getBlockState(blockpos).isAir() || this.level.getBlockState(blockpos).isPathfindable(this.level, blockpos, PathComputationType.LAND)) && blockpos.getY() > this.mob.level().getMinBuildHeight(); blockpos = blockpos.below()) {
                 }
 
                 i = blockpos.above().getY();
@@ -81,10 +78,9 @@ public class WorkersNodeEvaluator extends NodeEvaluator {
         }
 
         BlockPos blockpos1 = this.mob.blockPosition();
-        BlockPathTypes blockpathtypes = this.getCachedBlockType(this.mob, blockpos1.getX(), i, blockpos1.getZ());
-        if (this.mob.getPathfindingMalus(blockpathtypes) < 0.0F) {
+        if (!this.canStartAt(blockpos$mutableblockpos.set(blockpos1.getX(), i, blockpos1.getZ()))) {
             AABB aabb = this.mob.getBoundingBox();
-            if (this.hasPositiveMalus(blockpos$mutableblockpos.set(aabb.minX, (double)i, aabb.minZ)) || this.hasPositiveMalus(blockpos$mutableblockpos.set(aabb.minX, (double)i, aabb.maxZ)) || this.hasPositiveMalus(blockpos$mutableblockpos.set(aabb.maxX, (double)i, aabb.minZ)) || this.hasPositiveMalus(blockpos$mutableblockpos.set(aabb.maxX, (double)i, aabb.maxZ))) {
+            if (this.canStartAt(blockpos$mutableblockpos.set(aabb.minX, (double)i, aabb.minZ)) || this.canStartAt(blockpos$mutableblockpos.set(aabb.minX, (double)i, aabb.maxZ)) || this.canStartAt(blockpos$mutableblockpos.set(aabb.maxX, (double)i, aabb.minZ)) || this.canStartAt(blockpos$mutableblockpos.set(aabb.maxX, (double)i, aabb.maxZ))) {
                 return this.getStartNode(blockpos$mutableblockpos);
             }
         }
@@ -92,23 +88,18 @@ public class WorkersNodeEvaluator extends NodeEvaluator {
         return this.getStartNode(new BlockPos(blockpos1.getX(), i, blockpos1.getZ()));
     }
 
-    @Nullable
     protected Node getStartNode(BlockPos p_230632_) {
         Node node = this.getNode(p_230632_);
-        if (node != null) {
-            node.type = this.getBlockPathType(this.mob, node.asBlockPos());
-            node.costMalus = this.mob.getPathfindingMalus(node.type);
-        }
-
+        node.type = this.getBlockPathType(this.mob, node.asBlockPos());
+        node.costMalus = this.mob.getPathfindingMalus(node.type);
         return node;
     }
 
-    private boolean hasPositiveMalus(BlockPos p_77647_) {
-        BlockPathTypes blockpathtypes = this.getBlockPathType(this.mob, p_77647_);
-        return this.mob.getPathfindingMalus(blockpathtypes) >= 0.0F;
+    protected boolean canStartAt(BlockPos p_262596_) {
+        BlockPathTypes blockpathtypes = this.getBlockPathType(this.mob, p_262596_);
+        return blockpathtypes != BlockPathTypes.OPEN && this.mob.getPathfindingMalus(blockpathtypes) >= 0.0F;
     }
 
-    @Nullable
     public Target getGoal(double p_77550_, double p_77551_, double p_77552_) {
         return this.getTargetFromNode(this.getNode(Mth.floor(p_77550_), Mth.floor(p_77551_), Mth.floor(p_77552_)));
     }
@@ -210,7 +201,7 @@ public class WorkersNodeEvaluator extends NodeEvaluator {
     }
 
     protected double getFloorLevel(BlockPos p_164733_) {
-        return getFloorLevel(this.level, p_164733_);
+        return (this.canFloat() || this.isAmphibious()) && this.level.getFluidState(p_164733_).is(FluidTags.WATER) ? (double)p_164733_.getY() + 0.5D : getFloorLevel(this.level, p_164733_);
     }
 
     public static double getFloorLevel(BlockGetter p_77612_, BlockPos p_77613_) {
@@ -228,7 +219,7 @@ public class WorkersNodeEvaluator extends NodeEvaluator {
         Node node = null;
         BlockPos.MutableBlockPos blockpos$mutableblockpos = new BlockPos.MutableBlockPos();
         double d0 = this.getFloorLevel(blockpos$mutableblockpos.set(p_164726_, p_164727_, p_164728_));
-        if (d0 - p_164730_ > 1.125D) {
+        if (d0 - p_164730_ > this.getMobJumpHeight()) {
             return null;
         } else {
             BlockPathTypes blockpathtypes = this.getCachedBlockType(this.mob, p_164726_, p_164727_, p_164728_);
@@ -243,12 +234,12 @@ public class WorkersNodeEvaluator extends NodeEvaluator {
             }
 
             if (blockpathtypes != BlockPathTypes.WALKABLE && (!this.isAmphibious() || blockpathtypes != BlockPathTypes.WATER)) {
-                if ((node == null || node.costMalus < 0.0F) && p_164729_ > 0 && blockpathtypes != BlockPathTypes.FENCE && blockpathtypes != BlockPathTypes.UNPASSABLE_RAIL && blockpathtypes != BlockPathTypes.TRAPDOOR && blockpathtypes != BlockPathTypes.POWDER_SNOW) {
+                if ((node == null || node.costMalus < 0.0F) && p_164729_ > 0 && (blockpathtypes != BlockPathTypes.FENCE || this.canWalkOverFences()) && blockpathtypes != BlockPathTypes.UNPASSABLE_RAIL && blockpathtypes != BlockPathTypes.TRAPDOOR && blockpathtypes != BlockPathTypes.POWDER_SNOW) {
                     node = this.findAcceptedNode(p_164726_, p_164727_ + 1, p_164728_, p_164729_ - 1, p_164730_, p_164731_, p_164732_);
                     if (node != null && (node.type == BlockPathTypes.OPEN || node.type == BlockPathTypes.WALKABLE) && this.mob.getBbWidth() < 1.0F) {
                         double d2 = (double)(p_164726_ - p_164731_.getStepX()) + 0.5D;
                         double d3 = (double)(p_164728_ - p_164731_.getStepZ()) + 0.5D;
-                        AABB aabb = new AABB(d2 - d1, getFloorLevel(this.level, blockpos$mutableblockpos.set(d2, (double)(p_164727_ + 1), d3)) + 0.001D, d3 - d1, d2 + d1, (double)this.mob.getBbHeight() + getFloorLevel(this.level, blockpos$mutableblockpos.set((double)node.x, (double)node.y, (double)node.z)) - 0.002D, d3 + d1);
+                        AABB aabb = new AABB(d2 - d1, this.getFloorLevel(blockpos$mutableblockpos.set(d2, (double)(p_164727_ + 1), d3)) + 0.001D, d3 - d1, d2 + d1, (double)this.mob.getBbHeight() + this.getFloorLevel(blockpos$mutableblockpos.set((double)node.x, (double)node.y, (double)node.z)) - 0.002D, d3 + d1);
                         if (this.hasCollisions(aabb)) {
                             node = null;
                         }
@@ -260,7 +251,7 @@ public class WorkersNodeEvaluator extends NodeEvaluator {
                         return node;
                     }
 
-                    while(p_164727_ > this.mob.level.getMinBuildHeight()) {
+                    while(p_164727_ > this.mob.level().getMinBuildHeight()) {
                         --p_164727_;
                         blockpathtypes = this.getCachedBlockType(this.mob, p_164726_, p_164727_, p_164728_);
                         if (blockpathtypes != BlockPathTypes.WATER) {
@@ -277,7 +268,7 @@ public class WorkersNodeEvaluator extends NodeEvaluator {
 
                     while(blockpathtypes == BlockPathTypes.OPEN) {
                         --p_164727_;
-                        if (p_164727_ < this.mob.level.getMinBuildHeight()) {
+                        if (p_164727_ < this.mob.level().getMinBuildHeight()) {
                             return this.getBlockedNode(p_164726_, i, p_164728_);
                         }
 
@@ -298,13 +289,11 @@ public class WorkersNodeEvaluator extends NodeEvaluator {
                     }
                 }
 
-                if (doesBlockHavePartialCollision(blockpathtypes)) {
+                if (doesBlockHavePartialCollision(blockpathtypes) && node == null) {
                     node = this.getNode(p_164726_, p_164727_, p_164728_);
-                    if (node != null) {
-                        node.closed = true;
-                        node.type = blockpathtypes;
-                        node.costMalus = blockpathtypes.getMalus();
-                    }
+                    node.closed = true;
+                    node.type = blockpathtypes;
+                    node.costMalus = blockpathtypes.getMalus();
                 }
 
                 return node;
@@ -314,25 +303,21 @@ public class WorkersNodeEvaluator extends NodeEvaluator {
         }
     }
 
-    @Nullable
+    private double getMobJumpHeight() {
+        return Math.max(1.125D, (double)this.mob.getStepHeight());
+    }
+
     private Node getNodeAndUpdateCostToMax(int p_230620_, int p_230621_, int p_230622_, BlockPathTypes p_230623_, float p_230624_) {
         Node node = this.getNode(p_230620_, p_230621_, p_230622_);
-        if (node != null) {
-            node.type = p_230623_;
-            node.costMalus = Math.max(node.costMalus, p_230624_);
-        }
-
+        node.type = p_230623_;
+        node.costMalus = Math.max(node.costMalus, p_230624_);
         return node;
     }
 
-    @Nullable
     private Node getBlockedNode(int p_230628_, int p_230629_, int p_230630_) {
         Node node = this.getNode(p_230628_, p_230629_, p_230630_);
-        if (node != null) {
-            node.type = BlockPathTypes.BLOCKED;
-            node.costMalus = -1.0F;
-        }
-
+        node.type = BlockPathTypes.BLOCKED;
+        node.costMalus = -1.0F;
         return node;
     }
 
@@ -342,11 +327,10 @@ public class WorkersNodeEvaluator extends NodeEvaluator {
         });
     }
 
-    public BlockPathTypes getBlockPathType(BlockGetter p_77594_, int p_77595_, int p_77596_, int p_77597_, Mob p_77598_, int p_77599_, int p_77600_, int p_77601_, boolean p_77602_, boolean p_77603_) {
+    public BlockPathTypes getBlockPathType(BlockGetter p_265141_, int p_265661_, int p_265757_, int p_265716_, Mob p_265398_) {
         EnumSet<BlockPathTypes> enumset = EnumSet.noneOf(BlockPathTypes.class);
         BlockPathTypes blockpathtypes = BlockPathTypes.BLOCKED;
-        BlockPos blockpos = p_77598_.blockPosition();
-        blockpathtypes = this.getBlockPathTypes(p_77594_, p_77595_, p_77596_, p_77597_, p_77599_, p_77600_, p_77601_, p_77602_, p_77603_, enumset, blockpathtypes, blockpos);
+        blockpathtypes = this.getBlockPathTypes(p_265141_, p_265661_, p_265757_, p_265716_, enumset, blockpathtypes, p_265398_.blockPosition());
         if (enumset.contains(BlockPathTypes.FENCE)) {
             return BlockPathTypes.FENCE;
         } else if (enumset.contains(BlockPathTypes.UNPASSABLE_RAIL)) {
@@ -355,67 +339,64 @@ public class WorkersNodeEvaluator extends NodeEvaluator {
             BlockPathTypes blockpathtypes1 = BlockPathTypes.BLOCKED;
 
             for(BlockPathTypes blockpathtypes2 : enumset) {
-                if (p_77598_.getPathfindingMalus(blockpathtypes2) < 0.0F) {
+                if (p_265398_.getPathfindingMalus(blockpathtypes2) < 0.0F) {
                     return blockpathtypes2;
                 }
 
-                if (p_77598_.getPathfindingMalus(blockpathtypes2) >= p_77598_.getPathfindingMalus(blockpathtypes1)) {
+                if (p_265398_.getPathfindingMalus(blockpathtypes2) >= p_265398_.getPathfindingMalus(blockpathtypes1)) {
                     blockpathtypes1 = blockpathtypes2;
                 }
             }
 
-            return blockpathtypes == BlockPathTypes.OPEN && p_77598_.getPathfindingMalus(blockpathtypes1) == 0.0F && p_77599_ <= 1 ? BlockPathTypes.OPEN : blockpathtypes1;
+            return blockpathtypes == BlockPathTypes.OPEN && p_265398_.getPathfindingMalus(blockpathtypes1) == 0.0F && this.entityWidth <= 1 ? BlockPathTypes.OPEN : blockpathtypes1;
         }
     }
 
-    public BlockPathTypes getBlockPathTypes(BlockGetter p_77581_, int p_77582_, int p_77583_, int p_77584_, int p_77585_, int p_77586_, int p_77587_, boolean p_77588_, boolean p_77589_, EnumSet<BlockPathTypes> p_77590_, BlockPathTypes p_77591_, BlockPos p_77592_) {
-        for(int i = 0; i < p_77585_; ++i) {
-            for(int j = 0; j < p_77586_; ++j) {
-                for(int k = 0; k < p_77587_; ++k) {
-                    int l = i + p_77582_;
-                    int i1 = j + p_77583_;
-                    int j1 = k + p_77584_;
-                    BlockPathTypes blockpathtypes = this.getBlockPathType(p_77581_, l, i1, j1);
-                    blockpathtypes = this.evaluateBlockPathType(p_77581_, p_77588_, p_77589_, p_77592_, blockpathtypes);
+    public BlockPathTypes getBlockPathTypes(BlockGetter p_265227_, int p_265066_, int p_265537_, int p_265771_, EnumSet<BlockPathTypes> p_265263_, BlockPathTypes p_265458_, BlockPos p_265515_) {
+        for(int i = 0; i < this.entityWidth; ++i) {
+            for(int j = 0; j < this.entityHeight; ++j) {
+                for(int k = 0; k < this.entityDepth; ++k) {
+                    int l = i + p_265066_;
+                    int i1 = j + p_265537_;
+                    int j1 = k + p_265771_;
+                    BlockPathTypes blockpathtypes = this.getBlockPathType(p_265227_, l, i1, j1);
+                    blockpathtypes = this.evaluateBlockPathType(p_265227_, p_265515_, blockpathtypes);
                     if (i == 0 && j == 0 && k == 0) {
-                        p_77591_ = blockpathtypes;
+                        p_265458_ = blockpathtypes;
                     }
 
-                    p_77590_.add(blockpathtypes);
+                    p_265263_.add(blockpathtypes);
                 }
             }
         }
 
-        return p_77591_;
+        return p_265458_;
     }
 
-    protected BlockPathTypes evaluateBlockPathType(BlockGetter p_77614_, boolean p_77615_, boolean p_77616_, BlockPos p_77617_, BlockPathTypes p_77618_) {
-        if (p_77618_ == BlockPathTypes.DOOR_WOOD_CLOSED && p_77615_ && p_77616_) {
-            p_77618_ = BlockPathTypes.WALKABLE_DOOR;
+    protected BlockPathTypes evaluateBlockPathType(BlockGetter p_265305_, BlockPos p_265350_, BlockPathTypes p_265551_) {
+        boolean flag = this.canPassDoors();
+        if (p_265551_ == BlockPathTypes.DOOR_WOOD_CLOSED && this.canOpenDoors() && flag) {
+            p_265551_ = BlockPathTypes.WALKABLE_DOOR;
         }
 
-        if (p_77618_ == BlockPathTypes.DOOR_OPEN && !p_77616_) {
-            p_77618_ = BlockPathTypes.BLOCKED;
+        if (p_265551_ == BlockPathTypes.DOOR_OPEN && !flag) {
+            p_265551_ = BlockPathTypes.BLOCKED;
         }
 
-        if (p_77618_ == BlockPathTypes.RAIL && !(p_77614_.getBlockState(p_77617_).getBlock() instanceof BaseRailBlock) && !(p_77614_.getBlockState(p_77617_.below()).getBlock() instanceof BaseRailBlock)) {
-            p_77618_ = BlockPathTypes.UNPASSABLE_RAIL;
+        if (p_265551_ == BlockPathTypes.RAIL && !(p_265305_.getBlockState(p_265350_).getBlock() instanceof BaseRailBlock) && !(p_265305_.getBlockState(p_265350_.below()).getBlock() instanceof BaseRailBlock)) {
+            p_265551_ = BlockPathTypes.UNPASSABLE_RAIL;
         }
 
-        if (p_77618_ == BlockPathTypes.LEAVES) {
-            p_77618_ = BlockPathTypes.BLOCKED;
-        }
-
-        return p_77618_;
+        return p_265551_;
     }
 
-    private BlockPathTypes getBlockPathType(Mob p_77573_, BlockPos p_77574_) {
+    protected BlockPathTypes getBlockPathType(Mob p_77573_, BlockPos p_77574_) {
         return this.getCachedBlockType(p_77573_, p_77574_.getX(), p_77574_.getY(), p_77574_.getZ());
     }
 
     protected BlockPathTypes getCachedBlockType(Mob p_77568_, int p_77569_, int p_77570_, int p_77571_) {
-        return this.pathTypesByPosCache.computeIfAbsent(BlockPos.asLong(p_77569_, p_77570_, p_77571_), (p_77566_) -> {
-            return this.getBlockPathType(this.level, p_77569_, p_77570_, p_77571_, p_77568_, this.entityWidth, this.entityHeight, this.entityDepth, this.canOpenDoors(), this.canPassDoors());
+        return this.pathTypesByPosCache.computeIfAbsent(BlockPos.asLong(p_77569_, p_77570_, p_77571_), (p_265015_) -> {
+            return this.getBlockPathType(this.level, p_77569_, p_77570_, p_77571_, p_77568_);
         });
     }
 
@@ -435,10 +416,6 @@ public class WorkersNodeEvaluator extends NodeEvaluator {
                 blockpathtypes = BlockPathTypes.DAMAGE_FIRE;
             }
 
-            if (blockpathtypes1 == BlockPathTypes.DAMAGE_CACTUS) {
-                blockpathtypes = BlockPathTypes.DAMAGE_CACTUS;
-            }
-
             if (blockpathtypes1 == BlockPathTypes.DAMAGE_OTHER) {
                 blockpathtypes = BlockPathTypes.DAMAGE_OTHER;
             }
@@ -449,6 +426,10 @@ public class WorkersNodeEvaluator extends NodeEvaluator {
 
             if (blockpathtypes1 == BlockPathTypes.POWDER_SNOW) {
                 blockpathtypes = BlockPathTypes.DANGER_POWDER_SNOW;
+            }
+
+            if (blockpathtypes1 == BlockPathTypes.DAMAGE_CAUTIOUS) {
+                blockpathtypes = BlockPathTypes.DAMAGE_CAUTIOUS;
             }
         }
 
@@ -475,11 +456,7 @@ public class WorkersNodeEvaluator extends NodeEvaluator {
                         FluidState fluidState = blockstate.getFluidState();
                         BlockPathTypes fluidPathType = fluidState.getAdjacentBlockPathType(p_77608_, p_77609_, null, p_77610_);
                         if (fluidPathType != null) return fluidPathType;
-                        if (blockstate.is(Blocks.CACTUS)) {
-                            return BlockPathTypes.DANGER_CACTUS;
-                        }
-
-                        if (blockstate.is(Blocks.SWEET_BERRY_BUSH)) {
+                        if (blockstate.is(Blocks.CACTUS) || blockstate.is(Blocks.SWEET_BERRY_BUSH)) {
                             return BlockPathTypes.DANGER_OTHER;
                         }
 
@@ -489,6 +466,10 @@ public class WorkersNodeEvaluator extends NodeEvaluator {
 
                         if (p_77608_.getFluidState(p_77609_).is(FluidTags.WATER)) {
                             return BlockPathTypes.WATER_BORDER;
+                        }
+
+                        if (blockstate.is(Blocks.WITHER_ROSE) || blockstate.is(Blocks.POINTED_DRIPSTONE)) {
+                            return BlockPathTypes.DAMAGE_CAUTIOUS;
                         }
                     }
                 }
@@ -503,53 +484,55 @@ public class WorkersNodeEvaluator extends NodeEvaluator {
         BlockPathTypes type = blockstate.getBlockPathType(p_77644_, p_77645_, null);
         if (type != null) return type;
         Block block = blockstate.getBlock();
-        Material material = blockstate.getMaterial();
         if (blockstate.isAir()) {
             return BlockPathTypes.OPEN;
         } else if (!blockstate.is(BlockTags.TRAPDOORS) && !blockstate.is(Blocks.LILY_PAD) && !blockstate.is(Blocks.BIG_DRIPLEAF)) {
             if (blockstate.is(Blocks.POWDER_SNOW)) {
                 return BlockPathTypes.POWDER_SNOW;
-            } else if (blockstate.is(Blocks.CACTUS)) {
-                return BlockPathTypes.DAMAGE_CACTUS;
-            } else if (blockstate.is(Blocks.SWEET_BERRY_BUSH)) {
-                return BlockPathTypes.DAMAGE_OTHER;
-            } else if (blockstate.is(Blocks.HONEY_BLOCK)) {
-                return BlockPathTypes.STICKY_HONEY;
-            } else if (blockstate.is(Blocks.COCOA)) {
-                return BlockPathTypes.COCOA;
-            } else {
-                FluidState fluidstate = p_77644_.getFluidState(p_77645_);
-                BlockPathTypes nonLoggableFluidPathType = fluidstate.getBlockPathType(p_77644_, p_77645_, null, false);
-                if (nonLoggableFluidPathType != null) return nonLoggableFluidPathType;
-                if (fluidstate.is(FluidTags.LAVA)) {
-                    return BlockPathTypes.LAVA;
-                } else if (isBurningBlock(blockstate)) {
-                    return BlockPathTypes.DAMAGE_FIRE;
-                } else if (DoorBlock.isWoodenDoor(blockstate) && !blockstate.getValue(DoorBlock.OPEN)) {
+            } else if (!blockstate.is(Blocks.CACTUS) && !blockstate.is(Blocks.SWEET_BERRY_BUSH)) {
+                if (blockstate.is(Blocks.HONEY_BLOCK)) {
+                    return BlockPathTypes.STICKY_HONEY;
+                } else if (blockstate.is(Blocks.COCOA)) {
+                    return BlockPathTypes.COCOA;
+                } else if (!blockstate.is(Blocks.WITHER_ROSE) && !blockstate.is(Blocks.POINTED_DRIPSTONE)) {
+                    FluidState fluidstate = p_77644_.getFluidState(p_77645_);
+                    BlockPathTypes nonLoggableFluidPathType = fluidstate.getBlockPathType(p_77644_, p_77645_, null, false);
+                    if (nonLoggableFluidPathType != null) return nonLoggableFluidPathType;
+                    if (fluidstate.is(FluidTags.LAVA)) {
+                        return BlockPathTypes.LAVA;
+                    } else if (isBurningBlock(blockstate)) {
+                        return BlockPathTypes.DAMAGE_FIRE;
+                    } else if (block instanceof DoorBlock) {
+                        DoorBlock doorblock = (DoorBlock)block;
+                        if (blockstate.getValue(DoorBlock.OPEN)) {
+                            return BlockPathTypes.DOOR_OPEN;
+                        } else {
+                            return doorblock.type().canOpenByHand() ? BlockPathTypes.DOOR_WOOD_CLOSED : BlockPathTypes.DOOR_IRON_CLOSED;
+                        }
+                    } else if (block instanceof FenceGateBlock && !blockstate.getValue(DoorBlock.OPEN)) {
                     return BlockPathTypes.DOOR_WOOD_CLOSED;
-                } else if (block instanceof FenceGateBlock && !blockstate.getValue(DoorBlock.OPEN)) {
-                    return BlockPathTypes.DOOR_WOOD_CLOSED;
-                } else if (block instanceof DoorBlock && material == Material.METAL && !blockstate.getValue(DoorBlock.OPEN)) {
-                    return BlockPathTypes.DOOR_IRON_CLOSED;
-                } else if (block instanceof DoorBlock && blockstate.getValue(DoorBlock.OPEN)) {
+                    } else if (block instanceof FenceGateBlock && blockstate.getValue(DoorBlock.OPEN)) {
                     return BlockPathTypes.DOOR_OPEN;
-                } else if (block instanceof FenceGateBlock && blockstate.getValue(DoorBlock.OPEN)) {
-                    return BlockPathTypes.DOOR_OPEN;
-                } else if (block instanceof BaseRailBlock) {
-                    return BlockPathTypes.RAIL;
-                } else if (block instanceof LeavesBlock) {
-                    return BlockPathTypes.LEAVES;
-                } else if (!blockstate.is(BlockTags.FENCES) && !blockstate.is(BlockTags.WALLS) && (!(block instanceof FenceGateBlock) || blockstate.getValue(FenceGateBlock.OPEN))) {
-                    if (!blockstate.isPathfindable(p_77644_, p_77645_, PathComputationType.LAND)) {
-                        return BlockPathTypes.BLOCKED;
+                    }else if (block instanceof BaseRailBlock) {
+                        return BlockPathTypes.RAIL;
+                    } else if (block instanceof LeavesBlock) {
+                        return BlockPathTypes.LEAVES;
+                    } else if (!blockstate.is(BlockTags.FENCES) && !blockstate.is(BlockTags.WALLS) && (!(block instanceof FenceGateBlock) || blockstate.getValue(FenceGateBlock.OPEN))) {
+                        if (!blockstate.isPathfindable(p_77644_, p_77645_, PathComputationType.LAND)) {
+                            return BlockPathTypes.BLOCKED;
+                        } else {
+                            BlockPathTypes loggableFluidPathType = fluidstate.getBlockPathType(p_77644_, p_77645_, null, true);
+                            if (loggableFluidPathType != null) return loggableFluidPathType;
+                            return fluidstate.is(FluidTags.WATER) ? BlockPathTypes.WATER : BlockPathTypes.OPEN;
+                        }
                     } else {
-                        BlockPathTypes loggableFluidPathType = fluidstate.getBlockPathType(p_77644_, p_77645_, null, true);
-                        if (loggableFluidPathType != null) return loggableFluidPathType;
-                        return fluidstate.is(FluidTags.WATER) ? BlockPathTypes.WATER : BlockPathTypes.OPEN;
+                        return BlockPathTypes.FENCE;
                     }
                 } else {
-                    return BlockPathTypes.FENCE;
+                    return BlockPathTypes.DAMAGE_CAUTIOUS;
                 }
+            } else {
+                return BlockPathTypes.DAMAGE_OTHER;
             }
         } else {
             return BlockPathTypes.TRAPDOOR;
@@ -559,4 +542,5 @@ public class WorkersNodeEvaluator extends NodeEvaluator {
     public static boolean isBurningBlock(BlockState p_77623_) {
         return p_77623_.is(BlockTags.FIRE) || p_77623_.is(Blocks.LAVA) || p_77623_.is(Blocks.MAGMA_BLOCK) || CampfireBlock.isLitCampfire(p_77623_) || p_77623_.is(Blocks.LAVA_CAULDRON);
     }
+
 }

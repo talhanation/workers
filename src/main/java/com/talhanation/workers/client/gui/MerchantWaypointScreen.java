@@ -104,15 +104,14 @@ public class MerchantWaypointScreen extends ScreenBase<MerchantWaypointContainer
     }
 
     private void createSetSendInfoButton(String ss) {
-        addRenderableWidget(new Button(leftPos + 240, topPos + 82, 40, 20, Component.literal(ss), button -> {
+        ExtendedButton sendInfoButton = addRenderableWidget(new ExtendedButton(leftPos + 240, topPos + 82, 40, 20, Component.literal(ss), button -> {
             this.sendInfo = !sendInfo;
 
             Main.SIMPLE_CHANNEL.sendToServer(new MessageMerchantSetSendInfo(merchant.getUUID(), sendInfo));
             this.setButtons();
-        },
-                (button1, poseStack, i, i1) -> {
-                    this.renderTooltip(poseStack, Translatable.TOOLTIP_SEND_INFO, i, i1);
-                }));
+        }));
+
+        sendInfoButton.setTooltip(Tooltip.create(Translatable.TOOLTIP_SEND_INFO));
     }
 
     public void setStartButtons(){
