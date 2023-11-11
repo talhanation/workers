@@ -186,7 +186,7 @@ public class MerchantAI extends Goal {
                     }
                 }
             }
-            else if (++timer > 100){
+            else if (++timer > 100 && isSailing){
                 if(precision < 250) precision += 25;
 
                 this.timer = 0;
@@ -237,18 +237,21 @@ public class MerchantAI extends Goal {
     }
 
     private void moveToPos(BlockPos pos, float speed) {
-        if(pos != null && !merchant.isTrading) {
-            //Move to Pos -> normal movement
-            if (!pos.closerThan(merchant.getOnPos(), 4F)) {
+        //Move to pos -> normal movement
+        BlockPos workerPos = merchant.getOnPos();
 
-                this.merchant.walkTowards(pos, speed);
-            }
-            //Near Pos -> precise movement
-            if (!pos.closerThan(merchant.getOnPos(), 1F)) {
-                this.merchant.getMoveControl().setWantedPosition(
-                        pos.getX(), pos.getY(), pos.getZ(), speed);
-            }
+        int heightDiff = Math.abs(workerPos.getY() - pos.getY());
+        double distance = merchant.distanceToSqr(pos.getX(), pos.getY(), pos.getZ());
+
+        this.merchant.walkTowards(pos, speed);
+        if(heightDiff >= 4){
+
         }
+        /*
+        else if(distance > 6.0F) {
+            this.merchant.getMoveControl().setWantedPosition(pos.getX(), merchant.getOnPos().getY(), pos.getZ(), speed);
+        }
+         */
     }
     private void changeTravelType(){
         if(merchant.getCurrentWayPoint() != null && merchant.isWaterBlockPos(merchant.getCurrentWayPoint())){
