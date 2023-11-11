@@ -4,12 +4,9 @@ import com.talhanation.workers.entities.ChickenFarmerEntity;
 import net.minecraft.core.BlockPos;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.sounds.SoundSource;
-import net.minecraft.util.Mth;
 import net.minecraft.world.SimpleContainer;
 import net.minecraft.world.entity.animal.Chicken;
-import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.entity.projectile.ThrownEgg;
-import net.minecraft.world.item.EggItem;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
 
