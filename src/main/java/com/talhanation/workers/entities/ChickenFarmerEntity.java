@@ -141,7 +141,7 @@ public class ChickenFarmerEntity extends AbstractAnimalFarmerEntity {
 
     @Override
     public boolean wantsToKeep(ItemStack itemStack) {
-        return super.wantsToKeep(itemStack) || isBreedItem(itemStack);
+        return super.wantsToKeep(itemStack) || isBreedItem(itemStack) || (this.getUseEggs() && itemStack.getItem().equals(Items.EGG));
     }
 
     @Override
@@ -149,7 +149,6 @@ public class ChickenFarmerEntity extends AbstractAnimalFarmerEntity {
         ItemStack initialTool = MAIN_TOOL;
         this.updateInventory(0, initialTool);
         this.equipTool(initialTool);
-
     }
 
     @Override
