@@ -1,6 +1,5 @@
 package com.talhanation.workers.entities.ai;
 import com.google.common.collect.ImmutableSet;
-import com.talhanation.workers.Main;
 import com.talhanation.workers.Translatable;
 import com.talhanation.workers.entities.MinerEntity;
 import net.minecraft.core.BlockPos;
