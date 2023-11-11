@@ -15,6 +15,9 @@ import net.minecraft.world.level.gameevent.GameEvent;
 import net.minecraft.world.level.pathfinder.Node;
 import net.minecraft.world.level.pathfinder.Path;
 
+import java.util.ArrayList;
+import java.util.List;
+
 
 public abstract class WorkersDoorInteractGoal extends Goal {
     protected Mob mob;
@@ -45,20 +48,29 @@ public abstract class WorkersDoorInteractGoal extends Goal {
         }
     }
 
-    protected void setOpen(boolean p_25196_) {
+    protected void setOpen(boolean open) {
         if (this.hasDoor) {
             BlockState blockstate = this.mob.getCommandSenderWorld().getBlockState(this.doorPos);
-            BlockState blockstateAbove = this.mob.getCommandSenderWorld().getBlockState(this.doorPos.above());
+
             if (blockstate.getBlock() instanceof DoorBlock) {
-                ((DoorBlock)blockstate.getBlock()).setOpen(this.mob, this.mob.getCommandSenderWorld(), blockstate, this.doorPos, p_25196_);
-                ((DoorBlock)blockstate.getBlock()).setOpen(this.mob, this.mob.getCommandSenderWorld(), blockstateAbove, this.doorPos.above(), p_25196_);
-            }
-            else if(blockstate.getBlock() instanceof FenceGateBlock){
+                ((DoorBlock) blockstate.getBlock()).setOpen(this.mob, this.mob.getCommandSenderWorld(), blockstate, this.doorPos, open);
+            } else if (blockstate.getBlock() instanceof FenceGateBlock) {
                 useGate(blockstate, this.mob.getCommandSenderWorld(), doorPos, this.mob);
-                useGate(blockstateAbove, this.mob.getCommandSenderWorld(), doorPos.above(), this.mob);
+            }
+
+            for(Direction direction: Direction.values()){
+                if(direction.equals(Direction.DOWN)) continue;
+
+                BlockPos blockPos = this.doorPos.relative(direction);
+                BlockState state = this.mob.getCommandSenderWorld().getBlockState(blockPos);
+
+                if (state.getBlock() instanceof DoorBlock) {
+                    ((DoorBlock) blockstate.getBlock()).setOpen(this.mob, this.mob.getCommandSenderWorld(), blockstate, this.doorPos, open);
+                } else if (state.getBlock() instanceof FenceGateBlock) {
+                    useGate(blockstate, this.mob.getCommandSenderWorld(), blockPos, this.mob);
+                }
             }
         }
-
     }
 
     public boolean canUse() {
