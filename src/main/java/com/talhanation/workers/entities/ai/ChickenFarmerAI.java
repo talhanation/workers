@@ -112,27 +112,31 @@ public class ChickenFarmerAI extends AnimalFarmerAI {
 
         if (throwEggs && animalFarmer instanceof ChickenFarmerEntity chickenFarmer && chickenFarmer.getUseEggs()){
             if(hasEggs()){
-
                 this.animalFarmer.getLookControl().setLookAt(animalFarmer.getStartPos().getX(), animalFarmer.getStartPos().getY(), animalFarmer.getStartPos().getZ(), 10.0F, (float) this.animalFarmer.getMaxHeadXRot());
+                double distance = animalFarmer.getStartPos().distSqr(animalFarmer.getOnPos());
 
-                animalFarmer.level.playSound(null, animalFarmer.getX(), animalFarmer.getY(), animalFarmer.getZ(), SoundEvents.EGG_THROW, SoundSource.PLAYERS, 0.5F, 0.4F / (animalFarmer.getRandom().nextFloat() * 0.4F + 0.8F));
-                ThrownEgg thrownegg = new ThrownEgg(animalFarmer.level, animalFarmer);
-                thrownegg.setItem(new ItemStack(Items.EGG));
+                if(distance <= 15F){
+                    animalFarmer.level.playSound(null, animalFarmer.getX(), animalFarmer.getY(), animalFarmer.getZ(), SoundEvents.EGG_THROW, SoundSource.PLAYERS, 0.5F, 0.4F / (animalFarmer.getRandom().nextFloat() * 0.4F + 0.8F));
+                    ThrownEgg thrownegg = new ThrownEgg(animalFarmer.level, animalFarmer);
+                    thrownegg.setItem(new ItemStack(Items.EGG));
 
-                double d0 = animalFarmer.getStartPos().getX() - this.animalFarmer.getX();
-                double d2 = animalFarmer.getStartPos().getZ() - this.animalFarmer.getZ();
+                    double d0 = animalFarmer.getStartPos().getX() - this.animalFarmer.getX();
+                    double d2 = animalFarmer.getStartPos().getZ() - this.animalFarmer.getZ();
 
-                thrownegg.shoot(d0, 0, d2, 0.1F, 0F);
+                    thrownegg.shoot(d0, 0, d2, 0.1F, 0F);
 
-                if(animalFarmer.level.addFreshEntity(thrownegg)){
-                    animalFarmer.workerSwingArm();
-                    consumeEggs();
+                    if(animalFarmer.level.addFreshEntity(thrownegg)){
+                        animalFarmer.workerSwingArm();
+                        consumeEggs();
+                    }
+                    else{
+                        slaughtering = false;
+                        breeding = true;
+                        throwEggs = false;
+                    }
                 }
-                else{
-                    slaughtering = false;
-                    breeding = true;
-                    throwEggs = false;
-                }
+                else
+                    this.animalFarmer.walkTowards(animalFarmer.getStartPos(), 1);
 
             }
             else{
