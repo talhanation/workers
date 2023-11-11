@@ -1,8 +1,8 @@
 package com.talhanation.workers.entities.ai;
 
-import com.talhanation.workers.Main;
 import com.talhanation.workers.Translatable;
 import com.talhanation.workers.entities.AbstractWorkerEntity;
+import com.talhanation.workers.entities.ChickenFarmerEntity;
 import com.talhanation.workers.entities.MinerEntity;
 import net.minecraft.core.BlockPos;
 import net.minecraft.sounds.SoundEvents;
@@ -78,6 +78,10 @@ public class DepositItemsInChestGoal extends Goal {
                         this.reequipTorch();
                     }
 
+                    if(this.worker instanceof ChickenFarmerEntity chickenFarmer && chickenFarmer.getUseEggs()){
+                        this.getEggsFromChest();
+                    }
+
                     timer = 50;
                     setTimer = true;
                 }
@@ -134,6 +138,17 @@ public class DepositItemsInChestGoal extends Goal {
         for (int i = 0; i < container.getContainerSize(); i++) {
             ItemStack stack = container.getItem(i);
             if(stack.is(Items.TORCH)){
+                worker.getInventory().addItem(stack.copy());
+                container.removeItemNoUpdate(i);
+                break;
+            }
+        }
+    }
+
+    private void getEggsFromChest(){
+        for (int i = 0; i < container.getContainerSize(); i++) {
+            ItemStack stack = container.getItem(i);
+            if(stack.is(Items.EGG)){
                 worker.getInventory().addItem(stack.copy());
                 container.removeItemNoUpdate(i);
                 break;
