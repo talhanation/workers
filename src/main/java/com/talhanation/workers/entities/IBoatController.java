@@ -10,6 +10,7 @@ import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.pathfinder.Node;
 import net.minecraft.world.phys.Vec3;
 
+import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 
@@ -25,6 +26,7 @@ public interface IBoatController {
     float getPrecisionMin();
     float getPrecisionMax();
     void setSailPos(BlockPos pos);
+    int coolDown = 0;
 
     default void updateBoatControl(double posX, double posZ, double speedFactor, double turnFactor, Node node){
         if(this.getWorker().getVehicle() instanceof Boat boat && boat.getPassengers().get(0).equals(this.getWorker())) {
@@ -213,24 +215,37 @@ public interface IBoatController {
     }
 
     default void setSmallShipsSailState(Boat boat, int state){
-        try{
-            Class<?> sailableClass = Class.forName("com.talhanation.smallships.world.entity.ship.abilities.Sailable");
-            if(sailableClass.isInstance(boat)){
-                Object sailable = sailableClass.cast(boat);
+        try {
+            Class<?> shipClass = Class.forName("com.talhanation.smallships.world.entity.ship.Ship");
+            Field coolDownFlied = shipClass.getField("sailStateCooldown");
+            int coolDown = coolDownFlied.getInt(boat);
 
-                Method sailableClassSetSailState = sailableClass.getMethod("setSailState", byte.class);
-                Method sailableClassGetSailState = sailableClass.getMethod("getSailState");
+            if(coolDown == 0){
+                try{
+                    Class<?> sailableClass = Class.forName("com.talhanation.smallships.world.entity.ship.abilities.Sailable");
+                    if(sailableClass.isInstance(boat)){
+                        Object sailable = sailableClass.cast(boat);
+                        Method sailableClassGetSailStateCooldown = sailableClass.getMethod("getSailStateCooldown");
+                        int configCoolDown = (int) sailableClassGetSailStateCooldown.invoke(sailable);
 
-                byte currentSail = (byte) sailableClassGetSailState.invoke(sailable);
-                if(currentSail != (byte) state) sailableClassSetSailState.invoke(sailable, (byte) state);
+
+                        Method sailableClassSetSailState = sailableClass.getMethod("setSailState", byte.class);
+                        Method sailableClassGetSailState = sailableClass.getMethod("getSailState");
+                        byte currentSail = (byte) sailableClassGetSailState.invoke(sailable);
+                        if(currentSail != (byte) state) sailableClassSetSailState.invoke(sailable, (byte) state);
+
+                        coolDownFlied.setInt(boat, configCoolDown);
+                    }
+
+                }
+                catch (ClassNotFoundException | IllegalAccessException | NoSuchMethodException | InvocationTargetException e) {
+                    Main.LOGGER.info("SailableClass was not found");
+                }
             }
 
+            } catch (ClassNotFoundException | NoSuchFieldException | IllegalAccessException e ) {
+            Main.LOGGER.info("shipClass was not found");
         }
-        catch (ClassNotFoundException | IllegalAccessException | NoSuchMethodException | InvocationTargetException e) {
-            Main.LOGGER.info("SailableClass was not found");
-        }
-
-
     }
 
     default float getVelocityResistance(){
