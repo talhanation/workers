@@ -7,6 +7,7 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.world.level.block.state.BlockState;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.network.NetworkEvent;
 import net.minecraftforge.network.PacketDistributor;
@@ -41,9 +42,12 @@ public class MessageMerchantAddWayPoint implements Message<MessageMerchantAddWay
     }
 
     private void addWayPoint(ServerPlayer player, MerchantEntity merchant){
-        BlockPos pos = merchant.getOnPos();
-
+        BlockPos pos;
+        if(merchant.isInWater()) pos = merchant.getOnPos().above();
+        else pos = merchant.getOnPos();
         //merchant.tellPlayer(player, Component.literal("Pos: " + pos + " was added."));
+        BlockState state = merchant.getCommandSenderWorld().getBlockState(pos);
+        if(state.isAir()) pos = pos.below();
 
         merchant.setStartPos(pos); // adds waypoint without starting work
 

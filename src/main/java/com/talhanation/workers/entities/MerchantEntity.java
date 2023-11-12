@@ -1,5 +1,6 @@
 package com.talhanation.workers.entities;
 
+import com.google.common.collect.ImmutableSet;
 import com.talhanation.workers.Main;
 import com.talhanation.workers.Translatable;
 import com.talhanation.workers.config.WorkersModConfig;
@@ -17,6 +18,7 @@ import net.minecraft.network.syncher.EntityDataAccessor;
 import net.minecraft.network.syncher.EntityDataSerializers;
 import net.minecraft.network.syncher.SynchedEntityData;
 import net.minecraft.tags.BiomeTags;
+import net.minecraft.tags.BlockTags;
 import net.minecraft.world.entity.*;
 import net.minecraft.world.entity.ai.attributes.AttributeSupplier;
 import net.minecraft.world.entity.ai.attributes.Attributes;
@@ -29,6 +31,7 @@ import net.minecraft.world.Containers;
 import net.minecraft.world.entity.vehicle.Boat;
 import net.minecraft.world.inventory.AbstractContainerMenu;
 import net.minecraft.world.MenuProvider;
+import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
 import net.minecraft.nbt.CompoundTag;
@@ -41,8 +44,10 @@ import net.minecraft.world.DifficultyInstance;
 import net.minecraft.world.level.ServerLevelAccessor;
 import net.minecraft.world.level.Level;
 import net.minecraft.server.level.ServerLevel;
+import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.state.BlockState;
+import net.minecraftforge.common.Tags;
 import net.minecraftforge.network.NetworkHooks;
 
 import javax.annotation.Nullable;
@@ -527,9 +532,9 @@ public class MerchantEntity extends AbstractWorkerEntity implements IBoatControl
             BlockPos prevPos = this.WAYPOINTS.get(WAYPOINTS.size() -1);
             double distance = pos.distSqr(prevPos);
 
-            boolean notNearFromCoastToWater = !isWaterBlockPos(prevPos) && isWaterBlockPos(pos) && distance >= 50F;
-            boolean notNearInRiverWater = this.getCommandSenderWorld().getBiome(pos).is(BiomeTags.IS_RIVER) && isWaterBlockPos(prevPos) && isWaterBlockPos(pos) && distance >= 4000F;
-            boolean notNearFromWaterToCoast = isWaterBlockPos(prevPos) && !isWaterBlockPos(pos) && distance >= 50F;
+            boolean notNearFromCoastToWater = !isWaterBlockPos(prevPos) && isWaterBlockPos(pos) && distance >= 75F;
+            boolean notNearInRiverWater = this.getCommandSenderWorld().getBiome(pos).is(BiomeTags.IS_RIVER) && isWaterBlockPos(prevPos) && isWaterBlockPos(pos) && distance >= 5000F;
+            boolean notNearFromWaterToCoast = isWaterBlockPos(prevPos) && !isWaterBlockPos(pos) && distance >= 75F;
 
             if(notNearFromCoastToWater || notNearInRiverWater || notNearFromWaterToCoast){
                 if(this.getOwner() != null) this.tellPlayer(this.getOwner(), Translatable.TEXT_WAYPOINT_NOT_NEAR_TO_PREV);
@@ -708,21 +713,16 @@ public class MerchantEntity extends AbstractWorkerEntity implements IBoatControl
         else return false;
     }
 
-    public boolean isWaterBlockPos(BlockPos pos){
-        for(int i = 0; i < 3; i++){
-            BlockPos pos1 = pos.below(i);
-            BlockPos pos2 = pos.above(i);
-            BlockState state1 = this.getCommandSenderWorld().getBlockState(pos1);
-            BlockState state2 = this.getCommandSenderWorld().getBlockState(pos2);
+    private static final Set<Block> ALLOWED_WATER_BLOCKS = ImmutableSet.of(
+            Blocks.WATER, Blocks.KELP, Blocks.KELP_PLANT, Blocks.SEAGRASS, Blocks.TALL_SEAGRASS);
 
-            if(!state1.is(Blocks.WATER) && !state1.is(Blocks.KELP) && !state1.is(Blocks.KELP_PLANT) && !state1.is(Blocks.SEAGRASS) && !state1.is(Blocks.TALL_SEAGRASS) && !state2.is(Blocks.KELP) && !state2.is(Blocks.KELP_PLANT) && !state2.is(Blocks.WATER) && !state2.is(Blocks.SEAGRASS) && !state2.is(Blocks.TALL_SEAGRASS)){
-                return false;
-            }
-        }
-        return true;
+    public boolean isWaterBlockPos(BlockPos pos){
+        BlockState state = this.getCommandSenderWorld().getBlockState(pos);
+
+        return ALLOWED_WATER_BLOCKS.contains(state.getBlock());
     }
 
-    public boolean isFreeWater(double x, double y, double z){
+    public boolean  isFreeWater(double x, double y , double z){
         for(int i = -2; i <= 2; i++) {
             for (int k = -2; k <= 2; k++) {
                 BlockPos pos = new BlockPos((int) x, (int) y, (int) z).offset(i, 0, k);
@@ -734,7 +734,7 @@ public class MerchantEntity extends AbstractWorkerEntity implements IBoatControl
         }
         return true;
     }
-
+    //-1721 67 -902
     public float getPrecisionMin(){
         int base = 50;
         if(this.getVehicle().getEncodeId().contains("smallships")){
