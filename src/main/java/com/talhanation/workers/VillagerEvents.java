@@ -9,6 +9,7 @@ import com.talhanation.workers.init.ModEntityTypes;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.ai.goal.target.NearestAttackableTargetGoal;
+import net.minecraft.world.entity.ai.memory.MemoryModuleType;
 import net.minecraft.world.entity.animal.horse.AbstractHorse;
 import net.minecraft.world.entity.monster.*;
 import net.minecraft.world.entity.npc.Villager;
@@ -79,7 +80,12 @@ public class VillagerEvents {
         if (worker != null) {
             worker.copyPosition(villager);
             worker.initSpawn();
-            villager.remove(Entity.RemovalReason.DISCARDED);
+
+            if(WorkersModConfig.WorkersTablesPOIReleasing.get()) villager.releasePoi(MemoryModuleType.JOB_SITE);
+            villager.releasePoi(MemoryModuleType.HOME);
+            villager.releasePoi(MemoryModuleType.MEETING_POINT);
+
+            villager.discard();
             villager.level.addFreshEntity(worker);
         }
     }
