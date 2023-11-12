@@ -8,7 +8,6 @@ import com.talhanation.workers.entities.ai.navigation.WorkersPathNavigation;
 import com.talhanation.workers.entities.ai.navigation.door.WorkersOpenDoorGoal;
 import com.talhanation.workers.inventory.WorkerHireContainer;
 import com.talhanation.workers.network.MessageHireGui;
-
 import net.minecraft.core.BlockPos;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.FriendlyByteBuf;
@@ -638,12 +637,14 @@ public abstract class AbstractWorkerEntity extends AbstractChunkLoaderEntity {
             this.setIsWorking(false);
         }
     }
-
+	
     public void tellPlayer(LivingEntity player, Component message) {
-        Component dialogue = Component.literal(this.getName().getString())
-            .append(": ")
-            .append(message);
-        player.sendSystemMessage(dialogue);
+		if(WorkersModConfig.OwnerReceiveInfo.get()){
+			Component dialogue = Component.literal(this.getName().getString())
+				.append(": ")
+				.append(message);
+			player.sendSystemMessage(dialogue);
+		}
     }
 
     public void walkTowards(BlockPos pos, double speed) {
