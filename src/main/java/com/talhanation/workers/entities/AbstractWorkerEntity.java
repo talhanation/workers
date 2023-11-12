@@ -640,10 +640,12 @@ public abstract class AbstractWorkerEntity extends AbstractChunkLoaderEntity {
     }
 
     public void tellPlayer(LivingEntity player, Component message) {
-        Component dialogue = Component.literal(this.getName().getString())
-            .append(": ")
-            .append(message);
-        player.sendSystemMessage(dialogue);
+		if(WorkersModConfig.OwnerReceiveInfo.get()){
+			Component dialogue = Component.literal(this.getName().getString())
+				.append(": ")
+				.append(message);
+			player.sendSystemMessage(dialogue);
+		}
     }
 
     public void walkTowards(BlockPos pos, double speed) {

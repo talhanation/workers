@@ -31,7 +31,8 @@ public class WorkersModConfig {
     public static ForgeConfigSpec.BooleanValue CommandScreenToggle;
     public static ForgeConfigSpec.BooleanValue MonsterAttackWorkers;
     public static ForgeConfigSpec.BooleanValue PillagerAttackWorkers;
-
+    public static ForgeConfigSpec.BooleanValue OwnerReceiveInfo;
+    public static ForgeConfigSpec.BooleanValue WorkersTablesPOIReleasing;
 
     static{
         VERSION = BUILDER.comment("\n" +"##Version, do not change!##")
@@ -69,6 +70,14 @@ public class WorkersModConfig {
          */
         BUILDER.pop();
         BUILDER.comment("Workers Config:").push("Workers");
+
+        OwnerReceiveInfo = BUILDER.comment("""
+
+                        Should Owners receive info's about the worker through text?
+                        \t(takes effect after restart)
+                        \tdefault: true""")
+                .worldRestart()
+                .define("OwnerReceiveInfo", true);
 
         WorkerChunkLoading = BUILDER.comment("""
                         
@@ -176,6 +185,20 @@ public class WorkersModConfig {
                         \tdefault: true""")
                 .worldRestart()
                 .define("PillagerAttackWorkers", true);
+
+        BUILDER.pop();
+        BUILDER.comment("Recruit Village Config:").push("Villages");
+
+        WorkersTablesPOIReleasing = BUILDER.comment("""
+
+                        ----Should Villager Workers that were created with Tables release the POI for other Villagers?----
+                        ----True -> allows multiple villagers to become a worker with one table.----
+                        ----False -> only one villager can become a recruit with one table.----
+                        \t(takes effect after restart)
+                        \tdefault: true""")
+                .worldRestart()
+                .define("WorkersTablesPOIReleasing", true);
+
 
         /*
         BeekeeperCost = BUILDER.comment("""
