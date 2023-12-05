@@ -1,4 +1,4 @@
-package com.talhanation.workers.client.gui;
+ package com.talhanation.workers.client.gui;
 
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.talhanation.workers.Main;
@@ -64,37 +64,36 @@ public class CommandScreen extends ScreenBase<CommandMenu> {
 
     private void setButtons(){
         this.clearWidgets();
+        if(worker_ids != null && worker_ids.size() > 0){
+            if(!worker_names.isEmpty() && index < worker_names.size()) this.name = worker_names.get(index);
 
-        if(!worker_names.isEmpty() && index < worker_names.size()) this.name = worker_names.get(index);
+            int zeroLeftPos = leftPos + 150;
+            int zeroTopPos = topPos - 40;
 
-        int zeroLeftPos = leftPos + 150;
-        int zeroTopPos = topPos - 40;
+            this.rightButton = cycleButtonRight(zeroLeftPos, zeroTopPos);
+            this.leftButton = cycleButtonLeft(zeroLeftPos, zeroTopPos);
 
-        this.rightButton = cycleButtonRight(zeroLeftPos, zeroTopPos);
-        this.leftButton = cycleButtonLeft(zeroLeftPos, zeroTopPos);
+            this.blockpos = getBlockPos();
 
-        this.blockpos = getBlockPos();
+            this.followButton = setFollow(zeroLeftPos, zeroTopPos);
+            this.workPosButton = setWorkPosition(blockpos, zeroLeftPos, zeroTopPos);
+            this.sleepPosButton = setSleepPosition(blockpos, zeroLeftPos, zeroTopPos);
+            this.chestPosButton = setChestPosition(blockpos, zeroLeftPos, zeroTopPos);
 
-        this.followButton = setFollow(zeroLeftPos, zeroTopPos);
-        this.workPosButton = setWorkPosition(blockpos, zeroLeftPos, zeroTopPos);
-        this.sleepPosButton = setSleepPosition(blockpos, zeroLeftPos, zeroTopPos);
-        this.chestPosButton = setChestPosition(blockpos, zeroLeftPos, zeroTopPos);
+            this.leftButton.active = canCycleLeft();
+            this.rightButton.active = canCycleRight();
 
-        this.leftButton.active = canCycleLeft();
-        this.rightButton.active = canCycleRight();
+            this.workPosButton.active = blockpos != null;
+            this.sleepPosButton.active = blockpos != null && getBlockState().isBed(player.getCommandSenderWorld(), blockpos, player);
+            this.chestPosButton.active = blockpos != null && player.getCommandSenderWorld().getBlockEntity(blockpos) instanceof Container;
 
-        this.workPosButton.active = blockpos != null;
-        this.sleepPosButton.active = blockpos != null && getBlockState().isBed(player.level, blockpos, player);
-        this.chestPosButton.active = blockpos != null && player.level.getBlockEntity(blockpos) instanceof Container;
-
-
-        //Buttons for special workers
-        if(name != null && name.contains("Merchant")){
-            this.startTravelButton = this.setStartTravel(zeroLeftPos, zeroTopPos);
-            this.stopTravelButton = this.setStopTravel(zeroLeftPos, zeroTopPos);
-            this.returnTravelButton = this.setReturnTravel(zeroLeftPos, zeroTopPos);
+            //Buttons for special workers
+            if(name != null && name.contains("Merchant")){
+                this.startTravelButton = this.setStartTravel(zeroLeftPos, zeroTopPos);
+                this.stopTravelButton = this.setStopTravel(zeroLeftPos, zeroTopPos);
+                this.returnTravelButton = this.setReturnTravel(zeroLeftPos, zeroTopPos);
+            }
         }
-
     }
 
     @Override
