@@ -99,7 +99,8 @@ public class Main {
             MessageMerchantSetAutoStartTravel.class,
             MessageFollow.class,
             MessageChickenFarmerUseEggs.class,
-            MessageMerchantSetSendInfo.class
+            MessageMerchantSetSendInfo.class,
+            MessageLumberjackReplant.class
         };
         for (int i = 0; i < messages.length; i++) CommonRegistry.registerMessage(SIMPLE_CHANNEL, i, messages[i]);
         LOGGER.info("Messages registered");
