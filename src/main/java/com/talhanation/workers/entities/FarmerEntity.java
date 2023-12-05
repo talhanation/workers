@@ -10,6 +10,7 @@ import com.talhanation.workers.network.MessageOpenGuiWorker;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.nbt.ListTag;
+import net.minecraft.tags.BlockTags;
 import net.minecraft.world.entity.*;
 import net.minecraft.world.item.HoeItem;
 import net.minecraft.world.level.block.Block;
@@ -33,6 +34,7 @@ import net.minecraft.world.DifficultyInstance;
 import net.minecraft.world.level.ServerLevelAccessor;
 import net.minecraft.world.level.Level;
 import net.minecraft.server.level.ServerLevel;
+import net.minecraftforge.common.Tags;
 import net.minecraftforge.network.NetworkHooks;
 import org.jetbrains.annotations.NotNull;
 
@@ -69,6 +71,13 @@ public class FarmerEntity extends AbstractWorkerEntity {
             Blocks.BEETROOTS,
             Blocks.MELON,
             Blocks.PUMPKIN);
+
+    //HoeItem
+    public static final Set<Block> TILLABLES = ImmutableSet.of(
+            Blocks.DIRT,
+            Blocks.ROOTED_DIRT,
+            Blocks.COARSE_DIRT,
+            Blocks.GRASS_BLOCK);
 
     public FarmerEntity(EntityType<? extends AbstractWorkerEntity> entityType, Level world) {
         super(entityType, world);

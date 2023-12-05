@@ -170,7 +170,7 @@ public class MinerAI extends Goal {
                 case PIT_8X8X8 -> {
                     if (miner.shouldIgnoreBlock(blockstate) || block1 == Blocks.OAK_PLANKS) {
                         miner.blocks++;
-                        if (block1 != Blocks.OAK_PLANKS) placePlanks();
+                        if (block1 != Blocks.OAK_PLANKS) placePlanks(blockstate);
                     }
 
                     if (miner.blocks == 8) {
@@ -229,7 +229,7 @@ public class MinerAI extends Goal {
                     boolean canNotBreak = !miner.canBreakBlock(blockstate);
                     if (ignoreBlock || canNotBreak || block1 == Blocks.OAK_PLANKS) {
                         miner.blocks++;
-                        if (block1 != Blocks.OAK_PLANKS) placePlanks();
+                        if (block1 != Blocks.OAK_PLANKS) placePlanks(blockstate);
                         //if(shouldPlaceTorch(1, ,4)) placeTorch();
                     }
 
@@ -400,10 +400,10 @@ public class MinerAI extends Goal {
         return false;
     }
 
-    public void placePlanks(){
-        if (shouldPlacePlanks()) {// && hasPlanksInInv()){
-            miner.level.setBlock(this.minePos, Blocks.OAK_PLANKS.defaultBlockState(), 3);
-            miner.level.playSound(null, this.minePos.getX(), this.minePos.getY(), this.minePos.getZ(), SoundEvents.WOOD_PLACE, SoundSource.BLOCKS, 1.0F, 1.0F);
+    public void placePlanks(BlockState state){
+        if (shouldPlacePlanks() && miner.canBreakBlock(state)) {// && hasPlanksInInv()){
+            miner.getCommandSenderWorld().setBlock(this.minePos, Blocks.OAK_PLANKS.defaultBlockState(), 3);
+            miner.getCommandSenderWorld().playSound(null, this.minePos.getX(), this.minePos.getY(), this.minePos.getZ(), SoundEvents.WOOD_PLACE, SoundSource.BLOCKS, 1.0F, 1.0F);
         }
     }
 

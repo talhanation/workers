@@ -10,12 +10,14 @@ import net.minecraft.world.SimpleContainer;
 import net.minecraft.world.entity.ai.goal.Goal;
 import net.minecraft.world.entity.vehicle.Boat;
 import net.minecraft.world.item.BoneMealItem;
+import net.minecraft.world.item.HoeItem;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
 import net.minecraft.world.level.block.*;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.material.FluidState;
 import net.minecraft.world.level.material.Fluids;
+import net.minecraftforge.common.Tags;
 import net.minecraftforge.event.ForgeEventFactory;
 
 import java.util.EnumSet;
@@ -216,30 +218,35 @@ public class FarmerAI extends Goal {
     }
     private void prepareWaterPos(){
         if (waterPos != null) {
-            FluidState waterBlockState = this.farmer.level.getFluidState(waterPos);
+            BlockState blockState = this.farmer.getCommandSenderWorld().getBlockState(waterPos);
+            FluidState waterBlockState = this.farmer.getCommandSenderWorld().getFluidState(waterPos);
 
             if (waterBlockState != Fluids.WATER.defaultFluidState() || waterBlockState != Fluids.FLOWING_WATER.defaultFluidState()){
-                farmer.level.setBlock(waterPos, Blocks.WATER.defaultBlockState(), 3);
-                farmer.level.playSound(null, waterPos.getX(), waterPos.getY(), waterPos.getZ(),
-                        SoundEvents.BUCKET_EMPTY, SoundSource.BLOCKS, 1.0F, 1.0F);
+                if(FarmerEntity.TILLABLES.contains(blockState.getBlock())){
+                    farmer.getCommandSenderWorld().setBlock(waterPos, Blocks.WATER.defaultBlockState(), 3);
+                    farmer.getCommandSenderWorld().playSound(null, waterPos.getX(), waterPos.getY(), waterPos.getZ(),
+                            SoundEvents.BUCKET_EMPTY, SoundSource.BLOCKS, 1.0F, 1.0F);
+                }
+                else return;
             }
             farmer.workerSwingArm();
         }
     }
     private void prepareFarmLand(BlockPos blockPos) {
         // Make sure the center block remains waterlogged.
-
-        if(blockPos != waterPos) {
-            farmer.level.setBlock(blockPos, Blocks.FARMLAND.defaultBlockState(), 3);
-            farmer.level.playSound(null, blockPos.getX(), blockPos.getY(), blockPos.getZ(), SoundEvents.HOE_TILL,
+        BlockState blockState = this.farmer.getCommandSenderWorld().getBlockState(blockPos);
+        Block block = blockState.getBlock();
+        if(blockPos != waterPos && FarmerEntity.TILLABLES.contains(block)) {
+            farmer.getCommandSenderWorld().setBlock(blockPos, Blocks.FARMLAND.defaultBlockState(), 3);
+            farmer.getCommandSenderWorld().playSound(null, blockPos.getX(), blockPos.getY(), blockPos.getZ(), SoundEvents.HOE_TILL,
                     SoundSource.BLOCKS, 1.0F, 1.0F);
-            BlockState blockState = this.farmer.level.getBlockState(blockPos.above());
-            Block block = blockState.getBlock();
+            BlockState blockStateAbove = this.farmer.getCommandSenderWorld().getBlockState(blockPos.above());
+            Block blockAbove = blockStateAbove.getBlock();
             farmer.workerSwingArm();
 
-            if (block instanceof BushBlock || block instanceof GrowingPlantBlock) {
-                farmer.level.destroyBlock(blockPos.above(), false);
-                farmer.level.playSound(null, blockPos.getX(), blockPos.getY(), blockPos.getZ(), SoundEvents.GRASS_BREAK,
+            if (blockAbove instanceof BushBlock || blockAbove instanceof GrowingPlantBlock) {
+                farmer.getCommandSenderWorld().destroyBlock(blockPos.above(), false);
+                farmer.getCommandSenderWorld().playSound(null, blockPos.getX(), blockPos.getY(), blockPos.getZ(), SoundEvents.GRASS_BREAK,
                         SoundSource.BLOCKS, 1.0F, 1.0F);
             }
         }
@@ -257,8 +264,8 @@ public class FarmerAI extends Goal {
 
                 Block block = blockState.getBlock();
 
-                boolean canSustainSeeds = block == Blocks.GRASS_BLOCK || block == Blocks.DIRT;
-                boolean hasSpaceAbove = (aboveBlockState.is(Blocks.AIR) || aboveBlockState.is(BlockTags.REPLACEABLE_PLANTS));
+                boolean canSustainSeeds = FarmerEntity.TILLABLES.contains(block);
+                boolean hasSpaceAbove = (aboveBlockState.is(Blocks.AIR) || aboveBlockState.is(BlockTags.REPLACEABLE));
 
                 if (canSustainSeeds && hasSpaceAbove) {
                     return blockPos;
@@ -267,6 +274,8 @@ public class FarmerAI extends Goal {
         }
         return null;
     }
+
+
 
     public BlockPos getPlantPos() {
         // int range = 8;
