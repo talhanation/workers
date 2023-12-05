@@ -122,14 +122,15 @@ public class ChickenFarmerAI extends AnimalFarmerAI {
 
                     thrownegg.shoot(d0, 0, d2, 0.1F, 0F);
 
-                if(animalFarmer.getCommandSenderWorld().addFreshEntity(thrownegg)){
-                    animalFarmer.workerSwingArm();
-                    consumeEggs();
-                }
-                else{
-                    slaughtering = false;
-                    breeding = true;
-                    throwEggs = false;
+                    if(animalFarmer.getCommandSenderWorld().addFreshEntity(thrownegg)){
+                        animalFarmer.workerSwingArm();
+                        consumeEggs();
+                    }
+                    else{
+                        slaughtering = false;
+                        breeding = true;
+                        throwEggs = false;
+                    }
                 }
                 else
                     this.animalFarmer.walkTowards(animalFarmer.getStartPos(), 1);

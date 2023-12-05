@@ -112,7 +112,7 @@ public class LumberjackAI extends Goal {
                     if (this.mineBlock(chopPos))
                         this.lumber.increaseFarmedItems();
 
-                    if (lumber.getCommandSenderWorld().getBlockState(chopPos.below()).is(Blocks.DIRT) && this.lumber.getCommandSenderWorld().isEmptyBlock(chopPos)) {
+                    if(lumber.getReplantSaplings() && lumber.getCommandSenderWorld().getBlockState(chopPos.below()).is(Blocks.DIRT) && this.lumber.getCommandSenderWorld().isEmptyBlock(chopPos)) {
                         plantSaplingFromInv(chopPos);
                     }
                 }
