@@ -20,7 +20,7 @@ public class Translatable {
     public static final MutableComponent TEXT_BUTTON_TRAVEL_STOP = new TranslatableComponent("gui.workers.button.travel_stop");
     public static final MutableComponent TEXT_BUTTON_FOLLOW = new TranslatableComponent("gui.workers.button.follow");
 	public static final MutableComponent TOOLTIP_SEND_INFO =  new TranslatableComponent("gui.workers.tooltip.sendInfo");
-
+	public static final MutableComponent TOOLTIP_LUMBER_REPLANT = new TranslatableComponent("gui.workers.tooltip.lumberjackReplant");
 
     public static MutableComponent TEXT_HELLO(String job) {
         return new TranslatableComponent("chat.workers.text.hello", job);

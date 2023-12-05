@@ -40,12 +40,7 @@ import java.util.function.Predicate;
 
 import net.minecraft.world.entity.AgeableMob;
 import net.minecraft.world.entity.ai.goal.FloatGoal;
-import net.minecraft.world.entity.ai.goal.GolemRandomStrollInVillageGoal;
-import net.minecraft.world.entity.ai.goal.LookAtPlayerGoal;
-import net.minecraft.world.entity.ai.goal.MoveBackToVillageGoal;
 import net.minecraft.world.entity.ai.goal.PanicGoal;
-import net.minecraft.world.entity.ai.goal.RandomLookAroundGoal;
-import net.minecraft.world.entity.ai.goal.WaterAvoidingRandomStrollGoal;
 import org.jetbrains.annotations.NotNull;
 
 public class LumberjackEntity extends AbstractWorkerEntity {
@@ -54,6 +49,7 @@ public class LumberjackEntity extends AbstractWorkerEntity {
             item) -> (!item.hasPickUpDelay() && item.isAlive() && this.wantsToPickUp(item.getItem()));
 
     private static final EntityDataAccessor<Integer> STATE = SynchedEntityData.defineId(LumberjackEntity.class, EntityDataSerializers.INT);
+    private static final EntityDataAccessor<Boolean> REPLANT = SynchedEntityData.defineId(LumberjackEntity.class, EntityDataSerializers.BOOLEAN);
 
     public LumberjackEntity(EntityType<? extends AbstractWorkerEntity> entityType, Level world) {
         super(entityType, world);
@@ -95,17 +91,20 @@ public class LumberjackEntity extends AbstractWorkerEntity {
     protected void defineSynchedData() {
         super.defineSynchedData();
         this.entityData.define(STATE, 0);
+        this.entityData.define(REPLANT, true);
     }
 
     public void addAdditionalSaveData(@NotNull CompoundTag nbt) {
         super.addAdditionalSaveData(nbt);
         nbt.putInt("State", this.getState());
+        nbt.putBoolean("Replant", this.getReplantSaplings());
     }
 
     //Boat
     public void readAdditionalSaveData(@NotNull CompoundTag nbt) {
         super.readAdditionalSaveData(nbt);
         this.setState(nbt.getInt("State"));
+        this.setReplantSaplings(nbt.getBoolean("Replant"));
     }
 
     @Override
@@ -199,6 +198,14 @@ public class LumberjackEntity extends AbstractWorkerEntity {
         } else {
             Main.SIMPLE_CHANNEL.sendToServer(new MessageOpenGuiWorker(player, this.getUUID()));
         }
+    }
+
+    public void setReplantSaplings(boolean replant) {
+        this.entityData.set(REPLANT, replant);
+    }
+
+    public boolean getReplantSaplings() {
+        return entityData.get(REPLANT);
     }
 
     public enum State{
