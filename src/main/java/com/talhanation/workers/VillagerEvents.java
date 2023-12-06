@@ -39,7 +39,7 @@ public class VillagerEvents {
             illager.targetSelector.addGoal(4, new NearestAttackableTargetGoal<>(illager, AbstractWorkerEntity.class, true));
         }
 
-        if (WorkersModConfig.MonsterAttackWorkers.get() && entity instanceof Monster) {
+        if (WorkersModConfig.MonsterAttackWorkers.get() && entity instanceof Monster && !(entity instanceof EnderMan)) {
             Monster monster = (Monster) entity;
             if (!(monster instanceof Creeper))
                 monster.targetSelector.addGoal(4, new NearestAttackableTargetGoal<>(monster, AbstractWorkerEntity.class, true));
