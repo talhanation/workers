@@ -5,6 +5,9 @@ import com.talhanation.workers.entities.AbstractWorkerEntity;
 import com.talhanation.workers.entities.ai.horse.HorseRiddenByMerchantGoal;
 import com.talhanation.workers.init.ModBlocks;
 import com.talhanation.workers.init.ModEntityTypes;
+import net.minecraft.core.BlockPos;
+import net.minecraft.network.chat.Component;
+import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.ai.goal.target.NearestAttackableTargetGoal;
@@ -21,12 +24,18 @@ import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
 import net.minecraft.world.item.trading.MerchantOffer;
 import net.minecraft.world.level.ItemLike;
+import net.minecraft.world.level.block.Block;
+import net.minecraft.world.level.block.state.BlockState;
+import net.minecraftforge.event.entity.EntityJoinWorldEvent;
+import net.minecraftforge.event.entity.living.LivingEvent;
 import net.minecraftforge.event.village.VillagerTradesEvent;
+import net.minecraftforge.event.world.BlockEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 
 import java.util.HashMap;
 import java.util.List;
 import java.util.Objects;
+import java.util.Random;
 
 public class VillagerEvents {
 
@@ -225,10 +234,10 @@ public class VillagerEvents {
             BlockState blockState = event.getState();
             Block block = blockState.getBlock();
             BlockPos blockPos = event.getPos();
-            ServerLevel level = Objects.requireNonNull(event.getLevel().getServer()).overworld();
+            ServerLevel level = Objects.requireNonNull(event.getWorld().getServer()).overworld();
             if(level != null && WorkersModConfig.ProfessionBlocksDrop.get()){
                 ItemEntity itementity = new ItemEntity(level, blockPos.getX(), blockPos.getY() + 0.5, blockPos.getZ(), block.asItem().getDefaultInstance());
-                itementity.setDeltaMovement(level.random.triangle(0.0D, 0.11485000171139836D), level.random.triangle(0.2D, 0.11485000171139836D), level.random.triangle(0.0D, 0.11485000171139836D));
+                itementity.setDeltaMovement(level.random.nextGaussian(0.0D, 0.11485000171139836D), level.random.nextGaussian(0.2D, 0.11485000171139836D), level.random.nextGaussian(0.0D, 0.11485000171139836D));
                 level.addFreshEntity(itementity);
             }
         }

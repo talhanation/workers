@@ -8,11 +8,13 @@ import com.talhanation.workers.inventory.WorkerInventoryContainer;
 import com.talhanation.workers.entities.AbstractWorkerEntity;
 import com.talhanation.workers.network.MessageLumberjackReplant;
 import de.maxhenkel.corelib.inventory.ScreenBase;
+import net.minecraft.client.gui.components.Button;
+import net.minecraft.network.chat.TextComponent;
 import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.network.chat.Component;
 
-import java.awt.*;
+
 
 public class WorkerInventoryScreen extends ScreenBase<WorkerInventoryContainer> {
 
@@ -62,7 +64,7 @@ public class WorkerInventoryScreen extends ScreenBase<WorkerInventoryContainer> 
     }
 
     private void setReplantSaplingsButton(String string) {
-        addRenderableWidget(new Button(leftPos + 190, topPos + 57, 40, 20, Component.literal(string), button1 -> {
+        addRenderableWidget(new Button(leftPos + 190, topPos + 57, 40, 20, new TextComponent(string), button1 -> {
             this.replantSaplings = !replantSaplings;
 
             Main.SIMPLE_CHANNEL.sendToServer(new MessageLumberjackReplant(worker.getUUID(), replantSaplings));
