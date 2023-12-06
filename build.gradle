@@ -37,9 +37,11 @@ mixin{
 }
 
 
-version = '1.7.5'
+
+version = '1.7.6'
 group = 'com.talhanation.workers' // http://maven.apache.org/guides/mini/guide-naming-conventions.html
 archivesBaseName = 'workers-1.19.2'
+
 
 
 java.toolchain.languageVersion = JavaLanguageVersion.of(17)
