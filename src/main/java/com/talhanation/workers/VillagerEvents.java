@@ -10,6 +10,7 @@ import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.ai.goal.target.NearestAttackableTargetGoal;
 import net.minecraft.world.entity.ai.memory.MemoryModuleType;
 import net.minecraft.world.entity.animal.horse.AbstractHorse;
+import net.minecraft.world.entity.item.ItemEntity;
 import net.minecraft.world.entity.monster.*;
 import net.minecraft.world.entity.npc.Villager;
 import net.minecraft.world.entity.npc.VillagerProfession;
@@ -25,7 +26,7 @@ import net.minecraftforge.eventbus.api.SubscribeEvent;
 
 import java.util.HashMap;
 import java.util.List;
-import java.util.Random;
+import java.util.Objects;
 
 public class VillagerEvents {
 
@@ -215,6 +216,22 @@ public class VillagerEvents {
         public MerchantOffer getOffer(Entity entity, Random random) {
             return new MerchantOffer(new ItemStack(this.buyingItem, this.buyingAmount),
                     new ItemStack(sellingItem, sellingAmount), maxUses, givenExp, priceMultiplier);
+        }
+    }
+
+    @SubscribeEvent
+    public void onProfessionBlockBreak(BlockEvent.BreakEvent event){
+        if(event.getState().getBlock().getDescriptionId().contains("workers")){
+            BlockState blockState = event.getState();
+            Block block = blockState.getBlock();
+            BlockPos blockPos = event.getPos();
+            ServerLevel level = Objects.requireNonNull(event.getLevel().getServer()).overworld();
+            if(level != null && WorkersModConfig.ProfessionBlocksDrop.get()){
+                ItemEntity itementity = new ItemEntity(level, blockPos.getX(), blockPos.getY() + 0.5, blockPos.getZ(), block.asItem().getDefaultInstance());
+                float f = 0.05F;
+                itementity.setDeltaMovement(level.random.triangle(0.0D, 0.11485000171139836D), level.random.triangle(0.2D, 0.11485000171139836D), level.random.triangle(0.0D, 0.11485000171139836D));
+                level.addFreshEntity(itementity);
+            }
         }
     }
 }
