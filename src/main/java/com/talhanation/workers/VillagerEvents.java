@@ -228,7 +228,6 @@ public class VillagerEvents {
             ServerLevel level = Objects.requireNonNull(event.getLevel().getServer()).overworld();
             if(level != null && WorkersModConfig.ProfessionBlocksDrop.get()){
                 ItemEntity itementity = new ItemEntity(level, blockPos.getX(), blockPos.getY() + 0.5, blockPos.getZ(), block.asItem().getDefaultInstance());
-                float f = 0.05F;
                 itementity.setDeltaMovement(level.random.triangle(0.0D, 0.11485000171139836D), level.random.triangle(0.2D, 0.11485000171139836D), level.random.triangle(0.0D, 0.11485000171139836D));
                 level.addFreshEntity(itementity);
             }
