@@ -5,7 +5,6 @@ import com.talhanation.workers.entities.AbstractWorkerEntity;
 import com.talhanation.workers.entities.ai.horse.HorseRiddenByMerchantGoal;
 import com.talhanation.workers.init.ModBlocks;
 import com.talhanation.workers.init.ModEntityTypes;
-
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.ai.goal.target.NearestAttackableTargetGoal;
@@ -21,11 +20,9 @@ import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
 import net.minecraft.world.item.trading.MerchantOffer;
 import net.minecraft.world.level.ItemLike;
-import net.minecraft.world.level.block.Block;
-import net.minecraftforge.event.entity.EntityJoinWorldEvent;
-import net.minecraftforge.event.entity.living.LivingEvent;
 import net.minecraftforge.event.village.VillagerTradesEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
+
 import java.util.HashMap;
 import java.util.List;
 import java.util.Random;
@@ -74,12 +71,19 @@ public class VillagerEvents {
         }
     }
 
-
     private void createWorker(Villager villager, EntityType<? extends AbstractWorkerEntity> workerType) {
         AbstractWorkerEntity worker = workerType.create(villager.level);
         if (worker != null) {
+
             worker.copyPosition(villager);
             worker.initSpawn();
+
+            for(ItemStack itemStack : villager.getInventory().items){
+                worker.getInventory().addItem(itemStack);
+            }
+
+            Component name = villager.getCustomName();
+            if(name  != null)worker.setCustomName(name);
 
             if(WorkersModConfig.WorkersTablesPOIReleasing.get()) villager.releasePoi(MemoryModuleType.JOB_SITE);
             villager.releasePoi(MemoryModuleType.HOME);
@@ -108,14 +112,14 @@ public class VillagerEvents {
     public void villagerTrades(VillagerTradesEvent event) {
 
         if (event.getType() == VillagerProfession.MASON) {
-            VillagerTrades.ItemListing block_trade = new Trade(Items.EMERALD, 30, ModBlocks.MINER_BLOCK.get(), 1, 4,
+            Trade block_trade = new Trade(Items.EMERALD, 30, ModBlocks.MINER_BLOCK.get(), 1, 4,
                     20);
             List<ItemListing> list = event.getTrades().get(2);
             list.add(block_trade);
             event.getTrades().put(2, list);
         }
         if (event.getType() == VillagerProfession.FARMER) {
-            VillagerTrades.ItemListing block_trade = new Trade(Items.EMERALD, 23, ModBlocks.LUMBERJACK_BLOCK.get(), 1,
+            Trade block_trade = new Trade(Items.EMERALD, 23, ModBlocks.LUMBERJACK_BLOCK.get(), 1,
                     4, 20);
             List<ItemListing> list = event.getTrades().get(2);
             list.add(block_trade);
@@ -123,7 +127,7 @@ public class VillagerEvents {
         }
 
         if (event.getType() == VillagerProfession.FISHERMAN) {
-            VillagerTrades.ItemListing block_trade = new Trade(Items.EMERALD, 32, ModBlocks.FISHER_BLOCK.get(), 1, 4,
+            Trade block_trade = new Trade(Items.EMERALD, 32, ModBlocks.FISHER_BLOCK.get(), 1, 4,
                     20);
             List<ItemListing> list = event.getTrades().get(2);
             list.add(block_trade);
@@ -131,7 +135,7 @@ public class VillagerEvents {
         }
 
         if (event.getType() == VillagerProfession.BUTCHER) {
-            VillagerTrades.ItemListing block_trade = new Trade(Items.EMERALD, 35, ModBlocks.SHEPHERD_BLOCK.get(), 1, 4,
+            Trade block_trade = new Trade(Items.EMERALD, 35, ModBlocks.SHEPHERD_BLOCK.get(), 1, 4,
                     20);
             List<ItemListing> list = event.getTrades().get(2);
             list.add(block_trade);
@@ -139,7 +143,7 @@ public class VillagerEvents {
         }
 
         if (event.getType() == VillagerProfession.SHEPHERD) {
-            VillagerTrades.ItemListing block_trade = new Trade(Items.EMERALD, 25, ModBlocks.SHEPHERD_BLOCK.get(), 1, 4,
+            Trade block_trade = new Trade(Items.EMERALD, 25, ModBlocks.SHEPHERD_BLOCK.get(), 1, 4,
                     20);
             List<ItemListing> list = event.getTrades().get(2);
             list.add(block_trade);
@@ -147,7 +151,7 @@ public class VillagerEvents {
         }
 
         if (event.getType() == VillagerProfession.LIBRARIAN) {
-            VillagerTrades.ItemListing block_trade = new Trade(Items.EMERALD, 45, ModBlocks.MERCHANT_BLOCK.get(), 1, 4,
+            Trade block_trade = new Trade(Items.EMERALD, 45, ModBlocks.MERCHANT_BLOCK.get(), 1, 4,
                     20);
             List<ItemListing> list = event.getTrades().get(2);
             list.add(block_trade);
@@ -155,7 +159,7 @@ public class VillagerEvents {
         }
 
         if (event.getType() == VillagerProfession.FARMER) {
-            VillagerTrades.ItemListing block_trade = new Trade(Items.EMERALD, 28, ModBlocks.FARMER_BLOCK.get(), 1, 4,
+            Trade block_trade = new Trade(Items.EMERALD, 28, ModBlocks.FARMER_BLOCK.get(), 1, 4,
                     20);
             List<ItemListing> list = event.getTrades().get(2);
             list.add(block_trade);
@@ -163,7 +167,7 @@ public class VillagerEvents {
         }
 
         if (event.getType() == VillagerProfession.BUTCHER) {
-            VillagerTrades.ItemListing block_trade = new Trade(Items.EMERALD, 40, ModBlocks.CATTLE_FARMER_BLOCK.get(),
+            Trade block_trade = new Trade(Items.EMERALD, 40, ModBlocks.CATTLE_FARMER_BLOCK.get(),
                     1, 4, 20);
             List<ItemListing> list = event.getTrades().get(2);
             list.add(block_trade);
@@ -171,7 +175,7 @@ public class VillagerEvents {
         }
 
         if (event.getType() == VillagerProfession.BUTCHER) {
-            VillagerTrades.ItemListing block_trade = new Trade(Items.EMERALD, 32, ModBlocks.CHICKEN_FARMER_BLOCK.get(),
+            Trade block_trade = new Trade(Items.EMERALD, 32, ModBlocks.CHICKEN_FARMER_BLOCK.get(),
                     1, 4, 20);
             List<ItemListing> list = event.getTrades().get(2);
             list.add(block_trade);
@@ -186,12 +190,6 @@ public class VillagerEvents {
             event.getTrades().put(2, list);
         }
 
-    }
-
-    static class EmeraldForItemsTrade extends Trade {
-        public EmeraldForItemsTrade(ItemLike buyingItem, int buyingAmount, int maxUses, int givenExp) {
-            super(buyingItem, buyingAmount, Items.EMERALD, 1, maxUses, givenExp);
-        }
     }
 
     static class Trade implements VillagerTrades.ItemListing {
@@ -219,49 +217,4 @@ public class VillagerEvents {
                     new ItemStack(sellingItem, sellingAmount), maxUses, givenExp, priceMultiplier);
         }
     }
-
-    static class ItemsForEmeraldsTrade implements VillagerTrades.ItemListing {
-        private final ItemStack itemStack;
-        private final int emeraldCost;
-        private final int numberOfItems;
-        private final int maxUses;
-        private final int villagerXp;
-        private final float priceMultiplier;
-
-        public ItemsForEmeraldsTrade(Block p_i50528_1_, int p_i50528_2_, int p_i50528_3_, int p_i50528_4_,
-                int p_i50528_5_) {
-            this(new ItemStack(p_i50528_1_), p_i50528_2_, p_i50528_3_, p_i50528_4_, p_i50528_5_);
-        }
-
-        public ItemsForEmeraldsTrade(Item p_i50529_1_, int p_i50529_2_, int p_i50529_3_, int p_i50529_4_) {
-            this(new ItemStack(p_i50529_1_), p_i50529_2_, p_i50529_3_, 12, p_i50529_4_);
-        }
-
-        public ItemsForEmeraldsTrade(Item p_i50530_1_, int p_i50530_2_, int p_i50530_3_, int p_i50530_4_,
-                int p_i50530_5_) {
-            this(new ItemStack(p_i50530_1_), p_i50530_2_, p_i50530_3_, p_i50530_4_, p_i50530_5_);
-        }
-
-        public ItemsForEmeraldsTrade(ItemStack p_i50531_1_, int p_i50531_2_, int p_i50531_3_, int p_i50531_4_,
-                int p_i50531_5_) {
-            this(p_i50531_1_, p_i50531_2_, p_i50531_3_, p_i50531_4_, p_i50531_5_, 0.05F);
-        }
-
-        public ItemsForEmeraldsTrade(ItemStack p_i50532_1_, int p_i50532_2_, int p_i50532_3_, int p_i50532_4_,
-                int p_i50532_5_, float p_i50532_6_) {
-            this.itemStack = p_i50532_1_;
-            this.emeraldCost = p_i50532_2_;
-            this.numberOfItems = p_i50532_3_;
-            this.maxUses = p_i50532_4_;
-            this.villagerXp = p_i50532_5_;
-            this.priceMultiplier = p_i50532_6_;
-        }
-
-        public MerchantOffer getOffer(Entity p_221182_1_, Random p_221182_2_) {
-            return new MerchantOffer(new ItemStack(Items.EMERALD, this.emeraldCost),
-                    new ItemStack(this.itemStack.getItem(), this.numberOfItems), this.maxUses, this.villagerXp,
-                    this.priceMultiplier);
-        }
-    }
-
 }
