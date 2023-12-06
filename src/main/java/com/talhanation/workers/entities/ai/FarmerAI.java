@@ -265,7 +265,7 @@ public class FarmerAI extends Goal {
                 Block block = blockState.getBlock();
 
                 boolean canSustainSeeds = FarmerEntity.TILLABLES.contains(block);
-                boolean hasSpaceAbove = (aboveBlockState.is(Blocks.AIR) || aboveBlockState.is(BlockTags.REPLACEABLE));
+                boolean hasSpaceAbove = (aboveBlockState.is(Blocks.AIR) || aboveBlockState.is(BlockTags.REPLACEABLE_PLANTS));
 
                 if (canSustainSeeds && hasSpaceAbove) {
                     return blockPos;
