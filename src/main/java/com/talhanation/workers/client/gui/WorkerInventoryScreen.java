@@ -3,18 +3,16 @@ package com.talhanation.workers.client.gui;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.talhanation.workers.Main;
 import com.talhanation.workers.Translatable;
-import com.talhanation.workers.entities.ChickenFarmerEntity;
 import com.talhanation.workers.entities.LumberjackEntity;
 import com.talhanation.workers.inventory.WorkerInventoryContainer;
 import com.talhanation.workers.entities.AbstractWorkerEntity;
-import com.talhanation.workers.network.MessageChickenFarmerUseEggs;
 import com.talhanation.workers.network.MessageLumberjackReplant;
 import de.maxhenkel.corelib.inventory.ScreenBase;
-import net.minecraft.network.chat.TextComponent;
 import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.network.chat.Component;
-import net.minecraftforge.client.gui.widget.ExtendedButton;
+
+import java.awt.*;
 
 public class WorkerInventoryScreen extends ScreenBase<WorkerInventoryContainer> {
 
@@ -64,13 +62,15 @@ public class WorkerInventoryScreen extends ScreenBase<WorkerInventoryContainer> 
     }
 
     private void setReplantSaplingsButton(String string) {
-        ExtendedButton button = addRenderableWidget(new ExtendedButton(leftPos + 190, topPos + 57, 40, 20, Component.literal(string), button1 -> {
+        addRenderableWidget(new Button(leftPos + 190, topPos + 57, 40, 20, Component.literal(string), button1 -> {
             this.replantSaplings = !replantSaplings;
 
             Main.SIMPLE_CHANNEL.sendToServer(new MessageLumberjackReplant(worker.getUUID(), replantSaplings));
             this.setButtons();
+        },
+        (button1, poseStack, i, i1) -> {
+            this.renderTooltip(poseStack, Translatable.TOOLTIP_LUMBER_REPLANT, i, i1);
         }));
-        button.setTooltip(Tooltip.create(Translatable.TOOLTIP_LUMBER_REPLANT));
     }
 
     @Override
