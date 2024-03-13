@@ -7,7 +7,9 @@ import net.minecraft.world.Container;
 import net.minecraft.world.entity.ai.goal.Goal;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
+import net.minecraft.world.level.block.ChestBlock;
 import net.minecraft.world.level.block.entity.BlockEntity;
+import net.minecraft.world.level.block.state.BlockState;
 
 import javax.annotation.Nullable;
 
@@ -56,19 +58,26 @@ public class WorkerUpkeepPosGoal extends Goal {
         super.start();
         message = true;
         noSpaceInvMessage = true;
+        this.chestPos = worker.getChestPos();
+
+        if (chestPos != null && !this.hasFoodInInv()){
+            BlockEntity entity = worker.level.getBlockEntity(chestPos);
+            BlockState blockState = worker.getCommandSenderWorld().getBlockState(chestPos);
+            if(blockState.getBlock() instanceof ChestBlock chestBlock){
+                this.container = ChestBlock.getContainer(chestBlock, blockState, worker.getCommandSenderWorld(), chestPos, false);
+            }
+            else if (entity instanceof Container containerEntity) {
+                this.container = containerEntity;
+            }
+        }
+        else stop();
     }
 
     @Override
     public void tick() {
         super.tick();
-        this.chestPos = worker.getChestPos();
 
         if (chestPos != null && !this.hasFoodInInv()){
-            BlockEntity entity = worker.level.getBlockEntity(chestPos);
-
-            if (entity instanceof Container containerEntity) {
-                this.container = containerEntity;
-            }
 
             this.worker.getNavigation().moveTo(chestPos.getX(), chestPos.getY(), chestPos.getZ(), 1.15D);
 
