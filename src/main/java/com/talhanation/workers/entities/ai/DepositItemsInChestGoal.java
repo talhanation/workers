@@ -40,7 +40,7 @@ public class DepositItemsInChestGoal extends Goal {
         message = false;
         this.chestPos = worker.getChestPos();
         if (chestPos != null) {
-            BlockEntity entity = worker.level.getBlockEntity(chestPos);
+            BlockEntity entity = worker.getCommandSenderWorld().getBlockEntity(chestPos);
             BlockState blockState = worker.getCommandSenderWorld().getBlockState(chestPos);
             if (blockState.getBlock() instanceof ChestBlock chestBlock) {
                 this.container = ChestBlock.getContainer(chestBlock, blockState, worker.getCommandSenderWorld(), chestPos, false);

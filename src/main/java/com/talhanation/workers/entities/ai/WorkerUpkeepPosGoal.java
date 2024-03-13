@@ -64,7 +64,7 @@ public class WorkerUpkeepPosGoal extends Goal {
         this.chestPos = worker.getChestPos();
 
         if (chestPos != null && !this.hasFoodInInv()){
-            BlockEntity entity = worker.level.getBlockEntity(chestPos);
+            BlockEntity entity = worker.getCommandSenderWorld().getBlockEntity(chestPos);
             BlockState blockState = worker.getCommandSenderWorld().getBlockState(chestPos);
             if(blockState.getBlock() instanceof ChestBlock chestBlock){
                 this.container = ChestBlock.getContainer(chestBlock, blockState, worker.getCommandSenderWorld(), chestPos, false);
@@ -157,14 +157,14 @@ public class WorkerUpkeepPosGoal extends Goal {
     public void interactChest(Container container, boolean open) {
         if (container instanceof ChestBlockEntity chest) {
             if (open) {
-                this.worker.getLevel().blockEvent(this.chestPos, chest.getBlockState().getBlock(), 1, 1);
-                this.worker.level.playSound(null, chestPos, SoundEvents.CHEST_OPEN, worker.getSoundSource(), 0.7F, 0.8F + 0.4F * worker.getRandom().nextFloat());
+                this.worker.getCommandSenderWorld().blockEvent(this.chestPos, chest.getBlockState().getBlock(), 1, 1);
+                this.worker.getCommandSenderWorld().playSound(null, chestPos, SoundEvents.CHEST_OPEN, worker.getSoundSource(), 0.7F, 0.8F + 0.4F * worker.getRandom().nextFloat());
             }
             else {
-                this.worker.getLevel().blockEvent(this.chestPos, chest.getBlockState().getBlock(), 1, 0);
-                worker.level.playSound(null, chestPos, SoundEvents.CHEST_CLOSE, worker.getSoundSource(), 0.7F, 0.8F + 0.4F * worker.getRandom().nextFloat());
+                this.worker.getCommandSenderWorld().blockEvent(this.chestPos, chest.getBlockState().getBlock(), 1, 0);
+                worker.getCommandSenderWorld().playSound(null, chestPos, SoundEvents.CHEST_CLOSE, worker.getSoundSource(), 0.7F, 0.8F + 0.4F * worker.getRandom().nextFloat());
             }
-            this.worker.getLevel().gameEvent(this.worker, open ? GameEvent.BLOCK_OPEN : GameEvent.BLOCK_CLOSE, chestPos);
+            this.worker.getCommandSenderWorld().gameEvent(this.worker, open ? GameEvent.BLOCK_OPEN : GameEvent.BLOCK_CLOSE, chestPos);
         }
     }
 }
