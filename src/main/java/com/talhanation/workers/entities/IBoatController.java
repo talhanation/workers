@@ -3,6 +3,7 @@ package com.talhanation.workers.entities;
 import com.talhanation.workers.Main;
 import net.minecraft.core.BlockPos;
 import net.minecraft.util.Mth;
+import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.entity.vehicle.Boat;
 import net.minecraft.world.level.block.Blocks;
@@ -33,8 +34,8 @@ public interface IBoatController {
             String string = boat.getEncodeId();
             if(Main.isSmallShipsInstalled && (string.contains("smallships"))){
                 if(this.getWorker() instanceof MerchantEntity merchant){
-                    boolean onPosIsDeep = getWaterDepth(boat.getOnPos()) >= 7;
-                    boolean wayPointIsDeep = merchant.getCurrentWayPoint() != null && getWaterDepth(merchant.getCurrentWayPoint()) >= 7;
+                    boolean onPosIsDeep = getWaterDepth(boat.getOnPos(), this.getWorker()) >= 7;
+                    boolean wayPointIsDeep = merchant.getCurrentWayPoint() != null && getWaterDepth(merchant.getCurrentWayPoint(), this.getWorker()) >= 7;
 
                     if(onPosIsDeep && merchant.getCurrentWayPoint() != null && !boat.horizontalCollision){
                         // if waypoint is deep control shall be fast
@@ -42,7 +43,7 @@ public interface IBoatController {
                             updateSmallShipsBoatControl(merchant, boat, merchant.getCurrentWayPoint().getX(), merchant.getCurrentWayPoint().getZ(), wayPointIsDeep);
 
                         else if(merchant.getOwner() != null){
-                            boolean ownerOnPosIsDeep = getWaterDepth(merchant.getOwner().getOnPos()) >= 7;
+                            boolean ownerOnPosIsDeep = getWaterDepth(merchant.getOwner().getOnPos(), this.getWorker()) >= 7;
                             boolean ownerFar = merchant.distanceToSqr(merchant.getOwner()) > 30;
                             if(ownerOnPosIsDeep)
                                 updateSmallShipsBoatControl(merchant, boat, merchant.getOwner().getX(), merchant.getOwner().getZ(), ownerFar);
@@ -333,10 +334,10 @@ public interface IBoatController {
         return Math.toDegrees(Math.acos(cosTheta));
     }
 
-    private int getWaterDepth(BlockPos pos){
+    static int getWaterDepth(BlockPos pos, LivingEntity worker){
         int depth = 0;
         for(int i = 0; i < 10; i++){
-            BlockState state = getWorker().level.getBlockState(pos.below(i));
+            BlockState state = worker.level.getBlockState(pos.below(i));
             if(state.is(Blocks.WATER) || state.is(Blocks.KELP_PLANT) || state.is(Blocks.KELP)){
                 depth++;
             }
