@@ -37,7 +37,8 @@ mixin{
 }
 
 
-version = '1.7.6'
+
+version = '1.7.7'
 
 group = 'com.talhanation.workers'
 archivesBaseName = 'workers-1.18.2'
