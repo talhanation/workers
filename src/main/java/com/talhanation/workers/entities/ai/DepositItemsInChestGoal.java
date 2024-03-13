@@ -11,8 +11,10 @@ import net.minecraft.world.SimpleContainer;
 import net.minecraft.world.entity.ai.goal.Goal;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
+import net.minecraft.world.level.block.ChestBlock;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.entity.ChestBlockEntity;
+import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.gameevent.GameEvent;
 
 public class DepositItemsInChestGoal extends Goal {
@@ -37,6 +39,16 @@ public class DepositItemsInChestGoal extends Goal {
         super.start();
         message = false;
         this.chestPos = worker.getChestPos();
+        if (chestPos != null) {
+            BlockEntity entity = worker.level.getBlockEntity(chestPos);
+            BlockState blockState = worker.getCommandSenderWorld().getBlockState(chestPos);
+            if (blockState.getBlock() instanceof ChestBlock chestBlock) {
+                this.container = ChestBlock.getContainer(chestBlock, blockState, worker.getCommandSenderWorld(), chestPos, false);
+            } else if (entity instanceof Container containerEntity) {
+                this.container = containerEntity;
+            } else
+                message = true;
+        }
     }
 
     @Override
@@ -57,12 +69,13 @@ public class DepositItemsInChestGoal extends Goal {
         this.chestPos = worker.getChestPos();
 
         if (chestPos != null) {
+
             BlockEntity entity = worker.getCommandSenderWorld().getBlockEntity(chestPos);
             if (entity instanceof Container containerEntity) {
                 this.container = containerEntity;
             }
             else message = true;
-
+			
             this.worker.getNavigation().moveTo(chestPos.getX(), chestPos.getY(), chestPos.getZ(), 1.1D);
 
             if (chestPos.closerThan(worker.getOnPos(), 2.5) && container != null) {
@@ -87,7 +100,8 @@ public class DepositItemsInChestGoal extends Goal {
                 }
             }
         }
-        else message = true;
+        else
+            message = true;
 
         if(message && worker.getOwner() != null){
             this.worker.tellPlayer(worker.getOwner(), Translatable.TEXT_CANT_FIND_CHEST);
