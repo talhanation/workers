@@ -170,7 +170,8 @@ public class MinerAI extends Goal {
                 case PIT_8X8X8 -> {
                     if (miner.shouldIgnoreBlock(blockstate) || block1 == Blocks.OAK_PLANKS) {
                         miner.blocks++;
-                        if (block1 != Blocks.OAK_PLANKS) placePlanks(blockstate);
+                        if (block1 != Blocks.OAK_PLANKS)
+                            placePlanks(blockstate);
                     }
 
                     if (miner.blocks == 8) {
@@ -225,12 +226,10 @@ public class MinerAI extends Goal {
                 }
 
                 case PIT_16X16X16 -> {
-                    boolean ignoreBlock = miner.shouldIgnoreBlock(blockstate);
-                    boolean canNotBreak = !miner.canBreakBlock(blockstate);
-                    if (ignoreBlock || canNotBreak || block1 == Blocks.OAK_PLANKS) {
+                    if (miner.shouldIgnoreBlock(blockstate) || block1 == Blocks.OAK_PLANKS) {
                         miner.blocks++;
-                        if (block1 != Blocks.OAK_PLANKS) placePlanks(blockstate);
-                        //if(shouldPlaceTorch(1, ,4)) placeTorch();
+                        if (block1 != Blocks.OAK_PLANKS)
+                            placePlanks(blockstate);
                     }
 
                     if (miner.blocks == 16) {
@@ -402,7 +401,9 @@ public class MinerAI extends Goal {
     }
 
     public void placePlanks(BlockState state){
-        if (shouldPlacePlanks() && miner.canBreakBlock(state)) {// && hasPlanksInInv()){
+        boolean should = shouldPlacePlanks();
+
+        if (should) {// && hasPlanksInInv()){
             miner.getCommandSenderWorld().setBlock(this.minePos, Blocks.OAK_PLANKS.defaultBlockState(), 3);
             miner.getCommandSenderWorld().playSound(null, this.minePos.getX(), this.minePos.getY(), this.minePos.getZ(), SoundEvents.WOOD_PLACE, SoundSource.BLOCKS, 1.0F, 1.0F);
         }
@@ -423,4 +424,5 @@ public class MinerAI extends Goal {
     public boolean hasTorchInInv() {
         return miner.getInventory().hasAnyOf(ImmutableSet.of(Items.TORCH));
     }
+
 }
