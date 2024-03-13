@@ -244,85 +244,90 @@ public class CommandEvents {
 
         if(merchantWantsTrade){
             if (canAddItemToInv && merchantHasItems && playerCanPay) {
-                // give player
-                // remove merchant ->add left
-                //
+                if(playerInv.getFreeSlot() != -1){
+                    // give player
+                    // remove merchant ->add left
+                    //
 
-                merchantTradeItem = merchantTradeItem - tradeCount;
-                // playerTradeItem = playerTradeItem + tradeCount;
+                    merchantTradeItem = merchantTradeItem - tradeCount;
+                    // playerTradeItem = playerTradeItem + tradeCount;
 
-                // remove merchant tradeItem
-                for (int i = 0; i < merchantInv.getContainerSize(); i++) {
-                    ItemStack itemStackInSlot = merchantInv.getItem(i);
-                    Item itemInSlot = itemStackInSlot.getItem();
-                    if (itemInSlot == tradeItem) {
-                        merchantInv.removeItemNoUpdate(i);
+                    // remove merchant tradeItem
+                    for (int i = 0; i < merchantInv.getContainerSize(); i++) {
+                        ItemStack itemStackInSlot = merchantInv.getItem(i);
+                        Item itemInSlot = itemStackInSlot.getItem();
+                        if (itemInSlot == tradeItem) {
+                            merchantInv.removeItemNoUpdate(i);
+                        }
                     }
-                }
 
-                // add tradeGoodLeft to merchantInv
-                ItemStack tradeGoodLeft = tradeItemStack.copy();
-                // int maxSize = tradeGoodLeft.getMaxStackSize();
-                for (int i = 0; i < 18; i++) {
-                    if (merchantTradeItem > 64) {
-                        tradeGoodLeft.setCount(merchantTradeItem);
-                        merchantInv.addItem(tradeGoodLeft);
+                    // add tradeGoodLeft to merchantInv
+                    ItemStack tradeGoodLeft = tradeItemStack.copy();
+                    // int maxSize = tradeGoodLeft.getMaxStackSize();
+                    for (int i = 0; i < 18; i++) {
+                        if (merchantTradeItem > 64) {
+                            tradeGoodLeft.setCount(merchantTradeItem);
+                            merchantInv.addItem(tradeGoodLeft);
 
-                        merchantTradeItem = merchantTradeItem - 64;
+                            merchantTradeItem = merchantTradeItem - 64;
 
-                        // player.sendMessage(new StringTextComponent("count: " + merchantTradeItem),
-                        // player.getUUID());
+                            // player.sendMessage(new StringTextComponent("count: " + merchantTradeItem),
+                            // player.getUUID());
 
-                    } else {
-                        tradeGoodLeft.setCount(merchantTradeItem);
-                        merchantInv.addItem(tradeGoodLeft);
-                        break;
+                        } else {
+                            tradeGoodLeft.setCount(merchantTradeItem);
+                            merchantInv.addItem(tradeGoodLeft);
+                            break;
+                        }
                     }
-                }
-                // add tradeItem to playerInventory
-                ItemStack tradeGood = tradeItemStack.copy();
-                tradeGood.setCount(tradeCount);
-                playerInv.add(tradeGood);
+                    // add tradeItem to playerInventory
+                    ItemStack tradeGood = tradeItemStack.copy();
+                    tradeGood.setCount(tradeCount);
+                    playerInv.add(tradeGood);
 
-                // give player tradeGood
-                // remove playerEmeralds ->add left
-                //
-                playerEmeralds = playerEmeralds - sollPrice;
+                    // give player tradeGood
+                    // remove playerEmeralds ->add left
+                    //
+                    playerEmeralds = playerEmeralds - sollPrice;
 
-                // merchantEmeralds = merchantEmeralds + sollPrice;
+                    // merchantEmeralds = merchantEmeralds + sollPrice;
 
-                // remove playerEmeralds
-                for (int i = 0; i < playerInv.getContainerSize(); i++) {
-                    ItemStack itemStackInSlot = playerInv.getItem(i);
-                    Item itemInSlot = itemStackInSlot.getItem();
-                    if (itemInSlot == emerald) {
-                        playerInv.removeItemNoUpdate(i);
+                    // remove playerEmeralds
+                    for (int i = 0; i < playerInv.getContainerSize(); i++) {
+                        ItemStack itemStackInSlot = playerInv.getItem(i);
+                        Item itemInSlot = itemStackInSlot.getItem();
+                        if (itemInSlot == emerald) {
+                            playerInv.removeItemNoUpdate(i);
+                        }
                     }
+
+                    // add emeralds to merchantInventory
+                    ItemStack emeraldsKar = emeraldItemStack.copy();
+                    emeraldsKar.setCount(sollPrice);// später merchantEmeralds wenn ich alle s löschen tu
+                    merchantInv.addItem(emeraldsKar);
+
+                    // add leftEmeralds to playerInventory
+                    ItemStack emeraldsLeft = emeraldItemStack.copy();
+                    emeraldsLeft.setCount(playerEmeralds);// später merchantEmeralds wenn ich alle s löschen tu
+                    playerInv.add(emeraldsLeft);
+                    merchant.setCurrentTrades(tradeID, merchant.getCurrentTrades(tradeID) + 1);
+
+                    // debug
+                    // player.sendMessage(new StringTextComponent("###########################"),
+                    // player.getUUID());
+                    // player.sendMessage(new StringTextComponent("Soll Price: " + sollPrice),
+                    // player.getUUID());
+                    // player.sendMessage(new StringTextComponent("###########################"),
+                    // player.getUUID());
+                    // player.sendMessage(new StringTextComponent("MerchantEmeralds: " +
+                    // merchantEmeralds), player.getUUID());
+                    // player.sendMessage(new StringTextComponent("PlayerEmeralds: " +
+                    // playerEmeralds), player.getUUID());
                 }
-
-                // add emeralds to merchantInventory
-                ItemStack emeraldsKar = emeraldItemStack.copy();
-                emeraldsKar.setCount(sollPrice);// später merchantEmeralds wenn ich alle s löschen tu
-                merchantInv.addItem(emeraldsKar);
-
-                // add leftEmeralds to playerInventory
-                ItemStack emeraldsLeft = emeraldItemStack.copy();
-                emeraldsLeft.setCount(playerEmeralds);// später merchantEmeralds wenn ich alle s löschen tu
-                playerInv.add(emeraldsLeft);
-                merchant.setCurrentTrades(tradeID, merchant.getCurrentTrades(tradeID) + 1);
-
-                // debug
-                // player.sendMessage(new StringTextComponent("###########################"),
-                // player.getUUID());
-                // player.sendMessage(new StringTextComponent("Soll Price: " + sollPrice),
-                // player.getUUID());
-                // player.sendMessage(new StringTextComponent("###########################"),
-                // player.getUUID());
-                // player.sendMessage(new StringTextComponent("MerchantEmeralds: " +
-                // merchantEmeralds), player.getUUID());
-                // player.sendMessage(new StringTextComponent("PlayerEmeralds: " +
-                // playerEmeralds), player.getUUID());
-            } else {
+                else
+                    merchant.tellPlayer(player, TEXT_NO_SPACE_FOR_TRADE);
+            }
+            else {
                 LivingEntity owner = merchant.getOwner();
                 if (!merchantHasItems) {
                     merchant.tellPlayer(player, TEXT_OUT_OF_STOCK);
@@ -438,42 +443,45 @@ public class CommandEvents {
 
          if(merchantWantsTrade) {
              if (playerCanPay) {
-                 // give player
-                 // remove merchant ->add left
-                 //
+                 if (playerInv.getFreeSlot() != -1) {// give player
+                     // remove merchant ->add left
+                     //
 
-                 // playerTradeItem = playerTradeItem + tradeCount;
+                     // playerTradeItem = playerTradeItem + tradeCount;
 
-                 // add tradeItem to playerInventory
-                 ItemStack tradeGood = tradeItemStack.copy();
-                 tradeGood.setCount(tradeCount);
-                 playerInv.add(tradeGood);
+                     // add tradeItem to playerInventory
+                     ItemStack tradeGood = tradeItemStack.copy();
+                     tradeGood.setCount(tradeCount);
+                     playerInv.add(tradeGood);
 
-                 // give player tradeGood
-                 // remove playerEmeralds ->add left
-                 playerEmeralds = playerEmeralds - sollPrice;
+                     // give player tradeGood
+                     // remove playerEmeralds ->add left
+                     playerEmeralds = playerEmeralds - sollPrice;
 
-                 // remove playerEmeralds
-                 for (int i = 0; i < playerInv.getContainerSize(); i++) {
-                     ItemStack itemStackInSlot = playerInv.getItem(i);
-                     Item itemInSlot = itemStackInSlot.getItem();
-                     if (itemInSlot == emerald) {
-                         playerInv.removeItemNoUpdate(i);
+                     // remove playerEmeralds
+                     for (int i = 0; i < playerInv.getContainerSize(); i++) {
+                         ItemStack itemStackInSlot = playerInv.getItem(i);
+                         Item itemInSlot = itemStackInSlot.getItem();
+                         if (itemInSlot == emerald) {
+                             playerInv.removeItemNoUpdate(i);
+                         }
                      }
+
+                     // add leftEmeralds to playerInventory
+                     ItemStack emeraldsLeft = emeraldItemStack.copy();
+                     emeraldsLeft.setCount(playerEmeralds);// später merchantEmeralds wenn ich alle s löschen tu
+                     playerInv.add(emeraldsLeft);
+                     merchant.setCurrentTrades(tradeID, merchant.getCurrentTrades(tradeID) + 1);
                  }
-
-                 // add leftEmeralds to playerInventory
-                 ItemStack emeraldsLeft = emeraldItemStack.copy();
-                 emeraldsLeft.setCount(playerEmeralds);// später merchantEmeralds wenn ich alle s löschen tu
-                 playerInv.add(emeraldsLeft);
-                 merchant.setCurrentTrades(tradeID, merchant.getCurrentTrades(tradeID) + 1);
-
-             } else {
-                 merchant.tellPlayer(player, TEXT_NEED(sollPrice, emerald));
+                 else
+                     merchant.tellPlayer(player, TEXT_NO_SPACE_FOR_TRADE);
              }
-         } else {
-             merchant.tellPlayer(player, TEXT_NO_NEED(tradeItem));
+             else
+                 merchant.tellPlayer(player, TEXT_NEED(sollPrice, emerald));
          }
+         else
+             merchant.tellPlayer(player, TEXT_NO_NEED(tradeItem));
+
      }
 
     public static void openCommandScreen(Player player) {

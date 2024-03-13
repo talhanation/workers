@@ -104,5 +104,7 @@ public class Translatable {
     public static final MutableComponent TEXT_CHEST_FULL = new TranslatableComponent("chat.workers.chestFull");
     public static final MutableComponent TEXT_COULD_NOT_DEPOSIT = new TranslatableComponent("chat.workers.couldNotDeposit");
     public static final MutableComponent TEXT_WAYPOINT_NOT_NEAR_TO_PREV = new TranslatableComponent("chat.workers.text.waypointNotNearToPrev");
+	public static final MutableComponent TEXT_NO_SPACE_FOR_TRADE = new TranslatableComponent("chat.workers.text.noSpaceInvForTrade");
+
 
 }
