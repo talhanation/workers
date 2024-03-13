@@ -3,13 +3,16 @@ package com.talhanation.workers.entities.ai;
 import com.talhanation.workers.Translatable;
 import com.talhanation.workers.entities.AbstractWorkerEntity;
 import net.minecraft.core.BlockPos;
+import net.minecraft.sounds.SoundEvents;
 import net.minecraft.world.Container;
 import net.minecraft.world.entity.ai.goal.Goal;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
 import net.minecraft.world.level.block.ChestBlock;
 import net.minecraft.world.level.block.entity.BlockEntity;
+import net.minecraft.world.level.block.entity.ChestBlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.level.gameevent.GameEvent;
 
 import javax.annotation.Nullable;
 
@@ -74,6 +77,12 @@ public class WorkerUpkeepPosGoal extends Goal {
     }
 
     @Override
+    public void stop() {
+        super.stop();
+        if(container != null) this.interactChest(container,false);
+    }
+
+    @Override
     public void tick() {
         super.tick();
 
@@ -91,10 +100,12 @@ public class WorkerUpkeepPosGoal extends Goal {
 
                         if (foodItem != null){
                             if(canAddFood()){
+                                interactChest(container, true);
                                 food = foodItem.copy();
                                 food.setCount(1);
                                 worker.getInventory().addItem(food);
                                 foodItem.shrink(1);
+
                             }
                             else{
                                 if(worker.getOwner() != null && noSpaceInvMessage){
@@ -137,5 +148,19 @@ public class WorkerUpkeepPosGoal extends Goal {
                 return true;
         }
         return false;
+    }
+
+    public void interactChest(Container container, boolean open) {
+        if (container instanceof ChestBlockEntity chest) {
+            if (open) {
+                this.worker.getLevel().blockEvent(this.chestPos, chest.getBlockState().getBlock(), 1, 1);
+                this.worker.level.playSound(null, chestPos, SoundEvents.CHEST_OPEN, worker.getSoundSource(), 0.7F, 0.8F + 0.4F * worker.getRandom().nextFloat());
+            }
+            else {
+                this.worker.getLevel().blockEvent(this.chestPos, chest.getBlockState().getBlock(), 1, 0);
+                worker.level.playSound(null, chestPos, SoundEvents.CHEST_CLOSE, worker.getSoundSource(), 0.7F, 0.8F + 0.4F * worker.getRandom().nextFloat());
+            }
+            this.worker.getLevel().gameEvent(this.worker, open ? GameEvent.BLOCK_OPEN : GameEvent.BLOCK_CLOSE, chestPos);
+        }
     }
 }
