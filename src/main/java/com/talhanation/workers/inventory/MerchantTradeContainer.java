@@ -72,6 +72,10 @@ public class MerchantTradeContainer extends ContainerBase {
         return merchant;
     }
 
+    public ItemStack quickMoveStack(Player playerIn, int index) {
+        return ItemStack.EMPTY;
+    }
+
     @Override
     public boolean stillValid(Player playerIn) {
         if(this.workerInventory.stillValid(playerIn) && this.merchant.isAlive() && this.merchant.distanceTo(playerIn) < 8.0F){
