@@ -118,7 +118,6 @@
   "gui.workers.button.follow": "Follow",
   "controls.open_command_screen": "Open Command Screen",
   "gui.workers.tooltip.sendInfo": "Should the merchant provide information about its current travel status?",
-  "gui.workers.tooltip.lumberjackReplant": "Should the Lumberjack replant collected saplings?"
-
-
+  "gui.workers.tooltip.lumberjackReplant": "Should the Lumberjack replant collected saplings?",
+  "chat.workers.text.noSpaceInvForTrade": "You need space in your inventory to trade."
 }

@@ -103,5 +103,6 @@ public class Translatable {
     public static final MutableComponent TEXT_CHEST_FULL = Component.translatable("chat.workers.chestFull");
     public static final MutableComponent TEXT_COULD_NOT_DEPOSIT = Component.translatable("chat.workers.couldNotDeposit");
     public static final Component TEXT_WAYPOINT_NOT_NEAR_TO_PREV = Component.translatable("chat.workers.text.waypointNotNearToPrev");
+    public static final Component TEXT_NO_SPACE_FOR_TRADE = Component.translatable("chat.workers.text.noSpaceInvForTrade");
 
 }
