@@ -17,7 +17,7 @@ public class WorkersPathNavigation extends GroundPathNavigation {
         worker.setPathfindingMalus(BlockPathTypes.DAMAGE_CACTUS, 32.0F);
         worker.setPathfindingMalus(BlockPathTypes.DANGER_POWDER_SNOW, -1.0F);
         worker.setPathfindingMalus(BlockPathTypes.DOOR_WOOD_CLOSED, 0.0F);
-        worker.setPathfindingMalus(BlockPathTypes.FENCE, 32.0F);
+        worker.setPathfindingMalus(BlockPathTypes.FENCE, -1.0F);
         worker.setPathfindingMalus(BlockPathTypes.LAVA, -1.0F);
     }
 
