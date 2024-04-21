@@ -56,6 +56,7 @@
   "chat.workers.text.bed": "Teşekkür ederim! Artık orada uyuyacağım.",
   "chat.workers.text.bedError": "Bu bir yatak gibi görünmüyor.",
   "chat.workers.cantFindBed": "Yatağımı bulamıyorum, yeni bir tane bulmam için yardımcı olabilir misiniz?",
+  "chat.workers.bedOccupied": "Yatağım dolu!",
 
   "chat.workers.couldNotDeposit": "Eşyalarımı sandığa koyamadım, yeni bir tane bulmam için yardımcı olabilir misiniz?",
   "chat.workers.needChest": "Eşyaları koymak için bir sandığım yok.",
