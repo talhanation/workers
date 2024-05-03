@@ -100,10 +100,11 @@ public class Main {
             MessageFollow.class,
             MessageChickenFarmerUseEggs.class,
             MessageMerchantSetSendInfo.class,
-            MessageLumberjackReplant.class
+            MessageLumberjackReplant.class,
+            MessageToClientUpdateHireScreen.class
         };
         for (int i = 0; i < messages.length; i++) CommonRegistry.registerMessage(SIMPLE_CHANNEL, i, messages[i]);
-        LOGGER.info("Messages registered");
+        LOGGER.info("Villager Workers Messages registered");
 
         isSmallShipsInstalled = ModList.get().isLoaded("smallships");//Smallships mod
     }

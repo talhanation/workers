@@ -54,5 +54,7 @@ public class WorkerInventoryContainer extends ContainerBase {
     public void broadcastChanges() {
         super.broadcastChanges();
         worker.upgradeTool();
+        worker.updateNeedsTool();
+        worker.upgradeArmor();
     }
 }

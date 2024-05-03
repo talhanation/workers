@@ -62,8 +62,8 @@ public class Translatable {
     }
 
      */
-    public static Component TEXT_OUT_OF_TOOLS(ItemStack lastItem) {
-        return Component.translatable("chat.workers.text.outOfTools", lastItem.getDisplayName().getString());
+    public static Component TEXT_OUT_OF_TOOLS() {
+        return Component.translatable("chat.workers.text.outOfTools");
     }
 
     public static Component TEXT_HIRE_COSTS(int cost, String item) {

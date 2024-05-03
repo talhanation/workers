@@ -27,6 +27,7 @@ import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.inventory.AbstractContainerMenu;
 import net.minecraft.world.MenuProvider;
 import net.minecraft.world.item.FishingRodItem;
+import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
 import net.minecraft.nbt.CompoundTag;
@@ -39,6 +40,8 @@ import net.minecraftforge.network.NetworkHooks;
 import org.jetbrains.annotations.NotNull;
 
 import javax.annotation.Nullable;
+import java.util.Arrays;
+import java.util.List;
 import java.util.Optional;
 import java.util.function.Predicate;
 
@@ -58,7 +61,6 @@ public class FishermanEntity extends AbstractWorkerEntity implements IBoatContro
 
     public FishermanEntity(EntityType<? extends AbstractWorkerEntity> entityType, Level world) {
         super(entityType, world);
-        this.initSpawn();
     }
 
     protected void defineSynchedData() {
@@ -171,6 +173,12 @@ public class FishermanEntity extends AbstractWorkerEntity implements IBoatContro
     public boolean isRequiredSecondTool(ItemStack tool) {
         return false;
     }
+    public boolean hasAMainTool(){
+        return true;
+    }
+    public boolean hasASecondTool(){
+        return false;
+    }
 
     @Override
     public boolean wantsToPickUp(ItemStack itemStack) {
@@ -264,4 +272,8 @@ public class FishermanEntity extends AbstractWorkerEntity implements IBoatContro
         }
     }
 
+    @Override
+    public List<Item> inventoryInputHelp() {
+        return Arrays.asList(Items.FISHING_ROD, Items.OAK_BOAT);
+    }
 }

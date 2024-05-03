@@ -39,7 +39,7 @@ public interface IBoatController {
 
                     if(onPosIsDeep && merchant.getCurrentWayPoint() != null && !boat.horizontalCollision){
                         // if waypoint is deep control shall be fast
-                        if(!merchant.getFollow())
+                        if(merchant.getStatus() != AbstractWorkerEntity.Status.FOLLOW)
                             updateSmallShipsBoatControl(merchant, boat, merchant.getCurrentWayPoint().getX(), merchant.getCurrentWayPoint().getZ(), wayPointIsDeep);
 
                         else if(merchant.getOwner() != null){
@@ -170,7 +170,7 @@ public interface IBoatController {
                     }
                     setSmallShipsSailState((Boat) ship,state);
                 }
-                else if(merchant.getTraveling() || merchant.getReturning() || merchant.getFollow()) {
+                else if(merchant.getTraveling() || merchant.getReturning() || merchant.getStatus() == AbstractWorkerEntity.Status.FOLLOW) {
                     setSmallShipsSailState((Boat) ship,1);
                     setPoint = 0.025F;
                 }

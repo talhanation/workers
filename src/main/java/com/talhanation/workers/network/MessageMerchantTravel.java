@@ -1,6 +1,7 @@
 package com.talhanation.workers.network;
 
 import com.talhanation.workers.Main;
+import com.talhanation.workers.entities.AbstractWorkerEntity;
 import com.talhanation.workers.entities.MerchantEntity;
 import de.maxhenkel.corelib.net.Message;
 import net.minecraft.network.FriendlyByteBuf;
@@ -49,12 +50,12 @@ public class MessageMerchantTravel implements Message<MessageMerchantTravel> {
             merchant.setFollow(false);
             merchant.setCurrentWayPointIndex(0);
             if (travel){
-                merchant.setIsWorking(true, true); // to activate the AI
+                merchant.setStatus(AbstractWorkerEntity.Status.WORK, true); // to activate the AI
                 merchant.setCurrentReturningTime(0);
                 merchant.tellPlayer(player, Component.literal("Im now traveling."));
             }
             else{
-                merchant.setIsWorking(false, true);
+                merchant.setStatus(AbstractWorkerEntity.Status.WANDER);
                 merchant.setReturning(false);
                 merchant.setCurrentReturningTime(0);
                 merchant.tellPlayer(player, Component.literal("I stopped traveling."));
@@ -62,7 +63,7 @@ public class MessageMerchantTravel implements Message<MessageMerchantTravel> {
             merchant.setTraveling(travel);
         }
         else{
-            merchant.setIsWorking(true, true); // to activate the AI
+            merchant.setStatus(AbstractWorkerEntity.Status.WORK, true); // to activate the AI
             merchant.setReturning(true);
             merchant.setTraveling(true);
             merchant.setFollow(false);

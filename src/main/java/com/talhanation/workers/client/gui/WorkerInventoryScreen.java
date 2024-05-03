@@ -4,6 +4,7 @@ import com.mojang.blaze3d.vertex.PoseStack;
 import com.talhanation.workers.Main;
 import com.talhanation.workers.Translatable;
 import com.talhanation.workers.entities.LumberjackEntity;
+import com.talhanation.workers.entities.MinerEntity;
 import com.talhanation.workers.inventory.WorkerInventoryContainer;
 import com.talhanation.workers.entities.AbstractWorkerEntity;
 import com.talhanation.workers.network.MessageLumberjackReplant;
@@ -12,6 +13,7 @@ import net.minecraft.client.gui.components.Button;
 import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.network.chat.Component;
+import net.minecraft.world.item.ItemStack;
 
 import java.awt.*;
 
@@ -78,8 +80,13 @@ public class WorkerInventoryScreen extends ScreenBase<WorkerInventoryContainer> 
     protected void renderLabels(PoseStack matrixStack, int mouseX, int mouseY) {
         super.renderLabels(matrixStack, mouseX, mouseY);
         font.draw(matrixStack, worker.getDisplayName().getVisualOrderText(), 8, 6, FONT_COLOR);
-        font.draw(matrixStack, playerInventory.getDisplayName().getVisualOrderText(), 8, imageHeight - 152 + 3,
-                FONT_COLOR);
+        font.draw(matrixStack, playerInventory.getDisplayName().getVisualOrderText(), 8, imageHeight - 152 + 3, FONT_COLOR);
+        int offset = this.worker instanceof MinerEntity ? 10 : 0;
+        if(worker.inventoryInputHelp() != null){
+            for(int i=0; i < worker.inventoryInputHelp().size(); i++){
+                renderItemAt(worker.inventoryInputHelp().get(i).getDefaultInstance(), 60 - offset + (15 * i), imageHeight - 165);
+            }
+        }
     }
 
     @Override
@@ -89,5 +96,9 @@ public class WorkerInventoryScreen extends ScreenBase<WorkerInventoryContainer> 
 
     protected void renderBg(PoseStack matrixStack, float partialTicks, int mouseX, int mouseY) {
         super.renderBg(matrixStack, partialTicks, mouseX, mouseY);
+    }
+
+    private void renderItemAt(ItemStack itemStack, int x, int y) {
+        if(itemStack != null) itemRenderer.renderAndDecorateItem(itemStack, x, y);
     }
 }

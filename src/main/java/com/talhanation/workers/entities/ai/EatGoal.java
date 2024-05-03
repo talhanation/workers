@@ -15,6 +15,7 @@ public class EatGoal extends Goal{
     public ItemStack foodStack;
     public ItemStack beforeItem;
     public int slotID;
+    private long lastCanUseCheck;
 
     public EatGoal(AbstractWorkerEntity worker) {
         this.worker = worker;
@@ -22,8 +23,15 @@ public class EatGoal extends Goal{
 
     @Override
     public boolean canUse() {
-        worker.updateHunger();
-        return hasFoodInInv() && worker.needsToEat() && !worker.isUsingItem();
+        long i = this.worker.getCommandSenderWorld().getGameTime();
+        if (i - this.lastCanUseCheck < 1200L) {
+            return false;
+        }
+        else{
+            this.lastCanUseCheck = i;
+            worker.updateHunger();
+            return hasFoodInInv() && worker.needsToEat() && !worker.isUsingItem();
+        }
     }
 
     @Override
@@ -54,9 +62,15 @@ public class EatGoal extends Goal{
 
         worker.heal(Objects.requireNonNull(foodStack.getItem().getFoodProperties(foodStack, worker)).getSaturationModifier() * 1);
         if (!worker.isSaturated()) {
-            float saturation = Objects.requireNonNull(foodStack.getItem().getFoodProperties(foodStack, worker)).getSaturationModifier() * 10;
-            float nutrition = Objects.requireNonNull(foodStack.getItem().getFoodProperties(foodStack, worker)).getNutrition() * 10;
-            worker.setHunger(worker.getHunger() + saturation + nutrition);
+            float saturation = Objects.requireNonNull(foodStack.getItem().getFoodProperties(foodStack, worker)).getSaturationModifier();
+            float nutrition = Objects.requireNonNull(foodStack.getItem().getFoodProperties(foodStack, worker)).getNutrition() * 5;
+
+            int currentHunger = worker.getHunger();
+            int newHunger = Math.round(currentHunger + saturation + nutrition);
+
+            if(newHunger >= 100) newHunger = 100;
+
+            worker.setHunger(newHunger);
         }
         worker.setItemInHand(InteractionHand.OFF_HAND, foodStack);
         worker.startUsingItem(InteractionHand.OFF_HAND);

@@ -1,5 +1,6 @@
 package com.talhanation.workers.entities.ai;
 
+import com.talhanation.workers.Translatable;
 import com.talhanation.workers.entities.AbstractWorkerEntity;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Vec3i;
@@ -18,17 +19,18 @@ public class SleepGoal extends Goal {
     private final MutableComponent BED_OCCUPIED = Component.translatable("chat.workers.bedOccupied");
     private boolean messageCantFindBed;
     private boolean messageBedOccupied;
+    private boolean noBed;
     public SleepGoal(AbstractWorkerEntity worker) {
         this.worker = worker;
     }
 
     @Override
     public boolean canUse() {        
-        return !this.worker.needsBed() && worker.needsToSleep() && !worker.getFollow();
+        return worker.getStatus() == AbstractWorkerEntity.Status.SLEEP && (!noBed || worker.getBedPos() != null);
     }
 
     public boolean canContinueToUse() {
-        return canUse();
+        return worker.needsToSleep() && worker.getStatus() != AbstractWorkerEntity.Status.FOLLOW;
     }
 
     @Override
@@ -36,6 +38,13 @@ public class SleepGoal extends Goal {
         super.start();
         this.messageCantFindBed = true;
         this.messageBedOccupied = true;
+
+         if(worker.getBedPos() == null) {
+             if (worker.getOwner() != null) {
+                 this.worker.tellPlayer(worker.getOwner(), Translatable.NEED_BED);
+             }
+             this.noBed = true;
+         }
     }
 
     @Override
@@ -43,7 +52,8 @@ public class SleepGoal extends Goal {
         super.stop();   
         this.worker.stopSleeping();
         this.worker.clearSleepingPos();
-
+        if(this.worker.getStatus() != AbstractWorkerEntity.Status.FOLLOW) this.worker.setStatus(AbstractWorkerEntity.Status.IDLE);
+        this.worker.shouldDepositBeforeSleep = true;
     }
 
     @Override
@@ -54,28 +64,28 @@ public class SleepGoal extends Goal {
             return;
         }
 
-        LivingEntity owner = worker.getOwner();
         BlockPos sleepPos = worker.getBedPos();
-        if (sleepPos == null) {
-            if(owner != null) worker.tellPlayer(owner, NEED_BED);
-            return;
-        }
-
-        BlockEntity bedEntity = worker.level.getBlockEntity(sleepPos);
-        if (messageCantFindBed && bedEntity == null || !bedEntity.getBlockState().isBed(worker.level, sleepPos, worker)) {
-            if(owner != null) worker.tellPlayer(owner, CANT_FIND_BED);
-            messageCantFindBed = false;
-            return;
-        }
-        
-        if (bedEntity.getBlockState().getValue(BlockStateProperties.OCCUPIED)) {
-            if(messageBedOccupied){
-                if(owner != null) worker.tellPlayer(owner, BED_OCCUPIED);
-                messageBedOccupied = false;
+        if(sleepPos != null){
+            LivingEntity owner = worker.getOwner();
+            BlockEntity bedEntity = worker.level.getBlockEntity(sleepPos);
+            if (bedEntity == null || !bedEntity.getBlockState().isBed(worker.level, sleepPos, worker)) {
+                if(messageCantFindBed && owner != null){
+                    worker.tellPlayer(owner, CANT_FIND_BED);
+                    messageCantFindBed = false;
+                    this.noBed = true;
+                }
+                return;
             }
-        }
-        else {
-            this.goToBed(sleepPos);
+            if (bedEntity.getBlockState().getValue(BlockStateProperties.OCCUPIED)) {
+                if(messageBedOccupied){
+                    if(owner != null) worker.tellPlayer(owner, BED_OCCUPIED);
+                    messageBedOccupied = false;
+                    this.noBed = true;
+                }
+            }
+            else {
+                this.goToBed(sleepPos);
+            }
         }
     }
 

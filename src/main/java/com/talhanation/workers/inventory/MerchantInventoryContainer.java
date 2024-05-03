@@ -94,4 +94,11 @@ public class MerchantInventoryContainer extends ContainerBase {
     public void removed(Player playerIn) {
         super.removed(playerIn);
     }
+
+    public void broadcastChanges() {
+        super.broadcastChanges();
+        merchant.upgradeTool();
+        merchant.upgradeArmor();
+    }
+
 }

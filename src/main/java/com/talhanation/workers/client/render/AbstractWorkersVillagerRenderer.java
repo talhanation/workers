@@ -21,7 +21,7 @@ public abstract class AbstractWorkersVillagerRenderer extends HumanoidMobRendere
 
     public AbstractWorkersVillagerRenderer(EntityRendererProvider.Context context) {
         super(context, new WorkersVillagerModel(context.bakeLayer(ClientEvent.WORKER)), 0.5F);
-        this.addLayer(new HumanoidArmorLayer<>(this, new HumanoidModel(context.bakeLayer(ModelLayers.PLAYER_INNER_ARMOR)), new HumanoidModel(context.bakeLayer(ModelLayers.PLAYER_OUTER_ARMOR))));
+        this.addLayer(new HumanoidArmorLayer<>(this, new HumanoidModel(context.bakeLayer(ClientEvent.RECRUIT_INNER_ARMOR)), new HumanoidModel(context.bakeLayer(ClientEvent.RECRUIT_OUTER_ARMOR))));
         //layer
         //TODO : add other layers
     }
