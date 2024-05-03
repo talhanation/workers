@@ -7,18 +7,16 @@ import com.talhanation.workers.config.WorkersModConfig;
 import com.talhanation.workers.entities.ai.ControlBoatAI;
 import com.talhanation.workers.entities.ai.MerchantAI;
 import com.talhanation.workers.inventory.MerchantInventoryContainer;
+import com.talhanation.workers.inventory.MerchantOwnerContainer;
 import com.talhanation.workers.inventory.MerchantTradeContainer;
 import com.talhanation.workers.inventory.MerchantWaypointContainer;
-import com.talhanation.workers.network.MessageOpenGuiMerchant;
-import com.talhanation.workers.network.MessageOpenGuiWorker;
-import com.talhanation.workers.network.MessageToClientUpdateMerchantScreen;
+import com.talhanation.workers.network.*;
 import net.minecraft.core.BlockPos;
 import net.minecraft.nbt.Tag;
 import net.minecraft.network.syncher.EntityDataAccessor;
 import net.minecraft.network.syncher.EntityDataSerializers;
 import net.minecraft.network.syncher.SynchedEntityData;
 import net.minecraft.tags.BiomeTags;
-import net.minecraft.tags.BlockTags;
 import net.minecraft.world.entity.*;
 import net.minecraft.world.entity.ai.attributes.AttributeSupplier;
 import net.minecraft.world.entity.ai.attributes.Attributes;
@@ -27,7 +25,6 @@ import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.SimpleContainer;
-import net.minecraft.world.Containers;
 import net.minecraft.world.entity.vehicle.Boat;
 import net.minecraft.world.inventory.AbstractContainerMenu;
 import net.minecraft.world.MenuProvider;
@@ -77,8 +74,9 @@ public class MerchantEntity extends AbstractWorkerEntity implements IBoatControl
     private static final EntityDataAccessor<Optional<UUID>> BOAT_ID = SynchedEntityData.defineId(MerchantEntity.class, EntityDataSerializers.OPTIONAL_UUID);
     private static final EntityDataAccessor<Boolean> AUTO_START_TRAVEL = SynchedEntityData.defineId(MerchantEntity.class, EntityDataSerializers.BOOLEAN);
     private static final EntityDataAccessor<Boolean> INFO = SynchedEntityData.defineId(MerchantEntity.class, EntityDataSerializers.BOOLEAN);
-
-    private final SimpleContainer tradeInventory = new SimpleContainer(8);
+    public static  final int[] PRICE_SLOT = new int[] { 0, 2, 4, 6, 8, 10 };
+    public static  final int[] TRADE_SLOT = new int[] { 1, 3, 5, 7, 9, 11 };
+    private final SimpleContainer tradeInventory = new SimpleContainer(12);
     public boolean isTrading;
     private List<Integer> TRADE_LIMITS = new ArrayList<>();
     private List<Integer> CURRENT_TRADES = new ArrayList<>();
@@ -86,6 +84,7 @@ public class MerchantEntity extends AbstractWorkerEntity implements IBoatControl
     public List<ItemStack> WAYPOINT_ITEMS = new ArrayList<>();
     public MerchantEntity(EntityType<? extends AbstractWorkerEntity> entityType, Level world) {
         super(entityType, world);
+        this.inventory = new SimpleContainer(36);
     }
 
     protected void defineSynchedData() {
@@ -106,20 +105,26 @@ public class MerchantEntity extends AbstractWorkerEntity implements IBoatControl
         this.entityData.define(AUTO_START_TRAVEL, true);
         this.entityData.define(INFO, true);
     }
+
+    @Override
+    public boolean wantsToPickUp(ItemStack itemStack) {
+        //TODO: Add items from trade lists, so it can be restocked from upkeep
+        return !this.isCreative();
+    }
     @Override
     public boolean needsToSleep() {
-        return !this.getTraveling() && super.needsToSleep();
+        return !this.getTraveling() && !this.getReturning() && (State.HOME.getIndex() == this.getState() && !this.getAutoStartTravel()) && super.needsToSleep();
     }
 
     private void initTradeLimits() {
         if(TRADE_LIMITS.isEmpty()){
-            TRADE_LIMITS = Arrays.asList(16,16,16,16);
+            TRADE_LIMITS = Arrays.asList(16,16,16,16,16,16);
         }
     }
 
     private void initCurrentTrades() {
         if(CURRENT_TRADES.isEmpty()){
-            CURRENT_TRADES = Arrays.asList(0,0,0,0);
+            CURRENT_TRADES = Arrays.asList(0,0,0,0,0,0);
         }
     }
 
@@ -146,7 +151,7 @@ public class MerchantEntity extends AbstractWorkerEntity implements IBoatControl
             if (this.isCreative()) {
                 if (player.isCreative() && player.createCommandSourceStack().hasPermission(4)) {
                     if (player.isCrouching()) {
-                        openGUI(player);
+                        openOwnerGUI(player);
                     }
                     else {
                         if(status == Status.FOLLOW) this.setStatus(prevStatus);
@@ -162,7 +167,7 @@ public class MerchantEntity extends AbstractWorkerEntity implements IBoatControl
             else {
                 if (this.isTame() && (player.getUUID().equals(this.getOwnerUUID()))) {
                     if (player.isCrouching()) {
-                        openGUI(player);
+                        openOwnerGUI(player);
                     }
                     if (!player.isCrouching()) {
                         if(status == Status.FOLLOW)
@@ -220,6 +225,9 @@ public class MerchantEntity extends AbstractWorkerEntity implements IBoatControl
     public void openWaypointsGUI(Player player) {
         if (player instanceof ServerPlayer) {
             NetworkHooks.openScreen((ServerPlayer) player, new MenuProvider() {
+                Main.SIMPLE_CHANNEL.send(PacketDistributor.PLAYER.with(() -> (ServerPlayer) player), new MessageToClientUpdateMerchantScreen(this.WAYPOINTS, this.WAYPOINT_ITEMS, getCurrentTrades(), getTradeLimits(), this.getTraveling(), this.getReturning()));
+
+
                 @Override
                 public @NotNull Component getDisplayName() {
                     return getName();
@@ -233,14 +241,9 @@ public class MerchantEntity extends AbstractWorkerEntity implements IBoatControl
                 packetBuffer.writeUUID(getUUID());
             });
         } else {
-            Main.SIMPLE_CHANNEL.sendToServer(new MessageOpenGuiMerchant(player, this.getUUID()));
-        }
-
-        if (player instanceof ServerPlayer) {
-            Main.SIMPLE_CHANNEL.send(PacketDistributor.PLAYER.with(() -> (ServerPlayer) player), new MessageToClientUpdateMerchantScreen(this.WAYPOINTS, this.WAYPOINT_ITEMS, getCurrentTrades(), getTradeLimits(), this.getTraveling(), this.getReturning()));
+            Main.SIMPLE_CHANNEL.sendToServer(new MessageOpenWaypointsGuiMerchant(player, this.getUUID()));
         }
     }
-
     @Override
     public void openGUI(Player player) {
         if (player instanceof ServerPlayer) {
@@ -260,9 +263,26 @@ public class MerchantEntity extends AbstractWorkerEntity implements IBoatControl
         } else {
             Main.SIMPLE_CHANNEL.sendToServer(new MessageOpenGuiWorker(player, this.getUUID()));
         }
-
+    }
+    public void openOwnerGUI(Player player) {
         if (player instanceof ServerPlayer) {
             Main.SIMPLE_CHANNEL.send(PacketDistributor.PLAYER.with(() -> (ServerPlayer) player), new MessageToClientUpdateMerchantScreen(this.WAYPOINTS, this.WAYPOINT_ITEMS, getCurrentTrades(), getTradeLimits(), this.getTraveling(), this.getReturning()));
+
+            NetworkHooks.openGui((ServerPlayer) player, new MenuProvider() {
+                @Override
+                public @NotNull Component getDisplayName() {
+                    return getName();
+                }
+
+                @Override
+                public @NotNull AbstractContainerMenu createMenu(int i, @NotNull Inventory playerInventory, @NotNull Player playerEntity) {
+                    return new MerchantOwnerContainer(i, MerchantEntity.this, playerInventory);
+                }
+            }, packetBuffer -> {
+                packetBuffer.writeUUID(getUUID());
+            });
+        } else {
+            Main.SIMPLE_CHANNEL.sendToServer(new MessageOpenOwnerGuiMerchant(player, this.getUUID()));
         }
     }
 
@@ -397,7 +417,7 @@ public class MerchantEntity extends AbstractWorkerEntity implements IBoatControl
         nbt.put("Waypoints", waypoints);
 
         ListTag limits = new ListTag();
-        for(int i = 0; i < 4; i++) {
+        for(int i = 0; i < TRADE_SLOT.length; i++) {
             CompoundTag compoundnbt = new CompoundTag();
             compoundnbt.putByte("TradeLimit_" + i, (byte) i);
 
@@ -410,7 +430,7 @@ public class MerchantEntity extends AbstractWorkerEntity implements IBoatControl
 
 
         ListTag trades = new ListTag();
-        for(int i = 0; i < 4; i++) {
+        for(int i = 0; i < TRADE_SLOT.length; i++) {
             CompoundTag compoundnbt = new CompoundTag();
             compoundnbt.putByte("Trade_" + i, (byte) i);
             int trade = getCurrentTrades().get(i);
@@ -478,7 +498,7 @@ public class MerchantEntity extends AbstractWorkerEntity implements IBoatControl
 
         ListTag limits = nbt.getList("TradeLimits", 10);
         if(!limits.isEmpty()){
-            for (int i = 0; i < 4; ++i) {
+            for (int i = 0; i < TRADE_SLOT.length; ++i) {
                 CompoundTag compoundnbt = limits.getCompound(i);
                 int limit = compoundnbt.getInt("Limit");
 
@@ -489,7 +509,7 @@ public class MerchantEntity extends AbstractWorkerEntity implements IBoatControl
 
         ListTag trades = nbt.getList("Trades", 10);
         if(!trades.isEmpty()) {
-            for (int i = 0; i < 4; ++i) {
+            for (int i = 0; i < TRADE_SLOT.length; ++i) {
                 CompoundTag compoundnbt = trades.getCompound(i);
                 int trade = compoundnbt.getInt("Trade");
 
@@ -710,10 +730,6 @@ public class MerchantEntity extends AbstractWorkerEntity implements IBoatControl
 
     public void die(@NotNull DamageSource dmg) {
         super.die(dmg);
-        if(!isCreative()){
-            for (int i = 0; i < this.tradeInventory.getContainerSize(); i++)
-                Containers.dropItemStack(this.getCommandSenderWorld(), getX(), getY(), getZ(), this.tradeInventory.getItem(i));
-        }
     }
     @Override
     public boolean hurt(DamageSource dmg, float amt) {
@@ -742,11 +758,11 @@ public class MerchantEntity extends AbstractWorkerEntity implements IBoatControl
         }
         return true;
     }
-    //-1721 67 -902
+
     public float getPrecisionMin(){
-        int base = 50;
+        int base = 100;
         if(this.getVehicle().getEncodeId().contains("smallships")){
-            base = 100;
+            base = 150;
         }
         return base;
     }

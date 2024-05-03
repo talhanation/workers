@@ -1,6 +1,7 @@
 package com.talhanation.workers.entities.ai;
 
 import com.talhanation.workers.entities.AbstractWorkerEntity;
+import com.talhanation.workers.entities.IBoatController;
 import com.talhanation.workers.entities.MerchantEntity;
 import net.minecraft.core.BlockPos;
 import net.minecraft.network.chat.Component;
@@ -97,8 +98,16 @@ public class MerchantAI extends Goal {
             }
 
             case TRAVELING_GROUND -> {
-                if(merchant.getVehicle() instanceof Boat) merchant.stopRiding();
-                moveToWayPoint(indexChange, nextState, condition, false);
+                if(merchant.getVehicle() instanceof Boat ship){
+                    merchant.setSmallShipsSailState(ship, 0);
+                    double speed = IBoatController.getSmallshipSpeed(ship);
+                    if(speed < 0.01){
+                        this.merchant.stopRiding();
+                    }
+                }
+                else{
+                    moveToWayPoint(indexChange, nextState, condition, false);
+                }
             }
 
             case ARRIVED -> {
@@ -259,7 +268,9 @@ public class MerchantAI extends Goal {
             else
                 this.setWorkState(MOVE_TO_BOAT);
         }
-        else if (state != ARRIVED && state != HOME)
+
+        else if (state != ARRIVED && state != HOME) {
             this.setWorkState(TRAVELING_GROUND);
+        }
     }
 }

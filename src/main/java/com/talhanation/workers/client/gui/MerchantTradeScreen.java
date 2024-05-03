@@ -56,14 +56,26 @@ public class MerchantTradeScreen extends ScreenBase<MerchantTradeContainer> {
             Main.SIMPLE_CHANNEL
                     .sendToServer(new MessageMerchantTradeButton(merchant.getUUID(), playerInventory.player.getUUID(), 3));
         }));
+
+        addRenderableWidget(new ExtendedButton(leftPos + 110, topPos + 20 + 18 * 4, 48, 12, TRADE_TEXT, button -> {
+            Main.SIMPLE_CHANNEL
+                    .sendToServer(new MessageMerchantTradeButton(merchant.getUUID(), playerInventory.player.getUUID(), 4));
+        }));
+
+        addRenderableWidget(new ExtendedButton(leftPos + 110, topPos + 20 + 18 * 5, 48, 12, TRADE_TEXT, button -> {
+            Main.SIMPLE_CHANNEL
+                    .sendToServer(new MessageMerchantTradeButton(merchant.getUUID(), playerInventory.player.getUUID(), 5));
+        }));
     }
 
     @Override
     protected void renderLabels(GuiGraphics guiGraphics, int mouseX, int mouseY) {
         super.renderLabels(guiGraphics, mouseX, mouseY);
 
-        guiGraphics.drawString(font, merchant.getDisplayName().getVisualOrderText(), 8, 6, fontColor, false);
-        guiGraphics.drawString(font, playerInventory.getDisplayName().getVisualOrderText(), 8, imageHeight - 152 + 25, fontColor, false);
+        font.draw(matrixStack, merchant.getDisplayName().getVisualOrderText(), 8, 6, FONT_COLOR);
+        matrixStack.popPose();
+
+        font.draw(matrixStack, playerInventory.getDisplayName().getVisualOrderText(), 8, imageHeight - 152 + 59, FONT_COLOR);
     }
 
     @Override

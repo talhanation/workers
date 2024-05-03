@@ -1,9 +1,24 @@
 package com.talhanation.workers;
 
+import com.google.common.collect.ImmutableSet;
+import com.talhanation.workers.client.gui.*;
+import com.talhanation.workers.commands.MerchantResetCommand;
+
 import com.talhanation.workers.config.WorkersModConfig;
 import com.talhanation.workers.network.*;
 import net.minecraft.world.item.CreativeModeTabs;
 import net.minecraftforge.event.BuildCreativeModeTabContentsEvent;
+import de.maxhenkel.corelib.ClientRegistry;
+import net.minecraft.client.KeyMapping;
+import net.minecraft.resources.ResourceLocation;
+import net.minecraft.sounds.SoundEvents;
+import net.minecraft.world.entity.ai.village.poi.PoiType;
+import net.minecraft.world.entity.npc.VillagerProfession;
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.inventory.MenuType;
+import net.minecraft.world.phys.AABB;
+import net.minecraftforge.event.RegisterCommandsEvent;
+import net.minecraftforge.event.RegistryEvent;
 import net.minecraftforge.fml.DistExecutor;
 import net.minecraftforge.fml.ModList;
 import net.minecraftforge.fml.ModLoadingContext;
@@ -38,6 +53,7 @@ public class Main {
     public static final String MOD_ID = "workers";
     public static final Logger LOGGER = LogManager.getLogger(MOD_ID);
     public static SimpleChannel SIMPLE_CHANNEL;
+
     public static boolean isSmallShipsInstalled;
 
     public Main() {
@@ -63,6 +79,12 @@ public class Main {
 
         MinecraftForge.EVENT_BUS.register(this);
     }
+
+    @SubscribeEvent
+    public void onRegisterCommands(RegisterCommandsEvent event) {
+        MerchantResetCommand.register(event.getDispatcher());
+    }
+
 
     @SuppressWarnings({"unchecked", "rawtypes"})
     private void setup(final FMLCommonSetupEvent event) {
@@ -105,7 +127,9 @@ public class Main {
             MessageChickenFarmerUseEggs.class,
             MessageMerchantSetSendInfo.class,
             MessageLumberjackReplant.class,
-            MessageToClientUpdateHireScreen.class
+            MessageToClientUpdateHireScreen.class,
+            MessageOpenOwnerGuiMerchant.class,
+            MessageWriteSpawnEgg.class
         };
         for (int i = 0; i < messages.length; i++) CommonRegistry.registerMessage(SIMPLE_CHANNEL, i, messages[i]);
         LOGGER.info("Villager Workers Messages registered");

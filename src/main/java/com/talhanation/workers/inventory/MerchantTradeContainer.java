@@ -14,16 +14,9 @@ import net.minecraft.world.item.ItemStack;
 public class MerchantTradeContainer extends ContainerBase {
     private final Container workerInventory;
     private final MerchantEntity merchant;
-    private final int[] PRICE_ID = new int[] {
-            0, 2, 4, 6
-    };
-
-    private final int[] TRADE_ID = new int[] {
-            1, 3, 5, 7
-    };
 
     public MerchantTradeContainer(int id, MerchantEntity merchant, Inventory playerInventory) {
-        super(ModMenuTypes.MERCHANT_CONTAINER_TYPE.get(), id, playerInventory, merchant.getInventory());
+        super(Main.MERCHANT_TRADE_CONTAINER_TYPE, id, playerInventory, merchant.getInventory());
         this.merchant = merchant;
         this.workerInventory = merchant.getTradeInventory();
         addWorkerTradeSlots();
@@ -33,12 +26,12 @@ public class MerchantTradeContainer extends ContainerBase {
 
     @Override
     public int getInvOffset() {
-        return 25;
+        return 56;
     }
 
     public void addWorkerPriceSlots() {
-        for (int k = 0; k < 4; ++k) {
-            this.addSlot(new Slot(workerInventory, PRICE_ID[k], 8 + 18, 18 + k * 18) {
+        for (int k = 0; k < MerchantEntity.PRICE_SLOT.length; ++k) {
+            this.addSlot(new Slot(workerInventory, MerchantEntity.PRICE_SLOT[k], 8 + 18, 16 + k * 18) {
                 @Override
                 public boolean mayPlace(ItemStack itemStack) {
                     return false;
@@ -53,8 +46,8 @@ public class MerchantTradeContainer extends ContainerBase {
     }
 
     public void addWorkerTradeSlots() {
-        for (int k = 0; k < 4; ++k) {
-            this.addSlot(new Slot(workerInventory, TRADE_ID[k], 8 + 18 * 4, 18 + k * 18) {
+        for (int k = 0; k < MerchantEntity.TRADE_SLOT.length; ++k) {
+            this.addSlot(new Slot(workerInventory, MerchantEntity.TRADE_SLOT[k], 8 + 18 * 4, 16 + k * 18) {
                 @Override
                 public boolean mayPlace(ItemStack itemStack) {
                     return false;

@@ -2,10 +2,13 @@ package com.talhanation.workers.client.gui;
 
 import com.talhanation.workers.Main;
 import com.talhanation.workers.entities.MerchantEntity;
-import com.talhanation.workers.inventory.MerchantInventoryContainer;
+import com.talhanation.workers.inventory.MerchantOwnerContainer;
 import com.talhanation.workers.network.*;
 import de.maxhenkel.corelib.inventory.ScreenBase;
-import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.client.gui.components.Button;
+import net.minecraft.network.chat.MutableComponent;
+import net.minecraft.network.chat.TextComponent;
+import net.minecraft.network.chat.TranslatableComponent;
 import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.network.chat.Component;
@@ -14,7 +17,7 @@ import net.minecraftforge.client.gui.widget.ExtendedButton;
 
 import java.util.List;
 
-public class MerchantOwnerScreen extends ScreenBase<MerchantInventoryContainer> {
+public class MerchantOwnerScreen extends ScreenBase<MerchantOwnerContainer> {
 
     private static final ResourceLocation GUI_TEXTURE_3 = new ResourceLocation(Main.MOD_ID,
             "textures/gui/merchant_owner_gui.png");
@@ -25,8 +28,11 @@ public class MerchantOwnerScreen extends ScreenBase<MerchantInventoryContainer> 
     private final Inventory playerInventory;
     private final Player player;
 
-    public MerchantOwnerScreen(MerchantInventoryContainer container, Inventory playerInventory, Component title) {
-        super(GUI_TEXTURE_3, container, playerInventory, Component.literal(""));
+    private final MutableComponent TEXT_TRAVEL = new TranslatableComponent("gui.workers.merchant.travel");
+    private final MutableComponent TEXT_INVENTORY = new TranslatableComponent("gui.workers.merchant.inventory");
+    private final MutableComponent TEXT_SHOW_TRADE = new TranslatableComponent("gui.workers.merchant.show_trade");
+    public MerchantOwnerScreen(MerchantOwnerContainer container, Inventory playerInventory, Component title) {
+        super(GUI_TEXTURE_3, container, playerInventory, new TextComponent(""));
         this.merchant = (MerchantEntity) container.getWorker();
         this.playerInventory = playerInventory;
         this.player = playerInventory.player;
@@ -43,8 +49,17 @@ public class MerchantOwnerScreen extends ScreenBase<MerchantInventoryContainer> 
         int mirror = 240 - 60;
 
 
-        addRenderableWidget(new ExtendedButton(zeroLeftPos - mirror + 180, zeroTopPos + 35, 41, 20, Component.literal("Travel"), button -> {
-            Main.SIMPLE_CHANNEL.sendToServer(new MessageOpenWaypointsGuiMerchant(this.player, this.merchant.getUUID()));
+        addRenderableWidget(new Button(zeroLeftPos - mirror + 180, zeroTopPos + 35, 41, 20, TEXT_TRAVEL, button -> {
+            this.merchant.openWaypointsGUI(player);
+        }));
+
+        addRenderableWidget(new Button(zeroLeftPos - mirror + 180, zeroTopPos + 200, 41, 20, TEXT_SHOW_TRADE, button -> {
+            this.merchant.openTradeGUI(player);
+        }));
+
+        addRenderableWidget(new Button(zeroLeftPos - mirror + 180, zeroTopPos + 225, 41, 20, TEXT_INVENTORY, button -> {
+            this.merchant.openGUI(player);
+
         }));
 
         if(this.player.isCreative() && this.player.createCommandSourceStack().hasPermission(4)){
@@ -54,6 +69,8 @@ public class MerchantOwnerScreen extends ScreenBase<MerchantInventoryContainer> 
         createTradeLimitButtons(zeroLeftPos - mirror + 130, zeroTopPos + 48, 1);
         createTradeLimitButtons(zeroLeftPos - mirror + 130, zeroTopPos + 48, 2);
         createTradeLimitButtons(zeroLeftPos - mirror + 130, zeroTopPos + 48, 3);
+        createTradeLimitButtons(zeroLeftPos - mirror + 130, zeroTopPos + 48, 4);
+        createTradeLimitButtons(zeroLeftPos - mirror + 130, zeroTopPos + 48, 5);
     }
 
     public void setUpdatableButtons(){
@@ -82,6 +99,7 @@ public class MerchantOwnerScreen extends ScreenBase<MerchantInventoryContainer> 
                 Main.SIMPLE_CHANNEL.sendToServer(new MessageMerchantSetCreative(merchant.getUUID(), !merchant.isCreative()));
                 this.setUpdatableButtons();
         }));
+
     }
 
     private void createTradeLimitButtons(int x, int y, int index){
@@ -106,7 +124,7 @@ public class MerchantOwnerScreen extends ScreenBase<MerchantInventoryContainer> 
         }));
         addRenderableWidget(new ExtendedButton(26 + x, y + 18 * index, 12, 12, Component.literal("0"),
             button -> {
-                Main.SIMPLE_CHANNEL.sendToServer(new MessageMerchantResetCurrentTradeCounts(merchant.getUUID()));
+                Main.SIMPLE_CHANNEL.sendToServer(new MessageMerchantResetCurrentTradeCounts(merchant.getUUID(), index));
         }));
     }
 
