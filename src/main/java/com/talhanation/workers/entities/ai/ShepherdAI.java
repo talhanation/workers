@@ -1,5 +1,6 @@
 package com.talhanation.workers.entities.ai;
 
+import com.talhanation.workers.entities.AbstractWorkerEntity;
 import com.talhanation.workers.entities.ShepherdEntity;
 import net.minecraft.core.BlockPos;
 import net.minecraft.sounds.SoundEvents;
@@ -28,7 +29,7 @@ public class ShepherdAI extends AnimalFarmerAI{
 
     @Override
     public boolean canUse() {
-        return animalFarmer.canWork();
+        return animalFarmer.getStatus() == AbstractWorkerEntity.Status.WORK;
     }
 
     @Override
@@ -43,12 +44,12 @@ public class ShepherdAI extends AnimalFarmerAI{
     @Override
     public void performWork() {
 
-        if (workPos != null && !workPos.closerThan(animalFarmer.getOnPos(), 10D) && !animalFarmer.getFollow())
+        if (workPos != null && !workPos.closerThan(animalFarmer.getOnPos(), 10D))
             this.animalFarmer.getNavigation().moveTo(workPos.getX(), workPos.getY(), workPos.getZ(), 1);
 
         if (sheering) {
             this.sheep = findSheepSheering();
-            if (hasMainToolInInv() && this.sheep.isPresent() && sheep.get().readyForShearing()) {
+            if (animalFarmer.hasMainToolInInv() && this.sheep.isPresent() && sheep.get().readyForShearing()) {
 
                 this.animalFarmer.getNavigation().moveTo(this.sheep.get(), 1);
 
@@ -59,7 +60,12 @@ public class ShepherdAI extends AnimalFarmerAI{
                     this.animalFarmer.getLookControl().setLookAt(sheep.get().getX(), sheep.get().getEyeY(), sheep.get().getZ(), 10.0F, (float) this.animalFarmer.getMaxHeadXRot());
                     this.sheep = Optional.empty();
                 }
-            } else {
+            }
+            else {
+                if(!animalFarmer.hasMainToolInInv()){
+                    animalFarmer.needsMainTool = true;
+                }
+
                 sheering = false;
                 breeding = true;
             }
@@ -98,7 +104,7 @@ public class ShepherdAI extends AnimalFarmerAI{
             if (sheeps.size() > animalFarmer.getMaxAnimalCount()) {
                 sheep = sheeps.stream().findFirst();
 
-                if (sheep.isPresent() && hasSecondToolInInv()) {
+                if (sheep.isPresent() && animalFarmer.hasSecondToolInInv()) {
                     this.animalFarmer.getNavigation().moveTo(sheep.get().getX(), sheep.get().getY(), sheep.get().getZ(), 1);
 
                     if(!animalFarmer.isRequiredSecondTool(animalFarmer.getMainHandItem())) this.animalFarmer.changeToTool(false);
@@ -114,6 +120,9 @@ public class ShepherdAI extends AnimalFarmerAI{
                         animalFarmer.increaseFarmedItems();
                     }
                 } else {
+                    if(!animalFarmer.hasSecondToolInInv()){
+                        animalFarmer.needsSecondTool = true;
+                    }
                     slaughtering = false;
                     sheering = true;
                 }

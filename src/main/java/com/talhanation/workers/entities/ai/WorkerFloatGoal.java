@@ -45,6 +45,5 @@ public class WorkerFloatGoal extends Goal {
         if (this.mob.getRandom().nextFloat() < 0.8F) {
             this.mob.getJumpControl().jump();
         }
-
     }
 }

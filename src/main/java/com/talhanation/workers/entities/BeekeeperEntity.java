@@ -26,6 +26,8 @@ import net.minecraft.world.level.ServerLevelAccessor;
 import org.jetbrains.annotations.NotNull;
 
 import javax.annotation.Nullable;
+import java.util.Arrays;
+import java.util.List;
 import java.util.Set;
 import java.util.function.Predicate;
 
@@ -43,7 +45,6 @@ public class BeekeeperEntity extends AbstractAnimalFarmerEntity {
 
     public BeekeeperEntity(EntityType<? extends AbstractAnimalFarmerEntity> entityType, Level world) {
         super(entityType, world);
-        this.initSpawn();
     }
 
     protected void defineSynchedData() {
@@ -137,9 +138,19 @@ public class BeekeeperEntity extends AbstractAnimalFarmerEntity {
     public boolean isRequiredMainTool(ItemStack tool) {
         return false;
     }
-
+    public boolean hasAMainTool(){
+        return false;
+    }
+    public boolean hasASecondTool(){
+        return false;
+    }
     @Override
     public boolean isRequiredSecondTool(ItemStack tool) {
         return false;
+    }
+
+    @Override
+    public List<Item> inventoryInputHelp() {
+        return Arrays.asList(Items.DANDELION, Items.BEE_NEST);
     }
 }

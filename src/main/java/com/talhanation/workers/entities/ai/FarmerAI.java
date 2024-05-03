@@ -1,6 +1,7 @@
 package com.talhanation.workers.entities.ai;
 
-import com.google.common.collect.ImmutableSet;
+import com.talhanation.workers.Translatable;
+import com.talhanation.workers.entities.AbstractWorkerEntity;
 import com.talhanation.workers.entities.FarmerEntity;
 import net.minecraft.core.BlockPos;
 import net.minecraft.server.level.ServerLevel;
@@ -9,22 +10,16 @@ import net.minecraft.sounds.SoundSource;
 import net.minecraft.tags.BlockTags;
 import net.minecraft.world.SimpleContainer;
 import net.minecraft.world.entity.ai.goal.Goal;
-import net.minecraft.world.entity.vehicle.Boat;
 import net.minecraft.world.item.BoneMealItem;
-import net.minecraft.world.item.Item;
-import net.minecraft.world.item.HoeItem;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
 import net.minecraft.world.level.block.*;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.material.FluidState;
 import net.minecraft.world.level.material.Fluids;
-import net.minecraftforge.common.Tags;
 import net.minecraftforge.event.ForgeEventFactory;
 
 import java.util.EnumSet;
-import java.util.Random;
-import java.util.Set;
 
 import static com.talhanation.workers.entities.FarmerEntity.CROP_BLOCKS;
 import static com.talhanation.workers.entities.FarmerEntity.WANTED_SEEDS;
@@ -33,6 +28,7 @@ public class FarmerAI extends Goal {
     private final FarmerEntity farmer;
     private BlockPos workPos;
     private BlockPos waterPos;
+    private boolean messageNoHoe;
     private enum State {
         PLOWING,
         PLANTING,
@@ -47,7 +43,7 @@ public class FarmerAI extends Goal {
     }
 
     public boolean canUse() {
-        return this.farmer.canWork();
+        return farmer.getStatus() == AbstractWorkerEntity.Status.WORK;
     }
 
     public boolean canContinueToUse() {
@@ -58,6 +54,7 @@ public class FarmerAI extends Goal {
     public void start() {
         super.start();
         this.state = State.PLOWING;
+        this.messageNoHoe = true;
         farmer.resetWorkerParameters();
     }
 
@@ -77,22 +74,32 @@ public class FarmerAI extends Goal {
 
             switch (state) {
                 case PLOWING -> {
-                    if (!startPosIsWater()) {
-                        this.farmer.walkTowards(waterPos, 1.2);
-                        if (waterPos.closerThan(farmer.blockPosition(), 4)) {
-                            farmer.workerSwingArm();
-                            this.prepareWaterPos();
+                    if(farmer.hasMainToolInInv()){
+                        if (!startPosIsWater()) {
+                            this.farmer.walkTowards(waterPos, 1.2);
+                            if (waterPos.closerThan(farmer.blockPosition(), 4)) {
+                                farmer.workerSwingArm();
+                                this.prepareWaterPos();
+                            }
+                        }
+                        this.workPos = getHoePos();
+                        if (workPos != null) {
+                            this.farmer.walkTowards(workPos, 1);
+                            if (workPos.closerThan(farmer.blockPosition(), 3)) {
+                                farmer.workerSwingArm();
+                                this.prepareFarmLand(workPos);
+                            }
+                        } else {
+                            state = State.PLANTING;
                         }
                     }
-                    this.workPos = getHoePos();
-                    if (workPos != null) {
-                        this.farmer.walkTowards(workPos, 1);
-                        if (workPos.closerThan(farmer.blockPosition(), 3)) {
-                            farmer.workerSwingArm();
-                            this.prepareFarmLand(workPos);
+                    else{
+                        if(messageNoHoe && this.farmer.getOwner() != null){
+                            this.farmer.tellPlayer(farmer.getOwner(), Translatable.TEXT_OUT_OF_TOOLS());
+                            messageNoHoe = false;
                         }
-                    } else {
-                        state = State.PLANTING;
+                        this.farmer.needsMainTool = true;
+
                     }
                 }
                 case PLANTING -> {
@@ -161,7 +168,10 @@ public class FarmerAI extends Goal {
             if(crop.isBonemealSuccess((ServerLevel) farmer.getLevel(), farmer.getRandom(), workPos, state)){
                 for (int i = 0; i < farmer.getInventory().getContainerSize(); ++i) {
                     ItemStack itemstack = farmer.getInventory().getItem(i);
-                    if(itemstack.getItem() instanceof BoneMealItem) itemstack.shrink(1);
+                    if(itemstack.getItem() instanceof BoneMealItem){
+                        itemstack.shrink(1);
+                        break;
+                    }
                 }
             }
         }
@@ -228,8 +238,9 @@ public class FarmerAI extends Goal {
             if (waterBlockState != Fluids.WATER.defaultFluidState() || waterBlockState != Fluids.FLOWING_WATER.defaultFluidState()){
                 if(FarmerEntity.TILLABLES.contains(blockState.getBlock())){
                     farmer.getCommandSenderWorld().setBlock(waterPos, Blocks.WATER.defaultBlockState(), 3);
-                    farmer.getCommandSenderWorld().playSound(null, waterPos.getX(), waterPos.getY(), waterPos.getZ(),
-                            SoundEvents.BUCKET_EMPTY, SoundSource.BLOCKS, 1.0F, 1.0F);
+                    farmer.getCommandSenderWorld().playSound(null, waterPos.getX(), waterPos.getY(), waterPos.getZ(), SoundEvents.BUCKET_EMPTY, SoundSource.BLOCKS, 1.0F, 1.0F);
+
+                    farmer.consumeToolDurability();
                 }
                 else return;
             }
@@ -247,7 +258,7 @@ public class FarmerAI extends Goal {
             BlockState blockStateAbove = this.farmer.getCommandSenderWorld().getBlockState(blockPos.above());
             Block blockAbove = blockStateAbove.getBlock();
             farmer.workerSwingArm();
-
+            farmer.consumeToolDurability();
             if (blockAbove instanceof BushBlock || blockAbove instanceof GrowingPlantBlock) {
                 farmer.getCommandSenderWorld().destroyBlock(blockPos.above(), false);
                 farmer.getCommandSenderWorld().playSound(null, blockPos.getX(), blockPos.getY(), blockPos.getZ(), SoundEvents.GRASS_BREAK,
@@ -349,8 +360,7 @@ public class FarmerAI extends Goal {
     }
 
     private boolean mineBlock(BlockPos blockPos) {
-        if (this.farmer.isAlive() && ForgeEventFactory.getMobGriefingEvent(this.farmer.level, this.farmer)
-                && !farmer.getFollow()) {
+        if (this.farmer.isAlive() && ForgeEventFactory.getMobGriefingEvent(this.farmer.level, this.farmer)) {
 
             BlockState blockstate = this.farmer.level.getBlockState(blockPos);
             Block block = blockstate.getBlock();

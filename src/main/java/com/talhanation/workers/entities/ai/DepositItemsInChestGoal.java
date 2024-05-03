@@ -1,55 +1,77 @@
 package com.talhanation.workers.entities.ai;
 
 import com.talhanation.workers.Translatable;
-import com.talhanation.workers.entities.AbstractWorkerEntity;
-import com.talhanation.workers.entities.ChickenFarmerEntity;
-import com.talhanation.workers.entities.MinerEntity;
+import com.talhanation.workers.entities.*;
 import net.minecraft.core.BlockPos;
+import net.minecraft.nbt.CompoundTag;
 import net.minecraft.sounds.SoundEvents;
+import net.minecraft.world.CompoundContainer;
 import net.minecraft.world.Container;
 import net.minecraft.world.SimpleContainer;
 import net.minecraft.world.entity.ai.goal.Goal;
+import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
+import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.ChestBlock;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.entity.ChestBlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.gameevent.GameEvent;
 
-import java.util.function.Predicate;
+import javax.annotation.Nullable;
+import java.util.EnumSet;
+
 
 public class DepositItemsInChestGoal extends Goal {
     private final AbstractWorkerEntity worker;
     public BlockPos chestPos;
     public Container container;
-    public boolean message;
+    public boolean messageCantFindChest;
+    public boolean messageNoFood;
+    public boolean messageChestFull;
     public int timer = 0;
     public boolean setTimer = false;
-
+    public boolean noSpaceInvMessage;
+    public boolean noToolMessage;
+    public boolean messageNoChest;
     public DepositItemsInChestGoal(AbstractWorkerEntity worker) {
         this.worker = worker;
+        this.setFlags(EnumSet.of(Flag.MOVE, Flag.LOOK));
     }
 
     @Override
     public boolean canUse() {
-        return this.worker.needsToDeposit();
+        return this.worker.getStatus() == AbstractWorkerEntity.Status.DEPOSIT;
+    }
+
+    public boolean canContinueToUse() {
+        return canUse() && worker.getStatus() != AbstractWorkerEntity.Status.FOLLOW;
+    }
+    @Override
+    public boolean isInterruptable() {
+        return false;
     }
 
     @Override
     public void start() {
         super.start();
-        message = false;
+        messageNoFood = true;
+        noSpaceInvMessage = true;
+        noToolMessage = true;
+        messageChestFull = true;
+        messageNoChest = true;
+
         this.chestPos = worker.getChestPos();
         if (chestPos != null) {
-            BlockEntity entity = worker.level.getBlockEntity(chestPos);
-            BlockState blockState = worker.getCommandSenderWorld().getBlockState(chestPos);
-            if (blockState.getBlock() instanceof ChestBlock chestBlock) {
-                this.container = ChestBlock.getContainer(chestBlock, blockState, worker.getCommandSenderWorld(), chestPos, false);
-            } else if (entity instanceof Container containerEntity) {
-                this.container = containerEntity;
-            } else
-                message = true;
+            container = getContainer(chestPos);
+            if(container == null){
+                if(messageCantFindChest && worker.getOwner() != null){
+                    this.worker.tellPlayer(worker.getOwner(), Translatable.TEXT_CANT_FIND_CHEST);
+                    this.messageCantFindChest = false;
+                }
+                this.worker.clearChestPos();
+            }
         }
     }
 
@@ -60,12 +82,9 @@ public class DepositItemsInChestGoal extends Goal {
         timer = 0;
         setTimer = false;
         this.worker.resetFarmedItems();
-    }
 
-    public boolean canContinueToUse() {
-        return canUse();
+        if(this.worker.getStatus() != AbstractWorkerEntity.Status.FOLLOW) this.worker.setStatus(AbstractWorkerEntity.Status.IDLE);
     }
-
     @Override
     public void tick() {
         this.chestPos = worker.getChestPos();
@@ -74,91 +93,235 @@ public class DepositItemsInChestGoal extends Goal {
 
             this.worker.getNavigation().moveTo(chestPos.getX(), chestPos.getY(), chestPos.getZ(), 1.1D);
 
-            if (chestPos.closerThan(worker.getOnPos(), 2.5) && container != null) {
+            if (chestPos.closerThan(worker.getOnPos(), 2.5)) {
                 this.worker.getNavigation().stop();
                 this.worker.getLookControl().setLookAt(chestPos.getX(), chestPos.getY() + 1, chestPos.getZ(), 10.0F, (float) this.worker.getMaxHeadXRot());
 
-                if(!setTimer){
-                    this.interactChest(container, true);
-                    this.depositItems(container);
-                    this.reequipTool();
+                if(container != null){
+                    if(!setTimer){
+                        this.interactChest(container, true);
+                        this.depositItems(container);
 
-                    if(this.worker instanceof MinerEntity){
-                        this.reequipTorch();
+                        if(!canAddItemsInInventory()){
+                            if(worker.getOwner() != null && noSpaceInvMessage){
+                                worker.tellPlayer(worker.getOwner(), Translatable.TEXT_NO_SPACE_INV);
+                                noSpaceInvMessage = false;
+                            }
+
+                        }
+
+                        this.reequipMainTool();
+                        this.reequipSecondTool();
+
+                        if(this.worker instanceof MinerEntity){
+                            if(!hasEnoughOfItem(Items.TORCH, 16)) this.getItemFromChest(Items.TORCH);
+                        }
+                        //TODO: ADD fisherman takes boat
+                        if(this.worker instanceof FarmerEntity){
+                            if(!hasEnoughOfItem(Items.BONE_MEAL, 32)) this.getItemFromChest(Items.BONE_MEAL);
+                        }
+
+                        if(this.worker instanceof ChickenFarmerEntity chickenFarmer){
+                            if(chickenFarmer.getUseEggs()) this.getItemFromChest(Items.EGG);
+                            if(!hasEnoughOfItem(Items.WHEAT_SEEDS, 32)) this.getItemFromChest(Items.WHEAT_SEEDS);
+                            if(!hasEnoughOfItem(Items.PUMPKIN_SEEDS, 32)) this.getItemFromChest(Items.PUMPKIN_SEEDS);
+                            if(!hasEnoughOfItem(Items.MELON_SEEDS, 32)) this.getItemFromChest(Items.MELON_SEEDS);
+                            if(!hasEnoughOfItem(Items.BEETROOT_SEEDS, 32)) this.getItemFromChest(Items.BEETROOT_SEEDS);
+                        }
+
+                        if(this.worker instanceof ShepherdEntity || this.worker instanceof CattleFarmerEntity){
+                            if(!hasEnoughOfItem(Items.WHEAT, 32)) this.getItemFromChest(Items.WHEAT);
+                        }
+
+                        if(this.worker instanceof SwineherdEntity){
+                            if(!hasEnoughOfItem(Items.CARROT, 32)) this.getItemFromChest(Items.CARROT);
+                        }
+
+                        if(this.worker instanceof CattleFarmerEntity){
+                            if(!hasEnoughOfItem(Items.MILK_BUCKET, 3)) this.getItemFromChest(Items.BUCKET);
+                        }
+
+                        if(this.worker.needsToGetFood() && !this.hasFoodInInv()){
+                            if (isFoodInChest(container)) {
+                                for (int i = 0; i < 3; i++) {
+                                    ItemStack foodItem = this.getFoodFromInv(container);
+                                    ItemStack food;
+
+                                    if (foodItem != null){
+                                        food = foodItem.copy();
+                                        food.setCount(1);
+                                        worker.getInventory().addItem(food);
+                                        foodItem.shrink(1);
+                                    }
+                                }
+                            }
+                            else {
+                                if(worker.getOwner() != null && messageNoFood){
+                                    worker.tellPlayer(worker.getOwner(), Translatable.TEXT_NO_FOOD);
+                                    messageNoFood = false;
+                                }
+                            }
+                        }
+
+                        if(((!worker.hasMainToolInInv() || worker.needsMainTool) && worker.hasAMainTool()) || ((!worker.hasSecondToolInInv() || worker.needsSecondTool) && worker.hasASecondTool())){
+                            if(worker.getOwner() != null && noToolMessage) {
+                                worker.tellPlayer(worker.getOwner(), Translatable.TEXT_OUT_OF_TOOLS());
+                                noToolMessage = false;
+                            }
+                        }
+
+                        timer = 30;
+                        setTimer = true;
                     }
-
-                    if(this.worker instanceof ChickenFarmerEntity chickenFarmer && chickenFarmer.getUseEggs()){
-                        this.getEggsFromChest();
-                    }
-
-                    timer = 50;
-                    setTimer = true;
                 }
+                else {
+                    container = getContainer(chestPos);
+
+                    if(container == null){
+                        if(messageCantFindChest && worker.getOwner() != null){
+                            this.worker.tellPlayer(worker.getOwner(), Translatable.TEXT_CANT_FIND_CHEST);
+                            this.messageCantFindChest = false;
+                        }
+                        this.worker.clearChestPos();
+                    }
+                }
+
             }
         }
-        else
-            message = true;
-
-        if(message && worker.getOwner() != null){
-            this.worker.tellPlayer(worker.getOwner(), Translatable.TEXT_CANT_FIND_CHEST);
-            this.worker.setNeedsChest(true);
+        else {
+            if(messageNoChest && worker.getOwner() != null){
+                this.worker.tellPlayer(worker.getOwner(), Translatable.NEED_CHEST);
+                messageNoChest = false;
+            }
         }
 
         if(setTimer){
             if(timer > 0) timer--;
             if(timer == 0) stop();
         }
-
     }
 
+    private Container getContainer(BlockPos chestPos) {
+        BlockEntity entity = worker.getCommandSenderWorld().getBlockEntity(chestPos);
+        BlockState blockState = worker.getCommandSenderWorld().getBlockState(chestPos);
+        if (blockState.getBlock() instanceof ChestBlock chestBlock) {
+            return ChestBlock.getContainer(chestBlock, blockState, worker.getCommandSenderWorld(), chestPos, false);
+        } else if (entity instanceof Container containerEntity) {
+            return containerEntity;
+        }
+        else {
+            messageCantFindChest = true;
+        }
+        return null;
+    }
+
+    @Nullable
+    private ItemStack getFoodFromInv(Container inv){
+        ItemStack itemStack = null;
+        for(int i = 0; i < inv.getContainerSize(); i++){
+            ItemStack itemStack2 = inv.getItem(i);
+            if(itemStack2.isEdible() && itemStack2.getFoodProperties(this.worker).getNutrition() > 3){
+                itemStack = inv.getItem(i);
+                break;
+            }
+        }
+        return itemStack;
+    }
+
+    private boolean canAddItemsInInventory(){
+        for(int i = 0; i < worker.getInventory().getContainerSize(); i++){
+            if(worker.getInventory().getItem(i).isEmpty())
+                return true;
+        }
+        return false;
+    }
+
+
     public void interactChest(Container container, boolean open) {
-        if (container instanceof ChestBlockEntity chest) {
+        if(container instanceof CompoundContainer || container instanceof ChestBlockEntity){
+            BlockState state = this.worker.getCommandSenderWorld().getBlockState(this.chestPos);
+            Block block = state.getBlock();
+            boolean isOpened = false;
+            CompoundTag compoundTag = new CompoundTag();
+            if(worker.getLevel().getBlockEntity(chestPos) instanceof ChestBlockEntity chestBlockEntity){
+                compoundTag = chestBlockEntity.getPersistentData();
+                if(compoundTag.contains("isOpened"))
+                    isOpened = compoundTag.getBoolean("isOpened");
+                else
+                    compoundTag.putBoolean("isOpened", false);
+            }
+
             if (open) {
-                this.worker.getLevel().blockEvent(this.chestPos, chest.getBlockState().getBlock(), 1, 1);
-                this.worker.level.playSound(null, chestPos, SoundEvents.CHEST_OPEN, worker.getSoundSource(), 0.7F, 0.8F + 0.4F * worker.getRandom().nextFloat());
+                if(!isOpened){
+                    this.worker.getLevel().blockEvent(this.chestPos, block, 1, 1);
+                    this.worker.level.playSound(null, chestPos, SoundEvents.CHEST_OPEN, worker.getSoundSource(), 0.7F, 0.8F + 0.4F * worker.getRandom().nextFloat());
+                    compoundTag.putBoolean("isOpened", true);
+                }
             }
             else {
-                this.worker.getLevel().blockEvent(this.chestPos, chest.getBlockState().getBlock(), 1, 0);
-                worker.level.playSound(null, chestPos, SoundEvents.CHEST_CLOSE, worker.getSoundSource(), 0.7F, 0.8F + 0.4F * worker.getRandom().nextFloat());
+                if(isOpened){
+                    this.worker.getLevel().blockEvent(this.chestPos, block, 1, 0);
+                    this.worker.level.playSound(null, chestPos, SoundEvents.CHEST_CLOSE, worker.getSoundSource(), 0.7F, 0.8F + 0.4F * worker.getRandom().nextFloat());
+                    compoundTag.putBoolean("isOpened", false);
+                }
             }
             this.worker.getLevel().gameEvent(this.worker, open ? GameEvent.BLOCK_OPEN : GameEvent.BLOCK_CLOSE, chestPos);
         }
     }
 
-    private void reequipTool(){
-        if(worker.needsTool()){
-            boolean hasMainHand = this.hasAnyMatching(worker::isRequiredMainTool);
-            boolean hasOffHand = this.hasAnyMatching(worker::isRequiredSecondTool);
 
-            for (int i = 0; i < container.getContainerSize(); i++) {
-                ItemStack stack = container.getItem(i);
+    private void reequipMainTool(){
+        boolean hasMainHand = worker.getInventory().hasAnyMatching(worker::isRequiredMainTool);
 
-                if((!hasMainHand && worker.isRequiredMainTool(stack))){
-                    take(stack);
-                }
-                if(!hasOffHand && worker.isRequiredSecondTool(stack)){
-                    take(stack);
-                }
+        for (int i = 0; i < container.getContainerSize(); i++) {
+            ItemStack stack = container.getItem(i);
+
+            if((!hasMainHand && worker.isRequiredMainTool(stack) && worker.hasAMainTool())){
+                take(stack);
+
+                worker.needsMainTool = false;
+                worker.updateNeedsTool();
+                break;
             }
-            worker.setNeedsTool(false);
+
         }
     }
 
-    private boolean hasAnyMatching(Predicate<ItemStack> p_216875_) {
-        for(int i = 0; i < worker.getInventory().getContainerSize(); ++i) {
-            ItemStack itemstack = worker.getInventory().getItem(i);
-            if (p_216875_.test(itemstack)) {
-                return true;
-            }
-        }
+    private void reequipSecondTool(){
+        boolean hasOffHand = worker.getInventory().hasAnyMatching(worker::isRequiredSecondTool);
 
-        return false;
-	}
-    
-	private void reequipTorch(){
         for (int i = 0; i < container.getContainerSize(); i++) {
             ItemStack stack = container.getItem(i);
-            if(stack.is(Items.TORCH)){
+
+            if(!hasOffHand && worker.isRequiredSecondTool(stack) && worker.hasASecondTool()){
+                take(stack);
+
+                worker.needsSecondTool = false;
+                worker.updateNeedsTool();
+                break;
+            }
+        }
+    }
+
+    private boolean hasEnoughOfItem(Item item, int x){
+        int amount = getAmountOfItem(item);
+        return amount >= x;
+    }
+
+    public int getAmountOfItem(Item item){
+        int amount = 0;
+        for (int i = 0; i < worker.getInventory().getContainerSize(); i++) {
+            ItemStack containerItem = worker.getInventory().getItem(i);
+            if(containerItem.is(item)){
+                amount += containerItem.getCount();
+            }
+        }
+        return amount;
+    }
+    private void getItemFromChest(Item item){
+        for (int i = 0; i < container.getContainerSize(); i++) {
+            ItemStack stack = container.getItem(i);
+            if(stack.is(item)){
                 worker.getInventory().addItem(stack.copy());
                 container.removeItemNoUpdate(i);
                 break;
@@ -166,16 +329,6 @@ public class DepositItemsInChestGoal extends Goal {
         }
     }
 
-    private void getEggsFromChest(){
-        for (int i = 0; i < container.getContainerSize(); i++) {
-            ItemStack stack = container.getItem(i);
-            if(stack.is(Items.EGG)){
-                worker.getInventory().addItem(stack.copy());
-                container.removeItemNoUpdate(i);
-                break;
-            }
-        }
-    }
 
     private void take(ItemStack stack){
         ItemStack tool = stack.copy();
@@ -187,10 +340,10 @@ public class DepositItemsInChestGoal extends Goal {
         SimpleContainer inventory = worker.getInventory();
 
         if (this.isContainerFull(container)) {
-            this.worker.setNeedsChest(true);
 
-            if(worker.getOwner() != null) {
+            if(worker.getOwner() != null && messageChestFull) {
                 this.worker.tellPlayer(worker.getOwner(), Translatable.TEXT_CHEST_FULL);
+                messageChestFull = false;
             }
             return;
         }
@@ -201,7 +354,7 @@ public class DepositItemsInChestGoal extends Goal {
             // This avoids depositing items such as tools, food, 
             // or anything the workers wouldn't pick up while they're working.
             // It also avoids depositing items that the worker needs to continue working.
-            if (stack.is(Items.AIR) || stack.isEmpty() || !worker.wantsToPickUp(stack) || worker.wantsToKeep(stack)) {
+            if (stack.is(Items.AIR) || stack.isEmpty() || !worker.wantsToPickUp(stack) || (worker.wantsToKeep(stack) && getAmountOfItem(stack.getItem()) <= 64)) {
                 continue;
             }
             // Attempt to deposit the stack in the container, keep the remainder
@@ -255,5 +408,21 @@ public class DepositItemsInChestGoal extends Goal {
         return stack;
     }
 
+    private boolean hasFoodInInv(){
+        return worker.getInventory().items
+                .stream()
+                .filter(itemStack -> !itemStack.is(Items.PUFFERFISH))
+                .filter(itemStack -> itemStack.isEdible() && itemStack.getFoodProperties(this.worker).getNutrition() > 4)
+                .anyMatch(ItemStack::isEdible);
+    }
 
+    private boolean isFoodInChest(Container container){
+        for(int i = 0; i < container.getContainerSize(); i++) {
+            ItemStack foodItem = container.getItem(i);
+            if(foodItem.isEdible() && foodItem.getFoodProperties(this.worker).getNutrition() > 4){
+                return true;
+            }
+        }
+        return false;
+    }
 }

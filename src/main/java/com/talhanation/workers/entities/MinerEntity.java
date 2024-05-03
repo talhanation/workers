@@ -41,6 +41,8 @@ import net.minecraftforge.network.NetworkHooks;
 import org.jetbrains.annotations.NotNull;
 
 import javax.annotation.Nullable;
+import java.util.Arrays;
+import java.util.List;
 import java.util.Set;
 import java.util.function.Predicate;
 
@@ -93,7 +95,6 @@ public class MinerEntity extends AbstractWorkerEntity {
 
     public MinerEntity(EntityType<? extends AbstractWorkerEntity> entityType, Level world) {
         super(entityType, world);
-
     }
 
     public boolean canWorkWithoutTool(){
@@ -194,7 +195,7 @@ public class MinerEntity extends AbstractWorkerEntity {
 
     public void readAdditionalSaveData(@NotNull CompoundTag nbt) {
         super.readAdditionalSaveData(nbt);
-        this.setMineType(nbt.getInt("MineType"));
+        this.setMineType(nbt.getInt("MineType"), false);
         this.setMineDepth(nbt.getInt("Depth"));
         this.setChecked(nbt.getBoolean("Checked"));
         this.setMineDirection(Direction.byName(nbt.getString("MineDirection")));
@@ -212,8 +213,8 @@ public class MinerEntity extends AbstractWorkerEntity {
         this.entityData.set(CHECKED, checked);
     }
 
-    public void setMineType(int x) {
-        this.clearStartPos();
+    public void setMineType(int x, boolean clear) {
+        if(clear)this.clearStartPos();
         this.entityData.set(MINE_TYPE, x);
     }
     @Override
@@ -276,15 +277,6 @@ public class MinerEntity extends AbstractWorkerEntity {
         }
     }
 
-    @Override
-    public void setIsWorking(boolean bool) {
-        if (this.getMineType() == 0) {
-            bool = false;
-            entityData.set(IS_WORKING, bool);
-        } else
-            super.setIsWorking(bool);
-    }
-
     public void tick() {
         super.tick();
     }
@@ -298,9 +290,14 @@ public class MinerEntity extends AbstractWorkerEntity {
         return tool.getItem() instanceof PickaxeItem;
     }
 
-    @Override
     public boolean isRequiredSecondTool(ItemStack tool) {
         return tool.getItem() instanceof ShovelItem;
+    }
+    public boolean hasAMainTool(){
+        return true;
+    }
+    public boolean hasASecondTool(){
+        return true;
     }
 
     public boolean canBreakBlock(BlockState state){
@@ -311,8 +308,13 @@ public class MinerEntity extends AbstractWorkerEntity {
         else
             return false;
     }
+
+    public int getFarmedItemsDepositAmount(){
+        return 128;
+    }
+
     @Override
-    public boolean needsToDeposit(){
-        return (this.needsTool() || this.getFarmedItems() >= 128) && getChestPos() != null && !this.getFollow() && !this.needsChest() && !this.needsToSleep(); //TODO: configurable amount
+    public List<Item> inventoryInputHelp() {
+        return Arrays.asList(Items.IRON_PICKAXE, Items.IRON_SHOVEL, Items.TORCH);
     }
 }

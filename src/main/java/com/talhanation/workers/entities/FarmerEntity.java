@@ -36,6 +36,9 @@ import net.minecraftforge.network.NetworkHooks;
 import org.jetbrains.annotations.NotNull;
 
 import javax.annotation.Nullable;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
 import java.util.Set;
 import java.util.function.Predicate;
 
@@ -49,7 +52,6 @@ public class FarmerEntity extends AbstractWorkerEntity {
             Items.MELON_SEEDS,
             Items.POTATO,
             Items.BEETROOT_SEEDS,
-            Items.BONE_MEAL,
             Items.CARROT);
 
     public final Set<Item> WANTED_ITEMS = ImmutableSet.of(
@@ -76,7 +78,6 @@ public class FarmerEntity extends AbstractWorkerEntity {
 
     public FarmerEntity(EntityType<? extends AbstractWorkerEntity> entityType, Level world) {
         super(entityType, world);
-        this.initSpawn();
     }
 
     public void addAdditionalSaveData(@NotNull CompoundTag nbt) {
@@ -182,6 +183,12 @@ public class FarmerEntity extends AbstractWorkerEntity {
     public boolean isRequiredSecondTool(ItemStack tool) {
         return false;
     }
+    public boolean hasAMainTool(){
+        return true;
+    }
+    public boolean hasASecondTool(){
+        return false;
+    }
 
     @Override
     public boolean wantsToPickUp(ItemStack itemStack) {
@@ -200,5 +207,10 @@ public class FarmerEntity extends AbstractWorkerEntity {
         ItemStack initialTool = new ItemStack(Items.WOODEN_HOE);
         this.updateInventory(0, initialTool);
         this.equipTool(initialTool);
+    }
+
+    @Override
+    public List<Item> inventoryInputHelp() {
+        return Arrays.asList(Items.IRON_HOE, Items.BONE_MEAL, Items.WHEAT_SEEDS, Items.BEETROOT_SEEDS, Items.CARROT, Items.POTATO);
     }
 }

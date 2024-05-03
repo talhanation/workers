@@ -25,7 +25,10 @@ import net.minecraft.world.level.ServerLevelAccessor;
 import org.jetbrains.annotations.NotNull;
 
 import javax.annotation.Nullable;
+import java.util.Arrays;
+import java.util.List;
 import java.util.Set;
+import java.util.function.Consumer;
 import java.util.function.Predicate;
 
 public class ChickenFarmerEntity extends AbstractAnimalFarmerEntity {
@@ -48,7 +51,6 @@ public class ChickenFarmerEntity extends AbstractAnimalFarmerEntity {
 
     public ChickenFarmerEntity(EntityType<? extends AbstractAnimalFarmerEntity> entityType, Level world) {
         super(entityType, world);
-        this.initSpawn();
     }
 
     protected void defineSynchedData() {
@@ -152,6 +154,12 @@ public class ChickenFarmerEntity extends AbstractAnimalFarmerEntity {
     public boolean isRequiredSecondTool(ItemStack tool) {
         return false;
     }
+    public boolean hasAMainTool(){
+        return true;
+    }
+    public boolean hasASecondTool(){
+        return false;
+    }
 
     public boolean isBreedItem(ItemStack itemStack){
         return itemStack.getItem().equals(Items.WHEAT_SEEDS)
@@ -166,5 +174,10 @@ public class ChickenFarmerEntity extends AbstractAnimalFarmerEntity {
 
     public boolean getUseEggs() {
         return entityData.get(USE_EGGS);
+    }
+
+    @Override
+    public List<Item> inventoryInputHelp() {
+        return Arrays.asList(Items.IRON_AXE, Items.EGG, Items.WHEAT_SEEDS, Items.BEETROOT_SEEDS, Items.MELON_SEEDS, Items.PUMPKIN_SEEDS);
     }
 }

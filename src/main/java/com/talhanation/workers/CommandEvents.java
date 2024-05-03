@@ -53,12 +53,9 @@ public class CommandEvents {
             }
             worker.setStartPos(blockpos);
 
-            if( !(worker instanceof  MerchantEntity)){
-                worker.setFollow(false);
-                worker.setIsWorking(true);
+            if(!(worker instanceof MerchantEntity)){
+                worker.setStatus(AbstractWorkerEntity.Status.WORK, true);
             }
-
-
             if (worker instanceof IBoatController sailor) sailor.setSailPos(blockpos);
         }
     }
@@ -73,8 +70,8 @@ public class CommandEvents {
             BlockState selectedBlock = worker.level.getBlockState(blockpos);
             if (selectedBlock.is(Blocks.CHEST) || selectedBlock.is(Blocks.BARREL)) {
                 worker.setChestPos(blockpos);
-                worker.setNeedsChest(false);
                 worker.tellPlayer(owner, TEXT_CHEST);
+                worker.setStatus(AbstractWorkerEntity.Status.DEPOSIT);
             } else {
                 worker.tellPlayer(owner, TEXT_CHEST_ERROR);
             }
@@ -97,7 +94,6 @@ public class CommandEvents {
                     bedHead = blockpos.relative(selectedBlock.getValue(BlockStateProperties.HORIZONTAL_FACING));
                 }
                 worker.setBedPos(bedHead);
-                worker.setNeedsBed(false);
                 worker.tellPlayer(owner, TEXT_BED);
             } else {
                 worker.tellPlayer(owner, TEXT_BED_ERROR);
@@ -113,7 +109,6 @@ public class CommandEvents {
         }
         if (expectedOwnerUuid.equals(player_uuid)) {
             worker.setHomePos(blockpos);
-            worker.setNeedsHome(false);
             worker.tellPlayer(owner, TEXT_HOME);
 
             setChestPosWorker(worker, blockpos, owner);
@@ -132,13 +127,12 @@ public class CommandEvents {
                     if (block == null) continue;
                     if (block.is(Blocks.CHEST) || block.is(Blocks.BARREL)) {
                         worker.setChestPos(chestPos);
-                        worker.setNeedsChest(false);
+
                         return;
                     }
                 }
             }
         }
-        worker.setNeedsChest(true);
         worker.tellPlayer(owner, NEED_CHEST);
     }
 
@@ -156,13 +150,13 @@ public class CommandEvents {
                         block.getValue(BlockStateProperties.BED_PART) == BedPart.HEAD
                     ) {
                         worker.setBedPos(bedPos);
-                        worker.setNeedsBed(false);
+
                         return;
                     }
                 }
             }
         }
-        worker.setNeedsBed(true);
+
         worker.tellPlayer(owner, NEED_BED);
     }
     public static void handleMerchantTrade(Player player, MerchantEntity merchant, int tradeID) {
@@ -350,23 +344,20 @@ public class CommandEvents {
 
     }
 
-    public static void handleRecruiting(Player player, AbstractWorkerEntity worker){
+    public static void handleRecruiting(Player player, AbstractWorkerEntity worker, String name){
         int sollPrice = worker.workerCosts();
         Inventory playerInv = player.getInventory();
         int playerEmeralds = 0;
 
-        String str = WorkersModConfig.WorkersCurrency.get();
-        Optional<Holder<Item>> holder = ForgeRegistries.ITEMS.getHolder(ResourceLocation.tryParse(str));
 
-        ItemStack currencyItemStack = holder.map(itemHolder -> itemHolder.value().getDefaultInstance()).orElseGet(Items.EMERALD::getDefaultInstance);
 
-        Item currency = currencyItemStack.getItem();
+        ItemStack currencyItemStack = getWorkersCurrency();
 
         //checkPlayerMoney
         for (int i = 0; i < playerInv.getContainerSize(); i++){
             ItemStack itemStackInSlot = playerInv.getItem(i);
             Item itemInSlot = itemStackInSlot.getItem();
-            if (itemInSlot.equals(currency)){
+            if (itemInSlot.equals(currencyItemStack.getItem())){
                 playerEmeralds = playerEmeralds + itemStackInSlot.getCount();
             }
         }
@@ -386,7 +377,7 @@ public class CommandEvents {
                 for (int i = 0; i < playerInv.getContainerSize(); i++) {
                     ItemStack itemStackInSlot = playerInv.getItem(i);
                     Item itemInSlot = itemStackInSlot.getItem();
-                    if (itemInSlot.equals(currency)) {
+                    if (itemInSlot.equals(currencyItemStack.getItem())) {
                         playerInv.removeItemNoUpdate(i);
                     }
                 }
@@ -395,14 +386,22 @@ public class CommandEvents {
                 ItemStack emeraldsLeft = currencyItemStack.copy();
                 emeraldsLeft.setCount(playerEmeralds);
                 playerInv.add(emeraldsLeft);
+                worker.setCustomName(Component.literal(name));
             }
         }
         else
-             worker.tellPlayer(player, TEXT_HIRE_COSTS(sollPrice, currency.getDescription().getString()));
+             worker.tellPlayer(player, TEXT_HIRE_COSTS(sollPrice, currencyItemStack.getItem().getDescription().getString()));
+    }
+
+    public static ItemStack getWorkersCurrency() {
+        String str = WorkersModConfig.WorkersCurrency.get();
+        Optional<Holder<Item>> holder = ForgeRegistries.ITEMS.getHolder(ResourceLocation.tryParse(str));
+
+        return holder.map(itemHolder -> itemHolder.value().getDefaultInstance()).orElseGet(Items.EMERALD::getDefaultInstance);
     }
 
 
-     public static void handleCreativeMerchantTrade(Player player, MerchantEntity merchant, int tradeID) {
+    public static void handleCreativeMerchantTrade(Player player, MerchantEntity merchant, int tradeID) {
          int[] PRICE_SLOT = new int[]{0, 2, 4, 6};
          int[] TRADE_SLOT = new int[]{1, 3, 5, 7};
 

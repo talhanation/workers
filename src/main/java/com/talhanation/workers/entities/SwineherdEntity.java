@@ -29,6 +29,8 @@ import net.minecraft.world.level.ServerLevelAccessor;
 import org.jetbrains.annotations.NotNull;
 
 import javax.annotation.Nullable;
+import java.util.Arrays;
+import java.util.List;
 import java.util.Set;
 import java.util.function.Predicate;
 
@@ -44,7 +46,6 @@ public class SwineherdEntity extends AbstractAnimalFarmerEntity {
 
     public SwineherdEntity(EntityType<? extends AbstractAnimalFarmerEntity> entityType, Level world) {
         super(entityType, world);
-        this.initSpawn();
     }
 
     protected void defineSynchedData() {
@@ -144,5 +145,15 @@ public class SwineherdEntity extends AbstractAnimalFarmerEntity {
     @Override
     public boolean isRequiredSecondTool(ItemStack tool) {
         return false;
+    }
+    public boolean hasAMainTool(){
+        return true;
+    }
+    public boolean hasASecondTool(){
+        return false;
+    }
+    @Override
+    public List<Item> inventoryInputHelp() {
+        return Arrays.asList(Items.IRON_AXE, Items.CARROT);
     }
 }

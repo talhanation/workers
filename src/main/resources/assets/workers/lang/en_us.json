@@ -83,7 +83,7 @@
   "chat.workers.text.follow": "I will follow you!",
   "chat.workers.text.home": "My home is here now.",
   "chat.workers.text.outOfStock": "Sorry, I'm out of Stock.",
-  "chat.workers.text.outOfTools": "My last %s just broke, i need a new one!",
+  "chat.workers.text.outOfTools": "I need a tool to continue working!",
   "chat.workers.text.need": "Sorry, you need %s %s",
   "chat.workers.text.noNeed": "Sorry, i reached my limit on this trade.",
   "chat.workers.text.outOfStockOwner": "I'm out of stock!",

@@ -1,6 +1,6 @@
 package com.talhanation.workers.entities.ai;
 
-import com.talhanation.workers.Main;
+import com.talhanation.workers.entities.AbstractWorkerEntity;
 import com.talhanation.workers.entities.LumberjackEntity;
 import net.minecraft.tags.BlockTags;
 import net.minecraft.world.level.block.Block;
@@ -19,7 +19,6 @@ import net.minecraftforge.event.ForgeEventFactory;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.EnumSet;
-import java.util.Random;
 
 import static com.talhanation.workers.entities.LumberjackEntity.State.*;
 
@@ -35,7 +34,7 @@ public class LumberjackAI extends Goal {
 
     public boolean canUse() {
         // Start AI if there are trees near the work place.
-        return lumber.isTame() && lumber.getStartPos() != null;
+        return lumber.getStatus() == AbstractWorkerEntity.Status.WORK && lumber.getStartPos() != null;
     }
 
     public boolean canContinueToUse() {
@@ -58,13 +57,12 @@ public class LumberjackAI extends Goal {
         // Go back to assigned work position.
         switch (state){
             case IDLE -> {
-                if(lumber.getStartPos() != null && lumber.canWork()){
+                if(lumber.getStartPos() != null){
                     setWorkState(CALC_WORK_POS);
                 }
             }
 
             case CALC_WORK_POS ->  {
-                if(!lumber.canWork()) this.setWorkState(STOP);
                 if(lumber.getVehicle() != null) lumber.stopRiding();
 
                 workPos = lumber.getStartPos();
@@ -76,7 +74,6 @@ public class LumberjackAI extends Goal {
             }
 
             case WORKING -> {
-                if(!lumber.canWork()) this.setWorkState(STOP);
                 if(lumber.getVehicle() != null) lumber.stopRiding();
 
                 if(isInSapling()) {
@@ -272,7 +269,7 @@ public class LumberjackAI extends Goal {
     }
 
     private boolean mineBlock(BlockPos blockPos){
-        if (this.lumber.isAlive() && ForgeEventFactory.getMobGriefingEvent(this.lumber.level, this.lumber) && !lumber.getFollow()) {
+        if (this.lumber.isAlive() && ForgeEventFactory.getMobGriefingEvent(this.lumber.level, this.lumber)) {
 
             BlockState blockstate = this.lumber.level.getBlockState(blockPos);
             Block block = blockstate.getBlock();

@@ -198,15 +198,15 @@ public class WorkersModConfig {
                         \t(takes effect after restart)
                         \tdefault: true""")
                 .worldRestart()
-                .define("WorkersTablesPOIReleasing", true);
+                .define("WorkersTablesPOIReleasing", false);
 
         ProfessionBlocksDrop = BUILDER.comment("""
 
                         ----Should the profession tables drop when breaking?----
                         \t(takes effect after restart)
-                        \tdefault: false""")
+                        \tdefault: true""")
                 .worldRestart()
-                .define("ProfessionBlocksDrop", false);
+                .define("ProfessionBlocksDrop", true);
 
 
         /*

@@ -6,18 +6,12 @@ import com.talhanation.workers.entities.FishermanEntity;
 import com.talhanation.workers.entities.IBoatController;
 import com.talhanation.workers.entities.ai.navigation.SailorPathNavigation;
 import net.minecraft.core.BlockPos;
-import net.minecraft.tags.BiomeTags;
-import net.minecraft.util.Mth;
-import net.minecraft.world.entity.ai.behavior.RandomSwim;
 import net.minecraft.world.entity.ai.goal.Goal;
-import net.minecraft.world.entity.ai.goal.RandomSwimmingGoal;
 import net.minecraft.world.entity.vehicle.Boat;
 import net.minecraft.world.level.block.Blocks;
-import net.minecraft.world.level.block.SimpleWaterloggedBlock;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.pathfinder.Node;
 import net.minecraft.world.level.pathfinder.Path;
-import net.minecraftforge.common.Tags;
 
 import static com.talhanation.workers.entities.ai.ControlBoatAI.State.*;
 
@@ -39,11 +33,11 @@ public class ControlBoatAI extends Goal {
 
     @Override
     public boolean canUse() {
-        return  this.worker.getVehicle() instanceof Boat boat && boat.getPassengers().get(0).equals(this.worker);
+        return this.worker.getVehicle() instanceof Boat boat && boat.getPassengers().get(0).equals(this.worker);
     }
 
     public boolean canContinueToUse() {
-        return !(this.worker instanceof FishermanEntity && worker.getFollow());
+        return canUse();
     }
 
     public boolean isInterruptable() {
@@ -92,13 +86,12 @@ public class ControlBoatAI extends Goal {
                                     worker.level.setBlock(new BlockPos(node.x, worker.getY() + 4, node.z), Blocks.ICE.defaultBlockState(), 3);
                                 }
                             }
-
-
                             state = MOVING_PATH;
                         }
                     } else
                         state = IDLE;
                 }
+
                 case MOVING_PATH -> {
                     if(!worker.getVehicle().horizontalCollision && getWaterDepth(worker.getOnPos()) >= 7 && path.getEndNode() != null) {
                         this.node = path.getEndNode();

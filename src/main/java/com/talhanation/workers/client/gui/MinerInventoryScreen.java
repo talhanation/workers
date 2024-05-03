@@ -2,6 +2,7 @@ package com.talhanation.workers.client.gui;
 
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.talhanation.workers.Main;
+import com.talhanation.workers.entities.AbstractWorkerEntity;
 import com.talhanation.workers.inventory.WorkerInventoryContainer;
 import com.talhanation.workers.entities.MinerEntity;
 import com.talhanation.workers.network.MessageMineDepth;
@@ -30,7 +31,8 @@ public class MinerInventoryScreen extends WorkerInventoryScreen {
     protected void init() {
         super.init();
         // MINETYPE
-        addRenderableWidget(new Button(leftPos + 90, topPos + 60, 8, 12,  new TextComponent("<"), button -> {
+        addRenderableWidget(new Button(leftPos + 95, topPos + 60, 8, 12, new TextComponent("<"), button -> {
+
             this.mineType = miner.getMineType();
             if (this.mineType != 0) {
                 this.mineType--;
@@ -91,7 +93,7 @@ public class MinerInventoryScreen extends WorkerInventoryScreen {
         switch (miner.getMineType()) {
             default:
             case 0:
-                if (miner.getFollow())
+                if (miner.getStatus() == AbstractWorkerEntity.Status.FOLLOW)
                     type = FOLLOWING.getString();
                 else
                     type = WANDERING.getString();
