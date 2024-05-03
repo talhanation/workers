@@ -86,7 +86,7 @@ public class MinerAI extends Goal {
     }
 
     public void tick() {
-        Main.LOGGER.info("Miner State: " + workState);
+        //Main.LOGGER.info("Miner State: " + workState);
         switch (workState){
             case IDLE -> {
                 if(miner.getStartPos() != null) {
@@ -143,7 +143,7 @@ public class MinerAI extends Goal {
                 messageNoShovel = true;
 
             }
-            this.miner.needsMainTool = true;
+            this.miner.needsSecondTool = true;
             return;
         }
 

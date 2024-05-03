@@ -1,5 +1,6 @@
 package com.talhanation.workers.network;
 
+import com.talhanation.workers.entities.AbstractWorkerEntity;
 import com.talhanation.workers.entities.MerchantEntity;
 import de.maxhenkel.corelib.net.Message;
 import net.minecraft.core.BlockPos;
@@ -43,7 +44,10 @@ public class MessageMerchantSetCreative implements Message<MessageMerchantSetCre
 
     private void setCreative(ServerPlayer player, MerchantEntity merchant, boolean creative){
         merchant.setCreative(creative);
-        if(creative) merchant.tellPlayer(player, new TextComponent("Im now a Creative Merchant."));
+        if(creative){
+            merchant.tellPlayer(player, new TextComponent("Im now a Creative Merchant."));
+            merchant.setStatus(AbstractWorkerEntity.Status.IDLE);
+        }
         else merchant.tellPlayer(player, new TextComponent("Im back a Survival Merchant."));
     }
 

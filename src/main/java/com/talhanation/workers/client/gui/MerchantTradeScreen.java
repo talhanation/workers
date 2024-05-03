@@ -23,7 +23,6 @@ public class MerchantTradeScreen extends ScreenBase<MerchantTradeContainer> {
     private final Inventory playerInventory;
 
     private final MutableComponent TRADE_TEXT = new TranslatableComponent("gui.workers.merchant.trade");
-
     public MerchantTradeScreen(MerchantTradeContainer container, Inventory playerInventory, Component title) {
         super(GUI_TEXTURE_3, container, playerInventory, new TextComponent(""));
         this.merchant = (MerchantEntity) container.getWorker();
@@ -57,6 +56,16 @@ public class MerchantTradeScreen extends ScreenBase<MerchantTradeContainer> {
             Main.SIMPLE_CHANNEL
                     .sendToServer(new MessageMerchantTradeButton(merchant.getUUID(), playerInventory.player.getUUID(), 3));
         }));
+
+        addRenderableWidget(new ExtendedButton(leftPos + 110, topPos + 20 + 18 * 4, 48, 12, TRADE_TEXT, button -> {
+            Main.SIMPLE_CHANNEL
+                    .sendToServer(new MessageMerchantTradeButton(merchant.getUUID(), playerInventory.player.getUUID(), 4));
+        }));
+
+        addRenderableWidget(new ExtendedButton(leftPos + 110, topPos + 20 + 18 * 5, 48, 12, TRADE_TEXT, button -> {
+            Main.SIMPLE_CHANNEL
+                    .sendToServer(new MessageMerchantTradeButton(merchant.getUUID(), playerInventory.player.getUUID(), 5));
+        }));
     }
 
     @Override
@@ -66,8 +75,7 @@ public class MerchantTradeScreen extends ScreenBase<MerchantTradeContainer> {
         font.draw(matrixStack, merchant.getDisplayName().getVisualOrderText(), 8, 6, FONT_COLOR);
         matrixStack.popPose();
 
-        font.draw(matrixStack, playerInventory.getDisplayName().getVisualOrderText(), 8, imageHeight - 152 + 25,
-                FONT_COLOR);
+        font.draw(matrixStack, playerInventory.getDisplayName().getVisualOrderText(), 8, imageHeight - 152 + 59, FONT_COLOR);
     }
 
     @Override
