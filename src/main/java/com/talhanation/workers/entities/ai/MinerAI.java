@@ -143,7 +143,7 @@ public class MinerAI extends Goal {
                 messageNoShovel = true;
 
             }
-            this.miner.needsMainTool = true;
+            this.miner.needsSecondTool = true;
             return;
         }
 
