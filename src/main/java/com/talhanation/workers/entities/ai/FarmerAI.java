@@ -1,5 +1,6 @@
 package com.talhanation.workers.entities.ai;
 
+import com.google.common.collect.ImmutableSet;
 import com.talhanation.workers.Translatable;
 import com.talhanation.workers.entities.AbstractWorkerEntity;
 import com.talhanation.workers.entities.FarmerEntity;

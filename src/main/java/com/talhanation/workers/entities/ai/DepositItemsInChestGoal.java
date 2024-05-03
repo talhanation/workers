@@ -21,6 +21,7 @@ import net.minecraft.world.level.gameevent.GameEvent;
 
 import javax.annotation.Nullable;
 import java.util.EnumSet;
+import java.util.function.Predicate;
 
 
 public class DepositItemsInChestGoal extends Goal {
@@ -244,7 +245,7 @@ public class DepositItemsInChestGoal extends Goal {
             boolean isOpened = false;
             CompoundTag compoundTag = new CompoundTag();
             if(worker.getLevel().getBlockEntity(chestPos) instanceof ChestBlockEntity chestBlockEntity){
-                compoundTag = chestBlockEntity.getPersistentData();
+                compoundTag = chestBlockEntity.getTileData();
                 if(compoundTag.contains("isOpened"))
                     isOpened = compoundTag.getBoolean("isOpened");
                 else
@@ -271,7 +272,7 @@ public class DepositItemsInChestGoal extends Goal {
 
 
     private void reequipMainTool(){
-        boolean hasMainHand = worker.getInventory().hasAnyMatching(worker::isRequiredMainTool);
+        boolean hasMainHand = this.hasAnyMatching(worker::isRequiredMainTool);
 
         for (int i = 0; i < container.getContainerSize(); i++) {
             ItemStack stack = container.getItem(i);
@@ -288,7 +289,7 @@ public class DepositItemsInChestGoal extends Goal {
     }
 
     private void reequipSecondTool(){
-        boolean hasOffHand = worker.getInventory().hasAnyMatching(worker::isRequiredSecondTool);
+        boolean hasOffHand = this.hasAnyMatching(worker::isRequiredSecondTool);
 
         for (int i = 0; i < container.getContainerSize(); i++) {
             ItemStack stack = container.getItem(i);
@@ -303,6 +304,15 @@ public class DepositItemsInChestGoal extends Goal {
         }
     }
 
+    private boolean hasAnyMatching(Predicate<ItemStack> p_216875_) {
+        for (int i = 0; i < worker.getInventory().getContainerSize(); ++i) {
+            ItemStack itemstack = worker.getInventory().getItem(i);
+            if (p_216875_.test(itemstack)) {
+                return true;
+            }
+        }
+        return false;
+    }
     private boolean hasEnoughOfItem(Item item, int x){
         int amount = getAmountOfItem(item);
         return amount >= x;

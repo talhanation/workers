@@ -596,11 +596,12 @@ public abstract class AbstractWorkerEntity extends AbstractChunkLoaderEntity {
 			Component dialogue = new TextComponent(this.getName().getString())
 				.append(": ")
 				.append(message);
-			player.sendSystemMessage(dialogue);
+			player.sendMessage(dialogue, player.getUUID());
 		}
     }
 
     public void walkTowards(BlockPos pos, double speed) {
+
         if(pos != null){
             this.getNavigation().moveTo(pos.getX(), pos.getY(), pos.getZ(), speed);
             this.getLookControl().setLookAt(
@@ -817,7 +818,7 @@ public abstract class AbstractWorkerEntity extends AbstractChunkLoaderEntity {
     public void tick() {
         super.tick();
         updateSwingTime();
-        Main.LOGGER.info("Status: " + this.status);
+        //Main.LOGGER.info("Status: " + this.status);
         if(this.getOwner() != null && getOwner().getTeam() != null && this.getTeam() != null && !getOwner().getTeam().isAlliedTo(this.getTeam())){
             PlayerTeam playerteam = level.getScoreboard().getPlayerTeam(getOwner().getTeam().getName());
             if(playerteam != null) getCommandSenderWorld().getScoreboard().addPlayerToTeam(this.getStringUUID(), playerteam);

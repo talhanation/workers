@@ -386,7 +386,7 @@ public class CommandEvents {
                 ItemStack emeraldsLeft = currencyItemStack.copy();
                 emeraldsLeft.setCount(playerEmeralds);
                 playerInv.add(emeraldsLeft);
-                worker.setCustomName(Component.literal(name));
+                worker.setCustomName(new TextComponent(name));
             }
         }
         else
