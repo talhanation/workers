@@ -32,7 +32,7 @@ public class MessageMineType implements Message<MessageMineType> {
         for (MinerEntity recruits : list){
 
             if (recruits.getUUID().equals(this.uuid)) {
-                recruits.setMineType(this.mineType);
+                recruits.setMineType(this.mineType, true);
                 recruits.resetWorkerParameters();
             }
         }

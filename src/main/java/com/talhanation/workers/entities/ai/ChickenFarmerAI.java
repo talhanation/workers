@@ -1,5 +1,7 @@
 package com.talhanation.workers.entities.ai;
 
+import com.talhanation.workers.Translatable;
+import com.talhanation.workers.entities.AbstractWorkerEntity;
 import com.talhanation.workers.entities.ChickenFarmerEntity;
 import net.minecraft.core.BlockPos;
 import net.minecraft.sounds.SoundEvents;
@@ -31,7 +33,7 @@ public class ChickenFarmerAI extends AnimalFarmerAI {
 
     @Override
     public boolean canUse() {
-        return this.animalFarmer.canWork();
+        return animalFarmer.getStatus() == AbstractWorkerEntity.Status.WORK;
     }
 
     @Override
@@ -45,7 +47,7 @@ public class ChickenFarmerAI extends AnimalFarmerAI {
 
     @Override
     public void performWork() {
-        if (workPos != null && !workPos.closerThan(animalFarmer.getOnPos(), 10D) && !animalFarmer.getFollow())
+        if (workPos != null && !workPos.closerThan(animalFarmer.getOnPos(), 10D))
             this.animalFarmer.getNavigation().moveTo(workPos.getX(), workPos.getY(), workPos.getZ(), 1);
 
         if (breeding) {
@@ -80,7 +82,7 @@ public class ChickenFarmerAI extends AnimalFarmerAI {
 
         if (slaughtering) {
             List<Chicken> chickens = findChickenSlaughtering();
-            if (chickens.size() > animalFarmer.getMaxAnimalCount()) {
+            if (chickens.size() > animalFarmer.getMaxAnimalCount() && animalFarmer.hasMainToolInInv()) {
                 chicken = chickens.stream().findFirst();
 
                 if (chicken.isPresent()) {
@@ -100,7 +102,11 @@ public class ChickenFarmerAI extends AnimalFarmerAI {
                     }
                 }
 
-            } else {
+            }
+            else {
+                if(!animalFarmer.hasMainToolInInv()){
+                    this.animalFarmer.needsMainTool = true;
+                }
                 slaughtering = false;
                 breeding = false;
                 throwEggs = true;

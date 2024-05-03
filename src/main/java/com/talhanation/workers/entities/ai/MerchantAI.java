@@ -1,5 +1,6 @@
 package com.talhanation.workers.entities.ai;
 
+import com.talhanation.workers.entities.AbstractWorkerEntity;
 import com.talhanation.workers.entities.MerchantEntity;
 import net.minecraft.core.BlockPos;
 import net.minecraft.network.chat.Component;
@@ -30,7 +31,7 @@ public class MerchantAI extends Goal {
     }
 
     public boolean canUse() {
-        return merchant.getIsWorking() && !merchant.getFollow();
+        return merchant.getStatus() == AbstractWorkerEntity.Status.WORK;
     }
 
     @Override

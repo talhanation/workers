@@ -1,5 +1,6 @@
 package com.talhanation.workers.entities;
 
+import com.talhanation.workers.CommandEvents;
 import com.talhanation.workers.Main;
 import com.talhanation.workers.config.WorkersModConfig;
 import com.talhanation.workers.entities.ai.*;
@@ -8,7 +9,7 @@ import com.talhanation.workers.entities.ai.navigation.WorkersPathNavigation;
 import com.talhanation.workers.entities.ai.navigation.door.WorkersOpenDoorGoal;
 import com.talhanation.workers.inventory.WorkerHireContainer;
 import com.talhanation.workers.network.MessageHireGui;
-
+import com.talhanation.workers.network.MessageToClientUpdateHireScreen;
 import net.minecraft.core.BlockPos;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.FriendlyByteBuf;
@@ -16,7 +17,6 @@ import net.minecraft.network.chat.Component;
 import net.minecraft.network.syncher.EntityDataAccessor;
 import net.minecraft.network.syncher.EntityDataSerializers;
 import net.minecraft.network.syncher.SynchedEntityData;
-import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.sounds.SoundEvent;
 import net.minecraft.sounds.SoundEvents;
@@ -29,25 +29,26 @@ import net.minecraft.world.damagesource.DamageSource;
 import net.minecraft.world.entity.*;
 import net.minecraft.world.entity.ai.attributes.Attributes;
 import net.minecraft.world.entity.ai.navigation.PathNavigation;
-import net.minecraft.world.entity.ai.village.ReputationEventType;
 import net.minecraft.world.entity.item.ItemEntity;
-import net.minecraft.world.entity.npc.Villager;
 import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.entity.projectile.AbstractArrow;
 import net.minecraft.world.entity.vehicle.Boat;
 import net.minecraft.world.inventory.AbstractContainerMenu;
+import net.minecraft.world.item.ArmorItem;
+import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.ServerLevelAccessor;
+import net.minecraft.world.scores.PlayerTeam;
 import net.minecraftforge.event.ForgeEventFactory;
 import net.minecraftforge.network.NetworkHooks;
+import net.minecraftforge.network.PacketDistributor;
 import org.jetbrains.annotations.NotNull;
 
 import javax.annotation.Nullable;
 
-import java.util.List;
-import java.util.Optional;
+import java.util.*;
 import java.util.function.Consumer;
 import java.util.function.Predicate;
 
@@ -59,23 +60,24 @@ public abstract class AbstractWorkerEntity extends AbstractChunkLoaderEntity {
     private static final EntityDataAccessor<Optional<BlockPos>> HOME = SynchedEntityData.defineId(AbstractWorkerEntity.class, EntityDataSerializers.OPTIONAL_BLOCK_POS);
     private static final EntityDataAccessor<Optional<BlockPos>> CHEST = SynchedEntityData.defineId(AbstractWorkerEntity.class, EntityDataSerializers.OPTIONAL_BLOCK_POS);
     private static final EntityDataAccessor<Optional<BlockPos>> BED = SynchedEntityData.defineId(AbstractWorkerEntity.class, EntityDataSerializers.OPTIONAL_BLOCK_POS);
-    private static final EntityDataAccessor<Boolean> FOLLOW = SynchedEntityData.defineId(AbstractWorkerEntity.class, EntityDataSerializers.BOOLEAN);
-    public static final EntityDataAccessor<Boolean> IS_WORKING = SynchedEntityData.defineId(AbstractWorkerEntity.class, EntityDataSerializers.BOOLEAN);
     private static final EntityDataAccessor<Integer> breakingTime = SynchedEntityData.defineId(AbstractWorkerEntity.class, EntityDataSerializers.INT);
     private static final EntityDataAccessor<Integer> currentTimeBreak = SynchedEntityData.defineId(AbstractWorkerEntity.class, EntityDataSerializers.INT);
     private static final EntityDataAccessor<Integer> previousTimeBreak = SynchedEntityData.defineId(AbstractWorkerEntity.class, EntityDataSerializers.INT);
-    private static final EntityDataAccessor<Float> HUNGER = SynchedEntityData.defineId(AbstractWorkerEntity.class, EntityDataSerializers.FLOAT);
-    private static final EntityDataAccessor<Boolean> NEEDS_HOME = SynchedEntityData.defineId(AbstractWorkerEntity.class, EntityDataSerializers.BOOLEAN);
-    private static final EntityDataAccessor<Boolean> NEEDS_CHEST = SynchedEntityData.defineId(AbstractWorkerEntity.class, EntityDataSerializers.BOOLEAN);
-    private static final EntityDataAccessor<Boolean> NEEDS_BED = SynchedEntityData.defineId(AbstractWorkerEntity.class, EntityDataSerializers.BOOLEAN);
+    private static final EntityDataAccessor<Integer> HUNGER = SynchedEntityData.defineId(AbstractWorkerEntity.class, EntityDataSerializers.INT);
     private static final EntityDataAccessor<String> OWNER_NAME = SynchedEntityData.defineId(AbstractWorkerEntity.class, EntityDataSerializers.STRING);
     private static final EntityDataAccessor<String> PROFESSION_NAME = SynchedEntityData.defineId(AbstractWorkerEntity.class, EntityDataSerializers.STRING);
-    public static final EntityDataAccessor<Integer> FARMED_ITEMS = SynchedEntityData.defineId(AbstractWorkerEntity.class, EntityDataSerializers.INT);
+    private static final EntityDataAccessor<Byte> STATUS = SynchedEntityData.defineId(AbstractWorkerEntity.class, EntityDataSerializers.BYTE);
     private static final EntityDataAccessor<Boolean> NEEDS_TOOL = SynchedEntityData.defineId(AbstractWorkerEntity.class, EntityDataSerializers.BOOLEAN);
 
+    public boolean needsSecondTool;
+    public boolean needsMainTool;
     int hurtTimeStamp = 0;
     public boolean isPickingUp;
     public boolean startPosChanged;
+    private int farmedItems;
+    protected Status status;
+    public Status prevStatus;
+    public boolean shouldDepositBeforeSleep;
 
     public AbstractWorkerEntity(EntityType<? extends AbstractWorkerEntity> entityType, Level world) {
         super(entityType, world);
@@ -101,18 +103,12 @@ public abstract class AbstractWorkerEntity extends AbstractChunkLoaderEntity {
 
     @Override
     protected void registerGoals() {
-        this.goalSelector.addGoal(0, new WorkerUpkeepPosGoal(this));
         this.goalSelector.addGoal(0, new EatGoal(this));
         this.goalSelector.addGoal(0, new SleepGoal(this));
         this.goalSelector.addGoal(0, new WorkerFloatGoal(this));
         this.goalSelector.addGoal(0, new WorkersOpenDoorGoal(this, true));
         this.goalSelector.addGoal(1, new DepositItemsInChestGoal(this));
-        this.goalSelector.addGoal(10, new WorkerMoveToHomeGoal<>(this));
-        this.goalSelector.addGoal(0, new WorkerFollowOwnerGoal(this, 1.0F, 20.0F));
-
-        //this.goalSelector.addGoal(14, new MoveBackToVillageGoal(this, 0.6D, false));
-        //this.goalSelector.addGoal(10, new GolemRandomStrollInVillageGoal(this, 0.6D));
-        //this.goalSelector.addGoal(10, new WaterAvoidingRandomStrollGoal(this, 1.0D, 0F));
+        this.goalSelector.addGoal(2, new WorkerFollowOwnerGoal(this, 1.0F));
         this.goalSelector.addGoal(11, new WorkerLookAtPlayerGoal(this, Player.class, 8.0F));
         this.goalSelector.addGoal(12, new WorkerRandomLookAroundGoal(this));
         this.goalSelector.addGoal(10, new WorkerLookAtPlayerGoal(this, LivingEntity.class, 8.0F));
@@ -175,36 +171,27 @@ public abstract class AbstractWorkerEntity extends AbstractChunkLoaderEntity {
     // TODO: Boolean for worker "can work without tools" like lumberjacks punching trees, or farmers.
     // TODO: GoalAI#canUse() should check for this boolean.
     public void consumeToolDurability() {
-        ItemStack heldItem = this.getItemInHand(InteractionHand.MAIN_HAND);
+        Iterable<ItemStack> hands = this.getHandSlots();
         // Damage the tool
-        heldItem.hurtAndBreak(1, this,(worker) -> {
-            worker.broadcastBreakEvent(EquipmentSlot.MAINHAND);
-            worker.setItemInHand(InteractionHand.MAIN_HAND, ItemStack.EMPTY);
+        hands.forEach(itemStack ->  itemStack.hurtAndBreak(1, this, (worker) -> {
+            this.broadcastBreakEvent(EquipmentSlot.MAINHAND);
+            this.broadcastBreakEvent(InteractionHand.MAIN_HAND);
+            this.setItemInHand(InteractionHand.MAIN_HAND, ItemStack.EMPTY);
+            this.setItemSlot(EquipmentSlot.MAINHAND, ItemStack.EMPTY);
 
-            worker.stopUsingItem();
+            if (this.getItemInHand(InteractionHand.MAIN_HAND).isEmpty()) {
+                if(isRequiredMainTool(itemStack)) this.needsMainTool = true;
+                if(isRequiredSecondTool(itemStack)) this.needsSecondTool = true;
 
-            if (worker.getItemInHand(InteractionHand.MAIN_HAND).isEmpty()) {
-                LivingEntity owner = worker.getOwner();
-                if (owner != null) worker.tellPlayer(owner, TEXT_OUT_OF_TOOLS(heldItem));
-                worker.setNeedsTool(true);
             }
-        });
+            this.stopUsingItem();
+        }));
         this.upgradeTool();
+        this.updateNeedsTool();
     }
 
     public boolean canWorkWithoutTool(){
         return true;
-    }
-
-    public void tick() {
-        super.tick();
-        updateSwingTime();
-        updateSwimming();
-
-        //Main.LOGGER.info("Hunger: " + this.getHunger());
-
-        if (hurtTimeStamp > 0)
-            hurtTimeStamp--;
     }
 
     public void rideTick() {
@@ -232,28 +219,25 @@ public abstract class AbstractWorkerEntity extends AbstractChunkLoaderEntity {
         this.entityData.define(DEST_POS, Optional.empty());
         this.entityData.define(CHEST, Optional.empty());
         this.entityData.define(BED, Optional.empty());
-        this.entityData.define(IS_WORKING, false);
-        this.entityData.define(FOLLOW, false);
-        this.entityData.define(NEEDS_HOME, false);
-        this.entityData.define(NEEDS_CHEST, false);
-        this.entityData.define(NEEDS_BED, false);
-        this.entityData.define(NEEDS_TOOL, false);
         this.entityData.define(breakingTime, 0);
         this.entityData.define(currentTimeBreak, -1);
         this.entityData.define(previousTimeBreak, -1);
-        this.entityData.define(HUNGER, 50F);
+        this.entityData.define(HUNGER, 75);
         this.entityData.define(OWNER_NAME, "");
         this.entityData.define(PROFESSION_NAME, "");
-        this.entityData.define(FARMED_ITEMS, 0);
+        this.entityData.define(STATUS, (byte) 0);
+        this.entityData.define(NEEDS_TOOL, false);
     }
 
     public void addAdditionalSaveData(@NotNull CompoundTag nbt) {
         super.addAdditionalSaveData(nbt);
-        nbt.putBoolean("Follow", this.getFollow());
-        nbt.putBoolean("isWorking", this.getIsWorking());
-        nbt.putBoolean("needsHome", this.needsHome());
-        nbt.putBoolean("needsChest", this.needsChest());
-        nbt.putBoolean("needsTool", this.needsTool());
+        nbt.putByte("Status", this.getStatusByte());
+        if(prevStatus != null) nbt.putByte("prevStatus", this.prevStatus.getIndex());
+
+        nbt.putBoolean("shouldDepositBeforeSleep", this.shouldDepositBeforeSleep);
+
+        nbt.putBoolean("needsSecondTool", this.needsSecondTool);
+        nbt.putBoolean("needsMainTool", this.needsMainTool);
         nbt.putInt("breakTime", this.getBreakingTime());
         nbt.putInt("currentTimeBreak", this.getCurrentTimeBreak());
         nbt.putInt("previousTimeBreak", this.getPreviousTimeBreak());
@@ -266,8 +250,6 @@ public abstract class AbstractWorkerEntity extends AbstractChunkLoaderEntity {
         if (startPos != null) this.setNbtPosition(nbt, "Start", startPos);
         BlockPos destPos = this.getDestPos();
         if (destPos != null) this.setNbtPosition(nbt, "Dest", destPos);
-        BlockPos homePos = this.getHomePos();
-        if (homePos != null) this.setNbtPosition(nbt, "Home", homePos);
         BlockPos chestPos = this.getChestPos();
         if (chestPos != null) this.setNbtPosition(nbt, "Chest", chestPos);
         BlockPos bedPos = this.getBedPos();
@@ -283,13 +265,20 @@ public abstract class AbstractWorkerEntity extends AbstractChunkLoaderEntity {
 
     public void readAdditionalSaveData(@NotNull CompoundTag nbt) {
         super.readAdditionalSaveData(nbt);
-        this.setFollow(nbt.getBoolean("Follow"));
+        if(nbt.contains("Status")) this.setStatus(nbt.getByte("Status"));
+        else this.setStatus(Status.FOLLOW);
+
+        if(nbt.contains("prevStatus")) this.prevStatus = Status.fromIndex(nbt.getByte("prevStatus"));
+        else this.prevStatus = Status.IDLE;
+
+        this.shouldDepositBeforeSleep = nbt.getBoolean("shouldDepositBeforeSleep");
+
         this.setBreakingTime(nbt.getInt("breakTime"));
-        this.setNeedsTool(nbt.getBoolean("needsTool"));
+        this.needsSecondTool = nbt.getBoolean("needsSecondTool");
+        this.needsMainTool = nbt.getBoolean("needsMainTool");
         this.setCurrentTimeBreak(nbt.getInt("currentTimeBreak"));
         this.setPreviousTimeBreak(nbt.getInt("previousTimeBreak"));
-        this.setIsWorking(nbt.getBoolean("isWorking"), true);
-        this.setHunger(nbt.getFloat("Hunger"));
+        this.setHunger(nbt.getInt("Hunger"));
         this.setOwnerName(nbt.getString("OwnerName"));
         this.setProfessionName(nbt.getString("ProfessionName"));
         this.setFarmedItems(nbt.getInt("FarmedItems"));
@@ -324,7 +313,7 @@ public abstract class AbstractWorkerEntity extends AbstractChunkLoaderEntity {
     //////////////////////////////////// GET////////////////////////////////////
 
     public int getFarmedItems() {
-        return this.entityData.get(FARMED_ITEMS);
+        return farmedItems;
     }
 
     public String getProfessionName() {
@@ -334,35 +323,14 @@ public abstract class AbstractWorkerEntity extends AbstractChunkLoaderEntity {
     public String getOwnerName() {
         return entityData.get(OWNER_NAME);
     }
-
-    @Nullable
-    public BlockPos getHomePos() {
-        return this.entityData.get(HOME).orElse(null);
-    }
-
-    public boolean needsHome() {
-        return this.entityData.get(NEEDS_HOME);
-    }
-
-    public boolean needsTool() {
-        return this.entityData.get(NEEDS_TOOL);
-    }
     @Nullable
     public BlockPos getChestPos() {
         return this.entityData.get(CHEST).orElse(null);
     }
 
-    public boolean needsChest() {
-        return this.entityData.get(NEEDS_CHEST);
-    }
-
     @Nullable
     public BlockPos getBedPos() {
         return this.entityData.get(BED).orElse(null);
-    }
-
-    public boolean needsBed() {
-        return this.entityData.get(NEEDS_BED);
     }
 
     public int getCurrentTimeBreak() {
@@ -377,7 +345,7 @@ public abstract class AbstractWorkerEntity extends AbstractChunkLoaderEntity {
         return this.entityData.get(breakingTime);
     }
 
-    public float getHunger() {
+    public int getHunger() {
         return this.entityData.get(HUNGER);
     }
 
@@ -393,12 +361,12 @@ public abstract class AbstractWorkerEntity extends AbstractChunkLoaderEntity {
         return this.entityData.get(START_POS).orElse(null);
     }
 
-    public boolean getFollow() {
-        return this.entityData.get(FOLLOW);
+    public byte getStatusByte() {
+        return this.entityData.get(STATUS);
     }
 
-    public boolean getIsWorking() {
-        return this.entityData.get(IS_WORKING);
+    public Status getStatus(){
+        return status;
     }
 
     public SoundEvent getHurtSound(DamageSource ds) {
@@ -444,8 +412,8 @@ public abstract class AbstractWorkerEntity extends AbstractChunkLoaderEntity {
 
     //////////////////////////////////// SET////////////////////////////////////
 
-    public void setFarmedItems(int x){
-        this.entityData.set(FARMED_ITEMS, x);
+    public void setFarmedItems(int x) {
+        this.farmedItems = x;
     }
     public void setProfessionName(String string) {
         this.entityData.set(PROFESSION_NAME, string);
@@ -479,7 +447,7 @@ public abstract class AbstractWorkerEntity extends AbstractChunkLoaderEntity {
         this.entityData.set(breakingTime, value);
     }
 
-    public void setHunger(float value) {
+    public void setHunger(int value) {
         this.entityData.set(HUNGER, value);
     }
 
@@ -498,68 +466,40 @@ public abstract class AbstractWorkerEntity extends AbstractChunkLoaderEntity {
         this.entityData.set(START_POS, Optional.empty());
     }
 
-    public void setNeedsHome(boolean bool) {
-        this.entityData.set(NEEDS_HOME, bool);
+    public void clearChestPos() {
+        this.entityData.set(CHEST, Optional.empty());
     }
 
-    public void setNeedsTool(boolean bool) {
-        if(bool) setFarmedItems(64);
-        this.entityData.set(NEEDS_TOOL, bool);
+    public void setStatus(byte x) {
+        this.entityData.set(STATUS, x);
+        if(prevStatus != status)this.prevStatus = this.status;
+        this.status = Status.fromIndex(x);
     }
 
-    public void setNeedsChest(boolean bool) {
-        this.entityData.set(NEEDS_CHEST, bool);
-    }
-    
-    public void setNeedsBed(boolean bool) {
-        this.entityData.set(NEEDS_BED, bool);
+    public void setStatus(Status status){
+        this.setStatus(status.getIndex());
     }
 
-    public void setFollow(boolean bool) {
-        if (getFollow() == bool) return;
-        this.entityData.set(FOLLOW, bool);
-
-        LivingEntity owner = this.getOwner();
-        if (owner == null) return;
-
-        if (bool) {
-            this.tellPlayer(owner, TEXT_FOLLOW);
-
-        } else if (this.getIsWorking()) {
-            this.tellPlayer(owner, TEXT_CONTINUE);
-        } else {
-            this.tellPlayer(owner, TEXT_WANDER);
-        }
-    }
-
-	public void setIsWorking(boolean bool) {
-        LivingEntity owner = this.getOwner();
-
-        if (getIsWorking() != bool) {
-            if (owner != null) {
-                if (!this.isStarving()) {
-                    if (bool) {
-                        this.tellPlayer(owner, TEXT_WORKING);
-                    } else {
-                        this.tellPlayer(owner, TEXT_DONE);
-                    }
-                } else if (isStarving()) {
-                    this.tellPlayer(owner, TEXT_STARVING);
-                    entityData.set(IS_WORKING, false);
+    public void setStatus(Status status, boolean withDialog){
+        this.setStatus(status);
+        LivingEntity owner = getOwner();
+        if(withDialog && owner != null) {
+            switch(status){
+                case WORK -> {
+                    if(prevStatus == Status.FOLLOW) this.tellPlayer(owner, TEXT_CONTINUE);
+                    else this.tellPlayer(owner, TEXT_WORKING);
                 }
+                case FOLLOW -> {
+                    this.tellPlayer(owner, TEXT_FOLLOW);
+                }
+
+                case WANDER,IDLE,DEPOSIT -> {
+                    this.tellPlayer(owner, TEXT_WANDER);
+                }
+
             }
-            entityData.set(IS_WORKING, bool);
         }
     }
-
-	public void setIsWorking(boolean bool, boolean withoutFeedback) {
-        if (withoutFeedback) {
-            entityData.set(IS_WORKING, bool);
-        } else {
-            this.setIsWorking(bool);
-        }
-    }
-
     public void setOwned(boolean owned) {
         super.setTame(owned);
     }
@@ -567,7 +507,7 @@ public abstract class AbstractWorkerEntity extends AbstractChunkLoaderEntity {
     public void setEquipment() {
     }
 
-    //////////////////////////////////// ATTACK
+    //////////////////////////////////// ATTACK ////////////////////////////////////
     //////////////////////////////////// FUNCTIONS////////////////////////////////////
 
     public boolean hurt(DamageSource dmg, float amt) {
@@ -578,11 +518,19 @@ public abstract class AbstractWorkerEntity extends AbstractChunkLoaderEntity {
             return false;
         } else {
             Entity entity = dmg.getEntity();
-            this.setOrderedToSit(false);
+
             if (entity != null && !(entity instanceof Player) && !(entity instanceof AbstractArrow)) {
                 amt = (amt + 1.0F) / 2.0F;
             }
 
+            for(ItemStack armor : this.getArmorSlots()){
+                armor.hurtAndBreak(1, this, (worker) -> {
+                       if(armor.getItem() instanceof ArmorItem armorItem){
+                           EquipmentSlot slot = armorItem.getEquipmentSlot();
+                           setItemSlot(slot, ItemStack.EMPTY);
+                       }
+                });
+            }
             LivingEntity attacker = this.getLastHurtByMob();
 
             if (this.isTame() && attacker != null && hurtTimeStamp <= 0) {
@@ -626,19 +574,20 @@ public abstract class AbstractWorkerEntity extends AbstractChunkLoaderEntity {
     }
 
      public void updateHunger() {
-         if(getHunger() > 0) {
-             setHunger((getHunger() - 0.0001F));
-
-             if (getIsWorking()) setHunger((getHunger() - 0.0002F));
-
-             if(getBedPos() == null) setHunger((getHunger() - 0.0002F));
+         Status status = getStatus();
+         int hunger = getHunger();
+         if (status == Status.WORK || getBedPos() == null) {
+             hunger -= 5;
+         }
+         else{
+             hunger -= 3;
          }
 
-        if (isStarving() && this.getIsWorking()) {
-            this.setIsWorking(false);
-        }
-    }
+         if (hunger < 0)
+             hunger = 0;
 
+         setHunger(hunger);
+     }
     public void tellPlayer(LivingEntity player, Component message) {
 		if(WorkersModConfig.OwnerReceiveInfo.get()){
 			Component dialogue = Component.literal(this.getName().getString())
@@ -665,11 +614,11 @@ public abstract class AbstractWorkerEntity extends AbstractChunkLoaderEntity {
         return this.needsToEat() && (isChest);
     }
     public boolean needsToEat() {
-        return (getHunger() <= 50F || getHealth() < getMaxHealth() * 0.2) || isStarving();
+        return (getHunger() <= 25F || getHealth() < getMaxHealth() * 0.2) || isStarving();
     }
 
     public boolean isStarving() {
-        return (getHunger() <= 1F);
+        return (getHunger() <= 5);
     }
 
     public boolean isSaturated() {
@@ -683,29 +632,15 @@ public abstract class AbstractWorkerEntity extends AbstractChunkLoaderEntity {
         this.setPreviousTimeBreak(-1);
     }
 
-    public boolean canWork(){
-         boolean canNotWorkWithTool = needsTool() && !canWorkWithoutTool();
-         boolean noStartPos = this.getStartPos() == null;
-         boolean needsToSleep = this.needsToSleep();
-         boolean isFollowing = this.getFollow();
-         boolean needsToDeposit = this.needsToDeposit();
-         boolean needsToGetFood = this.needsToGetFood();
-         boolean isWorkingActive = this.getIsWorking();
-        // Stop AI while following the player.
-        // Stop AI to at night, so SleepGoal can start.
-        // Stop AI if work position is not set.
-        // Stop AI if inventory is full, so TransferItemsInChestGoal can start.
-        // Stop AI if can not work without tool;
-        if(canNotWorkWithTool || noStartPos || needsToSleep || isFollowing || needsToDeposit || needsToGetFood || startPosChanged) {
-            startPosChanged = false;
-            return false;
-        }
-        // Start AI if should working
-        return isWorkingActive;
+    public boolean needsToDeposit(){
+        boolean needsTool = this.needsMainTool || this.needsSecondTool;
+        boolean farmed = this.getFarmedItems() >= getFarmedItemsDepositAmount();
+        boolean needsToEat = needsToEat();
+        return (needsTool || farmed || needsToEat);
     }
 
-    public boolean needsToDeposit(){
-        return (this.needsTool() || this.getFarmedItems() >= 64) && getChestPos() != null && !this.getFollow() && !this.needsChest() && !this.needsToSleep(); //TODO: configurable amount
+    protected int getFarmedItemsDepositAmount() {
+        return 64;
     }
 
     public void increaseFarmedItems(){
@@ -748,7 +683,9 @@ public abstract class AbstractWorkerEntity extends AbstractChunkLoaderEntity {
                     openGUI(player);
                 }
                 if (!player.isCrouching()) {
-                    setFollow(!getFollow());
+                    Status status = getStatus();
+                    if(status != Status.FOLLOW) this.setStatus(Status.FOLLOW, true);
+                    else this.setStatus(Objects.requireNonNullElse(prevStatus, Status.WANDER), true);
                     return InteractionResult.SUCCESS;
                 }
             } else if (this.isTame() && !player.getUUID().equals(this.getOwnerUUID())) {
@@ -771,7 +708,7 @@ public abstract class AbstractWorkerEntity extends AbstractChunkLoaderEntity {
         this.setOrderedToSit(false);
         this.setOwnerUUID(player.getUUID());
         this.setOwned(true);
-        this.setFollow(true);
+        this.setStatus(Status.FOLLOW);
         this.navigation.stop();
 
         int i = this.random.nextInt(4);
@@ -781,7 +718,6 @@ public abstract class AbstractWorkerEntity extends AbstractChunkLoaderEntity {
             case 3 -> this.tellPlayer(player, TEXT_RECRUITED3);
         }
 
-        this.tellOtherVillagersIWasHired(player);
         return true;
     }
 
@@ -798,14 +734,6 @@ public abstract class AbstractWorkerEntity extends AbstractChunkLoaderEntity {
         );
     }
 
-    private void tellOtherVillagersIWasHired(Player player) {
-        if (this.getCommandSenderWorld() instanceof ServerLevel server) {
-            server.getNearbyEntities(Villager.class, null, this, getBoundingBox()).forEach((villager) -> {
-                server.onReputationEvent(ReputationEventType.ZOMBIE_VILLAGER_CURED, player, villager);
-            });
-        }
-    }
-
     public abstract Predicate<ItemEntity> getAllowedItems();
 
     public abstract void openGUI(Player player);
@@ -820,6 +748,8 @@ public abstract class AbstractWorkerEntity extends AbstractChunkLoaderEntity {
     public void openHireGUI(Player player) {
         this.navigation.stop();
         if (player instanceof ServerPlayer serverPlayer) {
+            Main.SIMPLE_CHANNEL.send(PacketDistributor.PLAYER.with(()-> (ServerPlayer) player), new MessageToClientUpdateHireScreen(CommandEvents.getWorkersCurrency() ,this.workerCosts()));
+
             MenuProvider containerSupplier = new MenuProvider() {
                 @Override
                 public Component getDisplayName() {
@@ -859,6 +789,7 @@ public abstract class AbstractWorkerEntity extends AbstractChunkLoaderEntity {
     public abstract boolean isRequiredMainTool(ItemStack tool);
     public abstract boolean isRequiredSecondTool(ItemStack tool);
 
+
     public boolean hasMainToolInInv() {
         SimpleContainer inventory = this.getInventory();
         for (int i = 0; i < inventory.getContainerSize(); i++) {
@@ -867,4 +798,111 @@ public abstract class AbstractWorkerEntity extends AbstractChunkLoaderEntity {
         }
         return false;
     }
+
+    public boolean hasSecondToolInInv() {
+        SimpleContainer inventory = this.getInventory();
+        for (int i = 0; i < inventory.getContainerSize(); i++) {
+            ItemStack itemStack = inventory.getItem(i);
+            if (this.isRequiredSecondTool(itemStack)) return true;
+        }
+        return false;
+    }
+
+    public void updateNeedsTool(){
+        this.entityData.set(NEEDS_TOOL, this.needsMainTool || this.needsSecondTool);
+    }
+
+    public void tick() {
+        super.tick();
+        updateSwingTime();
+        //Main.LOGGER.info("Status: " + this.status);
+        if(this.getOwner() != null && getOwner().getTeam() != null && this.getTeam() != null && !getOwner().getTeam().isAlliedTo(this.getTeam())){
+            PlayerTeam playerteam = this.getCommandSenderWorld().getScoreboard().getPlayerTeam(getOwner().getTeam().getName());
+            if(playerteam != null) getCommandSenderWorld().getScoreboard().addPlayerToTeam(this.getStringUUID(), playerteam);
+        }
+
+        if(!this.getMainHandItem().isEmpty() && this.entityData.get(NEEDS_TOOL)){
+            this.broadcastBreakEvent(EquipmentSlot.MAINHAND);
+            this.broadcastBreakEvent(InteractionHand.MAIN_HAND);
+            this.setItemInHand(InteractionHand.MAIN_HAND, ItemStack.EMPTY);
+            this.setItemSlot(EquipmentSlot.MAINHAND, ItemStack.EMPTY);
+            //WORKAROUND FOR ITEM BREAKS BUT STILL IN HAND
+        }
+
+        //Main.LOGGER.info("Hunger: " + this.getHunger());
+
+        if (hurtTimeStamp > 0) hurtTimeStamp--;
+
+
+        if(status != null){
+
+            switch (status){
+                case IDLE,WANDER -> {
+                    if(needsToSleep()){
+                        this.setStatus(Status.SLEEP);
+                    }
+                    else if(needsToDeposit()){
+                        this.setStatus(Status.DEPOSIT);
+                    }
+                    else if(getStartPos() != null){
+                        this.setStatus(Status.WORK);
+                    }
+                }
+
+                case SLEEP -> {
+                    if(shouldDepositBeforeSleep && canDepositBeforeSleep()){
+                        setStatus(Status.DEPOSIT);
+                        shouldDepositBeforeSleep = false;
+                    }
+                }
+
+                case WORK -> {
+                    if(needsToSleep()){
+                        this.setStatus(Status.SLEEP);
+                    }
+                    else if(needsToDeposit()){
+                        this.setStatus(Status.DEPOSIT);
+                    }
+                }
+
+                case FOLLOW, DEPOSIT -> {
+
+                }
+            }
+        }
+    }
+
+    private boolean canDepositBeforeSleep() {
+        return getFarmedItems() > 0 && getChestPos() != null;
+    }
+    public abstract boolean hasASecondTool();
+    public abstract boolean hasAMainTool();
+    public enum Status{
+        IDLE((byte) 0),
+        WANDER((byte) 1),
+        FOLLOW((byte) 2),
+        WORK((byte) 3),
+        DEPOSIT((byte) 4),
+        SLEEP((byte) 5);
+
+        private final byte index;
+        Status(byte index){
+            this.index = index;
+        }
+
+        public byte getIndex(){
+            return this.index;
+        }
+        public static Status fromIndex(byte index) {
+            for (Status state : Status.values()) {
+                if (state.getIndex() == index) {
+                    return state;
+                }
+            }
+            throw new IllegalArgumentException("Invalid Status index: " + index);
+        }
+    }
+
+    public abstract List<Item> inventoryInputHelp();
+
 }

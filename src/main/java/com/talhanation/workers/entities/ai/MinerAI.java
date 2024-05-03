@@ -1,6 +1,8 @@
 package com.talhanation.workers.entities.ai;
 import com.google.common.collect.ImmutableSet;
+import com.talhanation.workers.Main;
 import com.talhanation.workers.Translatable;
+import com.talhanation.workers.entities.AbstractWorkerEntity;
 import com.talhanation.workers.entities.MinerEntity;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
@@ -26,7 +28,7 @@ public class MinerAI extends Goal {
     private MineType mineType;
     private WorkState workState;
     private boolean messageNoPickaxe;
-    private int torchCounter;
+    private boolean messageNoShovel;
 
     public MinerAI(MinerEntity miner) {
         this.miner = miner;
@@ -34,7 +36,9 @@ public class MinerAI extends Goal {
     }
 
     public boolean canUse() {
-        return this.miner.canWork() && miner.getMineType() != 0;
+        BlockPos pos = miner.getStartPos();
+        int type = miner.getMineType();
+        return miner.getStatus() == AbstractWorkerEntity.Status.WORK && type != 0  && pos != null;
     }
 
     public boolean canContinueToUse() {
@@ -49,13 +53,19 @@ public class MinerAI extends Goal {
         this.mineType = getMineType();
         this.workState = WorkState.IDLE;
         this.messageNoPickaxe = false;
+        this.messageNoShovel = false;
+    }
+
+    public void done(){
+        if(miner.getOwner() != null ) this.miner.tellPlayer(miner.getOwner(), Translatable.TEXT_DONE);
+        this.miner.clearStartPos();
+        this.resetGoal();
     }
 
     public void resetGoal(){
-        miner.resetCounts();
-        miner.setIsWorking(false);
+        this.miner.resetCounts();
         this.miner.setChecked(false);
-        this.stop();
+        this.miner.setStatus(AbstractWorkerEntity.Status.IDLE);
     }
 
     private enum WorkState {
@@ -76,7 +86,7 @@ public class MinerAI extends Goal {
     }
 
     public void tick() {
-        //Main.LOGGER.info("Miner State: " + workState);
+        Main.LOGGER.info("Miner State: " + workState);
         switch (workState){
             case IDLE -> {
                 if(miner.getStartPos() != null) {
@@ -106,7 +116,7 @@ public class MinerAI extends Goal {
                     this.walkTowards(miner.getStartPos());
 
                     if (miner.getStartPos().closerThan(miner.getOnPos(), 4F)) {
-                        resetGoal();
+                        this.done();
                         workState = WorkState.IDLE;
                     }
                 }
@@ -116,6 +126,28 @@ public class MinerAI extends Goal {
 
     private void working(){
         //Handle Direction and assign minePos
+
+
+        if(!miner.hasMainToolInInv()) {
+            if(!messageNoPickaxe && this.miner.getOwner() != null){
+                this.miner.tellPlayer(miner.getOwner(), Translatable.TEXT_NO_PICKAXE);
+                messageNoPickaxe = true;
+
+            }
+            this.miner.needsMainTool = true;
+            return;
+        }
+        else if(!miner.hasSecondToolInInv()) {
+            if(!messageNoShovel && this.miner.getOwner() != null){
+                this.miner.tellPlayer(miner.getOwner(), Translatable.TEXT_OUT_OF_TOOLS());
+                messageNoShovel = true;
+
+            }
+            this.miner.needsMainTool = true;
+            return;
+        }
+
+
         if (miner.getMineDirection().equals(Direction.EAST)) {
             this.minePos = new BlockPos(miner.getStartPos().getX() + miner.blocks, miner.getStartPos().getY() - miner.depth, miner.getStartPos().getZ() - miner.side);
 
@@ -147,21 +179,14 @@ public class MinerAI extends Goal {
 
         //break block if close enough
         if (minePos.closerThan(miner.getOnPos(), 6)){
-            boolean needsPickaxe = blockstate.is(BlockTags.MINEABLE_WITH_PICKAXE);
-
-            if(needsPickaxe && !miner.hasMainToolInInv()) {
-                if(!messageNoPickaxe && this.miner.getOwner() != null){
-                    this.miner.tellPlayer(miner.getOwner(), Translatable.TEXT_NO_PICKAXE);
-                    messageNoPickaxe = true;
-                }
-                return;
-            }
 
             if (this.mineBlock(minePos)) {
                 //Mod-compat do not simplify
                 if(block1 instanceof FallingBlock || block1 instanceof Fallable) {
 
-                    this.miner.resetCounts();
+                    miner.blocks = miner.blocks/2;
+                    miner.side = miner.side/2;
+                    miner.depth = miner.depth/2;
                 }
                 this.miner.increaseFarmedItems();
             }
@@ -352,9 +377,8 @@ public class MinerAI extends Goal {
     }
 
     private boolean mineBlock(BlockPos blockPos){
-        if (this.miner.isAlive() && ForgeEventFactory.getMobGriefingEvent(this.miner.getCommandSenderWorld(), this.miner) && !miner.getFollow()) {
+        if (this.miner.isAlive() && ForgeEventFactory.getMobGriefingEvent(this.miner.getCommandSenderWorld(), this.miner)) {
             BlockState blockstate = this.miner.getCommandSenderWorld().getBlockState(blockPos);
-            Block block = blockstate.getBlock();
             this.miner.changeTool(blockstate);
 
             ItemStack heldItem = this.miner.getItemInHand(InteractionHand.MAIN_HAND);

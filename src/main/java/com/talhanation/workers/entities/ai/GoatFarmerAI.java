@@ -1,5 +1,6 @@
 package com.talhanation.workers.entities.ai;
 
+import com.talhanation.workers.entities.AbstractWorkerEntity;
 import com.talhanation.workers.entities.ShepherdEntity;
 import net.minecraft.core.BlockPos;
 import net.minecraft.sounds.SoundEvents;
@@ -35,7 +36,7 @@ public class GoatFarmerAI extends Goal {
         if (!this.shepherd.getCommandSenderWorld().isDay()) {
             return false;
         } else
-            return shepherd.getIsWorking() && !shepherd.getFollow();
+            return shepherd.getStatus() == AbstractWorkerEntity.Status.WORK;
     }
 
     @Override
@@ -50,7 +51,7 @@ public class GoatFarmerAI extends Goal {
     @Override
     public void tick() {
         super.tick();
-        if (!workPos.closerThan(shepherd.getOnPos(), 10D) && workPos != null && !shepherd.getFollow())
+        if (!workPos.closerThan(shepherd.getOnPos(), 10D) && workPos != null)
             this.shepherd.getNavigation().moveTo(workPos.getX(), workPos.getY(), workPos.getZ(), 1);
 
         if (milking) {

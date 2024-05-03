@@ -4,6 +4,7 @@ package com.talhanation.workers.client.events;
 import com.talhanation.workers.Main;
 import com.talhanation.workers.client.models.WorkersVillagerModel;
 import com.talhanation.workers.client.render.human.*;
+import com.talhanation.workers.client.render.layer.RecruitArmorLayer;
 import com.talhanation.workers.client.render.villager.*;
 import com.talhanation.workers.config.WorkersModConfig;
 import com.talhanation.workers.init.ModEntityTypes;
@@ -18,6 +19,8 @@ import net.minecraftforge.fml.common.Mod;
 public class ClientEvent {
 
     public static ModelLayerLocation WORKER = new ModelLayerLocation(new ResourceLocation(Main.MOD_ID + "worker"), "worker");
+    public static ModelLayerLocation RECRUIT_OUTER_ARMOR = new ModelLayerLocation(new ResourceLocation(Main.MOD_ID + "recruit_outer_layer"), "recruit_outer_layer");
+    public static ModelLayerLocation RECRUIT_INNER_ARMOR = new ModelLayerLocation(new ResourceLocation(Main.MOD_ID + "recruit_inner_layer"), "recruit_inner_layer");
 
     @SubscribeEvent
     public static void clientSetup(EntityRenderersEvent.RegisterRenderers event){
@@ -52,5 +55,8 @@ public class ClientEvent {
     @SubscribeEvent
     public static void layerDefinitions(EntityRenderersEvent.RegisterLayerDefinitions event) {
         event.registerLayerDefinition(ClientEvent.WORKER, WorkersVillagerModel::createLayerDefinition);
+        event.registerLayerDefinition(ClientEvent.RECRUIT_OUTER_ARMOR, RecruitArmorLayer::createOuterArmorLayer);
+        event.registerLayerDefinition(ClientEvent.RECRUIT_INNER_ARMOR, RecruitArmorLayer::createInnerArmorLayer);
+
     }
 }

@@ -1,12 +1,11 @@
 package com.talhanation.workers.entities.ai;
 
+import com.talhanation.workers.Translatable;
+import com.talhanation.workers.entities.AbstractWorkerEntity;
 import com.talhanation.workers.entities.SwineherdEntity;
 import net.minecraft.core.BlockPos;
 import net.minecraft.sounds.SoundEvents;
-import net.minecraft.world.SimpleContainer;
-import net.minecraft.world.entity.EquipmentSlot;
 import net.minecraft.world.entity.animal.Pig;
-import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
 
 import java.util.EnumSet;
@@ -29,7 +28,7 @@ public class SwineherdAI extends AnimalFarmerAI {
 
     @Override
     public boolean canUse() {
-        return animalFarmer.canWork();
+        return animalFarmer.getStatus() == AbstractWorkerEntity.Status.WORK;
     }
 
     @Override
@@ -42,7 +41,7 @@ public class SwineherdAI extends AnimalFarmerAI {
 
     @Override
     public void performWork() {
-        if (!workPos.closerThan(animalFarmer.getOnPos(), 10D) && workPos != null && !animalFarmer.getFollow())
+        if (!workPos.closerThan(animalFarmer.getOnPos(), 10D) && workPos != null)
             this.animalFarmer.getNavigation().moveTo(workPos.getX(), workPos.getY(), workPos.getZ(), 1);
 
 
@@ -76,7 +75,7 @@ public class SwineherdAI extends AnimalFarmerAI {
 
         if (slaughtering) {
             List<Pig> cows = findPigSlaughtering();
-            if (cows.size() > animalFarmer.getMaxAnimalCount()) {
+            if (cows.size() > animalFarmer.getMaxAnimalCount() && animalFarmer.hasMainToolInInv()) {
                 pig = cows.stream().findFirst();
 
                 if (pig.isPresent()) {
@@ -98,6 +97,9 @@ public class SwineherdAI extends AnimalFarmerAI {
                 }
             }
             else {
+                if(!animalFarmer.hasMainToolInInv()){
+                    this.animalFarmer.needsMainTool = true;
+                }
                 slaughtering = false;
                 breeding = true;
             }

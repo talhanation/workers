@@ -143,13 +143,14 @@ public class MerchantEntity extends AbstractWorkerEntity implements IBoatControl
             return InteractionResult.CONSUME;
         }
         else {
-            if (isCreative()) {
+            if (this.isCreative()) {
                 if (player.isCreative() && player.createCommandSourceStack().hasPermission(4)) {
                     if (player.isCrouching()) {
                         openGUI(player);
                     }
                     else {
-                        setFollow(!getFollow());
+                        if(status == Status.FOLLOW) this.setStatus(prevStatus);
+                        else this.setStatus(Status.FOLLOW, true);
                         return InteractionResult.SUCCESS;
                     }
                 }
@@ -164,7 +165,9 @@ public class MerchantEntity extends AbstractWorkerEntity implements IBoatControl
                         openGUI(player);
                     }
                     if (!player.isCrouching()) {
-                        setFollow(!getFollow());
+                        if(status == Status.FOLLOW)
+                            this.setStatus(Objects.requireNonNullElse(prevStatus, Status.IDLE), true);
+                        else this.setStatus(Status.FOLLOW, true);
                         return InteractionResult.SUCCESS;
                     }
                 }
@@ -187,7 +190,7 @@ public class MerchantEntity extends AbstractWorkerEntity implements IBoatControl
     }
 
     public void setFollow(boolean bool) {
-        super.setFollow(bool);
+        //super.setFollow(bool);
         if (!this.getReturning() && !this.getTraveling() && !bool && this.getVehicle() instanceof Boat boat && boat.getEncodeId().contains("smallships")) {
             this.setSmallShipsSailState(boat, 0);
             this.setSailPos(null);
@@ -312,9 +315,14 @@ public class MerchantEntity extends AbstractWorkerEntity implements IBoatControl
     public boolean isRequiredMainTool(ItemStack tool) {
         return false;
     }
-
+    public boolean hasAMainTool(){
+        return false;
+    }
     @Override
     public boolean isRequiredSecondTool(ItemStack tool) {
+        return false;
+    }
+    public boolean hasASecondTool(){
         return false;
     }
 
@@ -786,5 +794,10 @@ public class MerchantEntity extends AbstractWorkerEntity implements IBoatControl
 
     public void setSendInfo(boolean send){
         entityData.set(INFO, send);
+    }
+
+    @Override
+    public List<Item> inventoryInputHelp() {
+        return null;
     }
 }

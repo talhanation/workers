@@ -7,6 +7,7 @@ import net.minecraft.world.InteractionHand;
 import net.minecraft.world.SimpleContainer;
 import net.minecraft.world.damagesource.DamageSource;
 import net.minecraft.world.entity.EntityType;
+import net.minecraft.world.entity.EquipmentSlot;
 import net.minecraft.world.entity.TamableAnimal;
 import net.minecraft.world.item.*;
 import net.minecraft.world.level.Level;
@@ -27,7 +28,7 @@ public abstract class AbstractInventoryEntity extends TamableAnimal {
 
     public void tick() {
         super.tick();
-        if(this.getMainHandItem() == ItemStack.EMPTY) upgradeTool();
+        if(this.getMainHandItem().isEmpty()) upgradeTool();
     }
 
     //////////////////////////////////// DATA////////////////////////////////////
@@ -117,6 +118,17 @@ public abstract class AbstractInventoryEntity extends TamableAnimal {
         }
     }
 
+    public void upgradeArmor() {
+        for (int i = 0; i < this.inventory.getContainerSize(); i++) {
+            ItemStack itemStack = inventory.getItem(i);
+
+            if (itemStack.getItem() instanceof ArmorItem armorItem) {
+                EquipmentSlot slot = armorItem.getSlot();
+                this.setItemSlot(slot, itemStack);
+            }
+        }
+    }
+
     private void handleToolUpgrade(ItemStack tool, int inventoryIndex) {
         if (tool.getDamageValue() >= tool.getMaxDamage()) {
             // Delete tool if it is broken
@@ -130,7 +142,16 @@ public abstract class AbstractInventoryEntity extends TamableAnimal {
     public void equipTool(ItemStack tool) {
         this.setItemInHand(InteractionHand.MAIN_HAND, tool);
         this.updateUsingItem(tool);
-        //this.startUsingItem(InteractionHand.MAIN_HAND);
+
+        if(this instanceof AbstractWorkerEntity worker){
+            if(worker.isRequiredMainTool(tool)) worker.needsMainTool = false;
+            if(worker.isRequiredSecondTool(tool)) worker.needsSecondTool = false;
+        }
+    }
+
+    @Override
+    public boolean equipItemIfPossible(ItemStack p_21541_) {
+        return super.equipItemIfPossible(p_21541_);
     }
 
     public void die(@NotNull DamageSource dmg) {

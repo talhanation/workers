@@ -27,6 +27,8 @@ import net.minecraft.world.level.ServerLevelAccessor;
 import org.jetbrains.annotations.NotNull;
 
 import javax.annotation.Nullable;
+import java.util.Arrays;
+import java.util.List;
 import java.util.function.Predicate;
 
 public class ShepherdEntity extends AbstractAnimalFarmerEntity {
@@ -42,7 +44,6 @@ public class ShepherdEntity extends AbstractAnimalFarmerEntity {
 
     public ShepherdEntity(EntityType<? extends AbstractWorkerEntity> entityType, Level world) {
         super(entityType, world);
-        this.initSpawn();
     }
 
     @Override
@@ -133,5 +134,14 @@ public class ShepherdEntity extends AbstractAnimalFarmerEntity {
     public boolean isRequiredSecondTool(ItemStack tool) {
         return tool.getItem() instanceof AxeItem;
     }
-
+    public boolean hasAMainTool(){
+        return true;
+    }
+    public boolean hasASecondTool(){
+        return true;
+    }
+    @Override
+    public List<Item> inventoryInputHelp() {
+        return Arrays.asList(Items.IRON_AXE, Items.SHEARS , Items.WHEAT);
+    }
 }

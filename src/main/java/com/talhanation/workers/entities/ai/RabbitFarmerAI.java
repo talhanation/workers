@@ -1,5 +1,6 @@
 package com.talhanation.workers.entities.ai;
 
+import com.talhanation.workers.entities.AbstractWorkerEntity;
 import com.talhanation.workers.entities.RabbitFarmerEntity;
 import net.minecraft.core.BlockPos;
 import net.minecraft.world.SimpleContainer;
@@ -30,10 +31,7 @@ public class RabbitFarmerAI extends Goal {
 
     @Override
     public boolean canUse() {
-        if (!this.rabbitFarmer.getCommandSenderWorld().isDay()) {
-            return false;
-        }
-        else return rabbitFarmer.getIsWorking() && !rabbitFarmer.getFollow();
+         return rabbitFarmer.getStatus() == AbstractWorkerEntity.Status.WORK;
     }
 
     @Override
@@ -47,7 +45,7 @@ public class RabbitFarmerAI extends Goal {
     @Override
     public void tick() {
         super.tick();
-        if (workPos != null && !workPos.closerThan(rabbitFarmer.getOnPos(), 10D) && !rabbitFarmer.getFollow())
+        if (workPos != null && !workPos.closerThan(rabbitFarmer.getOnPos(), 10D))
             this.rabbitFarmer.getNavigation().moveTo(workPos.getX(), workPos.getY(), workPos.getZ(), 1);
 
         if (breeding){

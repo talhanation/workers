@@ -50,4 +50,10 @@ public class AnimalFarmerInventoryContainer extends ContainerBase {
     public void removed(Player playerIn) {
         super.removed(playerIn);
     }
+
+    public void broadcastChanges() {
+        super.broadcastChanges();
+        worker.upgradeTool();
+        worker.upgradeArmor();
+    }
 }

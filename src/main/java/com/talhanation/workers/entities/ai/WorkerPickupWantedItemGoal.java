@@ -17,15 +17,16 @@ public class WorkerPickupWantedItemGoal extends Goal{
 
     @Override
     public boolean canUse() {
-        if (
-            this.worker.getStartPos() == null ||
-            this.worker.getFollow() ||
-            this.worker.isSleeping()
-        ) {
-            return false;
-        };
-        this.itemsToPickup = this.findItemsNearby();
-        return !this.itemsToPickup.isEmpty();
+         return false;
+
+        //this.itemsToPickup = this.findItemsNearby();
+        //return !this.itemsToPickup.isEmpty();
+    }
+
+    @Override
+    public void start() {
+        super.start();
+
     }
 
     private List<ItemEntity> findItemsNearby() {

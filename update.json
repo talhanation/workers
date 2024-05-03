@@ -1,17 +1,33 @@
 {
   "homepage": "https://www.curseforge.com/minecraft/mc-mods/workers/files",
   "promos": {
-    "1.20.1-recommended": "1.7.0",
-    "1.19.2-recommended": "1.7.0",
-    "1.18.2-recommended": "1.7.0"
+    "1.20.1-recommended": "1.7.8",
+    "1.19.2-recommended": "1.7.8",
+    "1.18.2-recommended": "1.7.8"
   },
   "1.18.2": {
+    "1.7.8": "fixed tasking AI, fixed double chest lid, fixed deposit behavior",
+    "1.7.7": "fixed exploit with merchants, fixed double chest interaction, fixed sailor path navigation",
+    "1.7.6": "fixed crash, add a lumberjack feature",
+    "1.7.5": "fixed crash, improved merchant travel",
+    "1.7.4": "added interaction with fence gates, fixed bugs",
+    "1.7.3": "fixed workers not walking to work position",
+    "1.7.2": "minor fixes to chicken farmer",
+    "1.7.1": "minor fixes for Traveling Merchants Update",
     "1.7.0": "Traveling Merchants Update",
     "1.6.2": "fixed minor ai issues and improved workers pathfinder.",
     "1.6.1": "fixed workers pathfinder.",
     "1.6.0": "Big bug fix update and added command menu."
   },
   "1.19.2": {
+    "1.7.8": "fixed tasking AI, fixed double chest lid, fixed deposit behavior",
+    "1.7.7": "fixed exploit with merchants, fixed double chest interaction, fixed sailor path navigation",
+    "1.7.6": "fixed crash, add a lumberjack feature",
+    "1.7.5": "fixed crash, improved merchant travel",
+    "1.7.4": "added interaction with fence gates, fixed bugs",
+    "1.7.3": "fixed workers not walking to work position",
+    "1.7.2": "minor fixes to chicken farmer",
+    "1.7.1": "minor fixes for Traveling Merchants Update",
     "1.7.0": "Traveling Merchants Update",
     "1.6.6": "fixed workers get stuck and wont work because they cant deposit.",
     "1.6.5": "fixed miner and farmer issues. Improved depositing",
@@ -22,6 +38,14 @@
     "1.6.0": "Big bug fix update and added command menu."
   },
   "1.20.1": {
+    "1.7.8": "fixed tasking AI, fixed double chest lid, fixed deposit behavior",
+    "1.7.7": "fixed exploit with merchants, fixed double chest interaction, fixed sailor path navigation",
+    "1.7.6": "fixed crash, add a lumberjack feature",
+    "1.7.5": "fixed crash, improved merchant travel",
+    "1.7.4": "added interaction with fence gates, fixed bugs",
+    "1.7.3": "fixed workers not walking to work position",
+    "1.7.2": "minor fixes to chicken farmer",
+    "1.7.1": "minor fixes for Traveling Merchants Update",
     "1.7.0": "Traveling Merchants Update"
   }
 }

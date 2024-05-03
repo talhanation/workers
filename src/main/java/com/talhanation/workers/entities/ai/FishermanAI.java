@@ -2,6 +2,7 @@ package com.talhanation.workers.entities.ai;
 
 import com.talhanation.workers.Main;
 import com.talhanation.workers.Translatable;
+import com.talhanation.workers.entities.AbstractWorkerEntity;
 import com.talhanation.workers.entities.FishermanEntity;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
@@ -47,7 +48,7 @@ public class FishermanAI extends Goal {
 
     @Override
     public boolean canUse() {
-        return fisherman.isTame() && fisherman.getStartPos() != null;
+        return fisherman.getStartPos() != null;
 
     }
 
@@ -74,14 +75,15 @@ public class FishermanAI extends Goal {
         if(DEBUG) Main.LOGGER.info("State: " + state);
         switch (state){
             case IDLE -> {
-                if(fisherman.getStartPos() != null && fisherman.canWork()){
+                if(fisherman.getStartPos() != null && fisherman.getStatus() == AbstractWorkerEntity.Status.WORK){
 
                     this.setWorkState(CALC_COAST);
                 }
             }
 
             case CALC_COAST -> {
-                if(!fisherman.canWork()) this.setWorkState(STOPPING);
+                if(fisherman.getStatus() != AbstractWorkerEntity.Status.WORK) this.setWorkState(STOPPING);
+
                 if(fisherman.getVehicle() != null) fisherman.stopRiding();
 
                 coastPos = getCoastPos();
@@ -93,7 +95,8 @@ public class FishermanAI extends Goal {
             }
 
             case MOVING_COAST -> {
-                if(!fisherman.canWork()) this.setWorkState(STOPPING);
+                if(fisherman.getStatus() != AbstractWorkerEntity.Status.WORK) this.setWorkState(STOPPING);
+
                 if(fisherman.getVehicle() != null) fisherman.stopRiding();
 
                 if (coastPos == null) setWorkState(CALC_COAST);
@@ -127,9 +130,7 @@ public class FishermanAI extends Goal {
 
             case MOVING_TO_BOAT -> {
                 if(boat != null && boat.getPassengers().isEmpty()){
-                    if(!fisherman.canWork()) {
-                        this.setWorkState(STOPPING);
-                    }
+                    if(fisherman.getStatus() != AbstractWorkerEntity.Status.WORK) this.setWorkState(STOPPING);
 
                     this.moveToPos(boat.getOnPos());
 
@@ -153,7 +154,8 @@ public class FishermanAI extends Goal {
             }
 
             case SAILING -> {
-                if(!fisherman.canWork()) this.setWorkState(STOPPING);
+                if(fisherman.getStatus() != AbstractWorkerEntity.Status.WORK) this.setWorkState(STOPPING);
+
                 if(fishingPos == null){
                     this.setWorkState(IDLE);
                     break;
@@ -187,7 +189,7 @@ public class FishermanAI extends Goal {
             }
 
             case FISHING -> {
-                if(!fisherman.canWork()) this.setWorkState(STOPPING);
+                if(fisherman.getStatus() != AbstractWorkerEntity.Status.WORK) this.setWorkState(STOPPING);
 
                 if(fishingPos == null) this.setWorkState(STOPPING);
 
@@ -196,7 +198,7 @@ public class FishermanAI extends Goal {
                         this.fisherman.tellPlayer(fisherman.getOwner(), Translatable.TEXT_NO_FISHING_ROD);
                         messageNoFishingRod = true;
                     }
-                    fisherman.setNeedsTool(true);
+                    fisherman.needsMainTool = true;
                 }
 
                 fishing();
@@ -206,7 +208,8 @@ public class FishermanAI extends Goal {
                 if(coastPos != null) {
                     if (boat != null && boat.getFirstPassenger() != null && this.fisherman.equals(boat.getFirstPassenger())) {
                         this.fisherman.setSailPos(coastPos);
-                    } else{
+                    }
+                     else{
                         if(fisherman.needsToSleep()){
                             setWorkState(SLEEP);
                         }
@@ -247,10 +250,6 @@ public class FishermanAI extends Goal {
 
                 else if(fisherman.needsToDeposit()){
                     setWorkState(DEPOSIT);
-                }
-
-                else if(fisherman.needsToGetFood()){
-                    setWorkState(UPKEEP);
                 }
                 else{
                     this.fisherman.walkTowards(coastPos, 1);
@@ -318,7 +317,7 @@ public class FishermanAI extends Goal {
     }
 
     public void resetTask() {
-        fisherman.getNavigation().stop();
+        this.fisherman.getNavigation().stop();
         this.fishingTimer = fisherman.getRandom().nextInt(600);
     }
 
@@ -571,7 +570,7 @@ public class FishermanAI extends Goal {
         if(list.isEmpty()){
             if (fisherman.getOwner() != null) fisherman.tellPlayer(fisherman.getOwner(), Translatable.TEXT_FISHER_NO_WATER);
 
-            this.fisherman.setIsWorking(false, true);
+            //this.fisherman.setIsWorking(false, true);
             this.fisherman.clearStartPos();
             this.fisherman.stopRiding();
             this.stop();

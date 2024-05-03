@@ -18,8 +18,7 @@ public class WorkerFindWaterAI extends Goal {
     }
 
     public boolean canUse() {
-        if (! worker.getFollow() && worker.getIsWorking()){
-
+        if (worker.getStatus() == AbstractWorkerEntity.Status.WORK){
             targetPos = findBlockWater();
 
             return targetPos != null;

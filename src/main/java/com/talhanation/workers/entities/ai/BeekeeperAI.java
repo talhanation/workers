@@ -1,5 +1,6 @@
 package com.talhanation.workers.entities.ai;
 
+import com.talhanation.workers.entities.AbstractWorkerEntity;
 import com.talhanation.workers.entities.BeekeeperEntity;
 import net.minecraft.core.BlockPos;
 import net.minecraft.sounds.SoundEvents;
@@ -31,7 +32,7 @@ public class BeekeeperAI extends Goal {
 
     @Override
     public boolean canUse() {
-        return beekeeper.canWork();
+        return beekeeper.getStatus() == AbstractWorkerEntity.Status.WORK;
     }
 
     @Override

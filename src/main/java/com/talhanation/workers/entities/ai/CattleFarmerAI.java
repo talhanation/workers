@@ -1,11 +1,12 @@
 package com.talhanation.workers.entities.ai;
 
 
+import com.talhanation.workers.Translatable;
+import com.talhanation.workers.entities.AbstractWorkerEntity;
 import com.talhanation.workers.entities.CattleFarmerEntity;
 import net.minecraft.core.BlockPos;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.world.SimpleContainer;
-import net.minecraft.world.entity.EquipmentSlot;
 import net.minecraft.world.entity.animal.Cow;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
@@ -31,7 +32,7 @@ public class CattleFarmerAI extends AnimalFarmerAI {
 
     @Override
     public boolean canUse() {
-        return animalFarmer.canWork();
+        return animalFarmer.getStatus() == AbstractWorkerEntity.Status.WORK;
     }
 
     @Override
@@ -45,7 +46,7 @@ public class CattleFarmerAI extends AnimalFarmerAI {
 
     @Override
     public void performWork() {
-        if (!workPos.closerThan(animalFarmer.getOnPos(), 10D) && workPos != null && !animalFarmer.getFollow())
+        if (!workPos.closerThan(animalFarmer.getOnPos(), 10D) && workPos != null)
             this.animalFarmer.getNavigation().moveTo(workPos.getX(), workPos.getY(), workPos.getZ(), 1);
 
         if (milking){
@@ -103,7 +104,7 @@ public class CattleFarmerAI extends AnimalFarmerAI {
 
         if (slaughtering) {
             List<Cow> cows = findCowSlaughtering();
-            if (cows.size() > animalFarmer.getMaxAnimalCount()) {
+            if (cows.size() > animalFarmer.getMaxAnimalCount() && animalFarmer.hasMainToolInInv()) {
                 cow = cows.stream().findFirst();
 
                 if(!animalFarmer.isRequiredSecondTool(animalFarmer.getMainHandItem())) this.animalFarmer.changeToTool(false);
@@ -122,6 +123,10 @@ public class CattleFarmerAI extends AnimalFarmerAI {
 
             }
             else {
+                if(!animalFarmer.hasMainToolInInv()){
+                    this.animalFarmer.needsMainTool = true;
+                    this.animalFarmer.updateNeedsTool();
+                }
                 slaughtering = false;
                 milking = true;
             }

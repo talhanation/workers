@@ -33,11 +33,11 @@ public class ControlBoatAI extends Goal {
 
     @Override
     public boolean canUse() {
-        return  this.worker.getVehicle() instanceof Boat boat && boat.getPassengers().get(0).equals(this.worker);
+        return this.worker.getVehicle() instanceof Boat boat && boat.getPassengers().get(0).equals(this.worker);
     }
 
     public boolean canContinueToUse() {
-        return !(this.worker instanceof FishermanEntity && worker.getFollow());
+        return canUse();
     }
 
     public boolean isInterruptable() {
@@ -86,13 +86,12 @@ public class ControlBoatAI extends Goal {
                                     worker.getCommandSenderWorld().setBlock(new BlockPos(node.x, (int) (worker.getY() + 4), node.z), Blocks.ICE.defaultBlockState(), 3);
                                 }
                             }
-
-
                             state = MOVING_PATH;
                         }
                     } else
                         state = IDLE;
                 }
+
                 case MOVING_PATH -> {
                     if(!worker.getVehicle().horizontalCollision && getWaterDepth(worker.getOnPos()) >= 7 && path.getEndNode() != null) {
                         this.node = path.getEndNode();

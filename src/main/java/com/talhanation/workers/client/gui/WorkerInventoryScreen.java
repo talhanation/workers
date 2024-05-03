@@ -4,6 +4,7 @@ import com.talhanation.workers.Main;
 import com.talhanation.workers.Translatable;
 import com.talhanation.workers.entities.ChickenFarmerEntity;
 import com.talhanation.workers.entities.LumberjackEntity;
+import com.talhanation.workers.entities.MinerEntity;
 import com.talhanation.workers.inventory.WorkerInventoryContainer;
 import com.talhanation.workers.entities.AbstractWorkerEntity;
 import com.talhanation.workers.network.MessageChickenFarmerUseEggs;
@@ -15,6 +16,9 @@ import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.network.chat.Component;
 import net.minecraftforge.client.gui.widget.ExtendedButton;
+import net.minecraft.world.item.ItemStack;
+import java.awt.*;
+
 
 public class WorkerInventoryScreen extends ScreenBase<WorkerInventoryContainer> {
 
@@ -78,6 +82,14 @@ public class WorkerInventoryScreen extends ScreenBase<WorkerInventoryContainer> 
         super.renderLabels(guiGraphics, mouseX, mouseY);
         guiGraphics.drawString(font, worker.getDisplayName().getVisualOrderText(), 8, 6, fontColor, false);
         guiGraphics.drawString(font, playerInventory.getDisplayName().getVisualOrderText(), 8, imageHeight - 152 + 3, fontColor, false);
+
+        int offset = this.worker instanceof MinerEntity ? 10 : 0;
+        if(worker.inventoryInputHelp() != null){
+            for(int i=0; i < worker.inventoryInputHelp().size(); i++){
+                renderItemAt(worker.inventoryInputHelp().get(i).getDefaultInstance(), 60 - offset + (15 * i), imageHeight - 165);
+            }
+        }
+
     }
 
     @Override
@@ -87,5 +99,9 @@ public class WorkerInventoryScreen extends ScreenBase<WorkerInventoryContainer> 
 
     protected void renderBg(GuiGraphics guiGraphics, float partialTicks, int mouseX, int mouseY) {
         super.renderBg(guiGraphics, partialTicks, mouseX, mouseY);
+    }
+
+    private void renderItemAt(ItemStack itemStack, int x, int y) {
+        if(itemStack != null) itemRenderer.renderAndDecorateItem(itemStack, x, y);
     }
 }

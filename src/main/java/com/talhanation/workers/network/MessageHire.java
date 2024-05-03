@@ -14,11 +14,13 @@ public class MessageHire implements Message<MessageHire> {
 
     private UUID player;
     private UUID worker;
+    private String name;
 
     public MessageHire() {
     }
 
-    public MessageHire(UUID player, UUID recruit) {
+    public MessageHire(UUID player, UUID recruit, String name) {
+        this.name = name;
         this.player = player;
         this.worker = recruit;
     }
@@ -37,19 +39,21 @@ public class MessageHire implements Message<MessageHire> {
                 .stream()
                 .filter(AbstractWorkerEntity::isAlive)
                 .findAny()
-                .ifPresent(abstractRecruitEntity -> CommandEvents.handleRecruiting(player, abstractRecruitEntity));
+                .ifPresent(abstractRecruitEntity -> CommandEvents.handleRecruiting(player, abstractRecruitEntity, name));
 
     }
 
     public MessageHire fromBytes(FriendlyByteBuf buf) {
         this.player = buf.readUUID();
         this.worker = buf.readUUID();
+        this.name = buf.readUtf();
         return this;
     }
 
     public void toBytes(FriendlyByteBuf buf) {
         buf.writeUUID(this.player);
         buf.writeUUID(this.worker);
+        buf.writeUtf(this.name);
     }
 
 }
