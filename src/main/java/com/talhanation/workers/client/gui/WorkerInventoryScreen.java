@@ -10,6 +10,7 @@ import com.talhanation.workers.entities.AbstractWorkerEntity;
 import com.talhanation.workers.network.MessageChickenFarmerUseEggs;
 import com.talhanation.workers.network.MessageLumberjackReplant;
 import de.maxhenkel.corelib.inventory.ScreenBase;
+import net.minecraft.client.gui.Gui;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.components.Tooltip;
 import net.minecraft.world.entity.player.Inventory;
@@ -86,7 +87,7 @@ public class WorkerInventoryScreen extends ScreenBase<WorkerInventoryContainer> 
         int offset = this.worker instanceof MinerEntity ? 10 : 0;
         if(worker.inventoryInputHelp() != null){
             for(int i=0; i < worker.inventoryInputHelp().size(); i++){
-                renderItemAt(worker.inventoryInputHelp().get(i).getDefaultInstance(), 60 - offset + (15 * i), imageHeight - 165);
+                renderItemAt(guiGraphics, worker.inventoryInputHelp().get(i).getDefaultInstance(), 60 - offset + (15 * i), imageHeight - 165);
             }
         }
 
@@ -101,7 +102,7 @@ public class WorkerInventoryScreen extends ScreenBase<WorkerInventoryContainer> 
         super.renderBg(guiGraphics, partialTicks, mouseX, mouseY);
     }
 
-    private void renderItemAt(ItemStack itemStack, int x, int y) {
-        if(itemStack != null) itemRenderer.renderAndDecorateItem(itemStack, x, y);
+    private void renderItemAt(GuiGraphics guiGraphics, ItemStack itemStack, int x, int y) {
+        if(itemStack != null) guiGraphics.renderFakeItem(itemStack, x, y);
     }
 }

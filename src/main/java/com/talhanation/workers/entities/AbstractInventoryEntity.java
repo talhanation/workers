@@ -123,7 +123,7 @@ public abstract class AbstractInventoryEntity extends TamableAnimal {
             ItemStack itemStack = inventory.getItem(i);
 
             if (itemStack.getItem() instanceof ArmorItem armorItem) {
-                EquipmentSlot slot = armorItem.getSlot();
+                EquipmentSlot slot = armorItem.getEquipmentSlot();
                 this.setItemSlot(slot, itemStack);
             }
         }
@@ -150,7 +150,7 @@ public abstract class AbstractInventoryEntity extends TamableAnimal {
     }
 
     @Override
-    public boolean equipItemIfPossible(ItemStack p_21541_) {
+    public @NotNull ItemStack equipItemIfPossible(ItemStack p_21541_) {
         return super.equipItemIfPossible(p_21541_);
     }
 

@@ -22,7 +22,7 @@ public class WorkerFollowOwnerGoal extends Goal {
     }
 
     public boolean canUse() {
-        long i = this.worker.level.getGameTime();
+        long i = this.worker.getCommandSenderWorld().getGameTime();
         if (i - this.lastCanUseCheck >= 20L) {
             this.lastCanUseCheck = i;
             LivingEntity livingentity = this.worker.getOwner();

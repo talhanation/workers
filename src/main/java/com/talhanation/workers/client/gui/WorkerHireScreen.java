@@ -62,7 +62,7 @@ public class WorkerHireScreen extends ScreenBase<WorkerHireContainer> {
         clearWidgets();
         setEditBox();
 
-        addRenderableWidget(new Button(zeroLeftPos - mirror + 40, zeroTopPos + 85, 100, 20, TEXT_HIRE, button -> {
+        addRenderableWidget(new ExtendedButton(zeroLeftPos - mirror + 40, zeroTopPos + 85, 100, 20, TEXT_HIRE, button -> {
             Main.SIMPLE_CHANNEL.sendToServer(new MessageHire(player.getUUID(), worker.getUUID(), textField.getValue()));
 
             this.onClose();
@@ -70,7 +70,6 @@ public class WorkerHireScreen extends ScreenBase<WorkerHireContainer> {
 
     }
     private void setEditBox() {
-        minecraft.keyboardHandler.setSendRepeatsToGui(true);
         Component name = worker.getName();
 
         textField = new EditBox(font, leftPos + 3, topPos + 3, 90, 12, name);
@@ -78,7 +77,7 @@ public class WorkerHireScreen extends ScreenBase<WorkerHireContainer> {
         textField.setTextColor(-1);
         textField.setTextColorUneditable(-1);
         textField.setBordered(true);
-        textField.setFocus(true);
+        textField.setFocused(true);
         textField.setMaxLength(16);
 
         addRenderableWidget(textField);
@@ -114,7 +113,6 @@ public class WorkerHireScreen extends ScreenBase<WorkerHireContainer> {
         //guiGraphics.drawString(font, worker.getDisplayName().getVisualOrderText(), 8, 5, fontColor, false);
         guiGraphics.drawString(font, player.getInventory().getDisplayName().getVisualOrderText(), 8, this.imageHeight - 96 + 2, fontColor, false);
 
-
         // Info
         guiGraphics.drawString(font, "Hp:", k, l, fontColor, false);
         guiGraphics.drawString(font, "" + health, k + 40, l, fontColor, false);
@@ -128,13 +126,9 @@ public class WorkerHireScreen extends ScreenBase<WorkerHireContainer> {
         guiGraphics.drawString(font, "Hunger:", k, l + 30, fontColor, false);
         guiGraphics.drawString(font, "" + hunger, k + 40, l + 30, fontColor, false);
 
-
-        guiGraphics.drawString(font, "Costs:", k, l + 40, fontColor, false);
-        guiGraphics.drawString(font, "" + costs, k + 40, l + 40, fontColor, false);
-
         if(currency != null){
-            itemRenderer.renderGuiItem(currency, 120, this.imageHeight - 122);
-            itemRenderer.renderGuiItemDecorations(font, currency, 120, this.imageHeight - 122);
+            guiGraphics.renderFakeItem(currency, 120, this.imageHeight - 122);
+            guiGraphics.renderItemDecorations(font, currency, 120, this.imageHeight - 122);
         }
 
     }
