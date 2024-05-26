@@ -78,7 +78,10 @@ public class DepositItemsInChestGoal extends Goal {
     @Override
     public void stop() {
         super.stop();
-        if(container != null) this.interactChest(container,false);
+        if(container != null) {
+            this.container.setChanged();
+            this.interactChest(container,false);
+        }
         timer = 0;
         setTimer = false;
         this.worker.resetFarmedItems();
