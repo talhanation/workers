@@ -121,8 +121,9 @@ dependencies {
     runtimeOnly fg.deobf("de.maxhenkel.corelib:corelib:1.20.1-1.0.0")
     runtimeOnly fg.deobf("de.maxhenkel.corelib:corelib:1.20.1-1.0.0:javadoc")
 
+    implementation fg.deobf("curse.maven:small-ships-450659:5324996")
     annotationProcessor 'org.spongepowered:mixin:0.8.5:processor'
-    implementation fg.deobf("curse.maven:small-ships-450659:5173804")
+
 }
 
 // Example for how to get properties into the manifest for reading at runtime.
