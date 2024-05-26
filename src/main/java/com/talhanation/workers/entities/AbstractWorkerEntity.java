@@ -78,6 +78,7 @@ public abstract class AbstractWorkerEntity extends AbstractChunkLoaderEntity {
     protected Status status;
     public Status prevStatus;
     public boolean shouldDepositBeforeSleep;
+    private int maxFallDistance;
 
     public AbstractWorkerEntity(EntityType<? extends AbstractWorkerEntity> entityType, Level world) {
         super(entityType, world);
@@ -99,6 +100,14 @@ public abstract class AbstractWorkerEntity extends AbstractChunkLoaderEntity {
         }
         else
             return super.getNavigation();
+    }
+
+    public int getMaxFallDistance() {
+        return maxFallDistance;
+    }
+
+    public void setMaxFallDistance(int x){
+        this.maxFallDistance = x;
     }
 
     @Override
