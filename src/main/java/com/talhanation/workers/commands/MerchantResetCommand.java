@@ -16,7 +16,7 @@ import java.util.stream.StreamSupport;
 
 public class MerchantResetCommand {
     public static void register(CommandDispatcher<CommandSourceStack> dispatcher) {
-        LiteralArgumentBuilder<CommandSourceStack> literalBuilder = Commands.literal("workers").requires((source) -> source.hasPermission(4));
+        LiteralArgumentBuilder<CommandSourceStack> literalBuilder = Commands.literal("workers").requires((source) -> source.hasPermission(2));
 
         literalBuilder
             .then(Commands.literal("merchants")
