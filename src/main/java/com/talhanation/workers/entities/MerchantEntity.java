@@ -108,7 +108,7 @@ public class MerchantEntity extends AbstractWorkerEntity implements IBoatControl
     }
     @Override
     public boolean needsToSleep() {
-        return !this.getTraveling() && super.needsToSleep();
+        return !this.getTraveling() && !this.getReturning() && (State.HOME.getIndex() == this.getState() && !this.getAutoStartTravel()) && super.needsToSleep();
     }
 
     private void initTradeLimits() {
