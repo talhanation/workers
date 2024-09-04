@@ -3,6 +3,7 @@ package com.talhanation.workers.entities;
 import com.talhanation.workers.Main;
 import net.minecraft.core.BlockPos;
 import net.minecraft.util.Mth;
+import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.entity.vehicle.Boat;
@@ -28,7 +29,24 @@ public interface IBoatController {
     float getPrecisionMax();
     void setSailPos(BlockPos pos);
     int coolDown = 0;
+    static float getSmallshipSpeed(Entity vehicle) {
+        float speed = 0;
+        if(vehicle instanceof Boat boat) {
+            try{
+                Class<?> shipClass = Class.forName("com.talhanation.smallships.world.entity.ship.Ship");
+                if(shipClass.isInstance(boat)) {
+                    Object ship = shipClass.cast(boat);
 
+                    Method shipClassGetSpeed = shipClass.getMethod("getSpeed");
+                    speed = (float) shipClassGetSpeed.invoke(ship);
+
+                }
+            } catch (ClassNotFoundException | NoSuchMethodException | IllegalAccessException | InvocationTargetException e) {
+                Main.LOGGER.info("shipClass was not found");
+            }
+        }
+        return speed;
+    }
     default void updateBoatControl(double posX, double posZ, double speedFactor, double turnFactor, Node node){
         if(this.getWorker().getVehicle() instanceof Boat boat && boat.getPassengers().get(0).equals(this.getWorker())) {
             String string = boat.getEncodeId();
