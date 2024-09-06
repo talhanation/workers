@@ -80,10 +80,9 @@ public class Main {
     public static MenuType<WorkerInventoryContainer> MINER_CONTAINER_TYPE;
     public static MenuType<WorkerInventoryContainer> ANIMAL_FARMER_CONTAINER_TYPE;
     public static MenuType<WorkerInventoryContainer> WORKER_CONTAINER_TYPE;
-    public static MenuType<MerchantTradeContainer> MERCHANT_CONTAINER_TYPE;
-    public static MenuType<MerchantInventoryContainer> MERCHANT_OWNER_CONTAINER_TYPE;
+    public static MenuType<MerchantTradeContainer> MERCHANT_TRADE_CONTAINER_TYPE;
+    public static MenuType<MerchantOwnerContainer> MERCHANT_OWNER_CONTAINER_TYPE;
     public static MenuType<MerchantWaypointContainer> MERCHANT_WAYPOINT_CONTAINER_TYPE;
-
     public static boolean isSmallShipsInstalled;
 
     public Main() {
@@ -151,7 +150,8 @@ public class Main {
             MessageChickenFarmerUseEggs.class,
             MessageMerchantSetSendInfo.class,
             MessageLumberjackReplant.class,
-            MessageToClientUpdateHireScreen.class
+            MessageToClientUpdateHireScreen.class,
+            MessageOpenOwnerGuiMerchant.class
         };
         for (int i = 0; i < messages.length; i++) CommonRegistry.registerMessage(SIMPLE_CHANNEL, i, messages[i]);
         LOGGER.info("Villager Workers Messages registered");
@@ -168,7 +168,7 @@ public class Main {
 
         ClientRegistry.registerScreen(Main.MINER_CONTAINER_TYPE, MinerInventoryScreen::new);
         ClientRegistry.registerScreen(Main.WORKER_CONTAINER_TYPE, WorkerInventoryScreen::new);
-        ClientRegistry.registerScreen(Main.MERCHANT_CONTAINER_TYPE, MerchantTradeScreen::new);
+        ClientRegistry.registerScreen(Main.MERCHANT_TRADE_CONTAINER_TYPE, MerchantTradeScreen::new);
         ClientRegistry.registerScreen(Main.MERCHANT_OWNER_CONTAINER_TYPE, MerchantOwnerScreen::new);
         ClientRegistry.registerScreen(Main.ANIMAL_FARMER_CONTAINER_TYPE, AnimalFarmerInventoryScreen::new);
         ClientRegistry.registerScreen(Main.HIRE_CONTAINER_TYPE, WorkerHireScreen::new);
@@ -257,19 +257,19 @@ public class Main {
             }
             return new WorkerInventoryContainer(windowId, rec, inv);
         });
-        MERCHANT_CONTAINER_TYPE = new MenuType<>((IContainerFactory<MerchantTradeContainer>) (windowId, inv, data) -> {
+        MERCHANT_TRADE_CONTAINER_TYPE = new MenuType<>((IContainerFactory<MerchantTradeContainer>) (windowId, inv, data) -> {
             MerchantEntity rec = (MerchantEntity) getRecruitByUUID(inv.player, data.readUUID());
             if (rec == null) {
                 return null;
             }
             return new MerchantTradeContainer(windowId, rec, inv);
         });
-        MERCHANT_OWNER_CONTAINER_TYPE = new MenuType<>((IContainerFactory<MerchantInventoryContainer>) (windowId, inv, data) -> {
+        MERCHANT_OWNER_CONTAINER_TYPE = new MenuType<>((IContainerFactory<MerchantOwnerContainer>) (windowId, inv, data) -> {
             MerchantEntity rec = (MerchantEntity) getRecruitByUUID(inv.player, data.readUUID());
             if (rec == null) {
                 return null;
             }
-            return new MerchantInventoryContainer(windowId, rec, inv);
+            return new MerchantOwnerContainer(windowId, rec, inv);
         });
         ANIMAL_FARMER_CONTAINER_TYPE = new MenuType<>((IContainerFactory<WorkerInventoryContainer>) (windowId, inv, data) -> {
             AbstractWorkerEntity rec = getRecruitByUUID(inv.player, data.readUUID());
@@ -310,8 +310,8 @@ public class Main {
         WORKER_CONTAINER_TYPE.setRegistryName(new ResourceLocation(Main.MOD_ID, "worker_container"));
         event.getRegistry().register(WORKER_CONTAINER_TYPE);
 
-        MERCHANT_CONTAINER_TYPE.setRegistryName(new ResourceLocation(Main.MOD_ID, "merchant_container"));
-        event.getRegistry().register(MERCHANT_CONTAINER_TYPE);
+        MERCHANT_TRADE_CONTAINER_TYPE.setRegistryName(new ResourceLocation(Main.MOD_ID, "merchant_container"));
+        event.getRegistry().register(MERCHANT_TRADE_CONTAINER_TYPE);
 
         MERCHANT_OWNER_CONTAINER_TYPE.setRegistryName(new ResourceLocation(Main.MOD_ID, "merchant_owner_container"));
         event.getRegistry().register(MERCHANT_OWNER_CONTAINER_TYPE);

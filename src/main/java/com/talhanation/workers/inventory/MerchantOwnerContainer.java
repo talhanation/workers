@@ -3,22 +3,21 @@ package com.talhanation.workers.inventory;
 import com.talhanation.workers.Main;
 import com.talhanation.workers.entities.AbstractWorkerEntity;
 import com.talhanation.workers.entities.MerchantEntity;
-
 import de.maxhenkel.corelib.inventory.ContainerBase;
-import net.minecraft.world.entity.player.Player;
-import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.Container;
+import net.minecraft.world.entity.player.Inventory;
+import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.inventory.Slot;
 import net.minecraft.world.item.ItemStack;
 
-public class MerchantTradeContainer extends ContainerBase {
-    private final Container workerInventory;
+public class MerchantOwnerContainer extends ContainerBase {
+    private final Container workerTradeInventory;
     private final MerchantEntity merchant;
 
-    public MerchantTradeContainer(int id, MerchantEntity merchant, Inventory playerInventory) {
-        super(Main.MERCHANT_TRADE_CONTAINER_TYPE, id, playerInventory, merchant.getInventory());
+    public MerchantOwnerContainer(int id, MerchantEntity merchant, Inventory playerInventory) {
+        super(Main.MERCHANT_OWNER_CONTAINER_TYPE, id, playerInventory, merchant.getInventory());
         this.merchant = merchant;
-        this.workerInventory = merchant.getTradeInventory();
+        this.workerTradeInventory = merchant.getTradeInventory();
         addWorkerTradeSlots();
         addWorkerPriceSlots();
         addPlayerInventorySlots();
@@ -31,15 +30,15 @@ public class MerchantTradeContainer extends ContainerBase {
 
     public void addWorkerPriceSlots() {
         for (int k = 0; k < MerchantEntity.PRICE_SLOT.length; ++k) {
-            this.addSlot(new Slot(workerInventory, MerchantEntity.PRICE_SLOT[k], 8 + 18, 16 + k * 18) {
+            this.addSlot(new Slot(workerTradeInventory, MerchantEntity.PRICE_SLOT[k], 8 + 18, 16 + k * 18) {
                 @Override
                 public boolean mayPlace(ItemStack itemStack) {
-                    return false;
+                    return true;
                 }
 
                 @Override
                 public boolean mayPickup(Player player) {
-                    return false;
+                    return true;
                 }
             });
         }
@@ -47,15 +46,15 @@ public class MerchantTradeContainer extends ContainerBase {
 
     public void addWorkerTradeSlots() {
         for (int k = 0; k < MerchantEntity.TRADE_SLOT.length; ++k) {
-            this.addSlot(new Slot(workerInventory, MerchantEntity.TRADE_SLOT[k], 8 + 18 * 4, 16 + k * 18) {
+            this.addSlot(new Slot(workerTradeInventory, MerchantEntity.TRADE_SLOT[k], 8 + 18 * 4, 16 + k * 18) {
                 @Override
                 public boolean mayPlace(ItemStack itemStack) {
-                    return false;
+                    return true;
                 }
 
                 @Override
                 public boolean mayPickup(Player player) {
-                    return false;
+                    return true;
                 }
             });
         }
@@ -65,22 +64,21 @@ public class MerchantTradeContainer extends ContainerBase {
         return merchant;
     }
 
-    public ItemStack quickMoveStack(Player playerIn, int index) {
-        return ItemStack.EMPTY;
-    }
-
     @Override
     public boolean stillValid(Player playerIn) {
-        if(this.workerInventory.stillValid(playerIn) && this.merchant.isAlive() && this.merchant.distanceTo(playerIn) < 8.0F){
-            this.merchant.isTrading = true;
-            return true;
-        }
-        return false;
+        return this.workerTradeInventory.stillValid(playerIn) && this.merchant.isAlive()
+                && this.merchant.distanceTo(playerIn) < 8.0F;
     }
 
     @Override
     public void removed(Player playerIn) {
-        this.merchant.isTrading = false;
         super.removed(playerIn);
     }
+
+    public void broadcastChanges() {
+        super.broadcastChanges();
+        merchant.upgradeTool();
+        merchant.upgradeArmor();
+    }
+
 }

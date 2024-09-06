@@ -7,10 +7,12 @@ import com.talhanation.workers.config.WorkersModConfig;
 import com.talhanation.workers.entities.ai.ControlBoatAI;
 import com.talhanation.workers.entities.ai.MerchantAI;
 import com.talhanation.workers.inventory.MerchantInventoryContainer;
+import com.talhanation.workers.inventory.MerchantOwnerContainer;
 import com.talhanation.workers.inventory.MerchantTradeContainer;
 import com.talhanation.workers.inventory.MerchantWaypointContainer;
 import com.talhanation.workers.network.MessageOpenGuiMerchant;
 import com.talhanation.workers.network.MessageOpenGuiWorker;
+import com.talhanation.workers.network.MessageOpenOwnerGuiMerchant;
 import com.talhanation.workers.network.MessageToClientUpdateMerchantScreen;
 import net.minecraft.core.BlockPos;
 import net.minecraft.network.chat.TextComponent;
@@ -148,7 +150,7 @@ public class MerchantEntity extends AbstractWorkerEntity implements IBoatControl
             if (this.isCreative()) {
                 if (player.isCreative() && player.createCommandSourceStack().hasPermission(4)) {
                     if (player.isCrouching()) {
-                        openGUI(player);
+                        openOwnerGUI(player);
                     }
                     else {
                         if(status == Status.FOLLOW) this.setStatus(prevStatus);
@@ -164,7 +166,7 @@ public class MerchantEntity extends AbstractWorkerEntity implements IBoatControl
             else {
                 if (this.isTame() && (player.getUUID().equals(this.getOwnerUUID()))) {
                     if (player.isCrouching()) {
-                        openGUI(player);
+                        openOwnerGUI(player);
                     }
                     if (!player.isCrouching()) {
                         if(status == Status.FOLLOW)
@@ -240,12 +242,9 @@ public class MerchantEntity extends AbstractWorkerEntity implements IBoatControl
             Main.SIMPLE_CHANNEL.sendToServer(new MessageOpenGuiMerchant(player, this.getUUID()));
         }
     }
-
     @Override
     public void openGUI(Player player) {
         if (player instanceof ServerPlayer) {
-            Main.SIMPLE_CHANNEL.send(PacketDistributor.PLAYER.with(() -> (ServerPlayer) player), new MessageToClientUpdateMerchantScreen(this.WAYPOINTS, this.WAYPOINT_ITEMS, getCurrentTrades(), getTradeLimits(), this.getTraveling(), this.getReturning()));
-
             NetworkHooks.openGui((ServerPlayer) player, new MenuProvider() {
                 @Override
                 public @NotNull Component getDisplayName() {
@@ -262,7 +261,27 @@ public class MerchantEntity extends AbstractWorkerEntity implements IBoatControl
         } else {
             Main.SIMPLE_CHANNEL.sendToServer(new MessageOpenGuiWorker(player, this.getUUID()));
         }
+    }
+    public void openOwnerGUI(Player player) {
+        if (player instanceof ServerPlayer) {
+            Main.SIMPLE_CHANNEL.send(PacketDistributor.PLAYER.with(() -> (ServerPlayer) player), new MessageToClientUpdateMerchantScreen(this.WAYPOINTS, this.WAYPOINT_ITEMS, getCurrentTrades(), getTradeLimits(), this.getTraveling(), this.getReturning()));
 
+            NetworkHooks.openGui((ServerPlayer) player, new MenuProvider() {
+                @Override
+                public @NotNull Component getDisplayName() {
+                    return getName();
+                }
+
+                @Override
+                public @NotNull AbstractContainerMenu createMenu(int i, @NotNull Inventory playerInventory, @NotNull Player playerEntity) {
+                    return new MerchantOwnerContainer(i, MerchantEntity.this, playerInventory);
+                }
+            }, packetBuffer -> {
+                packetBuffer.writeUUID(getUUID());
+            });
+        } else {
+            Main.SIMPLE_CHANNEL.sendToServer(new MessageOpenOwnerGuiMerchant(player, this.getUUID()));
+        }
     }
 
     // ATTRIBUTES

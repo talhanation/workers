@@ -45,6 +45,9 @@
   "gui.workers.miner.room16x16x3": "Room 16x16x3",
   "gui.workers.miner.depth": "Depth",
   "gui.workers.merchant.trade": "Trade",
+  "gui.workers.merchant.inventory": "Inventory",
+  "gui.workers.merchant.travel": "Travel",
+  "gui.workers.merchant.show_trade": "Show Trades",
   "gui.workers.hire_gui.text.hire": "Hire",
   "gui.workers.shepherd.max_animals": "max.",
 
