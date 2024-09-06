@@ -14,7 +14,8 @@ import net.minecraft.world.level.Level;
 import org.jetbrains.annotations.NotNull;
 
 public abstract class AbstractInventoryEntity extends TamableAnimal {
-    private final SimpleContainer inventory = new SimpleContainer(18);
+
+    protected SimpleContainer inventory = new SimpleContainer(18);
 
     public AbstractInventoryEntity(EntityType<? extends TamableAnimal> entityType, Level world) {
         super(entityType, world);

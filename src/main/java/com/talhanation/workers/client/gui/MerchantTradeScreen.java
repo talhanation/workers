@@ -23,7 +23,6 @@ public class MerchantTradeScreen extends ScreenBase<MerchantTradeContainer> {
     private final Inventory playerInventory;
 
     private final MutableComponent TRADE_TEXT = new TranslatableComponent("gui.workers.merchant.trade");
-
     public MerchantTradeScreen(MerchantTradeContainer container, Inventory playerInventory, Component title) {
         super(GUI_TEXTURE_3, container, playerInventory, new TextComponent(""));
         this.merchant = (MerchantEntity) container.getWorker();

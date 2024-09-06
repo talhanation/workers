@@ -87,6 +87,7 @@ public class MerchantEntity extends AbstractWorkerEntity implements IBoatControl
     public List<ItemStack> WAYPOINT_ITEMS = new ArrayList<>();
     public MerchantEntity(EntityType<? extends AbstractWorkerEntity> entityType, Level world) {
         super(entityType, world);
+        this.inventory = new SimpleContainer(27);
     }
 
     protected void defineSynchedData() {
