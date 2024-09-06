@@ -56,6 +56,8 @@ public class MerchantOwnerScreen extends ScreenBase<MerchantInventoryContainer> 
         createTradeLimitButtons(zeroLeftPos - mirror + 130, zeroTopPos + 48, 1);
         createTradeLimitButtons(zeroLeftPos - mirror + 130, zeroTopPos + 48, 2);
         createTradeLimitButtons(zeroLeftPos - mirror + 130, zeroTopPos + 48, 3);
+        createTradeLimitButtons(zeroLeftPos - mirror + 130, zeroTopPos + 48, 4);
+        createTradeLimitButtons(zeroLeftPos - mirror + 130, zeroTopPos + 48, 5);
     }
 
     public void setUpdatableButtons(){

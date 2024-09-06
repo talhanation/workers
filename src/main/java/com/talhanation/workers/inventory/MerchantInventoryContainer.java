@@ -25,14 +25,14 @@ public class MerchantInventoryContainer extends ContainerBase {
         addWorkerTradeSlots();
         addWorkerPriceSlots();
         addPlayerInventorySlots();
-        addWorkerInventorySlots();
+        //addWorkerInventorySlots();
     }
 
     @Override
     public int getInvOffset() {
         return 56;
     }
-
+    /*
     public void addWorkerInventorySlots() {
         for (int k = 0; k < 2; ++k) {
             for (int l = 0; l < 9; ++l) {
@@ -40,9 +40,10 @@ public class MerchantInventoryContainer extends ContainerBase {
             }
         }
     }
+    */
 
     public void addWorkerPriceSlots() {
-        for (int k = 0; k < 4; ++k) {
+        for (int k = 0; k < MerchantEntity.PRICE_SLOT.length; ++k) {
             this.addSlot(new Slot(workerTradeInventory, MerchantEntity.PRICE_SLOT[k], 8 + 18, 16 + k * 18) {
                 @Override
                 public boolean mayPlace(ItemStack itemStack) {
@@ -58,7 +59,7 @@ public class MerchantInventoryContainer extends ContainerBase {
     }
 
     public void addWorkerTradeSlots() {
-        for (int k = 0; k < 4; ++k) {
+        for (int k = 0; k < MerchantEntity.TRADE_SLOT.length; ++k) {
             this.addSlot(new Slot(workerTradeInventory, MerchantEntity.TRADE_SLOT[k], 8 + 18 * 4, 16 + k * 18) {
                 @Override
                 public boolean mayPlace(ItemStack itemStack) {
@@ -79,7 +80,7 @@ public class MerchantInventoryContainer extends ContainerBase {
 
     @Override
     public boolean stillValid(Player playerIn) {
-        return this.workerInventory.stillValid(playerIn) && this.merchant.isAlive()
+        return this.workerTradeInventory.stillValid(playerIn) && this.merchant.isAlive()
                 && this.merchant.distanceTo(playerIn) < 8.0F;
     }
 

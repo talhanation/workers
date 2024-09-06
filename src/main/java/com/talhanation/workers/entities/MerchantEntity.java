@@ -77,9 +77,9 @@ public class MerchantEntity extends AbstractWorkerEntity implements IBoatControl
     private static final EntityDataAccessor<Optional<UUID>> BOAT_ID = SynchedEntityData.defineId(MerchantEntity.class, EntityDataSerializers.OPTIONAL_UUID);
     private static final EntityDataAccessor<Boolean> AUTO_START_TRAVEL = SynchedEntityData.defineId(MerchantEntity.class, EntityDataSerializers.BOOLEAN);
     private static final EntityDataAccessor<Boolean> INFO = SynchedEntityData.defineId(MerchantEntity.class, EntityDataSerializers.BOOLEAN);
-    public static  final int[] PRICE_SLOT = new int[] { 0, 2, 4, 6 };
-    public static  final int[] TRADE_SLOT = new int[] { 1, 3, 5, 7 };
-    private final SimpleContainer tradeInventory = new SimpleContainer(8);
+    public static  final int[] PRICE_SLOT = new int[] { 0, 2, 4, 6, 8, 10 };
+    public static  final int[] TRADE_SLOT = new int[] { 1, 3, 5, 7, 9, 11 };
+    private final SimpleContainer tradeInventory = new SimpleContainer(12);
     public boolean isTrading;
     private List<Integer> TRADE_LIMITS = new ArrayList<>();
     private List<Integer> CURRENT_TRADES = new ArrayList<>();
@@ -114,13 +114,13 @@ public class MerchantEntity extends AbstractWorkerEntity implements IBoatControl
 
     private void initTradeLimits() {
         if(TRADE_LIMITS.isEmpty()){
-            TRADE_LIMITS = Arrays.asList(16,16,16,16);
+            TRADE_LIMITS = Arrays.asList(16,16,16,16,16);
         }
     }
 
     private void initCurrentTrades() {
         if(CURRENT_TRADES.isEmpty()){
-            CURRENT_TRADES = Arrays.asList(0,0,0,0);
+            CURRENT_TRADES = Arrays.asList(0,0,0,0,0);
         }
     }
 
@@ -220,6 +220,8 @@ public class MerchantEntity extends AbstractWorkerEntity implements IBoatControl
 
     public void openWaypointsGUI(Player player) {
         if (player instanceof ServerPlayer) {
+            Main.SIMPLE_CHANNEL.send(PacketDistributor.PLAYER.with(() -> (ServerPlayer) player), new MessageToClientUpdateMerchantScreen(this.WAYPOINTS, this.WAYPOINT_ITEMS, getCurrentTrades(), getTradeLimits(), this.getTraveling(), this.getReturning()));
+
             NetworkHooks.openGui((ServerPlayer) player, new MenuProvider() {
                 @Override
                 public @NotNull Component getDisplayName() {
@@ -236,15 +238,13 @@ public class MerchantEntity extends AbstractWorkerEntity implements IBoatControl
         } else {
             Main.SIMPLE_CHANNEL.sendToServer(new MessageOpenGuiMerchant(player, this.getUUID()));
         }
-
-        if (player instanceof ServerPlayer) {
-            Main.SIMPLE_CHANNEL.send(PacketDistributor.PLAYER.with(() -> (ServerPlayer) player), new MessageToClientUpdateMerchantScreen(this.WAYPOINTS, this.WAYPOINT_ITEMS, getCurrentTrades(), getTradeLimits(), this.getTraveling(), this.getReturning()));
-        }
     }
 
     @Override
     public void openGUI(Player player) {
         if (player instanceof ServerPlayer) {
+            Main.SIMPLE_CHANNEL.send(PacketDistributor.PLAYER.with(() -> (ServerPlayer) player), new MessageToClientUpdateMerchantScreen(this.WAYPOINTS, this.WAYPOINT_ITEMS, getCurrentTrades(), getTradeLimits(), this.getTraveling(), this.getReturning()));
+
             NetworkHooks.openGui((ServerPlayer) player, new MenuProvider() {
                 @Override
                 public @NotNull Component getDisplayName() {
@@ -262,9 +262,6 @@ public class MerchantEntity extends AbstractWorkerEntity implements IBoatControl
             Main.SIMPLE_CHANNEL.sendToServer(new MessageOpenGuiWorker(player, this.getUUID()));
         }
 
-        if (player instanceof ServerPlayer) {
-            Main.SIMPLE_CHANNEL.send(PacketDistributor.PLAYER.with(() -> (ServerPlayer) player), new MessageToClientUpdateMerchantScreen(this.WAYPOINTS, this.WAYPOINT_ITEMS, getCurrentTrades(), getTradeLimits(), this.getTraveling(), this.getReturning()));
-        }
     }
 
     // ATTRIBUTES
