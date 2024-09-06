@@ -257,27 +257,11 @@ public class CommandEvents {
 
                     // add tradeGoodLeft to merchantInv
                     ItemStack tradeGoodLeft = tradeItemStack.copy();
-                    // int maxSize = tradeGoodLeft.getMaxStackSize();
-                    for (int i = 0; i < 18; i++) {
-                        if (merchantTradeItem > 64) {
-                            tradeGoodLeft.setCount(merchantTradeItem);
-                            merchantInv.addItem(tradeGoodLeft);
+                    addItemWithMaxStackCount(merchantInv, tradeGoodLeft, merchantTradeItem);
 
-                            merchantTradeItem = merchantTradeItem - 64;
-
-                            // player.sendMessage(new StringTextComponent("count: " + merchantTradeItem),
-                            // player.getUUID());
-
-                        } else {
-                            tradeGoodLeft.setCount(merchantTradeItem);
-                            merchantInv.addItem(tradeGoodLeft);
-                            break;
-                        }
-                    }
                     // add tradeItem to playerInventory
                     ItemStack tradeGood = tradeItemStack.copy();
-                    tradeGood.setCount(tradeCount);
-                    playerInv.add(tradeGood);
+                    addItemWithMaxStackCount(playerInv, tradeGood, tradeCount);
 
                     // give player tradeGood
                     // remove playerEmeralds ->add left
@@ -297,26 +281,13 @@ public class CommandEvents {
 
                     // add emeralds to merchantInventory
                     ItemStack emeraldsKar = emeraldItemStack.copy();
-                    emeraldsKar.setCount(sollPrice);// später merchantEmeralds wenn ich alle s löschen tu
-                    merchantInv.addItem(emeraldsKar);
+                    addItemWithMaxStackCount(merchantInv, emeraldsKar, sollPrice);
 
                     // add leftEmeralds to playerInventory
                     ItemStack emeraldsLeft = emeraldItemStack.copy();
-                    emeraldsLeft.setCount(playerEmeralds);// später merchantEmeralds wenn ich alle s löschen tu
-                    playerInv.add(emeraldsLeft);
-                    merchant.setCurrentTrades(tradeID, merchant.getCurrentTrades(tradeID) + 1);
+                    addItemWithMaxStackCount(playerInv, emeraldsLeft, playerEmeralds);
 
-                    // debug
-                    // player.sendMessage(new StringTextComponent("###########################"),
-                    // player.getUUID());
-                    // player.sendMessage(new StringTextComponent("Soll Price: " + sollPrice),
-                    // player.getUUID());
-                    // player.sendMessage(new StringTextComponent("###########################"),
-                    // player.getUUID());
-                    // player.sendMessage(new StringTextComponent("MerchantEmeralds: " +
-                    // merchantEmeralds), player.getUUID());
-                    // player.sendMessage(new StringTextComponent("PlayerEmeralds: " +
-                    // playerEmeralds), player.getUUID());
+                    merchant.setCurrentTrades(tradeID, merchant.getCurrentTrades(tradeID) + 1);
                 }
                 else
                     merchant.tellPlayer(player, TEXT_NO_SPACE_FOR_TRADE);
@@ -342,6 +313,41 @@ public class CommandEvents {
             merchant.tellPlayer(player, TEXT_NO_NEED(tradeItem));
         }
 
+    }
+
+    private static void addItemWithMaxStackCount(SimpleContainer merchantInv, ItemStack stack, int count) {
+        int maxStackCount = stack.getMaxStackSize();
+
+        while (count > 0) {
+
+            int currentStackCount = Math.min(maxStackCount, count);
+
+            ItemStack newStack = stack.copy();
+            newStack.setCount(currentStackCount);
+
+            merchantInv.addItem(newStack);
+
+
+            count -= currentStackCount;
+        }
+    }
+
+    private static void addItemWithMaxStackCount(Inventory inv, ItemStack stack, int count) {
+        int maxStackCount = stack.getMaxStackSize();
+
+        while (count > 0) {
+
+            int currentStackCount = Math.min(maxStackCount, count);
+
+            ItemStack newStack = stack.copy();
+            newStack.setCount(currentStackCount);
+
+
+            inv.add(newStack);
+
+
+            count -= currentStackCount;
+        }
     }
 
     public static void handleRecruiting(Player player, AbstractWorkerEntity worker, String name){
@@ -443,17 +449,12 @@ public class CommandEvents {
          if(merchantWantsTrade) {
              if (playerCanPay) {
                  if (playerInv.getFreeSlot() != -1) {// give player
-                     // remove merchant ->add left
-                     //
-
-                     // playerTradeItem = playerTradeItem + tradeCount;
 
                      // add tradeItem to playerInventory
                      ItemStack tradeGood = tradeItemStack.copy();
-                     tradeGood.setCount(tradeCount);
-                     playerInv.add(tradeGood);
+                     addItemWithMaxStackCount(playerInv, tradeGood, tradeCount);
 
-                     // give player tradeGood
+
                      // remove playerEmeralds ->add left
                      playerEmeralds = playerEmeralds - sollPrice;
 
@@ -468,8 +469,8 @@ public class CommandEvents {
 
                      // add leftEmeralds to playerInventory
                      ItemStack emeraldsLeft = emeraldItemStack.copy();
-                     emeraldsLeft.setCount(playerEmeralds);// später merchantEmeralds wenn ich alle s löschen tu
-                     playerInv.add(emeraldsLeft);
+                     addItemWithMaxStackCount(playerInv, emeraldsLeft, playerEmeralds);
+
                      merchant.setCurrentTrades(tradeID, merchant.getCurrentTrades(tradeID) + 1);
                  }
                  else
