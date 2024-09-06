@@ -167,9 +167,6 @@ public class CommandEvents {
             handleSurvivalMerchantTrade(player, merchant, tradeID);
     }
     public static void handleSurvivalMerchantTrade(Player player, MerchantEntity merchant, int tradeID) {
-        int[] PRICE_SLOT = new int[] { 0, 2, 4, 6 };
-        int[] TRADE_SLOT = new int[] { 1, 3, 5, 7 };
-
         Inventory playerInv = player.getInventory();
         SimpleContainer merchantInv = merchant.getInventory();// supply and money
         SimpleContainer merchantTradeInv = merchant.getTradeInventory();// trade interface
@@ -179,11 +176,11 @@ public class CommandEvents {
         int playerTradeItem = 0;
         int merchantTradeItem = 0;
 
-        ItemStack emeraldItemStack = merchantTradeInv.getItem(PRICE_SLOT[tradeID]);
+        ItemStack emeraldItemStack = merchantTradeInv.getItem(MerchantEntity.PRICE_SLOT[tradeID]);
         Item emerald = emeraldItemStack.getItem();//
         int sollPrice = emeraldItemStack.getCount();
 
-        ItemStack tradeItemStack = merchantTradeInv.getItem(TRADE_SLOT[tradeID]);
+        ItemStack tradeItemStack = merchantTradeInv.getItem(MerchantEntity.TRADE_SLOT[tradeID]);
         Item tradeItem = tradeItemStack.getItem();
         int tradeCount = tradeItemStack.getCount();
 

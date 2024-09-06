@@ -77,7 +77,8 @@ public class MerchantEntity extends AbstractWorkerEntity implements IBoatControl
     private static final EntityDataAccessor<Optional<UUID>> BOAT_ID = SynchedEntityData.defineId(MerchantEntity.class, EntityDataSerializers.OPTIONAL_UUID);
     private static final EntityDataAccessor<Boolean> AUTO_START_TRAVEL = SynchedEntityData.defineId(MerchantEntity.class, EntityDataSerializers.BOOLEAN);
     private static final EntityDataAccessor<Boolean> INFO = SynchedEntityData.defineId(MerchantEntity.class, EntityDataSerializers.BOOLEAN);
-
+    public static  final int[] PRICE_SLOT = new int[] { 0, 2, 4, 6 };
+    public static  final int[] TRADE_SLOT = new int[] { 1, 3, 5, 7 };
     private final SimpleContainer tradeInventory = new SimpleContainer(8);
     public boolean isTrading;
     private List<Integer> TRADE_LIMITS = new ArrayList<>();

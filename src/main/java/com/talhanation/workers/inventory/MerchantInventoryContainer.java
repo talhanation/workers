@@ -16,13 +16,6 @@ public class MerchantInventoryContainer extends ContainerBase {
     private final Container workerInventory;
     private final Container workerTradeInventory;
     private final MerchantEntity merchant;
-    private final int[] PRICE_ID = new int[] {
-            0, 2, 4, 6
-    };
-
-    private final int[] TRADE_ID = new int[] {
-            1, 3, 5, 7
-    };
 
     public MerchantInventoryContainer(int id, MerchantEntity merchant, Inventory playerInventory) {
         super(Main.MERCHANT_OWNER_CONTAINER_TYPE, id, playerInventory, merchant.getInventory());
@@ -50,7 +43,7 @@ public class MerchantInventoryContainer extends ContainerBase {
 
     public void addWorkerPriceSlots() {
         for (int k = 0; k < 4; ++k) {
-            this.addSlot(new Slot(workerTradeInventory, PRICE_ID[k], 8 + 18, 16 + k * 18) {
+            this.addSlot(new Slot(workerTradeInventory, MerchantEntity.PRICE_SLOT[k], 8 + 18, 16 + k * 18) {
                 @Override
                 public boolean mayPlace(ItemStack itemStack) {
                     return true;
@@ -66,7 +59,7 @@ public class MerchantInventoryContainer extends ContainerBase {
 
     public void addWorkerTradeSlots() {
         for (int k = 0; k < 4; ++k) {
-            this.addSlot(new Slot(workerTradeInventory, TRADE_ID[k], 8 + 18 * 4, 16 + k * 18) {
+            this.addSlot(new Slot(workerTradeInventory, MerchantEntity.TRADE_SLOT[k], 8 + 18 * 4, 16 + k * 18) {
                 @Override
                 public boolean mayPlace(ItemStack itemStack) {
                     return true;
