@@ -10,10 +10,7 @@ import com.talhanation.workers.inventory.MerchantInventoryContainer;
 import com.talhanation.workers.inventory.MerchantOwnerContainer;
 import com.talhanation.workers.inventory.MerchantTradeContainer;
 import com.talhanation.workers.inventory.MerchantWaypointContainer;
-import com.talhanation.workers.network.MessageOpenGuiMerchant;
-import com.talhanation.workers.network.MessageOpenGuiWorker;
-import com.talhanation.workers.network.MessageOpenOwnerGuiMerchant;
-import com.talhanation.workers.network.MessageToClientUpdateMerchantScreen;
+import com.talhanation.workers.network.*;
 import net.minecraft.core.BlockPos;
 import net.minecraft.network.chat.TextComponent;
 import net.minecraft.network.syncher.EntityDataAccessor;
@@ -239,7 +236,7 @@ public class MerchantEntity extends AbstractWorkerEntity implements IBoatControl
                 packetBuffer.writeUUID(getUUID());
             });
         } else {
-            Main.SIMPLE_CHANNEL.sendToServer(new MessageOpenGuiMerchant(player, this.getUUID()));
+            Main.SIMPLE_CHANNEL.sendToServer(new MessageOpenWaypointsGuiMerchant(player, this.getUUID()));
         }
     }
     @Override
