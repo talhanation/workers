@@ -3,7 +3,6 @@ package com.talhanation.workers.client.gui;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.talhanation.workers.Main;
 import com.talhanation.workers.entities.MerchantEntity;
-import com.talhanation.workers.inventory.MerchantInventoryContainer;
 import com.talhanation.workers.inventory.MerchantOwnerContainer;
 import com.talhanation.workers.network.*;
 import de.maxhenkel.corelib.inventory.ScreenBase;
@@ -102,8 +101,7 @@ public class MerchantOwnerScreen extends ScreenBase<MerchantOwnerContainer> {
 
     }
 
-    private void createTradeLimitButtons(int x, int y
-            , int index){
+    private void createTradeLimitButtons(int x, int y, int index){
         addRenderableWidget(new ExtendedButton(x, y + 18 * index, 12, 12, new TextComponent("+"), button -> {
             int limit = limits.get(index);
 

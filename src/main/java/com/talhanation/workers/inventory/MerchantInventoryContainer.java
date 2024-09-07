@@ -5,16 +5,12 @@ import com.talhanation.workers.entities.AbstractWorkerEntity;
 import com.talhanation.workers.entities.MerchantEntity;
 
 import de.maxhenkel.corelib.inventory.ContainerBase;
-import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.Container;
-import net.minecraft.world.inventory.MenuType;
 import net.minecraft.world.inventory.Slot;
 
 public class MerchantInventoryContainer extends ContainerBase {
-    protected static final ResourceLocation GUI_TEXTURE_3 = new ResourceLocation(Main.MOD_ID,
-            "textures/gui/worker_gui.png");
     private final Container workerInventory;
     private final MerchantEntity merchant;
 

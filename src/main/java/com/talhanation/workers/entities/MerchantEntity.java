@@ -117,13 +117,13 @@ public class MerchantEntity extends AbstractWorkerEntity implements IBoatControl
 
     private void initTradeLimits() {
         if(TRADE_LIMITS.isEmpty()){
-            TRADE_LIMITS = Arrays.asList(16,16,16,16,16);
+            TRADE_LIMITS = Arrays.asList(16,16,16,16,16,16);
         }
     }
 
     private void initCurrentTrades() {
         if(CURRENT_TRADES.isEmpty()){
-            CURRENT_TRADES = Arrays.asList(0,0,0,0,0);
+            CURRENT_TRADES = Arrays.asList(0,0,0,0,0,0);
         }
     }
 
