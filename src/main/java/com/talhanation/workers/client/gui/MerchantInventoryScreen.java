@@ -22,6 +22,8 @@ public class MerchantInventoryScreen extends ScreenBase<MerchantInventoryContain
         super(TEXTURE, container, playerInventory,  new TextComponent(""));
         this.merchant = (MerchantEntity) container.getWorker();
         this.playerInventory = playerInventory;
+        this.imageHeight = 256;
+        this.imageWidth = 176;
     }
 
     @Override
@@ -34,6 +36,6 @@ public class MerchantInventoryScreen extends ScreenBase<MerchantInventoryContain
     protected void renderLabels(PoseStack matrixStack, int mouseX, int mouseY) {
         super.renderLabels(matrixStack, mouseX, mouseY);
         font.draw(matrixStack, merchant.getDisplayName().getVisualOrderText(), 8, 6, FONT_COLOR);
-        font.draw(matrixStack, playerInventory.getDisplayName().getVisualOrderText(), 8, imageHeight - 152 + 76, FONT_COLOR);
+        font.draw(matrixStack, playerInventory.getDisplayName().getVisualOrderText(), 8, imageHeight - 152 + 78, FONT_COLOR);
     }
 }
