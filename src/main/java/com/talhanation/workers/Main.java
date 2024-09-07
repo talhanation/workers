@@ -96,10 +96,10 @@ public class Main {
         modEventBus.addGenericListener(PoiType.class, this::registerPointsOfInterest);
         modEventBus.addGenericListener(VillagerProfession.class, this::registerVillagerProfessions);
         modEventBus.addGenericListener(MenuType.class, this::registerContainers);
-        ModEntityTypes.ENTITY_TYPES.register(modEventBus);
-        ModBlocks.BLOCKS.register(modEventBus);
-        //ModSounds.SOUNDS.register(modEventBus);
         ModItems.ITEMS.register(modEventBus);
+        ModBlocks.BLOCKS.register(modEventBus);
+        ModEntityTypes.ENTITY_TYPES.register(modEventBus);
+        //ModSounds.SOUNDS.register(modEventBus);
         MinecraftForge.EVENT_BUS.register(this);
         DistExecutor.unsafeRunWhenOn(Dist.CLIENT, () -> () -> FMLJavaModLoadingContext.get().getModEventBus().addListener(Main.this::clientSetup));
     }
@@ -152,7 +152,8 @@ public class Main {
             MessageMerchantSetSendInfo.class,
             MessageLumberjackReplant.class,
             MessageToClientUpdateHireScreen.class,
-            MessageOpenOwnerGuiMerchant.class
+            MessageOpenOwnerGuiMerchant.class,
+            MessageWriteSpawnEgg.class
         };
         for (int i = 0; i < messages.length; i++) CommonRegistry.registerMessage(SIMPLE_CHANNEL, i, messages[i]);
         LOGGER.info("Villager Workers Messages registered");
