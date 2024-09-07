@@ -24,7 +24,7 @@ public class MerchantInventoryContainer extends ContainerBase {
 
     @Override
     public int getInvOffset() {
-        return 56;
+        return 18;
     }
 
     public void addWorkerInventorySlots() {
