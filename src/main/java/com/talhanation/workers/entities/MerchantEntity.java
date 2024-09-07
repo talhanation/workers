@@ -728,10 +728,6 @@ public class MerchantEntity extends AbstractWorkerEntity implements IBoatControl
 
     public void die(@NotNull DamageSource dmg) {
         super.die(dmg);
-        if(!isCreative()){
-            for (int i = 0; i < this.tradeInventory.getContainerSize(); i++)
-                Containers.dropItemStack(this.level, getX(), getY(), getZ(), this.tradeInventory.getItem(i));
-        }
     }
     @Override
     public boolean hurt(DamageSource dmg, float amt) {

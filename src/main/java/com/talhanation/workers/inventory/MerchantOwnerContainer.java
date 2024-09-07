@@ -9,6 +9,7 @@ import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.inventory.Slot;
 import net.minecraft.world.item.ItemStack;
+import org.jetbrains.annotations.NotNull;
 
 public class MerchantOwnerContainer extends ContainerBase {
     private final Container workerTradeInventory;
@@ -32,14 +33,33 @@ public class MerchantOwnerContainer extends ContainerBase {
         for (int k = 0; k < MerchantEntity.PRICE_SLOT.length; ++k) {
             this.addSlot(new Slot(workerTradeInventory, MerchantEntity.PRICE_SLOT[k], 8 + 18, 16 + k * 18) {
                 @Override
-                public boolean mayPlace(ItemStack itemStack) {
-                    return true;
+                public boolean mayPlace(@NotNull ItemStack itemStack) {
+                    workerTradeInventory.setItem(this.getSlotIndex(), itemStack.copy());
+                    return false;
                 }
 
                 @Override
-                public boolean mayPickup(Player player) {
-                    return true;
+                public boolean mayPickup(@NotNull Player player) {
+                    ItemStack slotStack = workerTradeInventory.getItem(this.getSlotIndex());
+                    if(slotStack.is(this.getCarried().getItem())){
+                        int count = this.getCarried().getCount();
+                        int current = slotStack.getCount();
+                        int amount = count+current;
+                        if(amount > slotStack.getMaxStackSize()){
+                            amount = slotStack.getMaxStackSize();
+                        }
+                        slotStack.setCount(amount);
+                    }
+                    else{
+                        workerTradeInventory.setItem(this.getSlotIndex(), ItemStack.EMPTY);
+                    }
+                    return false;
                 }
+
+                public ItemStack getCarried(){
+                    return MerchantOwnerContainer.this.getCarried();
+                }
+
             });
         }
     }
@@ -48,16 +68,39 @@ public class MerchantOwnerContainer extends ContainerBase {
         for (int k = 0; k < MerchantEntity.TRADE_SLOT.length; ++k) {
             this.addSlot(new Slot(workerTradeInventory, MerchantEntity.TRADE_SLOT[k], 8 + 18 * 4, 16 + k * 18) {
                 @Override
-                public boolean mayPlace(ItemStack itemStack) {
-                    return true;
+                public boolean mayPlace(@NotNull ItemStack itemStack) {
+                    workerTradeInventory.setItem(this.getSlotIndex(), itemStack.copy());
+                    return false;
                 }
 
                 @Override
-                public boolean mayPickup(Player player) {
-                    return true;
+                public boolean mayPickup(@NotNull Player player) {
+                    ItemStack slotStack = workerTradeInventory.getItem(this.getSlotIndex());
+                    if(slotStack.is(this.getCarried().getItem())){
+                        int count = this.getCarried().getCount();
+                        int current = slotStack.getCount();
+                        int amount = count+current;
+                        if(amount > slotStack.getMaxStackSize()){
+                            amount = slotStack.getMaxStackSize();
+                        }
+                        slotStack.setCount(amount);
+                    }
+                    else{
+                        workerTradeInventory.setItem(this.getSlotIndex(), ItemStack.EMPTY);
+                    }
+                    return false;
                 }
+
+                public ItemStack getCarried(){
+                    return MerchantOwnerContainer.this.getCarried();
+                }
+
             });
         }
+    }
+
+    public ItemStack quickMoveStack(Player playerIn, int index) {
+        return ItemStack.EMPTY;
     }
 
     public AbstractWorkerEntity getWorker() {
