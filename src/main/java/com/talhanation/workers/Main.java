@@ -83,6 +83,7 @@ public class Main {
     public static MenuType<MerchantTradeContainer> MERCHANT_TRADE_CONTAINER_TYPE;
     public static MenuType<MerchantOwnerContainer> MERCHANT_OWNER_CONTAINER_TYPE;
     public static MenuType<MerchantWaypointContainer> MERCHANT_WAYPOINT_CONTAINER_TYPE;
+    public static MenuType<MerchantInventoryContainer> MERCHANT_INVENTORY_CONTAINER_TYPE;
     public static boolean isSmallShipsInstalled;
 
     public Main() {
@@ -174,6 +175,7 @@ public class Main {
         ClientRegistry.registerScreen(Main.HIRE_CONTAINER_TYPE, WorkerHireScreen::new);
         ClientRegistry.registerScreen(Main.COMMAND_CONTAINER_TYPE, CommandScreen::new);
         ClientRegistry.registerScreen(Main.MERCHANT_WAYPOINT_CONTAINER_TYPE, MerchantWaypointScreen::new);
+        ClientRegistry.registerScreen(Main.MERCHANT_INVENTORY_CONTAINER_TYPE, MerchantInventoryScreen::new);
     }
 
     @SubscribeEvent
@@ -271,6 +273,15 @@ public class Main {
             }
             return new MerchantOwnerContainer(windowId, rec, inv);
         });
+
+        MERCHANT_INVENTORY_CONTAINER_TYPE = new MenuType<>((IContainerFactory<MerchantInventoryContainer>) (windowId, inv, data) -> {
+            MerchantEntity rec = (MerchantEntity) getRecruitByUUID(inv.player, data.readUUID());
+            if (rec == null) {
+                return null;
+            }
+            return new MerchantInventoryContainer(windowId, rec, inv);
+        });
+
         ANIMAL_FARMER_CONTAINER_TYPE = new MenuType<>((IContainerFactory<WorkerInventoryContainer>) (windowId, inv, data) -> {
             AbstractWorkerEntity rec = getRecruitByUUID(inv.player, data.readUUID());
             if (rec == null) {
@@ -327,6 +338,9 @@ public class Main {
 
         MERCHANT_WAYPOINT_CONTAINER_TYPE.setRegistryName(new ResourceLocation(Main.MOD_ID, "merchant_waypoint_container"));
         event.getRegistry().register(MERCHANT_WAYPOINT_CONTAINER_TYPE);
+
+        MERCHANT_INVENTORY_CONTAINER_TYPE.setRegistryName(new ResourceLocation(Main.MOD_ID, "merchant_inventory_container"));
+        event.getRegistry().register(MERCHANT_INVENTORY_CONTAINER_TYPE);
     }
 
     @Nullable

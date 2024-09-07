@@ -1,9 +1,11 @@
 package com.talhanation.workers.inventory;
 
+import com.talhanation.workers.Main;
 import com.talhanation.workers.entities.AbstractWorkerEntity;
 import com.talhanation.workers.entities.MerchantEntity;
 
 import de.maxhenkel.corelib.inventory.ContainerBase;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.Container;
@@ -11,12 +13,13 @@ import net.minecraft.world.inventory.MenuType;
 import net.minecraft.world.inventory.Slot;
 
 public class MerchantInventoryContainer extends ContainerBase {
-
+    protected static final ResourceLocation GUI_TEXTURE_3 = new ResourceLocation(Main.MOD_ID,
+            "textures/gui/worker_gui.png");
     private final Container workerInventory;
     private final MerchantEntity merchant;
 
     public MerchantInventoryContainer(int id, MerchantEntity merchant, Inventory playerInventory) {
-        super(MenuType.GENERIC_9x3, id, playerInventory, merchant.getInventory());
+        super(Main.MERCHANT_INVENTORY_CONTAINER_TYPE, id, playerInventory, merchant.getInventory());
         this.merchant = merchant;
         this.workerInventory = merchant.getInventory();
         addPlayerInventorySlots();
@@ -29,9 +32,9 @@ public class MerchantInventoryContainer extends ContainerBase {
     }
 
     public void addWorkerInventorySlots() {
-        for (int k = 0; k < 3; ++k) {
+        for (int k = 0; k < 4; ++k) {
             for (int l = 0; l < 9; ++l) {
-                this.addSlot(new Slot(workerInventory, l + k * 9, 8 + l * 18, 3 + 18 * 5 + k * 18));
+                this.addSlot(new Slot(workerInventory, l + k * 9, 8 + l * 18, 18 + k * 18));
             }
         }
     }
