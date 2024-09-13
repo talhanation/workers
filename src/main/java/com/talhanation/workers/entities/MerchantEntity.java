@@ -44,6 +44,7 @@ import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.state.BlockState;
+import net.minecraftforge.common.Tags;
 import net.minecraftforge.network.NetworkHooks;
 
 import javax.annotation.Nullable;
@@ -103,6 +104,12 @@ public class MerchantEntity extends AbstractWorkerEntity implements IBoatControl
         this.entityData.define(IS_DAY_COUNTED, false);
         this.entityData.define(AUTO_START_TRAVEL, true);
         this.entityData.define(INFO, true);
+    }
+
+    @Override
+    public boolean wantsToPickUp(ItemStack itemStack) {
+        //TODO: Add items from trade lists, so it can be restocked from upkeep
+        return !this.isCreative();
     }
     @Override
     public boolean needsToSleep() {
