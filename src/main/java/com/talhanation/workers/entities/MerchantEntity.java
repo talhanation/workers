@@ -17,7 +17,6 @@ import net.minecraft.network.syncher.EntityDataAccessor;
 import net.minecraft.network.syncher.EntityDataSerializers;
 import net.minecraft.network.syncher.SynchedEntityData;
 import net.minecraft.tags.BiomeTags;
-import net.minecraft.tags.BlockTags;
 import net.minecraft.world.entity.*;
 import net.minecraft.world.entity.ai.attributes.AttributeSupplier;
 import net.minecraft.world.entity.ai.attributes.Attributes;
@@ -26,7 +25,6 @@ import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.SimpleContainer;
-import net.minecraft.world.Containers;
 import net.minecraft.world.entity.vehicle.Boat;
 import net.minecraft.world.inventory.AbstractContainerMenu;
 import net.minecraft.world.MenuProvider;
@@ -46,7 +44,6 @@ import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.state.BlockState;
-import net.minecraftforge.common.Tags;
 import net.minecraftforge.network.NetworkHooks;
 
 import javax.annotation.Nullable;
@@ -753,11 +750,11 @@ public class MerchantEntity extends AbstractWorkerEntity implements IBoatControl
         }
         return true;
     }
-    //-1721 67 -902
+
     public float getPrecisionMin(){
-        int base = 50;
+        int base = 100;
         if(this.getVehicle().getEncodeId().contains("smallships")){
-            base = 100;
+            base = 150;
         }
         return base;
     }
