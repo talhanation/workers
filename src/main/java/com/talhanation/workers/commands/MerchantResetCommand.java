@@ -46,7 +46,7 @@ public class MerchantResetCommand {
                 .collect(Collectors.toList());
     }
     private static void merchantResetTrades(MerchantEntity merchant){
-            for(int i = 0; i < 4; i++)
+            for(int i = 0; i < MerchantEntity.TRADE_SLOT.length; i++)
                 merchant.setCurrentTrades(i, 0);
     }
 }

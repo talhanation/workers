@@ -13,12 +13,14 @@ import java.util.UUID;
 
 public class MessageMerchantResetCurrentTradeCounts implements Message<MessageMerchantResetCurrentTradeCounts> {
     private UUID worker;
+    private int index;
 
     public MessageMerchantResetCurrentTradeCounts() {
     }
 
-    public MessageMerchantResetCurrentTradeCounts(UUID worker) {
+    public MessageMerchantResetCurrentTradeCounts(UUID worker, int index) {
         this.worker = worker;
+        this.index = index;
     }
 
     public Dist getExecutingSide() {
@@ -39,19 +41,19 @@ public class MessageMerchantResetCurrentTradeCounts implements Message<MessageMe
     }
 
     private void resetCurrent(ServerPlayer player, MerchantEntity merchant){
-        for(int i = 0; i < 4; i++)
-            merchant.setCurrentTrades(i, 0);
-
+        merchant.setCurrentTrades(index, 0);
         Main.SIMPLE_CHANNEL.send(PacketDistributor.PLAYER.with(() -> (ServerPlayer) player), new MessageToClientUpdateMerchantScreen(merchant.WAYPOINTS, merchant.WAYPOINT_ITEMS, merchant.getCurrentTrades(), merchant.getTradeLimits(),merchant.getTraveling(), merchant.getReturning()));
     }
 
     public MessageMerchantResetCurrentTradeCounts fromBytes(FriendlyByteBuf buf) {
         this.worker = buf.readUUID();
+        this.index = buf.readInt();
         return this;
     }
 
     public void toBytes(FriendlyByteBuf buf) {
         buf.writeUUID(this.worker);
+        buf.writeInt(this.index);
     }
 
 }

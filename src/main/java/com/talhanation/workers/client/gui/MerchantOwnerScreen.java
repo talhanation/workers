@@ -123,7 +123,7 @@ public class MerchantOwnerScreen extends ScreenBase<MerchantOwnerContainer> {
         }));
         addRenderableWidget(new ExtendedButton(26 + x, y + 18 * index, 12, 12, new TextComponent("0"),
             button -> {
-                Main.SIMPLE_CHANNEL.sendToServer(new MessageMerchantResetCurrentTradeCounts(merchant.getUUID()));
+                Main.SIMPLE_CHANNEL.sendToServer(new MessageMerchantResetCurrentTradeCounts(merchant.getUUID(), index));
         }));
     }
 

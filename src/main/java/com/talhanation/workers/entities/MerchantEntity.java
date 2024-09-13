@@ -412,7 +412,7 @@ public class MerchantEntity extends AbstractWorkerEntity implements IBoatControl
         nbt.put("Waypoints", waypoints);
 
         ListTag limits = new ListTag();
-        for(int i = 0; i < 4; i++) {
+        for(int i = 0; i < TRADE_SLOT.length; i++) {
             CompoundTag compoundnbt = new CompoundTag();
             compoundnbt.putByte("TradeLimit_" + i, (byte) i);
 
@@ -425,7 +425,7 @@ public class MerchantEntity extends AbstractWorkerEntity implements IBoatControl
 
 
         ListTag trades = new ListTag();
-        for(int i = 0; i < 4; i++) {
+        for(int i = 0; i < TRADE_SLOT.length; i++) {
             CompoundTag compoundnbt = new CompoundTag();
             compoundnbt.putByte("Trade_" + i, (byte) i);
             int trade = getCurrentTrades().get(i);
@@ -493,7 +493,7 @@ public class MerchantEntity extends AbstractWorkerEntity implements IBoatControl
 
         ListTag limits = nbt.getList("TradeLimits", 10);
         if(!limits.isEmpty()){
-            for (int i = 0; i < 4; ++i) {
+            for (int i = 0; i < TRADE_SLOT.length; ++i) {
                 CompoundTag compoundnbt = limits.getCompound(i);
                 int limit = compoundnbt.getInt("Limit");
 
@@ -504,7 +504,7 @@ public class MerchantEntity extends AbstractWorkerEntity implements IBoatControl
 
         ListTag trades = nbt.getList("Trades", 10);
         if(!trades.isEmpty()) {
-            for (int i = 0; i < 4; ++i) {
+            for (int i = 0; i < TRADE_SLOT.length; ++i) {
                 CompoundTag compoundnbt = trades.getCompound(i);
                 int trade = compoundnbt.getInt("Trade");
 
