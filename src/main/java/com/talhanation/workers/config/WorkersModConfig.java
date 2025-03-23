@@ -96,6 +96,50 @@ public class WorkersModConfig {
                 .worldRestart()
                 .define("WorkerChunkLoading", true);
 
+        WorkersPayment = BUILDER.comment("""
+                        
+                        RecruitsPayment
+                        \t(takes effect after restart)
+                        \t
+                        Should workers need to be payed in intervals?
+                        default: false""")
+
+                .worldRestart()
+                .define("WorkersPayment", false);
+
+        WorkersPaymentInterval = BUILDER.comment("""
+                        
+                        RecruitsPaymentInterval
+                        \t(takes effect after restart)
+                        \t
+                        The interval in minutes workers need to be payed?
+                        default: 15""")
+
+                .worldRestart()
+                .defineInRange("WorkersPaymentInterval", 15,1,1453);
+
+        WorkersPaymentAmount = BUILDER.comment("""
+                        
+                        RecruitsPaymentAmount
+                        \t(takes effect after restart)
+                        \t
+                        The amount of currency workers need to be payed?
+                        default: 1""")
+
+                .worldRestart()
+                .defineInRange("WorkersPaymentAmount", 1,1,1453);
+
+        WorkersNoPaymentAction = BUILDER.comment("""
+                        
+                        RecruitsNoPaymentAction
+                        \t(takes effect after restart)
+                        \t
+                        The action the workers will do when they don't get payed.
+                        default: DISBAND""")
+
+                .worldRestart()
+                .defineEnum("WorkersNoPaymentAction", AbstractWorkerEntity.NoPaymentAction.DISBAND);
+
         WorkersCurrency = BUILDER.comment("""
 
                         ----Currency----

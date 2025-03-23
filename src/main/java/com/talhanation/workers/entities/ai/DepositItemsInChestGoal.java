@@ -35,6 +35,7 @@ public class DepositItemsInChestGoal extends Goal {
     public boolean noSpaceInvMessage;
     public boolean noToolMessage;
     public boolean messageNoChest;
+    public boolean canResetPaymentTimer = false;
     public DepositItemsInChestGoal(AbstractWorkerEntity worker) {
         this.worker = worker;
         this.setFlags(EnumSet.of(Flag.MOVE, Flag.LOOK));
@@ -82,6 +83,12 @@ public class DepositItemsInChestGoal extends Goal {
             this.container.setChanged();
             this.interactChest(container,false);
         }
+
+        if(worker.paymentTimer == 0 && canResetPaymentTimer){
+            canResetPaymentTimer = false;
+            worker.resetPaymentTimer();
+        }
+
         timer = 0;
         setTimer = false;
         this.worker.resetFarmedItems();
@@ -103,6 +110,12 @@ public class DepositItemsInChestGoal extends Goal {
                 if(container != null){
                     if(!setTimer){
                         this.interactChest(container, true);
+
+                        if(worker.paymentTimer == 0){
+                            worker.checkPayment(container);
+                            canResetPaymentTimer = true;
+                        }
+
                         this.depositItems(container);
 
                         if(!canAddItemsInInventory()){

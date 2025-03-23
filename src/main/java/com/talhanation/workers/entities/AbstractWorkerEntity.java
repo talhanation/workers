@@ -76,7 +76,7 @@ public abstract class AbstractWorkerEntity extends AbstractChunkLoaderEntity {
     public Status prevStatus;
     public boolean shouldDepositBeforeSleep;
     private int maxFallDistance;
-    private int paymentTimer;
+    public int paymentTimer;
     protected int cost;
 
     public AbstractWorkerEntity(EntityType<? extends AbstractWorkerEntity> entityType, Level world) {
@@ -254,6 +254,7 @@ public abstract class AbstractWorkerEntity extends AbstractChunkLoaderEntity {
         nbt.putString("ProfessionName", this.getProfessionName());
         nbt.putInt("FarmedItems", this.getFarmedItems());
         nbt.putInt("WorkerCost", this.cost);
+        nbt.putInt("paymentTimer", this.paymentTimer);
 
         BlockPos startPos = this.getStartPos();
         if (startPos != null) this.setNbtPosition(nbt, "Start", startPos);
@@ -292,6 +293,13 @@ public abstract class AbstractWorkerEntity extends AbstractChunkLoaderEntity {
         this.setProfessionName(nbt.getString("ProfessionName"));
         this.setFarmedItems(nbt.getInt("FarmedItems"));
         this.cost = nbt.getInt("WorkerCost");
+
+        if(nbt.contains("paymentTimer")){
+            this.paymentTimer = (nbt.getInt("paymentTimer"));
+        }
+        else{
+            resetPaymentTimer();
+        }
 
         BlockPos startPos = this.getNbtPosition(nbt, "Start");
         if (startPos != null) this.setStartPos(startPos);
@@ -482,7 +490,7 @@ public abstract class AbstractWorkerEntity extends AbstractChunkLoaderEntity {
 
     public void setStatus(byte x) {
         this.entityData.set(STATUS, x);
-        if(prevStatus != status)this.prevStatus = this.status;
+        if(prevStatus != status) this.prevStatus = this.status;
         this.status = Status.fromIndex(x);
     }
 
@@ -642,11 +650,22 @@ public abstract class AbstractWorkerEntity extends AbstractChunkLoaderEntity {
         this.setPreviousTimeBreak(-1);
     }
 
+    public boolean needsToPayment(){
+        if(!isTame()) return false;
+
+        if(paymentTimer == 0) {
+            if(getChestPos() != null) return true;
+            else checkPayment(this.getInventory());
+        };
+        return false;
+    }
+
     public boolean needsToDeposit(){
         boolean needsTool = this.needsMainTool || this.needsSecondTool;
         boolean farmed = this.getFarmedItems() >= getFarmedItemsDepositAmount();
         boolean needsToEat = needsToEat();
-        return (needsTool || farmed || needsToEat);
+        boolean needsToPayment = needsToPayment();
+        return (needsTool || farmed || needsToEat || needsToPayment);
     }
 
     protected int getFarmedItemsDepositAmount() {
@@ -755,12 +774,17 @@ public abstract class AbstractWorkerEntity extends AbstractChunkLoaderEntity {
             this.setOwned(false);
             this.setOwnerName("");
             this.setOwnerUUID(null);
+            this.setChestPos(null);
+            this.setBedPos(null);
+            this.setStartPos(null);
+            this.setStatus(Status.IDLE, false);
+            this.setDestPos(null);
 
             if(increaseCost) this.recalculateCost();
         }
     }
     private void recalculateCost() {
-        this.cost = (int) (cost * 1.33);
+        this.cost = (int) (cost * 1.20);
     }
 
     public abstract Predicate<ItemEntity> getAllowedItems();
@@ -843,6 +867,15 @@ public abstract class AbstractWorkerEntity extends AbstractChunkLoaderEntity {
 
     public void tick() {
         super.tick();
+        if(this.getCommandSenderWorld().isClientSide()) return;
+
+        if(WorkersModConfig.WorkersPayment.get()){
+            if(paymentTimer > 0) paymentTimer--;
+            if(paymentTimer == 0) {
+                if(getChestPos() == null) checkPayment(this.getInventory());
+            }
+        }
+
         updateSwingTime();
         //Main.LOGGER.info("Status: " + this.status);
         if(this.getOwner() != null && getOwner().getTeam() != null && this.getTeam() != null && !getOwner().getTeam().isAlliedTo(this.getTeam())){
@@ -945,13 +978,12 @@ public abstract class AbstractWorkerEntity extends AbstractChunkLoaderEntity {
                     doPayment(this.getInventory());
                 }
                 else{
-                    this.doNoPaymentAction();
                     if(this.getOwner() != null){
                         this.getOwner().sendSystemMessage(Translatable.TEXT_NO_PAYMENT(this.getName().getString()));
                     }
+
+                    this.doNoPaymentAction();
                 }
-
-
             }
 
             resetPaymentTimer();
