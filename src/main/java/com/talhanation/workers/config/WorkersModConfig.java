@@ -2,6 +2,7 @@ package com.talhanation.workers.config;
 
 import com.electronwill.nightconfig.core.file.CommentedFileConfig;
 import com.electronwill.nightconfig.core.io.WritingMode;
+import com.talhanation.workers.entities.AbstractWorkerEntity;
 import net.minecraftforge.common.ForgeConfigSpec;
 import net.minecraftforge.fml.common.Mod;
 
@@ -34,6 +35,10 @@ public class WorkersModConfig {
     public static ForgeConfigSpec.BooleanValue OwnerReceiveInfo;
     public static ForgeConfigSpec.BooleanValue WorkersTablesPOIReleasing;
     public static ForgeConfigSpec.BooleanValue ProfessionBlocksDrop;
+    public static ForgeConfigSpec.BooleanValue WorkersPayment;
+    public static ForgeConfigSpec.IntValue WorkersPaymentInterval;
+    public static ForgeConfigSpec.IntValue WorkersPaymentAmount;
+    public static ForgeConfigSpec.EnumValue<AbstractWorkerEntity.NoPaymentAction> WorkersNoPaymentAction;
 
     static{
         VERSION = BUILDER.comment("\n" +"##Version, do not change!##")

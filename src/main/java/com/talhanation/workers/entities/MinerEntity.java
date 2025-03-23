@@ -130,6 +130,8 @@ public class MinerEntity extends AbstractWorkerEntity {
         Component name = Component.literal("Miner");
         this.setProfessionName(name.getString());
         this.setCustomName(name);
+
+        this.cost = WorkersModConfig.MinerCost.get();
     }
 
     @Override
@@ -161,11 +163,6 @@ public class MinerEntity extends AbstractWorkerEntity {
     @Override
     public AgeableMob getBreedOffspring(@NotNull ServerLevel world, @NotNull AgeableMob ageable) {
         return null;
-    }
-
-    @Override
-    public int workerCosts() {
-        return WorkersModConfig.MinerCost.get();
     }
 
     public int getMaxMineDepth() {

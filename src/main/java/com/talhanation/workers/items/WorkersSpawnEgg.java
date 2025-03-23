@@ -2,29 +2,31 @@ package com.talhanation.workers.items;
 
 import com.talhanation.workers.Main;
 import com.talhanation.workers.entities.MerchantEntity;
+import com.talhanation.workers.init.ModEntityTypes;
 import net.minecraft.core.BlockPos;
 import net.minecraft.nbt.ListTag;
-import net.minecraft.network.chat.TextComponent;
+import net.minecraft.network.chat.Component;
 import net.minecraft.world.InteractionResult;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EntityType;
+import net.minecraft.world.entity.Mob;
 import net.minecraft.world.item.ItemStack;
-import net.minecraft.world.item.SpawnEggItem;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.world.item.context.UseOnContext;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.scores.PlayerTeam;
+import net.minecraftforge.common.ForgeSpawnEggItem;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Optional;
 import java.util.UUID;
 import java.util.function.Supplier;
 
-public class WorkersSpawnEgg extends SpawnEggItem {
-    private final Supplier<EntityType<?>> entityType;
+public class WorkersSpawnEgg extends ForgeSpawnEggItem {
+    private final Supplier<? extends EntityType<? extends Mob>> entityType;
 
-    public WorkersSpawnEgg(Supplier<EntityType<?>> entityType, int primaryColor, int secondaryColor, Properties properties){
-        super(null, primaryColor, secondaryColor, properties);
+    public WorkersSpawnEgg(Supplier<? extends EntityType<? extends Mob>> entityType, int primaryColor, int secondaryColor, Properties properties){
+        super(entityType, primaryColor, secondaryColor, properties);
         this.entityType = entityType;
     }
     @Override
@@ -61,14 +63,14 @@ public class WorkersSpawnEgg extends SpawnEggItem {
 
                 if (nbt.contains("Team")) {
                     String s = nbt.getString("Team");
-                    PlayerTeam playerteam = merchant.level.getScoreboard().getPlayerTeam(s);
-                    boolean flag = playerteam != null && merchant.level.getScoreboard().addPlayerToTeam(merchant.getStringUUID(), playerteam);
+                    PlayerTeam playerteam = merchant.getCommandSenderWorld().getScoreboard().getPlayerTeam(s);
+                    boolean flag = playerteam != null && merchant.getCommandSenderWorld().getScoreboard().addPlayerToTeam(merchant.getStringUUID(), playerteam);
                     if (!flag) {
                         Main.LOGGER.warn("Unable to add mob to team \"{}\" (that team probably doesn't exist)", (Object)s);
                     }
                 }
                 String name = nbt.getString("Name");
-                merchant.setCustomName(new TextComponent(name));
+                merchant.setCustomName(Component.literal(name));
 
 
                 ListTag tradeList = nbt.getList("TradeInventory", 10);
@@ -114,9 +116,9 @@ public class WorkersSpawnEgg extends SpawnEggItem {
                 for (int i = 0; i < waypoints.size(); ++i) {
                     CompoundTag compoundnbt = waypoints.getCompound(i);
                     BlockPos pos1 = new BlockPos(
-                            compoundnbt.getDouble("PosX"),
-                            compoundnbt.getDouble("PosY"),
-                            compoundnbt.getDouble("PosZ"));
+                            compoundnbt.getInt("PosX"),
+                            compoundnbt.getInt("PosY"),
+                            compoundnbt.getInt("PosZ"));
                     merchant.WAYPOINTS.add(pos1);
                 }
 

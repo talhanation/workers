@@ -29,7 +29,7 @@ public class KeyEvents {
     }
 
     @SubscribeEvent
-    public void onPlayerPick(InputEvent.ClickInputEvent event){
+    public void onPlayerPick(InputEvent.InteractionKeyMappingTriggered event){
         if(event.isPickBlock()){
             Minecraft minecraft = Minecraft.getInstance();
             LocalPlayer clientPlayerEntity = minecraft.player;

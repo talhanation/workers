@@ -2,6 +2,7 @@ package com.talhanation.workers.entities;
 
 import com.talhanation.workers.CommandEvents;
 import com.talhanation.workers.Main;
+import com.talhanation.workers.Translatable;
 import com.talhanation.workers.config.WorkersModConfig;
 import com.talhanation.workers.entities.ai.*;
 import com.talhanation.workers.entities.ai.navigation.SailorPathNavigation;
@@ -20,11 +21,7 @@ import net.minecraft.network.syncher.SynchedEntityData;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.sounds.SoundEvent;
 import net.minecraft.sounds.SoundEvents;
-import net.minecraft.world.DifficultyInstance;
-import net.minecraft.world.InteractionHand;
-import net.minecraft.world.InteractionResult;
-import net.minecraft.world.MenuProvider;
-import net.minecraft.world.SimpleContainer;
+import net.minecraft.world.*;
 import net.minecraft.world.damagesource.DamageSource;
 import net.minecraft.world.entity.*;
 import net.minecraft.world.entity.ai.attributes.Attributes;
@@ -79,6 +76,8 @@ public abstract class AbstractWorkerEntity extends AbstractChunkLoaderEntity {
     public Status prevStatus;
     public boolean shouldDepositBeforeSleep;
     private int maxFallDistance;
+    private int paymentTimer;
+    protected int cost;
 
     public AbstractWorkerEntity(EntityType<? extends AbstractWorkerEntity> entityType, Level world) {
         super(entityType, world);
@@ -254,6 +253,7 @@ public abstract class AbstractWorkerEntity extends AbstractChunkLoaderEntity {
         nbt.putFloat("Hunger", this.getHunger());
         nbt.putString("ProfessionName", this.getProfessionName());
         nbt.putInt("FarmedItems", this.getFarmedItems());
+        nbt.putInt("WorkerCost", this.cost);
 
         BlockPos startPos = this.getStartPos();
         if (startPos != null) this.setNbtPosition(nbt, "Start", startPos);
@@ -291,6 +291,7 @@ public abstract class AbstractWorkerEntity extends AbstractChunkLoaderEntity {
         this.setOwnerName(nbt.getString("OwnerName"));
         this.setProfessionName(nbt.getString("ProfessionName"));
         this.setFarmedItems(nbt.getInt("FarmedItems"));
+        this.cost = nbt.getInt("WorkerCost");
 
         BlockPos startPos = this.getNbtPosition(nbt, "Start");
         if (startPos != null) this.setStartPos(startPos);
@@ -665,7 +666,9 @@ public abstract class AbstractWorkerEntity extends AbstractChunkLoaderEntity {
         return false;
     }
 
-    public abstract int workerCosts();
+    public int getWorkerCost(){
+        return cost;
+    }
 
     @Override
     public boolean canBreed() {
@@ -743,6 +746,23 @@ public abstract class AbstractWorkerEntity extends AbstractChunkLoaderEntity {
         );
     }
 
+    public void disband(@Nullable LivingEntity player, boolean increaseCost){
+        if(player instanceof Player){
+            String name = this.getName().getString();
+            player.sendSystemMessage(Translatable.TEXT_DISBAND(name));
+
+            this.setTarget(null);
+            this.setOwned(false);
+            this.setOwnerName("");
+            this.setOwnerUUID(null);
+
+            if(increaseCost) this.recalculateCost();
+        }
+    }
+    private void recalculateCost() {
+        this.cost = (int) (cost * 1.33);
+    }
+
     public abstract Predicate<ItemEntity> getAllowedItems();
 
     public abstract void openGUI(Player player);
@@ -757,7 +777,7 @@ public abstract class AbstractWorkerEntity extends AbstractChunkLoaderEntity {
     public void openHireGUI(Player player) {
         this.navigation.stop();
         if (player instanceof ServerPlayer serverPlayer) {
-            Main.SIMPLE_CHANNEL.send(PacketDistributor.PLAYER.with(()-> (ServerPlayer) player), new MessageToClientUpdateHireScreen(CommandEvents.getWorkersCurrency() ,this.workerCosts()));
+            Main.SIMPLE_CHANNEL.send(PacketDistributor.PLAYER.with(()-> (ServerPlayer) player), new MessageToClientUpdateHireScreen(CommandEvents.getWorkersCurrency() ,this.getWorkerCost()));
 
             MenuProvider containerSupplier = new MenuProvider() {
                 @Override
@@ -914,4 +934,82 @@ public abstract class AbstractWorkerEntity extends AbstractChunkLoaderEntity {
 
     public abstract List<Item> inventoryInputHelp();
 
+
+    public void checkPayment(Container container) {
+        if(WorkersModConfig.WorkersPayment.get() && getOwnerUUID() != null){
+            if(isPaymentInContainer(container)){
+                doPayment(container);
+            }
+            else{
+                if(isPaymentInContainer(this.getInventory())){
+                    doPayment(this.getInventory());
+                }
+                else{
+                    this.doNoPaymentAction();
+                    if(this.getOwner() != null){
+                        this.getOwner().sendSystemMessage(Translatable.TEXT_NO_PAYMENT(this.getName().getString()));
+                    }
+                }
+
+
+            }
+
+            resetPaymentTimer();
+        }
+    }
+
+    public void doPayment(Container container){
+        int amount = WorkersModConfig.WorkersPaymentAmount.get();
+        for (int i = 0; i < amount; i++) {
+            ItemStack currency = this.getCurrencyFromInv(container);
+            if (currency != null) {
+                currency.shrink(amount);
+            }
+        }
+    }
+
+    @Nullable
+    public ItemStack getCurrencyFromInv(Container inv){
+        ItemStack currency = null;
+        for(int i = 0; i < inv.getContainerSize(); i++){
+            ItemStack itemStack = inv.getItem(i);
+            if(itemStack.is(CommandEvents.getWorkersCurrency().getItem())){
+                currency = itemStack;
+                break;
+            }
+        }
+        return currency;
+    }
+
+    public void doNoPaymentAction(){
+        NoPaymentAction action = WorkersModConfig.WorkersNoPaymentAction.get();
+        switch (action){
+            case DISBAND -> {
+                this.disband(this.getOwner(), true);
+            }
+
+            case DESPAWN -> {
+                this.discard();
+            }
+        }
+    }
+
+    public void resetPaymentTimer(){
+        int interval = WorkersModConfig.WorkersPaymentInterval.get();
+        this.paymentTimer = 20*60*interval;
+    }
+
+    public enum NoPaymentAction{
+        DISBAND,
+
+        DESPAWN;
+
+        public static NoPaymentAction fromString(String name) {
+            try {
+                return NoPaymentAction.valueOf(name.toUpperCase());
+            } catch (IllegalArgumentException e) {
+                return DISBAND;
+            }
+        }
+    }
 }

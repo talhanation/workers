@@ -102,11 +102,6 @@ public class FarmerEntity extends AbstractWorkerEntity {
     }
 
     @Override
-    public int workerCosts() {
-        return WorkersModConfig.FarmerCost.get();
-    }
-
-    @Override
     public Predicate<ItemEntity> getAllowedItems() {
         return ALLOWED_ITEMS;
     }
@@ -175,6 +170,7 @@ public class FarmerEntity extends AbstractWorkerEntity {
 
         this.setProfessionName(name.getString());
         this.setCustomName(name);
+        this.cost = WorkersModConfig.FarmerCost.get();
     }
 
     @Override

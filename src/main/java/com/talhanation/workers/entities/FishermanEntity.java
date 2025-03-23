@@ -105,11 +105,6 @@ public class FishermanEntity extends AbstractWorkerEntity implements IBoatContro
     }
 
     @Override
-    public int workerCosts() {
-        return WorkersModConfig.FishermanCost.get();
-    }
-
-    @Override
     public Predicate<ItemEntity> getAllowedItems() {
         return ALLOWED_ITEMS;
     }
@@ -158,6 +153,7 @@ public class FishermanEntity extends AbstractWorkerEntity implements IBoatContro
 
         this.setProfessionName(name.getString());
         this.setCustomName(name);
+        this.cost = WorkersModConfig.FishermanCost.get();
     }
 
     public boolean canWorkWithoutTool(){

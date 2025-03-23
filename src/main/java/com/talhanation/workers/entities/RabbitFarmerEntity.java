@@ -68,7 +68,7 @@ public class RabbitFarmerEntity extends AbstractAnimalFarmerEntity {
 
 
     @Override
-    public int workerCosts() {
+    public int getWorkerCost() {
         return 18;
     }
 

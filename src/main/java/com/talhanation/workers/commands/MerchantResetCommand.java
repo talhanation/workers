@@ -6,10 +6,11 @@ import com.talhanation.workers.entities.MerchantEntity;
 import net.minecraft.ChatFormatting;
 import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.commands.Commands;
-import net.minecraft.network.chat.TextComponent;
+import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerLevel;
 
 import java.util.List;
+import java.util.function.Supplier;
 import java.util.stream.Collectors;
 import java.util.stream.StreamSupport;
 
@@ -28,10 +29,10 @@ public class MerchantResetCommand {
                 }
                 CommandSourceStack source = commandSource.getSource();
                 if (!merchants.isEmpty()) {
-                    source.sendSuccess(new TextComponent("Successfully reset trades for " + merchants.size() + " merchants."), true);
+                    source.sendSuccess(()-> Component.literal("Successfully reset trades for " + merchants.size() + " merchants."), true);
                     return 1;
                 } else {
-                    source.sendFailure(new TextComponent("No merchants found to reset trades.").withStyle(ChatFormatting.RED));
+                    source.sendFailure(Component.literal("No merchants found to reset trades.").withStyle(ChatFormatting.RED));
                     return 0;
                 }
             })));

@@ -65,7 +65,7 @@ public class SwineherdEntity extends AbstractAnimalFarmerEntity {
     }
 
     @Override
-    public int workerCosts() {
+    public int getWorkerCost() {
         return WorkersModConfig.SwineherdCost.get();
     }
 
@@ -116,6 +116,8 @@ public class SwineherdEntity extends AbstractAnimalFarmerEntity {
 
         this.setProfessionName(name.getString());
         this.setCustomName(name);
+
+        this.cost = WorkersModConfig.SwineherdCost.get();
     }
 
     @Override

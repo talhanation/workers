@@ -66,7 +66,7 @@ public class LumberjackEntity extends AbstractWorkerEntity {
     }
 
     @Override
-    public int workerCosts() {
+    public int getWorkerCost() {
         return WorkersModConfig.LumberjackCost.get();
     }
 
@@ -131,6 +131,7 @@ public class LumberjackEntity extends AbstractWorkerEntity {
 
         this.setProfessionName(name.getString());
         this.setCustomName(name);
+        this.cost = WorkersModConfig.LumberjackCost.get();
     }
 
     @Override

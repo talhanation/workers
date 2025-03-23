@@ -16,7 +16,7 @@ public class MerchantTradeContainer extends ContainerBase {
     private final MerchantEntity merchant;
 
     public MerchantTradeContainer(int id, MerchantEntity merchant, Inventory playerInventory) {
-        super(Main.MERCHANT_TRADE_CONTAINER_TYPE, id, playerInventory, merchant.getInventory());
+        super(ModMenuTypes.MERCHANT_TRADE_CONTAINER_TYPE.get(), id, playerInventory, merchant.getInventory());
         this.merchant = merchant;
         this.workerInventory = merchant.getTradeInventory();
         addWorkerTradeSlots();

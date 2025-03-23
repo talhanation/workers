@@ -95,6 +95,8 @@
   "chat.workers.text.fisherNoWater": "I could not find any water source nearby.",
   "chat.workers.text.noFoodInUpkeep": "I could not find any food in my chest.",
   "chat.workers.bedOccupied": "My Bed is occupied!",
+  "chat.workers.text.disband": "%s has disbanded from your Command!",
+  "chat.workers.text.noPaymentInUpkeep": "%s: There is no payment in my upkeep or my inventory.",
 
   "chat.workers.text.waypointNotNearToPrev": "This waypoint needs to be closer to the previous one!",
 

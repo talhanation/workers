@@ -15,7 +15,7 @@ public class MerchantInventoryContainer extends ContainerBase {
     private final MerchantEntity merchant;
 
     public MerchantInventoryContainer(int id, MerchantEntity merchant, Inventory playerInventory) {
-        super(Main.MERCHANT_INVENTORY_CONTAINER_TYPE, id, playerInventory, merchant.getInventory());
+        super(ModMenuTypes.MERCHANT_INVENTORY_CONTAINER_MENU_TYPE.get(), id, playerInventory, merchant.getInventory());
         this.merchant = merchant;
         this.workerInventory = merchant.getInventory();
         addPlayerInventorySlots();

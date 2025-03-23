@@ -134,7 +134,7 @@ public class MerchantEntity extends AbstractWorkerEntity implements IBoatControl
     }
 
     @Override
-    public int workerCosts() {
+    public int getWorkerCost() {
         return WorkersModConfig.MerchantCost.get();
     }
 
@@ -224,10 +224,9 @@ public class MerchantEntity extends AbstractWorkerEntity implements IBoatControl
 
     public void openWaypointsGUI(Player player) {
         if (player instanceof ServerPlayer) {
+            Main.SIMPLE_CHANNEL.send(PacketDistributor.PLAYER.with(() -> (ServerPlayer) player), new MessageToClientUpdateMerchantScreen(this.WAYPOINTS, this.WAYPOINT_ITEMS, getCurrentTrades(), getTradeLimits(), this.getTraveling(), this.getReturning()));
+
             NetworkHooks.openScreen((ServerPlayer) player, new MenuProvider() {
-                Main.SIMPLE_CHANNEL.send(PacketDistributor.PLAYER.with(() -> (ServerPlayer) player), new MessageToClientUpdateMerchantScreen(this.WAYPOINTS, this.WAYPOINT_ITEMS, getCurrentTrades(), getTradeLimits(), this.getTraveling(), this.getReturning()));
-
-
                 @Override
                 public @NotNull Component getDisplayName() {
                     return getName();
@@ -268,7 +267,7 @@ public class MerchantEntity extends AbstractWorkerEntity implements IBoatControl
         if (player instanceof ServerPlayer) {
             Main.SIMPLE_CHANNEL.send(PacketDistributor.PLAYER.with(() -> (ServerPlayer) player), new MessageToClientUpdateMerchantScreen(this.WAYPOINTS, this.WAYPOINT_ITEMS, getCurrentTrades(), getTradeLimits(), this.getTraveling(), this.getReturning()));
 
-            NetworkHooks.openGui((ServerPlayer) player, new MenuProvider() {
+            NetworkHooks.openScreen((ServerPlayer) player, new MenuProvider() {
                 @Override
                 public @NotNull Component getDisplayName() {
                     return getName();
@@ -327,6 +326,7 @@ public class MerchantEntity extends AbstractWorkerEntity implements IBoatControl
 
         this.setProfessionName(name.getString());
         this.setCustomName(name);
+        this.cost = WorkersModConfig.MerchantCost.get();
 
         this.heal(100);
     }

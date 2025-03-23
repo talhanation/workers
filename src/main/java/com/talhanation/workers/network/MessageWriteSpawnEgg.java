@@ -36,7 +36,7 @@ public class MessageWriteSpawnEgg implements Message<MessageWriteSpawnEgg> {
 
     public void executeServerSide(NetworkEvent.Context context) {
         ServerPlayer serverPlayer = context.getSender();
-        List<MerchantEntity> merchantlist = Objects.requireNonNull(context.getSender()).level.getEntitiesOfClass(MerchantEntity.class, context.getSender().getBoundingBox().inflate(64.0D));
+        List<MerchantEntity> merchantlist = Objects.requireNonNull(context.getSender()).getCommandSenderWorld().getEntitiesOfClass(MerchantEntity.class, context.getSender().getBoundingBox().inflate(64.0D));
 
         for (MerchantEntity merchant : merchantlist) {
             if(merchant.getUUID().equals(this.merchant)) {

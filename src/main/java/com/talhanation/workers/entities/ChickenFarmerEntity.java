@@ -74,11 +74,6 @@ public class ChickenFarmerEntity extends AbstractAnimalFarmerEntity {
     }
 
     @Override
-    public int workerCosts() {
-        return WorkersModConfig.ChickenFarmerCost.get();
-    }
-
-    @Override
     public Predicate<ItemEntity> getAllowedItems() {
         return ALLOWED_ITEMS;
     }
@@ -126,6 +121,7 @@ public class ChickenFarmerEntity extends AbstractAnimalFarmerEntity {
 
         this.setProfessionName(name.getString());
         this.setCustomName(name);
+        this.cost = WorkersModConfig.ChickenFarmerCost.get();
     }
     @Override
     public boolean wantsToPickUp(ItemStack itemStack) {

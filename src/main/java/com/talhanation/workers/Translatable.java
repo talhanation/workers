@@ -47,6 +47,14 @@ public class Translatable {
     public static final Component TEXT_CONTINUE = Component.translatable("chat.workers.text.continue");
     public static final Component TEXT_WANDER = Component.translatable("chat.workers.text.wander");
 
+    public static MutableComponent TEXT_DISBAND(String name) {
+        return Component.translatable("chat.workers.text.disband", name);
+    }
+
+    public static MutableComponent TEXT_NO_PAYMENT(String name) {
+        return Component.translatable("chat.workers.text.noPaymentInUpkeep", name);
+    }
+
     /*
     public static Component TEXT_BED_KEY() {
         Component currentMapping = ModShortcuts.ASSIGN_BED_KEY.getTranslatedKeyMessage();

@@ -5,10 +5,8 @@ import com.talhanation.workers.entities.MerchantEntity;
 import com.talhanation.workers.inventory.MerchantOwnerContainer;
 import com.talhanation.workers.network.*;
 import de.maxhenkel.corelib.inventory.ScreenBase;
-import net.minecraft.client.gui.components.Button;
+import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.network.chat.MutableComponent;
-import net.minecraft.network.chat.TextComponent;
-import net.minecraft.network.chat.TranslatableComponent;
 import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.network.chat.Component;
@@ -28,11 +26,11 @@ public class MerchantOwnerScreen extends ScreenBase<MerchantOwnerContainer> {
     private final Inventory playerInventory;
     private final Player player;
 
-    private final MutableComponent TEXT_TRAVEL = new TranslatableComponent("gui.workers.merchant.travel");
-    private final MutableComponent TEXT_INVENTORY = new TranslatableComponent("gui.workers.merchant.inventory");
-    private final MutableComponent TEXT_SHOW_TRADE = new TranslatableComponent("gui.workers.merchant.show_trade");
+    private final MutableComponent TEXT_TRAVEL = Component.translatable("gui.workers.merchant.travel");
+    private final MutableComponent TEXT_INVENTORY = Component.translatable("gui.workers.merchant.inventory");
+    private final MutableComponent TEXT_SHOW_TRADE = Component.translatable("gui.workers.merchant.show_trade");
     public MerchantOwnerScreen(MerchantOwnerContainer container, Inventory playerInventory, Component title) {
-        super(GUI_TEXTURE_3, container, playerInventory, new TextComponent(""));
+        super(GUI_TEXTURE_3, container, playerInventory, Component.literal(""));
         this.merchant = (MerchantEntity) container.getWorker();
         this.playerInventory = playerInventory;
         this.player = playerInventory.player;
@@ -49,15 +47,15 @@ public class MerchantOwnerScreen extends ScreenBase<MerchantOwnerContainer> {
         int mirror = 240 - 60;
 
 
-        addRenderableWidget(new Button(zeroLeftPos - mirror + 180, zeroTopPos + 35, 41, 20, TEXT_TRAVEL, button -> {
+        addRenderableWidget(new ExtendedButton(zeroLeftPos - mirror + 180, zeroTopPos + 35, 41, 20, TEXT_TRAVEL, button -> {
             this.merchant.openWaypointsGUI(player);
         }));
 
-        addRenderableWidget(new Button(zeroLeftPos - mirror + 180, zeroTopPos + 200, 41, 20, TEXT_SHOW_TRADE, button -> {
+        addRenderableWidget(new ExtendedButton(zeroLeftPos - mirror + 180, zeroTopPos + 200, 41, 20, TEXT_SHOW_TRADE, button -> {
             this.merchant.openTradeGUI(player);
         }));
 
-        addRenderableWidget(new Button(zeroLeftPos - mirror + 180, zeroTopPos + 225, 41, 20, TEXT_INVENTORY, button -> {
+        addRenderableWidget(new ExtendedButton(zeroLeftPos - mirror + 180, zeroTopPos + 225, 41, 20, TEXT_INVENTORY, button -> {
             this.merchant.openGUI(player);
 
         }));

@@ -1,7 +1,10 @@
 package com.talhanation.workers.entities;
 
+import com.talhanation.workers.CommandEvents;
+import com.talhanation.workers.config.WorkersModConfig;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.ListTag;
+import net.minecraft.world.Container;
 import net.minecraft.world.Containers;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.SimpleContainer;
@@ -149,6 +152,18 @@ public abstract class AbstractInventoryEntity extends TamableAnimal {
             if(worker.isRequiredSecondTool(tool)) worker.needsSecondTool = false;
         }
     }
+
+    public boolean isPaymentInContainer(Container container){
+        int amount = 0;
+        for(int i = 0; i < container.getContainerSize(); i++) {
+            ItemStack itemStack = container.getItem(i);
+            if(itemStack.is(CommandEvents.getWorkersCurrency().getItem())){
+                amount += itemStack.getCount();
+            }
+        }
+        return amount >= WorkersModConfig.WorkersPaymentAmount.get();
+    }
+
 
     @Override
     public @NotNull ItemStack equipItemIfPossible(ItemStack p_21541_) {

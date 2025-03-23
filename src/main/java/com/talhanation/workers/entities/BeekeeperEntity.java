@@ -64,11 +64,6 @@ public class BeekeeperEntity extends AbstractAnimalFarmerEntity {
     }
 
     @Override
-    public int workerCosts() {
-        return 18;
-    }
-
-    @Override
     public Predicate<ItemEntity> getAllowedItems() {
         return ALLOWED_ITEMS;
     }

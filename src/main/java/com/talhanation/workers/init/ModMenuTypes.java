@@ -81,22 +81,31 @@ public class ModMenuTypes {
                 return new WorkerInventoryContainer(windowId, rec, inv);
             }));
 
-    public static final RegistryObject<MenuType<MerchantTradeContainer>> MERCHANT_CONTAINER_TYPE =
+    public static final RegistryObject<MenuType<MerchantInventoryContainer>> MERCHANT_INVENTORY_CONTAINER_MENU_TYPE =
             MENU_TYPES.register("merchant_container", () -> IForgeMenuType.create((windowId, inv, data) -> {
                 MerchantEntity rec = (MerchantEntity) getRecruitByUUID(inv.player, data.readUUID());
                 if (rec == null) {
                     return null;
                 }
-                return new MerchantTradeContainer(windowId, rec, inv);
+                return new MerchantInventoryContainer(windowId, rec, inv);
             }));
 
-    public static final RegistryObject<MenuType<MerchantInventoryContainer>> MERCHANT_OWNER_CONTAINER_TYPE =
+    public static final RegistryObject<MenuType<MerchantOwnerContainer>> MERCHANT_OWNER_CONTAINER_TYPE =
             MENU_TYPES.register("merchant_owner_container", () -> IForgeMenuType.create((windowId, inv, data) -> {
                 MerchantEntity rec = (MerchantEntity) getRecruitByUUID(inv.player, data.readUUID());
                 if (rec == null) {
                     return null;
                 }
-                return new MerchantInventoryContainer(windowId, rec, inv);
+                return new MerchantOwnerContainer(windowId, rec, inv);
+            }));
+
+    public static final RegistryObject<MenuType<MerchantTradeContainer>> MERCHANT_TRADE_CONTAINER_TYPE =
+            MENU_TYPES.register("merchant_trade_container", () -> IForgeMenuType.create((windowId, inv, data) -> {
+                MerchantEntity rec = (MerchantEntity) getRecruitByUUID(inv.player, data.readUUID());
+                if (rec == null) {
+                    return null;
+                }
+                return new MerchantTradeContainer(windowId, rec, inv);
             }));
 
     public static final RegistryObject<MenuType<CommandMenu>> COMMAND_CONTAINER_TYPE =
@@ -130,8 +139,9 @@ public class ModMenuTypes {
     public static void registerMenus() {
         registerMenu(MINER_CONTAINER_TYPE.get(), MinerInventoryScreen::new);
         registerMenu(WORKER_CONTAINER_TYPE.get(), WorkerInventoryScreen::new);
-        registerMenu(MERCHANT_CONTAINER_TYPE.get(), MerchantTradeScreen::new);
+        registerMenu(MERCHANT_TRADE_CONTAINER_TYPE.get(), MerchantTradeScreen::new);
         registerMenu(MERCHANT_OWNER_CONTAINER_TYPE.get(), MerchantOwnerScreen::new);
+        registerMenu(MERCHANT_INVENTORY_CONTAINER_MENU_TYPE.get(), MerchantInventoryScreen::new);
         registerMenu(ANIMAL_FARMER_CONTAINER_TYPE.get(), AnimalFarmerInventoryScreen::new);
         registerMenu(HIRE_CONTAINER_TYPE.get(), WorkerHireScreen::new);
         registerMenu(WAYPOINT_CONTAINER_TYPE.get(), MerchantWaypointScreen::new);

@@ -347,7 +347,7 @@ public class CommandEvents {
     }
 
     public static void handleRecruiting(Player player, AbstractWorkerEntity worker, String name){
-        int sollPrice = worker.workerCosts();
+        int sollPrice = worker.getWorkerCost();
         Inventory playerInv = player.getInventory();
         int playerEmeralds = 0;
 
