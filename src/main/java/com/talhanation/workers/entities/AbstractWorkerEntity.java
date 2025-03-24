@@ -442,15 +442,15 @@ public abstract class AbstractWorkerEntity extends AbstractChunkLoaderEntity {
     }
 
     public void setHomePos(BlockPos pos) {
-        this.entityData.set(HOME, Optional.of(pos));            
+        this.entityData.set(HOME, Optional.ofNullable(pos));
     }
 
-    public void setChestPos(BlockPos pos) {
-        this.entityData.set(CHEST, Optional.of(pos));
+    public void setChestPos(@Nullable BlockPos pos) {
+        this.entityData.set(CHEST, Optional.ofNullable(pos));
     }
     
     public void setBedPos(BlockPos pos) {
-        this.entityData.set(BED, Optional.of(pos));
+        this.entityData.set(BED, Optional.ofNullable(pos));
     }
 
     public void setPreviousTimeBreak(int value) {
@@ -470,7 +470,7 @@ public abstract class AbstractWorkerEntity extends AbstractChunkLoaderEntity {
     }
 
     public void setDestPos(BlockPos pos) {
-        this.entityData.set(DEST_POS, Optional.of(pos));
+        this.entityData.set(DEST_POS, Optional.ofNullable(pos));
     }
 
     public void setStartPos(BlockPos pos) {
@@ -732,6 +732,7 @@ public abstract class AbstractWorkerEntity extends AbstractChunkLoaderEntity {
     }
 
     public boolean hire(Player player) {
+        this.resetPaymentTimer();
         this.makeHireSound();
 
         this.tame(player);
