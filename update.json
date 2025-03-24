@@ -1,7 +1,7 @@
 {
   "homepage": "https://www.curseforge.com/minecraft/mc-mods/workers/files",
   "promos": {
-    "1.20.1-recommended": "1.7.8",
+    "1.20.1-recommended": "1.7.9.1",
     "1.19.2-recommended": "1.7.8",
     "1.18.2-recommended": "1.7.8"
   },
@@ -38,7 +38,7 @@
     "1.6.0": "Big bug fix update and added command menu."
   },
   "1.20.1": {
-    "1.7.8": "fixed tasking AI, fixed double chest lid, fixed deposit behavior",
+    "1.7.9.1": "fixed crash when hiring and added more merchant related stuff",
     "1.7.7": "fixed exploit with merchants, fixed double chest interaction, fixed sailor path navigation",
     "1.7.6": "fixed crash, add a lumberjack feature",
     "1.7.5": "fixed crash, improved merchant travel",
