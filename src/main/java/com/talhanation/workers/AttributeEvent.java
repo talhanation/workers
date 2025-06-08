@@ -12,6 +12,7 @@ public class AttributeEvent {
     @SubscribeEvent
     public static void entityAttributeEvent(final EntityAttributeCreationEvent event) {
         event.put(ModEntityTypes.FARMER.get(), FarmerEntity.setAttributes().build());
+        /*
         event.put(ModEntityTypes.FISHERMAN.get(), FishermanEntity.setAttributes().build());
         event.put(ModEntityTypes.LUMBERJACK.get(), LumberjackEntity.setAttributes().build());
         event.put(ModEntityTypes.MERCHANT.get(), MerchantEntity.setAttributes().build());
@@ -22,5 +23,7 @@ public class AttributeEvent {
         event.put(ModEntityTypes.SWINEHERD.get(), SwineherdEntity.setAttributes().build());
         event.put(ModEntityTypes.RABBIT_FARMER.get(), RabbitFarmerEntity.setAttributes().build());
         event.put(ModEntityTypes.BEEKEEPER.get(), BeekeeperEntity.setAttributes().build());
+
+         */
     }
 }

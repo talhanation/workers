@@ -1,10 +1,7 @@
 package com.talhanation.workers.init;
 
 import com.talhanation.workers.Main;
-import net.minecraft.world.level.block.state.BlockBehaviour;
 import net.minecraft.world.level.block.Block;
-import net.minecraft.world.level.block.Blocks;
-import net.minecraftforge.registries.RegistryObject;
 import net.minecraftforge.registries.DeferredRegister;
 import net.minecraftforge.registries.ForgeRegistries;
 
@@ -12,6 +9,7 @@ public class ModBlocks {
 
     public static final DeferredRegister<Block> BLOCKS = DeferredRegister.create(ForgeRegistries.BLOCKS, Main.MOD_ID);
 
+    /*
     public static final RegistryObject<Block> MINER_BLOCK = BLOCKS.register("miner_block",
             () -> new Block(BlockBehaviour.Properties.copy(Blocks.FLETCHING_TABLE)));
 
@@ -38,4 +36,6 @@ public class ModBlocks {
 
     public static final RegistryObject<Block> SWINEHERD_BLOCK = BLOCKS.register("swineherd_block",
             () -> new Block(BlockBehaviour.Properties.copy(Blocks.FLETCHING_TABLE)));
+
+     */
 }

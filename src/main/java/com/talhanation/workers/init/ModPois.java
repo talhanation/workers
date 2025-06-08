@@ -20,18 +20,6 @@ public class ModPois {
     public static final DeferredRegister<PoiType> POIS =
             DeferredRegister.create(ForgeRegistries.POI_TYPES, Main.MOD_ID);
 
-    public static final RegistryObject<PoiType> POI_MINER = makePoi("miner", ModBlocks.MINER_BLOCK);
-    public static final RegistryObject<PoiType> POI_LUMBERJACK = makePoi("lumberjack", ModBlocks.LUMBERJACK_BLOCK);
-    public static final RegistryObject<PoiType> POI_FARMER = makePoi("farmer", ModBlocks.FARMER_BLOCK);
-    public static final RegistryObject<PoiType> POI_MERCHANT = makePoi("merchant", ModBlocks.MERCHANT_BLOCK);
-    public static final RegistryObject<PoiType> POI_SHEPHERD = makePoi("shepherd", ModBlocks.SHEPHERD_BLOCK);
-    public static final RegistryObject<PoiType> POI_FISHER = makePoi("fisherman", ModBlocks.FISHER_BLOCK);
-    public static final RegistryObject<PoiType> POI_CATTLE_FARMER =
-            makePoi("cattle_farmer", ModBlocks.CATTLE_FARMER_BLOCK);
-    public static final RegistryObject<PoiType> POI_CHICKEN_FARMER =
-            makePoi("chicken_farmer", ModBlocks.CHICKEN_FARMER_BLOCK);
-    public static final RegistryObject<PoiType> POI_SWINEHERD = makePoi("swineherd", ModBlocks.SWINEHERD_BLOCK);
-
     private static RegistryObject<PoiType> makePoi(String name, RegistryObject<Block> block) {
         logger.info("Registering POI for " + block.getKey().toString());
         return POIS.register(name, () -> {

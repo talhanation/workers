@@ -18,20 +18,6 @@ public class ModProfessions {
     public static final DeferredRegister<VillagerProfession> PROFESSIONS =
             DeferredRegister.create(ForgeRegistries.VILLAGER_PROFESSIONS, Main.MOD_ID);
 
-    public static final RegistryObject<VillagerProfession> MINER = makeProfession("miner", ModPois.POI_MINER);
-    public static final RegistryObject<VillagerProfession> LUMBERJACK =
-            makeProfession("lumberjack", ModPois.POI_LUMBERJACK);
-    public static final RegistryObject<VillagerProfession> FARMER = makeProfession("farmer", ModPois.POI_FARMER);
-    public static final RegistryObject<VillagerProfession> MERCHANT = makeProfession("merchant", ModPois.POI_MERCHANT);
-    public static final RegistryObject<VillagerProfession> SHEPHERD = makeProfession("shepherd", ModPois.POI_SHEPHERD);
-    public static final RegistryObject<VillagerProfession> FISHER = makeProfession("fisherman", ModPois.POI_FISHER);
-    public static final RegistryObject<VillagerProfession> CATTLE_FARMER =
-            makeProfession("cattle_farmer", ModPois.POI_CATTLE_FARMER);
-    public static final RegistryObject<VillagerProfession> CHICKEN_FARMER =
-            makeProfession("chicken_farmer", ModPois.POI_CHICKEN_FARMER);
-    public static final RegistryObject<VillagerProfession> SWINEHERD =
-            makeProfession("swineherd", ModPois.POI_SWINEHERD);
-
     private static final RegistryObject<VillagerProfession> makeProfession(String name,
             RegistryObject<PoiType> pointOfInterest) {
         logger.info("Registering profession for {} with POI {}", name, pointOfInterest);

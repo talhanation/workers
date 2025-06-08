@@ -1,18 +1,8 @@
 package com.talhanation.workers.init;
 
 import com.talhanation.workers.Main;
-import com.talhanation.workers.entities.BeekeeperEntity;
-import com.talhanation.workers.entities.CattleFarmerEntity;
-import com.talhanation.workers.entities.ChickenFarmerEntity;
-import com.talhanation.workers.entities.FarmerEntity;
-import com.talhanation.workers.entities.FishermanEntity;
-import com.talhanation.workers.entities.LumberjackEntity;
-import com.talhanation.workers.entities.MerchantEntity;
-import com.talhanation.workers.entities.MinerEntity;
-import com.talhanation.workers.entities.RabbitFarmerEntity;
-import com.talhanation.workers.entities.ShepherdEntity;
-import com.talhanation.workers.entities.SwineherdEntity;
 
+import com.talhanation.workers.entities.FarmerEntity;
 import net.minecraft.world.entity.MobCategory;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.resources.ResourceLocation;
@@ -24,7 +14,7 @@ public class ModEntityTypes {
 
         public static final DeferredRegister<EntityType<?>> ENTITY_TYPES = DeferredRegister
                         .create(ForgeRegistries.ENTITY_TYPES, Main.MOD_ID);
-
+        /*
         public static final RegistryObject<EntityType<MinerEntity>> MINER = ENTITY_TYPES.register("miner",
                         () -> EntityType.Builder.of(MinerEntity::new, MobCategory.CREATURE)
                                         .sized(0.6F, 1.95F)
@@ -49,6 +39,7 @@ public class ModEntityTypes {
                                         .setTrackingRange(32)
                                         .setShouldReceiveVelocityUpdates(true)
                                         .build(new ResourceLocation(Main.MOD_ID, "shepherd").toString()));
+        */
 
         public static final RegistryObject<EntityType<FarmerEntity>> FARMER = ENTITY_TYPES.register("farmer",
                         () -> EntityType.Builder.of(FarmerEntity::new, MobCategory.CREATURE)
@@ -57,7 +48,7 @@ public class ModEntityTypes {
                                         .setTrackingRange(32)
                                         .setShouldReceiveVelocityUpdates(true)
                                         .build(new ResourceLocation(Main.MOD_ID, "farmer").toString()));
-
+/*
         public static final RegistryObject<EntityType<FishermanEntity>> FISHERMAN = ENTITY_TYPES.register("fisherman",
                         () -> EntityType.Builder.of(FishermanEntity::new, MobCategory.CREATURE)
                                         .sized(0.6F, 1.95F)
@@ -116,5 +107,5 @@ public class ModEntityTypes {
                                         .setTrackingRange(32)
                                         .setShouldReceiveVelocityUpdates(true)
                                         .build(new ResourceLocation(Main.MOD_ID, "beekeeper").toString()));
-
+*/
 }

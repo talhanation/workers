@@ -1,23 +1,12 @@
 package com.talhanation.workers;
 
-import com.google.common.collect.ImmutableSet;
-import com.talhanation.workers.client.gui.*;
-import com.talhanation.workers.commands.MerchantResetCommand;
-
-import com.talhanation.workers.config.WorkersModConfig;
-import com.talhanation.workers.network.*;
 import net.minecraft.world.item.CreativeModeTabs;
 import net.minecraftforge.event.BuildCreativeModeTabContentsEvent;
 import net.minecraftforge.event.RegisterCommandsEvent;
 import net.minecraftforge.fml.DistExecutor;
-import net.minecraftforge.fml.ModList;
-import net.minecraftforge.fml.ModLoadingContext;
-import net.minecraftforge.fml.config.ModConfig;
-import net.minecraftforge.fml.loading.FMLPaths;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
-import com.talhanation.workers.client.events.KeyEvents;
 import com.talhanation.workers.init.ModBlocks;
 import com.talhanation.workers.init.ModEntityTypes;
 import com.talhanation.workers.init.ModItems;
@@ -47,8 +36,8 @@ public class Main {
     public static boolean isSmallShipsInstalled;
 
     public Main() {
-        ModLoadingContext.get().registerConfig(ModConfig.Type.COMMON, WorkersModConfig.CONFIG);
-        WorkersModConfig.loadConfig(WorkersModConfig.CONFIG, FMLPaths.CONFIGDIR.get().resolve("workers-common.toml"));
+        //ModLoadingContext.get().registerConfig(ModConfig.Type.COMMON, WorkersModConfig.CONFIG);
+        //WorkersModConfig.loadConfig(WorkersModConfig.CONFIG, FMLPaths.CONFIGDIR.get().resolve("workers-common.toml"));
 
         final IEventBus modEventBus = FMLJavaModLoadingContext.get().getModEventBus();
         modEventBus.addListener(this::setup);
@@ -72,7 +61,7 @@ public class Main {
 
     @SubscribeEvent
     public void onRegisterCommands(RegisterCommandsEvent event) {
-        MerchantResetCommand.register(event.getDispatcher());
+        //MerchantResetCommand.register(event.getDispatcher());
     }
 
 
@@ -86,77 +75,20 @@ public class Main {
         SIMPLE_CHANNEL = CommonRegistry.registerChannel(Main.MOD_ID, "default");
 
         Class[] messages = {
-            MessageStartPos.class,
-            MessageOpenGuiMiner.class,
-            MessageMineType.class,
-            MessageMineDepth.class,
-            MessageOpenGuiWorker.class,
-            MessageOpenGuiMerchant.class,
-            MessageMerchantTradeButton.class,
-            MessageOpenGuiAnimalFarmer.class,
-            MessageAnimalCount.class,
-            MessageHire.class,
-            MessageHireGui.class,
-            MessageChestPos.class,
-            MessageBedPos.class,
-            MessageOpenCommandScreen.class,
-            MessageToClientUpdateCommandScreen.class,
-            MessageMerchantTravel.class,
-            MessageMerchantAddWayPoint.class,
-            MessageMerchantRemoveWayPoint.class,
-            MessageMerchantSetCreative.class,
-            MessageMerchantReturnTime.class,
-            MessageToClientUpdateMerchantScreen.class,
-            MessageMerchantHorse.class,
-            MessageMerchantResetCurrentTradeCounts.class,
-            MessageMerchantTradeLimitButton.class,
-            MessageOpenWaypointsGuiMerchant.class,
-            MessageMerchantSetTravelSpeed.class,
-            MessageMerchantSetAutoStartTravel.class,
-            MessageFollow.class,
-            MessageChickenFarmerUseEggs.class,
-            MessageMerchantSetSendInfo.class,
-            MessageLumberjackReplant.class,
-            MessageToClientUpdateHireScreen.class,
-            MessageOpenOwnerGuiMerchant.class,
-            MessageWriteSpawnEgg.class
+
         };
         for (int i = 0; i < messages.length; i++) CommonRegistry.registerMessage(SIMPLE_CHANNEL, i, messages[i]);
-        LOGGER.info("Villager Workers Messages registered");
-
-        isSmallShipsInstalled = ModList.get().isLoaded("smallships");//Smallships mod
     }
 
     @SubscribeEvent
     @OnlyIn(Dist.CLIENT)
     public void clientSetup(FMLClientSetupEvent event) {
         event.enqueueWork(ModMenuTypes::registerMenus);
-        MinecraftForge.EVENT_BUS.register(new KeyEvents());
     }
 
     private void addCreativeTabs(BuildCreativeModeTabContentsEvent event) {
         if (event.getTabKey().equals(CreativeModeTabs.SPAWN_EGGS)) {
-            event.accept(ModItems.MINER_SPAWN_EGG.get());
-            event.accept(ModItems.LUMBER_SPAWN_EGG.get());
-            event.accept(ModItems.FISHERMAN_SPAWN_EGG.get());
-            event.accept(ModItems.MERCHANT_SPAWN_EGG.get());
-            event.accept(ModItems.SHEPHERD_SPAWN_EGG.get());
-            event.accept(ModItems.SWINEHERD_SPAWN_EGG.get());
-            event.accept(ModItems.CATTLE_FARMER_SPAWN_EGG.get());
-            event.accept(ModItems.CHICKEN_FARMER_SPAWN_EGG.get());
             event.accept(ModItems.FARMER_SPAWN_EGG.get());
-        }
-
-        if (event.getTabKey().equals(CreativeModeTabs.FUNCTIONAL_BLOCKS)){
-            event.accept(ModBlocks.MINER_BLOCK.get());
-            event.accept(ModBlocks.LUMBERJACK_BLOCK.get());
-            event.accept(ModBlocks.FISHER_BLOCK.get());
-            event.accept(ModBlocks.MERCHANT_BLOCK.get());
-            event.accept(ModBlocks.SHEPHERD_BLOCK.get());
-            event.accept(ModBlocks.SWINEHERD_BLOCK.get());
-            event.accept(ModBlocks.CATTLE_FARMER_BLOCK.get());
-            event.accept(ModBlocks.CHICKEN_FARMER_BLOCK.get());
-            event.accept(ModBlocks.FARMER_BLOCK.get());
         }
     }
 }
