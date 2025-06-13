@@ -9,7 +9,6 @@ import java.util.*;
 public class CommandEvents {
 	public void setWorkArea(UUID player_uuid, AbstractWorkerEntity worker, AABB area) {
         LivingEntity owner = worker.getOwner();
-
     }
 
 }

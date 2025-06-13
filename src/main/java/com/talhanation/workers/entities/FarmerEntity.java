@@ -3,24 +3,22 @@ package com.talhanation.workers.entities;
 import com.google.common.collect.ImmutableSet;
 import com.talhanation.recruits.entities.AbstractRecruitEntity;
 import com.talhanation.recruits.pathfinding.AsyncGroundPathNavigation;
+import com.talhanation.workers.config.WorkersServerConfig;
 import com.talhanation.workers.entities.ai.FarmerWorkController;
 import com.talhanation.workers.world.CropArea;
-import net.minecraft.core.BlockPos;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.syncher.EntityDataAccessor;
 import net.minecraft.network.syncher.EntityDataSerializers;
 import net.minecraft.network.syncher.SynchedEntityData;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.util.RandomSource;
 import net.minecraft.world.DifficultyInstance;
 import net.minecraft.world.entity.*;
 import net.minecraft.world.entity.ai.attributes.AttributeSupplier;
 import net.minecraft.world.entity.ai.attributes.Attributes;
 import net.minecraft.world.entity.item.ItemEntity;
-import net.minecraft.world.item.BucketItem;
-import net.minecraft.world.item.Item;
-import net.minecraft.world.item.ItemStack;
-import net.minecraft.world.item.Items;
+import net.minecraft.world.item.*;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.ServerLevelAccessor;
 import net.minecraft.world.level.block.Block;
@@ -29,6 +27,8 @@ import net.minecraft.world.level.material.Fluid;
 import net.minecraft.world.level.material.Fluids;
 import net.minecraft.world.level.material.WaterFluid;
 import net.minecraftforge.common.ForgeMod;
+import net.minecraftforge.common.IPlantable;
+import net.minecraftforge.registries.ForgeRegistries;
 
 import javax.annotation.Nullable;
 import java.util.List;
@@ -38,12 +38,6 @@ import java.util.function.Predicate;
 public class FarmerEntity extends AbstractWorkerEntity{
 
     public static final EntityDataAccessor<CompoundTag> CROP_AREAS = SynchedEntityData.defineId(FarmerEntity.class, EntityDataSerializers.COMPOUND_TAG);
-
-
-    @Override
-    public Predicate<ItemEntity> getAllowedItems() {
-        return null;
-    }
 
     public static final Set<Block> TILLABLES = ImmutableSet.of(
             Blocks.DIRT,
@@ -83,32 +77,13 @@ public class FarmerEntity extends AbstractWorkerEntity{
 
     protected void defineSynchedData() {
         super.defineSynchedData();
-        this.entityData.define(CROP_AREAS, new CompoundTag());
     }
 
-    public CompoundTag getCropAreasTag(){
-        return entityData.get(CROP_AREAS);
+    @Override//not used
+    public Predicate<ItemEntity> getAllowedItems() {
+        return null;
     }
 
-    public void setCropAreasTag(CompoundTag tag){
-        this.entityData.set(CROP_AREAS, tag);
-    }
-
-    public void addCropArea(CropArea newCropArea){
-        List<CropArea> list = getCropAreas();
-
-        if(newCropArea.name.isEmpty() || newCropArea.name.isBlank()){
-            newCropArea.name = "Field " + list.size();
-        }
-
-        list.add(newCropArea);
-
-        this.setCropAreasTag(CropArea.listToNBT(list));
-    }
-
-    public List<CropArea> getCropAreas() {
-        return CropArea.listFromNBT(getCropAreasTag());
-    }
     @Override
     public void initSpawn() {
         this.setCustomName(Component.literal("Farmer"));
@@ -125,13 +100,6 @@ public class FarmerEntity extends AbstractWorkerEntity{
         AbstractRecruitEntity.applySpawnValues(this);
     }
 
-    //TODO: REMOVE
-    @Override
-    public void setMovePos(BlockPos pos) {
-        super.setMovePos(pos);
-        this.addCropArea(new CropArea(pos, 8, Items.WHEAT_SEEDS.getDefaultInstance(),""));
-    }
-
     @Override
     public List<Item> inventoryInputHelp() {
         return null;
@@ -142,5 +110,17 @@ public class FarmerEntity extends AbstractWorkerEntity{
             if(fluid instanceof WaterFluid || fluid.isSame(Fluids.WATER)) return true;
         }
         return false;
+    }
+
+    public boolean wantsToPickUp(ItemStack itemStack) {
+        ResourceLocation id = ForgeRegistries.ITEMS.getKey(itemStack.getItem());
+        if(id == null) return false;
+
+        if(WorkersServerConfig.FARMER_PICKUP.contains(id.toString())) return true;
+
+        if (itemStack.getItem() instanceof HoeItem && this.getMainHandItem().isEmpty()) {
+            return !this.hasSameTypeOfItem(itemStack);
+        }
+        return super.wantsToPickUp(itemStack);
     }
 }

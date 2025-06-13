@@ -3,6 +3,7 @@ package com.talhanation.workers.init;
 import com.talhanation.workers.Main;
 
 import com.talhanation.workers.entities.FarmerEntity;
+import com.talhanation.workers.entities.WorkAreaEntity;
 import net.minecraft.world.entity.MobCategory;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.resources.ResourceLocation;
@@ -14,6 +15,12 @@ public class ModEntityTypes {
 
         public static final DeferredRegister<EntityType<?>> ENTITY_TYPES = DeferredRegister
                         .create(ForgeRegistries.ENTITY_TYPES, Main.MOD_ID);
+
+        public static final RegistryObject<EntityType<WorkAreaEntity>> WORKAREA = ENTITY_TYPES.register("workarea",
+                () -> EntityType.Builder.of(WorkAreaEntity::new, MobCategory.MISC)
+                        .sized(1.0F, 2.00F)
+                        .fireImmune().noSummon()
+                        .build(new ResourceLocation(Main.MOD_ID, "workarea").toString()));
         /*
         public static final RegistryObject<EntityType<MinerEntity>> MINER = ENTITY_TYPES.register("miner",
                         () -> EntityType.Builder.of(MinerEntity::new, MobCategory.CREATURE)

@@ -9,6 +9,7 @@ import net.minecraft.world.phys.AABB;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Stack;
 
 public class CropArea {
     public BlockPos centerPos;
@@ -16,12 +17,19 @@ public class CropArea {
     public int size;
     public ItemStack seedStack;
     public String name;
+    public Stack<BlockPos> stackToPlant = new Stack<>();
+    public Stack<BlockPos> stackToBreak = new Stack<>();
+    public Stack<BlockPos> stackToPlow = new Stack<>();
+    public boolean isDone;
+    public boolean isChecked;
 
-    public CropArea(BlockPos centerPos, int size, ItemStack seedStack, String name) {
+    public CropArea(BlockPos centerPos, int size, ItemStack seedStack, String name, boolean isChecked, boolean isDone) {
         this.name = name;
         this.centerPos = centerPos;
         this.size = size;
         this.seedStack = seedStack;
+        this.isChecked = isChecked;
+        this.isDone = isDone;
         this.createArea();
     }
 
@@ -45,6 +53,10 @@ public class CropArea {
 
         tag.put("SeedStack", seedStack.save(new CompoundTag()));
         tag.putString("Name", this.name);
+
+        tag.putBoolean("isChecked", isChecked);
+        tag.putBoolean("isDone", isDone);
+
         return tag;
     }
 
@@ -59,7 +71,11 @@ public class CropArea {
 
         ItemStack seed = ItemStack.of(tag.getCompound("SeedStack"));
         String name = tag.getString("Name");
-        return new CropArea(center, size, seed, name);
+
+        boolean isChecked = tag.getBoolean("isChecked");
+        boolean isDone = tag.getBoolean("isDone");
+
+        return new CropArea(center, size, seed, name, isChecked, isDone);
     }
 
     public static List<CropArea> listFromNBT(CompoundTag tag){
@@ -90,4 +106,5 @@ public class CropArea {
         return tag;
     }
 }
+
 

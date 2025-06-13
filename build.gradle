@@ -121,7 +121,7 @@ dependencies {
     shadow fg.deobf("de.maxhenkel.corelib:corelib:1.20.1-1.0.0:api")
     runtimeOnly fg.deobf("de.maxhenkel.corelib:corelib:1.20.1-1.0.0")
     runtimeOnly fg.deobf("de.maxhenkel.corelib:corelib:1.20.1-1.0.0:javadoc")
-    implementation fg.deobf("curse.maven:recruits-523860:6610128")
+    implementation fg.deobf("curse.maven:recruits-523860:6646247")
 
     //implementation fg.deobf("curse.maven:small-ships-450659:5324996")
     annotationProcessor 'org.spongepowered:mixin:0.8.5:processor'

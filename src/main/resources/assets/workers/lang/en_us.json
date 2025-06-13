@@ -19,5 +19,9 @@
   "item.workers.fisherman_spawn_egg": "Fisherman Spawn Egg",
   "item.workers.swineherd_spawn_egg": "Swineherd Spawn Egg",
   "item.workers.cattle_farmer_spawn_egg": "Cattle Farmer Spawn Egg",
-  "item.workers.chicken_farmer_spawn_egg": "Chicken Farmer Spawn Egg"
+  "item.workers.chicken_farmer_spawn_egg": "Chicken Farmer Spawn Egg",
+
+  "gui.workers.command.tooltip.workers": "Workers",
+  "gui.workers.command.text.add_field": "Add Crop field",
+  "gui.workers.command.tooltip.add_field": "Adds a Crop field on the position you are pointing at."
 }

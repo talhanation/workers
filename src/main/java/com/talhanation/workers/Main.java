@@ -1,5 +1,8 @@
 package com.talhanation.workers;
 
+import com.talhanation.recruits.client.events.CommandCategoryManager;
+import com.talhanation.workers.client.gui.WorkerCommandScreen;
+import com.talhanation.workers.network.MessageAddWorkArea;
 import net.minecraft.world.item.CreativeModeTabs;
 import net.minecraftforge.event.BuildCreativeModeTabContentsEvent;
 import net.minecraftforge.event.RegisterCommandsEvent;
@@ -75,7 +78,7 @@ public class Main {
         SIMPLE_CHANNEL = CommonRegistry.registerChannel(Main.MOD_ID, "default");
 
         Class[] messages = {
-
+            MessageAddWorkArea.class
         };
         for (int i = 0; i < messages.length; i++) CommonRegistry.registerMessage(SIMPLE_CHANNEL, i, messages[i]);
     }
@@ -84,6 +87,7 @@ public class Main {
     @OnlyIn(Dist.CLIENT)
     public void clientSetup(FMLClientSetupEvent event) {
         event.enqueueWork(ModMenuTypes::registerMenus);
+        CommandCategoryManager.register(new WorkerCommandScreen());
     }
 
     private void addCreativeTabs(BuildCreativeModeTabContentsEvent event) {
