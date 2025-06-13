@@ -68,15 +68,19 @@ public class WorkAreaEntity extends Entity {
                     BlockPos above = pos.above();
                     BlockState stateAbove = level.getBlockState(above);
 
-                    boolean canSustainSeeds = FarmerEntity.TILLABLES.contains(state.getBlock()) || state.getBlock() instanceof FarmBlock;
+                    boolean canBeTilled = FarmerEntity.TILLABLES.contains(state.getBlock());
                     boolean hasSpaceAbove = stateAbove.isAir();
 
-                    if (canSustainSeeds && (hasSpaceAbove|| stateAbove.getBlock() instanceof BushBlock)){
-                        this.stackToPlow.push(pos);
-                        this.stackToPlant.push(pos.above());
-                    }
 
-                    if(state.getBlock() instanceof CropBlock cropBlock){
+                    if(state.getBlock() instanceof FarmBlock){
+                        if(hasSpaceAbove){
+                            this.stackToPlant.push(pos.above());
+                        }
+                    }
+                    else if (canBeTilled && (hasSpaceAbove || stateAbove.getBlock() instanceof BushBlock)){
+                        this.stackToPlow.push(pos);
+                    }
+                    else if(state.getBlock() instanceof CropBlock cropBlock){
                         int currentAge = cropBlock.getAge(state);
                         int maxAge = cropBlock.getMaxAge();
 
