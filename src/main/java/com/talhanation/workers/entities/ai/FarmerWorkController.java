@@ -33,9 +33,12 @@ public class FarmerWorkController implements IWorkerController {
     public boolean initWork(){
         List<WorkAreaEntity> list = farmer.getCommandSenderWorld().getEntitiesOfClass(WorkAreaEntity.class, farmer.getBoundingBox().inflate(32));
 
+        list.sort(Comparator.comparing(WorkAreaEntity::isBeingWorkedOn));
+
         list.sort(Comparator.comparing(workAreaEntity -> workAreaEntity.position().distanceToSqr(farmer.position())));
+
         list.removeIf(workAreaEntity -> !workAreaEntity.canWorkHere(this.farmer));
-        //list.removeIf(workAreaEntity -> !workAreaEntity.hasWorkOpen());
+        list.removeIf(WorkAreaEntity::isDone);
         if(list.isEmpty()) return false;
 
         this.currentWorkArea = list.get(0);
@@ -53,6 +56,7 @@ public class FarmerWorkController implements IWorkerController {
             }
         }
         else if(centerPosState.is(Blocks.WATER)) {
+            blockPos = currentWorkArea.getOnPos();
             return true;
         }
 
@@ -64,7 +68,6 @@ public class FarmerWorkController implements IWorkerController {
 
         return false;
     }
-
     @Override
     public void tick() {
         if(farmer == null) return;
@@ -81,6 +84,9 @@ public class FarmerWorkController implements IWorkerController {
             if(moveToPosition(blockPos)) return;
             if(breakBlocks(currentWorkArea.stackToBreak) || plowBlocks(currentWorkArea.stackToPlow) || plantCrops(currentWorkArea.stackToPlant)) return;
 
+            currentWorkArea.setDone(true);
+            currentWorkArea.setBeingWorkedOn(false);
+            currentWorkArea = null;
             initialized = false;
         }
     }
@@ -97,7 +103,7 @@ public class FarmerWorkController implements IWorkerController {
         }
         else{
             farmer.setHoldPos(pos.getCenter());
-            farmer.setState(3);
+            farmer.setFollowState(3);
             farmer.getLookControl().setLookAt(blockPos.getCenter());
 
             double distance = pos.getCenter().distanceToSqr(farmer.position());
@@ -133,29 +139,6 @@ public class FarmerWorkController implements IWorkerController {
         return false;
     }
 
-    private boolean isFarmland(BlockState state){
-        return state.getBlock() instanceof FarmBlock;
-    }
-    private boolean isTillAble(BlockState state){
-        return FarmerEntity.TILLABLES.contains(state.getBlock());
-    }
-
-    private boolean isBush(BlockState state){
-        return state.getBlock() instanceof BushBlock;
-    }
-
-    private boolean isCrop(BlockState state){
-        return state.getBlock() instanceof CropBlock;
-    }
-
-    private boolean isCropDone(BlockState state){
-        return state.getBlock() instanceof CropBlock cropBlock && cropBlock.getAge(state) == cropBlock.getMaxAge();
-    }
-
-    private boolean isAir(BlockState state){
-        return state.isAir();
-    }
-
     //Returns false when done
     public boolean plantCrops(Stack<BlockPos> positions){
         if(positions != null && !positions.isEmpty()){
@@ -166,12 +149,12 @@ public class FarmerWorkController implements IWorkerController {
             }
             if(blockPos == null){
                 //this.cropArea.stackToPlant.sort(Comparator.comparingDouble(pos -> pos.getCenter().distanceToSqr(this.farmer.position())));
-                blockPos = positions.pop();
+                if(!positions.isEmpty()) blockPos = positions.pop();
             }
 
             BlockState state = farmer.getCommandSenderWorld().getBlockState(blockPos);
             if(state.getBlock() instanceof CropBlock){
-                blockPos = positions.pop();
+                if(!positions.isEmpty()) blockPos = positions.pop();
             }
             else if (seedFromInv.getItem() instanceof BlockItem blockItem) {
                 farmer.getCommandSenderWorld().setBlockAndUpdate(blockPos, blockItem.getBlock().defaultBlockState());

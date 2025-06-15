@@ -27,7 +27,7 @@ public class WorkAreaEntity extends Entity {
     public Stack<BlockPos> stackToBreak = new Stack<>();
     public Stack<BlockPos> stackToPlow = new Stack<>();
     public boolean isDone;
-    public boolean isChecked;
+    public boolean isBeingWorkedOn;
     public UUID workerUUID;
     public UUID playerUUID;
     public String playerName;
@@ -47,14 +47,31 @@ public class WorkAreaEntity extends Entity {
     @Override
     public void readAdditionalSaveData(CompoundTag tag) {
         this.playerUUID = tag.getUUID("playerUUID");
+        this.isDone = tag.getBoolean("isDone");
+        this.resetTimer = tag.getInt("resetTimer");
+        this.isBeingWorkedOn = tag.getBoolean("isBeingWorkedOn");
     }
 
     @Override
     public void addAdditionalSaveData(CompoundTag tag) {
         tag.putUUID("playerUUID", playerUUID);
+        tag.putBoolean("isDone", isDone);
+        tag.putInt("resetTimer", resetTimer);
+        tag.putBoolean("isBeingWorkedOn", isBeingWorkedOn);
+    }
+
+    int resetTimer;
+    @Override
+    public void tick() {
+        super.tick();
+        if(isDone && resetTimer++ > 20*60*3){
+            resetTimer = 0;
+            this.setDone(false);
+        }
     }
 
     public void scanArea() {
+        this.setBeingWorkedOn(true);
         stackToPlant.clear();
         stackToBreak.clear();
         stackToPlow.clear();
@@ -69,15 +86,14 @@ public class WorkAreaEntity extends Entity {
                     BlockState stateAbove = level.getBlockState(above);
 
                     boolean canBeTilled = FarmerEntity.TILLABLES.contains(state.getBlock());
-                    boolean hasSpaceAbove = stateAbove.isAir();
-
+                    boolean hasSpaceAbove = stateAbove.isAir() || stateAbove.getBlock() instanceof BushBlock;
 
                     if(state.getBlock() instanceof FarmBlock){
-                        if(hasSpaceAbove){
+                        if(hasSpaceAbove && !isCrop(stateAbove)){//what?
                             this.stackToPlant.push(pos.above());
                         }
                     }
-                    else if (canBeTilled && (hasSpaceAbove || stateAbove.getBlock() instanceof BushBlock)){
+                    else if (canBeTilled && hasSpaceAbove){
                         this.stackToPlow.push(pos);
                     }
                     else if(state.getBlock() instanceof CropBlock cropBlock){
@@ -96,6 +112,28 @@ public class WorkAreaEntity extends Entity {
         }
     }
 
+    public boolean isFarmland(BlockState state){
+        return state.getBlock() instanceof FarmBlock;
+    }
+    public boolean isTillAble(BlockState state){
+        return FarmerEntity.TILLABLES.contains(state.getBlock());
+    }
+
+    public boolean isBush(BlockState state){
+        return state.getBlock() instanceof BushBlock;
+    }
+
+    public boolean isCrop(BlockState state){
+        return state.getBlock() instanceof CropBlock;
+    }
+
+    public boolean isCropDone(BlockState state){
+        return state.getBlock() instanceof CropBlock cropBlock && cropBlock.getAge(state) == cropBlock.getMaxAge();
+    }
+
+    public boolean isAir(BlockState state){
+        return state.isAir();
+    }
     @Override
     public boolean hurt(DamageSource damageSource, float a) {
         return false;
@@ -141,10 +179,26 @@ public class WorkAreaEntity extends Entity {
     }
 
     public boolean canWorkHere(FarmerEntity farmer) {
-        return farmer.getOwnerUUID().equals(this.playerUUID);
+        return farmer.isOwned() && farmer.getOwnerUUID().equals(this.playerUUID);
     }
 
     public boolean hasWorkOpen(){
         return !stackToBreak.isEmpty() || !stackToPlant.isEmpty() || !stackToPlow.isEmpty();
+    }
+
+    public void setDone(boolean b) {
+        this.isDone = b;
+    }
+
+    public boolean isDone(){
+        return this.isDone;
+    }
+
+    public void setBeingWorkedOn(boolean b) {
+        this.isBeingWorkedOn = b;
+    }
+
+    public boolean isBeingWorkedOn(){
+        return this.isBeingWorkedOn;
     }
 }
