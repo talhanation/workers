@@ -2,7 +2,7 @@ package com.talhanation.workers.entities.ai;
 
 import com.talhanation.workers.entities.FarmerEntity;
 import com.talhanation.workers.entities.IWorkerController;
-import com.talhanation.workers.entities.WorkAreaEntity;
+import com.talhanation.workers.entities.workarea.CropArea;
 import net.minecraft.core.BlockPos;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.sounds.SoundSource;
@@ -24,7 +24,7 @@ public class FarmerWorkController implements IWorkerController {
     public FarmerEntity farmer;
     public BlockPos blockPos;
     public boolean initialized;
-    public WorkAreaEntity currentWorkArea;
+    public CropArea currentCropArea;
     public Stack<BlockPos> stackToPlant = new Stack<>();
     public Stack<BlockPos> stackToBreak = new Stack<>();
     public Stack<BlockPos> stackToPlow = new Stack<>();
@@ -34,38 +34,38 @@ public class FarmerWorkController implements IWorkerController {
     }
 
     public boolean initWork(){
-        List<WorkAreaEntity> list = farmer.getCommandSenderWorld().getEntitiesOfClass(WorkAreaEntity.class, farmer.getBoundingBox().inflate(32));
+        List<CropArea> list = farmer.getCommandSenderWorld().getEntitiesOfClass(CropArea.class, farmer.getBoundingBox().inflate(32));
 
-        list.sort(Comparator.comparing(WorkAreaEntity::isBeingWorkedOn));
+        list.sort(Comparator.comparing(CropArea::isBeingWorkedOn));
 
         list.sort(Comparator.comparing(workAreaEntity -> workAreaEntity.position().distanceToSqr(farmer.position())));
 
         list.removeIf(workAreaEntity -> !workAreaEntity.canWorkHere(this.farmer));
-        list.removeIf(WorkAreaEntity::isDone);
+        list.removeIf(CropArea::isDone);
         if(list.isEmpty()) return false;
 
-        this.currentWorkArea = list.get(0);
+        this.currentCropArea = list.get(0);
 
-        if(currentWorkArea == null) return false;
+        if(currentCropArea == null) return false;
 
         setWorkState(WorkState.BREAKING_BLOCKS);
 
-        BlockState centerPosState = farmer.getCommandSenderWorld().getBlockState(currentWorkArea.getOnPos());
+        BlockState centerPosState = farmer.getCommandSenderWorld().getBlockState(currentCropArea.getOnPos());
         if(centerPosState.isAir()){
             ItemStack itemStack = farmer.getMatchingItem(item -> farmer.isBucketWithWater(item));
             if(itemStack == null) return false;
             if(itemStack.getItem() instanceof BucketItem bucketItem){
-                bucketItem.emptyContents(null,  farmer.getCommandSenderWorld(), currentWorkArea.getOnPos(), null);
+                bucketItem.emptyContents(null,  farmer.getCommandSenderWorld(), currentCropArea.getOnPos(), null);
             }
         }
         else if(centerPosState.is(Blocks.WATER)) {
-            blockPos = currentWorkArea.getOnPos();
+            blockPos = currentCropArea.getOnPos();
             return true;
         }
 
         else{
-            if(!this.stackToBreak.contains(currentWorkArea.getOnPos())){
-                this.stackToBreak.push(currentWorkArea.getOnPos());
+            if(!this.stackToBreak.contains(currentCropArea.getOnPos())){
+                this.stackToBreak.push(currentCropArea.getOnPos());
             }
         }
 
@@ -82,7 +82,7 @@ public class FarmerWorkController implements IWorkerController {
                 initialized = true;
             }
 
-            if(currentWorkArea == null) return;
+            if(currentCropArea == null) return;
             if(moveToPosition(blockPos)) return;
 
             switch (workState){
@@ -102,9 +102,9 @@ public class FarmerWorkController implements IWorkerController {
                 }
 
                 case DONE -> {
-                    currentWorkArea.setDone(true);
-                    currentWorkArea.setBeingWorkedOn(false);
-                    currentWorkArea = null;
+                    currentCropArea.setDone(true);
+                    currentCropArea.setBeingWorkedOn(false);
+                    currentCropArea = null;
                     initialized = false;
                 }
             }
@@ -161,7 +161,7 @@ public class FarmerWorkController implements IWorkerController {
     //Returns false when done
     public boolean plantCrops(Stack<BlockPos> positions){
         if(positions != null && !positions.isEmpty()){
-            ItemStack seedFromInv = farmer.getMatchingItem(itemStack -> itemStack.is(currentWorkArea.seedStack.getItem()));
+            ItemStack seedFromInv = farmer.getMatchingItem(itemStack -> itemStack.is(currentCropArea.getSeedStack().getItem()));
             if(seedFromInv == null){
                 this.blockPos = null;
                 return false;
@@ -225,25 +225,25 @@ public class FarmerWorkController implements IWorkerController {
 
         switch (newState){
             case BREAKING_BLOCKS -> {
-                this.currentWorkArea.scanBreakArea();
+                this.currentCropArea.scanBreakArea();
 
-                this.stackToBreak = currentWorkArea.stackToBreak;
+                this.stackToBreak = currentCropArea.stackToBreak;
 
                 this.stackToBreak.sort(Comparator.comparing(pos -> pos.getCenter().distanceToSqr(farmer.position())));
             }
 
             case PLOWING -> {
-                this.currentWorkArea.scanPlowArea();
+                this.currentCropArea.scanPlowArea();
 
-                this.stackToPlow = currentWorkArea.stackToPlow;
+                this.stackToPlow = currentCropArea.stackToPlow;
 
                 this.stackToPlow.sort(Comparator.comparing(pos -> pos.getCenter().distanceToSqr(farmer.position())));
             }
 
             case PLANTING ->  {
-                this.currentWorkArea.scanPlantArea();
+                this.currentCropArea.scanPlantArea();
 
-                this.stackToPlant = currentWorkArea.stackToPlant;
+                this.stackToPlant = currentCropArea.stackToPlant;
 
                 this.stackToPlant.sort(Comparator.comparing(pos -> pos.getCenter().distanceToSqr(farmer.position())));
             }

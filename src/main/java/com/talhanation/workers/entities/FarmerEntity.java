@@ -37,8 +37,6 @@ import java.util.function.Predicate;
 
 public class FarmerEntity extends AbstractWorkerEntity{
 
-    public static final EntityDataAccessor<CompoundTag> CROP_AREAS = SynchedEntityData.defineId(FarmerEntity.class, EntityDataSerializers.COMPOUND_TAG);
-
     public static final Set<Block> TILLABLES = ImmutableSet.of(
             Blocks.DIRT,
             Blocks.ROOTED_DIRT,

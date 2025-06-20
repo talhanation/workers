@@ -3,7 +3,9 @@ package com.talhanation.workers.init;
 import com.talhanation.workers.Main;
 
 import com.talhanation.workers.entities.FarmerEntity;
-import com.talhanation.workers.entities.WorkAreaEntity;
+import com.talhanation.workers.entities.workarea.CropArea;
+import com.talhanation.workers.entities.workarea.WorkAreaEntity;
+import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.MobCategory;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.resources.ResourceLocation;
@@ -16,11 +18,11 @@ public class ModEntityTypes {
         public static final DeferredRegister<EntityType<?>> ENTITY_TYPES = DeferredRegister
                         .create(ForgeRegistries.ENTITY_TYPES, Main.MOD_ID);
 
-        public static final RegistryObject<EntityType<WorkAreaEntity>> WORKAREA = ENTITY_TYPES.register("workarea",
-                () -> EntityType.Builder.of(WorkAreaEntity::new, MobCategory.MISC)
+        public static final RegistryObject<EntityType<CropArea>> CROPAREA = ENTITY_TYPES.register("croparea",
+                () -> EntityType.Builder.of(CropArea::new, MobCategory.MISC)
                         .sized(1.0F, 2.00F)
                         .fireImmune().noSummon()
-                        .build(new ResourceLocation(Main.MOD_ID, "workarea").toString()));
+                        .build(new ResourceLocation(Main.MOD_ID, "croparea").toString()));
         /*
         public static final RegistryObject<EntityType<MinerEntity>> MINER = ENTITY_TYPES.register("miner",
                         () -> EntityType.Builder.of(MinerEntity::new, MobCategory.CREATURE)

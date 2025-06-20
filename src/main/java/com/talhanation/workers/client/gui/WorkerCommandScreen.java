@@ -39,7 +39,7 @@ public class WorkerCommandScreen implements ICommandCategory {
                 button -> {
                     if(screen.rayBlockPos == null) return;
                     Vec3 pos = screen.rayBlockPos.above().getCenter();
-                    Main.SIMPLE_CHANNEL.sendToServer(new MessageAddWorkArea((float) pos.x(), (int) pos.y(), (float) pos.z()));
+                    Main.SIMPLE_CHANNEL.sendToServer(new MessageAddWorkArea((float) pos.x(), (int) pos.y(), (float) pos.z(), 0));
                 });
 
         addCropFieldButton.setTooltip(Tooltip.create(TOOLTIP_ADD_FIELD));

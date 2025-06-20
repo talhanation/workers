@@ -4,7 +4,6 @@ import com.talhanation.recruits.config.RecruitsClientConfig;
 import com.talhanation.workers.Main;
 import com.talhanation.workers.client.render.WorkerAreaRenderer;
 import com.talhanation.workers.client.render.WorkerVillagerRenderer;
-import com.talhanation.workers.entities.WorkAreaEntity;
 import com.talhanation.workers.init.ModEntityTypes;
 import com.talhanation.workers.client.render.WorkerHumanRenderer;
 import net.minecraft.client.renderer.entity.EntityRenderers;
@@ -19,7 +18,7 @@ public class ClientEvent {
     @SubscribeEvent
     @OnlyIn(Dist.CLIENT)
     public static void entityRenderersEvent(EntityRenderersEvent.RegisterRenderers event) {
-        EntityRenderers.register(ModEntityTypes.WORKAREA.get(), WorkerAreaRenderer::new);
+        EntityRenderers.register(ModEntityTypes.CROPAREA.get(), WorkerAreaRenderer::new);
 
         if (RecruitsClientConfig.RecruitsLookLikeVillagers.get()) {
             EntityRenderers.register(ModEntityTypes.FARMER.get(), WorkerVillagerRenderer::new);

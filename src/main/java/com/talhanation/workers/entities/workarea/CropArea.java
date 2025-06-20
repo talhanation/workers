@@ -1,0 +1,148 @@
+package com.talhanation.workers.entities.workarea;
+
+import com.talhanation.workers.entities.FarmerEntity;
+import net.minecraft.core.BlockPos;
+import net.minecraft.nbt.CompoundTag;
+import net.minecraft.network.syncher.EntityDataAccessor;
+import net.minecraft.network.syncher.EntityDataSerializers;
+import net.minecraft.network.syncher.SynchedEntityData;
+import net.minecraft.world.entity.EntityType;
+import net.minecraft.world.item.Item;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.Items;
+import net.minecraft.world.level.Level;
+import net.minecraft.world.level.block.BushBlock;
+import net.minecraft.world.level.block.CropBlock;
+import net.minecraft.world.level.block.FarmBlock;
+import net.minecraft.world.level.block.state.BlockState;
+
+import java.util.Stack;
+
+public class CropArea extends WorkAreaEntity{
+
+    public static final EntityDataAccessor<ItemStack> SEED_STACK = SynchedEntityData.defineId(CropArea.class, EntityDataSerializers.ITEM_STACK);
+
+    public Stack<BlockPos> stackToPlant = new Stack<>();
+    public Stack<BlockPos> stackToBreak = new Stack<>();
+    public Stack<BlockPos> stackToPlow = new Stack<>();
+
+    public CropArea(EntityType<?> type, Level level) {
+        super(type, level);
+    }
+
+    protected void defineSynchedData() {
+        super.defineSynchedData();
+        this.entityData.define(SEED_STACK, ItemStack.EMPTY);
+    }
+
+    @Override
+    public void readAdditionalSaveData(CompoundTag tag) {
+        super.readAdditionalSaveData(tag);
+        if(tag.contains("seedItem")){
+            ItemStack stack = ItemStack.of(tag.getCompound("seedItem"));
+            this.setSeedStack(stack);
+        }
+
+    }
+
+    @Override
+    public void addAdditionalSaveData(CompoundTag tag) {
+        super.addAdditionalSaveData(tag);
+        tag.put("seedItem", this.getSeedStack().getOrCreateTag());
+    }
+
+    public Item getRenderItem(){
+        return Items.IRON_HOE;
+    }
+
+    public void scanBreakArea(){
+        stackToBreak.clear();
+        Level level = this.getCommandSenderWorld();
+        for (int i = -getSize(); i <= getSize(); i++) {
+            for (int k = -getHeight(); k <= getHeight(); k++) {
+                for (int j = -getSize(); j <= getSize(); j++) {
+                    BlockPos pos = getOnPos().offset(i, k, j);
+                    BlockState state = level.getBlockState(pos);
+
+                    BlockPos below = pos.below();
+                    BlockState stateBelow = level.getBlockState(below);
+
+                    if(isFarmland(stateBelow) || isTillAble(stateBelow)){
+                        if(isCropDone(state) || (isBush(state) && !isCrop(state))){
+                            this.stackToBreak.push(pos);
+                        }
+                    }
+                }
+            }
+        }
+    }
+    public void scanPlowArea(){
+        stackToPlow.clear();
+        Level level = this.getCommandSenderWorld();
+        for (int i = -getSize(); i <= getSize(); i++) {
+            for (int k = -getHeight(); k <= getHeight(); k++) {
+                for (int j = -getSize(); j <= getSize(); j++) {
+                    BlockPos pos = getOnPos().offset(i, k, j);
+                    BlockState state = level.getBlockState(pos);
+
+                    BlockPos above = pos.above();
+                    BlockState stateAbove = level.getBlockState(above);
+
+                    if(isAir(stateAbove) && isTillAble(state)){
+                        this.stackToPlow.push(pos);
+                    }
+                }
+            }
+        }
+    }
+    public void scanPlantArea(){
+        stackToPlant.clear();
+        Level level = this.getCommandSenderWorld();
+        for (int i = -getSize(); i <= getSize(); i++) {
+            for (int k = -getHeight(); k <= getHeight(); k++) {
+                for (int j = -getSize(); j <= getSize(); j++) {
+                    BlockPos pos = getOnPos().offset(i, k, j);
+                    BlockState state = level.getBlockState(pos);
+
+                    BlockPos below = pos.below();
+                    BlockState stateBelow = level.getBlockState(below);
+
+                    if(isAir(state) && isFarmland(stateBelow)){
+                        this.stackToPlant.push(pos);
+                    }
+                }
+            }
+        }
+    }
+
+    public boolean isFarmland(BlockState state){
+        return state.getBlock() instanceof FarmBlock;
+    }
+    public boolean isTillAble(BlockState state){
+        return FarmerEntity.TILLABLES.contains(state.getBlock());
+    }
+
+    public boolean isBush(BlockState state){
+        return state.getBlock() instanceof BushBlock;
+    }
+
+    public boolean isCrop(BlockState state){
+        return state.getBlock() instanceof CropBlock;
+    }
+
+    public boolean isCropDone(BlockState state){
+        return state.getBlock() instanceof CropBlock cropBlock && cropBlock.getAge(state) == cropBlock.getMaxAge();
+    }
+
+    public boolean isAir(BlockState state){
+        return state.isAir();
+    }
+
+    public void setSeedStack(ItemStack seedStack) {
+        this.entityData.set(SEED_STACK, seedStack);
+    }
+
+    public ItemStack getSeedStack(){
+        return entityData.get(SEED_STACK);
+    }
+}

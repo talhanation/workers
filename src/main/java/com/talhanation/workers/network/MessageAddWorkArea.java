@@ -1,11 +1,12 @@
 package com.talhanation.workers.network;
 
-import com.talhanation.workers.entities.WorkAreaEntity;
+import com.talhanation.workers.entities.workarea.CropArea;
+import com.talhanation.workers.entities.workarea.WorkAreaEntity;
 import com.talhanation.workers.init.ModEntityTypes;
 import de.maxhenkel.corelib.net.Message;
 import net.minecraft.network.FriendlyByteBuf;
+import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerPlayer;
-import net.minecraft.world.phys.Vec3;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.network.NetworkEvent;
 
@@ -13,14 +14,16 @@ public class MessageAddWorkArea implements Message<MessageAddWorkArea> {
     public float x;
     public float y;
     public float z;
+    public int type;
     public MessageAddWorkArea() {
 
     }
 
-    public MessageAddWorkArea(float x, float y, float z) {
+    public MessageAddWorkArea(float x, float y, float z, int type) {
         this.x = x;
         this.y = y;
         this.z = z;
+        this.type = type;
     }
 
     public Dist getExecutingSide() {
@@ -30,19 +33,33 @@ public class MessageAddWorkArea implements Message<MessageAddWorkArea> {
     public void executeServerSide(NetworkEvent.Context context){
         ServerPlayer player = context.getSender();
         if(player == null) return;
+        String teamStringID = "";
+        if(player.getTeam() != null){
+            teamStringID = player.getTeam().getName();
+        }
+        WorkAreaEntity workArea;
+        switch (type){
+            default -> {
+                workArea = new CropArea(ModEntityTypes.CROPAREA.get(), player.level());
+                workArea.setSize(4);
+                workArea.setHeight(2);
 
-        WorkAreaEntity workArea = new WorkAreaEntity(ModEntityTypes.WORKAREA.get(), player.level());
+            }
+        }
+        workArea.setTeamStringID(teamStringID);
+        workArea.setDone(false);
+        workArea.setPlayerName(player.getName().getString());
+        workArea.setPlayerUUID(player.getUUID());
+        workArea.setCustomName(Component.literal(""));
+
         workArea.moveTo(this.x, this.y, this.z);
-        workArea.playerName = player.getName().getString();
-        workArea.playerUUID = player.getUUID();
-        workArea.name = "";
-
         player.level().addFreshEntity(workArea);
     }
     public MessageAddWorkArea fromBytes(FriendlyByteBuf buf) {
         this.x = buf.readFloat();
         this.y = buf.readFloat();
         this.z = buf.readFloat();
+        this.type = buf.readInt();
         //this.recruit = buf.readUUID();
 
         return this;
@@ -52,6 +69,7 @@ public class MessageAddWorkArea implements Message<MessageAddWorkArea> {
         buf.writeFloat(x);
         buf.writeFloat(y);
         buf.writeFloat(z);
+        buf.writeInt(type);
     }
 
 }
