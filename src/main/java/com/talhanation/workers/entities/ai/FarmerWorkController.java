@@ -25,7 +25,10 @@ public class FarmerWorkController implements IWorkerController {
     public BlockPos blockPos;
     public boolean initialized;
     public WorkAreaEntity currentWorkArea;
-
+    public Stack<BlockPos> stackToPlant = new Stack<>();
+    public Stack<BlockPos> stackToBreak = new Stack<>();
+    public Stack<BlockPos> stackToPlow = new Stack<>();
+    public WorkState workState;
     public FarmerWorkController(FarmerEntity farmer){
         this.farmer = farmer;
     }
@@ -45,7 +48,7 @@ public class FarmerWorkController implements IWorkerController {
 
         if(currentWorkArea == null) return false;
 
-        currentWorkArea.scanArea();
+        setWorkState(WorkState.BREAKING_BLOCKS);
 
         BlockState centerPosState = farmer.getCommandSenderWorld().getBlockState(currentWorkArea.getOnPos());
         if(centerPosState.isAir()){
@@ -61,8 +64,8 @@ public class FarmerWorkController implements IWorkerController {
         }
 
         else{
-            if(!currentWorkArea.stackToBreak.contains(currentWorkArea.getOnPos())){
-                currentWorkArea.stackToBreak.push(currentWorkArea.getOnPos());
+            if(!this.stackToBreak.contains(currentWorkArea.getOnPos())){
+                this.stackToBreak.push(currentWorkArea.getOnPos());
             }
         }
 
@@ -80,14 +83,31 @@ public class FarmerWorkController implements IWorkerController {
             }
 
             if(currentWorkArea == null) return;
-
             if(moveToPosition(blockPos)) return;
-            if(breakBlocks(currentWorkArea.stackToBreak) || plowBlocks(currentWorkArea.stackToPlow) || plantCrops(currentWorkArea.stackToPlant)) return;
 
-            currentWorkArea.setDone(true);
-            currentWorkArea.setBeingWorkedOn(false);
-            currentWorkArea = null;
-            initialized = false;
+            switch (workState){
+                case BREAKING_BLOCKS -> {
+                    if(breakBlocks(this.stackToBreak)) return;
+                    setWorkState(WorkState.PLOWING);
+                }
+
+                case PLOWING -> {
+                    if(plowBlocks(this.stackToPlow)) return;
+                    setWorkState(WorkState.PLANTING);
+                }
+
+                case PLANTING -> {
+                    if(plantCrops(this.stackToPlant)) return;
+                    setWorkState(WorkState.DONE);
+                }
+
+                case DONE -> {
+                    currentWorkArea.setDone(true);
+                    currentWorkArea.setBeingWorkedOn(false);
+                    currentWorkArea = null;
+                    initialized = false;
+                }
+            }
         }
     }
 
@@ -120,7 +140,6 @@ public class FarmerWorkController implements IWorkerController {
     public boolean breakBlocks(Stack<BlockPos> positions){
         if(positions != null && !positions.isEmpty()){
             if(blockPos == null){
-                //this.cropArea.stackToBreak.sort(Comparator.comparingDouble(pos -> pos.getCenter().distanceToSqr(this.farmer.position())));
                 blockPos = positions.pop();
             }
             //getNextBlock
@@ -148,13 +167,14 @@ public class FarmerWorkController implements IWorkerController {
                 return false;
             }
             if(blockPos == null){
-                //this.cropArea.stackToPlant.sort(Comparator.comparingDouble(pos -> pos.getCenter().distanceToSqr(this.farmer.position())));
                 if(!positions.isEmpty()) blockPos = positions.pop();
             }
 
             BlockState state = farmer.getCommandSenderWorld().getBlockState(blockPos);
             if(state.getBlock() instanceof CropBlock){
-                if(!positions.isEmpty()) blockPos = positions.pop();
+                if(!positions.isEmpty()){
+                    blockPos = positions.pop();
+                }
             }
             else if (seedFromInv.getItem() instanceof BlockItem blockItem) {
                 farmer.getCommandSenderWorld().setBlockAndUpdate(blockPos, blockItem.getBlock().defaultBlockState());
@@ -181,13 +201,12 @@ public class FarmerWorkController implements IWorkerController {
     public boolean plowBlocks(Stack<BlockPos> positions){
         if(positions != null && !positions.isEmpty()){
             if(blockPos == null){
-                //this.cropArea.stackToPlow.sort(Comparator.comparingDouble(pos -> pos.getCenter().distanceToSqr(this.farmer.position())));
                 blockPos = positions.pop();
             }
             //getNextBlock
             BlockState state = farmer.getCommandSenderWorld().getBlockState(blockPos);
             if(state.getBlock() instanceof FarmBlock){
-                blockPos = positions.pop();
+                if(!positions.isEmpty()) blockPos = positions.pop();
             }
             else{//plowBlock
                 this.farmer.swing(InteractionHand.MAIN_HAND);
@@ -200,4 +219,45 @@ public class FarmerWorkController implements IWorkerController {
         blockPos = null;
         return false;
     }
+
+    public void setWorkState(WorkState newState){
+        if(newState == this.workState) return;
+
+        switch (newState){
+            case BREAKING_BLOCKS -> {
+                this.currentWorkArea.scanBreakArea();
+
+                this.stackToBreak = currentWorkArea.stackToBreak;
+
+                this.stackToBreak.sort(Comparator.comparing(pos -> pos.getCenter().distanceToSqr(farmer.position())));
+            }
+
+            case PLOWING -> {
+                this.currentWorkArea.scanPlowArea();
+
+                this.stackToPlow = currentWorkArea.stackToPlow;
+
+                this.stackToPlow.sort(Comparator.comparing(pos -> pos.getCenter().distanceToSqr(farmer.position())));
+            }
+
+            case PLANTING ->  {
+                this.currentWorkArea.scanPlantArea();
+
+                this.stackToPlant = currentWorkArea.stackToPlant;
+
+                this.stackToPlant.sort(Comparator.comparing(pos -> pos.getCenter().distanceToSqr(farmer.position())));
+            }
+            default -> {}
+        }
+        this.workState = newState;
+    }
+
+    public enum WorkState{
+        BREAKING_BLOCKS,
+        PLOWING,
+        PLANTING,
+        DONE
+    }
 }
+
+

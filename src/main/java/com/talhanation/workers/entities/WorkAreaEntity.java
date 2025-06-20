@@ -70,6 +70,66 @@ public class WorkAreaEntity extends Entity {
         }
     }
 
+    public void scanBreakArea(){
+        stackToBreak.clear();
+        Level level = this.getCommandSenderWorld();
+        for (int i = -radius; i <= radius; i++) {
+            for (int k = -height; k <= height; k++) {
+                for (int j = -radius; j <= radius; j++) {
+                    BlockPos pos = getOnPos().offset(i, k, j);
+                    BlockState state = level.getBlockState(pos);
+
+                    BlockPos below = pos.below();
+                    BlockState stateBelow = level.getBlockState(below);
+
+                    if(isFarmland(stateBelow) || isTillAble(stateBelow)){
+                        if(isCropDone(state) || (isBush(state) && !isCrop(state))){
+                            this.stackToBreak.push(pos);
+                        }
+                    }
+                }
+            }
+        }
+    }
+    public void scanPlowArea(){
+        stackToPlow.clear();
+        Level level = this.getCommandSenderWorld();
+        for (int i = -radius; i <= radius; i++) {
+            for (int k = -height; k <= height; k++) {
+                for (int j = -radius; j <= radius; j++) {
+                    BlockPos pos = getOnPos().offset(i, k, j);
+                    BlockState state = level.getBlockState(pos);
+
+                    BlockPos above = pos.above();
+                    BlockState stateAbove = level.getBlockState(above);
+
+                    if(isAir(stateAbove) && isTillAble(state)){
+                        this.stackToPlow.push(pos);
+                    }
+                }
+            }
+        }
+    }
+    public void scanPlantArea(){
+        stackToPlant.clear();
+        Level level = this.getCommandSenderWorld();
+        for (int i = -radius; i <= radius; i++) {
+            for (int k = -height; k <= height; k++) {
+                for (int j = -radius; j <= radius; j++) {
+                    BlockPos pos = getOnPos().offset(i, k, j);
+                    BlockState state = level.getBlockState(pos);
+
+                    BlockPos below = pos.below();
+                    BlockState stateBelow = level.getBlockState(below);
+
+                    if(isAir(state) && isFarmland(stateBelow)){
+                        this.stackToPlant.push(pos);
+                    }
+                }
+            }
+        }
+    }
+
     public void scanArea() {
         this.setBeingWorkedOn(true);
         stackToPlant.clear();
@@ -89,7 +149,7 @@ public class WorkAreaEntity extends Entity {
                     boolean hasSpaceAbove = stateAbove.isAir() || stateAbove.getBlock() instanceof BushBlock;
 
                     if(state.getBlock() instanceof FarmBlock){
-                        if(hasSpaceAbove && !isCrop(stateAbove)){//what?
+                        if(hasSpaceAbove){//what?
                             this.stackToPlant.push(pos.above());
                         }
                     }
