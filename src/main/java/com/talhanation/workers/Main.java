@@ -3,6 +3,9 @@ package com.talhanation.workers;
 import com.talhanation.recruits.client.events.CommandCategoryManager;
 import com.talhanation.workers.client.gui.WorkerCommandScreen;
 import com.talhanation.workers.network.MessageAddWorkArea;
+import com.talhanation.workers.network.MessageToClientOpenWorkAreaScreen;
+import com.talhanation.workers.network.MessageUpdateCropArea;
+import com.talhanation.workers.network.MessageUpdateWorkArea;
 import net.minecraft.world.item.CreativeModeTabs;
 import net.minecraftforge.event.BuildCreativeModeTabContentsEvent;
 import net.minecraftforge.event.RegisterCommandsEvent;
@@ -78,7 +81,10 @@ public class Main {
         SIMPLE_CHANNEL = CommonRegistry.registerChannel(Main.MOD_ID, "default");
 
         Class[] messages = {
-            MessageAddWorkArea.class
+            MessageAddWorkArea.class,
+            MessageToClientOpenWorkAreaScreen.class,
+            MessageUpdateWorkArea.class,
+            MessageUpdateCropArea.class
         };
         for (int i = 0; i < messages.length; i++) CommonRegistry.registerMessage(SIMPLE_CHANNEL, i, messages[i]);
     }

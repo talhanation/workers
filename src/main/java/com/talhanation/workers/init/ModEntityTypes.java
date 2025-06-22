@@ -4,8 +4,6 @@ import com.talhanation.workers.Main;
 
 import com.talhanation.workers.entities.FarmerEntity;
 import com.talhanation.workers.entities.workarea.CropArea;
-import com.talhanation.workers.entities.workarea.WorkAreaEntity;
-import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.MobCategory;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.resources.ResourceLocation;

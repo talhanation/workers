@@ -4,7 +4,7 @@ import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.VertexConsumer;
 import com.mojang.math.Axis;
 import com.talhanation.recruits.client.events.ClientEvent;
-import com.talhanation.workers.entities.workarea.WorkAreaEntity;
+import com.talhanation.workers.entities.workarea.AbstractWorkAreaEntity;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.LevelRenderer;
 import net.minecraft.client.renderer.MultiBufferSource;
@@ -27,7 +27,7 @@ import net.minecraftforge.api.distmarker.OnlyIn;
 import org.jetbrains.annotations.NotNull;
 
 @OnlyIn(Dist.CLIENT)
-public class WorkerAreaRenderer extends EntityRenderer<WorkAreaEntity> {
+public class WorkerAreaRenderer extends EntityRenderer<AbstractWorkAreaEntity> {
     private final ItemRenderer itemRenderer;
     public WorkerAreaRenderer(EntityRendererProvider.Context mgr) {
         super(mgr);
@@ -36,47 +36,47 @@ public class WorkerAreaRenderer extends EntityRenderer<WorkAreaEntity> {
         this.shadowStrength = 0.75F;
     }
     @Override
-    public ResourceLocation getTextureLocation(WorkAreaEntity p_115034_) {
+    public ResourceLocation getTextureLocation(AbstractWorkAreaEntity p_115034_) {
         return TextureAtlas.LOCATION_BLOCKS;
     }
     //ItemEntityRenderer
     @Override
-    public void render(@NotNull WorkAreaEntity workAreaEntity, float entityYaw, float partialTicks, PoseStack poseStack, MultiBufferSource bufferSource, int packedLight) {
+    public void render(@NotNull AbstractWorkAreaEntity abstractWorkAreaEntity, float entityYaw, float partialTicks, PoseStack poseStack, MultiBufferSource bufferSource, int packedLight) {
+        super.render(abstractWorkAreaEntity, entityYaw, partialTicks, poseStack, bufferSource, packedLight);
         Player player = Minecraft.getInstance().player;
         if(player == null) return;
 
-        if(!player.getUUID().equals(workAreaEntity.getPlayerUUID()) || (player.getTeam() != null && !player.getTeam().getName().equals(workAreaEntity.getTeamStringID()))) return;
-
-        Entity looking = ClientEvent.getEntityByLooking();
+        if(!player.getUUID().equals(abstractWorkAreaEntity.getPlayerUUID()) || (player.getTeam() != null && !player.getTeam().getName().equals(abstractWorkAreaEntity.getTeamStringID()))) return;
 
         poseStack.pushPose();
 
-        float rotation = (workAreaEntity.tickCount + partialTicks) * 3.0F;
+        float rotation = (abstractWorkAreaEntity.tickCount + partialTicks) * 3.0F;
 
-        ItemStack itemstack = workAreaEntity.getRenderItem().getDefaultInstance();
+        ItemStack itemstack = abstractWorkAreaEntity.getRenderItem().getDefaultInstance();
 
         poseStack.translate(0, 1, 0);
         poseStack.scale(2.30f, 2.30f, 2.30f);
         poseStack.mulPose(Axis.YP.rotationDegrees(rotation));
 
-        BakedModel bakedmodel = this.itemRenderer.getModel(itemstack, workAreaEntity.level(), null, workAreaEntity.getId());
+        BakedModel bakedmodel = this.itemRenderer.getModel(itemstack, abstractWorkAreaEntity.level(), null, abstractWorkAreaEntity.getId());
         this.itemRenderer.render(itemstack, ItemDisplayContext.GROUND, false, poseStack, bufferSource, packedLight, OverlayTexture.NO_OVERLAY, bakedmodel);
 
         poseStack.popPose();
 
-        if(looking == null || !looking.equals(workAreaEntity)) return;
+        Entity looking = ClientEvent.getEntityByLooking();
+        if(looking == null || !looking.equals(abstractWorkAreaEntity)) return;
 
-        double x = Mth.lerp(partialTicks, workAreaEntity.xOld, workAreaEntity.getX());
-        double y = Mth.lerp(partialTicks, workAreaEntity.yOld, workAreaEntity.getY());
-        double z = Mth.lerp(partialTicks, workAreaEntity.zOld, workAreaEntity.getZ());
+        double x = Mth.lerp(partialTicks, abstractWorkAreaEntity.xOld, abstractWorkAreaEntity.getX());
+        double y = Mth.lerp(partialTicks, abstractWorkAreaEntity.yOld, abstractWorkAreaEntity.getY());
+        double z = Mth.lerp(partialTicks, abstractWorkAreaEntity.zOld, abstractWorkAreaEntity.getZ());
 
         AABB worldBox = new AABB(
-                workAreaEntity.getOnPos().getX() - workAreaEntity.getSize(),
-                workAreaEntity.getOnPos().getY(),
-                workAreaEntity.getOnPos().getZ() - workAreaEntity.getSize(),
-                workAreaEntity.getOnPos().getX() + workAreaEntity.getSize() + 1,
-                workAreaEntity.getOnPos().getY() + workAreaEntity.getHeight(),
-                workAreaEntity.getOnPos().getZ() + workAreaEntity.getSize() + 1
+                abstractWorkAreaEntity.getOnPos().getX() - abstractWorkAreaEntity.getSize(),
+                abstractWorkAreaEntity.getOnPos().getY(),
+                abstractWorkAreaEntity.getOnPos().getZ() - abstractWorkAreaEntity.getSize(),
+                abstractWorkAreaEntity.getOnPos().getX() + abstractWorkAreaEntity.getSize() + 1,
+                abstractWorkAreaEntity.getOnPos().getY() + abstractWorkAreaEntity.getHeight(),
+                abstractWorkAreaEntity.getOnPos().getZ() + abstractWorkAreaEntity.getSize() + 1
         );
 
         AABB relativeBox = worldBox.move(-x, -y, -z);

@@ -18,6 +18,7 @@ public class WorkersServerConfig {
                     "minecraft:beetroot_seeds",
                     "minecraft:carrot",
                     "minecraft:potato",
-                    "minecraft:poisonous_potato"
+                    "minecraft:poisonous_potato",
+                    "supplementaries:flax"
             ));
 }

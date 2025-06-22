@@ -1,12 +1,20 @@
 package com.talhanation.workers.entities.workarea;
 
+import com.talhanation.workers.Main;
+import com.talhanation.workers.client.gui.CropAreaScreen;
 import com.talhanation.workers.entities.FarmerEntity;
+import com.talhanation.workers.network.MessageToClientOpenWorkAreaScreen;
+import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.core.BlockPos;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.syncher.EntityDataAccessor;
 import net.minecraft.network.syncher.EntityDataSerializers;
 import net.minecraft.network.syncher.SynchedEntityData;
+import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.world.InteractionHand;
+import net.minecraft.world.InteractionResult;
 import net.minecraft.world.entity.EntityType;
+import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
@@ -15,10 +23,11 @@ import net.minecraft.world.level.block.BushBlock;
 import net.minecraft.world.level.block.CropBlock;
 import net.minecraft.world.level.block.FarmBlock;
 import net.minecraft.world.level.block.state.BlockState;
+import net.minecraftforge.network.PacketDistributor;
 
 import java.util.Stack;
 
-public class CropArea extends WorkAreaEntity{
+public class CropArea extends AbstractWorkAreaEntity {
 
     public static final EntityDataAccessor<ItemStack> SEED_STACK = SynchedEntityData.defineId(CropArea.class, EntityDataSerializers.ITEM_STACK);
 
@@ -48,11 +57,30 @@ public class CropArea extends WorkAreaEntity{
     @Override
     public void addAdditionalSaveData(CompoundTag tag) {
         super.addAdditionalSaveData(tag);
-        tag.put("seedItem", this.getSeedStack().getOrCreateTag());
+        CompoundTag nbt = new CompoundTag();
+        this.getSeedStack().save(nbt);
+        tag.put("seedItem", nbt);
     }
 
     public Item getRenderItem(){
         return Items.IRON_HOE;
+    }
+
+    @Override
+    public Screen getScreen(Player player) {
+        return new CropAreaScreen(this, player);
+    }
+
+    public InteractionResult interact(Player player, InteractionHand hand) {
+        if(!player.getUUID().equals(this.getPlayerUUID())) return InteractionResult.PASS;
+
+        if (this.getCommandSenderWorld().isClientSide()) {
+            return InteractionResult.CONSUME;
+        }
+        else{
+            Main.SIMPLE_CHANNEL.send(PacketDistributor.PLAYER.with(() -> (ServerPlayer) player), new MessageToClientOpenWorkAreaScreen(this.getUUID()));
+            return InteractionResult.CONSUME;
+        }
     }
 
     public void scanBreakArea(){

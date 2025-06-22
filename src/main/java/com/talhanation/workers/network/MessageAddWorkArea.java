@@ -1,7 +1,7 @@
 package com.talhanation.workers.network;
 
 import com.talhanation.workers.entities.workarea.CropArea;
-import com.talhanation.workers.entities.workarea.WorkAreaEntity;
+import com.talhanation.workers.entities.workarea.AbstractWorkAreaEntity;
 import com.talhanation.workers.init.ModEntityTypes;
 import de.maxhenkel.corelib.net.Message;
 import net.minecraft.network.FriendlyByteBuf;
@@ -37,7 +37,7 @@ public class MessageAddWorkArea implements Message<MessageAddWorkArea> {
         if(player.getTeam() != null){
             teamStringID = player.getTeam().getName();
         }
-        WorkAreaEntity workArea;
+        AbstractWorkAreaEntity workArea;
         switch (type){
             default -> {
                 workArea = new CropArea(ModEntityTypes.CROPAREA.get(), player.level());

@@ -122,14 +122,15 @@ public class FarmerWorkController implements IWorkerController {
             return false;
         }
         else{
-            farmer.setHoldPos(pos.getCenter());
-            farmer.setFollowState(3);
-            farmer.getLookControl().setLookAt(blockPos.getCenter());
-
             double distance = pos.getCenter().distanceToSqr(farmer.position());
             if(distance < 35){
                 this.blockPos = null;
                 return false;
+            }
+            else{
+                farmer.getNavigation().moveTo(pos.getX(), pos.getY(), pos.getZ(), 0.8F);
+                farmer.setFollowState(6); //Working
+                farmer.getLookControl().setLookAt(blockPos.getCenter());
             }
             return true;
         }

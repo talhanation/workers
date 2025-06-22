@@ -23,5 +23,10 @@
 
   "gui.workers.command.tooltip.workers": "Workers",
   "gui.workers.command.text.add_field": "Add Crop field",
-  "gui.workers.command.tooltip.add_field": "Adds a Crop field on the position you are pointing at."
+  "gui.workers.command.tooltip.add_field": "Adds a Crop field on the position you are pointing at.",
+
+  "gui.workers.command.text.forward": "Forward",
+  "gui.workers.command.text.back": "Back",
+  "gui.workers.command.text.left": "Left",
+  "gui.workers.command.text.right": "Right"
 }

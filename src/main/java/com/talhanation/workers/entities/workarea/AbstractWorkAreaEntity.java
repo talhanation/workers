@@ -1,6 +1,8 @@
 package com.talhanation.workers.entities.workarea;
 
+import com.talhanation.workers.client.gui.WorkAreaScreen;
 import com.talhanation.workers.entities.FarmerEntity;
+import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.syncher.EntityDataAccessor;
 import net.minecraft.network.syncher.EntityDataSerializers;
@@ -8,23 +10,24 @@ import net.minecraft.network.syncher.SynchedEntityData;
 import net.minecraft.world.damagesource.DamageSource;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EntityType;
+import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.Item;
-import net.minecraft.world.item.Items;
 import net.minecraft.world.level.Level;
-import org.jetbrains.annotations.Nullable;
 
+import java.util.Optional;
 import java.util.UUID;
 
-public abstract class WorkAreaEntity extends Entity {
-    public static final EntityDataAccessor<String> PLAYER_NAME = SynchedEntityData.defineId(WorkAreaEntity.class, EntityDataSerializers.STRING);
-    public static final EntityDataAccessor<String> PLAYER_UUID = SynchedEntityData.defineId(WorkAreaEntity.class, EntityDataSerializers.STRING);
-    public static final EntityDataAccessor<Integer> SIZE = SynchedEntityData.defineId(WorkAreaEntity.class, EntityDataSerializers.INT);
-    public static final EntityDataAccessor<Integer> HEIGHT = SynchedEntityData.defineId(WorkAreaEntity.class, EntityDataSerializers.INT);
-    public static final EntityDataAccessor<String> TEAM_STRING_ID = SynchedEntityData.defineId(WorkAreaEntity.class, EntityDataSerializers.STRING);
+public abstract class AbstractWorkAreaEntity extends Entity {
+    public static final EntityDataAccessor<String> PLAYER_NAME = SynchedEntityData.defineId(AbstractWorkAreaEntity.class, EntityDataSerializers.STRING);
+    public static final EntityDataAccessor<Optional<UUID>> PLAYER_UUID = SynchedEntityData.defineId(AbstractWorkAreaEntity.class, EntityDataSerializers.OPTIONAL_UUID);
+    public static final EntityDataAccessor<Integer> SIZE = SynchedEntityData.defineId(AbstractWorkAreaEntity.class, EntityDataSerializers.INT);
+    public static final EntityDataAccessor<Integer> HEIGHT = SynchedEntityData.defineId(AbstractWorkAreaEntity.class, EntityDataSerializers.INT);
+    public static final EntityDataAccessor<String> TEAM_STRING_ID = SynchedEntityData.defineId(AbstractWorkAreaEntity.class, EntityDataSerializers.STRING);
     public boolean isDone;
     public boolean isBeingWorkedOn;
+    public static int DONE_TIME =  20*60*3;
 
-    public WorkAreaEntity(EntityType<?> type, Level level) {
+    public AbstractWorkAreaEntity(EntityType<?> type, Level level) {
         super(type, level);
         this.setNoGravity(true);
         this.setInvulnerable(true);
@@ -33,7 +36,7 @@ public abstract class WorkAreaEntity extends Entity {
     @Override
     protected void defineSynchedData() {
         this.entityData.define(PLAYER_NAME, "");
-        this.entityData.define(PLAYER_UUID, "");
+        this.entityData.define(PLAYER_UUID, Optional.empty());
         this.entityData.define(SIZE, 0);
         this.entityData.define(HEIGHT, 0);
         this.entityData.define(TEAM_STRING_ID, "");
@@ -44,7 +47,7 @@ public abstract class WorkAreaEntity extends Entity {
         this.isDone = tag.getBoolean("isDone");
         this.resetTimer = tag.getInt("resetTimer");
         this.isBeingWorkedOn = tag.getBoolean("isBeingWorkedOn");
-        this.setPlayerUUID(UUID.fromString(tag.getString("playerUUID")));
+        this.setPlayerUUID(tag.getUUID("playerUUID"));
         this.setSize(tag.getInt("size"));
         this.setHeight(tag.getInt("height"));
 
@@ -66,15 +69,20 @@ public abstract class WorkAreaEntity extends Entity {
         }
     }
 
-    int resetTimer;
+    public int resetTimer;
     @Override
     public void tick() {
         super.tick();
-        if(isDone && resetTimer++ > 20*60*3){
+        if(isDone && resetTimer++ > DONE_TIME){
             resetTimer = 0;
             this.setDone(false);
         }
     }
+    @Override
+    public boolean isPickable() {
+        return true;
+    }
+
     @Override
     public boolean hurt(DamageSource damageSource, float a) {
         return false;
@@ -146,7 +154,7 @@ public abstract class WorkAreaEntity extends Entity {
     }
 
     public void setPlayerUUID(UUID playerUUID) {
-        this.entityData.set(PLAYER_UUID, playerUUID.toString());
+        this.entityData.set(PLAYER_UUID, Optional.of(playerUUID));
     }
 
     public void setTeamStringID(String teamStringID) {
@@ -170,8 +178,9 @@ public abstract class WorkAreaEntity extends Entity {
     }
 
     public UUID getPlayerUUID(){
-        return UUID.fromString(this.entityData.get(PLAYER_UUID));
+        return this.entityData.get(PLAYER_UUID).orElse(null);
     }
 
     public abstract Item getRenderItem();
+    public abstract Screen getScreen(Player player);
 }
