@@ -21,6 +21,7 @@ public class WorkerCommandScreen implements ICommandCategory {
 
     private static final MutableComponent TOOLTIP_ADD_FIELD = Component.translatable("gui.workers.command.tooltip.add_field");
     private static final MutableComponent TEXT_ADD_FIELD = Component.translatable("gui.workers.command.text.add_field");
+    private static final MutableComponent TEXT_ADD_DEPOSIT = Component.translatable("gui.workers.command.text.add_field");
     @Override
     public Component getToolTipName() {
         return Component.translatable("gui.workers.command.tooltip.workers");
@@ -41,6 +42,17 @@ public class WorkerCommandScreen implements ICommandCategory {
                     Vec3 pos = screen.rayBlockPos.above().getCenter();
                     Main.SIMPLE_CHANNEL.sendToServer(new MessageAddWorkArea((float) pos.x(), (int) pos.y(), (float) pos.z(), 0));
                 });
+
+        addCropFieldButton.setTooltip(Tooltip.create(TOOLTIP_ADD_FIELD));
+        addCropFieldButton.active = screen.rayBlockPos != null;
+        screen.addRenderableWidget(addCropFieldButton);
+
+        RecruitsCommandButton addDepositPosition = new RecruitsCommandButton(x, y - 150, TEXT_ADD_DEPOSIT,
+            button -> {
+                if(screen.rayBlockPos == null) return;
+                Vec3 pos = screen.rayBlockPos.above().getCenter();
+                Main.SIMPLE_CHANNEL.sendToServer(new MessageAddWorkArea((float) pos.x(), (int) pos.y(), (float) pos.z(), 0));
+            });
 
         addCropFieldButton.setTooltip(Tooltip.create(TOOLTIP_ADD_FIELD));
         addCropFieldButton.active = screen.rayBlockPos != null;
