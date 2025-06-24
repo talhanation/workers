@@ -19,7 +19,7 @@ import java.util.List;
 public class CropAreaScreen extends WorkAreaScreen {
 
     public final CropArea cropArea;
-    private ScrollDropDownMenu<ItemStack> groupSelectionDropDownMenu;
+    private ItemScrollDropDownMenu seedItemSelectionDropDownMenu;
     private ItemStack currentSeeds;
     private List<ItemStack> possibleSeeds;
 
@@ -28,21 +28,27 @@ public class CropAreaScreen extends WorkAreaScreen {
         this.cropArea = cropArea;
         this.currentSeeds = cropArea.getSeedStack();
     }
-    boolean initial;
+
     @Override
-    public void tick() {
-        super.tick();
-        if(possibleSeeds == null && !initial){
-            this.possibleSeeds = getPossibleSeedsFromInventory();
+    protected void init() {
+        this.possibleSeeds = getPossibleSeedsFromInventory();
 
-            groupSelectionDropDownMenu = new ItemScrollDropDownMenu(currentSeeds, guiLeft + 100,guiTop + ySize - 100,  100, possibleSeeds, this::setCurrentSeeds);
-
-            groupSelectionDropDownMenu.setBgFillSelected(FastColor.ARGB32.color(255, 139, 139, 139));
-            //groupSelectionDropDownMenu.visible = Minecraft.getInstance().player.getUUID().equals(recruit.getOwnerUUID());
-            addRenderableWidget(groupSelectionDropDownMenu);
-            this.initial = true;
-        }
+        setButtons();
     }
+
+    @Override
+    public void setButtons() {
+        super.setButtons();
+
+        int dropDownWidth = 200;
+        int dropDownHeight = 20;
+
+        seedItemSelectionDropDownMenu = new ItemScrollDropDownMenu(currentSeeds,x - dropDownWidth / 2, 50 + y + dropDownHeight / 2 - dropDownHeight, dropDownWidth, dropDownHeight, possibleSeeds, this::setCurrentSeeds);
+        seedItemSelectionDropDownMenu.setBgFillSelected(FastColor.ARGB32.color(255, 139, 139, 139));
+
+        addRenderableWidget(seedItemSelectionDropDownMenu);
+    }
+
 
     public void setCurrentSeeds(ItemStack currentSeeds) {
         Main.SIMPLE_CHANNEL.sendToServer(new MessageUpdateCropArea(this.cropArea.getUUID(), currentSeeds));
@@ -65,31 +71,31 @@ public class CropAreaScreen extends WorkAreaScreen {
 
     @Override
     public void mouseMoved(double x, double y) {
-        if(groupSelectionDropDownMenu != null){
-            groupSelectionDropDownMenu.onMouseMove(x,y);
+        if(seedItemSelectionDropDownMenu != null){
+            seedItemSelectionDropDownMenu.onMouseMove(x,y);
         }
         super.mouseMoved(x, y);
     }
 
     @Override
     public boolean mouseClicked(double mouseX, double mouseY, int button) {
-        if (groupSelectionDropDownMenu != null && groupSelectionDropDownMenu.isMouseOver(mouseX, mouseY)) {
-            groupSelectionDropDownMenu.onMouseClick(mouseX, mouseY);
+        if (seedItemSelectionDropDownMenu != null && seedItemSelectionDropDownMenu.isMouseOver(mouseX, mouseY)) {
+            seedItemSelectionDropDownMenu.onMouseClick(mouseX, mouseY);
             return true;
         }
         return super.mouseClicked(mouseX, mouseY, button);
     }
     @Override
     public boolean mouseScrolled(double x, double y, double d) {
-        if(groupSelectionDropDownMenu != null) groupSelectionDropDownMenu.mouseScrolled(x,y,d);
+        if(seedItemSelectionDropDownMenu != null) seedItemSelectionDropDownMenu.mouseScrolled(x,y,d);
         return super.mouseScrolled(x, y, d);
     }
     @Override
     public void render(GuiGraphics guiGraphics, int mouseX, int mouseY, float partialTicks) {
         super.render(guiGraphics, mouseX, mouseY, partialTicks);
 
-        if (groupSelectionDropDownMenu != null) {
-            groupSelectionDropDownMenu.renderWidget(guiGraphics, mouseX, mouseY, partialTicks);
+        if (seedItemSelectionDropDownMenu != null) {
+            seedItemSelectionDropDownMenu.renderWidget(guiGraphics, mouseX, mouseY, partialTicks);
         }
     }
 }

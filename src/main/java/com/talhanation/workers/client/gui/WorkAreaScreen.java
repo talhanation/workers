@@ -22,6 +22,7 @@ public abstract class WorkAreaScreen extends RecruitsScreenBase {
     private static final MutableComponent TEXT_BACKWARD = Component.translatable("gui.workers.command.text.back");
     private static final MutableComponent TEXT_LEFT = Component.translatable("gui.workers.command.text.left");
     private static final MutableComponent TEXT_RIGHT = Component.translatable("gui.workers.command.text.right");
+    private static final MutableComponent TEXT_DESTROY = Component.translatable("gui.workers.command.text.destroy");
     private EditBox textFieldName;
     private Button moveForward;
     private Button moveBackward;
@@ -44,48 +45,57 @@ public abstract class WorkAreaScreen extends RecruitsScreenBase {
 
         setButtons();
     }
-
-    private void setButtons(){
+    public int x;
+    public int y;
+    public void setButtons(){
         clearWidgets();
+        x = this.width / 2;
+        y = this.height / 2;
+        int buttonWidth = 80;
+        int buttonHeight = 20;
 
-        moveForward = addRenderableWidget(new ExtendedButton(guiLeft + 32, guiTop + ySize - 120 - 7, 70, 20, TEXT_FORWARD,
+        // Move Forward
+        moveForward = addRenderableWidget(new ExtendedButton(x - buttonWidth / 2, y + buttonHeight / 2 - buttonHeight*2, buttonWidth, buttonHeight, TEXT_FORWARD,
                 btn -> {
                     int amount = Minecraft.getInstance().options.keyShift.isDown() ? 5 : 1;
-
                     Vec3 newPos = workArea.position().relative(player.getDirection(), amount);
                     Main.SIMPLE_CHANNEL.sendToServer(new MessageUpdateWorkArea(this.workArea.getUUID(), this.workArea.getCustomName().getString(), newPos, false));
                 }
         ));
-        //moveForward.setTooltip(Tooltip.create(TOOLTIP_TAKE_OWNERSHIP));
 
-        moveBackward = addRenderableWidget(new ExtendedButton(guiLeft + 32, guiTop + ySize - 160 - 7, 70, 20, TEXT_BACKWARD,
+        // Move Backward
+        moveBackward = addRenderableWidget(new ExtendedButton(x - buttonWidth / 2, y - buttonHeight / 2 + buttonHeight, buttonWidth, buttonHeight, TEXT_BACKWARD,
                 btn -> {
                     int amount = Minecraft.getInstance().options.keyShift.isDown() ? 5 : 1;
-
                     Vec3 newPos = workArea.position().relative(player.getDirection().getOpposite(), amount);
                     Main.SIMPLE_CHANNEL.sendToServer(new MessageUpdateWorkArea(this.workArea.getUUID(), this.workArea.getCustomName().getString(), newPos, false));
                 }
         ));
-        //moveBackward.setTooltip(Tooltip.create(TOOLTIP_TAKE_OWNERSHIP));
 
-        moveLeft = addRenderableWidget(new ExtendedButton(guiLeft + 32, guiTop + ySize - 200 - 7, 70, 20, TEXT_LEFT,
+        // Move Left
+        moveLeft = addRenderableWidget(new ExtendedButton(x - buttonWidth / 2 - buttonWidth, y - buttonHeight / 2, buttonWidth, buttonHeight, TEXT_LEFT,
                 btn -> {
                     int amount = Minecraft.getInstance().options.keyShift.isDown() ? 5 : 1;
-
                     Vec3 newPos = workArea.position().relative(player.getDirection().getCounterClockWise(), amount);
                     Main.SIMPLE_CHANNEL.sendToServer(new MessageUpdateWorkArea(this.workArea.getUUID(), this.workArea.getCustomName().getString(), newPos, false));
                 }
         ));
-        //moveLeft.setTooltip(Tooltip.create(TOOLTIP_TAKE_OWNERSHIP));
 
-        moveRight = addRenderableWidget(new ExtendedButton(guiLeft + 32 + 5 + 70, guiTop + ySize - 200 - 7, 70, 20, TEXT_RIGHT,
+        // Move Right
+        moveRight = addRenderableWidget(new ExtendedButton(x - buttonWidth / 2 + buttonWidth, y - buttonHeight / 2, buttonWidth, buttonHeight,  TEXT_RIGHT,
                 btn -> {
                     int amount = Minecraft.getInstance().options.keyShift.isDown() ? 5 : 1;
-
                     Vec3 newPos = workArea.position().relative(player.getDirection().getClockWise(), amount);
                     Main.SIMPLE_CHANNEL.sendToServer(new MessageUpdateWorkArea(this.workArea.getUUID(), this.workArea.getCustomName().getString(), newPos, false));
                 }
         ));
-        //moveRight.setTooltip(Tooltip.create(TOOLTIP_TAKE_OWNERSHIP));
+
+        // Destroy
+        destroy = addRenderableWidget(new ExtendedButton(x - buttonWidth / 2, y - buttonHeight / 2, buttonWidth, buttonHeight, TEXT_DESTROY,
+                btn -> {
+                    Main.SIMPLE_CHANNEL.sendToServer(new MessageUpdateWorkArea(this.workArea.getUUID(), this.workArea.getCustomName().getString(), workArea.position(), true));
+                    this.onClose();
+                }
+        ));
     }
 }
