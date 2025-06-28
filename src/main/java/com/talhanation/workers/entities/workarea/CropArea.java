@@ -142,7 +142,6 @@ public class CropArea extends AbstractWorkAreaEntity {
             }
         }
     }
-
     public boolean isFarmland(BlockState state){
         return state.getBlock() instanceof FarmBlock;
     }

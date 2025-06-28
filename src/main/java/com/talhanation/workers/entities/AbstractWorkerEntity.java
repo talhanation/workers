@@ -2,8 +2,13 @@ package com.talhanation.workers.entities;
 
 import com.talhanation.recruits.config.RecruitsClientConfig;
 import com.talhanation.recruits.entities.AbstractChunkLoaderEntity;
+import com.talhanation.workers.entities.ai.DepositItemsInChestsGoal;
+import com.talhanation.workers.entities.ai.GetNeededItemsFromChestsGoal;
+import com.talhanation.workers.world.NeededItem;
 import net.minecraft.core.BlockPos;
 import net.minecraft.nbt.CompoundTag;
+import net.minecraft.nbt.ListTag;
+import net.minecraft.nbt.Tag;
 import net.minecraft.sounds.SoundEvent;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.sounds.SoundSource;
@@ -30,10 +35,15 @@ public abstract class AbstractWorkerEntity extends AbstractChunkLoaderEntity {
     public AbstractWorkerEntity(EntityType<? extends AbstractWorkerEntity> entityType, Level world) {
         super(entityType, world);
     }
-
+    public List<BlockPos> chestPositions = new ArrayList<>();
+    public List<NeededItem> neededItems = new ArrayList<>();
+    public int farmedItems;
+    public boolean forcedDeposit;
     @Override
     protected void registerGoals() {
         super.registerGoals();
+        this.goalSelector.addGoal(0, new DepositItemsInChestsGoal(this));
+        this.goalSelector.addGoal(0, new GetNeededItemsFromChestsGoal(this));
     }
 
     /////////////////////////////////// TICK/////////////////////////////////////////
@@ -42,7 +52,7 @@ public abstract class AbstractWorkerEntity extends AbstractChunkLoaderEntity {
     @Override
     public void aiStep() {
         super.aiStep();
-        if(this.getCommandSenderWorld().isClientSide())return;
+        if(this.getCommandSenderWorld().isClientSide()) return;
 
         if(workController != null) this.workController.tick();
 
@@ -61,22 +71,89 @@ public abstract class AbstractWorkerEntity extends AbstractChunkLoaderEntity {
         }
     }
 
+    public boolean canAddItem(ItemStack itemToAdd) {
+        boolean flag = false;
+        List<ItemStack> inventorySlots = new ArrayList<>();
+        for(int i = 6; i < this.inventory.getContainerSize(); i++){
+            inventorySlots.add(inventory.items.get(i));
+        }
+
+        for(ItemStack itemstack : inventorySlots) {
+            if (itemstack.isEmpty() || ItemStack.isSameItemSameTags(itemstack, itemToAdd) && itemstack.getCount() < itemstack.getMaxStackSize()) {
+                flag = true;
+                break;
+            }
+        }
+
+        return flag;
+    }
+
     @Override
     protected void pickUpItem(ItemEntity itemEntity) {
         ItemStack itemstack = itemEntity.getItem();
         if (this.wantsToPickUp(itemstack)) {
-            SimpleContainer inventory = this.getInventory();
-            if (!inventory.canAddItem(itemstack)) return;
+            if (!this.canAddItem(itemstack)) return;
 
             this.onItemPickup(itemEntity);
             this.take(itemEntity, itemstack.getCount());
-            ItemStack itemstack1 = inventory.addItem(itemstack);
+            ItemStack itemstack1 = this.addItem(itemstack);
+
+            this.farmedItems += itemstack.getCount() - itemstack1.getCount();
+            NeededItem.applyToNeededItems(itemstack, neededItems);
+
             if (itemstack1.isEmpty()) {
                 itemEntity.remove(RemovalReason.DISCARDED);
             } else {
                 itemstack.setCount(itemstack1.getCount());
-
             }
+        }
+    }
+
+    public ItemStack addItem(ItemStack itemStackToAdd) {
+        if (itemStackToAdd.isEmpty()) {
+            return ItemStack.EMPTY;
+        } else {
+            ItemStack itemstack = itemStackToAdd.copy();
+            this.moveItemToOccupiedSlotsWithSameType(itemstack);
+            if (itemstack.isEmpty()) {
+                return ItemStack.EMPTY;
+            } else {
+                this.moveItemToEmptySlots(itemstack);
+                return itemstack.isEmpty() ? ItemStack.EMPTY : itemstack;
+            }
+        }
+    }
+
+    private void moveItemToOccupiedSlotsWithSameType(ItemStack itemStackToMove) {
+        for(int i = 6; i < this.getInventory().getContainerSize(); ++i) {
+            ItemStack itemstack = this.getInventory().getItem(i);
+            if (ItemStack.isSameItemSameTags(itemstack, itemStackToMove)) {
+                this.moveItemsBetweenStacks(itemStackToMove, itemstack);
+                if (itemStackToMove.isEmpty()) {
+                    return;
+                }
+            }
+        }
+    }
+
+    private void moveItemToEmptySlots(ItemStack itemStack) {
+        for(int i = 6; i < this.getInventory().getContainerSize(); ++i) {
+            ItemStack itemstack = this.getInventory().getItem(i);
+            if (itemstack.isEmpty()) {
+                this.getInventory().setItem(i, itemStack.copyAndClear());
+                return;
+            }
+        }
+
+    }
+
+    private void moveItemsBetweenStacks(ItemStack p_19186_, ItemStack p_19187_) {
+        int i = Math.min(64, p_19187_.getMaxStackSize());
+        int j = Math.min(p_19186_.getCount(), i - p_19187_.getCount());
+        if (j > 0) {
+            p_19187_.grow(j);
+            p_19186_.shrink(j);
+            this.getInventory().setChanged();
         }
     }
 
@@ -84,7 +161,7 @@ public abstract class AbstractWorkerEntity extends AbstractChunkLoaderEntity {
     public SpawnGroupData finalizeSpawn(@NotNull ServerLevelAccessor world, @NotNull DifficultyInstance diff, @NotNull MobSpawnType reason, @Nullable SpawnGroupData spawnData, @Nullable CompoundTag nbt) {
         return spawnData;
     }
-    public void setDropEquipment() {
+    public void setDropEquipment()  {
         this.dropEquipment();
     }
 
@@ -97,15 +174,35 @@ public abstract class AbstractWorkerEntity extends AbstractChunkLoaderEntity {
 
     public void addAdditionalSaveData(@NotNull CompoundTag nbt) {
         super.addAdditionalSaveData(nbt);
+        if (this.chestPositions != null && !this.chestPositions.isEmpty()) {
+            ListTag listTag = new ListTag();
+            for (BlockPos pos : this.chestPositions) {
+                CompoundTag compoundTag = new CompoundTag();
+                compoundTag.putInt("x", pos.getX());
+                compoundTag.putInt("y", pos.getY());
+                compoundTag.putInt("z", pos.getZ());
+                listTag.add(compoundTag);
+            }
 
+            nbt.put("ChestPositions", listTag);
+        }
+        nbt.putInt("farmedItems", farmedItems);
     }
 
     public void readAdditionalSaveData(@NotNull CompoundTag nbt) {
         super.readAdditionalSaveData(nbt);
-    }
-
-    public int getMaxAreas() {
-        return 3;
+        if (nbt.contains("ChestPositions", Tag.TAG_LIST)) {
+            ListTag listTag = nbt.getList("ChestPositions", Tag.TAG_COMPOUND);
+            this.chestPositions = new ArrayList<>();
+            for (Tag t : listTag) {
+                CompoundTag compoundTag = (CompoundTag) t;
+                int x = compoundTag.getInt("x");
+                int y = compoundTag.getInt("y");
+                int z = compoundTag.getInt("z");
+                this.chestPositions.add(new BlockPos(x, y, z));
+            }
+        }
+        this.farmedItems = nbt.getInt("farmedItems");
     }
 
     @OnlyIn(Dist.CLIENT)
@@ -145,6 +242,16 @@ public abstract class AbstractWorkerEntity extends AbstractChunkLoaderEntity {
 
     //////////////////////////////////// SET////////////////////////////////////
 
+    public void addDepositPosition(BlockPos pos){
+        if(chestPositions.contains(pos)) return;
+
+        this.chestPositions.add(pos);
+    }
+
+    public void removeDepositPosition(BlockPos pos){
+        this.chestPositions.remove(pos);
+    }
+
     public void setEquipment() {
     }
 
@@ -173,7 +280,11 @@ public abstract class AbstractWorkerEntity extends AbstractChunkLoaderEntity {
     public abstract List<Item> inventoryInputHelp();
 
     public boolean needsToGetToChest() {
-        return this.needsToGetFood(); // || needsToChangeTool || needsToDeposit
+        return this.needsToGetFood() || needsToDeposit() || needsToGetItems();
+    }
+
+    public boolean needsToDeposit() {
+        return forcedDeposit || farmedItems > 128;
     }
 
     @Nullable
@@ -224,4 +335,24 @@ public abstract class AbstractWorkerEntity extends AbstractChunkLoaderEntity {
 
         this.swing(InteractionHand.MAIN_HAND);
     }
+
+    public boolean needsToGetItems() {
+        return !neededItems.isEmpty();
+    }
+
+    public void addNeededItem(NeededItem neededItem) {
+        if(neededItems.contains(neededItem)) return;
+
+        neededItems.add(neededItem);
+    }
+
+    public void onItemAddedToInventory(ItemStack itemStack){
+        for(NeededItem neededItem : neededItems){
+            if(neededItem.matches(itemStack)){
+                NeededItem.applyToNeededItems(itemStack, neededItems);;
+                break;
+            }
+        }
+    }
+
 }

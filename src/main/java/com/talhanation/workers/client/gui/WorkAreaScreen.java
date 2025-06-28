@@ -57,8 +57,8 @@ public abstract class WorkAreaScreen extends RecruitsScreenBase {
         // Move Forward
         moveForward = addRenderableWidget(new ExtendedButton(x - buttonWidth / 2, y + buttonHeight / 2 - buttonHeight*2, buttonWidth, buttonHeight, TEXT_FORWARD,
                 btn -> {
-                    int amount = Minecraft.getInstance().options.keyShift.isDown() ? 5 : 1;
-                    Vec3 newPos = workArea.position().relative(player.getDirection(), amount);
+                    this.workArea.showBox = true;
+                    Vec3 newPos = workArea.position().relative(player.getDirection(), 1);
                     Main.SIMPLE_CHANNEL.sendToServer(new MessageUpdateWorkArea(this.workArea.getUUID(), this.workArea.getCustomName().getString(), newPos, false));
                 }
         ));
@@ -66,8 +66,8 @@ public abstract class WorkAreaScreen extends RecruitsScreenBase {
         // Move Backward
         moveBackward = addRenderableWidget(new ExtendedButton(x - buttonWidth / 2, y - buttonHeight / 2 + buttonHeight, buttonWidth, buttonHeight, TEXT_BACKWARD,
                 btn -> {
-                    int amount = Minecraft.getInstance().options.keyShift.isDown() ? 5 : 1;
-                    Vec3 newPos = workArea.position().relative(player.getDirection().getOpposite(), amount);
+                    this.workArea.showBox = true;
+                    Vec3 newPos = workArea.position().relative(player.getDirection().getOpposite(), 1);
                     Main.SIMPLE_CHANNEL.sendToServer(new MessageUpdateWorkArea(this.workArea.getUUID(), this.workArea.getCustomName().getString(), newPos, false));
                 }
         ));
@@ -75,8 +75,8 @@ public abstract class WorkAreaScreen extends RecruitsScreenBase {
         // Move Left
         moveLeft = addRenderableWidget(new ExtendedButton(x - buttonWidth / 2 - buttonWidth, y - buttonHeight / 2, buttonWidth, buttonHeight, TEXT_LEFT,
                 btn -> {
-                    int amount = Minecraft.getInstance().options.keyShift.isDown() ? 5 : 1;
-                    Vec3 newPos = workArea.position().relative(player.getDirection().getCounterClockWise(), amount);
+                    this.workArea.showBox = true;
+                    Vec3 newPos = workArea.position().relative(player.getDirection().getCounterClockWise(), 1);
                     Main.SIMPLE_CHANNEL.sendToServer(new MessageUpdateWorkArea(this.workArea.getUUID(), this.workArea.getCustomName().getString(), newPos, false));
                 }
         ));
@@ -84,8 +84,8 @@ public abstract class WorkAreaScreen extends RecruitsScreenBase {
         // Move Right
         moveRight = addRenderableWidget(new ExtendedButton(x - buttonWidth / 2 + buttonWidth, y - buttonHeight / 2, buttonWidth, buttonHeight,  TEXT_RIGHT,
                 btn -> {
-                    int amount = Minecraft.getInstance().options.keyShift.isDown() ? 5 : 1;
-                    Vec3 newPos = workArea.position().relative(player.getDirection().getClockWise(), amount);
+                    this.workArea.showBox = true;
+                    Vec3 newPos = workArea.position().relative(player.getDirection().getClockWise(), 1);
                     Main.SIMPLE_CHANNEL.sendToServer(new MessageUpdateWorkArea(this.workArea.getUUID(), this.workArea.getCustomName().getString(), newPos, false));
                 }
         ));
@@ -97,5 +97,12 @@ public abstract class WorkAreaScreen extends RecruitsScreenBase {
                     this.onClose();
                 }
         ));
+    }
+
+
+    public void onClose() {
+        super.onClose();
+
+        this.workArea.showBox = false;
     }
 }

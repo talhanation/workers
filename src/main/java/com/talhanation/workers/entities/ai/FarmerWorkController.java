@@ -3,13 +3,12 @@ package com.talhanation.workers.entities.ai;
 import com.talhanation.workers.entities.FarmerEntity;
 import com.talhanation.workers.entities.IWorkerController;
 import com.talhanation.workers.entities.workarea.CropArea;
+import com.talhanation.workers.world.NeededItem;
 import net.minecraft.core.BlockPos;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.sounds.SoundSource;
 import net.minecraft.world.InteractionHand;
-import net.minecraft.world.item.BlockItem;
-import net.minecraft.world.item.BucketItem;
-import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.*;
 import net.minecraft.world.level.block.*;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraftforge.common.IPlantable;
@@ -53,9 +52,13 @@ public class FarmerWorkController implements IWorkerController {
         BlockState centerPosState = farmer.getCommandSenderWorld().getBlockState(currentCropArea.getOnPos());
         if(centerPosState.isAir()){
             ItemStack itemStack = farmer.getMatchingItem(item -> farmer.isBucketWithWater(item));
-            if(itemStack == null) return false;
+            if(itemStack == null){
+                farmer.addNeededItem(new NeededItem(item -> farmer.isBucketWithWater(item),  1, false));
+                return false;
+            }
             if(itemStack.getItem() instanceof BucketItem bucketItem){
                 bucketItem.emptyContents(null,  farmer.getCommandSenderWorld(), currentCropArea.getOnPos(), null);
+
             }
         }
         else if(centerPosState.is(Blocks.WATER)) {
@@ -105,7 +108,12 @@ public class FarmerWorkController implements IWorkerController {
                     currentCropArea.setDone(true);
                     currentCropArea.setBeingWorkedOn(false);
                     currentCropArea = null;
+
                     initialized = false;
+                }
+
+                case ERROR -> {
+
                 }
             }
         }
@@ -123,7 +131,7 @@ public class FarmerWorkController implements IWorkerController {
         }
         else{
             double distance = pos.getCenter().distanceToSqr(farmer.position());
-            if(distance < 35){
+            if(distance < 15){
                 this.blockPos = null;
                 return false;
             }
@@ -164,6 +172,7 @@ public class FarmerWorkController implements IWorkerController {
         if(positions != null && !positions.isEmpty()){
             ItemStack seedFromInv = farmer.getMatchingItem(itemStack -> itemStack.is(currentCropArea.getSeedStack().getItem()));
             if(seedFromInv == null){
+                farmer.addNeededItem(new NeededItem(itemStack -> ItemStack.isSameItemSameTags(itemStack, currentCropArea.getSeedStack()),  16, true));
                 this.blockPos = null;
                 return false;
             }
@@ -201,6 +210,13 @@ public class FarmerWorkController implements IWorkerController {
 
     public boolean plowBlocks(Stack<BlockPos> positions){
         if(positions != null && !positions.isEmpty()){
+            boolean hasHoe = farmer.getMainHandItem().getItem() instanceof HoeItem;
+            if(!hasHoe){
+                farmer.addNeededItem(new NeededItem(stack -> stack.getItem() instanceof HoeItem, 1, false));
+                this.blockPos = null;
+                return true;
+            }
+
             if(blockPos == null){
                 blockPos = positions.pop();
             }
@@ -231,6 +247,7 @@ public class FarmerWorkController implements IWorkerController {
                 this.stackToBreak = currentCropArea.stackToBreak;
 
                 this.stackToBreak.sort(Comparator.comparing(pos -> pos.getCenter().distanceToSqr(farmer.position())));
+                this.stackToBreak.sort(Comparator.reverseOrder());
             }
 
             case PLOWING -> {
@@ -239,6 +256,7 @@ public class FarmerWorkController implements IWorkerController {
                 this.stackToPlow = currentCropArea.stackToPlow;
 
                 this.stackToPlow.sort(Comparator.comparing(pos -> pos.getCenter().distanceToSqr(farmer.position())));
+                this.stackToPlow.sort(Comparator.reverseOrder());
             }
 
             case PLANTING ->  {
@@ -247,6 +265,7 @@ public class FarmerWorkController implements IWorkerController {
                 this.stackToPlant = currentCropArea.stackToPlant;
 
                 this.stackToPlant.sort(Comparator.comparing(pos -> pos.getCenter().distanceToSqr(farmer.position())));
+                this.stackToPlow.sort(Comparator.reverseOrder());
             }
             default -> {}
         }
@@ -257,7 +276,8 @@ public class FarmerWorkController implements IWorkerController {
         BREAKING_BLOCKS,
         PLOWING,
         PLANTING,
-        DONE
+        DONE,
+        ERROR
     }
 }
 

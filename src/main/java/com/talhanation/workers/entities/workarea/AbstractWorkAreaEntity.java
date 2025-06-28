@@ -25,7 +25,8 @@ public abstract class AbstractWorkAreaEntity extends Entity {
     public static final EntityDataAccessor<String> TEAM_STRING_ID = SynchedEntityData.defineId(AbstractWorkAreaEntity.class, EntityDataSerializers.STRING);
     public boolean isDone;
     public boolean isBeingWorkedOn;
-    public static int DONE_TIME =  20*60*3;
+    public static int DONE_TIME =  20*60;
+    public boolean showBox;
 
     public AbstractWorkAreaEntity(EntityType<?> type, Level level) {
         super(type, level);

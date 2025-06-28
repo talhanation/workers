@@ -64,7 +64,8 @@ public class WorkerAreaRenderer extends EntityRenderer<AbstractWorkAreaEntity> {
         poseStack.popPose();
 
         Entity looking = ClientEvent.getEntityByLooking();
-        if(looking == null || !looking.equals(abstractWorkAreaEntity)) return;
+
+        if(!abstractWorkAreaEntity.showBox && (looking == null || !looking.equals(abstractWorkAreaEntity))) return;
 
         double x = Mth.lerp(partialTicks, abstractWorkAreaEntity.xOld, abstractWorkAreaEntity.getX());
         double y = Mth.lerp(partialTicks, abstractWorkAreaEntity.yOld, abstractWorkAreaEntity.getY());
