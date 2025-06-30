@@ -21,4 +21,10 @@ public class WorkersServerConfig {
                     "minecraft:poisonous_potato",
                     "supplementaries:flax"
             ));
+
+    public static ArrayList<String> LUMBERMAN_PICKUP = new ArrayList<>(
+            Arrays.asList(
+                    "minecraft:stick",
+                    "minecraft:bee_nest"
+            ));
 }

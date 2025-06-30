@@ -82,7 +82,8 @@ public class Main {
             MessageToClientOpenWorkAreaScreen.class,
             MessageUpdateWorkArea.class,
             MessageUpdateCropArea.class,
-            MessageAddDepositPos.class
+            MessageAddDepositPos.class,
+            MessageUpdateLumberArea.class
         };
         for (int i = 0; i < messages.length; i++) CommonRegistry.registerMessage(SIMPLE_CHANNEL, i, messages[i]);
     }
@@ -97,6 +98,7 @@ public class Main {
     private void addCreativeTabs(BuildCreativeModeTabContentsEvent event) {
         if (event.getTabKey().equals(CreativeModeTabs.SPAWN_EGGS)) {
             event.accept(ModItems.FARMER_SPAWN_EGG.get());
+            event.accept(ModItems.LUMBERJACK_SPAWN_EGG.get());
         }
     }
 }

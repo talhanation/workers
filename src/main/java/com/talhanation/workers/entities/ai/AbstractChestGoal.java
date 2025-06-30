@@ -127,7 +127,7 @@ public abstract class AbstractChestGoal extends Goal {
 
     @Override
     public boolean requiresUpdateEveryTick() {
-        return false;
+        return true;
     }
 
 }

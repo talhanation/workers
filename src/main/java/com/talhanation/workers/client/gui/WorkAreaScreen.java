@@ -50,7 +50,7 @@ public abstract class WorkAreaScreen extends RecruitsScreenBase {
     public void setButtons(){
         clearWidgets();
         x = this.width / 2;
-        y = this.height / 2;
+        y = this.height / 2 - 70;
         int buttonWidth = 80;
         int buttonHeight = 20;
 

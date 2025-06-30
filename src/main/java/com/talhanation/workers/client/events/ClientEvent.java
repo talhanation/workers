@@ -19,12 +19,15 @@ public class ClientEvent {
     @OnlyIn(Dist.CLIENT)
     public static void entityRenderersEvent(EntityRenderersEvent.RegisterRenderers event) {
         EntityRenderers.register(ModEntityTypes.CROPAREA.get(), WorkerAreaRenderer::new);
+        EntityRenderers.register(ModEntityTypes.LUMBERAREA.get(), WorkerAreaRenderer::new);
 
         if (RecruitsClientConfig.RecruitsLookLikeVillagers.get()) {
             EntityRenderers.register(ModEntityTypes.FARMER.get(), WorkerVillagerRenderer::new);
+            EntityRenderers.register(ModEntityTypes.LUMBERJACK.get(), WorkerVillagerRenderer::new);
         }
         else{
             EntityRenderers.register(ModEntityTypes.FARMER.get(), WorkerHumanRenderer::new);
+            EntityRenderers.register(ModEntityTypes.LUMBERJACK.get(), WorkerHumanRenderer::new);
         }
     }
 }

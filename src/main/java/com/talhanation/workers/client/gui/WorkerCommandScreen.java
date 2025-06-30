@@ -24,8 +24,11 @@ import java.util.List;
 
 public class WorkerCommandScreen implements ICommandCategory {
 
-    private static final MutableComponent TOOLTIP_ADD_FIELD = Component.translatable("gui.workers.command.tooltip.add_field");
+
     private static final MutableComponent TEXT_ADD_FIELD = Component.translatable("gui.workers.command.text.add_field");
+    private static final MutableComponent TEXT_ADD_LUMBER = Component.translatable("gui.workers.command.text.add_lumber");
+    private static final MutableComponent TOOLTIP_ADD_FIELD = Component.translatable("gui.workers.command.tooltip.add_field");
+    private static final MutableComponent TOOLTIP_ADD_LUMBER = Component.translatable("gui.workers.command.tooltip.add_lumber");
     private static final MutableComponent TEXT_ADD_DEPOSIT = Component.translatable("gui.workers.command.text.add_deposit");
     @Override
     public Component getToolTipName() {
@@ -51,6 +54,17 @@ public class WorkerCommandScreen implements ICommandCategory {
         addCropFieldButton.setTooltip(Tooltip.create(TOOLTIP_ADD_FIELD));
         addCropFieldButton.active = screen.rayBlockPos != null;
         screen.addRenderableWidget(addCropFieldButton);
+
+        RecruitsCommandButton addLumberArea = new RecruitsCommandButton(x, y + 0, TEXT_ADD_LUMBER,
+                button -> {
+                    if(screen.rayBlockPos == null) return;
+                    Vec3 pos = screen.rayBlockPos.above().getCenter();
+                    Main.SIMPLE_CHANNEL.sendToServer(new MessageAddWorkArea((float) pos.x(), (int) pos.y(), (float) pos.z(), 1));
+                });
+
+        addLumberArea.setTooltip(Tooltip.create(TOOLTIP_ADD_LUMBER));
+        addLumberArea.active = screen.rayBlockPos != null;
+        screen.addRenderableWidget(addLumberArea);
 
         RecruitsCommandButton addDepositPosition = new RecruitsCommandButton(x, y - 150, TEXT_ADD_DEPOSIT,
             button -> {

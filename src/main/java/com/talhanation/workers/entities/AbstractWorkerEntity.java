@@ -9,6 +9,7 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.ListTag;
 import net.minecraft.nbt.Tag;
+import net.minecraft.server.level.ServerLevel;
 import net.minecraft.sounds.SoundEvent;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.sounds.SoundSource;
@@ -16,10 +17,16 @@ import net.minecraft.world.*;
 import net.minecraft.world.damagesource.DamageSource;
 import net.minecraft.world.entity.*;
 import net.minecraft.world.entity.item.ItemEntity;
+import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.ShearsItem;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.ServerLevelAccessor;
+import net.minecraft.world.level.block.Block;
+import net.minecraft.world.level.block.Blocks;
+import net.minecraft.world.level.block.LeavesBlock;
+import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
@@ -301,33 +308,50 @@ public abstract class AbstractWorkerEntity extends AbstractChunkLoaderEntity {
     int breakingTime;
     int previousTimeBreak;
 
-    public void mineBlock(BlockPos pos){
+    public void mineBlock(BlockPos pos) {
         if (!this.isAlive()) return;
 
-        BlockState state = this.getCommandSenderWorld().getBlockState(pos);
+        Level level = this.getCommandSenderWorld();
+        BlockState state = level.getBlockState(pos);
         if (state.isAir()) return;
 
-        // Hit-Sound alle 5 Ticks
+        // Laubblöcke: mit Schere manuell abbauen und droppen
+        if (state.getBlock() instanceof LeavesBlock && this.getMainHandItem().getItem() instanceof ShearsItem) {
+            BlockEntity blockEntity = level.getBlockEntity(pos);
+            List<ItemStack> drops = Block.getDrops(state, (ServerLevel) level, pos, blockEntity, this, this.getMainHandItem());
+
+            for (ItemStack drop : drops) {
+                Containers.dropItemStack(level, pos.getX(), pos.getY(), pos.getZ(), drop);
+            }
+
+            state.onRemove(level, pos, Blocks.AIR.defaultBlockState(), false); // z.B. für Sounds/Particles
+            level.setBlock(pos, Blocks.AIR.defaultBlockState(), 3);
+            level.playSound(null, pos, SoundEvents.SHEEP_SHEAR, SoundSource.BLOCKS, 1.0F, 1.0F); // optionaler Scher-Sound
+
+            return;
+        }
+
+        // Normaler Abbau
         if (currentTimeBreak % 5 == 4) {
-            this.getCommandSenderWorld().playLocalSound(pos.getX(), pos.getY(), pos.getZ(),
+            level.playLocalSound(pos.getX(), pos.getY(), pos.getZ(),
                     state.getSoundType().getHitSound(), SoundSource.BLOCKS, 1F, 0.75F, false);
         }
 
         if (breakingTime == 0) {
-            breakingTime = (int) (state.getDestroySpeed(this.level(), pos) * 30);
+            breakingTime = (int) (state.getDestroySpeed(level, pos) * 30);
         }
 
-        float destroySpeed = this.getUseItem().getDestroySpeed(state);
+        float destroySpeed = this.getUseItem().getDestroySpeed(state) * 2;
         currentTimeBreak += (int) destroySpeed;
 
         int stage = (int) ((float) currentTimeBreak / breakingTime * 10);
         if (stage != previousTimeBreak) {
-            this.getCommandSenderWorld().destroyBlockProgress(1, pos, stage);
+            level.destroyBlockProgress(1, pos, stage);
             previousTimeBreak = stage;
         }
 
         if (currentTimeBreak >= breakingTime) {
-            this.getCommandSenderWorld().destroyBlock(pos, true, this);
+            level.destroyBlock(pos, true, this); // funktioniert für normale Blöcke
             currentTimeBreak = 0;
             breakingTime = 0;
             previousTimeBreak = 0;
@@ -335,6 +359,7 @@ public abstract class AbstractWorkerEntity extends AbstractChunkLoaderEntity {
 
         this.swing(InteractionHand.MAIN_HAND);
     }
+
 
     public boolean needsToGetItems() {
         return !neededItems.isEmpty();
@@ -351,6 +376,24 @@ public abstract class AbstractWorkerEntity extends AbstractChunkLoaderEntity {
             if(neededItem.matches(itemStack)){
                 NeededItem.applyToNeededItems(itemStack, neededItems);;
                 break;
+            }
+        }
+    }
+
+    public void switchMainHandItem(Predicate<ItemStack> predicate) {
+        if (!this.isAlive() || predicate == null) return;
+
+        SimpleContainer inventory = this.getInventory();
+        ItemStack mainHand = this.getMainHandItem();
+        if (predicate.test(mainHand)) return;
+
+        for (int i = 0; i < inventory.getContainerSize(); i++) {
+            ItemStack stack = inventory.getItem(i);
+            if (predicate.test(stack)) {
+
+                inventory.setItem(i, mainHand);
+                this.setItemInHand(InteractionHand.MAIN_HAND, stack);
+                return;
             }
         }
     }

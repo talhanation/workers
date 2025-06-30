@@ -1,6 +1,7 @@
 package com.talhanation.workers.entities.workarea;
 
 import com.talhanation.workers.client.gui.WorkAreaScreen;
+import com.talhanation.workers.entities.AbstractWorkerEntity;
 import com.talhanation.workers.entities.FarmerEntity;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.nbt.CompoundTag;
@@ -27,6 +28,7 @@ public abstract class AbstractWorkAreaEntity extends Entity {
     public boolean isBeingWorkedOn;
     public static int DONE_TIME =  20*60;
     public boolean showBox;
+    public boolean isBuild;
 
     public AbstractWorkAreaEntity(EntityType<?> type, Level level) {
         super(type, level);
@@ -124,8 +126,8 @@ public abstract class AbstractWorkAreaEntity extends Entity {
         return false;
     }
 
-    public boolean canWorkHere(FarmerEntity farmer) {
-        return farmer.isOwned() && (farmer.getOwnerUUID().equals(this.getPlayerUUID()) || (farmer.getTeam() != null && this.getTeamStringID() != null && this.getTeamStringID().equals(farmer.getTeam().getName())));
+    public boolean canWorkHere(AbstractWorkerEntity worker) {
+        return worker.isOwned() && (worker.getOwnerUUID().equals(this.getPlayerUUID()) || (worker.getTeam() != null && this.getTeamStringID() != null && this.getTeamStringID().equals(worker.getTeam().getName())));
     }
 
     public void setDone(boolean b) {

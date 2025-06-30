@@ -79,6 +79,7 @@ public class DepositItemsInChestsGoal extends AbstractChestGoal {
             }
 
             case OPEN_CHEST -> {
+                worker.getLookControl().setLookAt(chestPos.getCenter());
                 this.interactChest(container, true);
 
                 state = State.WAIT;
@@ -86,6 +87,7 @@ public class DepositItemsInChestsGoal extends AbstractChestGoal {
             }
 
             case WAIT -> {
+                worker.getLookControl().setLookAt(chestPos.getCenter());
                 if(timer++ < 30){
                     return;
                 }
@@ -96,6 +98,7 @@ public class DepositItemsInChestsGoal extends AbstractChestGoal {
             }
 
             case DEPOSIT -> {
+                worker.getLookControl().setLookAt(chestPos.getCenter());
                 if(depositItems()){
                     state = State.CLOSE_CHEST_DEPOSIT_DONE;
                     //worker.getOwner().sendSystemMessage(Component.literal("CLOSE_CHEST_DEPOSIT_DONE"));
@@ -108,6 +111,7 @@ public class DepositItemsInChestsGoal extends AbstractChestGoal {
             }
 
             case CLOSE_CHEST_DEPOSIT_DONE -> {
+                worker.getLookControl().setLookAt(chestPos.getCenter());
                 this.interactChest(container, false);
 
                 state = State.DONE;
@@ -115,6 +119,7 @@ public class DepositItemsInChestsGoal extends AbstractChestGoal {
             }
 
             case CLOSE_CHEST_FULL_CHEST -> {
+                worker.getLookControl().setLookAt(chestPos.getCenter());
                 this.interactChest(container, false);
 
                 state = State.SELECT_CHEST;

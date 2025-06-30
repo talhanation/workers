@@ -101,6 +101,25 @@ public class ItemScrollDropDownMenu extends AbstractWidget {
         }
     }
 
+    public void insertOption(int index, ItemStack stack, String text) {
+        ItemStack toInsert = stack;
+
+        if (stack.isEmpty()) {
+            toInsert = ItemStack.EMPTY;
+            toInsert.setHoverName(Component.literal(text));
+        }
+
+        if (index < 0 || index > options.size()) {
+            options.add(toInsert); // Am Ende anhängen
+        } else {
+            options.add(index, toInsert);
+        }
+
+        // Scrollbar ggf. anpassen
+        this.maxVisibleOptions = Math.min(5, options.size());
+        this.scrollbarHandleHeight = Math.max(10, (int)((float)this.maxVisibleOptions / (float)options.size() * (float)(this.height * this.maxVisibleOptions)));
+    }
+
     public void onClick(double mouseX, double mouseY) {
     }
 
