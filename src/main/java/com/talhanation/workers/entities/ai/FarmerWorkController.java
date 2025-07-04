@@ -5,6 +5,7 @@ import com.talhanation.workers.entities.IWorkerController;
 import com.talhanation.workers.entities.workarea.CropArea;
 import com.talhanation.workers.world.NeededItem;
 import net.minecraft.core.BlockPos;
+import net.minecraft.server.level.ServerLevel;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.sounds.SoundSource;
 import net.minecraft.world.InteractionHand;
@@ -14,9 +15,8 @@ import net.minecraft.world.level.block.state.BlockState;
 import net.minecraftforge.common.IPlantable;
 import net.minecraftforge.common.PlantType;
 
-import java.util.Comparator;
-import java.util.List;
-import java.util.Stack;
+import javax.annotation.Nullable;
+import java.util.*;
 
 public class FarmerWorkController implements IWorkerController {
 
@@ -33,20 +33,15 @@ public class FarmerWorkController implements IWorkerController {
     }
 
     public boolean initWork(){
-        List<CropArea> list = farmer.getCommandSenderWorld().getEntitiesOfClass(CropArea.class, farmer.getBoundingBox().inflate(32));
+        List<CropArea> areas = getAvailableWorkAreasByPriority((ServerLevel) farmer.getCommandSenderWorld(), farmer, currentCropArea);
 
-        list.sort(Comparator.comparing(CropArea::isBeingWorkedOn));
-
-        list.sort(Comparator.comparing(workAreaEntity -> workAreaEntity.position().distanceToSqr(farmer.position())));
-
-        list.removeIf(workAreaEntity -> !workAreaEntity.canWorkHere(this.farmer));
-        list.removeIf(CropArea::isDone);
-        if(list.isEmpty()) return false;
-
-        this.currentCropArea = list.get(0);
+        if (!areas.isEmpty()) {
+            this.currentCropArea = areas.get(0);
+        }
 
         if(currentCropArea == null) return false;
 
+        currentCropArea.setBeingWorkedOn(true);
         setWorkState(WorkState.BREAKING_BLOCKS);
 
         BlockState centerPosState = farmer.getCommandSenderWorld().getBlockState(currentCropArea.getOnPos());
@@ -105,10 +100,8 @@ public class FarmerWorkController implements IWorkerController {
                 }
 
                 case DONE -> {
-                    currentCropArea.setDone(true);
+                    //currentCropArea.setDone(true);
                     currentCropArea.setBeingWorkedOn(false);
-                    currentCropArea = null;
-
                     initialized = false;
                 }
 
@@ -270,6 +263,42 @@ public class FarmerWorkController implements IWorkerController {
             default -> {}
         }
         this.workState = newState;
+    }
+
+    public static List<CropArea> getAvailableWorkAreasByPriority(ServerLevel level, FarmerEntity farmer, @Nullable CropArea currentArea) {
+        List<CropArea> list = level.getEntitiesOfClass(CropArea.class, farmer.getBoundingBox().inflate(64));
+
+        Map<CropArea, Integer> priorityMap = new HashMap<>();
+
+        for (CropArea area : list) {
+            if (area == null || area == currentArea || !area.canWorkHere(farmer)) continue;
+
+            int priority = 0;
+
+            boolean perfectCandidate = area.isWorkerPerfectCandidate(farmer);
+
+            if (perfectCandidate) {
+                priority += 1000;
+            } else {
+                priority += 100;
+            }
+
+            if (!area.isBeingWorkedOn()) {
+                priority += 500;
+            }
+
+            priority += area.getTimeSinceLastVisit() * 4;
+
+            double dist = area.position().distanceToSqr(farmer.position());
+            priority -= dist / 4.0;
+
+            priorityMap.put(area, priority);
+        }
+
+        List<CropArea> sorted = new ArrayList<>(priorityMap.keySet());
+        sorted.sort((a, b) -> Integer.compare(priorityMap.get(b), priorityMap.get(a)));
+
+        return sorted;
     }
 
     public enum WorkState{

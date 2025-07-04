@@ -30,7 +30,7 @@ public abstract class AbstractChestGoal extends Goal {
 
     @Override
     public boolean canUse(){
-        return !worker.chestPositions.isEmpty() && worker.getFollowState() != 1;
+        return worker.getFollowState() != 1;
     }
 
     public boolean moveToPosition(BlockPos pos){

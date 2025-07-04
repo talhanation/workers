@@ -28,6 +28,7 @@ import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.LeavesBlock;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.phys.Vec3;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
 import org.jetbrains.annotations.NotNull;
@@ -396,6 +397,13 @@ public abstract class AbstractWorkerEntity extends AbstractChunkLoaderEntity {
                 return;
             }
         }
+    }
+
+    public double getHorizontalDistanceTo(Vec3 target){
+        Vec3 position = new Vec3(position().x, 0, position().z);
+        Vec3 toTarget = new Vec3(target.x, 0, target.z);
+
+        return position.distanceToSqr(toTarget);
     }
 
 }

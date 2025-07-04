@@ -126,7 +126,6 @@ public class GetNeededItemsFromChestsGoal extends AbstractChestGoal {
                     if(worker.getOwner() != null) worker.getOwner().sendSystemMessage(Component.literal(errorMessage));
                     errorMessageDone = true;
                 }
-                worker.neededItems.clear();
             }
         }
     }
@@ -164,7 +163,7 @@ public class GetNeededItemsFromChestsGoal extends AbstractChestGoal {
                         return false;
                     }
 
-                    // Statt direkter Manipulation:
+
                     NeededItem.applyToNeededItems(extracted, neededItems);
                     anyTaken = true;
 

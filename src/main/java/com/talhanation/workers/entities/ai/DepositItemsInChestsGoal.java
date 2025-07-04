@@ -44,7 +44,7 @@ public class DepositItemsInChestsGoal extends AbstractChestGoal {
 
                 if(blockPosStack.isEmpty()) {
                     state = State.ERROR;
-                    errorMessage = "No Deposit Positions";
+                    errorMessage = worker.getName().getString() + ": No Deposit Chests, please assign me Chests";
                     return;
                 }
 

@@ -2,7 +2,8 @@ package com.talhanation.workers.entities.workarea;
 
 import com.talhanation.workers.Main;
 import com.talhanation.workers.client.gui.LumberAreaScreen;
-import com.talhanation.workers.entities.FarmerEntity;
+import com.talhanation.workers.entities.AbstractWorkerEntity;
+import com.talhanation.workers.entities.LumberjackEntity;
 import com.talhanation.workers.network.MessageToClientOpenWorkAreaScreen;
 import com.talhanation.workers.world.Tree;
 import net.minecraft.client.gui.screens.Screen;
@@ -20,13 +21,8 @@ import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResult;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.player.Player;
-import net.minecraft.world.item.AxeItem;
-import net.minecraft.world.item.Item;
-import net.minecraft.world.item.ItemStack;
-import net.minecraft.world.item.Items;
+import net.minecraft.world.item.*;
 import net.minecraft.world.level.Level;
-import net.minecraft.world.level.block.FarmBlock;
-import net.minecraft.world.level.block.RotatedPillarBlock;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraftforge.network.PacketDistributor;
 
@@ -98,6 +94,27 @@ public class LumberArea extends AbstractWorkAreaEntity {
         }
     }
 
+    public boolean isWorkerPerfectCandidate(LumberjackEntity lumberjack) {
+        boolean needsSapling = this.getReplant();
+        boolean needsAxe = this.getStripLogs();
+        boolean needsShears = this.getShearLeaves();
+
+        if (needsSapling && lumberjack.getMatchingItem(stack -> stack.is(this.getSaplingStack().getItem())) == ItemStack.EMPTY) {
+            return false;
+        }
+
+        if (needsAxe && lumberjack.getMatchingItem(stack -> stack.getItem() instanceof AxeItem) == ItemStack.EMPTY) {
+            return false;
+        }
+
+        if (needsShears && lumberjack.getMatchingItem(stack -> stack.getItem() instanceof ShearsItem) == ItemStack.EMPTY) {
+            return false;
+        }
+
+        return true;
+    }
+
+
     public void scanForTrees() {
         Set<BlockPos> visited = new HashSet<>();
 
@@ -137,6 +154,10 @@ public class LumberArea extends AbstractWorkAreaEntity {
     }
 
     private void scanTree(Level level, BlockPos start, Set<BlockPos> visited, Tree tree) {
+        tree.getStackToShear().clear();
+        tree.getStackToStrip().clear();
+        tree.getStackToBreak().clear();
+
         Queue<BlockPos> toVisit = new ArrayDeque<>();
         toVisit.add(start);
 
@@ -152,27 +173,44 @@ public class LumberArea extends AbstractWorkAreaEntity {
                     tree.addToStrip(pos);
                 }
 
+                int range = 4;
+                for(int x = -range; x < range; x++){
+                    for(int y = -range; y < range; y++){
+                        for(int z = -range; z < range; z++){
+                            BlockPos pos1 = pos.offset(x, y, z);
+                            BlockState state1 = level.getBlockState(pos1);
+                            if (isLeaf(state1) && !tree.getStackToShear().contains(pos1)) {
+                                tree.addToShear(pos1);
+                            }
+                        }
+                    }
+                }
+
                 for (Direction dir : Direction.values()) {
                     toVisit.add(pos.relative(dir));
                 }
-
-                scanForNearbyLeaves(level, pos, visited, tree);
             }
         }
+        tree.getStackToShear().sort(Comparator.reverseOrder());
+        tree.getStackToStrip().sort(Comparator.reverseOrder());
+        tree.getStackToBreak().sort(Comparator.reverseOrder());
     }
 
-    private void scanForNearbyLeaves(Level level, BlockPos center, Set<BlockPos> visited, Tree tree) {
-        int radius = 3;
-
-        for (BlockPos pos : BlockPos.betweenClosed(center.offset(-radius, -radius, -radius), center.offset(radius, radius, radius))) {
-            if (visited.contains(pos)) continue;
-
-            BlockState state = level.getBlockState(pos);
-            if (isLeaf(state)) {
-                visited.add(pos);
-                tree.addToShear(pos);
-            }
+    public void scanPlantArea(){
+        this.stackToPlant.clear();
+        BlockPos center = this.getOnPos();
+        for (Direction dir : Direction.Plane.HORIZONTAL) {
+            stackToPlant.add(center.relative(dir, 5).above());
         }
+
+        stackToPlant.add(center.offset(-5, 1, -5));
+        stackToPlant.add(center.offset(-5, 1, 5));
+        stackToPlant.add(center.offset(5, 1, -5));
+        stackToPlant.add(center.offset(5, 1, 5));
+    }
+
+    public Stack<BlockPos> getStackToPlant() {
+        return stackToPlant;
     }
 
     private boolean isLog(Level level, BlockPos pos) {

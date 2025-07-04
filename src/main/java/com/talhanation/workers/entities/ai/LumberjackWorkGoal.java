@@ -5,20 +5,21 @@ import com.talhanation.workers.entities.workarea.LumberArea;
 import com.talhanation.workers.world.NeededItem;
 import com.talhanation.workers.world.Tree;
 import net.minecraft.core.BlockPos;
-import net.minecraft.network.chat.Component;
+import net.minecraft.server.level.ServerLevel;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.sounds.SoundSource;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.entity.ai.goal.Goal;
 import net.minecraft.world.item.AxeItem;
+import net.minecraft.world.item.BlockItem;
+import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.ShearsItem;
 import net.minecraft.world.level.block.Block;
+import net.minecraft.world.level.block.SaplingBlock;
 import net.minecraft.world.level.block.state.BlockState;
 
-import java.util.Comparator;
-import java.util.EnumSet;
-import java.util.List;
-import java.util.Stack;
+import javax.annotation.Nullable;
+import java.util.*;
 
 public class LumberjackWorkGoal extends Goal {
 
@@ -45,17 +46,13 @@ public class LumberjackWorkGoal extends Goal {
     @Override
     public void start() {
         super.start();
-        List<LumberArea> list = lumberjack.getCommandSenderWorld().getEntitiesOfClass(LumberArea.class, lumberjack.getBoundingBox().inflate(32));
+        if(this.lumberjack.getCommandSenderWorld().isClientSide()) return;
 
-        list.sort(Comparator.comparing(LumberArea::isBeingWorkedOn));
+        List<LumberArea> areas = getAvailableWorkAreasByPriority((ServerLevel) lumberjack.getCommandSenderWorld(), lumberjack, currentLumberArea);
 
-        list.sort(Comparator.comparing(workAreaEntity -> workAreaEntity.position().distanceToSqr(lumberjack.position())));
-
-        list.removeIf(workAreaEntity -> !workAreaEntity.canWorkHere(this.lumberjack));
-        list.removeIf(LumberArea::isDone);
-        if(list.isEmpty()) return;
-
-        this.currentLumberArea = list.get(0);
+        if (!areas.isEmpty()) {
+            this.currentLumberArea = areas.get(0);
+        }
 
         if(currentLumberArea == null) return;
 
@@ -71,24 +68,31 @@ public class LumberjackWorkGoal extends Goal {
         if(state == null) return;
         if(blockPos != null) this.lumberjack.getLookControl().setLookAt(blockPos.getCenter());
 
+
+        if(state == State.WOOD_CUTTING){
+            if(this.breakBlocks(currentTree.getStackToBreak())) return;
+
+            setState(State.SELECT_TREE);
+        }
+
         if(lumberjack.tickCount % 10 != 0) return;
 
         switch(state){
             case MOVE_TO_WORK_AREA ->{
                 if(this.moveToPosition(currentLumberArea.getOnPos(), 100)) return;
-
+                this.blockPos = null;
                 setState(State.SCAN_TREES);
             }
 
             case SCAN_TREES ->{
-                currentLumberArea.scanForTrees();
+                this.currentLumberArea.scanForTrees();
 
                 this.stackOfTrees = currentLumberArea.stackOfTrees;
                 this.stackOfTrees.sort(Comparator.comparing(tree -> tree.getPosition().getCenter().distanceToSqr(lumberjack.position())));
 
                 if(stackOfTrees.isEmpty()){
 
-                    setState(State.DONE);//state = State.PREPARE_PLANT_SAPLINGS;
+                    setState(State.PREPARE_PLANT_SAPLINGS);
                     return;
                 }
 
@@ -167,45 +171,51 @@ public class LumberjackWorkGoal extends Goal {
                 setState(State.WOOD_CUTTING);
             }
             case WOOD_CUTTING -> {
-                if(this.breakBlocks(currentTree.getStackToBreak())) return;
 
-                setState(State.SELECT_TREE);
             }
 
             case PREPARE_PLANT_SAPLINGS -> {
+                if(!currentLumberArea.getReplant()){
+                    setState(State.DONE);
+                    return;
+                }
 
+                this.currentLumberArea.scanPlantArea();
+                this.stackToPlant = currentLumberArea.stackToPlant;
+
+                if(stackToPlant.isEmpty()){
+                    setState(State.DONE);
+                    return;
+                }
 
                 setState(State.PLANT_SAPLINGS);
             }
 
             case PLANT_SAPLINGS -> {
-                if(currentLumberArea.getReplant()){
+                if(currentLumberArea.getReplant() && this.plantSaplings(currentLumberArea.getStackToPlant())) return;
 
-                }
-                else{
-
-                    setState(State.DONE);
-                }
+                setState(State.DONE);
             }
 
             case DONE -> {
                 if(!workDone){
                     workDone = true;
-                    currentLumberArea.setDone(true);
                     currentLumberArea.setBeingWorkedOn(false);
-                    currentLumberArea = null;
-                    this.stop();
+
+                    this.start();
                 }
             }
 
             case ERROR ->{
-
+                if(!errorMessageDone){
+                    errorMessageDone = true;
+                }
             }
         }
     }
 
     public void setState(State state) {
-        if(lumberjack.getOwner() != null) lumberjack.getOwner().sendSystemMessage(Component.literal(state.toString()));
+        //if(lumberjack.getOwner() != null) lumberjack.getOwner().sendSystemMessage(Component.literal(state.toString()));
         this.state = state;
     }
 
@@ -301,6 +311,55 @@ public class LumberjackWorkGoal extends Goal {
         }
         return false;
     }
+
+    public boolean plantSaplings(Stack<BlockPos> positions){
+        if(positions != null){
+            ItemStack saplingFromInv;
+            if(currentLumberArea.getSaplingStack().isEmpty()){
+                saplingFromInv = lumberjack.getMatchingItem(itemStack -> itemStack.getItem() instanceof BlockItem blockItem && blockItem.getBlock() instanceof SaplingBlock);
+                if(saplingFromInv == null){
+                    lumberjack.addNeededItem(new NeededItem(itemStack -> itemStack.getItem() instanceof BlockItem blockItem && blockItem.getBlock() instanceof SaplingBlock,  8, true));
+                    this.blockPos = null;
+                    return false;
+                }
+
+            }
+            else{
+                saplingFromInv = lumberjack.getMatchingItem(itemStack -> itemStack.is(currentLumberArea.getSaplingStack().getItem()));
+                if(saplingFromInv == null){
+                    lumberjack.addNeededItem(new NeededItem(itemStack -> ItemStack.isSameItemSameTags(itemStack, currentLumberArea.getSaplingStack()),  8, true));
+                    this.blockPos = null;
+                    return false;
+                }
+            }
+
+            if(blockPos == null){
+                if(!positions.isEmpty()) blockPos = positions.pop();
+                return blockPos != null;
+            }
+
+            BlockState state = lumberjack.getCommandSenderWorld().getBlockState(blockPos);
+            if(!state.isAir()){
+                if(!positions.isEmpty()){
+                    blockPos = positions.pop();
+                }
+                else{
+                    this.blockPos = null;
+                    return false;
+                }
+            }
+            else if (saplingFromInv.getItem() instanceof BlockItem blockItem) {
+                lumberjack.getCommandSenderWorld().setBlockAndUpdate(blockPos, blockItem.getBlock().defaultBlockState());
+
+                lumberjack.getCommandSenderWorld().playSound(null, blockPos.getX(), blockPos.getY(), blockPos.getZ(), SoundEvents.CROP_PLANTED, SoundSource.BLOCKS, 1.0F, 1.0F);
+                saplingFromInv.shrink(1);
+                this.lumberjack.swing(InteractionHand.MAIN_HAND);
+            }
+            return true;
+        }
+        this.blockPos = null;
+        return false;
+    }
     @Override
     public boolean canContinueToUse() {
         return canUse();
@@ -316,12 +375,50 @@ public class LumberjackWorkGoal extends Goal {
         return true;
     }
 
+    public static List<LumberArea> getAvailableWorkAreasByPriority(ServerLevel level, LumberjackEntity lumberjack, @Nullable LumberArea currentArea) {
+        List<LumberArea> list = level.getEntitiesOfClass(LumberArea.class, lumberjack.getBoundingBox().inflate(64));
+
+        Map<LumberArea, Integer> priorityMap = new HashMap<>();
+
+        for (LumberArea area : list) {
+            if (area == null || area == currentArea || !area.canWorkHere(lumberjack)) continue;
+
+            int priority = 0;
+
+            boolean perfectCandidate = area.isWorkerPerfectCandidate(lumberjack);
+
+            if (perfectCandidate) {
+                priority += 1000;
+            } else {
+                priority += 100;
+            }
+
+            if (!area.isBeingWorkedOn()) {
+                priority += 500;
+            }
+
+            priority += area.getTimeSinceLastVisit() * 4;
+
+            double dist = area.position().distanceToSqr(lumberjack.position());
+            priority -= dist / 4.0;
+
+            priorityMap.put(area, priority);
+        }
+
+        List<LumberArea> sorted = new ArrayList<>(priorityMap.keySet());
+        sorted.sort((a, b) -> Integer.compare(priorityMap.get(b), priorityMap.get(a)));
+
+        return sorted;
+    }
+
+
+
     public boolean moveToPosition(BlockPos pos, int threshold){
         if(pos == null){
             return false;
         }
         else{
-            double distance = pos.getCenter().distanceToSqr(lumberjack.position());
+            double distance = lumberjack.getHorizontalDistanceTo(pos.getCenter());
             if(distance < threshold){
                 return false;
             }

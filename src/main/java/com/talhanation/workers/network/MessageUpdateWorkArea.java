@@ -64,7 +64,7 @@ public class MessageUpdateWorkArea implements Message<MessageUpdateWorkArea> {
         workArea.moveTo(this.x, this.y, this.z);
         workArea.setDone(true);
 
-        workArea.resetTimer = DONE_TIME;
+        workArea.timeSinceLastVisit += DONE_TIME;
     }
 
     public MessageUpdateWorkArea fromBytes(FriendlyByteBuf buf) {

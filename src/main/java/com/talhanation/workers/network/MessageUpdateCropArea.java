@@ -50,7 +50,7 @@ public class MessageUpdateCropArea implements Message<MessageUpdateCropArea> {
         ItemStack itemStack = ItemStack.of(tag);
         cropArea.setSeedStack(itemStack);
 
-        cropArea.resetTimer = DONE_TIME;
+        cropArea.timeSinceLastVisit += DONE_TIME;
     }
 
     public MessageUpdateCropArea fromBytes(FriendlyByteBuf buf) {

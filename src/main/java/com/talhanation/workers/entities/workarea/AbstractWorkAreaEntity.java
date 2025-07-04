@@ -1,8 +1,6 @@
 package com.talhanation.workers.entities.workarea;
 
-import com.talhanation.workers.client.gui.WorkAreaScreen;
 import com.talhanation.workers.entities.AbstractWorkerEntity;
-import com.talhanation.workers.entities.FarmerEntity;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.syncher.EntityDataAccessor;
@@ -48,7 +46,7 @@ public abstract class AbstractWorkAreaEntity extends Entity {
     @Override
     public void readAdditionalSaveData(CompoundTag tag) {
         this.isDone = tag.getBoolean("isDone");
-        this.resetTimer = tag.getInt("resetTimer");
+        this.timeSinceLastVisit = tag.getInt("timeSinceLastVisit");
         this.isBeingWorkedOn = tag.getBoolean("isBeingWorkedOn");
         this.setPlayerUUID(tag.getUUID("playerUUID"));
         this.setSize(tag.getInt("size"));
@@ -63,7 +61,7 @@ public abstract class AbstractWorkAreaEntity extends Entity {
     public void addAdditionalSaveData(CompoundTag tag) {
         tag.putUUID("playerUUID", getPlayerUUID());
         tag.putBoolean("isDone", isDone);
-        tag.putInt("resetTimer", resetTimer);
+        tag.putInt("timeSinceLastVisit", timeSinceLastVisit);
         tag.putBoolean("isBeingWorkedOn", isBeingWorkedOn);
         tag.putInt("size", getSize());
         tag.putInt("height", getHeight());
@@ -72,14 +70,12 @@ public abstract class AbstractWorkAreaEntity extends Entity {
         }
     }
 
-    public int resetTimer;
+    public int timeSinceLastVisit;
     @Override
     public void tick() {
         super.tick();
-        if(isDone && resetTimer++ > DONE_TIME){
-            resetTimer = 0;
-            this.setDone(false);
-        }
+        if(!isBeingWorkedOn()) timeSinceLastVisit++;
+
     }
     @Override
     public boolean isPickable() {
@@ -139,8 +135,14 @@ public abstract class AbstractWorkAreaEntity extends Entity {
     }
 
     public void setBeingWorkedOn(boolean b) {
+        if(b) this.timeSinceLastVisit = 0;
         this.isBeingWorkedOn = b;
     }
+
+    public int getTimeSinceLastVisit(){
+        return this.timeSinceLastVisit;
+    }
+
 
     public boolean isBeingWorkedOn(){
         return this.isBeingWorkedOn;
