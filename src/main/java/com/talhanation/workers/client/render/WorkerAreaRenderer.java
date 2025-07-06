@@ -67,6 +67,7 @@ public class WorkerAreaRenderer extends EntityRenderer<AbstractWorkAreaEntity> {
 
         if(!abstractWorkAreaEntity.showBox && (looking == null || !looking.equals(abstractWorkAreaEntity))) return;
 
+
         double x = Mth.lerp(partialTicks, abstractWorkAreaEntity.xOld, abstractWorkAreaEntity.getX());
         double y = Mth.lerp(partialTicks, abstractWorkAreaEntity.yOld, abstractWorkAreaEntity.getY());
         double z = Mth.lerp(partialTicks, abstractWorkAreaEntity.zOld, abstractWorkAreaEntity.getZ());
@@ -82,6 +83,24 @@ public class WorkerAreaRenderer extends EntityRenderer<AbstractWorkAreaEntity> {
 
         AABB relativeBox = worldBox.move(-x, -y, -z);
 
+
+        for (AbstractWorkAreaEntity neighbor : AbstractWorkAreaEntity.getNearbyAreas(abstractWorkAreaEntity.level(), abstractWorkAreaEntity.getOnPos(), 20)) {
+            if (neighbor.getTeamStringID().equals(abstractWorkAreaEntity.getTeamStringID()) &&
+                    neighbor.getPlayerUUID().equals(abstractWorkAreaEntity.getPlayerUUID())) {
+                AABB neighborBox = new AABB(
+                        neighbor.getOnPos().getX() - neighbor.getSize(),
+                        neighbor.getOnPos().getY(),
+                        neighbor.getOnPos().getZ() - neighbor.getSize(),
+                        neighbor.getOnPos().getX() + neighbor.getSize() + 1,
+                        neighbor.getOnPos().getY() + neighbor.getHeight(),
+                        neighbor.getOnPos().getZ() + neighbor.getSize() + 1
+                ).move(-x, -y, -z);
+
+                poseStack.pushPose();
+                LevelRenderer.renderLineBox(poseStack, bufferSource.getBuffer(RenderType.lines()), neighborBox, 0.5F, 1.0F, 0.5F, 0.7F);
+                poseStack.popPose();
+            }
+        }
 
         poseStack.pushPose();
         VertexConsumer vertexConsumer = bufferSource.getBuffer(RenderType.lines());
