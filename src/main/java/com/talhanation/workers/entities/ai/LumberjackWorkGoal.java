@@ -206,6 +206,7 @@ public class LumberjackWorkGoal extends Goal {
                 if(!workDone){
                     workDone = true;
                     lumberjack.currentLumberArea.setBeingWorkedOn(false);
+                    blockPos = null;
                     lumberjack.currentLumberArea = null;
                     this.start();
                 }
