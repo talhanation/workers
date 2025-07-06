@@ -4,7 +4,8 @@ import com.google.common.collect.ImmutableSet;
 import com.talhanation.recruits.entities.AbstractRecruitEntity;
 import com.talhanation.recruits.pathfinding.AsyncGroundPathNavigation;
 import com.talhanation.workers.config.WorkersServerConfig;
-import com.talhanation.workers.entities.ai.FarmerWorkController;
+import com.talhanation.workers.entities.ai.FarmerWorkGoal;
+import com.talhanation.workers.world.NeededItem;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
@@ -25,6 +26,7 @@ import net.minecraft.world.level.material.Fluids;
 import net.minecraft.world.level.material.WaterFluid;
 import net.minecraftforge.common.ForgeMod;
 import net.minecraftforge.registries.ForgeRegistries;
+import org.jetbrains.annotations.NotNull;
 
 import javax.annotation.Nullable;
 import java.util.List;
@@ -41,7 +43,13 @@ public class FarmerEntity extends AbstractWorkerEntity{
 
     public FarmerEntity(EntityType<? extends AbstractWorkerEntity> entityType, Level world) {
         super(entityType, world);
-        this.workController = new FarmerWorkController(this);
+        //this.workController = new FarmerWorkController(this);
+    }
+
+    @Override
+    protected void registerGoals() {
+        super.registerGoals();
+        this.goalSelector.addGoal(0, new FarmerWorkGoal(this));
     }
 
     public static AttributeSupplier.Builder setAttributes() {
@@ -116,6 +124,7 @@ public class FarmerEntity extends AbstractWorkerEntity{
         if (itemStack.getItem() instanceof HoeItem && this.getMainHandItem().isEmpty()) {
             return !this.hasSameTypeOfItem(itemStack);
         }
+
         return super.wantsToPickUp(itemStack);
     }
 }

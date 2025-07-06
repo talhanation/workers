@@ -18,10 +18,13 @@ import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.*;
 import net.minecraft.world.level.Level;
+import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.BushBlock;
 import net.minecraft.world.level.block.CropBlock;
 import net.minecraft.world.level.block.FarmBlock;
 import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.level.material.Fluid;
+import net.minecraft.world.level.material.Fluids;
 import net.minecraftforge.network.PacketDistributor;
 
 import java.util.Stack;
@@ -85,6 +88,12 @@ public class CropArea extends AbstractWorkAreaEntity {
     public void scanBreakArea(){
         stackToBreak.clear();
         Level level = this.getCommandSenderWorld();
+
+        Fluid centerPosFluid = level.getFluidState(this.getOnPos()).getType();
+        if(!(centerPosFluid == Fluids.WATER)|| (centerPosFluid == Fluids.FLOWING_WATER)) {
+            this.stackToBreak.push(this.getOnPos());
+        }
+
         for (int i = -getSize(); i <= getSize(); i++) {
             for (int k = -getHeight(); k <= getHeight(); k++) {
                 for (int j = -getSize(); j <= getSize(); j++) {

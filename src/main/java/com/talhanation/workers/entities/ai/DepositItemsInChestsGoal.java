@@ -9,13 +9,14 @@ import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
 
 import java.util.Comparator;
+import java.util.EnumSet;
 import java.util.Stack;
 
 public class DepositItemsInChestsGoal extends AbstractChestGoal {
 
     public DepositItemsInChestsGoal(AbstractWorkerEntity worker){
         super(worker);
-        //this.setFlags(Flag.LOOK);
+        setFlags(EnumSet.of(Flag.LOOK));
     }
     @Override
     public boolean canUse() {
@@ -34,6 +35,8 @@ public class DepositItemsInChestsGoal extends AbstractChestGoal {
     public boolean errorMessageDone;
     public void tick(){
         if(this.worker.getCommandSenderWorld().isClientSide()) return;
+
+        if(this.chestPos != null) worker.getLookControl().setLookAt(chestPos.getCenter());
 
         switch (state){
             case SELECT_CHEST -> {
@@ -54,14 +57,12 @@ public class DepositItemsInChestsGoal extends AbstractChestGoal {
                 chestPos = blockPosStack.pop();
 
                 state = State.MOVE_TO_CHEST;
-                //worker.getOwner().sendSystemMessage(Component.literal("MOVE_TO_CHEST"));
             }
 
             case MOVE_TO_CHEST -> {
                 if(moveToPosition(chestPos)) return;
 
                 state = State.CHECK_CHEST;
-                //worker.getOwner().sendSystemMessage(Component.literal("CHECK_CHEST"));
             }
 
             case CHECK_CHEST -> {
@@ -70,60 +71,48 @@ public class DepositItemsInChestsGoal extends AbstractChestGoal {
                     worker.chestPositions.remove(chestPos);
                     if(!blockPosStack.isEmpty()) chestPos = blockPosStack.pop();
                     state = State.SELECT_CHEST;
-                    //worker.getOwner().sendSystemMessage(Component.literal("SELECT_CHEST"));
                     return;
                 }
 
                 state = State.OPEN_CHEST;
-                //worker.getOwner().sendSystemMessage(Component.literal("OPEN_CHEST"));
             }
 
             case OPEN_CHEST -> {
-                worker.getLookControl().setLookAt(chestPos.getCenter());
+
                 this.interactChest(container, true);
 
                 state = State.WAIT;
-                //worker.getOwner().sendSystemMessage(Component.literal("WAIT"));
             }
 
             case WAIT -> {
-                worker.getLookControl().setLookAt(chestPos.getCenter());
-                if(timer++ < 30){
+                if(timer++ < 20){
                     return;
                 }
                 timer = 0;
 
                 state = State.DEPOSIT;
-                //worker.getOwner().sendSystemMessage(Component.literal("DEPOSIT"));
             }
 
             case DEPOSIT -> {
-                worker.getLookControl().setLookAt(chestPos.getCenter());
                 if(depositItems()){
                     state = State.CLOSE_CHEST_DEPOSIT_DONE;
-                    //worker.getOwner().sendSystemMessage(Component.literal("CLOSE_CHEST_DEPOSIT_DONE"));
                 }
                 else{
                     state = State.CLOSE_CHEST_FULL_CHEST;
-                    //worker.getOwner().sendSystemMessage(Component.literal("CLOSE_CHEST_FULL_CHEST"));
                 }
 
             }
 
             case CLOSE_CHEST_DEPOSIT_DONE -> {
-                worker.getLookControl().setLookAt(chestPos.getCenter());
                 this.interactChest(container, false);
 
                 state = State.DONE;
-                //worker.getOwner().sendSystemMessage(Component.literal("DONE"));
             }
 
             case CLOSE_CHEST_FULL_CHEST -> {
-                worker.getLookControl().setLookAt(chestPos.getCenter());
                 this.interactChest(container, false);
 
                 state = State.SELECT_CHEST;
-                //worker.getOwner().sendSystemMessage(Component.literal("SELECT_CHEST"));
             }
 
             case DONE -> {

@@ -14,8 +14,10 @@ public class GetNeededItemsFromChestsGoal extends AbstractChestGoal {
     public State state;
     public String errorMessage;
     public boolean errorMessageDone;
+    private int retryTime;
     public GetNeededItemsFromChestsGoal(AbstractWorkerEntity worker) {
         super(worker);
+        setFlags(EnumSet.of(Flag.LOOK));
     }
 
     @Override
@@ -28,8 +30,8 @@ public class GetNeededItemsFromChestsGoal extends AbstractChestGoal {
         super.start();
         errorMessageDone = false;
         if(worker.chestPositions.isEmpty()) {
-            state = State.ERROR;
-            errorMessage = "No Chests assigned";
+            setState(State.ERROR_NO_CHESTS);
+            errorMessage = worker.getName().getString() + ": I have no Chests assigned";
             return;
         }
 
@@ -37,7 +39,7 @@ public class GetNeededItemsFromChestsGoal extends AbstractChestGoal {
         for(BlockPos pos : worker.chestPositions){
             this.blockPosStack.push(pos);
         }
-        state = State.SELECT_CHEST;
+        setState(State.SELECT_CHEST);
     }
     public void tick(){
         if(this.worker.getCommandSenderWorld().isClientSide()) return;
@@ -51,17 +53,17 @@ public class GetNeededItemsFromChestsGoal extends AbstractChestGoal {
                     chestPos = blockPosStack.pop();
                 }
                 else{
-                    state = State.ERROR;
+                    setState(State.ERROR_ITEMS_NOT_FOUND);
                     errorMessage = worker.getName().getString() + ": I need " + worker.neededItems;
                     return;
                 }
-                state = State.MOVE_TO_CHEST;
+                setState(State.MOVE_TO_CHEST);
             }
 
             case MOVE_TO_CHEST -> {
                 if(moveToPosition(chestPos)) return;
 
-                state = State.CHECK_CHEST;
+                setState(State.CHECK_CHEST);
             }
 
             case CHECK_CHEST -> {
@@ -69,37 +71,37 @@ public class GetNeededItemsFromChestsGoal extends AbstractChestGoal {
                 if(container == null || container.isEmpty()){
                     if(!blockPosStack.isEmpty()) chestPos = blockPosStack.pop();
 
-                    state = State.SELECT_CHEST;
+                    setState(State.SELECT_CHEST);
                     return;
                 }
 
-                state = State.OPEN_CHEST;
+                setState(State.OPEN_CHEST);
             }
 
             case OPEN_CHEST -> {
                 worker.getLookControl().setLookAt(chestPos.getCenter());
                 this.interactChest(container, true);
 
-                state = State.WAIT;
+                setState(State.WAIT);
             }
 
             case WAIT -> {
                 worker.getLookControl().setLookAt(chestPos.getCenter());
-                if(timer++ < 30){
+                if(timer++ < 20){
                     return;
                 }
                 timer = 0;
 
-                state = State.TAKE_NEEDED_ITEMS;
+                setState(State.TAKE_NEEDED_ITEMS);
             }
 
             case TAKE_NEEDED_ITEMS -> {
                 worker.getLookControl().setLookAt(chestPos.getCenter());
                 if(takeNeededItems()){
-                    state = State.CLOSE_CHEST_DONE;
+                    setState(State.CLOSE_CHEST_DONE);
                 }
                 else{
-                    state = State.CLOSE_CHEST_NOT_DONE;
+                    setState(State.CLOSE_CHEST_NOT_DONE);
                 }
             }
 
@@ -107,24 +109,40 @@ public class GetNeededItemsFromChestsGoal extends AbstractChestGoal {
                 worker.getLookControl().setLookAt(chestPos.getCenter());
                 this.interactChest(container, false);
 
-                state = State.DONE;
+                setState(State.DONE);
             }
 
             case CLOSE_CHEST_NOT_DONE -> {
                 worker.getLookControl().setLookAt(chestPos.getCenter());
                 this.interactChest(container, false);
 
-                state = State.SELECT_CHEST;
+                setState(State.SELECT_CHEST);
             }
 
             case DONE -> {
                 worker.neededItems.clear();
             }
 
-            case ERROR -> {
+            case ERROR_NO_CHESTS -> {
                 if(!errorMessageDone){
                     if(worker.getOwner() != null) worker.getOwner().sendSystemMessage(Component.literal(errorMessage));
                     errorMessageDone = true;
+                }
+
+                if(!worker.chestPositions.isEmpty()){
+                    this.start();
+                }
+            }
+
+            case ERROR_ITEMS_NOT_FOUND -> {
+                if(!errorMessageDone){
+                    if(worker.getOwner() != null) worker.getOwner().sendSystemMessage(Component.literal(errorMessage));
+                    errorMessageDone = true;
+                }
+
+                if(++retryTime >= 20*15 * 2){
+                    retryTime = 0;
+                    this.start();
                 }
             }
         }
@@ -189,6 +207,11 @@ public class GetNeededItemsFromChestsGoal extends AbstractChestGoal {
         return true;
     }
 
+    public void setState(State state) {
+        if(worker.getOwner() != null) worker.getOwner().sendSystemMessage(Component.literal(state.toString()));
+        this.state = state;
+    }
+
     public enum State{
         SELECT_CHEST,
         MOVE_TO_CHEST,
@@ -199,7 +222,8 @@ public class GetNeededItemsFromChestsGoal extends AbstractChestGoal {
         CLOSE_CHEST_NOT_DONE,
         CLOSE_CHEST_DONE,
         DONE,
-        ERROR
+        ERROR_NO_CHESTS,
+        ERROR_ITEMS_NOT_FOUND
 
     }
 }

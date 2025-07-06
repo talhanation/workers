@@ -39,7 +39,6 @@ import java.util.function.Predicate;
 
 
 public abstract class AbstractWorkerEntity extends AbstractChunkLoaderEntity {
-    public IWorkerController workController;
     public AbstractWorkerEntity(EntityType<? extends AbstractWorkerEntity> entityType, Level world) {
         super(entityType, world);
     }
@@ -61,8 +60,6 @@ public abstract class AbstractWorkerEntity extends AbstractChunkLoaderEntity {
     public void aiStep() {
         super.aiStep();
         if(this.getCommandSenderWorld().isClientSide()) return;
-
-        if(workController != null) this.workController.tick();
 
         this.getCommandSenderWorld().getProfiler().push("looting");
         if (this.canPickUpLoot() && this.isAlive() && !this.dead) {
@@ -94,6 +91,17 @@ public abstract class AbstractWorkerEntity extends AbstractChunkLoaderEntity {
         }
 
         return flag;
+    }
+    @Override
+    public boolean wantsToPickUp(ItemStack itemStack) {
+        List<NeededItem> neededItems = this.neededItems;
+
+        for (NeededItem needed : neededItems) {
+            if (needed.matches(itemStack)) {
+                return true;
+            }
+        }
+        return super.wantsToPickUp(itemStack);
     }
 
     @Override
@@ -388,7 +396,7 @@ public abstract class AbstractWorkerEntity extends AbstractChunkLoaderEntity {
         ItemStack mainHand = this.getMainHandItem();
         if (predicate.test(mainHand)) return;
 
-        for (int i = 0; i < inventory.getContainerSize(); i++) {
+        for (int i = 6; i < inventory.getContainerSize(); i++) {
             ItemStack stack = inventory.getItem(i);
             if (predicate.test(stack)) {
 

@@ -1,11 +1,8 @@
 package com.talhanation.workers.entities;
 
-import com.google.common.collect.ImmutableSet;
 import com.talhanation.recruits.entities.AbstractRecruitEntity;
 import com.talhanation.recruits.pathfinding.AsyncGroundPathNavigation;
 import com.talhanation.workers.config.WorkersServerConfig;
-import com.talhanation.workers.entities.ai.DepositItemsInChestsGoal;
-import com.talhanation.workers.entities.ai.FarmerWorkController;
 import com.talhanation.workers.entities.ai.LumberjackWorkGoal;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.chat.Component;
@@ -23,19 +20,12 @@ import net.minecraft.world.entity.item.ItemEntity;
 import net.minecraft.world.item.*;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.ServerLevelAccessor;
-import net.minecraft.world.level.block.Block;
-import net.minecraft.world.level.block.Blocks;
-import net.minecraft.world.level.block.CropBlock;
 import net.minecraft.world.level.block.SaplingBlock;
-import net.minecraft.world.level.material.Fluid;
-import net.minecraft.world.level.material.Fluids;
-import net.minecraft.world.level.material.WaterFluid;
 import net.minecraftforge.common.ForgeMod;
 import net.minecraftforge.registries.ForgeRegistries;
 
 import javax.annotation.Nullable;
 import java.util.List;
-import java.util.Set;
 import java.util.function.Predicate;
 
 public class LumberjackEntity extends AbstractWorkerEntity{
