@@ -45,7 +45,7 @@ public class LumberArea extends AbstractWorkAreaEntity {
     protected void defineSynchedData() {
         super.defineSynchedData();
         this.entityData.define(SAPLING_STACK, ItemStack.EMPTY);
-        this.entityData.define(REPLANT, false);
+        this.entityData.define(REPLANT, true);
         this.entityData.define(SHEAR_LEAVES, false);
         this.entityData.define(STRIP_LOGS, false);
     }
