@@ -140,8 +140,10 @@ public class GetNeededItemsFromChestsGoal extends AbstractChestGoal {
 
             case ERROR_ITEMS_NOT_FOUND -> {
                 if(!errorMessageDone){
-                    if(worker.getOwner() != null) worker.getOwner().sendSystemMessage(Component.literal(errorMessage));
                     errorMessageDone = true;
+                    if(worker.getOwner() != null) worker.getOwner().sendSystemMessage(Component.literal(errorMessage));
+
+                    worker.neededItems.removeIf(neededItem -> neededItem.optional);
                 }
 
                 if(++retryTime >= 20*15 * 2){

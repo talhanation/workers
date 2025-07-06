@@ -4,6 +4,8 @@ import com.talhanation.recruits.entities.AbstractRecruitEntity;
 import com.talhanation.recruits.pathfinding.AsyncGroundPathNavigation;
 import com.talhanation.workers.config.WorkersServerConfig;
 import com.talhanation.workers.entities.ai.LumberjackWorkGoal;
+import com.talhanation.workers.entities.workarea.AbstractWorkAreaEntity;
+import com.talhanation.workers.entities.workarea.LumberArea;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
@@ -29,10 +31,9 @@ import java.util.List;
 import java.util.function.Predicate;
 
 public class LumberjackEntity extends AbstractWorkerEntity{
-
+    public LumberArea currentLumberArea;
     public LumberjackEntity(EntityType<? extends AbstractWorkerEntity> entityType, Level world) {
         super(entityType, world);
-        //this.workController = new FarmerWorkController(this);
     }
 
     @Override
@@ -109,5 +110,10 @@ public class LumberjackEntity extends AbstractWorkerEntity{
             return !this.hasSameTypeOfItem(itemStack);
         }
         return super.wantsToPickUp(itemStack);
+    }
+
+    @Override
+    public AbstractWorkAreaEntity getCurrentWorkArea() {
+        return currentLumberArea;
     }
 }

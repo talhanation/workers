@@ -4,6 +4,7 @@ import com.talhanation.recruits.config.RecruitsClientConfig;
 import com.talhanation.recruits.entities.AbstractChunkLoaderEntity;
 import com.talhanation.workers.entities.ai.DepositItemsInChestsGoal;
 import com.talhanation.workers.entities.ai.GetNeededItemsFromChestsGoal;
+import com.talhanation.workers.entities.workarea.AbstractWorkAreaEntity;
 import com.talhanation.workers.world.NeededItem;
 import net.minecraft.core.BlockPos;
 import net.minecraft.nbt.CompoundTag;
@@ -53,6 +54,8 @@ public abstract class AbstractWorkerEntity extends AbstractChunkLoaderEntity {
         this.goalSelector.addGoal(0, new GetNeededItemsFromChestsGoal(this));
     }
 
+    public abstract AbstractWorkAreaEntity getCurrentWorkArea();
+
     /////////////////////////////////// TICK/////////////////////////////////////////
 
 
@@ -72,6 +75,13 @@ public abstract class AbstractWorkerEntity extends AbstractChunkLoaderEntity {
                 if (!itementity.isRemoved() && !itementity.getItem().isEmpty() && !itementity.hasPickUpDelay() && this.wantsToPickUp(itementity.getItem())) {
                     this.pickUpItem(itementity);
                 }
+            }
+        }
+
+        if(tickCount % 20 == 0){
+            if(this.getCurrentWorkArea() != null){
+                double distance = this.getHorizontalDistanceTo(getCurrentWorkArea().position());
+                if(distance >= 1000) this.getCurrentWorkArea().isBeingWorkedOn = false;
             }
         }
     }
@@ -412,6 +422,12 @@ public abstract class AbstractWorkerEntity extends AbstractChunkLoaderEntity {
         Vec3 toTarget = new Vec3(target.x, 0, target.z);
 
         return position.distanceToSqr(toTarget);
+    }
+
+    @Override
+    public void die(DamageSource dmg) {
+        super.die(dmg);
+        if(this.getCurrentWorkArea() != null) getCurrentWorkArea().setBeingWorkedOn(false);
     }
 
 }

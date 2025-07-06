@@ -5,7 +5,8 @@ import com.talhanation.recruits.entities.AbstractRecruitEntity;
 import com.talhanation.recruits.pathfinding.AsyncGroundPathNavigation;
 import com.talhanation.workers.config.WorkersServerConfig;
 import com.talhanation.workers.entities.ai.FarmerWorkGoal;
-import com.talhanation.workers.world.NeededItem;
+import com.talhanation.workers.entities.workarea.AbstractWorkAreaEntity;
+import com.talhanation.workers.entities.workarea.CropArea;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
@@ -26,7 +27,6 @@ import net.minecraft.world.level.material.Fluids;
 import net.minecraft.world.level.material.WaterFluid;
 import net.minecraftforge.common.ForgeMod;
 import net.minecraftforge.registries.ForgeRegistries;
-import org.jetbrains.annotations.NotNull;
 
 import javax.annotation.Nullable;
 import java.util.List;
@@ -34,7 +34,7 @@ import java.util.Set;
 import java.util.function.Predicate;
 
 public class FarmerEntity extends AbstractWorkerEntity{
-
+    public CropArea currentCropArea;
     public static final Set<Block> TILLABLES = ImmutableSet.of(
             Blocks.DIRT,
             Blocks.ROOTED_DIRT,
@@ -43,7 +43,7 @@ public class FarmerEntity extends AbstractWorkerEntity{
 
     public FarmerEntity(EntityType<? extends AbstractWorkerEntity> entityType, Level world) {
         super(entityType, world);
-        //this.workController = new FarmerWorkController(this);
+
     }
 
     @Override
@@ -126,5 +126,9 @@ public class FarmerEntity extends AbstractWorkerEntity{
         }
 
         return super.wantsToPickUp(itemStack);
+    }
+
+    public AbstractWorkAreaEntity getCurrentWorkArea(){
+        return currentCropArea;
     }
 }
