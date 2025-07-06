@@ -212,7 +212,7 @@ public class GetNeededItemsFromChestsGoal extends AbstractChestGoal {
     }
 
     public void setState(State state) {
-        if(worker.getOwner() != null) worker.getOwner().sendSystemMessage(Component.literal(state.toString()));
+        //if(worker.getOwner() != null) worker.getOwner().sendSystemMessage(Component.literal(state.toString()));
         this.state = state;
     }
 
