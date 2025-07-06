@@ -34,8 +34,7 @@ public class GetNeededItemsFromChestsGoal extends AbstractChestGoal {
             errorMessage = worker.getName().getString() + ": I have no Chests assigned";
             return;
         }
-
-        blockPosStack = new Stack<>();
+        this.blockPosStack = new Stack<>();
         for(BlockPos pos : worker.chestPositions){
             this.blockPosStack.push(pos);
         }
@@ -68,7 +67,7 @@ public class GetNeededItemsFromChestsGoal extends AbstractChestGoal {
 
             case CHECK_CHEST -> {
                 container = getContainer(chestPos);
-                if(container == null || container.isEmpty()){
+                if(container == null){
                     if(!blockPosStack.isEmpty()) chestPos = blockPosStack.pop();
 
                     setState(State.SELECT_CHEST);
@@ -82,12 +81,7 @@ public class GetNeededItemsFromChestsGoal extends AbstractChestGoal {
                 worker.getLookControl().setLookAt(chestPos.getCenter());
                 this.interactChest(container, true);
 
-                setState(State.WAIT);
-            }
-
-            case WAIT -> {
-                worker.getLookControl().setLookAt(chestPos.getCenter());
-                if(timer++ < 20){
+                if(timer++ < 40){
                     return;
                 }
                 timer = 0;
@@ -109,12 +103,22 @@ public class GetNeededItemsFromChestsGoal extends AbstractChestGoal {
                 worker.getLookControl().setLookAt(chestPos.getCenter());
                 this.interactChest(container, false);
 
+                if(timer++ < 20){
+                    return;
+                }
+                timer = 0;
+
                 setState(State.DONE);
             }
 
             case CLOSE_CHEST_NOT_DONE -> {
                 worker.getLookControl().setLookAt(chestPos.getCenter());
                 this.interactChest(container, false);
+
+                if(timer++ < 20){
+                    return;
+                }
+                timer = 0;
 
                 setState(State.SELECT_CHEST);
             }
@@ -217,7 +221,6 @@ public class GetNeededItemsFromChestsGoal extends AbstractChestGoal {
         MOVE_TO_CHEST,
         CHECK_CHEST,
         OPEN_CHEST,
-        WAIT,
         TAKE_NEEDED_ITEMS,
         CLOSE_CHEST_NOT_DONE,
         CLOSE_CHEST_DONE,

@@ -81,11 +81,7 @@ public class DepositItemsInChestsGoal extends AbstractChestGoal {
 
                 this.interactChest(container, true);
 
-                state = State.WAIT;
-            }
-
-            case WAIT -> {
-                if(timer++ < 20){
+                if(timer++ < 40){
                     return;
                 }
                 timer = 0;
@@ -106,11 +102,21 @@ public class DepositItemsInChestsGoal extends AbstractChestGoal {
             case CLOSE_CHEST_DEPOSIT_DONE -> {
                 this.interactChest(container, false);
 
+                if(timer++ < 20){
+                    return;
+                }
+                timer = 0;
+
                 state = State.DONE;
             }
 
             case CLOSE_CHEST_FULL_CHEST -> {
                 this.interactChest(container, false);
+
+                if(timer++ < 20){
+                    return;
+                }
+                timer = 0;
 
                 state = State.SELECT_CHEST;
             }
@@ -123,6 +129,10 @@ public class DepositItemsInChestsGoal extends AbstractChestGoal {
                 if(!errorMessageDone){
                     worker.getOwner().sendSystemMessage(Component.literal(errorMessage));
                     errorMessageDone = true;
+                }
+
+                if(!worker.chestPositions.isEmpty()){
+                    state = State.SELECT_CHEST;
                 }
             }
         }
@@ -186,7 +196,6 @@ public class DepositItemsInChestsGoal extends AbstractChestGoal {
         MOVE_TO_CHEST,
         CHECK_CHEST,
         OPEN_CHEST,
-        WAIT,
         DEPOSIT,
         CLOSE_CHEST_FULL_CHEST,
         CLOSE_CHEST_DEPOSIT_DONE,

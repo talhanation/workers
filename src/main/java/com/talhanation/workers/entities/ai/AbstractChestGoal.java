@@ -71,7 +71,7 @@ public abstract class AbstractChestGoal extends Goal {
     }
 
     public void interactChest(Container container, boolean open) {
-        if(container instanceof CompoundContainer || container instanceof ChestBlockEntity){
+        if(this.chestPos != null && (container instanceof CompoundContainer || container instanceof ChestBlockEntity)){
             BlockState state = this.worker.getCommandSenderWorld().getBlockState(this.chestPos);
             Block block = state.getBlock();
             boolean isOpened = false;
@@ -97,6 +97,7 @@ public abstract class AbstractChestGoal extends Goal {
                     this.worker.getCommandSenderWorld().playSound(null, chestPos, SoundEvents.CHEST_CLOSE, worker.getSoundSource(), 0.7F, 0.8F + 0.4F * worker.getRandom().nextFloat());
                     compoundTag.putBoolean("isOpened", false);
                 }
+
             }
             this.worker.getCommandSenderWorld().gameEvent(this.worker, open ? GameEvent.BLOCK_OPEN : GameEvent.BLOCK_CLOSE, chestPos);
         }
