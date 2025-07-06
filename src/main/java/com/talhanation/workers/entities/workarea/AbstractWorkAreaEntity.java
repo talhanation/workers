@@ -2,6 +2,7 @@ package com.talhanation.workers.entities.workarea;
 
 import com.talhanation.workers.entities.AbstractWorkerEntity;
 import net.minecraft.client.gui.screens.Screen;
+import net.minecraft.core.BlockPos;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.syncher.EntityDataAccessor;
 import net.minecraft.network.syncher.EntityDataSerializers;
@@ -12,7 +13,10 @@ import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.level.Level;
+import net.minecraft.world.phys.AABB;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -26,7 +30,6 @@ public abstract class AbstractWorkAreaEntity extends Entity {
     public boolean isBeingWorkedOn;
     public static int DONE_TIME =  20*60;
     public boolean showBox;
-    public boolean isBuild;
 
     public AbstractWorkAreaEntity(EntityType<?> type, Level level) {
         super(type, level);
@@ -143,6 +146,27 @@ public abstract class AbstractWorkAreaEntity extends Entity {
         return this.timeSinceLastVisit;
     }
 
+
+    public static List<AbstractWorkAreaEntity> getNearbyAreas(Level level, BlockPos center, int radius) {
+        List<AbstractWorkAreaEntity> nearby = new ArrayList<>();
+
+        for (AbstractWorkAreaEntity area : level.getEntitiesOfClass(AbstractWorkAreaEntity.class, new AABB(center).inflate(radius))) {
+            if (!area.getOnPos().equals(center)) {
+                nearby.add(area);
+            }
+        }
+
+        return nearby;
+    }
+
+    public static boolean isAreaOverlapping(Level level, AbstractWorkAreaEntity currentArea, AABB targetBox) {
+        for (AbstractWorkAreaEntity other : level.getEntitiesOfClass(AbstractWorkAreaEntity.class, targetBox.inflate(1))) {
+            if (other != currentArea && other.getBoundingBox().intersects(targetBox)) {
+                return true;
+            }
+        }
+        return false;
+    }
 
     public boolean isBeingWorkedOn(){
         return this.isBeingWorkedOn;
