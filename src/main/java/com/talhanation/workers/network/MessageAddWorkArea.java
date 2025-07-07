@@ -40,6 +40,11 @@ public class MessageAddWorkArea implements Message<MessageAddWorkArea> {
         }
         AbstractWorkAreaEntity workArea;
         switch (type){
+            case 2 -> {
+                workArea = new LumberArea(ModEntityTypes.BUILDAREA.get(), player.level());
+                workArea.setSize(4);
+                workArea.setHeight(4);
+            }
             case 1 -> {
                 workArea = new LumberArea(ModEntityTypes.LUMBERAREA.get(), player.level());
                 workArea.setSize(8);

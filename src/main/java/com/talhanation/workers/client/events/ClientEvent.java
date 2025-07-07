@@ -20,6 +20,7 @@ public class ClientEvent {
     public static void entityRenderersEvent(EntityRenderersEvent.RegisterRenderers event) {
         EntityRenderers.register(ModEntityTypes.CROPAREA.get(), WorkerAreaRenderer::new);
         EntityRenderers.register(ModEntityTypes.LUMBERAREA.get(), WorkerAreaRenderer::new);
+        EntityRenderers.register(ModEntityTypes.BUILDAREA.get(), WorkerAreaRenderer::new);
 
         if (RecruitsClientConfig.RecruitsLookLikeVillagers.get()) {
             EntityRenderers.register(ModEntityTypes.FARMER.get(), WorkerVillagerRenderer::new);

@@ -42,7 +42,7 @@ public abstract class WorkAreaScreen extends RecruitsScreenBase {
     @Override
     protected void init() {
         super.init();
-
+        workArea.showBox = true;
         setButtons();
     }
     public int x;

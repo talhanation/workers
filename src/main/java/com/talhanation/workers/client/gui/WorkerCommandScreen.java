@@ -30,6 +30,7 @@ public class WorkerCommandScreen implements ICommandCategory {
     private static final MutableComponent TOOLTIP_ADD_FIELD = Component.translatable("gui.workers.command.tooltip.add_field");
     private static final MutableComponent TOOLTIP_ADD_LUMBER = Component.translatable("gui.workers.command.tooltip.add_lumber");
     private static final MutableComponent TEXT_ADD_DEPOSIT = Component.translatable("gui.workers.command.text.add_deposit");
+    private static final MutableComponent TEXT_ADD_BUILDING = Component.translatable("gui.workers.command.text.add_building");
     @Override
     public Component getToolTipName() {
         return Component.translatable("gui.workers.command.tooltip.workers");
@@ -80,6 +81,17 @@ public class WorkerCommandScreen implements ICommandCategory {
         addDepositPosition.setTooltip(Tooltip.create(TOOLTIP_ADD_FIELD));
         addDepositPosition.active = isOneGroupActive && isDepositPosition(screen.rayBlockPos, player);
         screen.addRenderableWidget(addDepositPosition);
+
+        RecruitsCommandButton addBuilding = new RecruitsCommandButton(x, y + 200, TEXT_ADD_BUILDING,
+                button -> {
+                    if(screen.rayBlockPos == null) return;
+                    Vec3 pos = screen.rayBlockPos.above().getCenter();
+                    Main.SIMPLE_CHANNEL.sendToServer(new MessageAddWorkArea((float) pos.x(), (int) pos.y(), (float) pos.z(), 2));
+                });
+
+        //addBuilding.setTooltip(Tooltip.create(TOOLTIP_ADD_LUMBER));
+        addBuilding.active = screen.rayBlockPos != null;
+        screen.addRenderableWidget(addBuilding);
     }
 
     private boolean isDepositPosition(BlockPos rayBlockPos, Player player) {

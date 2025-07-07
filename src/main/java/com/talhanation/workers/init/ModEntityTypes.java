@@ -4,6 +4,7 @@ import com.talhanation.workers.Main;
 
 import com.talhanation.workers.entities.FarmerEntity;
 import com.talhanation.workers.entities.LumberjackEntity;
+import com.talhanation.workers.entities.workarea.BuildArea;
 import com.talhanation.workers.entities.workarea.CropArea;
 import com.talhanation.workers.entities.workarea.LumberArea;
 import net.minecraft.world.entity.MobCategory;
@@ -29,6 +30,11 @@ public class ModEntityTypes {
                         .sized(1.0F, 2.00F)
                         .fireImmune().noSummon()
                         .build(new ResourceLocation(Main.MOD_ID, "lumberarea").toString()));
+        public static final RegistryObject<EntityType<BuildArea>> BUILDAREA = ENTITY_TYPES.register("buildarea",
+                () -> EntityType.Builder.of(BuildArea::new, MobCategory.MISC)
+                        .sized(1.0F, 2.00F)
+                        .fireImmune().noSummon()
+                        .build(new ResourceLocation(Main.MOD_ID, "buildarea").toString()));
         /*
         public static final RegistryObject<EntityType<MinerEntity>> MINER = ENTITY_TYPES.register("miner",
                         () -> EntityType.Builder.of(MinerEntity::new, MobCategory.CREATURE)
