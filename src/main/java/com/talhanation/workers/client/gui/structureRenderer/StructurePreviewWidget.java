@@ -1,5 +1,6 @@
 package com.talhanation.workers.client.gui.structureRenderer;
 
+import com.mojang.blaze3d.systems.RenderSystem;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.math.Axis;
 import net.minecraft.client.Minecraft;
@@ -28,7 +29,10 @@ public class StructurePreviewWidget extends AbstractWidget {
     private boolean isDragging = false;
     private double lastMouseX = 0;
     private double lastMouseY = 0;
-
+    private float offsetX = 0;
+    private float offsetY = 0;
+    private boolean isRightDragging = false;
+    private long lastClickTime = 0;
     public StructurePreviewWidget(int x, int y, int width, int height, int areaX, int areaY) {
         super(x, y, width, height, Component.empty());
         this.areaX = areaX;
@@ -44,7 +48,19 @@ public class StructurePreviewWidget extends AbstractWidget {
         guiGraphics.fill(getX() - 1, getY() - 1, getX() + getWidth() + 1, getY() + getHeight() + 1, 0xFF555555);
         guiGraphics.fill(getX(), getY(), getX() + getWidth(), getY() + getHeight(), 0xFF222222);
 
+        int screenHeight = Minecraft.getInstance().getWindow().getHeight();
+        int scale = (int) Minecraft.getInstance().getWindow().getGuiScale();
+
+        int scissorX = getX() * scale;
+        int scissorY = screenHeight - (getY() + getHeight()) * scale;
+        int scissorWidth = getWidth() * scale;
+        int scissorHeight = getHeight() * scale;
+
+        RenderSystem.enableScissor(scissorX, scissorY, scissorWidth, scissorHeight);
+
         renderStructurePreview(guiGraphics.pose(), getX() + getWidth() / 2, getY() + getHeight() / 2);
+
+        RenderSystem.disableScissor();
     }
 
     private void renderStructurePreview(PoseStack poseStack, int previewX, int previewY) {
@@ -53,12 +69,13 @@ public class StructurePreviewWidget extends AbstractWidget {
 
         poseStack.translate(previewX, previewY, 1000);
         poseStack.scale(zoom, -zoom, zoom);
+
+        poseStack.translate(offsetX, offsetY, 0);
+
         poseStack.mulPose(Axis.XP.rotationDegrees(rotationX));
         poseStack.mulPose(Axis.YP.rotationDegrees(rotationY));
 
-        float centerX = areaX;
-        float centerZ = areaY;
-        poseStack.translate(-centerX, 0, -centerZ);
+        poseStack.translate(-areaX, 0, -areaY);
 
         Minecraft mc = Minecraft.getInstance();
         BlockRenderDispatcher dispatcher = mc.getBlockRenderer();
@@ -83,14 +100,35 @@ public class StructurePreviewWidget extends AbstractWidget {
 
             poseStack.popPose();
         }
-
         bufferSource.endBatch();
         poseStack.popPose();
     }
+
+    public void onGlobalMouseDragged(double mouseX, double mouseY, int button, double dragX, double dragY) {
+        if (button == 1 && isRightDragging) {
+            offsetX += dragX / zoom;
+            offsetY -= dragY / zoom;
+        } else if (button == 0 && isDragging) {
+            rotationY += dragX * 0.5f;
+            rotationX += dragY * 0.5f;
+            rotationX = Mth.clamp(rotationX, -90f, 90f);
+        }
+    }
     @Override
     public boolean mouseClicked(double mouseX, double mouseY, int button) {
-        if (button == 0 && isHoveredOrFocused() && isMouseWithinRenderArea(mouseX, mouseY)) {
-            isDragging = true;
+        if (isMouseWithinRenderArea(mouseX, mouseY)) {
+            if (button == 0) {
+                long currentTime = System.currentTimeMillis();
+                if (currentTime - lastClickTime < 250) {
+                    resetView();
+                    lastClickTime = 0;
+                    return true;
+                }
+                lastClickTime = currentTime;
+
+                isDragging = true;
+            }
+            if (button == 1) isRightDragging = true;
             lastMouseX = mouseX;
             lastMouseY = mouseY;
             return true;
@@ -100,21 +138,26 @@ public class StructurePreviewWidget extends AbstractWidget {
 
     @Override
     public boolean mouseReleased(double mouseX, double mouseY, int button) {
-        if (button == 0 && isDragging) {
-            isDragging = false;
-            return true;
-        }
-        return false;
+        if (button == 0) isDragging = false;
+        if (button == 1) isRightDragging = false;
+        return true;
     }
 
     @Override
     public boolean mouseDragged(double mouseX, double mouseY, int button, double dragX, double dragY) {
+        float dx = (float) (mouseX - lastMouseX);
+        float dy = (float) (mouseY - lastMouseY);
+
         if (isDragging) {
-            float dx = (float) (mouseX - lastMouseX);
-            float dy = (float) (mouseY - lastMouseY);
-            this.rotationY += dx * 0.5f;
-            this.rotationX += dy * 0.5f;
-            this.rotationX = Mth.clamp(rotationX, -90f, 90f);
+            rotationY += dx * 0.5f;
+            rotationX += dy * 0.5f;
+            rotationX = Mth.clamp(rotationX, -90f, 90f);
+            lastMouseX = mouseX;
+            lastMouseY = mouseY;
+            return true;
+        } else if (isRightDragging) {
+            offsetX += dx / zoom;
+            offsetY -= dy / zoom;
             lastMouseX = mouseX;
             lastMouseY = mouseY;
             return true;
@@ -122,7 +165,7 @@ public class StructurePreviewWidget extends AbstractWidget {
         return false;
     }
 
-    private boolean isMouseWithinRenderArea(double mouseX, double mouseY) {
+    public boolean isMouseWithinRenderArea(double mouseX, double mouseY) {
         return mouseX >= getX() && mouseX < getX() + getWidth()
                 && mouseY >= getY() && mouseY < getY() + getHeight();
     }
@@ -132,6 +175,12 @@ public class StructurePreviewWidget extends AbstractWidget {
 
     }
 
+    private void resetView() {
+        rotationX = 30;
+        rotationY = 45;
+        offsetX = 0;
+        offsetY = 0;
+    }
 
     @Override
     public boolean mouseScrolled(double mouseX, double mouseY, double x) {

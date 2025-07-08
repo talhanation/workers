@@ -1,6 +1,7 @@
 package com.talhanation.workers;
 
 import com.talhanation.recruits.client.events.CommandCategoryManager;
+import com.talhanation.workers.client.events.ScreenEvents;
 import com.talhanation.workers.client.gui.WorkerCommandScreen;
 import com.talhanation.workers.network.*;
 import net.minecraft.world.item.CreativeModeTabs;
@@ -83,7 +84,8 @@ public class Main {
             MessageUpdateWorkArea.class,
             MessageUpdateCropArea.class,
             MessageAddDepositPos.class,
-            MessageUpdateLumberArea.class
+            MessageUpdateLumberArea.class,
+            MessageUpdateBuildArea.class
         };
         for (int i = 0; i < messages.length; i++) CommonRegistry.registerMessage(SIMPLE_CHANNEL, i, messages[i]);
     }
@@ -93,6 +95,7 @@ public class Main {
     public void clientSetup(FMLClientSetupEvent event) {
         event.enqueueWork(ModMenuTypes::registerMenus);
         CommandCategoryManager.register(new WorkerCommandScreen());
+        MinecraftForge.EVENT_BUS.register(new ScreenEvents());
     }
 
     private void addCreativeTabs(BuildCreativeModeTabContentsEvent event) {

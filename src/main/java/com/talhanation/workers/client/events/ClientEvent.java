@@ -2,14 +2,17 @@ package com.talhanation.workers.client.events;
 
 import com.talhanation.recruits.config.RecruitsClientConfig;
 import com.talhanation.workers.Main;
+import com.talhanation.workers.client.gui.BuildAreaScreen;
 import com.talhanation.workers.client.render.WorkerAreaRenderer;
 import com.talhanation.workers.client.render.WorkerVillagerRenderer;
 import com.talhanation.workers.init.ModEntityTypes;
 import com.talhanation.workers.client.render.WorkerHumanRenderer;
+import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.client.renderer.entity.EntityRenderers;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
 import net.minecraftforge.client.event.EntityRenderersEvent;
+import net.minecraftforge.client.event.ScreenEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.common.Mod;
 

@@ -58,8 +58,13 @@ public abstract class WorkAreaScreen extends RecruitsScreenBase {
         moveForward = addRenderableWidget(new ExtendedButton(x - buttonWidth / 2, y + buttonHeight / 2 - buttonHeight*2, buttonWidth, buttonHeight, TEXT_FORWARD,
                 btn -> {
                     this.workArea.showBox = true;
-                    Vec3 newPos = workArea.position().relative(player.getDirection(), 1);
+                    int x = 1;
+                    if(hasShiftDown()){
+                        x = 5;
+                    }
+                    Vec3 newPos = workArea.position().relative(player.getDirection(), x);
                     Main.SIMPLE_CHANNEL.sendToServer(new MessageUpdateWorkArea(this.workArea.getUUID(), this.workArea.getCustomName().getString(), newPos, false));
+                    this.onAreaMoved();
                 }
         ));
 
@@ -67,7 +72,11 @@ public abstract class WorkAreaScreen extends RecruitsScreenBase {
         moveBackward = addRenderableWidget(new ExtendedButton(x - buttonWidth / 2, y - buttonHeight / 2 + buttonHeight, buttonWidth, buttonHeight, TEXT_BACKWARD,
                 btn -> {
                     this.workArea.showBox = true;
-                    Vec3 newPos = workArea.position().relative(player.getDirection().getOpposite(), 1);
+                    int x = 1;
+                    if(hasShiftDown()){
+                        x = 5;
+                    }
+                    Vec3 newPos = workArea.position().relative(player.getDirection().getOpposite(), x);
                     Main.SIMPLE_CHANNEL.sendToServer(new MessageUpdateWorkArea(this.workArea.getUUID(), this.workArea.getCustomName().getString(), newPos, false));
                 }
         ));
@@ -76,7 +85,11 @@ public abstract class WorkAreaScreen extends RecruitsScreenBase {
         moveLeft = addRenderableWidget(new ExtendedButton(x - buttonWidth / 2 - buttonWidth, y - buttonHeight / 2, buttonWidth, buttonHeight, TEXT_LEFT,
                 btn -> {
                     this.workArea.showBox = true;
-                    Vec3 newPos = workArea.position().relative(player.getDirection().getCounterClockWise(), 1);
+                    int x = 1;
+                    if(hasShiftDown()){
+                        x = 5;
+                    }
+                    Vec3 newPos = workArea.position().relative(player.getDirection().getCounterClockWise(), x);
                     Main.SIMPLE_CHANNEL.sendToServer(new MessageUpdateWorkArea(this.workArea.getUUID(), this.workArea.getCustomName().getString(), newPos, false));
                 }
         ));
@@ -85,7 +98,11 @@ public abstract class WorkAreaScreen extends RecruitsScreenBase {
         moveRight = addRenderableWidget(new ExtendedButton(x - buttonWidth / 2 + buttonWidth, y - buttonHeight / 2, buttonWidth, buttonHeight,  TEXT_RIGHT,
                 btn -> {
                     this.workArea.showBox = true;
-                    Vec3 newPos = workArea.position().relative(player.getDirection().getClockWise(), 1);
+                    int x = 1;
+                    if(hasShiftDown()){
+                        x = 5;
+                    }
+                    Vec3 newPos = workArea.position().relative(player.getDirection().getClockWise(), x);
                     Main.SIMPLE_CHANNEL.sendToServer(new MessageUpdateWorkArea(this.workArea.getUUID(), this.workArea.getCustomName().getString(), newPos, false));
                 }
         ));
@@ -99,6 +116,7 @@ public abstract class WorkAreaScreen extends RecruitsScreenBase {
         ));
     }
 
+    public void onAreaMoved() {}
 
     public void onClose() {
         super.onClose();
