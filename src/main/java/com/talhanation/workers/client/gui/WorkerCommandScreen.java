@@ -82,7 +82,7 @@ public class WorkerCommandScreen implements ICommandCategory {
         addDepositPosition.active = isOneGroupActive && isDepositPosition(screen.rayBlockPos, player);
         screen.addRenderableWidget(addDepositPosition);
 
-        RecruitsCommandButton addBuilding = new RecruitsCommandButton(x, y + 200, TEXT_ADD_BUILDING,
+        RecruitsCommandButton addBuilding = new RecruitsCommandButton(x, y + 70, TEXT_ADD_BUILDING,
                 button -> {
                     if(screen.rayBlockPos == null) return;
                     Vec3 pos = screen.rayBlockPos.above().getCenter();

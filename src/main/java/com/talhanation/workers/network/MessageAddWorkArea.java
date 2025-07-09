@@ -1,5 +1,6 @@
 package com.talhanation.workers.network;
 
+import com.talhanation.workers.entities.workarea.BuildArea;
 import com.talhanation.workers.entities.workarea.CropArea;
 import com.talhanation.workers.entities.workarea.AbstractWorkAreaEntity;
 import com.talhanation.workers.entities.workarea.LumberArea;
@@ -41,19 +42,22 @@ public class MessageAddWorkArea implements Message<MessageAddWorkArea> {
         AbstractWorkAreaEntity workArea;
         switch (type){
             case 2 -> {
-                workArea = new LumberArea(ModEntityTypes.BUILDAREA.get(), player.level());
-                workArea.setSize(4);
-                workArea.setHeight(4);
+                workArea = new BuildArea(ModEntityTypes.BUILDAREA.get(), player.level());
+                workArea.setXSize(4);
+                workArea.setYSize(4);
+                workArea.setZSize(4);
             }
             case 1 -> {
                 workArea = new LumberArea(ModEntityTypes.LUMBERAREA.get(), player.level());
-                workArea.setSize(8);
-                workArea.setHeight(8);
+                workArea.setXSize(16);
+                workArea.setYSize(8);
+                workArea.setZSize(16);
             }
             default -> {
                 workArea = new CropArea(ModEntityTypes.CROPAREA.get(), player.level());
-                workArea.setSize(4);
-                workArea.setHeight(2);
+                workArea.setXSize(8);
+                workArea.setYSize(2);
+                workArea.setZSize(8);
 
             }
         }

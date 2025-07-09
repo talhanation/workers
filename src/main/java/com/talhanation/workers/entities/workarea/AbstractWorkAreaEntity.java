@@ -23,8 +23,9 @@ import java.util.UUID;
 public abstract class AbstractWorkAreaEntity extends Entity {
     public static final EntityDataAccessor<String> PLAYER_NAME = SynchedEntityData.defineId(AbstractWorkAreaEntity.class, EntityDataSerializers.STRING);
     public static final EntityDataAccessor<Optional<UUID>> PLAYER_UUID = SynchedEntityData.defineId(AbstractWorkAreaEntity.class, EntityDataSerializers.OPTIONAL_UUID);
-    public static final EntityDataAccessor<Integer> SIZE = SynchedEntityData.defineId(AbstractWorkAreaEntity.class, EntityDataSerializers.INT);
-    public static final EntityDataAccessor<Integer> HEIGHT = SynchedEntityData.defineId(AbstractWorkAreaEntity.class, EntityDataSerializers.INT);
+    public static final EntityDataAccessor<Integer> X_SIZE = SynchedEntityData.defineId(AbstractWorkAreaEntity.class, EntityDataSerializers.INT);
+    public static final EntityDataAccessor<Integer> Z_SIZE = SynchedEntityData.defineId(AbstractWorkAreaEntity.class, EntityDataSerializers.INT);
+    public static final EntityDataAccessor<Integer> Y_SIZE = SynchedEntityData.defineId(AbstractWorkAreaEntity.class, EntityDataSerializers.INT);
     public static final EntityDataAccessor<String> TEAM_STRING_ID = SynchedEntityData.defineId(AbstractWorkAreaEntity.class, EntityDataSerializers.STRING);
     public boolean isDone;
     public boolean isBeingWorkedOn;
@@ -41,8 +42,9 @@ public abstract class AbstractWorkAreaEntity extends Entity {
     protected void defineSynchedData() {
         this.entityData.define(PLAYER_NAME, "");
         this.entityData.define(PLAYER_UUID, Optional.empty());
-        this.entityData.define(SIZE, 0);
-        this.entityData.define(HEIGHT, 0);
+        this.entityData.define(X_SIZE, 0);
+        this.entityData.define(Y_SIZE, 0);
+        this.entityData.define(Z_SIZE, 0);
         this.entityData.define(TEAM_STRING_ID, "");
     }
 
@@ -52,9 +54,9 @@ public abstract class AbstractWorkAreaEntity extends Entity {
         this.timeSinceLastVisit = tag.getInt("timeSinceLastVisit");
         this.isBeingWorkedOn = tag.getBoolean("isBeingWorkedOn");
         this.setPlayerUUID(tag.getUUID("playerUUID"));
-        this.setSize(tag.getInt("size"));
-        this.setHeight(tag.getInt("height"));
-
+        this.setXSize(tag.getInt("Xsize"));
+        this.setYSize(tag.getInt("Ysize"));
+        this.setZSize(tag.getInt("Zsize"));
         if(tag.contains("teamStringID")){
             this.setTeamStringID(tag.getString("teamStringID"));
         }
@@ -66,8 +68,8 @@ public abstract class AbstractWorkAreaEntity extends Entity {
         tag.putBoolean("isDone", isDone);
         tag.putInt("timeSinceLastVisit", timeSinceLastVisit);
         tag.putBoolean("isBeingWorkedOn", isBeingWorkedOn);
-        tag.putInt("size", getSize());
-        tag.putInt("height", getHeight());
+        tag.putInt("size", getXSize());
+        tag.putInt("height", getYSize());
         if(!this.getTeamStringID().isEmpty()){
             tag.putString("teamStringID", getTeamStringID());
         }
@@ -171,11 +173,14 @@ public abstract class AbstractWorkAreaEntity extends Entity {
     public boolean isBeingWorkedOn(){
         return this.isBeingWorkedOn;
     }
-    public void setSize(int size) {
-        this.entityData.set(SIZE, size);
+    public void setXSize(int size) {
+        this.entityData.set(X_SIZE, size);
     }
-    public void setHeight(int height) {
-        this.entityData.set(HEIGHT, height);
+    public void setYSize(int height) {
+        this.entityData.set(Y_SIZE, height);
+    }
+    public void setZSize(int size) {
+        this.entityData.set(Z_SIZE, size);
     }
 
     public void setPlayerName(String playerName) {
@@ -190,12 +195,15 @@ public abstract class AbstractWorkAreaEntity extends Entity {
         this.entityData.set(TEAM_STRING_ID, teamStringID);
     }
 
-    public int getHeight() {
-        return this.entityData.get(HEIGHT);
+    public int getYSize() {
+        return this.entityData.get(Y_SIZE);
     }
 
-    public int getSize() {
-        return this.entityData.get(SIZE);
+    public int getXSize() {
+        return this.entityData.get(X_SIZE);
+    }
+    public int getZSize() {
+        return this.entityData.get(Z_SIZE);
     }
 
     public String getTeamStringID(){

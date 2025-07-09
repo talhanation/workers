@@ -3,7 +3,6 @@ package com.talhanation.workers.entities.workarea;
 import com.talhanation.workers.Main;
 import com.talhanation.workers.client.gui.CropAreaScreen;
 import com.talhanation.workers.entities.FarmerEntity;
-import com.talhanation.workers.entities.LumberjackEntity;
 import com.talhanation.workers.network.MessageToClientOpenWorkAreaScreen;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.core.BlockPos;
@@ -18,7 +17,6 @@ import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.*;
 import net.minecraft.world.level.Level;
-import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.BushBlock;
 import net.minecraft.world.level.block.CropBlock;
 import net.minecraft.world.level.block.FarmBlock;
@@ -94,9 +92,9 @@ public class CropArea extends AbstractWorkAreaEntity {
             this.stackToBreak.push(this.getOnPos());
         }
 
-        for (int i = -getSize(); i <= getSize(); i++) {
-            for (int k = -getHeight(); k <= getHeight(); k++) {
-                for (int j = -getSize(); j <= getSize(); j++) {
+        for (int i = -getXSize(); i <= getXSize(); i++) {
+            for (int k = -getYSize(); k <= getYSize(); k++) {
+                for (int j = -getXSize(); j <= getXSize(); j++) {
                     BlockPos pos = getOnPos().offset(i, k, j);
                     BlockState state = level.getBlockState(pos);
 
@@ -115,9 +113,9 @@ public class CropArea extends AbstractWorkAreaEntity {
     public void scanPlowArea(){
         stackToPlow.clear();
         Level level = this.getCommandSenderWorld();
-        for (int i = -getSize(); i <= getSize(); i++) {
-            for (int k = -getHeight(); k <= getHeight(); k++) {
-                for (int j = -getSize(); j <= getSize(); j++) {
+        for (int i = -getXSize(); i <= getXSize(); i++) {
+            for (int k = -getYSize(); k <= getYSize(); k++) {
+                for (int j = -getXSize(); j <= getXSize(); j++) {
                     BlockPos pos = getOnPos().offset(i, k, j);
                     BlockState state = level.getBlockState(pos);
 
@@ -134,9 +132,9 @@ public class CropArea extends AbstractWorkAreaEntity {
     public void scanPlantArea(){
         stackToPlant.clear();
         Level level = this.getCommandSenderWorld();
-        for (int i = -getSize(); i <= getSize(); i++) {
-            for (int k = -getHeight(); k <= getHeight(); k++) {
-                for (int j = -getSize(); j <= getSize(); j++) {
+        for (int i = -getXSize(); i <= getXSize(); i++) {
+            for (int k = -getYSize(); k <= getYSize(); k++) {
+                for (int j = -getXSize(); j <= getXSize(); j++) {
                     BlockPos pos = getOnPos().offset(i, k, j);
                     BlockState state = level.getBlockState(pos);
 

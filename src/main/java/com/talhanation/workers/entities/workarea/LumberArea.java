@@ -2,7 +2,6 @@ package com.talhanation.workers.entities.workarea;
 
 import com.talhanation.workers.Main;
 import com.talhanation.workers.client.gui.LumberAreaScreen;
-import com.talhanation.workers.entities.AbstractWorkerEntity;
 import com.talhanation.workers.entities.LumberjackEntity;
 import com.talhanation.workers.network.MessageToClientOpenWorkAreaScreen;
 import com.talhanation.workers.world.Tree;
@@ -118,7 +117,7 @@ public class LumberArea extends AbstractWorkAreaEntity {
     public void scanForTrees() {
         Set<BlockPos> visited = new HashSet<>();
 
-        for (BlockPos pos : BlockPos.betweenClosed(this.getOnPos().offset(-getSize(), -getHeight(), -getSize()), this.getOnPos().offset(getSize(), getHeight(), getSize()))) {
+        for (BlockPos pos : BlockPos.betweenClosed(this.getOnPos().offset(-getXSize(), -getYSize(), -getXSize()), this.getOnPos().offset(getXSize(), getYSize(), getXSize()))) {
             if (!visited.contains(pos) && isLog(this.getCommandSenderWorld(), pos)) {
                 BlockState state = this.getCommandSenderWorld().getBlockState(pos);
                 if (isLog(state)) {

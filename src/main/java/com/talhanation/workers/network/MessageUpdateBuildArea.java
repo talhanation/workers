@@ -13,14 +13,18 @@ public class MessageUpdateBuildArea implements Message<MessageUpdateBuildArea> {
 
     public UUID uuid;
     public CompoundTag structureNBT;
-    public int size;
-    public int height;
+    public int xSize;
+    public int ySize;
+    public int zSize;
+    public boolean build;
     public MessageUpdateBuildArea() {}
-    public MessageUpdateBuildArea(UUID uuid, int size, int height, CompoundTag structureNBT) {
+    public MessageUpdateBuildArea(UUID uuid, int xSize, int ySize, int zSize, CompoundTag structureNBT, boolean build) {
         this.uuid = uuid;
-        this.size = size;
-        this.height = height;
+        this.xSize = xSize;
+        this.ySize = ySize;
+        this.zSize = zSize;
         this.structureNBT = structureNBT;
+        this.build = build;
     }
 
     @Override
@@ -33,7 +37,7 @@ public class MessageUpdateBuildArea implements Message<MessageUpdateBuildArea> {
         if(player == null) return;
 
         player.getCommandSenderWorld().getEntitiesOfClass(BuildArea.class, player.getBoundingBox()
-                        .inflate(16.0D), v -> v
+                        .inflate(32.0D), v -> v
                         .getUUID()
                         .equals(this.uuid))
                 .stream()
@@ -43,23 +47,32 @@ public class MessageUpdateBuildArea implements Message<MessageUpdateBuildArea> {
     }
 
     public void update(BuildArea buildArea){
-        buildArea.setSize(this.size);
-        buildArea.setHeight(this.height);
+        buildArea.setXSize(this.xSize);
+        buildArea.setYSize(this.ySize);
+        buildArea.setZSize(this.zSize);
+        buildArea.setStructureNBT(structureNBT);
+
+        if(build){
+            buildArea.setStartBuild();
+        }
     }
 
     public MessageUpdateBuildArea fromBytes(FriendlyByteBuf buf) {
         this.uuid = buf.readUUID();
-        this.size = buf.readInt();
-        this.height = buf.readInt();
+        this.xSize = buf.readInt();
+        this.ySize = buf.readInt();
+        this.zSize = buf.readInt();
         this.structureNBT = buf.readNbt();
+        this.build = buf.readBoolean();
         return this;
     }
 
     public void toBytes(FriendlyByteBuf buf) {
         buf.writeUUID(uuid);
-        buf.writeInt(size);
-        buf.writeInt(height);
+        buf.writeInt(xSize);
+        buf.writeInt(ySize);
+        buf.writeInt(zSize);
         buf.writeNbt(structureNBT);
-
+        buf.writeBoolean(build);
     }
 }

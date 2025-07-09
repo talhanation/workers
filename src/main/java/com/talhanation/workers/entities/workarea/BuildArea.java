@@ -5,7 +5,14 @@ import com.talhanation.workers.client.gui.BuildAreaScreen;
 import com.talhanation.workers.network.MessageToClientOpenWorkAreaScreen;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.core.BlockPos;
+import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.nbt.CompoundTag;
+import net.minecraft.nbt.ListTag;
+import net.minecraft.nbt.NbtUtils;
+import net.minecraft.nbt.Tag;
+import net.minecraft.network.syncher.EntityDataAccessor;
+import net.minecraft.network.syncher.EntityDataSerializers;
+import net.minecraft.network.syncher.SynchedEntityData;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResult;
@@ -22,7 +29,7 @@ import net.minecraftforge.network.PacketDistributor;
 import java.util.Stack;
 
 public class BuildArea extends AbstractWorkAreaEntity {
-
+    public static final EntityDataAccessor<CompoundTag> STRUCTURE = SynchedEntityData.defineId(BuildArea.class, EntityDataSerializers.COMPOUND_TAG);
     public Stack<BlockPos> stackToBreak = new Stack<>();
 
     public BuildArea(EntityType<?> type, Level level) {
@@ -31,6 +38,7 @@ public class BuildArea extends AbstractWorkAreaEntity {
 
     protected void defineSynchedData() {
         super.defineSynchedData();
+        this.entityData.define(STRUCTURE, new CompoundTag());
     }
     @Override
     public void readAdditionalSaveData(CompoundTag tag) {
@@ -68,6 +76,42 @@ public class BuildArea extends AbstractWorkAreaEntity {
         if(isDone()) this.remove(RemovalReason.DISCARDED);
     }
 
+    public void setStructureNBT(CompoundTag tag){
+        this.entityData.set(STRUCTURE, tag);
+    }
+
+    public CompoundTag getStructureNBT(){
+        return this.entityData.get(STRUCTURE);
+    }
+
+    public void setStartBuild() {
+        CompoundTag tag = getStructureNBT();
+        if (tag == null || !tag.contains("blocks", Tag.TAG_LIST)) return;
+
+        ListTag blockList = tag.getList("blocks", Tag.TAG_COMPOUND);
+        BlockPos origin = this.getOnPos(); // dein Zentrum, z. B. BuildArea.getCenter()
+
+        for (Tag t : blockList) {
+            CompoundTag blockTag = (CompoundTag) t;
+
+            // Relative Position
+            int relX = blockTag.getInt("x");
+            int relY = blockTag.getInt("y");
+            int relZ = blockTag.getInt("z");
+
+            BlockPos relPos = new BlockPos(relX, relY, relZ);
+            BlockPos worldPos = origin.offset(relPos); // Weltposition berechnen
+
+            // BlockState lesen
+            CompoundTag stateTag = blockTag.getCompound("state");
+            BlockState state = NbtUtils.readBlockState(BuiltInRegistries.BLOCK.asLookup(), stateTag);
+
+            // Block setzen
+            this.getCommandSenderWorld().setBlock(worldPos, state, 3);
+        }
+    }
+
+
     public void scanBreakArea(){
         stackToBreak.clear();
         Level level = this.getCommandSenderWorld();
@@ -77,9 +121,9 @@ public class BuildArea extends AbstractWorkAreaEntity {
             this.stackToBreak.push(this.getOnPos());
         }
 
-        for (int i = -getSize(); i <= getSize(); i++) {
-            for (int k = -getHeight(); k <= getHeight(); k++) {
-                for (int j = -getSize(); j <= getSize(); j++) {
+        for (int i = 0; i <= getXSize(); i++) {
+            for (int k = 0; k <= getYSize(); k++) {
+                for (int j = 0; j <= getZSize(); j++) {
                     BlockPos pos = getOnPos().offset(i, k, j);
                     BlockState state = level.getBlockState(pos);
 
@@ -89,5 +133,12 @@ public class BuildArea extends AbstractWorkAreaEntity {
                 }
             }
         }
+    }
+
+    public void setXSize(int x) {
+    }
+    public void setYSize(int y) {
+    }
+    public void setZSize(int z) {
     }
 }
