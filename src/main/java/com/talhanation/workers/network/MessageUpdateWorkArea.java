@@ -62,7 +62,6 @@ public class MessageUpdateWorkArea implements Message<MessageUpdateWorkArea> {
         workArea.setCustomName(Component.literal(name));
 
         workArea.moveTo(this.x, this.y, this.z);
-        workArea.setDone(true);
 
         workArea.timeSinceLastVisit += DONE_TIME;
     }

@@ -48,7 +48,7 @@ public class WorkerCommandScreen implements ICommandCategory {
         RecruitsCommandButton addCropFieldButton = new RecruitsCommandButton(x, y - 50, TEXT_ADD_FIELD,
                 button -> {
                     if(screen.rayBlockPos == null) return;
-                    Vec3 pos = screen.rayBlockPos.above().getCenter();
+                    Vec3 pos = screen.rayBlockPos.getCenter();
                     Main.SIMPLE_CHANNEL.sendToServer(new MessageAddWorkArea((float) pos.x(), (int) pos.y(), (float) pos.z(), 0));
                 });
 
@@ -59,7 +59,7 @@ public class WorkerCommandScreen implements ICommandCategory {
         RecruitsCommandButton addLumberArea = new RecruitsCommandButton(x, y + 0, TEXT_ADD_LUMBER,
                 button -> {
                     if(screen.rayBlockPos == null) return;
-                    Vec3 pos = screen.rayBlockPos.above().getCenter();
+                    Vec3 pos = screen.rayBlockPos.getCenter();
                     Main.SIMPLE_CHANNEL.sendToServer(new MessageAddWorkArea((float) pos.x(), (int) pos.y(), (float) pos.z(), 1));
                 });
 
@@ -82,10 +82,10 @@ public class WorkerCommandScreen implements ICommandCategory {
         addDepositPosition.active = isOneGroupActive && isDepositPosition(screen.rayBlockPos, player);
         screen.addRenderableWidget(addDepositPosition);
 
-        RecruitsCommandButton addBuilding = new RecruitsCommandButton(x, y + 70, TEXT_ADD_BUILDING,
+        RecruitsCommandButton addBuilding = new RecruitsCommandButton(x, y + 30, TEXT_ADD_BUILDING,
                 button -> {
                     if(screen.rayBlockPos == null) return;
-                    Vec3 pos = screen.rayBlockPos.above().getCenter();
+                    Vec3 pos = screen.rayBlockPos.getCenter();
                     Main.SIMPLE_CHANNEL.sendToServer(new MessageAddWorkArea((float) pos.x(), (int) pos.y(), (float) pos.z(), 2));
                 });
 

@@ -3,6 +3,8 @@ package com.talhanation.workers.entities.workarea;
 import com.talhanation.workers.entities.AbstractWorkerEntity;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.core.BlockPos;
+import net.minecraft.core.Direction;
+import net.minecraft.core.Vec3i;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.syncher.EntityDataAccessor;
 import net.minecraft.network.syncher.EntityDataSerializers;
@@ -14,6 +16,8 @@ import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.phys.AABB;
+import net.minecraft.world.phys.Vec3;
+import org.checkerframework.checker.units.qual.A;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -23,28 +27,31 @@ import java.util.UUID;
 public abstract class AbstractWorkAreaEntity extends Entity {
     public static final EntityDataAccessor<String> PLAYER_NAME = SynchedEntityData.defineId(AbstractWorkAreaEntity.class, EntityDataSerializers.STRING);
     public static final EntityDataAccessor<Optional<UUID>> PLAYER_UUID = SynchedEntityData.defineId(AbstractWorkAreaEntity.class, EntityDataSerializers.OPTIONAL_UUID);
-    public static final EntityDataAccessor<Integer> X_SIZE = SynchedEntityData.defineId(AbstractWorkAreaEntity.class, EntityDataSerializers.INT);
-    public static final EntityDataAccessor<Integer> Z_SIZE = SynchedEntityData.defineId(AbstractWorkAreaEntity.class, EntityDataSerializers.INT);
-    public static final EntityDataAccessor<Integer> Y_SIZE = SynchedEntityData.defineId(AbstractWorkAreaEntity.class, EntityDataSerializers.INT);
+    public static final EntityDataAccessor<Integer> WIDTH = SynchedEntityData.defineId(AbstractWorkAreaEntity.class, EntityDataSerializers.INT);
+    public static final EntityDataAccessor<Integer> DEPTH = SynchedEntityData.defineId(AbstractWorkAreaEntity.class, EntityDataSerializers.INT);
+    public static final EntityDataAccessor<Integer> HEIGHT = SynchedEntityData.defineId(AbstractWorkAreaEntity.class, EntityDataSerializers.INT);
     public static final EntityDataAccessor<String> TEAM_STRING_ID = SynchedEntityData.defineId(AbstractWorkAreaEntity.class, EntityDataSerializers.STRING);
+    public static final EntityDataAccessor<Direction> FACING = SynchedEntityData.defineId(AbstractWorkAreaEntity.class, EntityDataSerializers.DIRECTION);
     public boolean isDone;
     public boolean isBeingWorkedOn;
     public static int DONE_TIME =  20*60;
     public boolean showBox;
-
+    public AABB area;
     public AbstractWorkAreaEntity(EntityType<?> type, Level level) {
         super(type, level);
         this.setNoGravity(true);
         this.setInvulnerable(true);
+        this.createArea();
     }
 
     @Override
     protected void defineSynchedData() {
         this.entityData.define(PLAYER_NAME, "");
         this.entityData.define(PLAYER_UUID, Optional.empty());
-        this.entityData.define(X_SIZE, 0);
-        this.entityData.define(Y_SIZE, 0);
-        this.entityData.define(Z_SIZE, 0);
+        this.entityData.define(WIDTH, 0);
+        this.entityData.define(HEIGHT, 0);
+        this.entityData.define(DEPTH, 0);
+        this.entityData.define(FACING, Direction.SOUTH);
         this.entityData.define(TEAM_STRING_ID, "");
     }
 
@@ -54,9 +61,10 @@ public abstract class AbstractWorkAreaEntity extends Entity {
         this.timeSinceLastVisit = tag.getInt("timeSinceLastVisit");
         this.isBeingWorkedOn = tag.getBoolean("isBeingWorkedOn");
         this.setPlayerUUID(tag.getUUID("playerUUID"));
-        this.setXSize(tag.getInt("Xsize"));
-        this.setYSize(tag.getInt("Ysize"));
-        this.setZSize(tag.getInt("Zsize"));
+        this.setWidthSize(tag.getInt("width"));
+        this.setHeightSize(tag.getInt("height"));
+        this.setDepthSize(tag.getInt("depth"));
+        this.setFacing(Direction.from3DDataValue(tag.getInt("facing")));
         if(tag.contains("teamStringID")){
             this.setTeamStringID(tag.getString("teamStringID"));
         }
@@ -68,11 +76,14 @@ public abstract class AbstractWorkAreaEntity extends Entity {
         tag.putBoolean("isDone", isDone);
         tag.putInt("timeSinceLastVisit", timeSinceLastVisit);
         tag.putBoolean("isBeingWorkedOn", isBeingWorkedOn);
-        tag.putInt("size", getXSize());
-        tag.putInt("height", getYSize());
+        tag.putInt("width", getWidthSize());
+        tag.putInt("height", getHeightSize());
+        tag.putInt("depth", getDepthSize());
+        tag.putInt("facing", this.getFacing().get3DDataValue());
         if(!this.getTeamStringID().isEmpty()){
             tag.putString("teamStringID", getTeamStringID());
         }
+
     }
 
     public int timeSinceLastVisit;
@@ -148,7 +159,28 @@ public abstract class AbstractWorkAreaEntity extends Entity {
         return this.timeSinceLastVisit;
     }
 
+    public AABB getArea() {
+        return createArea();
+    }
 
+    public AABB createArea() {
+        Direction facing = getFacing();
+        int width = getWidthSize() - 1;
+        int depth = getDepthSize() - 1;
+        int height = getHeightSize();
+
+        AABB aabb = new AABB(this.getOnPos());
+        AABB aabb1 = null;
+        switch (facing){
+            default -> {//SOUTH
+                aabb1 = aabb.expandTowards(-width, height, depth);
+            }
+            case NORTH -> aabb1 = aabb.expandTowards(width, height, -depth);
+            case EAST -> aabb1 = aabb.expandTowards(depth, height, width);
+            case WEST -> aabb1 = aabb.expandTowards(-depth, height, -width);
+        }
+        return aabb1;
+    }
     public static List<AbstractWorkAreaEntity> getNearbyAreas(Level level, BlockPos center, int radius) {
         List<AbstractWorkAreaEntity> nearby = new ArrayList<>();
 
@@ -173,14 +205,18 @@ public abstract class AbstractWorkAreaEntity extends Entity {
     public boolean isBeingWorkedOn(){
         return this.isBeingWorkedOn;
     }
-    public void setXSize(int size) {
-        this.entityData.set(X_SIZE, size);
+    public void setWidthSize(int size) {
+        this.entityData.set(WIDTH, size);
     }
-    public void setYSize(int height) {
-        this.entityData.set(Y_SIZE, height);
+    public void setHeightSize(int height) {
+        this.entityData.set(HEIGHT, height);
     }
-    public void setZSize(int size) {
-        this.entityData.set(Z_SIZE, size);
+    public void setDepthSize(int size) {
+        this.entityData.set(DEPTH, size);
+    }
+
+    public void setFacing(Direction direction) {
+        this.entityData.set(FACING, direction);
     }
 
     public void setPlayerName(String playerName) {
@@ -195,15 +231,19 @@ public abstract class AbstractWorkAreaEntity extends Entity {
         this.entityData.set(TEAM_STRING_ID, teamStringID);
     }
 
-    public int getYSize() {
-        return this.entityData.get(Y_SIZE);
+    public int getHeightSize() {
+        return this.entityData.get(HEIGHT);
     }
 
-    public int getXSize() {
-        return this.entityData.get(X_SIZE);
+    public int getWidthSize() {
+        return this.entityData.get(WIDTH);
     }
-    public int getZSize() {
-        return this.entityData.get(Z_SIZE);
+    public int getDepthSize() {
+        return this.entityData.get(DEPTH);
+    }
+
+    public Direction getFacing() {
+        return this.entityData.get(FACING);
     }
 
     public String getTeamStringID(){
@@ -220,4 +260,8 @@ public abstract class AbstractWorkAreaEntity extends Entity {
 
     public abstract Item getRenderItem();
     public abstract Screen getScreen(Player player);
+
+    public BlockPos getOriginPos() {
+        return this.getOnPos();
+    }
 }

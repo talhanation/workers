@@ -117,30 +117,28 @@ public class LumberArea extends AbstractWorkAreaEntity {
     public void scanForTrees() {
         Set<BlockPos> visited = new HashSet<>();
 
-        for (BlockPos pos : BlockPos.betweenClosed(this.getOnPos().offset(-getXSize(), -getYSize(), -getXSize()), this.getOnPos().offset(getXSize(), getYSize(), getXSize()))) {
-            if (!visited.contains(pos) && isLog(this.getCommandSenderWorld(), pos)) {
-                BlockState state = this.getCommandSenderWorld().getBlockState(pos);
-                if (isLog(state)) {
-                    String treeType = getTreeType(state);
+        BlockPos.betweenClosedStream(area).forEach(pos -> {
+            BlockState state = this.getCommandSenderWorld().getBlockState(pos);
+            if (isLog(state)) {
+                String treeType = getTreeType(state);
 
-                    Tree tempTree = new Tree(treeType, pos);
-                    scanTree(this.getCommandSenderWorld(), pos.immutable(), visited, tempTree);
+                Tree tempTree = new Tree(treeType, pos);
+                scanTree(this.getCommandSenderWorld(), pos.immutable(), visited, tempTree);
 
-                    if (!tempTree.isEmpty()) {
+                if (!tempTree.isEmpty()) {
 
-                        BlockPos origin = getLowestLog(tempTree.getStackToBreak());
+                    BlockPos origin = getLowestLog(tempTree.getStackToBreak());
 
-                        Tree finalTree = new Tree(treeType, origin);
+                    Tree finalTree = new Tree(treeType, origin);
 
-                        for (BlockPos p : tempTree.getStackToBreak()) finalTree.addToBreak(p);
-                        for (BlockPos p : tempTree.getStackToStrip()) finalTree.addToStrip(p);
-                        for (BlockPos p : tempTree.getStackToShear()) finalTree.addToShear(p);
+                    for (BlockPos p : tempTree.getStackToBreak()) finalTree.addToBreak(p);
+                    for (BlockPos p : tempTree.getStackToStrip()) finalTree.addToStrip(p);
+                    for (BlockPos p : tempTree.getStackToShear()) finalTree.addToShear(p);
 
-                        stackOfTrees.push(finalTree);
-                    }
+                    stackOfTrees.push(finalTree);
                 }
             }
-        }
+        });
     }
 
     private BlockPos getLowestLog(Stack<BlockPos> logStack) {

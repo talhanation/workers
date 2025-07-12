@@ -92,61 +92,48 @@ public class CropArea extends AbstractWorkAreaEntity {
             this.stackToBreak.push(this.getOnPos());
         }
 
-        for (int i = -getXSize(); i <= getXSize(); i++) {
-            for (int k = -getYSize(); k <= getYSize(); k++) {
-                for (int j = -getXSize(); j <= getXSize(); j++) {
-                    BlockPos pos = getOnPos().offset(i, k, j);
-                    BlockState state = level.getBlockState(pos);
+        BlockPos.betweenClosedStream(area).forEach(pos -> {
+            BlockState state = level.getBlockState(pos);
 
-                    BlockPos below = pos.below();
-                    BlockState stateBelow = level.getBlockState(below);
+            BlockPos below = pos.below();
+            BlockState stateBelow = level.getBlockState(below);
 
-                    if(isFarmland(stateBelow) || isTillAble(stateBelow)){
-                        if(isCropDone(state) || (isBush(state) && !isCrop(state))){
-                            this.stackToBreak.push(pos);
-                        }
-                    }
+            if(isFarmland(stateBelow) || isTillAble(stateBelow)){
+                if(isCropDone(state) || (isBush(state) && !isCrop(state))){
+                    this.stackToBreak.push(pos);
                 }
             }
-        }
+        });
     }
     public void scanPlowArea(){
         stackToPlow.clear();
         Level level = this.getCommandSenderWorld();
-        for (int i = -getXSize(); i <= getXSize(); i++) {
-            for (int k = -getYSize(); k <= getYSize(); k++) {
-                for (int j = -getXSize(); j <= getXSize(); j++) {
-                    BlockPos pos = getOnPos().offset(i, k, j);
-                    BlockState state = level.getBlockState(pos);
 
-                    BlockPos above = pos.above();
-                    BlockState stateAbove = level.getBlockState(above);
+        BlockPos.betweenClosedStream(area).forEach(pos -> {
+            BlockState state = this.getCommandSenderWorld().getBlockState(pos);
 
-                    if(isAir(stateAbove) && isTillAble(state)){
-                        this.stackToPlow.push(pos);
-                    }
-                }
+            BlockPos above = pos.above();
+            BlockState stateAbove = level.getBlockState(above);
+
+            if(isAir(stateAbove) && isTillAble(state)){
+                this.stackToPlow.push(pos);
             }
-        }
+        });
     }
     public void scanPlantArea(){
         stackToPlant.clear();
         Level level = this.getCommandSenderWorld();
-        for (int i = -getXSize(); i <= getXSize(); i++) {
-            for (int k = -getYSize(); k <= getYSize(); k++) {
-                for (int j = -getXSize(); j <= getXSize(); j++) {
-                    BlockPos pos = getOnPos().offset(i, k, j);
-                    BlockState state = level.getBlockState(pos);
 
-                    BlockPos below = pos.below();
-                    BlockState stateBelow = level.getBlockState(below);
+        BlockPos.betweenClosedStream(area).forEach(pos -> {
+            BlockState state = level.getBlockState(pos);
 
-                    if(isAir(state) && isFarmland(stateBelow)){
-                        this.stackToPlant.push(pos);
-                    }
-                }
+            BlockPos below = pos.below();
+            BlockState stateBelow = level.getBlockState(below);
+
+            if(isAir(state) && isFarmland(stateBelow)){
+                this.stackToPlant.push(pos);
             }
-        }
+        });
     }
 
     public boolean isWorkerPerfectCandidate(FarmerEntity farmer) {

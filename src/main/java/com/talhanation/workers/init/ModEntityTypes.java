@@ -21,18 +21,17 @@ public class ModEntityTypes {
 
         public static final RegistryObject<EntityType<CropArea>> CROPAREA = ENTITY_TYPES.register("croparea",
                 () -> EntityType.Builder.of(CropArea::new, MobCategory.MISC)
-                        .sized(1.0F, 2.00F)
+                        .sized(1.2F, 2.00F)
                         .fireImmune().noSummon()
                         .build(new ResourceLocation(Main.MOD_ID, "croparea").toString()));
-
         public static final RegistryObject<EntityType<LumberArea>> LUMBERAREA = ENTITY_TYPES.register("lumberarea",
                 () -> EntityType.Builder.of(LumberArea::new, MobCategory.MISC)
-                        .sized(1.0F, 2.00F)
+                        .sized(1.2F, 2.00F)
                         .fireImmune().noSummon()
                         .build(new ResourceLocation(Main.MOD_ID, "lumberarea").toString()));
         public static final RegistryObject<EntityType<BuildArea>> BUILDAREA = ENTITY_TYPES.register("buildarea",
                 () -> EntityType.Builder.of(BuildArea::new, MobCategory.MISC)
-                        .sized(1.0F, 2.00F)
+                        .sized(1.2F, 2.00F)
                         .fireImmune().noSummon()
                         .build(new ResourceLocation(Main.MOD_ID, "buildarea").toString()));
         /*

@@ -3,17 +3,26 @@ package com.talhanation.workers.client.gui.structureRenderer;
 import com.mojang.blaze3d.systems.RenderSystem;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.math.Axis;
+import com.talhanation.workers.world.ScannedBlock;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.components.AbstractWidget;
 import net.minecraft.client.gui.narration.NarrationElementOutput;
+import net.minecraft.client.renderer.ItemBlockRenderTypes;
+import net.minecraft.client.renderer.LevelRenderer;
 import net.minecraft.client.renderer.MultiBufferSource;
+import net.minecraft.client.renderer.RenderType;
 import net.minecraft.client.renderer.block.BlockRenderDispatcher;
 import net.minecraft.client.renderer.texture.OverlayTexture;
 import net.minecraft.core.BlockPos;
 import net.minecraft.network.chat.Component;
 import net.minecraft.util.Mth;
+import net.minecraft.world.level.block.Rotation;
 import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.level.material.FluidState;
+import net.minecraft.world.phys.AABB;
+import net.minecraftforge.client.RenderTypeHelper;
+import net.minecraftforge.client.model.data.ModelData;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -21,9 +30,9 @@ import java.util.List;
 public class StructurePreviewWidget extends AbstractWidget {
 
     private List<ScannedBlock> structure = new ArrayList<>();
-    private float rotationX = 30;
-    private float rotationY = 45;
-    private float zoom = 5.0f;
+    private float rotationX = 25;
+    private float rotationY = 180;
+    private float zoom = 3.5f;
     private final float areaX;
     private final float areaY;
     private boolean isDragging = false;
@@ -62,46 +71,87 @@ public class StructurePreviewWidget extends AbstractWidget {
 
         RenderSystem.disableScissor();
     }
-
     private void renderStructurePreview(PoseStack poseStack, int previewX, int previewY) {
-        if(structure == null || structure.isEmpty()) return;
+        if (structure == null || structure.isEmpty()) return;
+
         poseStack.pushPose();
 
         poseStack.translate(previewX, previewY, 1000);
         poseStack.scale(zoom, -zoom, zoom);
-
         poseStack.translate(offsetX, offsetY, 0);
 
+        float pivotX = areaX / 2f;
+        float pivotZ = areaY / 2f;
+        poseStack.translate(pivotX, 0, pivotZ);
         poseStack.mulPose(Axis.XP.rotationDegrees(rotationX));
         poseStack.mulPose(Axis.YP.rotationDegrees(rotationY));
-
-        poseStack.translate(-areaX, 0, -areaY);
+        poseStack.translate(-pivotX, 0, -pivotZ);
 
         Minecraft mc = Minecraft.getInstance();
         BlockRenderDispatcher dispatcher = mc.getBlockRenderer();
         MultiBufferSource.BufferSource bufferSource = mc.renderBuffers().bufferSource();
 
+        // 🔁 Bestimme State-Rotation passend zu Y-Rotation (nur 90°-Schritte!)
+        Rotation blockRotation = getRotationFromDegrees(rotationY);
+
         for (ScannedBlock block : structure) {
             BlockState state = block.state();
+            FluidState fluidState = state.getFluidState();
             BlockPos relPos = block.relativePos();
+
+
+            BlockState rotatedState = state;
 
             poseStack.pushPose();
             poseStack.translate(relPos.getX(), relPos.getY(), relPos.getZ());
-            int packedLight = 15728880;
-            int packedOverlay = OverlayTexture.NO_OVERLAY;
+
+            RenderType renderType = null;
+            if (!fluidState.isEmpty()) {
+                renderType = ItemBlockRenderTypes.getRenderLayer(fluidState);
+            }
 
             dispatcher.renderSingleBlock(
-                    state,
+                    rotatedState,
                     poseStack,
                     bufferSource,
-                    packedLight,
-                    packedOverlay
+                    15728880,
+                    OverlayTexture.NO_OVERLAY,
+                    ModelData.EMPTY,
+                    renderType
             );
 
             poseStack.popPose();
         }
+
+        poseStack.pushPose();
+        poseStack.translate(areaX - 1, 0, 0);
+
+        AABB originBox = new AABB(
+                0, 0, 0,
+                1, 2, 1
+        ).inflate(0.01);
+
+        LevelRenderer.renderLineBox(
+                poseStack,
+                bufferSource.getBuffer(RenderType.lines()),
+                originBox,
+                1.0f, 0.0f, 0.0f, 1.0f
+        );
+        poseStack.popPose();
+
         bufferSource.endBatch();
         poseStack.popPose();
+    }
+
+
+    private static Rotation getRotationFromDegrees(float degrees) {
+        int normalized = Math.floorMod(Math.round(degrees / 90f), 4);
+        return switch (normalized) {
+            case 1 -> Rotation.CLOCKWISE_90;
+            case 2 -> Rotation.CLOCKWISE_180;
+            case 3 -> Rotation.COUNTERCLOCKWISE_90;
+            default -> Rotation.NONE;
+        };
     }
 
     public void onGlobalMouseDragged(double mouseX, double mouseY, int button, double dragX, double dragY) {

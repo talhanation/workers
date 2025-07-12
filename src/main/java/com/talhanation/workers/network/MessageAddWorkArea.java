@@ -43,24 +43,27 @@ public class MessageAddWorkArea implements Message<MessageAddWorkArea> {
         switch (type){
             case 2 -> {
                 workArea = new BuildArea(ModEntityTypes.BUILDAREA.get(), player.level());
-                workArea.setXSize(4);
-                workArea.setYSize(4);
-                workArea.setZSize(4);
+                workArea.setWidthSize(4);
+                workArea.setHeightSize(4);
+                workArea.setDepthSize(4);
+
             }
             case 1 -> {
                 workArea = new LumberArea(ModEntityTypes.LUMBERAREA.get(), player.level());
-                workArea.setXSize(16);
-                workArea.setYSize(8);
-                workArea.setZSize(16);
+                workArea.setWidthSize(16);
+                workArea.setHeightSize(12);
+                workArea.setDepthSize(16);
             }
             default -> {
                 workArea = new CropArea(ModEntityTypes.CROPAREA.get(), player.level());
-                workArea.setXSize(8);
-                workArea.setYSize(2);
-                workArea.setZSize(8);
+                workArea.setWidthSize(8);
+                workArea.setHeightSize(2);
+                workArea.setDepthSize(8);
 
             }
         }
+        workArea.setFacing(player.getDirection());
+        workArea.createArea();
         workArea.setTeamStringID(teamStringID);
         workArea.setDone(false);
         workArea.setPlayerName(player.getName().getString());

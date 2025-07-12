@@ -4,11 +4,11 @@ import com.talhanation.recruits.client.gui.component.ActivateableButton;
 import com.talhanation.recruits.client.gui.widgets.BlackShowingTextField;
 import com.talhanation.recruits.client.gui.widgets.ScrollDropDownMenu;
 import com.talhanation.workers.Main;
-import com.talhanation.workers.client.gui.structureRenderer.ScannedBlock;
+import com.talhanation.workers.world.ScannedBlock;
 import com.talhanation.workers.client.gui.structureRenderer.StructurePreviewWidget;
 import com.talhanation.workers.entities.workarea.BuildArea;
 import com.talhanation.workers.network.MessageUpdateBuildArea;
-import com.talhanation.workers.world.StructureScanner;
+import com.talhanation.workers.world.StructureManager;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.components.Button;
@@ -23,12 +23,6 @@ import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraftforge.client.gui.widget.ExtendedButton;
 
-import java.io.File;
-import java.io.IOException;
-import java.io.InputStream;
-import java.nio.file.DirectoryStream;
-import java.nio.file.Files;
-import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
@@ -53,6 +47,7 @@ public class BuildAreaScreen extends WorkAreaScreen {
     public Button ySizeMinusButton;
     public Button zSizePlusButton;
     public Button zSizeMinusButton;
+    public String savedName;
     public int areaXSize;
     public int areaYSize;
     public int areaZSize;
@@ -64,14 +59,15 @@ public class BuildAreaScreen extends WorkAreaScreen {
     @Override
     protected void init() {
         structureNBT = buildArea.getStructureNBT();
-        if(structureNBT != null){
+        if(structureNBT != null && !structureNBT.isEmpty()){
             mode = Mode.LOAD;
             structure = parseStructureFromNBT(structureNBT);
         }
+        else mode = Mode.SCAN;
 
-        this.areaXSize = buildArea.getXSize();
-        this.areaYSize = buildArea.getYSize();
-        this.areaZSize = buildArea.getZSize();
+        this.areaXSize = buildArea.getWidthSize();
+        this.areaYSize = buildArea.getHeightSize();
+        this.areaZSize = buildArea.getDepthSize();
         setButtons();
     }
 
@@ -121,7 +117,7 @@ public class BuildAreaScreen extends WorkAreaScreen {
                             else areaXSize++;
                             areaXSize = Mth.clamp(areaXSize, 3, 16);
 
-                            this.workArea.setXSize(areaXSize);
+                            this.workArea.setWidthSize(areaXSize);
                             Main.SIMPLE_CHANNEL.sendToServer(new MessageUpdateBuildArea(this.workArea.getUUID(), areaXSize, areaYSize, areaZSize, structureNBT, false));
                             this.setButtons();
                         }
@@ -133,7 +129,7 @@ public class BuildAreaScreen extends WorkAreaScreen {
                             else areaXSize--;
                             areaXSize = Mth.clamp(areaXSize, 3, 16);
 
-                            this.workArea.setXSize(areaXSize);
+                            this.workArea.setWidthSize(areaXSize);
                             Main.SIMPLE_CHANNEL.sendToServer(new MessageUpdateBuildArea(this.workArea.getUUID(), areaXSize, areaYSize, areaZSize,  structureNBT, false));
                             this.setButtons();
                         }
@@ -145,7 +141,7 @@ public class BuildAreaScreen extends WorkAreaScreen {
                             else areaYSize++;
                             areaYSize = Mth.clamp(areaYSize, 3, 16);
 
-                            this.workArea.setYSize(areaYSize);
+                            this.workArea.setHeightSize(areaYSize);
                             Main.SIMPLE_CHANNEL.sendToServer(new MessageUpdateBuildArea(this.workArea.getUUID(), areaXSize, areaYSize, areaZSize, structureNBT, false));
                             this.setButtons();
                         }
@@ -157,7 +153,7 @@ public class BuildAreaScreen extends WorkAreaScreen {
                             else areaYSize--;
                             areaYSize = Mth.clamp(areaYSize, 3, 16);
 
-                            this.workArea.setYSize(areaYSize);
+                            this.workArea.setHeightSize(areaYSize);
                             UUID uuid = this.buildArea.getUUID();
                             Main.SIMPLE_CHANNEL.sendToServer(new MessageUpdateBuildArea(uuid, areaXSize, areaYSize, areaZSize, structureNBT, false));
                             this.setButtons();
@@ -170,7 +166,7 @@ public class BuildAreaScreen extends WorkAreaScreen {
                             else areaZSize++;
                             areaZSize = Mth.clamp(areaZSize, 3, 16);
 
-                            this.workArea.setYSize(areaZSize);
+                            this.workArea.setHeightSize(areaZSize);
                             Main.SIMPLE_CHANNEL.sendToServer(new MessageUpdateBuildArea(this.workArea.getUUID(), areaXSize, areaYSize, areaZSize, structureNBT, false));
                             this.setButtons();
                         }
@@ -182,7 +178,7 @@ public class BuildAreaScreen extends WorkAreaScreen {
                             else areaZSize--;
                             areaZSize = Mth.clamp(areaZSize, 3, 16);
 
-                            this.workArea.setYSize(areaZSize);
+                            this.workArea.setHeightSize(areaZSize);
                             UUID uuid = this.buildArea.getUUID();
                             Main.SIMPLE_CHANNEL.sendToServer(new MessageUpdateBuildArea(uuid, areaXSize, areaYSize, areaZSize, structureNBT, false));
                             this.setButtons();
@@ -190,7 +186,7 @@ public class BuildAreaScreen extends WorkAreaScreen {
                 ));
 
                 scanNameEditBox = new EditBox(font, x - previewWidth/2 , y - previewHeight / 2 + 130 - boxHeight - 2, previewWidth, boxHeight, Component.literal(""));
-                scanNameEditBox.setValue("");
+                scanNameEditBox.setValue(savedName);
                 scanNameEditBox.setTextColor(-1);
                 scanNameEditBox.setTextColorUneditable(-1);
                 scanNameEditBox.setBordered(true);
@@ -203,34 +199,46 @@ public class BuildAreaScreen extends WorkAreaScreen {
                         btn ->{
                             this.performClientScan();
                             this.checkScanButtonActive();
+
                             checkSaveButtonActive(this.scanNameEditBox.getValue());
                         }
                 ));
 
                 saveButton = addRenderableWidget(new ExtendedButton(x + previewWidth/2, y + previewHeight + previewHeight/2 + 11, buttonWidth, buttonHeight, Component.literal("Save"),
-                        btn -> saveStructureToFile(this.scanNameEditBox.getValue())
+                        btn -> StructureManager.saveStructureToFile(this.scanNameEditBox.getValue(), structure, this.buildArea.getWidthSize(), this.buildArea.getHeightSize(), this.buildArea.getDepthSize(), this.buildArea.getFacing())
                 ));
 
-                structurePreview = new StructurePreviewWidget(x - previewWidth / 2, y - previewHeight / 2 + 130, previewWidth, previewHeight, buildArea.getXSize(), buildArea.getYSize());
+                structurePreview = new StructurePreviewWidget(x - previewWidth / 2, y - previewHeight / 2 + 130, previewWidth, previewHeight, buildArea.getWidthSize(), buildArea.getHeightSize());
                 addRenderableWidget(structurePreview);
-
                 checkScanButtonActive();
             }
 
             case LOAD -> {
-                List<String> scans = loadAvailableScans();
+                List<String> scans = StructureManager.loadAvailableScans();
                 String title = scans.isEmpty() ? "Empty" : "Select NBT-File";
                 structureOptions = new ScrollDropDownMenu<>(title, x - previewWidth/2 -1 , y - previewHeight / 2 + 130 - boxHeight - 2, previewWidth +2, boxHeight +2,
                         scans,
                         string -> string,
                         selectedName -> {
-                            CompoundTag tag = loadScanNbt(selectedName);
+                            CompoundTag tag = StructureManager.loadScanNbt(selectedName);
                             if (tag != null) {
                                 this.structureNBT = tag;
                                 this.structure = parseStructureFromNBT(tag);
                                 structurePreview.setStructure(this.structure);
                                 checkBuildButtonActive();
-                                Main.SIMPLE_CHANNEL.sendToServer(new MessageUpdateBuildArea(this.buildArea.getUUID(), areaXSize, areaYSize, areaZSize, structureNBT, false));
+                                int width = tag.getInt("width");
+                                int height = tag.getInt("height");;
+                                int depth = tag.getInt("depth");;
+
+                                this.savedName = tag.getString("name");
+                                this.areaXSize = width;
+                                this.areaYSize = height;
+                                this.areaZSize = depth;
+                                this.buildArea.setWidthSize(width);
+                                this.buildArea.setHeightSize(height);
+                                this.buildArea.setDepthSize(depth);
+                                Main.SIMPLE_CHANNEL.sendToServer(new MessageUpdateBuildArea(this.buildArea.getUUID(), width, height, depth, structureNBT, false));
+                                this.setButtons();
                             }
                         }
                 );
@@ -238,19 +246,21 @@ public class BuildAreaScreen extends WorkAreaScreen {
 
                 buildButton = addRenderableWidget(new ExtendedButton(x + previewWidth/2, y + previewHeight + previewHeight/2 + 11, buttonWidth, buttonHeight, Component.literal("Build"),
                         btn -> {
-                            Main.SIMPLE_CHANNEL.sendToServer(new MessageUpdateBuildArea(this.buildArea.getUUID(), this.buildArea.getXSize(), this.buildArea.getYSize(), areaZSize, this.structureNBT, true));
+                            Main.SIMPLE_CHANNEL.sendToServer(new MessageUpdateBuildArea(this.buildArea.getUUID(), this.buildArea.getWidthSize(), this.buildArea.getHeightSize(), areaZSize, this.structureNBT, true));
                         }
                 ));
 
-                structurePreview = new StructurePreviewWidget(x - previewWidth / 2, y - previewHeight / 2 + 130, previewWidth, previewHeight, buildArea.getXSize(), buildArea.getYSize());
+                structurePreview = new StructurePreviewWidget(x - previewWidth / 2, y - previewHeight / 2 + 130, previewWidth, previewHeight, buildArea.getWidthSize(), buildArea.getHeightSize());
                 addRenderableWidget(structurePreview);
-
+                if(structure != null) structurePreview.setStructure(structure);
                 checkBuildButtonActive();
             }
         }
 
+        String string = null;
+        if(scanNameEditBox != null) string = this.scanNameEditBox.getValue();
+        checkSaveButtonActive(string);
         checkBuildButtonActive();
-        checkSaveButtonActive(this.scanNameEditBox.getValue());
     }
 
 
@@ -277,14 +287,10 @@ public class BuildAreaScreen extends WorkAreaScreen {
     }
 
     private void performClientScan() {
-        BlockPos center = buildArea.getOnPos();
-        int size = buildArea.getXSize();
-        int height = buildArea.getYSize();
-
         Level level = Minecraft.getInstance().level;
         if (level == null) return;
 
-        this.structureNBT = StructureScanner.scanStructure(level, center, size, height);
+        this.structureNBT = StructureManager.scanStructure(level, this.buildArea, this.scanNameEditBox.getValue());
         this.structure = parseStructureFromNBT(structureNBT);
         this.structurePreview.setStructure(structure);
     }
@@ -348,66 +354,5 @@ public class BuildAreaScreen extends WorkAreaScreen {
         LOAD
     }
 
-    private void saveStructureToFile(String filename) {
-        File dir = new File(Minecraft.getInstance().gameDirectory, "config/workers/scan");
-        if (!dir.exists()) dir.mkdirs();
-
-        File file = new File(dir, filename.endsWith(".nbt") ? filename : filename + ".nbt");
-
-        ListTag list = new ListTag();
-        for (ScannedBlock block : structure) {
-            CompoundTag tag = new CompoundTag();
-            tag.putInt("x", block.relativePos().getX());
-            tag.putInt("y", block.relativePos().getY());
-            tag.putInt("z", block.relativePos().getZ());
-
-            CompoundTag stateTag = NbtUtils.writeBlockState(block.state());
-            tag.put("state", stateTag);
-
-            list.add(tag);
-        }
-
-        CompoundTag root = new CompoundTag();
-        root.put("blocks", list);
-
-        try {
-            NbtIo.writeCompressed(root, file);
-            Minecraft.getInstance().player.displayClientMessage(Component.literal("Scan saved to: " + file.getAbsolutePath()), true);
-        } catch (IOException e) {
-            Minecraft.getInstance().player.displayClientMessage(Component.literal("Error saving scan: " + e.getMessage()), true);
-            e.printStackTrace();
-        }
-    }
-
-    public static List<String> loadAvailableScans() {
-        List<String> scanNames = new ArrayList<>();
-        Path path = Path.of(Minecraft.getInstance().gameDirectory.getAbsolutePath(), "config", "workers", "scan");
-        if (Files.exists(path) && Files.isDirectory(path)) {
-            try (DirectoryStream<Path> stream = Files.newDirectoryStream(path, "*.nbt")) {
-                for (Path path1 : stream) {
-                    String fileName = path1.getFileName().toString();
-
-                    if (fileName.endsWith(".nbt")) {
-                        scanNames.add(fileName.substring(0, fileName.length() - 4));
-                    }
-                }
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
-        }
-
-        return scanNames;
-    }
-
-    public static CompoundTag loadScanNbt(String scanName) {
-        Path scanFile = Path.of(Minecraft.getInstance().gameDirectory.getAbsolutePath(), "config", "workers", "scan", scanName + ".nbt");
-
-        try (InputStream input = Files.newInputStream(scanFile)) {
-            return NbtIo.readCompressed(input);
-        } catch (IOException e) {
-            e.printStackTrace();
-            return null;
-        }
-    }
 
 }

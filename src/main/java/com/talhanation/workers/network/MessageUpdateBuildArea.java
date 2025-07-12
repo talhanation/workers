@@ -47,11 +47,10 @@ public class MessageUpdateBuildArea implements Message<MessageUpdateBuildArea> {
     }
 
     public void update(BuildArea buildArea){
-        buildArea.setXSize(this.xSize);
-        buildArea.setYSize(this.ySize);
-        buildArea.setZSize(this.zSize);
-        buildArea.setStructureNBT(structureNBT);
-
+        buildArea.setWidthSize(this.xSize);
+        buildArea.setHeightSize(this.ySize);
+        buildArea.setDepthSize(this.zSize);
+        buildArea.setStructureNBT(this.structureNBT);
         if(build){
             buildArea.setStartBuild();
         }
