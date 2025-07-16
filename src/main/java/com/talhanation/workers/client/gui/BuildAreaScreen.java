@@ -14,6 +14,7 @@ import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.components.Button;
 import net.minecraft.client.gui.components.EditBox;
 import net.minecraft.core.BlockPos;
+import net.minecraft.core.Direction;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.nbt.*;
 import net.minecraft.network.chat.Component;
@@ -96,6 +97,8 @@ public class BuildAreaScreen extends WorkAreaScreen {
         modeScanButton = addRenderableWidget(new ActivateableButton(x - buttonWidth - 100, y - previewHeight / 2 + 130, buttonWidth, buttonHeight, Component.literal("Scan"),
                 btn -> {
                     this.mode = Mode.SCAN;
+
+                    this.resetScan();
                     this.setButtons();
                 }
         ));
@@ -104,6 +107,8 @@ public class BuildAreaScreen extends WorkAreaScreen {
         modeLoadButton = addRenderableWidget(new ActivateableButton(x - buttonWidth - 100 , y - previewHeight / 2 + 130 + buttonHeight, buttonWidth, buttonHeight, Component.literal("Load"),
                 btn -> {
                     this.mode = Mode.LOAD;
+
+                    this.resetScan();
                     this.setButtons();
                 }
         ));
@@ -119,6 +124,8 @@ public class BuildAreaScreen extends WorkAreaScreen {
 
                             this.workArea.setWidthSize(areaXSize);
                             Main.SIMPLE_CHANNEL.sendToServer(new MessageUpdateBuildArea(this.workArea.getUUID(), areaXSize, areaYSize, areaZSize, structureNBT, false));
+
+                            this.resetScan();
                             this.setButtons();
                         }
                 ));
@@ -131,6 +138,8 @@ public class BuildAreaScreen extends WorkAreaScreen {
 
                             this.workArea.setWidthSize(areaXSize);
                             Main.SIMPLE_CHANNEL.sendToServer(new MessageUpdateBuildArea(this.workArea.getUUID(), areaXSize, areaYSize, areaZSize,  structureNBT, false));
+
+                            this.resetScan();
                             this.setButtons();
                         }
                 ));
@@ -143,6 +152,8 @@ public class BuildAreaScreen extends WorkAreaScreen {
 
                             this.workArea.setHeightSize(areaYSize);
                             Main.SIMPLE_CHANNEL.sendToServer(new MessageUpdateBuildArea(this.workArea.getUUID(), areaXSize, areaYSize, areaZSize, structureNBT, false));
+
+                            this.resetScan();
                             this.setButtons();
                         }
                 ));
@@ -156,6 +167,7 @@ public class BuildAreaScreen extends WorkAreaScreen {
                             this.workArea.setHeightSize(areaYSize);
                             UUID uuid = this.buildArea.getUUID();
                             Main.SIMPLE_CHANNEL.sendToServer(new MessageUpdateBuildArea(uuid, areaXSize, areaYSize, areaZSize, structureNBT, false));
+                            this.resetScan();
                             this.setButtons();
                         }
                 ));
@@ -168,6 +180,7 @@ public class BuildAreaScreen extends WorkAreaScreen {
 
                             this.workArea.setHeightSize(areaZSize);
                             Main.SIMPLE_CHANNEL.sendToServer(new MessageUpdateBuildArea(this.workArea.getUUID(), areaXSize, areaYSize, areaZSize, structureNBT, false));
+                            this.resetScan();
                             this.setButtons();
                         }
                 ));
@@ -181,6 +194,7 @@ public class BuildAreaScreen extends WorkAreaScreen {
                             this.workArea.setHeightSize(areaZSize);
                             UUID uuid = this.buildArea.getUUID();
                             Main.SIMPLE_CHANNEL.sendToServer(new MessageUpdateBuildArea(uuid, areaXSize, areaYSize, areaZSize, structureNBT, false));
+                            this.resetScan();
                             this.setButtons();
                         }
                 ));
@@ -224,7 +238,7 @@ public class BuildAreaScreen extends WorkAreaScreen {
                             if (tag != null) {
                                 this.structureNBT = tag;
                                 this.structure = parseStructureFromNBT(tag);
-                                structurePreview.setStructure(this.structure);
+                                structurePreview.setStructure(this.structure, this.structureNBT);
                                 checkBuildButtonActive();
                                 int width = tag.getInt("width");
                                 int height = tag.getInt("height");;
@@ -252,7 +266,7 @@ public class BuildAreaScreen extends WorkAreaScreen {
 
                 structurePreview = new StructurePreviewWidget(x - previewWidth / 2, y - previewHeight / 2 + 130, previewWidth, previewHeight, buildArea.getWidthSize(), buildArea.getHeightSize());
                 addRenderableWidget(structurePreview);
-                if(structure != null) structurePreview.setStructure(structure);
+                if(structure != null) structurePreview.setStructure(this.structure, this.structureNBT);
                 checkBuildButtonActive();
             }
         }
@@ -261,6 +275,12 @@ public class BuildAreaScreen extends WorkAreaScreen {
         if(scanNameEditBox != null) string = this.scanNameEditBox.getValue();
         checkSaveButtonActive(string);
         checkBuildButtonActive();
+    }
+
+    public void resetScan(){
+        structure = null;
+        structureNBT = null;
+        if(this.structurePreview != null) structurePreview.setStructure(null, null);
     }
 
 
@@ -292,7 +312,7 @@ public class BuildAreaScreen extends WorkAreaScreen {
 
         this.structureNBT = StructureManager.scanStructure(level, this.buildArea, this.scanNameEditBox.getValue());
         this.structure = parseStructureFromNBT(structureNBT);
-        this.structurePreview.setStructure(structure);
+        this.structurePreview.setStructure(structure, structureNBT);
     }
 
     @Override
@@ -308,7 +328,7 @@ public class BuildAreaScreen extends WorkAreaScreen {
         if (structureOptions != null && structureOptions.isMouseOver(mouseX, mouseY)) {
             this.structure = null;
             this.structureNBT = null;
-            this.structurePreview.setStructure(null);
+            this.structurePreview.setStructure(null, null);
             structureOptions.onMouseClick(mouseX, mouseY);
             return true;
         }
@@ -321,7 +341,8 @@ public class BuildAreaScreen extends WorkAreaScreen {
     }
     public static List<ScannedBlock> parseStructureFromNBT(CompoundTag root) {
         List<ScannedBlock> result = new ArrayList<>();
-
+        String dir = root.getString("facing");
+        Direction scanFacing = Direction.byName(dir);
         ListTag blockList = root.getList("blocks", Tag.TAG_COMPOUND);
         for (Tag tag : blockList) {
             CompoundTag blockTag = (CompoundTag) tag;
@@ -329,7 +350,7 @@ public class BuildAreaScreen extends WorkAreaScreen {
             BlockPos relPos = new BlockPos(blockTag.getInt("x"), blockTag.getInt("y"), blockTag.getInt("z"));
 
             CompoundTag be = blockTag.contains("blockEntity") ? blockTag.getCompound("blockEntity") : null;
-            result.add(new ScannedBlock(state, be, relPos));
+            result.add(new ScannedBlock(state, scanFacing, be, relPos));
         }
 
         return result;
@@ -345,8 +366,8 @@ public class BuildAreaScreen extends WorkAreaScreen {
 
     @Override
     public void onAreaMoved() {
-        this.structure = null;
-        this.structureNBT = null;
+        this.resetScan();
+        checkScanButtonActive();
     }
 
     public enum Mode{

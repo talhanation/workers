@@ -30,6 +30,9 @@ import net.minecraft.world.level.material.Fluid;
 import net.minecraft.world.level.material.Fluids;
 import net.minecraftforge.network.PacketDistributor;
 
+import java.util.EnumMap;
+import java.util.Map;
+import java.util.Objects;
 import java.util.Stack;
 
 public class BuildArea extends AbstractWorkAreaEntity {
@@ -121,6 +124,47 @@ public class BuildArea extends AbstractWorkAreaEntity {
     }
 
     public static BlockState rotateBlockState(BlockState state, int steps) {
+        steps = steps % 4;
+        if (steps == 0) return state;
+        
+        Property<?> pN = state.getBlock().getStateDefinition().getProperty("north");
+        Property<?> pE = state.getBlock().getStateDefinition().getProperty("east");
+        Property<?> pS = state.getBlock().getStateDefinition().getProperty("south");
+        Property<?> pW = state.getBlock().getStateDefinition().getProperty("west");
+
+        if (pN instanceof BooleanProperty north &&
+                pE instanceof BooleanProperty east &&
+                pS instanceof BooleanProperty south &&
+                pW instanceof BooleanProperty west) {
+
+            Map<Direction, BooleanProperty> connectionProps = Map.of(
+                    Direction.NORTH, north,
+                    Direction.EAST,  east,
+                    Direction.SOUTH, south,
+                    Direction.WEST,  west
+            );
+
+            Map<Direction, Boolean> values = new EnumMap<>(Direction.class);
+            for (Direction dir : Direction.Plane.HORIZONTAL) {
+                BooleanProperty prop = connectionProps.get(dir);
+                values.put(dir, state.getValue(prop));
+            }
+
+            // Neue rotierte Werte
+            Map<Direction, Boolean> rotatedValues = new EnumMap<>(Direction.class);
+            for (Direction dir : Direction.Plane.HORIZONTAL) {
+                Direction rotated = Direction.from2DDataValue((dir.get2DDataValue() + steps) % 4);
+                rotatedValues.put(rotated, values.get(dir));
+            }
+
+            // Setze neue Verbindungen
+            for (Map.Entry<Direction, Boolean> entry : rotatedValues.entrySet()) {
+                BooleanProperty prop = connectionProps.get(entry.getKey());
+                state = state.setValue(prop, entry.getValue());
+            }
+        }
+
+
         Property<?> facingProp = state.getProperties().stream()
                 .filter(p -> p.getName().equals("facing") || p.getName().equals("rotation") || p.getName().equals("axis") || p.getName().equals("horizontal_facing"))
                 .findFirst().orElse(null);

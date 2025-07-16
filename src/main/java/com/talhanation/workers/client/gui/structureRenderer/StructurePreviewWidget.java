@@ -3,7 +3,9 @@ package com.talhanation.workers.client.gui.structureRenderer;
 import com.mojang.blaze3d.systems.RenderSystem;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.math.Axis;
+import com.talhanation.workers.entities.workarea.BuildArea;
 import com.talhanation.workers.world.ScannedBlock;
+import com.talhanation.workers.world.StructureManager;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.components.AbstractWidget;
@@ -15,21 +17,28 @@ import net.minecraft.client.renderer.RenderType;
 import net.minecraft.client.renderer.block.BlockRenderDispatcher;
 import net.minecraft.client.renderer.texture.OverlayTexture;
 import net.minecraft.core.BlockPos;
+import net.minecraft.core.Direction;
+import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.chat.Component;
 import net.minecraft.util.Mth;
+import net.minecraft.world.level.block.EntityBlock;
 import net.minecraft.world.level.block.Rotation;
+import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.level.block.state.properties.DirectionProperty;
+import net.minecraft.world.level.block.state.properties.Property;
 import net.minecraft.world.level.material.FluidState;
 import net.minecraft.world.phys.AABB;
-import net.minecraftforge.client.RenderTypeHelper;
 import net.minecraftforge.client.model.data.ModelData;
 
+import javax.annotation.Nullable;
 import java.util.ArrayList;
 import java.util.List;
 
 public class StructurePreviewWidget extends AbstractWidget {
 
     private List<ScannedBlock> structure = new ArrayList<>();
+    private CompoundTag structureNBT;
     private float rotationX = 25;
     private float rotationY = 180;
     private float zoom = 3.5f;
@@ -48,7 +57,8 @@ public class StructurePreviewWidget extends AbstractWidget {
         this.areaY = areaY;
     }
 
-    public void setStructure(List<ScannedBlock> structure) {
+    public void setStructure(List<ScannedBlock> structure, CompoundTag structureNBT) {
+        this.structureNBT = structureNBT;
         this.structure = structure;
     }
 
@@ -71,9 +81,10 @@ public class StructurePreviewWidget extends AbstractWidget {
 
         RenderSystem.disableScissor();
     }
+
     private void renderStructurePreview(PoseStack poseStack, int previewX, int previewY) {
         if (structure == null || structure.isEmpty()) return;
-
+        if (structureNBT == null) return;
         poseStack.pushPose();
 
         poseStack.translate(previewX, previewY, 1000);
@@ -91,16 +102,10 @@ public class StructurePreviewWidget extends AbstractWidget {
         BlockRenderDispatcher dispatcher = mc.getBlockRenderer();
         MultiBufferSource.BufferSource bufferSource = mc.renderBuffers().bufferSource();
 
-        // 🔁 Bestimme State-Rotation passend zu Y-Rotation (nur 90°-Schritte!)
-        Rotation blockRotation = getRotationFromDegrees(rotationY);
-
         for (ScannedBlock block : structure) {
             BlockState state = block.state();
             FluidState fluidState = state.getFluidState();
             BlockPos relPos = block.relativePos();
-
-
-            BlockState rotatedState = state;
 
             poseStack.pushPose();
             poseStack.translate(relPos.getX(), relPos.getY(), relPos.getZ());
@@ -110,13 +115,26 @@ public class StructurePreviewWidget extends AbstractWidget {
                 renderType = ItemBlockRenderTypes.getRenderLayer(fluidState);
             }
 
+            ModelData modelData = ModelData.EMPTY;
+            if (state.getBlock() instanceof EntityBlock entityBlock) {
+                BlockEntity be = entityBlock.newBlockEntity(BlockPos.ZERO, state);
+                if (be != null) {
+                    modelData = be.getModelData();
+                }
+            }
+
+            String dir = structureNBT.getString("facing");
+            Direction areaFacing = Direction.byName(dir);;
+
+            BlockState rotatedState = BuildArea.rotateBlockState(state, 4 - areaFacing.get2DDataValue());
+
             dispatcher.renderSingleBlock(
                     rotatedState,
                     poseStack,
                     bufferSource,
                     15728880,
                     OverlayTexture.NO_OVERLAY,
-                    ModelData.EMPTY,
+                    modelData,
                     renderType
             );
 
@@ -143,15 +161,13 @@ public class StructurePreviewWidget extends AbstractWidget {
         poseStack.popPose();
     }
 
-
-    private static Rotation getRotationFromDegrees(float degrees) {
-        int normalized = Math.floorMod(Math.round(degrees / 90f), 4);
-        return switch (normalized) {
-            case 1 -> Rotation.CLOCKWISE_90;
-            case 2 -> Rotation.CLOCKWISE_180;
-            case 3 -> Rotation.COUNTERCLOCKWISE_90;
-            default -> Rotation.NONE;
-        };
+    public static @Nullable Direction getFacing(BlockState state) {
+        for (Property<?> prop : state.getProperties()) {
+            if (prop instanceof DirectionProperty dirProp) {
+                return state.getValue(dirProp);
+            }
+        }
+        return null;
     }
 
     public void onGlobalMouseDragged(double mouseX, double mouseY, int button, double dragX, double dragY) {

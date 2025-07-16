@@ -14,7 +14,10 @@ import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.BushBlock;
 import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.level.block.state.properties.DirectionProperty;
+import net.minecraft.world.level.block.state.properties.Property;
 
+import javax.annotation.Nullable;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
@@ -40,7 +43,6 @@ public class StructureManager {
         for (int y = 0; y < height; y++) {
             for (int dz = 0; dz < depth; dz++) {
                 for (int dx = 0; dx < width; dx++) {
-
                     BlockPos offset = origin
                             .relative(facing, dz)
                             .relative(right, width - 1 - dx)

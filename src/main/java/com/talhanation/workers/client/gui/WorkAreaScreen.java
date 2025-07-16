@@ -78,6 +78,7 @@ public abstract class WorkAreaScreen extends RecruitsScreenBase {
                     }
                     Vec3 newPos = workArea.position().relative(player.getDirection().getOpposite(), x);
                     Main.SIMPLE_CHANNEL.sendToServer(new MessageUpdateWorkArea(this.workArea.getUUID(), this.workArea.getCustomName().getString(), newPos, false));
+                    this.onAreaMoved();
                 }
         ));
 
@@ -91,6 +92,7 @@ public abstract class WorkAreaScreen extends RecruitsScreenBase {
                     }
                     Vec3 newPos = workArea.position().relative(player.getDirection().getCounterClockWise(), x);
                     Main.SIMPLE_CHANNEL.sendToServer(new MessageUpdateWorkArea(this.workArea.getUUID(), this.workArea.getCustomName().getString(), newPos, false));
+                    this.onAreaMoved();
                 }
         ));
 
@@ -104,6 +106,7 @@ public abstract class WorkAreaScreen extends RecruitsScreenBase {
                     }
                     Vec3 newPos = workArea.position().relative(player.getDirection().getClockWise(), x);
                     Main.SIMPLE_CHANNEL.sendToServer(new MessageUpdateWorkArea(this.workArea.getUUID(), this.workArea.getCustomName().getString(), newPos, false));
+                    this.onAreaMoved();
                 }
         ));
 
