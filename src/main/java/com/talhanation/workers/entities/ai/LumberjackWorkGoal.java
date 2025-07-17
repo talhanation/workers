@@ -61,6 +61,7 @@ public class LumberjackWorkGoal extends Goal {
         if(state == State.WOOD_CUTTING){
             if(this.breakBlocks(currentTree.getStackToBreak())) return;
 
+            currentTree.setInWork(false);
             setState(State.SELECT_TREE);
         }
 
@@ -90,7 +91,9 @@ public class LumberjackWorkGoal extends Goal {
             }
 
             case SCAN_TREES ->{
-                lumberjack.currentLumberArea.scanForTrees();
+                if(lumberjack.currentLumberArea.stackOfTrees.isEmpty()){
+                    lumberjack.currentLumberArea.scanForTrees();
+                }
 
                 this.stackOfTrees = lumberjack.currentLumberArea.stackOfTrees;
                 this.stackOfTrees.sort(Comparator.comparing(tree -> tree.getPosition().getCenter().distanceToSqr(lumberjack.position())));
@@ -111,7 +114,7 @@ public class LumberjackWorkGoal extends Goal {
                 }
 
                 this.currentTree = this.stackOfTrees.pop();
-
+                this.currentTree.setInWork(true);
                 setState(State.MOVE_TO_TREE);
             }
 

@@ -10,7 +10,7 @@ public class Tree {
     private final Stack<BlockPos> stackToBreak = new Stack<>();
     private final String treeType;
     private final BlockPos position;
-
+    private boolean isInWorks;
     public Tree(String treeType, BlockPos position) {
         this.treeType = treeType;
         this.position = position;
@@ -50,5 +50,11 @@ public class Tree {
 
     public boolean isEmpty() {
         return stackToShear.isEmpty() && stackToStrip.isEmpty() && stackToBreak.isEmpty();
+    }
+    public void setInWork(boolean isInWorks){
+        this.isInWorks = isInWorks;
+    }
+    public boolean isInWorks() {
+        return isInWorks;
     }
 }

@@ -23,6 +23,8 @@ import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.*;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.level.block.state.properties.BlockStateProperties;
+import net.minecraftforge.common.Tags;
 import net.minecraftforge.network.PacketDistributor;
 
 import java.util.*;
@@ -116,17 +118,20 @@ public class LumberArea extends AbstractWorkAreaEntity {
 
     public void scanForTrees() {
         Set<BlockPos> visited = new HashSet<>();
+        if (area == null) this.area = getArea();
 
         BlockPos.betweenClosedStream(area).forEach(pos -> {
             BlockState state = this.getCommandSenderWorld().getBlockState(pos);
-            if (isLog(state)) {
+            if (isLog(state) && !visited.contains(pos)) {
                 String treeType = getTreeType(state);
 
                 Tree tempTree = new Tree(treeType, pos);
                 scanTree(this.getCommandSenderWorld(), pos.immutable(), visited, tempTree);
 
-                if (!tempTree.isEmpty()) {
+                // NEU: Überprüfe, ob verbundenes Laub existiert
+                if (!hasNaturalLeavesConnected(tempTree, this.getCommandSenderWorld())) return;
 
+                if (!tempTree.isEmpty()) {
                     BlockPos origin = getLowestLog(tempTree.getStackToBreak());
 
                     Tree finalTree = new Tree(treeType, origin);
@@ -140,7 +145,27 @@ public class LumberArea extends AbstractWorkAreaEntity {
             }
         });
     }
+    private boolean hasNaturalLeavesConnected(Tree tree, Level level) {
+        for (BlockPos logPos : tree.getStackToBreak()) {
+            for (BlockPos offset : BlockPos.betweenClosed(
+                    logPos.offset(-4, -4, -4),
+                    logPos.offset(4, 4, 4))) {
 
+                BlockState state = level.getBlockState(offset);
+
+                if (isLeaf(state)) {
+                    // Nur Leaves zählen, die NICHT persistent sind
+                    if (!state.getOptionalValue(BlockStateProperties.PERSISTENT).orElse(false)) {
+                        // Zusätzlich checken, ob distance < 7 (also verbunden)
+                        if (state.getOptionalValue(BlockStateProperties.DISTANCE).orElse(7) < 7) {
+                            return true;
+                        }
+                    }
+                }
+            }
+        }
+        return false;
+    }
     private BlockPos getLowestLog(Stack<BlockPos> logStack) {
         return logStack.stream().min(Comparator.comparingInt(BlockPos::getY)).orElse(null);
     }
@@ -192,19 +217,59 @@ public class LumberArea extends AbstractWorkAreaEntity {
         tree.getStackToStrip().sort(Comparator.reverseOrder());
         tree.getStackToBreak().sort(Comparator.reverseOrder());
     }
+    public void scanPlantArea() {
+        if (area == null) this.area = getArea();
 
-    public void scanPlantArea(){
         this.stackToPlant.clear();
-        BlockPos center = this.getOnPos();
+        Level world = this.getCommandSenderWorld();
+
+        List<BlockPos> possiblePositions = new ArrayList<>();
+
+        BlockPos center = new BlockPos((int) area.getCenter().x(), this.getOnPos().getY(), (int) area.getCenter().z());
+
+        // Füge potenzielle XZ-Positionen hinzu, die später auf Y geprüft werden
         for (Direction dir : Direction.Plane.HORIZONTAL) {
-            stackToPlant.add(center.relative(dir, 5).above());
+            possiblePositions.add(center.relative(dir, 5));
         }
 
-        stackToPlant.add(center.offset(-5, 1, -5));
-        stackToPlant.add(center.offset(-5, 1, 5));
-        stackToPlant.add(center.offset(5, 1, -5));
-        stackToPlant.add(center.offset(5, 1, 5));
+        possiblePositions.add(center);
+        possiblePositions.add(center.offset(-5, 0, -5));
+        possiblePositions.add(center.offset(-5, 0, 5));
+        possiblePositions.add(center.offset(5, 0, -5));
+        possiblePositions.add(center.offset(5, 0, 5));
+
+        int minY = (int) area.minY;
+        int maxY = (int) (area.maxY);
+
+        for (BlockPos baseXZ : possiblePositions) {
+            for (int y = minY; y <= maxY; y++) {
+                BlockPos pos = new BlockPos(baseXZ.getX(), y, baseXZ.getZ());
+                BlockPos below = pos.below();
+                BlockState belowState = world.getBlockState(below);
+
+                if (canSustainSapling(belowState) && world.isEmptyBlock(pos)) {
+                    boolean enoughSpace = true;
+                    for (int i = 1; i <= 4; i++) {
+                        if (!world.isEmptyBlock(pos.above(i))) {
+                            enoughSpace = false;
+                            break;
+                        }
+                    }
+
+                    if (enoughSpace) {
+                        stackToPlant.add(pos.immutable());
+                        break; // gültige Stelle gefunden, keine weitere Y-Suche nötig
+                    }
+                }
+            }
+        }
     }
+
+
+    private boolean canSustainSapling(BlockState belowState) {
+        return belowState.is(BlockTags.DIRT);
+    }
+
 
     public Stack<BlockPos> getStackToPlant() {
         return stackToPlant;
