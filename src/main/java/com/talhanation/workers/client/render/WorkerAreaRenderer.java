@@ -6,7 +6,10 @@ import com.mojang.math.Axis;
 import com.talhanation.recruits.client.events.ClientEvent;
 import com.talhanation.workers.entities.workarea.AbstractWorkAreaEntity;
 import com.talhanation.workers.entities.workarea.BuildArea;
+import com.talhanation.workers.world.ScannedBlock;
+import com.talhanation.workers.world.StructureManager;
 import net.minecraft.client.Minecraft;
+import net.minecraft.client.renderer.ItemBlockRenderTypes;
 import net.minecraft.client.renderer.LevelRenderer;
 import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.RenderType;
@@ -18,6 +21,7 @@ import net.minecraft.client.renderer.texture.OverlayTexture;
 import net.minecraft.client.renderer.texture.TextureAtlas;
 import net.minecraft.client.resources.model.BakedModel;
 import net.minecraft.core.BlockPos;
+import net.minecraft.core.Direction;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.ListTag;
@@ -29,15 +33,17 @@ import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemDisplayContext;
 import net.minecraft.world.item.ItemStack;
-import net.minecraft.world.level.Level;
-import net.minecraft.world.level.block.Block;
+import net.minecraft.world.level.block.EntityBlock;
+import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.level.material.FluidState;
 import net.minecraft.world.phys.AABB;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
+import net.minecraftforge.client.model.data.ModelData;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.Random;
+import java.util.List;
 
 @OnlyIn(Dist.CLIENT)
 public class WorkerAreaRenderer extends EntityRenderer<AbstractWorkAreaEntity> {
@@ -81,7 +87,7 @@ public class WorkerAreaRenderer extends EntityRenderer<AbstractWorkAreaEntity> {
         if(!abstractWorkAreaEntity.showBox && (looking == null || !looking.equals(abstractWorkAreaEntity))) return;
 
         if(abstractWorkAreaEntity instanceof BuildArea buildArea){
-            //renderStructurePreview(poseStack, bufferSource, buildArea.getStructureNBT(), buildArea.getOnPos(), player.getCommandSenderWorld());
+            //renderStructurePreview(poseStack, buildArea);
         }
 
         double x = Mth.lerp(partialTicks, abstractWorkAreaEntity.xOld, abstractWorkAreaEntity.getX());
@@ -107,39 +113,69 @@ public class WorkerAreaRenderer extends EntityRenderer<AbstractWorkAreaEntity> {
         poseStack.popPose();
     }
 
-    public static void renderStructurePreview(PoseStack poseStack, MultiBufferSource buffer, CompoundTag tag, BlockPos origin, Level level) {
-        if (tag == null || !tag.contains("blocks")) return;
+    private void renderStructurePreview(PoseStack poseStack, BuildArea buildArea) {
+        if (buildArea.getStructureNBT() == null) return;
+        List<ScannedBlock> structure = StructureManager.parseStructureFromNBT(buildArea.getStructureNBT());
+        if (structure.isEmpty()) return;
 
-        ListTag blocks = tag.getList("blocks", Tag.TAG_COMPOUND);
-        BlockRenderDispatcher dispatcher = Minecraft.getInstance().getBlockRenderer();
+        poseStack.pushPose();
 
-        for (Tag t : blocks) {
-            CompoundTag blockTag = (CompoundTag) t;
+        Minecraft mc = Minecraft.getInstance();
+        BlockRenderDispatcher dispatcher = mc.getBlockRenderer();
+        MultiBufferSource.BufferSource bufferSource = mc.renderBuffers().bufferSource();
 
-            BlockState state = NbtUtils.readBlockState(BuiltInRegistries.BLOCK.asLookup(), blockTag.getCompound("state"));
-            if (state == null) continue;
+        String dir = buildArea.getStructureNBT().getString("facing");
+        Direction areaFacing = Direction.byName(dir);;
 
-            int x = blockTag.getInt("x");
-            int y = blockTag.getInt("y");
-            int z = blockTag.getInt("z");
+        int rotationSteps = switch (areaFacing) {
+            case NORTH -> 1;
+            case EAST -> 2;
+            case SOUTH -> 3;
+            case WEST -> 1;
+            default -> 0;
+        };
 
-            BlockPos worldPos = origin.offset(x, y, z);
+        poseStack.mulPose(Axis.YP.rotationDegrees(rotationSteps * 90f));
+        poseStack.translate(-buildArea.getWidthSize() + 0.5, -1, -0.5);
 
-            // Transparent rendern
+        for (ScannedBlock block : structure) {
+            BlockState state = block.state();
+            FluidState fluidState = state.getFluidState();
+            BlockPos relPos = block.relativePos();
+
             poseStack.pushPose();
-            poseStack.translate(worldPos.getX(), worldPos.getY(), worldPos.getZ());
+            poseStack.translate(relPos.getX(), relPos.getY(), relPos.getZ());
 
-            dispatcher.renderBatched(
-                    state,
-                    worldPos,
-                    level,
+            RenderType renderType = null;
+            if (!fluidState.isEmpty()) {
+                renderType = ItemBlockRenderTypes.getRenderLayer(fluidState);
+            }
+
+            ModelData modelData = ModelData.EMPTY;
+            if (state.getBlock() instanceof EntityBlock entityBlock) {
+                BlockEntity be = entityBlock.newBlockEntity(BlockPos.ZERO, state);
+                if (be != null) {
+                    modelData = be.getModelData();
+                }
+            }
+
+            BlockState rotatedState = BuildArea.rotateBlockState(state, 4 - areaFacing.get2DDataValue());
+
+            dispatcher.renderSingleBlock(
+                    rotatedState,
                     poseStack,
-                    buffer.getBuffer(RenderType.translucent()),
-                    false,
-                    level.getRandom()
+                    bufferSource,
+                    0xF000F0,
+                    OverlayTexture.NO_OVERLAY,
+                    modelData,
+                    renderType
             );
-
             poseStack.popPose();
         }
+
+        bufferSource.endBatch();
+        poseStack.popPose();
     }
+
+
 }

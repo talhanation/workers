@@ -4,6 +4,8 @@ import com.talhanation.recruits.client.gui.component.ActivateableButton;
 import com.talhanation.recruits.client.gui.widgets.BlackShowingTextField;
 import com.talhanation.recruits.client.gui.widgets.ScrollDropDownMenu;
 import com.talhanation.workers.Main;
+import com.talhanation.workers.client.gui.widgets.DisplayTextItemScrollDropDownMenu;
+import com.talhanation.workers.client.gui.widgets.ItemScrollDropDownMenu;
 import com.talhanation.workers.world.ScannedBlock;
 import com.talhanation.workers.client.gui.structureRenderer.StructurePreviewWidget;
 import com.talhanation.workers.entities.workarea.BuildArea;
@@ -13,15 +15,13 @@ import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.components.Button;
 import net.minecraft.client.gui.components.EditBox;
-import net.minecraft.core.BlockPos;
-import net.minecraft.core.Direction;
-import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.nbt.*;
 import net.minecraft.network.chat.Component;
+import net.minecraft.util.FastColor;
 import net.minecraft.util.Mth;
 import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.Level;
-import net.minecraft.world.level.block.state.BlockState;
 import net.minecraftforge.client.gui.widget.ExtendedButton;
 
 import java.util.ArrayList;
@@ -52,6 +52,8 @@ public class BuildAreaScreen extends WorkAreaScreen {
     public int areaXSize;
     public int areaYSize;
     public int areaZSize;
+    public List< ItemStack> requiredItems = new ArrayList<>();
+    public DisplayTextItemScrollDropDownMenu requiredItemsDropDownMenu;
     public BuildAreaScreen(BuildArea buildArea, Player player) {
         super(buildArea.getCustomName(), buildArea, player);
         this.buildArea = buildArea;
@@ -62,7 +64,7 @@ public class BuildAreaScreen extends WorkAreaScreen {
         structureNBT = buildArea.getStructureNBT();
         if(structureNBT != null && !structureNBT.isEmpty()){
             mode = Mode.LOAD;
-            structure = parseStructureFromNBT(structureNBT);
+            structure = StructureManager.parseStructureFromNBT(structureNBT);
         }
         else mode = Mode.SCAN;
 
@@ -178,7 +180,7 @@ public class BuildAreaScreen extends WorkAreaScreen {
                             else areaZSize++;
                             areaZSize = Mth.clamp(areaZSize, 3, 16);
 
-                            this.workArea.setHeightSize(areaZSize);
+                            this.workArea.setDepthSize(areaZSize);
                             Main.SIMPLE_CHANNEL.sendToServer(new MessageUpdateBuildArea(this.workArea.getUUID(), areaXSize, areaYSize, areaZSize, structureNBT, false));
                             this.resetScan();
                             this.setButtons();
@@ -191,7 +193,7 @@ public class BuildAreaScreen extends WorkAreaScreen {
                             else areaZSize--;
                             areaZSize = Mth.clamp(areaZSize, 3, 16);
 
-                            this.workArea.setHeightSize(areaZSize);
+                            this.workArea.setDepthSize(areaZSize);
                             UUID uuid = this.buildArea.getUUID();
                             Main.SIMPLE_CHANNEL.sendToServer(new MessageUpdateBuildArea(uuid, areaXSize, areaYSize, areaZSize, structureNBT, false));
                             this.resetScan();
@@ -236,14 +238,9 @@ public class BuildAreaScreen extends WorkAreaScreen {
                         selectedName -> {
                             CompoundTag tag = StructureManager.loadScanNbt(selectedName);
                             if (tag != null) {
-                                this.structureNBT = tag;
-                                this.structure = parseStructureFromNBT(tag);
-                                structurePreview.setStructure(this.structure, this.structureNBT);
-                                checkBuildButtonActive();
                                 int width = tag.getInt("width");
                                 int height = tag.getInt("height");;
                                 int depth = tag.getInt("depth");;
-
                                 this.savedName = tag.getString("name");
                                 this.areaXSize = width;
                                 this.areaYSize = height;
@@ -251,7 +248,13 @@ public class BuildAreaScreen extends WorkAreaScreen {
                                 this.buildArea.setWidthSize(width);
                                 this.buildArea.setHeightSize(height);
                                 this.buildArea.setDepthSize(depth);
-                                Main.SIMPLE_CHANNEL.sendToServer(new MessageUpdateBuildArea(this.buildArea.getUUID(), width, height, depth, structureNBT, false));
+                                Main.SIMPLE_CHANNEL.sendToServer(new MessageUpdateBuildArea(this.buildArea.getUUID(), width, height, depth, tag, false));
+
+                                this.structureNBT = tag;
+                                this.structure = StructureManager.parseStructureFromNBT(tag);
+                                this.setStructure(this.structure, this.structureNBT);
+                                checkBuildButtonActive();
+
                                 this.setButtons();
                             }
                         }
@@ -263,6 +266,13 @@ public class BuildAreaScreen extends WorkAreaScreen {
                             Main.SIMPLE_CHANNEL.sendToServer(new MessageUpdateBuildArea(this.buildArea.getUUID(), this.buildArea.getWidthSize(), this.buildArea.getHeightSize(), areaZSize, this.structureNBT, true));
                         }
                 ));
+
+                requiredItemsDropDownMenu = new DisplayTextItemScrollDropDownMenu(ItemStack.EMPTY, "Required Items", x + previewWidth/2 + buttonWidth + 3, y + previewHeight + previewHeight/2 + 11, 120, 20, requiredItems, null);
+                requiredItemsDropDownMenu.setBgFillSelected(FastColor.ARGB32.color(255, 139, 139, 139));
+                requiredItemsDropDownMenu.setCanSelectItem(false);
+                requiredItemsDropDownMenu.setResetCount(false);
+
+                addRenderableWidget(requiredItemsDropDownMenu);
 
                 structurePreview = new StructurePreviewWidget(x - previewWidth / 2, y - previewHeight / 2 + 130, previewWidth, previewHeight, buildArea.getWidthSize(), buildArea.getHeightSize());
                 addRenderableWidget(structurePreview);
@@ -277,10 +287,18 @@ public class BuildAreaScreen extends WorkAreaScreen {
         checkBuildButtonActive();
     }
 
+    private void setStructure(List<ScannedBlock> structure, CompoundTag structureNBT) {
+        this.structurePreview.setStructure(structure, structureNBT);
+        this.requiredItems = buildArea.getRequiredMaterials(structureNBT);
+
+        this.requiredItemsDropDownMenu.setOptions(requiredItems);
+    }
+
     public void resetScan(){
         structure = null;
-        structureNBT = null;
+        structureNBT = new CompoundTag();
         if(this.structurePreview != null) structurePreview.setStructure(null, null);
+        this.requiredItems = new ArrayList<>();
     }
 
 
@@ -311,7 +329,7 @@ public class BuildAreaScreen extends WorkAreaScreen {
         if (level == null) return;
 
         this.structureNBT = StructureManager.scanStructure(level, this.buildArea, this.scanNameEditBox.getValue());
-        this.structure = parseStructureFromNBT(structureNBT);
+        this.structure = StructureManager.parseStructureFromNBT(structureNBT);
         this.structurePreview.setStructure(structure, structureNBT);
     }
 
@@ -320,40 +338,31 @@ public class BuildAreaScreen extends WorkAreaScreen {
         if(structureOptions != null){
             structureOptions.onMouseMove(x,y);
         }
+        if(requiredItemsDropDownMenu != null){
+            requiredItemsDropDownMenu.onMouseMove(x,y);
+        }
         super.mouseMoved(x, y);
     }
 
     @Override
     public boolean mouseClicked(double mouseX, double mouseY, int button) {
+        if (requiredItemsDropDownMenu != null && requiredItemsDropDownMenu.isMouseOver(mouseX, mouseY)) {
+            this.requiredItemsDropDownMenu.onMouseClick(mouseX, mouseY);
+            return true;
+        }
+
         if (structureOptions != null && structureOptions.isMouseOver(mouseX, mouseY)) {
-            this.structure = null;
-            this.structureNBT = null;
-            this.structurePreview.setStructure(null, null);
-            structureOptions.onMouseClick(mouseX, mouseY);
+            this.resetScan();
+            this.structureOptions.onMouseClick(mouseX, mouseY);
             return true;
         }
         return super.mouseClicked(mouseX, mouseY, button);
     }
     @Override
     public boolean mouseScrolled(double x, double y, double d) {
-        if(structureOptions != null) structureOptions.mouseScrolled(x,y,d);
+        if(structureOptions != null  && structureOptions.isMouseOver(x, y)) structureOptions.mouseScrolled(x,y,d);
+        if(requiredItemsDropDownMenu != null && requiredItemsDropDownMenu.isMouseOver(x, y)) requiredItemsDropDownMenu.mouseScrolled(x,y,d);
         return super.mouseScrolled(x, y, d);
-    }
-    public static List<ScannedBlock> parseStructureFromNBT(CompoundTag root) {
-        List<ScannedBlock> result = new ArrayList<>();
-        String dir = root.getString("facing");
-        Direction scanFacing = Direction.byName(dir);
-        ListTag blockList = root.getList("blocks", Tag.TAG_COMPOUND);
-        for (Tag tag : blockList) {
-            CompoundTag blockTag = (CompoundTag) tag;
-            BlockState state = NbtUtils.readBlockState(BuiltInRegistries.BLOCK.asLookup(), blockTag.getCompound("state"));
-            BlockPos relPos = new BlockPos(blockTag.getInt("x"), blockTag.getInt("y"), blockTag.getInt("z"));
-
-            CompoundTag be = blockTag.contains("blockEntity") ? blockTag.getCompound("blockEntity") : null;
-            result.add(new ScannedBlock(state, scanFacing, be, relPos));
-        }
-
-        return result;
     }
 
     @Override
@@ -361,6 +370,9 @@ public class BuildAreaScreen extends WorkAreaScreen {
         super.render(guiGraphics, mouseX, mouseY, partialTicks);
         if (structureOptions != null) {
             structureOptions.renderWidget(guiGraphics, mouseX, mouseY, partialTicks);
+        }
+        if (requiredItemsDropDownMenu != null) {
+            requiredItemsDropDownMenu.renderWidget(guiGraphics, mouseX, mouseY, partialTicks);
         }
     }
 

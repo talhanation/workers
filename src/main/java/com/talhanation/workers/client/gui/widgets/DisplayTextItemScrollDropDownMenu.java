@@ -1,5 +1,6 @@
 package com.talhanation.workers.client.gui.widgets;
 
+
 import com.mojang.blaze3d.systems.RenderSystem;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphics;
@@ -12,8 +13,7 @@ import net.minecraft.world.item.ItemStack;
 import java.util.List;
 import java.util.function.Consumer;
 
-
-public class ItemScrollDropDownMenu extends AbstractWidget {
+public class DisplayTextItemScrollDropDownMenu extends AbstractWidget {
     private int bgFill = FastColor.ARGB32.color(255, 60, 60, 60);
     private int bgFillHovered = FastColor.ARGB32.color(255, 100, 100, 100);
     private int bgFillSelected = FastColor.ARGB32.color(255, 10, 10, 10);
@@ -23,7 +23,7 @@ public class ItemScrollDropDownMenu extends AbstractWidget {
     private int scrollbarHandleColor = FastColor.ARGB32.color(255, 150, 150, 150);
     public List<ItemStack> options;
     private final Consumer<ItemStack> onSelect;
-    private ItemStack selectedOption;
+    private ItemStack displayItem;
     private boolean isOpen;
     private final int optionHeight;
     private int scrollOffset = 0;
@@ -33,9 +33,11 @@ public class ItemScrollDropDownMenu extends AbstractWidget {
     private int scrollbarHandleHeight;
     private boolean canSelect;
     private boolean resetCount;
-    public ItemScrollDropDownMenu(ItemStack selectedOption, int x, int y, int width, int height, List<ItemStack> options, Consumer<ItemStack> onSelect) {
+    private String displayText;
+    public DisplayTextItemScrollDropDownMenu(ItemStack displayItem, String displayText, int x, int y, int width, int height, List<ItemStack> options, Consumer<ItemStack> onSelect) {
         super(x, y, width, height, Component.literal(""));
-        this.selectedOption = selectedOption;
+        this.displayItem = displayItem;
+        this.displayText = displayText;
         this.options = options;
         this.onSelect = onSelect;
         this.optionHeight = height;
@@ -53,14 +55,14 @@ public class ItemScrollDropDownMenu extends AbstractWidget {
                 guiGraphics.fill(this.getX(), this.getY(), this.getX() + this.width, this.getY() + this.height, this.bgFillSelected);
             }
 
-            guiGraphics.drawCenteredString(Minecraft.getInstance().font, selectedOption.getHoverName().getString(), this.getX() + this.width / 2, this.getY() + (this.height - 8) / 2, this.displayColor);
+            guiGraphics.drawCenteredString(Minecraft.getInstance().font, displayText, this.getX() + this.width / 2, this.getY() + (this.height - 8) / 2, this.displayColor);
 
             int iconX = this.getX() + 2;
             int iconY = this.getY() + 2;
 
-            if(resetCount) selectedOption.setCount(1);
-            guiGraphics.renderFakeItem(selectedOption, iconX, iconY);
-            guiGraphics.renderItemDecorations(Minecraft.getInstance().font, selectedOption, iconX, iconY);
+            if(resetCount) displayItem.setCount(1);
+            guiGraphics.renderFakeItem(displayItem, iconX, iconY);
+            guiGraphics.renderItemDecorations(Minecraft.getInstance().font, displayItem, iconX, iconY);
 
             if (this.isOpen) {
                 int dropdownHeight = this.maxVisibleOptions * this.optionHeight;
@@ -246,7 +248,6 @@ public class ItemScrollDropDownMenu extends AbstractWidget {
 
     private void selectOption(ItemStack option) {
         if(!canSelect) return;
-        this.selectedOption = option;
         this.onSelect.accept(option);
         this.isOpen = false;
     }
@@ -271,4 +272,5 @@ public class ItemScrollDropDownMenu extends AbstractWidget {
         this.optionTextColor = optionTextColor;
     }
 }
+
 

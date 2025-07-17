@@ -5,10 +5,7 @@ import net.minecraft.client.Minecraft;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.core.registries.BuiltInRegistries;
-import net.minecraft.nbt.CompoundTag;
-import net.minecraft.nbt.ListTag;
-import net.minecraft.nbt.NbtIo;
-import net.minecraft.nbt.NbtUtils;
+import net.minecraft.nbt.*;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.level.Level;
@@ -140,5 +137,22 @@ public class StructureManager {
             e.printStackTrace();
             return null;
         }
+    }
+
+    public static List<ScannedBlock> parseStructureFromNBT(CompoundTag root) {
+        List<ScannedBlock> result = new ArrayList<>();
+        String dir = root.getString("facing");
+        Direction scanFacing = Direction.byName(dir);
+        ListTag blockList = root.getList("blocks", Tag.TAG_COMPOUND);
+        for (Tag tag : blockList) {
+            CompoundTag blockTag = (CompoundTag) tag;
+            BlockState state = NbtUtils.readBlockState(BuiltInRegistries.BLOCK.asLookup(), blockTag.getCompound("state"));
+            BlockPos relPos = new BlockPos(blockTag.getInt("x"), blockTag.getInt("y"), blockTag.getInt("z"));
+
+            CompoundTag be = blockTag.contains("blockEntity") ? blockTag.getCompound("blockEntity") : null;
+            result.add(new ScannedBlock(state, scanFacing, be, relPos));
+        }
+
+        return result;
     }
 }

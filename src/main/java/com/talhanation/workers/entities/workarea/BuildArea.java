@@ -3,6 +3,8 @@ package com.talhanation.workers.entities.workarea;
 import com.talhanation.workers.Main;
 import com.talhanation.workers.client.gui.BuildAreaScreen;
 import com.talhanation.workers.network.MessageToClientOpenWorkAreaScreen;
+import com.talhanation.workers.world.ScannedBlock;
+import com.talhanation.workers.world.StructureManager;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
@@ -19,21 +21,19 @@ import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResult;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.item.BlockItem;
 import net.minecraft.world.item.Item;
+import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
 import net.minecraft.world.level.Level;
-import net.minecraft.world.level.block.Rotation;
+import net.minecraft.world.level.block.Block;
+import net.minecraft.world.level.block.DoorBlock;
 import net.minecraft.world.level.block.StairBlock;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.block.state.properties.*;
-import net.minecraft.world.level.material.Fluid;
-import net.minecraft.world.level.material.Fluids;
 import net.minecraftforge.network.PacketDistributor;
 
-import java.util.EnumMap;
-import java.util.Map;
-import java.util.Objects;
-import java.util.Stack;
+import java.util.*;
 
 public class BuildArea extends AbstractWorkAreaEntity {
     public static final EntityDataAccessor<CompoundTag> STRUCTURE = SynchedEntityData.defineId(BuildArea.class, EntityDataSerializers.COMPOUND_TAG);
@@ -50,10 +50,12 @@ public class BuildArea extends AbstractWorkAreaEntity {
     @Override
     public void readAdditionalSaveData(CompoundTag tag) {
         super.readAdditionalSaveData(tag);
+        this.setStructureNBT(tag.getCompound("structureNBT"));
     }
     @Override
     public void addAdditionalSaveData(CompoundTag tag) {
         super.addAdditionalSaveData(tag);
+        tag.put("structureNBT", this.getStructureNBT());
     }
 
     @Override
@@ -208,22 +210,78 @@ public class BuildArea extends AbstractWorkAreaEntity {
     }
 
 
-    public void scanBreakArea(){
+    public void scanBreakArea() {
         stackToBreak.clear();
         Level level = this.getCommandSenderWorld();
-
-        Fluid centerPosFluid = level.getFluidState(this.getOnPos()).getType();
-        if(!(centerPosFluid == Fluids.WATER)|| (centerPosFluid == Fluids.FLOWING_WATER)) {
-            this.stackToBreak.push(this.getOnPos());
+        List<ScannedBlock> structure = StructureManager.parseStructureFromNBT(getStructureNBT());
+        Map<BlockPos, BlockState> expectedBlocks = new HashMap<>();
+        for (ScannedBlock scanned : structure) {
+            BlockPos worldPos = getOriginPos().offset(scanned.relativePos());
+            expectedBlocks.put(worldPos, scanned.state());
         }
 
         BlockPos.betweenClosedStream(area).forEach(pos -> {
-            BlockState state = level.getBlockState(pos);
-            /*if (!state.isAir()) {
-                this.stackToBreak.push(pos.immutable());
+            BlockState currentState = level.getBlockState(pos);
 
+            BlockState expectedState = expectedBlocks.get(pos);
+
+            if (expectedState == null) {
+                // Kein Block war dort vorgesehen → komplett fremder Block
+                stackToBreak.push(pos.immutable());
+            } else if (!statesMatch(currentState, expectedState)) {
+                // Block stimmt nicht mit erwartetem überein → z.B. anderer Typ, Orientierung etc.
+                stackToBreak.push(pos.immutable());
             }
-             */
         });
+    }
+
+    private boolean statesMatch(BlockState current, BlockState expected) {
+        if (current.getBlock() != expected.getBlock()) return false;
+
+        for (Property<?> prop : expected.getProperties()) {
+            if (!current.hasProperty(prop)) return false;
+            if (!current.getValue(prop).equals(expected.getValue(prop))) return false;
+        }
+
+        return true;
+    }
+
+    public List<ItemStack> getRequiredMaterials(CompoundTag tag) {
+        Map<Item, Integer> materialMap = new HashMap<>();
+        List<ItemStack> stacks = new ArrayList<>();
+
+        if (tag == null || !tag.contains("blocks", Tag.TAG_LIST)) return stacks;
+
+        ListTag blockList = tag.getList("blocks", Tag.TAG_COMPOUND);
+        for (Tag t : blockList) {
+            CompoundTag blockTag = (CompoundTag) t;
+
+            CompoundTag stateTag = blockTag.getCompound("state");
+            BlockState state = NbtUtils.readBlockState(BuiltInRegistries.BLOCK.asLookup(), stateTag);
+
+            Block block = state.getBlock();
+            Item item = Item.BY_BLOCK.get(block);
+
+            if (state.hasProperty(BlockStateProperties.DOUBLE_BLOCK_HALF)) {
+                DoubleBlockHalf half = state.getValue(BlockStateProperties.DOUBLE_BLOCK_HALF);
+                if (half != DoubleBlockHalf.LOWER) {
+                    continue;
+                }
+            }
+
+            if (item instanceof BlockItem) {
+                materialMap.merge(item, 1, Integer::sum);
+            }
+        }
+
+        for (Map.Entry<Item, Integer> entry : materialMap.entrySet()) {
+            ItemStack stack = new ItemStack(entry.getKey());
+            if (stack.isEmpty()) continue;
+
+            stack.setCount(entry.getValue());
+            stacks.add(stack);
+        }
+
+        return stacks;
     }
 }
