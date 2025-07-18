@@ -4,6 +4,7 @@ import com.talhanation.workers.entities.FarmerEntity;
 import com.talhanation.workers.entities.workarea.CropArea;
 import com.talhanation.workers.world.NeededItem;
 import net.minecraft.core.BlockPos;
+import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.sounds.SoundSource;
@@ -35,7 +36,15 @@ public class FarmerWorkGoal extends Goal {
 
     @Override
     public boolean canUse() {
-        return !farmer.needsToSleep() && farmer.getFollowState() != 1 && !farmer.needsToGetToChest();
+        return !farmer.needsToSleep() && farmer.getFollowState() != 1 && !farmer.needsToGetToChest() && this.isCropAreaNotRemoved();
+    }
+
+    private boolean isCropAreaNotRemoved() {
+        if(farmer.currentCropArea == null || !farmer.currentCropArea.isRemoved()) return true;
+        else {
+            farmer.currentCropArea = null;
+        }
+        return false;
     }
 
     @Override
@@ -50,11 +59,10 @@ public class FarmerWorkGoal extends Goal {
         super.tick();
         if(this.farmer.getCommandSenderWorld().isClientSide()) return;
         if(state == null) return;
-        if(blockPos != null)this.farmer.getLookControl().setLookAt(blockPos.getCenter());
+        if(blockPos != null) this.farmer.getLookControl().setLookAt(blockPos.getCenter());
         if(farmer.tickCount % 5 != 0) return;
 
         if(blockPos != null && moveToPosition(blockPos, 20)) return;
-
 
         switch(state){
             case SELECT_WORK_AREA -> {
@@ -101,9 +109,8 @@ public class FarmerWorkGoal extends Goal {
 
                 setState(State.PREPARE_WATER_SPOT);
             }
-
             case PREPARE_WATER_SPOT -> {
-                BlockState centerPosState = farmer.getCommandSenderWorld().getBlockState(this.farmer.currentCropArea.getOnPos());
+                BlockState centerPosState = farmer.getCommandSenderWorld().getBlockState(this.farmer.currentCropArea.getWaterPosCenter());
                 if(centerPosState.isAir()){
 
                     ItemStack itemStack = farmer.getMatchingItem(item -> farmer.isBucketWithWater(item));
@@ -114,7 +121,7 @@ public class FarmerWorkGoal extends Goal {
                     else if(itemStack.getItem() instanceof BucketItem bucketItem){
                         farmer.switchMainHandItem(item -> farmer.isBucketWithWater(item));
 
-                        bucketItem.emptyContents(null,  farmer.getCommandSenderWorld(), this.farmer.currentCropArea.getOnPos(), null);
+                        bucketItem.emptyContents(null,  farmer.getCommandSenderWorld(), this.farmer.currentCropArea.getWaterPosCenter(), null);
                     }
                 }
 
@@ -324,17 +331,17 @@ public class FarmerWorkGoal extends Goal {
         return false;
     }
 
-    public static List<CropArea> getAvailableWorkAreasByPriority(ServerLevel level, FarmerEntity lumberjack, @Nullable CropArea currentArea) {
-        List<CropArea> list = level.getEntitiesOfClass(CropArea.class, lumberjack.getBoundingBox().inflate(64));
+    public static List<CropArea> getAvailableWorkAreasByPriority(ServerLevel level, FarmerEntity farmer, @Nullable CropArea currentArea) {
+        List<CropArea> list = level.getEntitiesOfClass(CropArea.class, farmer.getBoundingBox().inflate(64));
 
         Map<CropArea, Integer> priorityMap = new HashMap<>();
 
         for (CropArea area : list) {
-            if (area == null || area == currentArea || !area.canWorkHere(lumberjack)) continue;
+            if (area == null || area == currentArea || !area.canWorkHere(farmer)) continue;
 
             int priority = 0;
 
-            boolean perfectCandidate = area.isWorkerPerfectCandidate(lumberjack);
+            boolean perfectCandidate = area.isWorkerPerfectCandidate(farmer);
 
             if (perfectCandidate) {
                 priority += 10;

@@ -84,12 +84,17 @@ public class CropArea extends AbstractWorkAreaEntity {
     }
 
     public void scanBreakArea(){
+        if(area == null) area = this.getArea();
+
         stackToBreak.clear();
         Level level = this.getCommandSenderWorld();
+        BlockPos centerPos = this.getWaterPosCenter();
 
-        Fluid centerPosFluid = level.getFluidState(this.getOnPos()).getType();
+        if(centerPos == null) return;
+
+        Fluid centerPosFluid = level.getFluidState(centerPos).getType();
         if(!(centerPosFluid == Fluids.WATER)|| (centerPosFluid == Fluids.FLOWING_WATER)) {
-            this.stackToBreak.push(this.getOnPos());
+            this.stackToBreak.push(centerPos);
         }
 
         BlockPos.betweenClosedStream(area).forEach(pos -> {
@@ -100,12 +105,14 @@ public class CropArea extends AbstractWorkAreaEntity {
 
             if(isFarmland(stateBelow) || isTillAble(stateBelow)){
                 if(isCropDone(state) || (isBush(state) && !isCrop(state))){
-                    this.stackToBreak.push(pos);
+                    this.stackToBreak.push(pos.immutable());
                 }
             }
         });
     }
     public void scanPlowArea(){
+        if(area == null) area = this.getArea();
+
         stackToPlow.clear();
         Level level = this.getCommandSenderWorld();
 
@@ -115,12 +122,14 @@ public class CropArea extends AbstractWorkAreaEntity {
             BlockPos above = pos.above();
             BlockState stateAbove = level.getBlockState(above);
 
-            if(isAir(stateAbove) && isTillAble(state)){
-                this.stackToPlow.push(pos);
+            if(isTillAble(state) && isAir(stateAbove)){
+                this.stackToPlow.push(pos.immutable());
             }
         });
     }
     public void scanPlantArea(){
+        if(area == null) area = this.getArea();
+
         stackToPlant.clear();
         Level level = this.getCommandSenderWorld();
 
@@ -131,9 +140,18 @@ public class CropArea extends AbstractWorkAreaEntity {
             BlockState stateBelow = level.getBlockState(below);
 
             if(isAir(state) && isFarmland(stateBelow)){
-                this.stackToPlant.push(pos);
+                this.stackToPlant.push(pos.immutable());
             }
         });
+    }
+
+    public BlockPos getWaterPosCenter() {
+        if (area == null) this.area = getArea();
+
+        int centerX = (int) area.getCenter().x();
+        int centerZ = (int) area.getCenter().z();
+
+        return new BlockPos(centerX, this.getOnPos().getY(), centerZ);
     }
 
     public boolean isWorkerPerfectCandidate(FarmerEntity farmer) {
@@ -177,5 +195,11 @@ public class CropArea extends AbstractWorkAreaEntity {
 
     public ItemStack getSeedStack(){
         return entityData.get(SEED_STACK);
+    }
+
+    public enum Type{
+        CROP,
+        BUSH,
+        BLOCK
     }
 }
