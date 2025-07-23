@@ -87,22 +87,28 @@ public class WorkerAreaRenderer extends EntityRenderer<AbstractWorkAreaEntity> {
         if(!abstractWorkAreaEntity.showBox && (looking == null || !looking.equals(abstractWorkAreaEntity))) return;
 
         if(abstractWorkAreaEntity instanceof BuildArea buildArea){
-            //renderStructurePreview(poseStack, buildArea);
+            renderStructurePreview(poseStack, buildArea);
         }
 
         double x = Mth.lerp(partialTicks, abstractWorkAreaEntity.xOld, abstractWorkAreaEntity.getX());
         double y = Mth.lerp(partialTicks, abstractWorkAreaEntity.yOld, abstractWorkAreaEntity.getY());
         double z = Mth.lerp(partialTicks, abstractWorkAreaEntity.zOld, abstractWorkAreaEntity.getZ());
 
-        AABB worldBox = abstractWorkAreaEntity.getArea();
+        AABB area  = abstractWorkAreaEntity.getArea();
+        AABB worldBox = new AABB(area.minX, area.minY, area.minZ,
+                area.maxX + 1, area.maxY, area.maxZ + 1);
         AABB relativeBox = worldBox.move(-x, -y, -z);
 
         for (AbstractWorkAreaEntity neighbor : AbstractWorkAreaEntity.getNearbyAreas(abstractWorkAreaEntity.level(), abstractWorkAreaEntity.getOnPos(), 20)) {
             if (neighbor.getTeamStringID().equals(abstractWorkAreaEntity.getTeamStringID()) && neighbor.getPlayerUUID().equals(abstractWorkAreaEntity.getPlayerUUID())) {
-                AABB neighborBox = neighbor.getArea().move(-x, -y, -z);
+                AABB area1  = neighbor.getArea();
+                AABB worldBox1 = new AABB(area1.minX, area1.minY, area1.minZ,
+                        area1.maxX + 1, area1.maxY, area1.maxZ + 1);
+                AABB relativeBox1 = worldBox1.move(-x, -y, -z);
+
 
                 poseStack.pushPose();
-                LevelRenderer.renderLineBox(poseStack, bufferSource.getBuffer(RenderType.lines()), neighborBox, 0.5F, 1.0F, 0.5F, 0.7F);
+                LevelRenderer.renderLineBox(poseStack, bufferSource.getBuffer(RenderType.lines()), relativeBox1, 0.5F, 1.0F, 0.5F, 0.7F);
                 poseStack.popPose();
             }
         }
@@ -117,34 +123,23 @@ public class WorkerAreaRenderer extends EntityRenderer<AbstractWorkAreaEntity> {
         if (buildArea.getStructureNBT() == null) return;
         List<ScannedBlock> structure = StructureManager.parseStructureFromNBT(buildArea.getStructureNBT());
         if (structure.isEmpty()) return;
-
-        poseStack.pushPose();
-
         Minecraft mc = Minecraft.getInstance();
         BlockRenderDispatcher dispatcher = mc.getBlockRenderer();
         MultiBufferSource.BufferSource bufferSource = mc.renderBuffers().bufferSource();
 
-        String dir = buildArea.getStructureNBT().getString("facing");
-        Direction areaFacing = Direction.byName(dir);;
+        poseStack.pushPose();
 
-        int rotationSteps = switch (areaFacing) {
-            case NORTH -> 1;
-            case EAST -> 2;
-            case SOUTH -> 3;
-            case WEST -> 1;
-            default -> 0;
-        };
-
-        poseStack.mulPose(Axis.YP.rotationDegrees(rotationSteps * 90f));
-        poseStack.translate(-buildArea.getWidthSize() + 0.5, -1, -0.5);
+        poseStack.translate(-buildArea.getWidthSize() + 0.5, -1, -0.5);  // nur zentrieren
 
         for (ScannedBlock block : structure) {
             BlockState state = block.state();
             FluidState fluidState = state.getFluidState();
             BlockPos relPos = block.relativePos();
 
+            BlockPos rotatedPos = rotateRelativePos(relPos, buildArea.getFacing());
+
             poseStack.pushPose();
-            poseStack.translate(relPos.getX(), relPos.getY(), relPos.getZ());
+            poseStack.translate(rotatedPos.getX(), rotatedPos.getY(), rotatedPos.getZ());
 
             RenderType renderType = null;
             if (!fluidState.isEmpty()) {
@@ -159,7 +154,7 @@ public class WorkerAreaRenderer extends EntityRenderer<AbstractWorkAreaEntity> {
                 }
             }
 
-            BlockState rotatedState = BuildArea.rotateBlockState(state, 4 - areaFacing.get2DDataValue());
+            BlockState rotatedState = BuildArea.rotateBlockState(state, 4 - buildArea.getFacing().get2DDataValue());
 
             dispatcher.renderSingleBlock(
                     rotatedState,
@@ -177,5 +172,14 @@ public class WorkerAreaRenderer extends EntityRenderer<AbstractWorkAreaEntity> {
         poseStack.popPose();
     }
 
+    private BlockPos rotateRelativePos(BlockPos pos, Direction facing) {
+        return switch (facing) {
+            case SOUTH -> pos;
+            case WEST -> new BlockPos(pos.getZ(), pos.getY(), -pos.getX());
+            case NORTH -> new BlockPos(-pos.getX(), pos.getY(), -pos.getZ());
+            case EAST -> new BlockPos(-pos.getZ(), pos.getY(), pos.getX());
+            default -> pos;
+        };
+    }
 
 }

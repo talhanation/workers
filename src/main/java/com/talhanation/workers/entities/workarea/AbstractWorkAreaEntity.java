@@ -4,7 +4,6 @@ import com.talhanation.workers.entities.AbstractWorkerEntity;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
-import net.minecraft.core.Vec3i;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.syncher.EntityDataAccessor;
 import net.minecraft.network.syncher.EntityDataSerializers;
@@ -16,8 +15,6 @@ import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.phys.AABB;
-import net.minecraft.world.phys.Vec3;
-import org.checkerframework.checker.units.qual.A;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -151,12 +148,15 @@ public abstract class AbstractWorkAreaEntity extends Entity {
     }
 
     public void setBeingWorkedOn(boolean b) {
-        if(b) this.timeSinceLastVisit = 0;
         this.isBeingWorkedOn = b;
     }
 
     public int getTimeSinceLastVisit(){
         return this.timeSinceLastVisit;
+    }
+
+    public void setTimeSinceLastVisit(int timeSinceLastVisit) {
+        this.timeSinceLastVisit = timeSinceLastVisit;
     }
 
     public AABB getArea() {
@@ -169,17 +169,15 @@ public abstract class AbstractWorkAreaEntity extends Entity {
         int depth = getDepthSize() - 1;
         int height = getHeightSize();
 
-        AABB aabb = new AABB(this.getOnPos());
-        AABB aabb1 = null;
-        switch (facing){
-            default -> {//SOUTH
-                aabb1 = aabb.expandTowards(-width, height, depth);
-            }
-            case NORTH -> aabb1 = aabb.expandTowards(width, height, -depth);
-            case EAST -> aabb1 = aabb.expandTowards(depth, height, width);
-            case WEST -> aabb1 = aabb.expandTowards(-depth, height, -width);
+        BlockPos start = this.getOnPos();
+        BlockPos end;
+        switch (facing) {
+            case NORTH -> end = start.offset(width, height, -depth);
+            case SOUTH -> end = start.offset(-width, height, depth);
+            case WEST  -> end = start.offset(-width, height, -depth);
+            default  -> end = start.offset(width, height, depth);//EAST
         }
-        return aabb1;
+        return new AABB(start, end);
     }
     public static List<AbstractWorkAreaEntity> getNearbyAreas(Level level, BlockPos center, int radius) {
         List<AbstractWorkAreaEntity> nearby = new ArrayList<>();

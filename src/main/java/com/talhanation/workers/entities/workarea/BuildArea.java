@@ -27,7 +27,6 @@ import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Block;
-import net.minecraft.world.level.block.DoorBlock;
 import net.minecraft.world.level.block.StairBlock;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.block.state.properties.*;
@@ -220,7 +219,7 @@ public class BuildArea extends AbstractWorkAreaEntity {
             expectedBlocks.put(worldPos, scanned.state());
         }
 
-        BlockPos.betweenClosedStream(area).forEach(pos -> {
+        BlockPos.betweenClosedStream(getArea()).forEach(pos -> {
             BlockState currentState = level.getBlockState(pos);
 
             BlockState expectedState = expectedBlocks.get(pos);

@@ -11,7 +11,9 @@ import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.BlockItem;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.level.block.BushBlock;
 import net.minecraft.world.level.block.CropBlock;
+import net.minecraft.world.level.block.StemBlock;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -59,8 +61,9 @@ public class CropAreaScreen extends WorkAreaScreen {
         List<Item> items = new ArrayList<>();
         List<ItemStack> stacks = new ArrayList<>();
         for (ItemStack itemStack : player.getInventory().items) {
-            if (itemStack.getItem() instanceof BlockItem blockItem && blockItem.getBlock() instanceof CropBlock) {
-                if(!items.contains(itemStack.getItem())){
+            if (itemStack.getItem() instanceof BlockItem blockItem && !items.contains(itemStack.getItem())) {
+
+                if (blockItem.getBlock() instanceof CropBlock || blockItem.getBlock() instanceof StemBlock || blockItem.getBlock() instanceof BushBlock){
                     stacks.add(itemStack);
                     items.add(itemStack.getItem());
                 }

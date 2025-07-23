@@ -80,6 +80,7 @@ public class LumberjackWorkGoal extends Goal {
                 if(lumberjack.currentLumberArea == null) return;
 
                 lumberjack.currentLumberArea.setBeingWorkedOn(true);
+                this.lumberjack.currentLumberArea.setTimeSinceLastVisit(0);
                 workDone = false;
                 setState(State.MOVE_TO_WORK_AREA);
             }

@@ -56,10 +56,9 @@ public class MessageAddWorkArea implements Message<MessageAddWorkArea> {
             }
             default -> {
                 workArea = new CropArea(ModEntityTypes.CROPAREA.get(), player.level());
-                workArea.setWidthSize(8);
+                workArea.setWidthSize(9);
                 workArea.setHeightSize(2);
-                workArea.setDepthSize(8);
-
+                workArea.setDepthSize(9);
             }
         }
         workArea.setFacing(player.getDirection());

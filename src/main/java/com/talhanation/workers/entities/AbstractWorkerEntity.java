@@ -1,5 +1,6 @@
 package com.talhanation.workers.entities;
 
+import com.google.common.collect.ImmutableSet;
 import com.talhanation.recruits.config.RecruitsClientConfig;
 import com.talhanation.recruits.entities.AbstractChunkLoaderEntity;
 import com.talhanation.workers.entities.ai.DepositItemsInChestsGoal;
@@ -29,6 +30,8 @@ import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.LeavesBlock;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.level.material.Fluid;
+import net.minecraft.world.level.material.Fluids;
 import net.minecraft.world.phys.Vec3;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
@@ -40,6 +43,11 @@ import java.util.function.Predicate;
 
 
 public abstract class AbstractWorkerEntity extends AbstractChunkLoaderEntity {
+
+    public static final Set<Block> UNBREAKABLES = ImmutableSet.of(
+            Blocks.BEDROCK,
+            Blocks.BARRIER);
+
     public AbstractWorkerEntity(EntityType<? extends AbstractWorkerEntity> entityType, Level world) {
         super(entityType, world);
     }
@@ -428,6 +436,16 @@ public abstract class AbstractWorkerEntity extends AbstractChunkLoaderEntity {
     public void die(DamageSource dmg) {
         super.die(dmg);
         if(this.getCurrentWorkArea() != null) getCurrentWorkArea().setBeingWorkedOn(false);
+    }
+
+    public static boolean isPosBroken(BlockPos pos, Level level, boolean allowWater) {
+        BlockState state = level.getBlockState(pos);
+        if(state.isAir() || UNBREAKABLES.contains(state.getBlock())) return true;
+        if(allowWater){
+            Fluid fluidState = level.getFluidState(pos).getType();
+            return fluidState == Fluids.WATER || fluidState == Fluids.FLOWING_WATER;
+        }
+        return false;
     }
 
 }

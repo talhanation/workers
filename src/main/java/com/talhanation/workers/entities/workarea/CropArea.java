@@ -6,6 +6,7 @@ import com.talhanation.workers.entities.FarmerEntity;
 import com.talhanation.workers.network.MessageToClientOpenWorkAreaScreen;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.core.BlockPos;
+import net.minecraft.core.Direction;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.syncher.EntityDataAccessor;
 import net.minecraft.network.syncher.EntityDataSerializers;
@@ -17,9 +18,7 @@ import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.*;
 import net.minecraft.world.level.Level;
-import net.minecraft.world.level.block.BushBlock;
-import net.minecraft.world.level.block.CropBlock;
-import net.minecraft.world.level.block.FarmBlock;
+import net.minecraft.world.level.block.*;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.material.Fluid;
 import net.minecraft.world.level.material.Fluids;
@@ -34,11 +33,11 @@ public class CropArea extends AbstractWorkAreaEntity {
     public Stack<BlockPos> stackToPlant = new Stack<>();
     public Stack<BlockPos> stackToBreak = new Stack<>();
     public Stack<BlockPos> stackToPlow = new Stack<>();
+    public Type fieldType;
 
     public CropArea(EntityType<?> type, Level level) {
         super(type, level);
     }
-
     protected void defineSynchedData() {
         super.defineSynchedData();
         this.entityData.define(SEED_STACK, ItemStack.EMPTY);
@@ -51,7 +50,6 @@ public class CropArea extends AbstractWorkAreaEntity {
             ItemStack stack = ItemStack.of(tag.getCompound("seedItem"));
             this.setSeedStack(stack);
         }
-
     }
 
     @Override
@@ -93,7 +91,7 @@ public class CropArea extends AbstractWorkAreaEntity {
         if(centerPos == null) return;
 
         Fluid centerPosFluid = level.getFluidState(centerPos).getType();
-        if(!(centerPosFluid == Fluids.WATER)|| (centerPosFluid == Fluids.FLOWING_WATER)) {
+        if(!(centerPosFluid == Fluids.WATER || centerPosFluid == Fluids.FLOWING_WATER)) {
             this.stackToBreak.push(centerPos);
         }
 
@@ -128,12 +126,10 @@ public class CropArea extends AbstractWorkAreaEntity {
         });
     }
     public void scanPlantArea(){
-        if(area == null) area = this.getArea();
-
         stackToPlant.clear();
         Level level = this.getCommandSenderWorld();
 
-        BlockPos.betweenClosedStream(area).forEach(pos -> {
+        BlockPos.betweenClosedStream(createArea()).forEach(pos -> {
             BlockState state = level.getBlockState(pos);
 
             BlockPos below = pos.below();
@@ -146,12 +142,16 @@ public class CropArea extends AbstractWorkAreaEntity {
     }
 
     public BlockPos getWaterPosCenter() {
-        if (area == null) this.area = getArea();
+        BlockPos origin = this.getOnPos();
+        Direction facing = this.getFacing();
 
-        int centerX = (int) area.getCenter().x();
-        int centerZ = (int) area.getCenter().z();
-
-        return new BlockPos(centerX, this.getOnPos().getY(), centerZ);
+        return switch (facing) {
+            case NORTH -> origin.offset(4, 0, -4);
+            case SOUTH -> origin.offset(-4, 0, 4);
+            case WEST  -> origin.offset(-4, 0, -4);
+            case EAST  -> origin.offset(4, 0, 4);
+            default    -> origin;
+        };
     }
 
     public boolean isWorkerPerfectCandidate(FarmerEntity farmer) {
@@ -197,9 +197,24 @@ public class CropArea extends AbstractWorkAreaEntity {
         return entityData.get(SEED_STACK);
     }
 
+    public void updateType() {
+        if(this.getSeedStack().getItem() instanceof BlockItem blockItem){
+            if(blockItem.getBlock() instanceof StemBlock){
+                this.fieldType = Type.STEM;
+                return;
+            }
+            else if(blockItem.getBlock() instanceof SweetBerryBushBlock){
+                this.fieldType = Type.BUSH;
+                return;
+            }
+        }
+
+        this.fieldType = Type.CROP;
+    }
+
     public enum Type{
         CROP,
         BUSH,
-        BLOCK
+        STEM
     }
 }

@@ -1,5 +1,6 @@
 package com.talhanation.workers.entities.ai;
 
+import com.talhanation.workers.entities.AbstractWorkerEntity;
 import com.talhanation.workers.entities.FarmerEntity;
 import com.talhanation.workers.entities.workarea.CropArea;
 import com.talhanation.workers.world.NeededItem;
@@ -31,7 +32,7 @@ public class FarmerWorkGoal extends Goal {
     public Stack<BlockPos> stackToPlow;
     public FarmerWorkGoal(FarmerEntity farmer) {
         this.farmer = farmer;
-        setFlags(EnumSet.of(Flag.LOOK));
+        setFlags(EnumSet.of(Flag.LOOK, Flag.MOVE));
     }
 
     @Override
@@ -60,10 +61,11 @@ public class FarmerWorkGoal extends Goal {
         if(this.farmer.getCommandSenderWorld().isClientSide()) return;
         if(state == null) return;
         if(blockPos != null) this.farmer.getLookControl().setLookAt(blockPos.getCenter());
-        if(farmer.tickCount % 5 != 0) return;
+        //if(farmer.tickCount % 5 != 0) return;
+
+        if(!isCropAreaNotRemoved()) return;
 
         if(blockPos != null && moveToPosition(blockPos, 20)) return;
-
         switch(state){
             case SELECT_WORK_AREA -> {
                 if(this.farmer.currentCropArea != null) setState(State.MOVE_TO_WORK_AREA);
@@ -81,6 +83,7 @@ public class FarmerWorkGoal extends Goal {
 
 
                 this.farmer.currentCropArea.setBeingWorkedOn(true);
+                this.farmer.currentCropArea.setTimeSinceLastVisit(0);
                 workDone = false;
                 setState(State.MOVE_TO_WORK_AREA);
             }
@@ -310,8 +313,7 @@ public class FarmerWorkGoal extends Goal {
                 return blockPos != null;
             }
 
-            BlockState state = farmer.getCommandSenderWorld().getBlockState(blockPos);
-            if(state.isAir()){
+            if(AbstractWorkerEntity.isPosBroken(blockPos, this.farmer.getCommandSenderWorld(), true)){
                 if(!positions.isEmpty()){
                     blockPos = positions.pop();
                 }
@@ -353,7 +355,7 @@ public class FarmerWorkGoal extends Goal {
                 priority += 10;
             }
 
-            priority += area.timeSinceLastVisit * 10;
+            priority += area.getTimeSinceLastVisit() * 10;
 
             priorityMap.put(area, priority);
         }
