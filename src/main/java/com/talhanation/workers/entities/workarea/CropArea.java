@@ -103,7 +103,7 @@ public class CropArea extends AbstractWorkAreaEntity {
             BlockPos below = pos.below();
             BlockState stateBelow = level.getBlockState(below);
             if(fieldType == FieldType.STEM){
-                if (!isStem(state) && (isBush(state) || state.getBlock() instanceof MelonBlock || state.getBlock() instanceof PumpkinBlock)) {
+                if (state.getBlock() instanceof MelonBlock || state.getBlock() instanceof PumpkinBlock  || (isBush(state) && !isStem(state))) {
                     stackToBreak.push(pos.immutable());
                 }
             }
