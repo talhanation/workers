@@ -115,10 +115,11 @@ public class BuildAreaScreen extends WorkAreaScreen {
                 }
         ));
         modeLoadButton.active = this.mode == Mode.LOAD;
-
+        int sizeButtonX = 60;
+        int sizeButtonY = 130;
         switch (mode){
             case SCAN -> {
-                xSizePlusButton = addRenderableWidget(new ExtendedButton(x + previewWidth/2 + 80, y - previewHeight / 2 + 130, 20, 20, Component.literal("+"),
+                xSizePlusButton = addRenderableWidget(new ExtendedButton(x + previewWidth/2 + sizeButtonX, y - previewHeight / 2 + sizeButtonY, 20, 20, Component.literal("+"),
                         btn -> {
                             if(hasShiftDown()) areaXSize += 5;
                             else areaXSize++;
@@ -132,7 +133,7 @@ public class BuildAreaScreen extends WorkAreaScreen {
                         }
                 ));
 
-                xSizeMinusButton = addRenderableWidget(new ExtendedButton(x + previewWidth/2 + 80 + 20, y - previewHeight / 2 + 130, 20, 20, Component.literal("-"),
+                xSizeMinusButton = addRenderableWidget(new ExtendedButton(x + previewWidth/2 + sizeButtonX + 20, y - previewHeight / 2 + sizeButtonY, 20, 20, Component.literal("-"),
                         btn -> {
                             if(hasShiftDown()) areaXSize -= 5;
                             else areaXSize--;
@@ -146,7 +147,7 @@ public class BuildAreaScreen extends WorkAreaScreen {
                         }
                 ));
 
-                ySizePlusButton = addRenderableWidget(new ExtendedButton(x + previewWidth/2 + 80, y - previewHeight / 2 + 130 + 20, 20, 20, Component.literal("+"),
+                ySizePlusButton = addRenderableWidget(new ExtendedButton(x + previewWidth/2 + sizeButtonX, y - previewHeight / 2 + sizeButtonY + 20, 20, 20, Component.literal("+"),
                         btn -> {
                             if(hasShiftDown()) areaYSize += 5;
                             else areaYSize++;
@@ -160,7 +161,7 @@ public class BuildAreaScreen extends WorkAreaScreen {
                         }
                 ));
 
-                ySizeMinusButton = addRenderableWidget(new ExtendedButton(x + previewWidth/2 + 80 + 20, y - previewHeight / 2 + 130 + 20, 20, 20, Component.literal("-"),
+                ySizeMinusButton = addRenderableWidget(new ExtendedButton(x + previewWidth/2 + sizeButtonX + 20, y - previewHeight / 2 + sizeButtonY + 20, 20, 20, Component.literal("-"),
                         btn -> {
                             if(hasShiftDown()) areaYSize -= 5;
                             else areaYSize--;
@@ -174,7 +175,7 @@ public class BuildAreaScreen extends WorkAreaScreen {
                         }
                 ));
 
-                zSizePlusButton = addRenderableWidget(new ExtendedButton(x + previewWidth/2 + 80, y - previewHeight / 2 + 130 + 40, 20, 20, Component.literal("+"),
+                zSizePlusButton = addRenderableWidget(new ExtendedButton(x + previewWidth/2 + sizeButtonX, y - previewHeight / 2 + sizeButtonY + 40, 20, 20, Component.literal("+"),
                         btn -> {
                             if(hasShiftDown()) areaZSize += 5;
                             else areaZSize++;
@@ -187,7 +188,7 @@ public class BuildAreaScreen extends WorkAreaScreen {
                         }
                 ));
 
-                zSizeMinusButton = addRenderableWidget(new ExtendedButton(x + previewWidth/2 + 80 + 20, y - previewHeight / 2 + 130 + 40, 20, 20, Component.literal("-"),
+                zSizeMinusButton = addRenderableWidget(new ExtendedButton(x + previewWidth/2 + sizeButtonX + 20, y - previewHeight / 2 + sizeButtonY + 40, 20, 20, Component.literal("-"),
                         btn -> {
                             if(hasShiftDown()) areaZSize -= 5;
                             else areaZSize--;
@@ -220,7 +221,7 @@ public class BuildAreaScreen extends WorkAreaScreen {
                         }
                 ));
 
-                saveButton = addRenderableWidget(new ExtendedButton(x + previewWidth/2, y + previewHeight + previewHeight/2 + 11, buttonWidth, buttonHeight, Component.literal("Save"),
+                saveButton = addRenderableWidget(new ExtendedButton(x + previewWidth/2 + 1, y + previewHeight + previewHeight/2 + 11, buttonWidth, buttonHeight, Component.literal("Save"),
                         btn -> StructureManager.saveStructureToFile(this.scanNameEditBox.getValue(), structure, this.buildArea.getWidthSize(), this.buildArea.getHeightSize(), this.buildArea.getDepthSize(), this.buildArea.getFacing())
                 ));
 

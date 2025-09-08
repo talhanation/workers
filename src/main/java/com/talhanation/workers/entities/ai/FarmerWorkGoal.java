@@ -64,6 +64,11 @@ public class FarmerWorkGoal extends Goal {
 
         if(!isCropAreaNotRemoved()) return;
 
+        if(state != State.SELECT_WORK_AREA && this.farmer.currentCropArea == null){
+            setState(State.SELECT_WORK_AREA);
+            return;
+        }
+
         if(blockPos != null && moveToPosition(blockPos, 20)) return;
         switch(state){
             case SELECT_WORK_AREA -> {
@@ -241,7 +246,7 @@ public class FarmerWorkGoal extends Goal {
             }
 
             BlockState state = farmer.getCommandSenderWorld().getBlockState(blockPos);
-            if(state.getBlock() instanceof CropBlock){
+            if(state.getBlock() instanceof CropBlock || state.getBlock() instanceof StemBlock){
                 if(!positions.isEmpty()){
                     blockPos = positions.pop();
                 }
@@ -378,6 +383,7 @@ public class FarmerWorkGoal extends Goal {
                 return false;
             }
             else{
+                farmer.getNavigation().stop();
                 farmer.getNavigation().moveTo(pos.getX(), pos.getY(), pos.getZ(), 0.8F);
                 farmer.setFollowState(6); //Working
                 farmer.getLookControl().setLookAt(pos.getCenter());
