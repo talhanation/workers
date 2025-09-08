@@ -13,6 +13,7 @@ import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.block.BushBlock;
 import net.minecraft.world.level.block.CropBlock;
+import net.minecraft.world.level.block.SaplingBlock;
 import net.minecraft.world.level.block.StemBlock;
 
 import java.util.ArrayList;
@@ -63,12 +64,15 @@ public class CropAreaScreen extends WorkAreaScreen {
         for (ItemStack itemStack : player.getInventory().items) {
             if (itemStack.getItem() instanceof BlockItem blockItem && !items.contains(itemStack.getItem())) {
 
+                if(blockItem.getBlock() instanceof SaplingBlock ) continue;
+
                 if (blockItem.getBlock() instanceof CropBlock || blockItem.getBlock() instanceof StemBlock || blockItem.getBlock() instanceof BushBlock){
                     stacks.add(itemStack);
                     items.add(itemStack.getItem());
                 }
             }
         }
+
         return stacks;
     }
 

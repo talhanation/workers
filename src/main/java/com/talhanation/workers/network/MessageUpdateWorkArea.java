@@ -63,7 +63,7 @@ public class MessageUpdateWorkArea implements Message<MessageUpdateWorkArea> {
 
         workArea.moveTo(this.x, this.y, this.z);
 
-        workArea.setTimeSinceLastVisit(workArea.getTimeSinceLastVisit() + DONE_TIME);
+        workArea.setTime(workArea.getTime() + DONE_TIME);
     }
 
     public MessageUpdateWorkArea fromBytes(FriendlyByteBuf buf) {

@@ -5,7 +5,6 @@ import com.talhanation.workers.entities.FarmerEntity;
 import com.talhanation.workers.entities.workarea.CropArea;
 import com.talhanation.workers.world.NeededItem;
 import net.minecraft.core.BlockPos;
-import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.sounds.SoundSource;
@@ -61,7 +60,7 @@ public class FarmerWorkGoal extends Goal {
         if(this.farmer.getCommandSenderWorld().isClientSide()) return;
         if(state == null) return;
         if(blockPos != null) this.farmer.getLookControl().setLookAt(blockPos.getCenter());
-        //if(farmer.tickCount % 5 != 0) return;
+        if(farmer.tickCount % 5 != 0) return;
 
         if(!isCropAreaNotRemoved()) return;
 
@@ -70,7 +69,7 @@ public class FarmerWorkGoal extends Goal {
             case SELECT_WORK_AREA -> {
                 if(this.farmer.currentCropArea != null) setState(State.MOVE_TO_WORK_AREA);
 
-                if(++cooldown < farmer.getRandom().nextInt(100)) return;
+                if(++cooldown < farmer.getRandom().nextInt(300)) return;
                 this.cooldown = 0;
 
                 List<CropArea> areas = getAvailableWorkAreasByPriority((ServerLevel) farmer.getCommandSenderWorld(), farmer, this.farmer.currentCropArea);
@@ -83,7 +82,7 @@ public class FarmerWorkGoal extends Goal {
 
 
                 this.farmer.currentCropArea.setBeingWorkedOn(true);
-                this.farmer.currentCropArea.setTimeSinceLastVisit(0);
+                this.farmer.currentCropArea.setTime(0);
                 workDone = false;
                 setState(State.MOVE_TO_WORK_AREA);
             }
@@ -195,7 +194,8 @@ public class FarmerWorkGoal extends Goal {
                     this.farmer.currentCropArea.setBeingWorkedOn(false);
                     blockPos = null;
                     this.farmer.currentCropArea = null;
-                    this.start();
+
+                    setState(State.SELECT_WORK_AREA);
                 }
             }
 
@@ -355,7 +355,7 @@ public class FarmerWorkGoal extends Goal {
                 priority += 10;
             }
 
-            priority += area.getTimeSinceLastVisit() * 10;
+            priority += area.getTime() * 10;
 
             priorityMap.put(area, priority);
         }

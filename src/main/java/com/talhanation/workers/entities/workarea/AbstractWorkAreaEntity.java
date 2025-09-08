@@ -55,7 +55,7 @@ public abstract class AbstractWorkAreaEntity extends Entity {
     @Override
     public void readAdditionalSaveData(CompoundTag tag) {
         this.isDone = tag.getBoolean("isDone");
-        this.timeSinceLastVisit = tag.getInt("timeSinceLastVisit");
+        this.time = tag.getInt("time");
         this.isBeingWorkedOn = tag.getBoolean("isBeingWorkedOn");
         this.setPlayerUUID(tag.getUUID("playerUUID"));
         this.setWidthSize(tag.getInt("width"));
@@ -71,7 +71,6 @@ public abstract class AbstractWorkAreaEntity extends Entity {
     public void addAdditionalSaveData(CompoundTag tag) {
         tag.putUUID("playerUUID", getPlayerUUID());
         tag.putBoolean("isDone", isDone);
-        tag.putInt("timeSinceLastVisit", timeSinceLastVisit);
         tag.putBoolean("isBeingWorkedOn", isBeingWorkedOn);
         tag.putInt("width", getWidthSize());
         tag.putInt("height", getHeightSize());
@@ -80,15 +79,14 @@ public abstract class AbstractWorkAreaEntity extends Entity {
         if(!this.getTeamStringID().isEmpty()){
             tag.putString("teamStringID", getTeamStringID());
         }
-
+        tag.putInt("time", time);
     }
 
-    public int timeSinceLastVisit;
+    public int time;
     @Override
     public void tick() {
         super.tick();
-        if(!isBeingWorkedOn()) timeSinceLastVisit++;
-
+        if(tickCount % 20 == 0) time++;
     }
     @Override
     public boolean isPickable() {
@@ -151,12 +149,12 @@ public abstract class AbstractWorkAreaEntity extends Entity {
         this.isBeingWorkedOn = b;
     }
 
-    public int getTimeSinceLastVisit(){
-        return this.timeSinceLastVisit;
+    public int getTime(){
+        return this.time;
     }
 
-    public void setTimeSinceLastVisit(int timeSinceLastVisit) {
-        this.timeSinceLastVisit = timeSinceLastVisit;
+    public void setTime(int time) {
+        this.time = time;
     }
 
     public AABB getArea() {

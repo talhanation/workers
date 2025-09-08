@@ -50,7 +50,7 @@ public class MessageUpdateCropArea implements Message<MessageUpdateCropArea> {
         ItemStack itemStack = ItemStack.of(tag);
         cropArea.setSeedStack(itemStack);
         cropArea.updateType();
-        cropArea.setTimeSinceLastVisit(cropArea.getTimeSinceLastVisit() + DONE_TIME);
+        cropArea.setTime(cropArea.getTime() + DONE_TIME);
     }
 
     public MessageUpdateCropArea fromBytes(FriendlyByteBuf buf) {

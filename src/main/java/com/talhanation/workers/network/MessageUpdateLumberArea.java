@@ -58,7 +58,7 @@ public class MessageUpdateLumberArea implements Message<MessageUpdateLumberArea>
         lumberArea.setStripLogs(this.stripLogs);
         lumberArea.setReplant(this.replant);
 
-        lumberArea.timeSinceLastVisit += DONE_TIME;
+        lumberArea.time += DONE_TIME;
     }
 
     public MessageUpdateLumberArea fromBytes(FriendlyByteBuf buf) {
