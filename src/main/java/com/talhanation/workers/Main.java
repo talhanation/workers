@@ -85,7 +85,8 @@ public class Main {
             MessageUpdateCropArea.class,
             MessageAddDepositPos.class,
             MessageUpdateLumberArea.class,
-            MessageUpdateBuildArea.class
+            MessageUpdateBuildArea.class,
+            MessageUpdateMiningArea.class
         };
         for (int i = 0; i < messages.length; i++) CommonRegistry.registerMessage(SIMPLE_CHANNEL, i, messages[i]);
     }
@@ -102,6 +103,7 @@ public class Main {
         if (event.getTabKey().equals(CreativeModeTabs.SPAWN_EGGS)) {
             event.accept(ModItems.FARMER_SPAWN_EGG.get());
             event.accept(ModItems.LUMBERJACK_SPAWN_EGG.get());
+            event.accept(ModItems.MINER_SPAWN_EGG.get());
         }
     }
 }

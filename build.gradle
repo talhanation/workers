@@ -126,7 +126,7 @@ dependencies {
     implementation fg.deobf("curse.maven:supplementaries-412082:6615104")
     implementation fg.deobf("curse.maven:selene-499980:6681465")
     //implementation fg.deobf("curse.maven:small-ships-450659:5324996")
-
+    implementation fg.deobf("curse.maven:debug-utils-forge-783008:5337491")
     implementation fg.deobf("curse.maven:farmers-delight-398521:6597298")
     implementation fg.deobf("curse.maven:worldedit-225608:4586218")
     annotationProcessor 'org.spongepowered:mixin:0.8.5:processor'

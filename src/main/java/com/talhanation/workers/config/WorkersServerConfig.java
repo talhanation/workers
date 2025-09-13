@@ -32,4 +32,18 @@ public class WorkersServerConfig {
                     "minecraft:stick",
                     "minecraft:bee_nest"
             ));
+
+    public static ArrayList<String> MINER_PICKUP = new ArrayList<>(
+            Arrays.asList(
+                    "minecraft:redstone",
+                    "minecraft:cobblestone",
+                    "minecraft:sandstone",
+                    "minecraft:sand",
+                    "minecraft:gravel",
+                    "minecraft:calcite",
+                    "minecraft:clay",
+                    "minecraft:dripstone_block",
+                    "minecraft:pointed_dripstone",
+                    "minecraft:netherrack"
+            ));
 }

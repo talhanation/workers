@@ -4,9 +4,11 @@ import com.talhanation.workers.Main;
 
 import com.talhanation.workers.entities.FarmerEntity;
 import com.talhanation.workers.entities.LumberjackEntity;
+import com.talhanation.workers.entities.MinerEntity;
 import com.talhanation.workers.entities.workarea.BuildArea;
 import com.talhanation.workers.entities.workarea.CropArea;
 import com.talhanation.workers.entities.workarea.LumberArea;
+import com.talhanation.workers.entities.workarea.MiningArea;
 import net.minecraft.world.entity.MobCategory;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.resources.ResourceLocation;
@@ -34,14 +36,12 @@ public class ModEntityTypes {
                         .sized(1.2F, 2.00F)
                         .fireImmune().noSummon()
                         .build(new ResourceLocation(Main.MOD_ID, "buildarea").toString()));
+        public static final RegistryObject<EntityType<MiningArea>> MININGAREA = ENTITY_TYPES.register("miningarea",
+                () -> EntityType.Builder.of(MiningArea::new, MobCategory.MISC)
+                        .sized(1.2F, 2.00F)
+                        .fireImmune().noSummon()
+                        .build(new ResourceLocation(Main.MOD_ID, "miningarea").toString()));
         /*
-        public static final RegistryObject<EntityType<MinerEntity>> MINER = ENTITY_TYPES.register("miner",
-                        () -> EntityType.Builder.of(MinerEntity::new, MobCategory.CREATURE)
-                                        .sized(0.6F, 1.95F)
-                                        .canSpawnFarFromPlayer()
-                                        .setTrackingRange(32)
-                                        .setShouldReceiveVelocityUpdates(true)
-                                        .build(new ResourceLocation(Main.MOD_ID, "miner").toString()));
 
 
         public static final RegistryObject<EntityType<ShepherdEntity>> SHEPHERD = ENTITY_TYPES.register("shepherd",
@@ -68,6 +68,15 @@ public class ModEntityTypes {
                         .setTrackingRange(32)
                         .setShouldReceiveVelocityUpdates(true)
                         .build(new ResourceLocation(Main.MOD_ID, "farmer").toString()));
+
+        public static final RegistryObject<EntityType<MinerEntity>> MINER = ENTITY_TYPES.register("miner",
+                () -> EntityType.Builder.of(MinerEntity::new, MobCategory.CREATURE)
+                        .sized(0.6F, 1.95F)
+                        .canSpawnFarFromPlayer()
+                        .setTrackingRange(32)
+                        .setShouldReceiveVelocityUpdates(true)
+                        .build(new ResourceLocation(Main.MOD_ID, "miner").toString()));
+
 /*
         public static final RegistryObject<EntityType<FishermanEntity>> FISHERMAN = ENTITY_TYPES.register("fisherman",
                         () -> EntityType.Builder.of(FishermanEntity::new, MobCategory.CREATURE)

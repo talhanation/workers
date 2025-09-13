@@ -15,6 +15,7 @@ import net.minecraft.world.item.BlockItem;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.ShearsItem;
 import net.minecraft.world.level.block.Block;
+import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.SaplingBlock;
 import net.minecraft.world.level.block.state.BlockState;
 
@@ -34,7 +35,7 @@ public class LumberjackWorkGoal extends Goal {
 
     public LumberjackWorkGoal(LumberjackEntity lumberjack) {
         this.lumberjack = lumberjack;
-        setFlags(EnumSet.of(Flag.LOOK));
+        setFlags(EnumSet.of(Flag.LOOK, Flag.MOVE));
     }
 
     @Override

@@ -1,9 +1,6 @@
 package com.talhanation.workers.network;
 
-import com.talhanation.workers.entities.workarea.BuildArea;
-import com.talhanation.workers.entities.workarea.CropArea;
-import com.talhanation.workers.entities.workarea.AbstractWorkAreaEntity;
-import com.talhanation.workers.entities.workarea.LumberArea;
+import com.talhanation.workers.entities.workarea.*;
 import com.talhanation.workers.init.ModEntityTypes;
 import de.maxhenkel.corelib.net.Message;
 import net.minecraft.network.FriendlyByteBuf;
@@ -41,6 +38,13 @@ public class MessageAddWorkArea implements Message<MessageAddWorkArea> {
         }
         AbstractWorkAreaEntity workArea;
         switch (type){
+            case 3 -> {
+                workArea = new MiningArea(ModEntityTypes.MININGAREA.get(), player.level());
+                workArea.setWidthSize(8);
+                workArea.setHeightSize(4);
+                workArea.setDepthSize(8);
+
+            }
             case 2 -> {
                 workArea = new BuildArea(ModEntityTypes.BUILDAREA.get(), player.level());
                 workArea.setWidthSize(4);

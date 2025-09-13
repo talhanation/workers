@@ -19,7 +19,6 @@ import net.minecraft.world.*;
 import net.minecraft.world.damagesource.DamageSource;
 import net.minecraft.world.entity.*;
 import net.minecraft.world.entity.item.ItemEntity;
-import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.ShearsItem;
@@ -447,5 +446,4 @@ public abstract class AbstractWorkerEntity extends AbstractChunkLoaderEntity {
         }
         return false;
     }
-
 }

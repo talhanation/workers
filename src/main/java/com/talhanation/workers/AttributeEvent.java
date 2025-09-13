@@ -13,6 +13,7 @@ public class AttributeEvent {
     public static void entityAttributeEvent(final EntityAttributeCreationEvent event) {
         event.put(ModEntityTypes.FARMER.get(), FarmerEntity.setAttributes().build());
         event.put(ModEntityTypes.LUMBERJACK.get(), LumberjackEntity.setAttributes().build());
+        event.put(ModEntityTypes.MINER.get(), MinerEntity.setAttributes().build());
         /*
         event.put(ModEntityTypes.FISHERMAN.get(), FishermanEntity.setAttributes().build());
         event.put(ModEntityTypes.MERCHANT.get(), MerchantEntity.setAttributes().build());

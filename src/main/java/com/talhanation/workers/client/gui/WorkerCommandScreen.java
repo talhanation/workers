@@ -27,8 +27,10 @@ public class WorkerCommandScreen implements ICommandCategory {
 
     private static final MutableComponent TEXT_ADD_FIELD = Component.translatable("gui.workers.command.text.add_field");
     private static final MutableComponent TEXT_ADD_LUMBER = Component.translatable("gui.workers.command.text.add_lumber");
+    private static final MutableComponent TEXT_ADD_MINE = Component.translatable("gui.workers.command.text.add_mine");
     private static final MutableComponent TOOLTIP_ADD_FIELD = Component.translatable("gui.workers.command.tooltip.add_field");
     private static final MutableComponent TOOLTIP_ADD_LUMBER = Component.translatable("gui.workers.command.tooltip.add_lumber");
+    private static final MutableComponent TOOLTIP_ADD_MINE = Component.translatable("gui.workers.command.tooltip.add_mine");
     private static final MutableComponent TEXT_ADD_DEPOSIT = Component.translatable("gui.workers.command.text.add_deposit");
     private static final MutableComponent TEXT_ADD_BUILDING = Component.translatable("gui.workers.command.text.add_building");
     @Override
@@ -66,6 +68,17 @@ public class WorkerCommandScreen implements ICommandCategory {
         addLumberArea.setTooltip(Tooltip.create(TOOLTIP_ADD_LUMBER));
         addLumberArea.active = screen.rayBlockPos != null;
         screen.addRenderableWidget(addLumberArea);
+
+        RecruitsCommandButton addMine = new RecruitsCommandButton(x + 100, y + 0, TEXT_ADD_MINE,
+                button -> {
+                    if(screen.rayBlockPos == null) return;
+                    Vec3 pos = screen.rayBlockPos.getCenter();
+                    Main.SIMPLE_CHANNEL.sendToServer(new MessageAddWorkArea((float) pos.x(), (int) pos.y(), (float) pos.z(), 3));
+                });
+
+        addMine.setTooltip(Tooltip.create(TOOLTIP_ADD_MINE));
+        addMine.active = screen.rayBlockPos != null;
+        screen.addRenderableWidget(addMine);
 
         RecruitsCommandButton addDepositPosition = new RecruitsCommandButton(x, y - 150, TEXT_ADD_DEPOSIT,
             button -> {

@@ -5,7 +5,6 @@ import com.talhanation.recruits.client.gui.widgets.BlackShowingTextField;
 import com.talhanation.recruits.client.gui.widgets.ScrollDropDownMenu;
 import com.talhanation.workers.Main;
 import com.talhanation.workers.client.gui.widgets.DisplayTextItemScrollDropDownMenu;
-import com.talhanation.workers.client.gui.widgets.ItemScrollDropDownMenu;
 import com.talhanation.workers.world.ScannedBlock;
 import com.talhanation.workers.client.gui.structureRenderer.StructurePreviewWidget;
 import com.talhanation.workers.entities.workarea.BuildArea;
@@ -90,10 +89,6 @@ public class BuildAreaScreen extends WorkAreaScreen {
         int previewHeight = 100;
         int boxWidth = 80;
         int boxHeight = 20;
-
-        addRenderableWidget(new BlackShowingTextField(x + previewWidth/2, y - previewHeight / 2 + 130, boxWidth, boxHeight, Component.literal("x: " + areaXSize)));
-        addRenderableWidget(new BlackShowingTextField(x + previewWidth/2, y - previewHeight / 2 + 130 + boxHeight, boxWidth, boxHeight, Component.literal( "y: " + areaYSize)));
-        addRenderableWidget(new BlackShowingTextField(x + previewWidth/2, y - previewHeight / 2 + 130 + boxHeight*2, boxWidth, boxHeight, Component.literal( "z: " + areaZSize)));
 
         //MODE
         modeScanButton = addRenderableWidget(new ActivateableButton(x - buttonWidth - 100, y - previewHeight / 2 + 130, buttonWidth, buttonHeight, Component.literal("Scan"),
@@ -281,6 +276,11 @@ public class BuildAreaScreen extends WorkAreaScreen {
                 checkBuildButtonActive();
             }
         }
+
+        addRenderableWidget(new BlackShowingTextField(x + previewWidth/2, y - previewHeight / 2 + 130, boxWidth, boxHeight, Component.literal("x: " + areaXSize)));
+        addRenderableWidget(new BlackShowingTextField(x + previewWidth/2, y - previewHeight / 2 + 130 + boxHeight, boxWidth, boxHeight, Component.literal( "y: " + areaYSize)));
+        addRenderableWidget(new BlackShowingTextField(x + previewWidth/2, y - previewHeight / 2 + 130 + boxHeight*2, boxWidth, boxHeight, Component.literal( "z: " + areaZSize)));
+
 
         String string = null;
         if(scanNameEditBox != null) string = this.scanNameEditBox.getValue();
