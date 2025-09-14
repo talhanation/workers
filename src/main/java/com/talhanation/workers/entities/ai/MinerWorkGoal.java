@@ -60,7 +60,7 @@ public class MinerWorkGoal extends Goal {
         //if(!minerEntity.isWorkAreaNotRemoved()) return;
 
 
-        if(minerEntity.tickCount % 5 != 0) return;
+        //if(minerEntity.tickCount % 5 != 0) return;
         if(blockPos != null && moveToPosition(blockPos, 30)) return;
 
         if(state == State.MINING){
@@ -182,10 +182,7 @@ public class MinerWorkGoal extends Goal {
         if(positions != null){
             if(blockPos == null){
                 if(!positions.isEmpty()){
-                    positions.sort(Comparator.comparing(pos -> minerEntity.getBoundingBox().inflate(3).contains(pos.getCenter())));
-                    positions.sort(Comparator.comparing(pos -> minerEntity.position().relative(Direction.UP, 1).distanceToSqr(pos.getCenter())));
-                    positions.sort(Comparator.reverseOrder());
-                    blockPos = positions.pop();
+                    blockPos = this.getNewMiningPosition(positions);
                 }
                 return blockPos != null;
             }
@@ -193,11 +190,7 @@ public class MinerWorkGoal extends Goal {
             BlockState state = minerEntity.getCommandSenderWorld().getBlockState(blockPos);
             if(state.isAir()){
                 if(!positions.isEmpty()){
-                    positions.sort(Comparator.comparing(pos -> minerEntity.getBoundingBox().inflate(3).contains(pos.getCenter())));
-                    positions.sort(Comparator.comparing(pos -> minerEntity.position().relative(Direction.UP, 1).distanceToSqr(pos.getCenter())));
-                    positions.sort(Comparator.reverseOrder());
-
-                    blockPos = positions.pop();
+                    blockPos = this.getNewMiningPosition(positions);
                 }
                 else{
                     this.blockPos = null;
@@ -212,6 +205,24 @@ public class MinerWorkGoal extends Goal {
             return true;
         }
         return false;
+    }
+
+    private BlockPos getNewMiningPosition(Stack<BlockPos> positions) {
+        positions.sort(Comparator.comparing(pos -> minerEntity.position().distanceToSqr(pos.getCenter())));
+        positions.sort(Comparator.reverseOrder());
+        BlockPos newPosition;
+
+        if(positions.contains(blockPos.above())){
+            newPosition = blockPos.above();
+        }
+        else if(positions.contains(blockPos.below())){
+            newPosition = blockPos.below();
+        }
+        else{
+            newPosition = positions.pop();
+        }
+
+        return newPosition;
     }
 
     public boolean closeHoles(Stack<BlockPos> positions){

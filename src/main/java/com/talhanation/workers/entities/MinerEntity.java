@@ -25,6 +25,7 @@ import net.minecraft.world.level.Level;
 import net.minecraft.world.level.ServerLevelAccessor;
 import net.minecraftforge.common.ForgeMod;
 import net.minecraftforge.common.Tags;
+import net.minecraftforge.common.data.ForgeItemTagsProvider;
 import net.minecraftforge.registries.ForgeRegistries;
 
 import javax.annotation.Nullable;
@@ -107,10 +108,19 @@ public class MinerEntity extends AbstractWorkerEntity{
         if(itemStack.getItem() instanceof BlockItem blockItem && blockItem.getBlock().defaultBlockState().is(BlockTags.BASE_STONE_OVERWORLD)) return true;
         if(itemStack.getItem() instanceof BlockItem blockItem && blockItem.getBlock().defaultBlockState().is(Tags.Blocks.STONE)) return true;
         if(itemStack.getItem() instanceof BlockItem blockItem && blockItem.getBlock().defaultBlockState().is(BlockTags.BASE_STONE_NETHER)) return true;
-        if(itemStack.is(Tags.Items.ORES)) return true;
+        if(itemStack.is(Tags.Items.RAW_MATERIALS)) return true;
         if(itemStack.is(Tags.Items.SAND)) return true;
         if(itemStack.is(Tags.Items.STONE)) return true;
         if(itemStack.is(ItemTags.STONE_BRICKS)) return true;
+        if(itemStack.is(ItemTags.COAL_ORES)) return true;
+        if(itemStack.is(ItemTags.IRON_ORES)) return true;
+        if(itemStack.is(ItemTags.COPPER_ORES)) return true;
+        if(itemStack.is(ItemTags.DIAMOND_ORES)) return true;
+        if(itemStack.is(ItemTags.EMERALD_ORES)) return true;
+        if(itemStack.is(ItemTags.GOLD_ORES)) return true;
+        if(itemStack.is(ItemTags.LAPIS_ORES)) return true;
+        if(itemStack.is(ItemTags.LAPIS_ORES)) return true;
+
         if(itemStack.is(ItemTags.DIRT)) return true;
         if(itemStack.getItem() instanceof BlockItem blockItem && blockItem.getBlock().defaultBlockState().is(BlockTags.BASE_STONE_OVERWORLD)) return true;
         if (itemStack.getItem() instanceof PickaxeItem && this.getMainHandItem().isEmpty()) {
