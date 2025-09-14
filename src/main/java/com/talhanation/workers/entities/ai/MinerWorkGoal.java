@@ -212,7 +212,10 @@ public class MinerWorkGoal extends Goal {
         positions.sort(Comparator.reverseOrder());
         BlockPos newPosition;
 
-        if(positions.contains(blockPos.above())){
+        if(blockPos == null){
+            newPosition = positions.pop();
+        }
+        else if(positions.contains(blockPos.above())){
             newPosition = blockPos.above();
         }
         else if(positions.contains(blockPos.below())){
