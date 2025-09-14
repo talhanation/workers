@@ -14,8 +14,12 @@ import net.minecraft.world.entity.ai.goal.Goal;
 import net.minecraft.world.item.BlockItem;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.PickaxeItem;
+import net.minecraft.world.level.ClipContext;
+import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.phys.HitResult;
+import net.minecraft.world.phys.Vec3;
 
 import javax.annotation.Nullable;
 import java.util.*;
@@ -208,12 +212,19 @@ public class MinerWorkGoal extends Goal {
     }
 
     private BlockPos getNewMiningPosition(Stack<BlockPos> positions) {
-        positions.sort(Comparator.comparing(pos -> minerEntity.position().distanceToSqr(pos.getCenter())));
+        positions.sort(Comparator.comparingDouble(pos -> minerEntity.position().distanceToSqr(pos.getCenter())));
         positions.sort(Comparator.reverseOrder());
-        BlockPos newPosition;
+        BlockPos newPosition = null;
 
         if(blockPos == null){
-            newPosition = positions.pop();
+            for (BlockPos candidate : positions) {
+                if (!hasAirNeighbor(minerEntity.getCommandSenderWorld(), candidate)) {
+                    continue;
+                }
+
+                newPosition = candidate;
+                break;
+            }
         }
         else if(positions.contains(blockPos.above())){
             newPosition = blockPos.above();
@@ -224,8 +235,23 @@ public class MinerWorkGoal extends Goal {
         else{
             newPosition = positions.pop();
         }
-
+        positions.remove(newPosition);
         return newPosition;
+    }
+
+    private boolean hasAirNeighbor(Level level, BlockPos pos) {
+        return level.isEmptyBlock(pos.above())
+                || level.isEmptyBlock(pos.below())
+                || level.isEmptyBlock(pos.north())
+                || level.isEmptyBlock(pos.south())
+                || level.isEmptyBlock(pos.east())
+                || level.isEmptyBlock(pos.west());
+    }
+    //PERFORMANCE HEAVY DO NOT USE FREQUENTLY
+    private boolean canSeeBlock(Level level, Vec3 start, BlockPos target) {
+        Vec3 targetCenter = Vec3.atCenterOf(target);
+        ClipContext ctx = new ClipContext(start, targetCenter, ClipContext.Block.COLLIDER, ClipContext.Fluid.NONE, minerEntity);
+        return level.clip(ctx).getType() == HitResult.Type.MISS;
     }
 
     public boolean closeHoles(Stack<BlockPos> positions){
