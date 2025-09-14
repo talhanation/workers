@@ -343,9 +343,9 @@ public class RecruitsPathNodeEvaluator extends NodeEvaluator {
         return (this.canFloat() || this.isAmphibious()) && this.level.getFluidState(p_164733_).is(FluidTags.WATER) ? (double)p_164733_.getY() + 0.5D : getFloorLevel(this.level, p_164733_);
     }
 
-    public static double getFloorLevel(BlockGetter p_77612_, BlockPos p_77613_) {
-        BlockPos blockpos = p_77613_.below();
-        VoxelShape voxelshape = p_77612_.getBlockState(blockpos).getCollisionShape(p_77612_, blockpos);
+    public static double getFloorLevel(BlockGetter level, BlockPos pos) {
+        BlockPos blockpos = pos.below(3);
+        VoxelShape voxelshape = level.getBlockState(blockpos).getCollisionShape(level, blockpos);
         return (double)blockpos.getY() + (voxelshape.isEmpty() ? 0.0D : voxelshape.max(Direction.Axis.Y));
     }
 
