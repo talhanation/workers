@@ -127,7 +127,7 @@ public class DepositItemsInChestsGoal extends AbstractChestGoal {
 
             case ERROR -> {
                 if(!errorMessageDone){
-                    worker.getOwner().sendSystemMessage(Component.literal(errorMessage));
+                    if(worker.getOwner() != null) worker.getOwner().sendSystemMessage(Component.literal(errorMessage));
                     errorMessageDone = true;
                 }
 
