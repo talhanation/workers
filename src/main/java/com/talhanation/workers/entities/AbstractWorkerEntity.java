@@ -5,6 +5,7 @@ import com.talhanation.recruits.config.RecruitsClientConfig;
 import com.talhanation.recruits.entities.AbstractChunkLoaderEntity;
 import com.talhanation.workers.entities.ai.DepositItemsInChestsGoal;
 import com.talhanation.workers.entities.ai.GetNeededItemsFromChestsGoal;
+import com.talhanation.workers.entities.ai.DebugSyncWorkerPathNavigation;
 import com.talhanation.workers.entities.workarea.AbstractWorkAreaEntity;
 import com.talhanation.workers.world.NeededItem;
 import net.minecraft.core.BlockPos;
@@ -18,6 +19,7 @@ import net.minecraft.sounds.SoundSource;
 import net.minecraft.world.*;
 import net.minecraft.world.damagesource.DamageSource;
 import net.minecraft.world.entity.*;
+import net.minecraft.world.entity.ai.navigation.PathNavigation;
 import net.minecraft.world.entity.item.ItemEntity;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
@@ -65,6 +67,13 @@ public abstract class AbstractWorkerEntity extends AbstractChunkLoaderEntity {
 
     /////////////////////////////////// TICK/////////////////////////////////////////
 
+    protected @NotNull PathNavigation createNavigation(@NotNull Level level) {
+        return new DebugSyncWorkerPathNavigation(this, level);//TODO RESET TO ASYNC
+    }
+
+    public @NotNull PathNavigation getNavigation() {
+        return this.navigation;//TODO REMOVE)
+    }
 
     @Override
     public void aiStep() {
