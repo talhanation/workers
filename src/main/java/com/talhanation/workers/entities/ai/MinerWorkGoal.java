@@ -4,7 +4,6 @@ import com.talhanation.workers.entities.MinerEntity;
 import com.talhanation.workers.entities.workarea.MiningArea;
 import com.talhanation.workers.world.NeededItem;
 import net.minecraft.core.BlockPos;
-import net.minecraft.core.Direction;
 import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.sounds.SoundEvents;
@@ -41,7 +40,7 @@ public class MinerWorkGoal extends Goal {
 
     @Override
     public boolean canUse() {
-        return !minerEntity.needsToSleep() && minerEntity.getFollowState() != 1 && !minerEntity.needsToGetToChest();
+        return !minerEntity.needsToSleep() && minerEntity.getFollowState() != 1 && !minerEntity.needsToGetToChest() && this.isMiningAreaNotRemoved();
     }
 
     @Override
@@ -60,17 +59,21 @@ public class MinerWorkGoal extends Goal {
         if(state == null) return;
         if(blockPos != null) this.minerEntity.getLookControl().setLookAt(blockPos.getCenter());
 
+        if(!isMiningAreaNotRemoved()) return;
 
-        //if(!minerEntity.isWorkAreaNotRemoved()) return;
-
+        if(state != State.SELECT_WORK_AREA && this.minerEntity.currentMiningArea == null){
+            this.blockPos = null;
+            setState(State.SELECT_WORK_AREA);
+            return;
+        }
 
         //if(minerEntity.tickCount % 5 != 0) return;
-        if(blockPos != null && moveToPosition(blockPos, 30)) return;
+        if(blockPos != null && moveToPosition(blockPos, 20)) return;
 
         if(state == State.MINING){
             if(this.mineBlocks(this.stackToBreak)) return;
 
-            setState(State.PREPARE_CLOSE_HOLES);
+            setState(State.PREPARE_CLOSE_FLOOR);
         }
 
         switch(state){
@@ -123,7 +126,7 @@ public class MinerWorkGoal extends Goal {
                 this.stackToBreak = minerEntity.currentMiningArea.stackToBreak;
 
                 if(stackToBreak.isEmpty()){
-                    setState(State.PREPARE_CLOSE_HOLES);
+                    setState(State.PREPARE_CLOSE_FLOOR);
                     return;
                 }
 
@@ -140,8 +143,8 @@ public class MinerWorkGoal extends Goal {
             }
 
 
-            case PREPARE_CLOSE_HOLES -> {
-                this.minerEntity.currentMiningArea.scanClosingArea();
+            case PREPARE_CLOSE_FLOOR -> {
+                this.minerEntity.currentMiningArea.scanFloorArea();
                 this.stackToPlace = minerEntity.currentMiningArea.stackToPlace;
 
                 if(stackToPlace.isEmpty()){
@@ -149,10 +152,10 @@ public class MinerWorkGoal extends Goal {
                     return;
                 }
 
-                setState(State.CLOSE_HOLES);
+                setState(State.CLOSE_FLOOR);
             }
 
-            case CLOSE_HOLES -> {
+            case CLOSE_FLOOR -> {
                 if(this.closeHoles(this.stackToPlace)) return;
 
                 setState(State.DONE);
@@ -162,6 +165,10 @@ public class MinerWorkGoal extends Goal {
                 if(!workDone){
                     workDone = true;
                     minerEntity.currentMiningArea.setBeingWorkedOn(false);
+
+                    //ONLY FOR MINING AREA
+                    this.minerEntity.currentMiningArea.setDone(true);
+
                     blockPos = null;
                     minerEntity.currentMiningArea = null;
                     this.start();
@@ -174,6 +181,14 @@ public class MinerWorkGoal extends Goal {
                 }
             }
         }
+    }
+
+    private boolean isMiningAreaNotRemoved() {
+        if(minerEntity.currentMiningArea == null || !minerEntity.currentMiningArea.isRemoved()) return true;
+        else {
+            minerEntity.currentMiningArea = null;
+        }
+        return false;
     }
 
     public void setState(State state) {
@@ -212,8 +227,14 @@ public class MinerWorkGoal extends Goal {
     }
 
     private BlockPos getNewMiningPosition(Stack<BlockPos> positions) {
-        positions.sort(Comparator.comparingDouble(pos -> minerEntity.position().distanceToSqr(pos.getCenter())));
-        positions.sort(Comparator.reverseOrder());
+        positions.removeIf(pos ->
+                !canSeeBlock(minerEntity.getCommandSenderWorld(), minerEntity.getEyePosition(), pos)
+        );
+
+        positions.sort(Comparator.comparingDouble(
+                pos -> minerEntity.position().distanceToSqr(pos.getCenter())
+        ));
+
         BlockPos newPosition = null;
 
         if(blockPos == null){
@@ -282,7 +303,7 @@ public class MinerWorkGoal extends Goal {
             }
             else if(cobbleBlockFromInv.getItem() instanceof BlockItem blockItem) {
                 minerEntity.getCommandSenderWorld().setBlockAndUpdate(blockPos, blockItem.getBlock().defaultBlockState());
-                minerEntity.getCommandSenderWorld().playSound(null, blockPos.getX(), blockPos.getY(), blockPos.getZ(), SoundEvents.CROP_PLANTED, SoundSource.BLOCKS, 1.0F, 1.0F);
+                minerEntity.getCommandSenderWorld().playSound(null, blockPos.getX(), blockPos.getY(), blockPos.getZ(), SoundEvents.STONE_PLACE, SoundSource.BLOCKS, 1.0F, 1.0F);
                 cobbleBlockFromInv.shrink(1);
                 this.minerEntity.swing(InteractionHand.MAIN_HAND);
             }
@@ -298,7 +319,7 @@ public class MinerWorkGoal extends Goal {
 
     @Override
     public boolean isInterruptable() {
-        return false;
+        return true;
     }
 
     @Override
@@ -358,8 +379,8 @@ public class MinerWorkGoal extends Goal {
             }
             else{
                 //minerEntity.getNavigation().stop();
-                minerEntity.getNavigation().moveTo(pos.getX(), pos.getY(), pos.getZ(), 0.8F);
                 minerEntity.setFollowState(6); //Working
+                minerEntity.getNavigation().moveTo(pos.getX(), pos.getY(), pos.getZ(), 0.8F);
                 minerEntity.getLookControl().setLookAt(pos.getCenter());
             }
             return true;
@@ -372,8 +393,8 @@ public class MinerWorkGoal extends Goal {
         SCAN_BLOCKS,
         PREPARE_MINE_WALLS,
         MINE_WALLS,
-        PREPARE_CLOSE_HOLES,
-        CLOSE_HOLES,
+        PREPARE_CLOSE_FLOOR,
+        CLOSE_FLOOR,
         PREPARE_MINING,
         MINING,
         DONE,

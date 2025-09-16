@@ -1,12 +1,17 @@
 package com.talhanation.workers.entities.ai;
 
+import com.talhanation.recruits.entities.ai.RecruitFollowOwnerGoal;
 import com.talhanation.workers.Main;
 import com.talhanation.workers.entities.AbstractWorkerEntity;
+import com.talhanation.workers.entities.MinerEntity;
 import net.minecraft.world.entity.ai.navigation.GroundPathNavigation;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.pathfinder.BlockPathTypes;
+import net.minecraft.world.level.pathfinder.Path;
 import net.minecraft.world.level.pathfinder.PathFinder;
 import org.jetbrains.annotations.NotNull;
+
+import javax.annotation.Nullable;
 
 public class DebugSyncWorkerPathNavigation extends GroundPathNavigation { // ONLY FOR DEBUGGING OF NODE EVALUATOR NOT INTENDED TO USE IN MOD ITSELF
     private AbstractWorkerEntity worker;
@@ -32,9 +37,15 @@ public class DebugSyncWorkerPathNavigation extends GroundPathNavigation { // ONL
     }
 
     public boolean moveTo(double x, double y, double z, double g) {
-        this.worker.setMaxFallDistance(1);
-        Main.LOGGER.info("Target: " + y);
-        ((RecruitsPathNodeEvaluator)this.nodeEvaluator).setTarget((int) x, (int) y, (int) z);
         return this.moveTo(this.createPath(x, y, z, 1), g);
+    }
+
+    public boolean moveTo(@Nullable Path path, double g) {
+        this.worker.setMaxFallDistance(1);
+        if(worker instanceof MinerEntity && nodeEvaluator instanceof RecruitsPathNodeEvaluator recruitsPathNodeEvaluator){
+            int offset = worker.isWorking() && !(worker.needsToDeposit() || worker.needsToGetItems()) ? 3 : 0;
+            recruitsPathNodeEvaluator.setFloorOffset(offset);
+        }
+        return super.moveTo(path, g);
     }
 }

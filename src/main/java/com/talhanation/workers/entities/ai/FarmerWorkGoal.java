@@ -224,7 +224,7 @@ public class FarmerWorkGoal extends Goal {
 
     @Override
     public boolean isInterruptable() {
-        return false;
+        return true;
     }
 
     @Override

@@ -16,7 +16,7 @@ public class DepositItemsInChestsGoal extends AbstractChestGoal {
 
     public DepositItemsInChestsGoal(AbstractWorkerEntity worker){
         super(worker);
-        setFlags(EnumSet.of(Flag.LOOK));
+        setFlags(EnumSet.of(Flag.LOOK, Flag.MOVE));
     }
     @Override
     public boolean canUse() {

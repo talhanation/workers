@@ -75,6 +75,9 @@ public abstract class AbstractWorkerEntity extends AbstractChunkLoaderEntity {
         return this.navigation;//TODO REMOVE)
     }
 
+    public boolean isWorking(){
+        return this.getFollowState() == 6;
+    }
     @Override
     public void aiStep() {
         super.aiStep();

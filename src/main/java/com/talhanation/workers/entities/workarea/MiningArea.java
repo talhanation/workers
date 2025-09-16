@@ -33,7 +33,7 @@ public class MiningArea extends AbstractWorkAreaEntity {
 
     public static final EntityDataAccessor<Integer> MINING_MODE = SynchedEntityData.defineId(MiningArea.class, EntityDataSerializers.INT);
     public static final EntityDataAccessor<Integer> HEIGHT_OFFSET = SynchedEntityData.defineId(MiningArea.class, EntityDataSerializers.INT);
-
+    public static final EntityDataAccessor<Boolean> CLOSE_FLOOR = SynchedEntityData.defineId(MiningArea.class, EntityDataSerializers.BOOLEAN);
     public Stack<BlockPos> stackToPlace = new Stack<>();
     public Stack<BlockPos> stackToBreak = new Stack<>();
 
@@ -44,18 +44,21 @@ public class MiningArea extends AbstractWorkAreaEntity {
         super.defineSynchedData();
         this.entityData.define(MINING_MODE, 0);
         this.entityData.define(HEIGHT_OFFSET, 1);
+        this.entityData.define(CLOSE_FLOOR, true);
     }
 
     @Override
     public void readAdditionalSaveData(CompoundTag tag) {
         super.readAdditionalSaveData(tag);
-        setMiningMode(MiningMode.fromIndex(tag.getInt("miningMode")));
+        this.setMiningMode(MiningMode.fromIndex(tag.getInt("miningMode")));
+        this.setCloseFloor(tag.getBoolean("closeFloor"));
     }
 
     @Override
     public void addAdditionalSaveData(CompoundTag tag) {
         super.addAdditionalSaveData(tag);
         tag.putInt("miningMode", this.getMiningMode().getIndex());
+        tag.putBoolean("closeFloor", this.getCloseFloor());
     }
 
     public Item getRenderItem()  {
@@ -104,6 +107,14 @@ public class MiningArea extends AbstractWorkAreaEntity {
         area = this.createArea();
     }
 
+    public boolean getCloseFloor() {
+        return this.entityData.get(CLOSE_FLOOR);
+    }
+    public void setCloseFloor(boolean close) {
+        this.entityData.set(CLOSE_FLOOR, close);
+    }
+
+
     public void scanBreakArea() {
         if (area == null) area = this.getArea();
         stackToBreak.clear();
@@ -113,7 +124,7 @@ public class MiningArea extends AbstractWorkAreaEntity {
         BlockPos.betweenClosedStream(area).forEach(pos -> {
             BlockState state = level.getBlockState(pos);
             FluidState fluidState = level.getFluidState(pos);
-            if (!state.isAir() && fluidState.isEmpty()) {
+            if (pos.getY() != area.maxY && !state.isAir() && fluidState.isEmpty()) {
 
                 if (!isAir(state)) {
                     stackToBreak.push(pos.immutable());
@@ -132,10 +143,10 @@ public class MiningArea extends AbstractWorkAreaEntity {
             BlockState state = level.getBlockState(pos);
 
             if (isOre(state)) {
-                // check ob an Luft grenzt (frei sichtbar)
                 for (Direction dir : Direction.values()) {
                     BlockPos adj = pos.relative(dir);
-                    if (level.getBlockState(adj).isAir()) {
+                    BlockState blockstate = level.getBlockState(adj);
+                    if (this.isAir(blockstate)) {
                         stackToBreak.push(pos.immutable());
                         break;
                     }
@@ -144,25 +155,22 @@ public class MiningArea extends AbstractWorkAreaEntity {
         });
     }
 
-    public void scanClosingArea() {
+    public void scanFloorArea() {
         if (area == null) area = this.getArea();
         stackToPlace.clear();
 
         Level level = this.getCommandSenderWorld();
+
         getWallBlocks(area, 1).forEach(pos -> {
             BlockState state = level.getBlockState(pos);
             FluidState fluidState = level.getFluidState(pos);
-            if (!state.isAir() && fluidState.isEmpty()) {
-                for (Direction dir : Direction.values()) {
-                    BlockPos adj = pos.relative(dir);
-                    if (level.getBlockState(adj).isSolid()) {
-                        stackToPlace.push(pos.immutable());
-                        break;
-                    }
-                }
+
+            if (pos.getY() == area.minY - 1 && (state.isAir() || !fluidState.isEmpty())) {
+                stackToPlace.push(pos.immutable());
             }
         });
     }
+
 
     private Stream<BlockPos> getWallBlocks(AABB base, int inflate) {
         AABB expanded = base.inflate(inflate);

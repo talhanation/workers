@@ -37,6 +37,7 @@ public class RecruitsPathNodeEvaluator extends NodeEvaluator {
     private int x;
     private int y;
     private int z;
+    private int floorOffset;
     public void prepare(PathNavigationRegion region, Mob mob) {
         super.prepare(region, mob);
         if(mob.isVehicle()){
@@ -66,6 +67,10 @@ public class RecruitsPathNodeEvaluator extends NodeEvaluator {
         this.x = x;
         this.y = y;
         this.z = z;
+    }
+
+    public void setFloorOffset(int offset){
+        this.floorOffset = offset;
     }
 
     //prefer blocks that have empty neighbors
@@ -340,14 +345,17 @@ public class RecruitsPathNodeEvaluator extends NodeEvaluator {
     }
 
     protected double getFloorLevel(BlockPos p_164733_) {
-        return (this.canFloat() || this.isAmphibious()) && this.level.getFluidState(p_164733_).is(FluidTags.WATER) ? (double)p_164733_.getY() + 0.5D : getFloorLevel(this.level, p_164733_);
+        return (this.canFloat() || this.isAmphibious())
+                && this.level.getFluidState(p_164733_).is(FluidTags.WATER) ? (double)p_164733_.getY() + 0.5D : getFloorLevel(this.level, p_164733_);
     }
 
-    public static double getFloorLevel(BlockGetter level, BlockPos pos) {
-        BlockPos blockpos = pos.below(3);
+    public double getFloorLevel(BlockGetter level, BlockPos pos) {
+        BlockPos blockpos = pos.below(this.floorOffset);
         VoxelShape voxelshape = level.getBlockState(blockpos).getCollisionShape(level, blockpos);
         return (double)blockpos.getY() + (voxelshape.isEmpty() ? 0.0D : voxelshape.max(Direction.Axis.Y));
     }
+
+
 
     protected boolean isAmphibious() {
         return false;

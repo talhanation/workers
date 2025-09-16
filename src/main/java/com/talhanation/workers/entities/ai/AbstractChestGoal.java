@@ -43,8 +43,8 @@ public abstract class AbstractChestGoal extends Goal {
                 return false;
             }
             else{
-                this.worker.getNavigation().moveTo(pos.getX(), pos.getY(), pos.getZ(), 0.8F);
-                this.worker.setFollowState(6); //Working
+                this.worker.setFollowState(6); //Deposit
+                this.worker.getNavigation().moveTo(pos.getX(), pos.getY(), pos.getZ(), 0.9F);
                 this.worker.getLookControl().setLookAt(pos.getCenter());
             }
             return true;
@@ -123,7 +123,7 @@ public abstract class AbstractChestGoal extends Goal {
 
     @Override
     public boolean isInterruptable() {
-        return false;
+        return true;
     }
 
     @Override
