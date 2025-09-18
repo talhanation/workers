@@ -3,6 +3,7 @@ package com.talhanation.workers.entities.workarea;
 import com.talhanation.workers.Main;
 import com.talhanation.workers.client.gui.BuildAreaScreen;
 import com.talhanation.workers.network.MessageToClientOpenWorkAreaScreen;
+import com.talhanation.workers.world.BuildBlock;
 import com.talhanation.workers.world.ScannedBlock;
 import com.talhanation.workers.world.StructureManager;
 import net.minecraft.client.gui.screens.Screen;
@@ -37,7 +38,7 @@ import java.util.*;
 public class BuildArea extends AbstractWorkAreaEntity {
     public static final EntityDataAccessor<CompoundTag> STRUCTURE = SynchedEntityData.defineId(BuildArea.class, EntityDataSerializers.COMPOUND_TAG);
     public Stack<BlockPos> stackToBreak = new Stack<>();
-
+    public Stack<BuildBlock> stackToPlace = new Stack<>();
     public BuildArea(EntityType<?> type, Level level) {
         super(type, level);
     }
@@ -93,6 +94,8 @@ public class BuildArea extends AbstractWorkAreaEntity {
     }
 
     public void setStartBuild() {
+        stackToPlace.clear();
+
         CompoundTag tag = getStructureNBT();
         if (tag == null || !tag.contains("blocks", Tag.TAG_LIST)) return;
         int width = tag.getInt("width");
@@ -120,7 +123,7 @@ public class BuildArea extends AbstractWorkAreaEntity {
             BlockState state = NbtUtils.readBlockState(BuiltInRegistries.BLOCK.asLookup(), stateTag);
             BlockState rotatedState = rotateBlockState(state, rotationSteps);
 
-            this.getCommandSenderWorld().setBlock(worldPos, rotatedState, 3);
+            this.stackToPlace.push(new BuildBlock(worldPos, rotatedState));
         }
     }
 
@@ -284,3 +287,4 @@ public class BuildArea extends AbstractWorkAreaEntity {
         return stacks;
     }
 }
+

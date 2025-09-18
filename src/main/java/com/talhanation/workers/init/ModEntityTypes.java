@@ -2,6 +2,7 @@ package com.talhanation.workers.init;
 
 import com.talhanation.workers.Main;
 
+import com.talhanation.workers.entities.BuilderEntity;
 import com.talhanation.workers.entities.FarmerEntity;
 import com.talhanation.workers.entities.LumberjackEntity;
 import com.talhanation.workers.entities.MinerEntity;
@@ -76,6 +77,14 @@ public class ModEntityTypes {
                         .setTrackingRange(32)
                         .setShouldReceiveVelocityUpdates(true)
                         .build(new ResourceLocation(Main.MOD_ID, "miner").toString()));
+
+        public static final RegistryObject<EntityType<BuilderEntity>> BUILDER = ENTITY_TYPES.register("builder",
+                () -> EntityType.Builder.of(BuilderEntity::new, MobCategory.CREATURE)
+                        .sized(0.6F, 1.95F)
+                        .canSpawnFarFromPlayer()
+                        .setTrackingRange(32)
+                        .setShouldReceiveVelocityUpdates(true)
+                        .build(new ResourceLocation(Main.MOD_ID, "builder").toString()));
 
 /*
         public static final RegistryObject<EntityType<FishermanEntity>> FISHERMAN = ENTITY_TYPES.register("fisherman",

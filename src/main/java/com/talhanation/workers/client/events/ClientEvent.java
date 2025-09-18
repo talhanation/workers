@@ -27,11 +27,13 @@ public class ClientEvent {
             EntityRenderers.register(ModEntityTypes.FARMER.get(), WorkerVillagerRenderer::new);
             EntityRenderers.register(ModEntityTypes.LUMBERJACK.get(), WorkerVillagerRenderer::new);
             EntityRenderers.register(ModEntityTypes.MINER.get(), WorkerVillagerRenderer::new);
+            EntityRenderers.register(ModEntityTypes.BUILDER.get(), WorkerVillagerRenderer::new);
         }
         else{
             EntityRenderers.register(ModEntityTypes.FARMER.get(), WorkerHumanRenderer::new);
             EntityRenderers.register(ModEntityTypes.LUMBERJACK.get(), WorkerHumanRenderer::new);
             EntityRenderers.register(ModEntityTypes.MINER.get(), WorkerHumanRenderer::new);
+            EntityRenderers.register(ModEntityTypes.BUILDER.get(), WorkerVillagerRenderer::new);
         }
     }
 }
