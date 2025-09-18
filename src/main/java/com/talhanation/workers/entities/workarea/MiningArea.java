@@ -2,6 +2,7 @@ package com.talhanation.workers.entities.workarea;
 
 import com.talhanation.workers.Main;
 import com.talhanation.workers.client.gui.MiningAreaScreen;
+import com.talhanation.workers.config.WorkersServerConfig;
 import com.talhanation.workers.entities.MinerEntity;
 import com.talhanation.workers.network.MessageToClientOpenWorkAreaScreen;
 import net.minecraft.client.gui.screens.Screen;
@@ -11,6 +12,7 @@ import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.syncher.EntityDataAccessor;
 import net.minecraft.network.syncher.EntityDataSerializers;
 import net.minecraft.network.syncher.SynchedEntityData;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResult;
@@ -25,6 +27,7 @@ import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
 import net.minecraftforge.common.Tags;
 import net.minecraftforge.network.PacketDistributor;
+import net.minecraftforge.registries.ForgeRegistries;
 
 import java.util.Stack;
 import java.util.stream.Stream;
@@ -59,6 +62,12 @@ public class MiningArea extends AbstractWorkAreaEntity {
         super.addAdditionalSaveData(tag);
         tag.putInt("miningMode", this.getMiningMode().getIndex());
         tag.putBoolean("closeFloor", this.getCloseFloor());
+    }
+
+    @Override
+    public void tick() {
+        super.tick();
+        if(this.isDone()) this.remove(RemovalReason.DISCARDED);
     }
 
     public Item getRenderItem()  {
@@ -125,32 +134,30 @@ public class MiningArea extends AbstractWorkAreaEntity {
             BlockState state = level.getBlockState(pos);
             FluidState fluidState = level.getFluidState(pos);
             if (pos.getY() != area.maxY && !state.isAir() && fluidState.isEmpty()) {
-
-                if (!isAir(state)) {
+                if (!isAir(state) && !shouldIgnore(state)) {
                     stackToBreak.push(pos.immutable());
                 }
             }
         });
     }
 
+    public boolean shouldIgnore(BlockState state){
+        ResourceLocation id = ForgeRegistries.BLOCKS.getKey(state.getBlock());
+        if(id == null) return false;
+        return WorkersServerConfig.MINER_IGNORE.contains(id.toString());
+    }
+
     public void scanForOresOnWalls() {
         if (area == null) area = this.getArea();
-        stackToBreak.clear(); // optional: oder eigene stackToOres
+        stackToBreak.clear();
 
         Level level = this.getCommandSenderWorld();
 
         getWallBlocks(area, 3).forEach(pos -> {
             BlockState state = level.getBlockState(pos);
 
-            if (isOre(state)) {
-                for (Direction dir : Direction.values()) {
-                    BlockPos adj = pos.relative(dir);
-                    BlockState blockstate = level.getBlockState(adj);
-                    if (this.isAir(blockstate)) {
-                        stackToBreak.push(pos.immutable());
-                        break;
-                    }
-                }
+            if (isOre(state) && hasAirNeighbor(pos, level)) {
+                stackToBreak.push(pos.immutable());
             }
         });
     }
@@ -165,7 +172,18 @@ public class MiningArea extends AbstractWorkAreaEntity {
             BlockState state = level.getBlockState(pos);
             FluidState fluidState = level.getFluidState(pos);
 
+            if(!fluidState.isEmpty()) {
+                stackToPlace.push(pos.immutable());
+            }
+
             if (pos.getY() == area.minY - 1 && (state.isAir() || !fluidState.isEmpty())) {
+                stackToPlace.push(pos.immutable());
+            }
+        });
+
+        BlockPos.betweenClosedStream(area).forEach(pos -> {
+            FluidState fluidState = level.getFluidState(pos);
+            if (fluidState.isSource()) {
                 stackToPlace.push(pos.immutable());
             }
         });
@@ -185,6 +203,14 @@ public class MiningArea extends AbstractWorkAreaEntity {
         }
 
         return true;
+    }
+
+    public boolean hasAirNeighbor(BlockPos pos, Level level){
+        for(Direction direction: Direction.values()){
+            BlockState state = level.getBlockState(pos.relative(direction,1));
+            if(isAir(state)) return true;
+        }
+        return false;
     }
 
     public boolean isOre(BlockState state){

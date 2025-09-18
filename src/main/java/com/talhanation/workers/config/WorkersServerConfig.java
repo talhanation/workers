@@ -35,6 +35,8 @@ public class WorkersServerConfig {
 
     public static ArrayList<String> MINER_PICKUP = new ArrayList<>(
             Arrays.asList(
+                    "minecraft:torch",
+                    "minecraft:lantern",
                     "minecraft:redstone",
                     "minecraft:cobblestone",
                     "minecraft:sandstone",
@@ -44,6 +46,29 @@ public class WorkersServerConfig {
                     "minecraft:clay",
                     "minecraft:dripstone_block",
                     "minecraft:pointed_dripstone",
+                    "minecraft:netherrack",
+                    "minecraft:emerald",
+                    "minecraft:lapis_lazuli",
+                    "minecraft:diamond"
+            ));
+
+    public static ArrayList<String> MINER_IGNORE = new ArrayList<>(
+            Arrays.asList(
+                    "minecraft:air",
+                    "minecraft:cave_air",
+                    "minecraft:torch",
+                    "minecraft:wall_torch",
+                    "minecraft:lantern",
+                    "minecraft:lever",
+                    "minecraft:redstone_torch",
+                    "minecraft:redstone_wall_torch",
+                    "minecraft:redstone_wire",
+                    "minecraft:redstone_lamp",
+                    "minecraft:rail",
+                    "minecraft:water",
+                    "minecraft:soul_lantern",
+                    "minecraft:soul_torch",
+                    "minecraft:soul_wall_torch",
                     "minecraft:netherrack"
             ));
 }

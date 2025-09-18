@@ -23,9 +23,10 @@ import net.minecraft.world.entity.item.ItemEntity;
 import net.minecraft.world.item.*;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.ServerLevelAccessor;
+import net.minecraft.world.level.block.state.BlockState;
 import net.minecraftforge.common.ForgeMod;
 import net.minecraftforge.common.Tags;
-import net.minecraftforge.common.data.ForgeItemTagsProvider;
+import net.minecraftforge.common.TierSortingRegistry;
 import net.minecraftforge.registries.ForgeRegistries;
 
 import javax.annotation.Nullable;
@@ -132,5 +133,34 @@ public class MinerEntity extends AbstractWorkerEntity{
     @Override
     public AbstractWorkAreaEntity getCurrentWorkArea() {
         return currentMiningArea;
+    }
+
+    public boolean shouldIgnoreBlock(BlockState blockState) {
+        ResourceLocation id = ForgeRegistries.BLOCKS.getKey(blockState.getBlock());
+        if(id == null) return false;
+        return (WorkersServerConfig.MINER_IGNORE.contains(id.toString()) || !canBreakBlock(blockState));
+    }
+
+    public boolean canBreakBlock(BlockState state){
+        ItemStack tool = this.getMainHandItem();
+        if(tool.getItem() instanceof DiggerItem diggerItem){
+            return TierSortingRegistry.isCorrectTierForDrops(diggerItem.getTier(), state);
+        }
+        else
+            return false;
+    }
+
+
+    public void changeTool(BlockState blockState) {
+        if (blockState != null) {
+            if (blockState.is(BlockTags.MINEABLE_WITH_SHOVEL)) {
+                switchMainHandItem(itemStack -> itemStack.getItem() instanceof ShovelItem);
+            }
+            else if (blockState.is(BlockTags.MINEABLE_WITH_PICKAXE)) {
+                switchMainHandItem(itemStack -> itemStack.getItem() instanceof PickaxeItem);
+            }
+            else
+                switchMainHandItem(ItemStack::isEmpty);
+        }
     }
 }

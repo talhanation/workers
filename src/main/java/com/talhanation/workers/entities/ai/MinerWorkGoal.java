@@ -1,5 +1,6 @@
 package com.talhanation.workers.entities.ai;
 
+import com.google.common.collect.ImmutableSet;
 import com.talhanation.workers.entities.MinerEntity;
 import com.talhanation.workers.entities.workarea.MiningArea;
 import com.talhanation.workers.world.NeededItem;
@@ -12,12 +13,12 @@ import net.minecraft.world.InteractionHand;
 import net.minecraft.world.entity.ai.goal.Goal;
 import net.minecraft.world.item.BlockItem;
 import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.Items;
 import net.minecraft.world.item.PickaxeItem;
 import net.minecraft.world.level.ClipContext;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.state.BlockState;
-import net.minecraft.world.phys.HitResult;
 import net.minecraft.world.phys.Vec3;
 
 import javax.annotation.Nullable;
@@ -32,6 +33,7 @@ public class MinerWorkGoal extends Goal {
     public BlockPos blockPos;
     public Stack<BlockPos> stackToBreak;
     public Stack<BlockPos> stackToPlace;
+    private boolean needToSeeBlock;
 
     public MinerWorkGoal(MinerEntity minerEntity) {
         this.minerEntity = minerEntity;
@@ -40,7 +42,7 @@ public class MinerWorkGoal extends Goal {
 
     @Override
     public boolean canUse() {
-        return !minerEntity.needsToSleep() && minerEntity.getFollowState() != 1 && !minerEntity.needsToGetToChest() && this.isMiningAreaNotRemoved();
+        return !minerEntity.needsToSleep() && minerEntity.getFollowState() != 1 && !minerEntity.needsToGetToChest() && this.isMiningAreaAvailable();
     }
 
     @Override
@@ -59,7 +61,9 @@ public class MinerWorkGoal extends Goal {
         if(state == null) return;
         if(blockPos != null) this.minerEntity.getLookControl().setLookAt(blockPos.getCenter());
 
-        if(!isMiningAreaNotRemoved()) return;
+        if(!isMiningAreaAvailable()) return;
+
+        if(checkPlaceTorch()) return;
 
         if(state != State.SELECT_WORK_AREA && this.minerEntity.currentMiningArea == null){
             this.blockPos = null;
@@ -67,15 +71,17 @@ public class MinerWorkGoal extends Goal {
             return;
         }
 
-        //if(minerEntity.tickCount % 5 != 0) return;
-        if(blockPos != null && moveToPosition(blockPos, 20)) return;
+        if(minerEntity.tickCount % 20 == 0){
+            if(blockPos != null && moveToPosition(blockPos, 20)) return;
+        }
 
         if(state == State.MINING){
             if(this.mineBlocks(this.stackToBreak)) return;
 
-            setState(State.PREPARE_CLOSE_FLOOR);
+            setState(State.PREPARE_MINE_WALLS);
         }
 
+        if(minerEntity.tickCount % 5 != 0) return;
         switch(state){
             case SELECT_WORK_AREA ->{
                 if(minerEntity.currentMiningArea != null) setState(State.MOVE_TO_WORK_AREA);
@@ -95,16 +101,15 @@ public class MinerWorkGoal extends Goal {
             }
 
             case MOVE_TO_WORK_AREA ->{
-                if(this.moveToPosition(minerEntity.currentMiningArea.getOnPos(), 100)) return;
+                if(this.moveToPosition(minerEntity.currentMiningArea.getOnPos(), 70)) return;
                 this.blockPos = null;
-                setState(State.PREPARE_MINING);
+                setState(State.PREPARE_CLOSE_FLOOR);
             }
 
             case PREPARE_MINING -> {
                 this.minerEntity.currentMiningArea.scanBreakArea();
 
                 this.stackToBreak = this.minerEntity.currentMiningArea.stackToBreak;
-
 
                 if(stackToBreak.isEmpty()){
                     setState(State.PREPARE_MINE_WALLS);
@@ -113,18 +118,20 @@ public class MinerWorkGoal extends Goal {
 
                 minerEntity.switchMainHandItem(itemStack -> itemStack.getItem() instanceof PickaxeItem);
 
+                boolean hasAxe = minerEntity.getMainHandItem().getItem() instanceof PickaxeItem;
+                if(!hasAxe){
+                    minerEntity.addNeededItem(new NeededItem(stack -> stack.getItem() instanceof PickaxeItem, 1, false));
+                    this.blockPos = null;
+                    return;
+                }
+                needToSeeBlock = true;
                 setState(State.MINING);
-            }
-
-            case MINING -> {
-                //IS HANDLED ABOVE
             }
 
             case PREPARE_MINE_WALLS -> {
                 this.minerEntity.currentMiningArea.scanForOresOnWalls();
 
                 this.stackToBreak = minerEntity.currentMiningArea.stackToBreak;
-
                 if(stackToBreak.isEmpty()){
                     setState(State.PREPARE_CLOSE_FLOOR);
                     return;
@@ -138,7 +145,7 @@ public class MinerWorkGoal extends Goal {
                     this.blockPos = null;
                     return;
                 }
-
+                needToSeeBlock = false;
                 setState(State.MINING);
             }
 
@@ -163,10 +170,16 @@ public class MinerWorkGoal extends Goal {
 
             case DONE -> {
                 if(!workDone){
+                    blockPos = null;
+                    this.minerEntity.currentMiningArea.scanBreakArea();
+                    if(!this.minerEntity.currentMiningArea.stackToBreak.isEmpty()){
+                        setState(State.PREPARE_MINING);
+                        return;
+                    }
                     workDone = true;
                     minerEntity.currentMiningArea.setBeingWorkedOn(false);
 
-                    //ONLY FOR MINING AREA
+                    //ONLY FOR MINING AREA WILL REMOVE IT
                     this.minerEntity.currentMiningArea.setDone(true);
 
                     blockPos = null;
@@ -183,7 +196,38 @@ public class MinerWorkGoal extends Goal {
         }
     }
 
-    private boolean isMiningAreaNotRemoved() {
+    private boolean checkPlaceTorch() {
+        if(minerEntity.getCommandSenderWorld().getRawBrightness(minerEntity.getOnPos().above(), 0) <= 7){
+            BlockState onPosState = minerEntity.getCommandSenderWorld().getBlockState(minerEntity.getOnPos());
+            BlockState stateAbove = minerEntity.getCommandSenderWorld().getBlockState(minerEntity.getOnPos().above());
+            if(stateAbove.isAir() && !onPosState.isAir()){
+                placeTorch();
+                return true;
+            }
+
+        }
+        return false;
+    }
+
+    public void placeTorch(){
+        if (minerEntity.getInventory().hasAnyOf(ImmutableSet.of(Items.TORCH))){
+            minerEntity.switchMainHandItem(itemStack -> itemStack.is(Items.TORCH));
+
+            minerEntity.getCommandSenderWorld().setBlock(minerEntity.getOnPos().above(), Blocks.TORCH.defaultBlockState(), 3);
+            minerEntity.getCommandSenderWorld().playSound(null, this.minerEntity.getX(), this.minerEntity.getY(), this.minerEntity.getZ(), SoundEvents.WOOD_PLACE, SoundSource.BLOCKS, 1.0F, 1.0F);
+
+            for (int i = 0; i < minerEntity.getInventory().getContainerSize(); ++i) {
+                ItemStack itemstack = minerEntity.getInventory().getItem(i);
+                if(itemstack.is(Items.TORCH)) itemstack.shrink(1);
+            }
+        }
+        else{
+            NeededItem torch = new NeededItem(itemStack -> itemStack.is(Items.TORCH), 16, true);
+            if(!minerEntity.neededItems.contains(torch)) minerEntity.addNeededItem(torch);
+        }
+    }
+
+    private boolean isMiningAreaAvailable() {
         if(minerEntity.currentMiningArea == null || !minerEntity.currentMiningArea.isRemoved()) return true;
         else {
             minerEntity.currentMiningArea = null;
@@ -207,7 +251,7 @@ public class MinerWorkGoal extends Goal {
             }
 
             BlockState state = minerEntity.getCommandSenderWorld().getBlockState(blockPos);
-            if(state.isAir()){
+            if(state.isAir() || minerEntity.shouldIgnoreBlock(state)){
                 if(!positions.isEmpty()){
                     blockPos = this.getNewMiningPosition(positions);
                 }
@@ -218,6 +262,8 @@ public class MinerWorkGoal extends Goal {
                 blockBreakTime = 0;
             }
             else{
+                this.minerEntity.changeTool(state);
+
                 this.minerEntity.mineBlock(blockPos);
                 this.minerEntity.swing(InteractionHand.MAIN_HAND);
             }
@@ -227,25 +273,27 @@ public class MinerWorkGoal extends Goal {
     }
 
     private BlockPos getNewMiningPosition(Stack<BlockPos> positions) {
-        positions.removeIf(pos ->
-                !canSeeBlock(minerEntity.getCommandSenderWorld(), minerEntity.getEyePosition(), pos)
-        );
-
         positions.sort(Comparator.comparingDouble(
                 pos -> minerEntity.position().distanceToSqr(pos.getCenter())
         ));
+        positions.sort(Comparator.reverseOrder());
 
         BlockPos newPosition = null;
 
         if(blockPos == null){
-            for (BlockPos candidate : positions) {
-                if (!hasAirNeighbor(minerEntity.getCommandSenderWorld(), candidate)) {
-                    continue;
-                }
+            if(this.needToSeeBlock){
+                positions.removeIf(pos ->
+                        !canSeeBlock(minerEntity.getCommandSenderWorld(), minerEntity.position().add(0, 1, 0), pos)
+                );
 
-                newPosition = candidate;
-                break;
             }
+
+            if(positions.isEmpty()){
+                setState(State.MOVE_TO_WORK_AREA);
+                return null;
+            }
+
+            newPosition = positions.pop();
         }
         else if(positions.contains(blockPos.above())){
             newPosition = blockPos.above();
@@ -260,19 +308,12 @@ public class MinerWorkGoal extends Goal {
         return newPosition;
     }
 
-    private boolean hasAirNeighbor(Level level, BlockPos pos) {
-        return level.isEmptyBlock(pos.above())
-                || level.isEmptyBlock(pos.below())
-                || level.isEmptyBlock(pos.north())
-                || level.isEmptyBlock(pos.south())
-                || level.isEmptyBlock(pos.east())
-                || level.isEmptyBlock(pos.west());
-    }
     //PERFORMANCE HEAVY DO NOT USE FREQUENTLY
     private boolean canSeeBlock(Level level, Vec3 start, BlockPos target) {
-        Vec3 targetCenter = Vec3.atCenterOf(target);
+        Vec3 targetCenter = target.getCenter();
         ClipContext ctx = new ClipContext(start, targetCenter, ClipContext.Block.COLLIDER, ClipContext.Fluid.NONE, minerEntity);
-        return level.clip(ctx).getType() == HitResult.Type.MISS;
+        BlockPos ctxPos = level.clip(ctx).getBlockPos();
+        return ctxPos.equals(target);
     }
 
     public boolean closeHoles(Stack<BlockPos> positions){
@@ -287,17 +328,20 @@ public class MinerWorkGoal extends Goal {
             }
 
             if(blockPos == null){
-                if(!positions.isEmpty()) blockPos = positions.pop();
-                return blockPos != null;
-            }
-
-            BlockState state = minerEntity.getCommandSenderWorld().getBlockState(blockPos);
-            if(!state.isAir()){
                 if(!positions.isEmpty()){
                     blockPos = positions.pop();
                 }
                 else{
-                    this.blockPos = null;
+                    return false;
+                }
+            }
+
+            BlockState state = minerEntity.getCommandSenderWorld().getBlockState(blockPos);
+            if(!state.isAir() && !minerEntity.shouldIgnoreBlock(state)){
+                if(!positions.isEmpty()){
+                    blockPos = positions.pop();
+                }
+                else{
                     return false;
                 }
             }
@@ -375,10 +419,13 @@ public class MinerWorkGoal extends Goal {
         else{
             double distance = minerEntity.getHorizontalDistanceTo(pos.getCenter());
             if(distance < threshold){
+                minerEntity.getNavigation().stop();
+                BlockPos pos1 = minerEntity.getOnPos();
+                minerEntity.getMoveControl().setWantedPosition(pos1.getX(), pos1.getY(), pos1.getZ(), 1);
                 return false;
             }
             else{
-                //minerEntity.getNavigation().stop();
+
                 minerEntity.setFollowState(6); //Working
                 minerEntity.getNavigation().moveTo(pos.getX(), pos.getY(), pos.getZ(), 0.8F);
                 minerEntity.getLookControl().setLookAt(pos.getCenter());
@@ -390,7 +437,7 @@ public class MinerWorkGoal extends Goal {
     public enum State{
         SELECT_WORK_AREA,
         MOVE_TO_WORK_AREA,
-        SCAN_BLOCKS,
+        CHECK_FLUIDS,
         PREPARE_MINE_WALLS,
         MINE_WALLS,
         PREPARE_CLOSE_FLOOR,
