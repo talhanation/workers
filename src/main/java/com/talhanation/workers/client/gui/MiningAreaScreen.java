@@ -18,8 +18,6 @@ import java.util.UUID;
 public class MiningAreaScreen extends WorkAreaScreen {
 
     public final MiningArea miningArea;
-    public DropDownMenu<MiningArea.MiningMode> miningModes;
-    public MiningArea.MiningMode mode;
     public Button xSizePlusButton;
     public Button xSizeMinusButton;
     public Button ySizePlusButton;
@@ -37,7 +35,6 @@ public class MiningAreaScreen extends WorkAreaScreen {
 
     @Override
     protected void init() {
-        mode = miningArea.getMiningMode();
         this.areaXSize = miningArea.getWidthSize();
         this.areaYSize = miningArea.getHeightSize();
         this.areaZSize = miningArea.getDepthSize();
@@ -59,31 +56,6 @@ public class MiningAreaScreen extends WorkAreaScreen {
         int boxWidth = 120;
         int boxHeight = 20;
 
-        miningModes = new DropDownMenu<>(mode, x - boxWidth/2, y + previewHeight / 2, boxWidth, boxHeight,
-                List.of(MiningArea.MiningMode.values()),
-                Enum::toString,//TODO: LANG SUPPORT
-                selected -> {
-                    this.mode = selected;
-                    if(mode == MiningArea.MiningMode.MINE){
-                        areaXSize = 16;
-                        areaZSize = 16;
-                        areaYSize = 10;
-                        areaYOffset = -9;
-                    }
-                    else{
-                        areaYOffset = 1;
-                    }
-
-                    this.miningArea.setWidthSize(areaXSize);
-                    this.miningArea.setDepthSize(areaZSize);
-                    this.miningArea.setHeightSize(areaYSize);
-                    this.miningArea.setHeightOffset(areaYOffset);
-                    Main.SIMPLE_CHANNEL.sendToServer(new MessageUpdateMiningArea(this.miningArea.getUUID(), areaXSize, areaYSize, areaZSize, mode, areaYOffset));
-                    this.setButtons();
-                }
-        );
-
-
         int sizeButtonX = 120;
         int sizeButtonY = 130;
         addRenderableWidget(new BlackShowingTextField(x - boxWidth/2, y - previewHeight / 2 + 130, boxWidth, boxHeight, Component.literal("x: " + areaXSize)));
@@ -98,7 +70,7 @@ public class MiningAreaScreen extends WorkAreaScreen {
                     areaXSize = Mth.clamp(areaXSize, 1, 16);
 
                     this.miningArea.setWidthSize(areaXSize);
-                    Main.SIMPLE_CHANNEL.sendToServer(new MessageUpdateMiningArea(this.miningArea.getUUID(), areaXSize, areaYSize, areaZSize, mode, areaYOffset));
+                    Main.SIMPLE_CHANNEL.sendToServer(new MessageUpdateMiningArea(this.miningArea.getUUID(), areaXSize, areaYSize, areaZSize, areaYOffset));
                     this.setButtons();
                 }
         ));
@@ -110,7 +82,7 @@ public class MiningAreaScreen extends WorkAreaScreen {
                     areaXSize = Mth.clamp(areaXSize, 1, 16);
 
                     this.miningArea.setWidthSize(areaXSize);
-                    Main.SIMPLE_CHANNEL.sendToServer(new MessageUpdateMiningArea(this.miningArea.getUUID(), areaXSize, areaYSize, areaZSize, mode, areaYOffset));
+                    Main.SIMPLE_CHANNEL.sendToServer(new MessageUpdateMiningArea(this.miningArea.getUUID(), areaXSize, areaYSize, areaZSize, areaYOffset));
                     this.setButtons();
                 }
         ));
@@ -122,7 +94,7 @@ public class MiningAreaScreen extends WorkAreaScreen {
                     areaYSize = Mth.clamp(areaYSize, 2, 8);
 
                     this.miningArea.setHeightSize(areaYSize);
-                    Main.SIMPLE_CHANNEL.sendToServer(new MessageUpdateMiningArea(this.miningArea.getUUID(), areaXSize, areaYSize, areaZSize, mode, areaYOffset));
+                    Main.SIMPLE_CHANNEL.sendToServer(new MessageUpdateMiningArea(this.miningArea.getUUID(), areaXSize, areaYSize, areaZSize, areaYOffset));
                     this.setButtons();
                 }
         ));
@@ -135,7 +107,7 @@ public class MiningAreaScreen extends WorkAreaScreen {
 
                     this.miningArea.setHeightSize(areaYSize);
                     UUID uuid = this.miningArea.getUUID();
-                    Main.SIMPLE_CHANNEL.sendToServer(new MessageUpdateMiningArea(uuid, areaXSize, areaYSize, areaZSize, mode, areaYOffset));
+                    Main.SIMPLE_CHANNEL.sendToServer(new MessageUpdateMiningArea(uuid, areaXSize, areaYSize, areaZSize, areaYOffset));
                     this.setButtons();
                 }
         ));
@@ -147,7 +119,7 @@ public class MiningAreaScreen extends WorkAreaScreen {
                     areaZSize = Mth.clamp(areaZSize, 1, 16);
 
                     this.miningArea.setDepthSize(areaZSize);
-                    Main.SIMPLE_CHANNEL.sendToServer(new MessageUpdateMiningArea(this.miningArea.getUUID(), areaXSize, areaYSize, areaZSize, mode, areaYOffset));
+                    Main.SIMPLE_CHANNEL.sendToServer(new MessageUpdateMiningArea(this.miningArea.getUUID(), areaXSize, areaYSize, areaZSize, areaYOffset));
                     this.setButtons();
                 }
         ));
@@ -160,49 +132,29 @@ public class MiningAreaScreen extends WorkAreaScreen {
 
                     this.miningArea.setDepthSize(areaZSize);
                     UUID uuid = this.miningArea.getUUID();
-                    Main.SIMPLE_CHANNEL.sendToServer(new MessageUpdateMiningArea(uuid, areaXSize, areaYSize, areaZSize, mode, areaYOffset));
+                    Main.SIMPLE_CHANNEL.sendToServer(new MessageUpdateMiningArea(uuid, areaXSize, areaYSize, areaZSize, areaYOffset));
                     this.setButtons();
                 }
         ));
-
-
-        xSizePlusButton.active = mode == MiningArea.MiningMode.CUSTOM;
-        xSizeMinusButton.active = mode == MiningArea.MiningMode.CUSTOM;
-        ySizePlusButton.active = mode == MiningArea.MiningMode.CUSTOM;
-        ySizeMinusButton.active = mode == MiningArea.MiningMode.CUSTOM;
-        zSizePlusButton.active = mode == MiningArea.MiningMode.CUSTOM;
-        zSizeMinusButton.active = mode == MiningArea.MiningMode.CUSTOM;
     }
 
     @Override
     public void mouseMoved(double x, double y) {
-        if(miningModes != null){
-            miningModes.onMouseMove(x,y);
-        }
         super.mouseMoved(x, y);
     }
 
     @Override
     public boolean mouseClicked(double mouseX, double mouseY, int button) {
-        if (miningModes != null && miningModes.isMouseOver(mouseX, mouseY)) {
-            this.miningModes.onMouseClick(mouseX, mouseY);
-            return true;
-        }
         return super.mouseClicked(mouseX, mouseY, button);
     }
     @Override
     public boolean mouseScrolled(double x, double y, double d) {
-        if(miningModes != null  && miningModes.isMouseOver(x, y)) miningModes.mouseScrolled(x,y,d);
-
         return super.mouseScrolled(x, y, d);
     }
 
     @Override
     public void render(GuiGraphics guiGraphics, int mouseX, int mouseY, float partialTicks) {
         super.render(guiGraphics, mouseX, mouseY, partialTicks);
-        if (miningModes != null) {
-            miningModes.renderWidget(guiGraphics, mouseX, mouseY, partialTicks);
-        }
     }
 
     @Override

@@ -15,16 +15,14 @@ public class MessageUpdateMiningArea implements Message<MessageUpdateMiningArea>
     public int xSize;
     public int ySize;
     public int zSize;
-    public int modeIndex;
     public int yOffset;
     public MessageUpdateMiningArea() {}
 
-    public MessageUpdateMiningArea(UUID uuid, int xSize, int ySize, int zSize, MiningArea.MiningMode mode, int yOffset) {
+    public MessageUpdateMiningArea(UUID uuid, int xSize, int ySize, int zSize, int yOffset) {
         this.uuid = uuid;
         this.xSize = xSize;
         this.ySize = ySize;
         this.zSize = zSize;
-        this.modeIndex = mode.getIndex();
         this.yOffset = yOffset;
     }
 
@@ -50,7 +48,6 @@ public class MessageUpdateMiningArea implements Message<MessageUpdateMiningArea>
         miningArea.setWidthSize(this.xSize);
         miningArea.setHeightSize(this.ySize);
         miningArea.setDepthSize(this.zSize);
-        miningArea.setMiningMode(MiningArea.MiningMode.fromIndex(modeIndex));
         miningArea.setHeightOffset(this.yOffset);
     }
 
@@ -59,7 +56,6 @@ public class MessageUpdateMiningArea implements Message<MessageUpdateMiningArea>
         this.xSize = buf.readInt();
         this.ySize = buf.readInt();
         this.zSize = buf.readInt();
-        this.modeIndex = buf.readInt();
         this.yOffset = buf.readInt();
         return this;
     }
@@ -69,7 +65,6 @@ public class MessageUpdateMiningArea implements Message<MessageUpdateMiningArea>
         buf.writeInt(xSize);
         buf.writeInt(ySize);
         buf.writeInt(zSize);
-        buf.writeInt(modeIndex);
         buf.writeInt(yOffset);
     }
 }

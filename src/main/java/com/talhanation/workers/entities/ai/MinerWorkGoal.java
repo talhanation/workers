@@ -19,6 +19,7 @@ import net.minecraft.world.level.ClipContext;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.level.material.FluidState;
 import net.minecraft.world.phys.Vec3;
 
 import javax.annotation.Nullable;
@@ -236,7 +237,7 @@ public class MinerWorkGoal extends Goal {
     }
 
     public void setState(State state) {
-        if(minerEntity.getOwner() != null) minerEntity.getOwner().sendSystemMessage(Component.literal(state.toString()));
+        // if(minerEntity.getOwner() != null) minerEntity.getOwner().sendSystemMessage(Component.literal(state.toString()));
         this.state = state;
     }
 
@@ -337,7 +338,8 @@ public class MinerWorkGoal extends Goal {
             }
 
             BlockState state = minerEntity.getCommandSenderWorld().getBlockState(blockPos);
-            if(!state.isAir() && !minerEntity.shouldIgnoreBlock(state)){
+            FluidState fluid = minerEntity.getCommandSenderWorld().getFluidState(blockPos);
+            if(!state.isAir() && fluid.isEmpty()){
                 if(!positions.isEmpty()){
                     blockPos = positions.pop();
                 }

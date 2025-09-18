@@ -33,8 +33,6 @@ import java.util.Stack;
 import java.util.stream.Stream;
 
 public class MiningArea extends AbstractWorkAreaEntity {
-
-    public static final EntityDataAccessor<Integer> MINING_MODE = SynchedEntityData.defineId(MiningArea.class, EntityDataSerializers.INT);
     public static final EntityDataAccessor<Integer> HEIGHT_OFFSET = SynchedEntityData.defineId(MiningArea.class, EntityDataSerializers.INT);
     public static final EntityDataAccessor<Boolean> CLOSE_FLOOR = SynchedEntityData.defineId(MiningArea.class, EntityDataSerializers.BOOLEAN);
     public Stack<BlockPos> stackToPlace = new Stack<>();
@@ -45,7 +43,6 @@ public class MiningArea extends AbstractWorkAreaEntity {
     }
     protected void defineSynchedData() {
         super.defineSynchedData();
-        this.entityData.define(MINING_MODE, 0);
         this.entityData.define(HEIGHT_OFFSET, 1);
         this.entityData.define(CLOSE_FLOOR, true);
     }
@@ -53,14 +50,12 @@ public class MiningArea extends AbstractWorkAreaEntity {
     @Override
     public void readAdditionalSaveData(CompoundTag tag) {
         super.readAdditionalSaveData(tag);
-        this.setMiningMode(MiningMode.fromIndex(tag.getInt("miningMode")));
         this.setCloseFloor(tag.getBoolean("closeFloor"));
     }
 
     @Override
     public void addAdditionalSaveData(CompoundTag tag) {
         super.addAdditionalSaveData(tag);
-        tag.putInt("miningMode", this.getMiningMode().getIndex());
         tag.putBoolean("closeFloor", this.getCloseFloor());
     }
 
@@ -219,14 +214,6 @@ public class MiningArea extends AbstractWorkAreaEntity {
 
     public boolean isAir(BlockState state){
         return state.isAir() || state.is(Blocks.AIR) || state.is(Blocks.CAVE_AIR);
-    }
-
-    public void setMiningMode(MiningMode mode) {
-        this.entityData.set(MINING_MODE, mode.getIndex());
-    }
-
-    public MiningMode getMiningMode() {
-        return MiningMode.fromIndex(this.entityData.get(MINING_MODE));
     }
 
     public enum MiningMode {
