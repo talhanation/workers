@@ -117,7 +117,7 @@ public class BuilderEntity extends AbstractWorkerEntity{
     public boolean shouldIgnoreBlock(BlockState blockState) {
         ResourceLocation id = ForgeRegistries.BLOCKS.getKey(blockState.getBlock());
         if(id == null) return false;
-        return (id.toString().equals("minecraft:cave_air") || id.toString().equals("minecraft:cave_air")) && !canBreakBlock(blockState);
+        return (id.toString().equals("minecraft:air") || id.toString().equals("minecraft:cave_air")) && !canBreakBlock(blockState);
     }
 
     public boolean canBreakBlock(BlockState state){

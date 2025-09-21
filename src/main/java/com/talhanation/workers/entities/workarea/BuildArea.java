@@ -28,11 +28,13 @@ import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Block;
+import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.StairBlock;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.block.state.properties.*;
 import net.minecraftforge.network.PacketDistributor;
 
+import javax.annotation.Nullable;
 import java.util.*;
 
 public class BuildArea extends AbstractWorkAreaEntity {
@@ -93,7 +95,7 @@ public class BuildArea extends AbstractWorkAreaEntity {
         return this.entityData.get(STRUCTURE);
     }
 
-    public void setStartBuild() {
+    public void setStartBuild(boolean isCreative) {
         stackToPlace.clear();
 
         CompoundTag tag = getStructureNBT();
@@ -123,7 +125,16 @@ public class BuildArea extends AbstractWorkAreaEntity {
             BlockState state = NbtUtils.readBlockState(BuiltInRegistries.BLOCK.asLookup(), stateTag);
             BlockState rotatedState = rotateBlockState(state, rotationSteps);
 
-            this.stackToPlace.push(new BuildBlock(worldPos, rotatedState));
+
+            if(isCreative){
+                this.getCommandSenderWorld().setBlock(worldPos, rotatedState, 3);
+            }
+            else{
+                BlockState levelState = this.getCommandSenderWorld().getBlockState(worldPos);
+                if(rotatedState != null && !statesMatch(levelState, rotatedState)){
+                    this.stackToPlace.push(new BuildBlock(worldPos, rotatedState));
+                }
+            }
         }
     }
 
@@ -215,37 +226,27 @@ public class BuildArea extends AbstractWorkAreaEntity {
     public void scanBreakArea() {
         stackToBreak.clear();
         Level level = this.getCommandSenderWorld();
-        List<ScannedBlock> structure = StructureManager.parseStructureFromNBT(getStructureNBT());
-        Map<BlockPos, BlockState> expectedBlocks = new HashMap<>();
-        for (ScannedBlock scanned : structure) {
-            BlockPos worldPos = getOriginPos().offset(scanned.relativePos());
-            expectedBlocks.put(worldPos, scanned.state());
-        }
 
         BlockPos.betweenClosedStream(getArea()).forEach(pos -> {
-            BlockState currentState = level.getBlockState(pos);
+            BlockState buildingState = this.getStateFromPos(pos);
+            BlockState levelState = level.getBlockState(pos);
 
-            BlockState expectedState = expectedBlocks.get(pos);
-
-            if (expectedState == null) {
-                // Kein Block war dort vorgesehen → komplett fremder Block
-                stackToBreak.push(pos.immutable());
-            } else if (!statesMatch(currentState, expectedState)) {
-                // Block stimmt nicht mit erwartetem überein → z.B. anderer Typ, Orientierung etc.
+            if(buildingState != null && !levelState.isAir() && !statesMatch(levelState, buildingState)){
                 stackToBreak.push(pos.immutable());
             }
         });
     }
 
-    private boolean statesMatch(BlockState current, BlockState expected) {
-        if (current.getBlock() != expected.getBlock()) return false;
+    public boolean statesMatch(BlockState levelState, BlockState buildingState) {
+        if(buildingState == null) return true;
+        if(levelState.is(Blocks.GRASS_BLOCK) && buildingState.is(Blocks.DIRT)) return true;
+        if(levelState.is(Blocks.DIRT) && buildingState.is(Blocks.GRASS_BLOCK)) return true;
 
-        for (Property<?> prop : expected.getProperties()) {
-            if (!current.hasProperty(prop)) return false;
-            if (!current.getValue(prop).equals(expected.getValue(prop))) return false;
-        }
+        return levelState.equals(buildingState);
+    }
 
-        return true;
+    public List<ItemStack> getRequiredMaterials(){
+        return this.getRequiredMaterials(this.getStructureNBT());
     }
 
     public List<ItemStack> getRequiredMaterials(CompoundTag tag) {
@@ -285,6 +286,24 @@ public class BuildArea extends AbstractWorkAreaEntity {
         }
 
         return stacks;
+    }
+    @Nullable
+    public BlockState getStateFromPos(BlockPos blockPos) {
+        for(BuildBlock buildBlock : stackToPlace){
+            if(buildBlock.getPos().equals(blockPos)){
+                return buildBlock.getState();
+            }
+        }
+        return null;
+    }
+
+    public void removeBuildBlockToPlace(BlockPos blockPos) {
+        for(BuildBlock buildBlock : stackToPlace){
+            if(buildBlock.getPos().equals(blockPos)){
+                stackToPlace.remove(buildBlock);
+                return;
+            }
+        }
     }
 }
 

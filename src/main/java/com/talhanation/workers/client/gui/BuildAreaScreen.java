@@ -32,6 +32,7 @@ public class BuildAreaScreen extends WorkAreaScreen {
     public final BuildArea buildArea;
     public Button scanButton;
     public Button buildButton;
+    public Button placeButton;
     public StructurePreviewWidget structurePreview;
     public ScrollDropDownMenu<String> structureOptions;
     public CompoundTag structureNBT;
@@ -121,7 +122,7 @@ public class BuildAreaScreen extends WorkAreaScreen {
                             areaXSize = Mth.clamp(areaXSize, 3, 16);
 
                             this.workArea.setWidthSize(areaXSize);
-                            Main.SIMPLE_CHANNEL.sendToServer(new MessageUpdateBuildArea(this.workArea.getUUID(), areaXSize, areaYSize, areaZSize, structureNBT, false));
+                            Main.SIMPLE_CHANNEL.sendToServer(new MessageUpdateBuildArea(this.workArea.getUUID(), areaXSize, areaYSize, areaZSize, structureNBT, false, false));
 
                             this.resetScan();
                             this.setButtons();
@@ -135,7 +136,7 @@ public class BuildAreaScreen extends WorkAreaScreen {
                             areaXSize = Mth.clamp(areaXSize, 3, 16);
 
                             this.workArea.setWidthSize(areaXSize);
-                            Main.SIMPLE_CHANNEL.sendToServer(new MessageUpdateBuildArea(this.workArea.getUUID(), areaXSize, areaYSize, areaZSize,  structureNBT, false));
+                            Main.SIMPLE_CHANNEL.sendToServer(new MessageUpdateBuildArea(this.workArea.getUUID(), areaXSize, areaYSize, areaZSize,  structureNBT, false, false));
 
                             this.resetScan();
                             this.setButtons();
@@ -149,7 +150,7 @@ public class BuildAreaScreen extends WorkAreaScreen {
                             areaYSize = Mth.clamp(areaYSize, 3, 16);
 
                             this.workArea.setHeightSize(areaYSize);
-                            Main.SIMPLE_CHANNEL.sendToServer(new MessageUpdateBuildArea(this.workArea.getUUID(), areaXSize, areaYSize, areaZSize, structureNBT, false));
+                            Main.SIMPLE_CHANNEL.sendToServer(new MessageUpdateBuildArea(this.workArea.getUUID(), areaXSize, areaYSize, areaZSize, structureNBT, false, false));
 
                             this.resetScan();
                             this.setButtons();
@@ -164,7 +165,7 @@ public class BuildAreaScreen extends WorkAreaScreen {
 
                             this.workArea.setHeightSize(areaYSize);
                             UUID uuid = this.buildArea.getUUID();
-                            Main.SIMPLE_CHANNEL.sendToServer(new MessageUpdateBuildArea(uuid, areaXSize, areaYSize, areaZSize, structureNBT, false));
+                            Main.SIMPLE_CHANNEL.sendToServer(new MessageUpdateBuildArea(uuid, areaXSize, areaYSize, areaZSize, structureNBT, false, false));
                             this.resetScan();
                             this.setButtons();
                         }
@@ -177,7 +178,7 @@ public class BuildAreaScreen extends WorkAreaScreen {
                             areaZSize = Mth.clamp(areaZSize, 3, 16);
 
                             this.workArea.setDepthSize(areaZSize);
-                            Main.SIMPLE_CHANNEL.sendToServer(new MessageUpdateBuildArea(this.workArea.getUUID(), areaXSize, areaYSize, areaZSize, structureNBT, false));
+                            Main.SIMPLE_CHANNEL.sendToServer(new MessageUpdateBuildArea(this.workArea.getUUID(), areaXSize, areaYSize, areaZSize, structureNBT, false, false));
                             this.resetScan();
                             this.setButtons();
                         }
@@ -191,7 +192,7 @@ public class BuildAreaScreen extends WorkAreaScreen {
 
                             this.workArea.setDepthSize(areaZSize);
                             UUID uuid = this.buildArea.getUUID();
-                            Main.SIMPLE_CHANNEL.sendToServer(new MessageUpdateBuildArea(uuid, areaXSize, areaYSize, areaZSize, structureNBT, false));
+                            Main.SIMPLE_CHANNEL.sendToServer(new MessageUpdateBuildArea(uuid, areaXSize, areaYSize, areaZSize, structureNBT, false , false));
                             this.resetScan();
                             this.setButtons();
                         }
@@ -244,7 +245,7 @@ public class BuildAreaScreen extends WorkAreaScreen {
                                 this.buildArea.setWidthSize(width);
                                 this.buildArea.setHeightSize(height);
                                 this.buildArea.setDepthSize(depth);
-                                Main.SIMPLE_CHANNEL.sendToServer(new MessageUpdateBuildArea(this.buildArea.getUUID(), width, height, depth, tag, false));
+                                Main.SIMPLE_CHANNEL.sendToServer(new MessageUpdateBuildArea(this.buildArea.getUUID(), width, height, depth, tag, false, false));
 
                                 this.structureNBT = tag;
                                 this.structure = StructureManager.parseStructureFromNBT(tag);
@@ -259,9 +260,17 @@ public class BuildAreaScreen extends WorkAreaScreen {
 
                 buildButton = addRenderableWidget(new ExtendedButton(x + previewWidth/2, y + previewHeight + previewHeight/2 + 11, buttonWidth, buttonHeight, Component.literal("Build"),
                         btn -> {
-                            Main.SIMPLE_CHANNEL.sendToServer(new MessageUpdateBuildArea(this.buildArea.getUUID(), this.buildArea.getWidthSize(), this.buildArea.getHeightSize(), areaZSize, this.structureNBT, true));
+                            Main.SIMPLE_CHANNEL.sendToServer(new MessageUpdateBuildArea(this.buildArea.getUUID(), this.buildArea.getWidthSize(), this.buildArea.getHeightSize(), areaZSize, this.structureNBT, true, false));
                         }
                 ));
+
+                if(player.isCreative()){
+                    placeButton = addRenderableWidget(new ExtendedButton(x + previewWidth/2, y + previewHeight + previewHeight/2 + 11 + 20, buttonWidth, buttonHeight, Component.literal("Place"),
+                            btn -> {
+                                Main.SIMPLE_CHANNEL.sendToServer(new MessageUpdateBuildArea(this.buildArea.getUUID(), this.buildArea.getWidthSize(), this.buildArea.getHeightSize(), areaZSize, this.structureNBT, true, true));
+                            }
+                    ));
+                }
 
                 requiredItemsDropDownMenu = new DisplayTextItemScrollDropDownMenu(ItemStack.EMPTY, "Required Items", x + previewWidth/2 + buttonWidth + 3, y + previewHeight + previewHeight/2 + 11, 120, 20, requiredItems, null);
                 requiredItemsDropDownMenu.setBgFillSelected(FastColor.ARGB32.color(255, 139, 139, 139));
@@ -317,6 +326,7 @@ public class BuildAreaScreen extends WorkAreaScreen {
         if(this.buildButton == null) return;
 
         this.buildButton.active = this.structure != null;
+        this.placeButton.active = this.buildButton.active;
     }
 
     private void checkSaveButtonActive(String s) {

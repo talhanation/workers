@@ -17,14 +17,16 @@ public class MessageUpdateBuildArea implements Message<MessageUpdateBuildArea> {
     public int ySize;
     public int zSize;
     public boolean build;
+    public boolean isCreative;
     public MessageUpdateBuildArea() {}
-    public MessageUpdateBuildArea(UUID uuid, int xSize, int ySize, int zSize, CompoundTag structureNBT, boolean build) {
+    public MessageUpdateBuildArea(UUID uuid, int xSize, int ySize, int zSize, CompoundTag structureNBT, boolean build, boolean isCreative) {
         this.uuid = uuid;
         this.xSize = xSize;
         this.ySize = ySize;
         this.zSize = zSize;
         this.structureNBT = structureNBT;
         this.build = build;
+        this.isCreative = isCreative;
     }
 
     @Override
@@ -52,7 +54,7 @@ public class MessageUpdateBuildArea implements Message<MessageUpdateBuildArea> {
         buildArea.setDepthSize(this.zSize);
         buildArea.setStructureNBT(this.structureNBT);
         if(build){
-            buildArea.setStartBuild();
+            buildArea.setStartBuild(this.isCreative);
         }
     }
 
@@ -63,6 +65,7 @@ public class MessageUpdateBuildArea implements Message<MessageUpdateBuildArea> {
         this.zSize = buf.readInt();
         this.structureNBT = buf.readNbt();
         this.build = buf.readBoolean();
+        this.isCreative = buf.readBoolean();
         return this;
     }
 
@@ -73,5 +76,6 @@ public class MessageUpdateBuildArea implements Message<MessageUpdateBuildArea> {
         buf.writeInt(zSize);
         buf.writeNbt(structureNBT);
         buf.writeBoolean(build);
+        buf.writeBoolean(isCreative);
     }
 }

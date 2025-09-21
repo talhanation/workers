@@ -5,12 +5,14 @@ import com.talhanation.workers.entities.workarea.BuildArea;
 import com.talhanation.workers.world.BuildBlock;
 import com.talhanation.workers.world.NeededItem;
 import net.minecraft.core.BlockPos;
+import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.sounds.SoundSource;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.entity.ai.goal.Goal;
 import net.minecraft.world.item.BlockItem;
+import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.PickaxeItem;
 import net.minecraft.world.level.ClipContext;
@@ -22,6 +24,7 @@ import net.minecraft.world.phys.Vec3;
 
 import javax.annotation.Nullable;
 import java.util.*;
+import java.util.stream.Collectors;
 
 public class BuilderWorkGoal extends Goal {
 
@@ -30,9 +33,8 @@ public class BuilderWorkGoal extends Goal {
     public String errorMessage;
     public boolean errorMessageDone;
     public BlockPos blockPos;
-    public BuildBlock buildBlock;
     public Stack<BlockPos> stackToBreak;
-    public Stack<BuildBlock> stackToPlace;
+    public Stack<BlockPos> stackToPlace;
 
     public BuilderWorkGoal(BuilderEntity builderEntity) {
         this.builderEntity = builderEntity;
@@ -72,7 +74,7 @@ public class BuilderWorkGoal extends Goal {
             if(blockPos != null && moveToPosition(blockPos, 20)) return;
         }
 
-        if(builderEntity.tickCount % 5 != 0) return;
+        if(builderEntity.tickCount % 10 != 0) return;
         switch(state){
             case SELECT_WORK_AREA ->{
                 if(builderEntity.currentBuildArea != null) setState(State.MOVE_TO_WORK_AREA);
@@ -98,7 +100,7 @@ public class BuilderWorkGoal extends Goal {
             }
 
             case PREPARE_BREAK_BLOCKS -> {
-                this.builderEntity.currentBuildArea.scanBreakArea();
+                this.builderEntity.currentBuildArea.scanBreakArea();//SOMETHING WRONG I CAN FEEL IT
 
                 this.stackToBreak = this.builderEntity.currentBuildArea.stackToBreak;
 
@@ -125,14 +127,34 @@ public class BuilderWorkGoal extends Goal {
             }
 
             case PREPARE_PLACE_BLOCKS -> {
-                this.stackToPlace = builderEntity.currentBuildArea.stackToPlace;
-
-                //CHECK IF HE HAS ALL BLOCKS
-
-
-                if(stackToPlace.isEmpty()){
+                if(builderEntity.currentBuildArea.stackToPlace.isEmpty()){
                     setState(State.DONE);
                     return;
+                }
+
+                this.stackToPlace = new Stack<>();
+                for(BuildBlock buildBlock : builderEntity.currentBuildArea.stackToPlace){
+                    Item item = Item.BY_BLOCK.get(buildBlock.getState().getBlock());
+                    if(builderEntity.getInventory().hasAnyMatching(itemStack ->  itemStack.is(item))){
+                        stackToPlace.push(buildBlock.getPos());
+                    }
+                }
+                stackToPlace.sort(Comparator.reverseOrder());
+                //NO BUILDING ITEMS IN INVENTORY -> GET THE CORRECT ONES
+                if(stackToPlace.isEmpty()){
+                    List<ItemStack> neededItems = builderEntity.currentBuildArea.getRequiredMaterials();
+                    neededItems.sort(Comparator.comparingInt(ItemStack::getCount).reversed());
+
+                    Set<Item> allowedItems = builderEntity.currentBuildArea.stackToPlace.stream()
+                            .map(bb -> Item.BY_BLOCK.get(bb.getState().getBlock()))
+                            .collect(Collectors.toSet());
+
+                    neededItems.removeIf(stack -> !allowedItems.contains(stack.getItem()));
+
+                    ItemStack neededItem = neededItems.get(0);
+                    int amount = Math.min(64, neededItem.getCount());
+
+                    builderEntity.addNeededItem(new NeededItem(itemStack -> itemStack.is(neededItem.getItem()),  amount, false));
                 }
 
                 setState(State.PLACE_BLOCKS);
@@ -141,7 +163,7 @@ public class BuilderWorkGoal extends Goal {
             case PLACE_BLOCKS -> {
                 if(this.placeBlocks(this.stackToPlace)) return;
 
-                setState(State.DONE);
+                setState(State.PREPARE_PLACE_BLOCKS);
             }
 
             case DONE -> {
@@ -175,7 +197,7 @@ public class BuilderWorkGoal extends Goal {
     }
 
     public void setState(State state) {
-        // if(minerEntity.getOwner() != null) minerEntity.getOwner().sendSystemMessage(Component.literal(state.toString()));
+         if(builderEntity.getOwner() != null) builderEntity.getOwner().sendSystemMessage(Component.literal(state.toString()));
         this.state = state;
     }
 
@@ -243,6 +265,55 @@ public class BuilderWorkGoal extends Goal {
         positions.remove(newPosition);
         return newPosition;
     }
+    public boolean placeBlocks(Stack<BlockPos> positions){
+        if(positions != null){
+            if(blockPos == null){
+                if(!positions.isEmpty()){
+                    blockPos = positions.pop();
+                }
+                else{
+                    return false;
+                }
+            }
+
+            BlockState buildingState = builderEntity.currentBuildArea.getStateFromPos(blockPos);
+            BlockState levelState = builderEntity.getCommandSenderWorld().getBlockState(blockPos);
+
+            if(builderEntity.currentBuildArea.statesMatch(levelState, buildingState)){
+                if(!positions.isEmpty()){
+                    blockPos = positions.pop();
+                }
+                else{
+                    return false;
+                }
+            }
+            else if(buildingState != null) {
+                ItemStack buildingItem = builderEntity.getMatchingItem(itemStack -> itemStack.is(Item.BY_BLOCK.get(buildingState.getBlock())));
+                if(buildingItem != null){
+                    if(!builderEntity.getMainHandItem().is(buildingItem.getItem())){
+                        builderEntity.switchMainHandItem(itemStack -> itemStack.is(buildingItem.getItem()));
+                    }
+
+                    builderEntity.getCommandSenderWorld().setBlockAndUpdate(blockPos, buildingState);
+                    builderEntity.getCommandSenderWorld().playSound(null, blockPos.getX(), blockPos.getY(), blockPos.getZ(), buildingState.getSoundType().getPlaceSound(), SoundSource.BLOCKS, 1.0F, 1.0F);
+
+                    this.builderEntity.swing(InteractionHand.MAIN_HAND);
+
+                    buildingItem.shrink(1);
+
+                    builderEntity.currentBuildArea.removeBuildBlockToPlace(blockPos);
+                    this.blockPos = null;
+                }
+                else{
+                    return false;
+                }
+            }
+            return true;
+        }
+        this.blockPos = null;
+        return false;
+    }
+
 
     //PERFORMANCE HEAVY DO NOT USE FREQUENTLY
     private boolean canSeeBlock(Level level, Vec3 start, BlockPos target) {
@@ -252,57 +323,6 @@ public class BuilderWorkGoal extends Goal {
         return ctxPos.equals(target);
     }
 
-    public boolean placeBlocks(Stack<BuildBlock> positions){
-        if(positions != null){
-            ItemStack blockFromInv;
-
-            if(buildBlock == null || blockPos == null){
-                if(!positions.isEmpty()){
-                    buildBlock = positions.pop();
-                    blockPos = buildBlock.getPos();
-                }
-                else{
-                    return false;
-                }
-            }
-
-            blockFromInv = builderEntity.getMatchingItem(
-                    itemStack -> itemStack.getItem() instanceof BlockItem blockItem && blockItem.getBlock().defaultBlockState().is(buildBlock.getState().getBlock())
-            );
-            if(blockFromInv == null){
-                builderEntity.addNeededItem(new NeededItem(
-                        itemStack -> itemStack.getItem() instanceof BlockItem blockItem && blockItem.getBlock().defaultBlockState().is(buildBlock.getState().getBlock()),
-                        1,
-                        false)
-                );
-
-                this.buildBlock = null;
-                this.blockPos = null;
-                return false;
-            }
-
-            BlockState state = builderEntity.getCommandSenderWorld().getBlockState(blockPos);
-            if(state == buildBlock.getState()){
-                if(!positions.isEmpty()){
-                    buildBlock = positions.pop();
-                    blockPos = buildBlock.getPos();
-                }
-                else{
-                    return false;
-                }
-            }
-            else if(blockFromInv.getItem() instanceof BlockItem blockItem) {
-                builderEntity.getCommandSenderWorld().setBlockAndUpdate(blockPos, buildBlock.getState());
-                builderEntity.getCommandSenderWorld().playSound(null, blockPos.getX(), blockPos.getY(), blockPos.getZ(), SoundEvents.STONE_PLACE, SoundSource.BLOCKS, 1.0F, 1.0F);
-                blockFromInv.shrink(1);
-                this.builderEntity.swing(InteractionHand.MAIN_HAND);
-            }
-            return true;
-        }
-        this.blockPos = null;
-        this.buildBlock = null;
-        return false;
-    }
     @Override
     public boolean canContinueToUse() {
         return canUse();
@@ -326,7 +346,7 @@ public class BuilderWorkGoal extends Goal {
         for (BuildArea area : list) {
             if (area == null || area == currentArea || !area.canWorkHere(builderEntity)) continue;
 
-            if(area.isDone()) continue;
+            if(area.isDone() || area.stackToPlace.isEmpty()) continue;
 
             int priority = 0;
 
