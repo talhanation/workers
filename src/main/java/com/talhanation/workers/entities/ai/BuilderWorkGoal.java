@@ -3,6 +3,7 @@ package com.talhanation.workers.entities.ai;
 import com.talhanation.workers.entities.BuilderEntity;
 import com.talhanation.workers.entities.workarea.BuildArea;
 import com.talhanation.workers.world.BuildBlock;
+import com.talhanation.workers.world.BuildBlockParse;
 import com.talhanation.workers.world.NeededItem;
 import net.minecraft.core.BlockPos;
 import net.minecraft.network.chat.Component;
@@ -35,6 +36,7 @@ public class BuilderWorkGoal extends Goal {
     public BlockPos blockPos;
     public Stack<BlockPos> stackToBreak;
     public Stack<BlockPos> stackToPlace;
+    public int minBuildHeight;
 
     public BuilderWorkGoal(BuilderEntity builderEntity) {
         this.builderEntity = builderEntity;
@@ -71,10 +73,17 @@ public class BuilderWorkGoal extends Goal {
         }
 
         if(builderEntity.tickCount % 20 == 0){
-            if(blockPos != null && moveToPosition(blockPos, 20)) return;
+            if(blockPos != null && moveToPosition(blockPos, 40)) return;
+
+
+            if(state == State.BREAK_BLOCKS){
+                if(this.mineBlocks(this.stackToBreak)) return;
+
+                setState(State.PREPARE_PLACE_BLOCKS);
+            }
         }
 
-        if(builderEntity.tickCount % 10 != 0) return;
+        if(builderEntity.tickCount % 5 != 0) return;
         switch(state){
             case SELECT_WORK_AREA ->{
                 if(builderEntity.currentBuildArea != null) setState(State.MOVE_TO_WORK_AREA);
@@ -120,45 +129,62 @@ public class BuilderWorkGoal extends Goal {
                 setState(State.BREAK_BLOCKS);
             }
 
-            case BREAK_BLOCKS -> {
-                if(this.mineBlocks(this.stackToBreak)) return;
-
-                setState(State.PREPARE_PLACE_BLOCKS);
-            }
-
             case PREPARE_PLACE_BLOCKS -> {
-                if(builderEntity.currentBuildArea.stackToPlace.isEmpty()){
+                if (builderEntity.currentBuildArea.stackToPlace.isEmpty()) {
                     setState(State.DONE);
                     return;
                 }
 
-                this.stackToPlace = new Stack<>();
-                for(BuildBlock buildBlock : builderEntity.currentBuildArea.stackToPlace){
-                    Item item = Item.BY_BLOCK.get(buildBlock.getState().getBlock());
-                    if(builderEntity.getInventory().hasAnyMatching(itemStack ->  itemStack.is(item))){
-                        stackToPlace.push(buildBlock.getPos());
+                minBuildHeight = (int) builderEntity.currentBuildArea.getArea().maxY;
+
+                for (BuildBlock bb : builderEntity.currentBuildArea.stackToPlace) {
+                    int y = bb.getPos().getY();
+                    if (y < minBuildHeight) {
+                        minBuildHeight = y;
                     }
                 }
-                stackToPlace.sort(Comparator.reverseOrder());
-                //NO BUILDING ITEMS IN INVENTORY -> GET THE CORRECT ONES
-                if(stackToPlace.isEmpty()){
+
+
+                this.stackToPlace = new Stack<>();
+                for (BuildBlock buildBlock : builderEntity.currentBuildArea.stackToPlace) {
+                    BlockPos pos = buildBlock.getPos();
+                    if (pos.getY() != minBuildHeight) continue;
+
+                    Item item = BuildBlockParse.parseBlock(buildBlock.getState().getBlock()).getItem();
+                    if(item == null){
+                        if(builderEntity.getOwner() != null) builderEntity.getOwner().sendSystemMessage(Component.literal("Could not found item for " + buildBlock.getState().getBlock().getName() + " i, will skip this block." ));
+                        builderEntity.currentBuildArea.removeBuildBlockToPlace(pos);
+                        return;
+                    }
+                    else if (builderEntity.getInventory().hasAnyMatching(itemStack -> itemStack.is(item))) {
+                        stackToPlace.push(pos);
+                    }
+                }
+
+                if (stackToPlace.isEmpty()) {
                     List<ItemStack> neededItems = builderEntity.currentBuildArea.getRequiredMaterials();
                     neededItems.sort(Comparator.comparingInt(ItemStack::getCount).reversed());
 
                     Set<Item> allowedItems = builderEntity.currentBuildArea.stackToPlace.stream()
-                            .map(bb -> Item.BY_BLOCK.get(bb.getState().getBlock()))
+                            .filter(bb -> bb.getPos().getY() == minBuildHeight)
+                            .map(bb -> BuildBlockParse.parseBlock(bb.getState().getBlock()).getItem())
                             .collect(Collectors.toSet());
 
                     neededItems.removeIf(stack -> !allowedItems.contains(stack.getItem()));
 
-                    ItemStack neededItem = neededItems.get(0);
-                    int amount = Math.min(64, neededItem.getCount());
+                    if (!neededItems.isEmpty()) {
+                        ItemStack neededItem = neededItems.get(0);
+                        int amount = Math.min(64, neededItem.getCount());
 
-                    builderEntity.addNeededItem(new NeededItem(itemStack -> itemStack.is(neededItem.getItem()),  amount, false));
+                        builderEntity.addNeededItem(new NeededItem(
+                                itemStack -> itemStack.is(neededItem.getItem()), amount, false
+                        ));
+                    }
                 }
 
                 setState(State.PLACE_BLOCKS);
             }
+
 
             case PLACE_BLOCKS -> {
                 if(this.placeBlocks(this.stackToPlace)) return;
@@ -288,10 +314,15 @@ public class BuilderWorkGoal extends Goal {
                 }
             }
             else if(buildingState != null) {
-                ItemStack buildingItem = builderEntity.getMatchingItem(itemStack -> itemStack.is(Item.BY_BLOCK.get(buildingState.getBlock())));
+                BuildBlockParse blockParse = BuildBlockParse.parseBlock(buildingState.getBlock());
+                ItemStack buildingItem = builderEntity.getMatchingItem(itemStack -> itemStack.is(blockParse.getItem()));
                 if(buildingItem != null){
                     if(!builderEntity.getMainHandItem().is(buildingItem.getItem())){
                         builderEntity.switchMainHandItem(itemStack -> itemStack.is(buildingItem.getItem()));
+                    }
+                    //CHECK IF IT WAS PARSED TO KEEP THE BLOCK-ROTATIONS OF NOT EFFECTED ONES
+                    if(blockParse.wasParsed() && buildingItem.getItem() instanceof BlockItem blockItem){
+                        buildingState = blockItem.getBlock().defaultBlockState();
                     }
 
                     builderEntity.getCommandSenderWorld().setBlockAndUpdate(blockPos, buildingState);
@@ -302,7 +333,7 @@ public class BuilderWorkGoal extends Goal {
                     buildingItem.shrink(1);
 
                     builderEntity.currentBuildArea.removeBuildBlockToPlace(blockPos);
-                    this.blockPos = null;
+                    //this.blockPos = null;
                 }
                 else{
                     return false;
@@ -387,8 +418,6 @@ public class BuilderWorkGoal extends Goal {
             double distance = builderEntity.getHorizontalDistanceTo(pos.getCenter());
             if(distance < threshold){
                 builderEntity.getNavigation().stop();
-                BlockPos pos1 = builderEntity.getOnPos();
-                builderEntity.getMoveControl().setWantedPosition(pos1.getX(), pos1.getY(), pos1.getZ(), 1);
                 return false;
             }
             else{

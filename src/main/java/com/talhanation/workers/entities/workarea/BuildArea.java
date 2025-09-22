@@ -4,6 +4,7 @@ import com.talhanation.workers.Main;
 import com.talhanation.workers.client.gui.BuildAreaScreen;
 import com.talhanation.workers.network.MessageToClientOpenWorkAreaScreen;
 import com.talhanation.workers.world.BuildBlock;
+import com.talhanation.workers.world.BuildBlockParse;
 import com.talhanation.workers.world.ScannedBlock;
 import com.talhanation.workers.world.StructureManager;
 import net.minecraft.client.gui.screens.Screen;
@@ -29,6 +30,7 @@ import net.minecraft.world.item.Items;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.Blocks;
+import net.minecraft.world.level.block.FlowerPotBlock;
 import net.minecraft.world.level.block.StairBlock;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.block.state.properties.*;
@@ -242,6 +244,8 @@ public class BuildArea extends AbstractWorkAreaEntity {
         if(levelState.is(Blocks.GRASS_BLOCK) && buildingState.is(Blocks.DIRT)) return true;
         if(levelState.is(Blocks.DIRT) && buildingState.is(Blocks.GRASS_BLOCK)) return true;
 
+
+
         return levelState.equals(buildingState);
     }
 
@@ -263,7 +267,7 @@ public class BuildArea extends AbstractWorkAreaEntity {
             BlockState state = NbtUtils.readBlockState(BuiltInRegistries.BLOCK.asLookup(), stateTag);
 
             Block block = state.getBlock();
-            Item item = Item.BY_BLOCK.get(block);
+            Item item = BuildBlockParse.parseBlock(block).getItem();
 
             if (state.hasProperty(BlockStateProperties.DOUBLE_BLOCK_HALF)) {
                 DoubleBlockHalf half = state.getValue(BlockStateProperties.DOUBLE_BLOCK_HALF);
@@ -271,6 +275,7 @@ public class BuildArea extends AbstractWorkAreaEntity {
                     continue;
                 }
             }
+
 
             if (item instanceof BlockItem) {
                 materialMap.merge(item, 1, Integer::sum);

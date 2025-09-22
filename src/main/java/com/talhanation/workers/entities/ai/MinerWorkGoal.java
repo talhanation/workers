@@ -186,6 +186,8 @@ public class MinerWorkGoal extends Goal {
                     blockPos = null;
                     minerEntity.currentMiningArea = null;
                     this.start();
+
+                    this.minerEntity.forcedDeposit = true;
                 }
             }
 
@@ -422,8 +424,6 @@ public class MinerWorkGoal extends Goal {
             double distance = minerEntity.getHorizontalDistanceTo(pos.getCenter());
             if(distance < threshold){
                 minerEntity.getNavigation().stop();
-                BlockPos pos1 = minerEntity.getOnPos();
-                minerEntity.getMoveControl().setWantedPosition(pos1.getX(), pos1.getY(), pos1.getZ(), 1);
                 return false;
             }
             else{

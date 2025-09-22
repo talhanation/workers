@@ -39,7 +39,8 @@ public abstract class AbstractChestGoal extends Goal {
         }
         else{
             double distance = pos.getCenter().distanceToSqr(worker.position());
-            if(distance < 15){
+            if(distance < 20){
+                worker.getNavigation().stop();
                 return false;
             }
             else{

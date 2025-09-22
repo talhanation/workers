@@ -408,8 +408,9 @@ public abstract class AbstractWorkerEntity extends AbstractChunkLoaderEntity {
 
         neededItems.add(neededItem);
     }
-
-    public void onItemAddedToInventory(ItemStack itemStack){
+    //@Override
+    public void onItemStackAdded(ItemStack itemStack){
+        //super.onItemStackAdded(itemStack);
         for(NeededItem neededItem : neededItems){
             if(neededItem.matches(itemStack)){
                 NeededItem.applyToNeededItems(itemStack, neededItems);;
@@ -455,6 +456,16 @@ public abstract class AbstractWorkerEntity extends AbstractChunkLoaderEntity {
         if(allowWater){
             Fluid fluidState = level.getFluidState(pos).getType();
             return fluidState == Fluids.WATER || fluidState == Fluids.FLOWING_WATER;
+        }
+        return false;
+    }
+
+    public boolean hasFreeInvSlot() {
+        for (int i = 6; i < inventory.getContainerSize(); i++) {
+            ItemStack stack = inventory.getItem(i);
+            if (stack.isEmpty()) {
+                return true;
+            }
         }
         return false;
     }

@@ -123,6 +123,7 @@ public class DepositItemsInChestsGoal extends AbstractChestGoal {
 
             case DONE -> {
                 worker.farmedItems = 0;
+                worker.forcedDeposit = false;
             }
 
             case ERROR -> {

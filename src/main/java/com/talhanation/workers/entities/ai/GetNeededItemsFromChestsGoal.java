@@ -22,7 +22,7 @@ public class GetNeededItemsFromChestsGoal extends AbstractChestGoal {
 
     @Override
     public boolean canUse() {
-        return worker.needsToGetItems() && super.canUse();
+        return !worker.needsToDeposit() && worker.needsToGetItems() && super.canUse();
     }
 
     @Override
@@ -91,6 +91,7 @@ public class GetNeededItemsFromChestsGoal extends AbstractChestGoal {
 
             case TAKE_NEEDED_ITEMS -> {
                 worker.getLookControl().setLookAt(chestPos.getCenter());
+
                 if(takeNeededItems()){
                     setState(State.CLOSE_CHEST_DONE);
                 }
@@ -119,6 +120,13 @@ public class GetNeededItemsFromChestsGoal extends AbstractChestGoal {
                     return;
                 }
                 timer = 0;
+
+                if(!worker.hasFreeInvSlot()){
+                    setState(State.ERROR_OWN_INVENTORY_FULL);
+                    errorMessage = worker.getName().getString() + ": My Inventory is full!";
+                    return;
+                }
+
 
                 setState(State.SELECT_CHEST);
             }
@@ -151,6 +159,15 @@ public class GetNeededItemsFromChestsGoal extends AbstractChestGoal {
                     this.start();
                 }
             }
+
+            case ERROR_OWN_INVENTORY_FULL -> {
+                if(!errorMessageDone){
+                    errorMessageDone = true;
+                    if(worker.getOwner() != null) worker.getOwner().sendSystemMessage(Component.literal(errorMessage));
+
+                    worker.forcedDeposit = true;
+                }
+            }
         }
     }
 
@@ -173,7 +190,6 @@ public class GetNeededItemsFromChestsGoal extends AbstractChestGoal {
 
             for (int j = neededItems.size() - 1; j >= 0; j--) {
                 NeededItem needed = neededItems.get(j);
-
                 if (needed.matches(itemInChest)) {
                     int neededCount = needed.count;
                     int availableCount = itemInChest.getCount();
@@ -228,7 +244,8 @@ public class GetNeededItemsFromChestsGoal extends AbstractChestGoal {
         CLOSE_CHEST_DONE,
         DONE,
         ERROR_NO_CHESTS,
-        ERROR_ITEMS_NOT_FOUND
+        ERROR_ITEMS_NOT_FOUND,
+        ERROR_OWN_INVENTORY_FULL
 
     }
 }

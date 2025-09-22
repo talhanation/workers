@@ -380,10 +380,10 @@ public class FarmerWorkGoal extends Goal {
         else{
             double distance = farmer.getHorizontalDistanceTo(pos.getCenter());
             if(distance < threshold){
+                farmer.getNavigation().stop();
                 return false;
             }
             else{
-                farmer.getNavigation().stop();
                 farmer.getNavigation().moveTo(pos.getX(), pos.getY(), pos.getZ(), 0.8F);
                 farmer.setFollowState(6); //Working
                 farmer.getLookControl().setLookAt(pos.getCenter());
