@@ -3,9 +3,10 @@ package com.talhanation.workers.entities;
 import com.google.common.collect.ImmutableSet;
 import com.talhanation.recruits.config.RecruitsClientConfig;
 import com.talhanation.recruits.entities.AbstractChunkLoaderEntity;
+import com.talhanation.recruits.pathfinding.AsyncGroundPathNavigation;
+import com.talhanation.workers.entities.ai.DebugSyncWorkerPathNavigation;
 import com.talhanation.workers.entities.ai.DepositItemsInChestsGoal;
 import com.talhanation.workers.entities.ai.GetNeededItemsFromChestsGoal;
-import com.talhanation.workers.entities.ai.DebugSyncWorkerPathNavigation;
 import com.talhanation.workers.entities.workarea.AbstractWorkAreaEntity;
 import com.talhanation.workers.world.NeededItem;
 import net.minecraft.core.BlockPos;
@@ -66,14 +67,15 @@ public abstract class AbstractWorkerEntity extends AbstractChunkLoaderEntity {
     public abstract AbstractWorkAreaEntity getCurrentWorkArea();
 
     /////////////////////////////////// TICK/////////////////////////////////////////
-
+    /*
     protected @NotNull PathNavigation createNavigation(@NotNull Level level) {
-        return new DebugSyncWorkerPathNavigation(this, level);//TODO RESET TO ASYNC
+        return new DebugSyncWorkerPathNavigation(this, level);//TODO ONLY TO TEST NODE EVALUATOR
     }
 
     public @NotNull PathNavigation getNavigation() {
         return this.navigation;//TODO REMOVE)
     }
+    */
 
     public boolean isWorking(){
         return this.getFollowState() == 6;

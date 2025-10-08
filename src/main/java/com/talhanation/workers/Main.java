@@ -1,6 +1,7 @@
 package com.talhanation.workers;
 
 import com.talhanation.recruits.client.events.CommandCategoryManager;
+import com.talhanation.recruits.config.RecruitsServerConfig;
 import com.talhanation.workers.client.events.ScreenEvents;
 import com.talhanation.workers.client.gui.WorkerCommandScreen;
 import com.talhanation.workers.network.*;
@@ -76,6 +77,23 @@ public class Main {
         MinecraftForge.EVENT_BUS.register(this);
         MinecraftForge.EVENT_BUS.register(new UpdateChecker());
 
+        /*
+        RecruitsHireTradesRegistry.register(new RecruitsHireTrade(ModEntityTypes.FARMER.getId(), WorkersServerConfig.FarmerCost.get(),1, 50));
+        RecruitsHireTradesRegistry.register(new RecruitsHireTrade(ModEntityTypes.LUMBERJACK.getId(), WorkersServerConfig.LumberjackCost.get(),1, 50));
+        RecruitsHireTradesRegistry.register(new RecruitsHireTrade(ModEntityTypes.MINER.getId(), WorkersServerConfig.MinerCost.get(),1, 50));
+
+        RecruitsHireTradesRegistry.register(new RecruitsHireTrade(ModEntityTypes.BUILDER.getId(), WorkersServerConfig.BuilderCost.get(),2, 50));
+        RecruitsHireTradesRegistry.register(new RecruitsHireTrade(ModEntityTypes.MERCHANT.getId(), WorkersServerConfig.MerchantCost.get(),2, 50));
+
+        RecruitsHireTradesRegistry.register(new RecruitsHireTrade(ModEntityTypes.FISHERMAN.getId(), WorkersServerConfig.FishermanCost.get(),3, 50));
+        RecruitsHireTradesRegistry.register(new RecruitsHireTrade(ModEntityTypes.CATTLE_FARMER.getId(), WorkersServerConfig.CattleFarmerCost.get(),3, 50));
+        RecruitsHireTradesRegistry.register(new RecruitsHireTrade(ModEntityTypes.CHICKEN_FARMER.getId(), WorkersServerConfig.ChickenFarmer.get(),3, 50));
+        RecruitsHireTradesRegistry.register(new RecruitsHireTrade(ModEntityTypes.SWINEHERD.getId(), WorkersServerConfig.SwineFarmerCost.get(),3, 50));
+        RecruitsHireTradesRegistry.register(new RecruitsHireTrade(ModEntityTypes.RABBIT_FARMER.getId(), WorkersServerConfig.RabbitFarmerCost.get(),3, 50));
+        RecruitsHireTradesRegistry.register(new RecruitsHireTrade(ModEntityTypes.BEE_KEEPER.getId(), WorkersServerConfig.BeeKeeperCost.get(),3, 50));
+
+        RecruitsHireTradesRegistry.register(new RecruitsHireTrade(ModEntityTypes.CHEF.getId(), WorkersServerConfig.ChefCost.get(),4, 50));
+        */
         SIMPLE_CHANNEL = CommonRegistry.registerChannel(Main.MOD_ID, "default");
 
         Class[] messages = {
