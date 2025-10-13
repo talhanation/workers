@@ -28,6 +28,6 @@ Adds hireable Villager Workers into Minecraft.
 [[dependencies.workers]]
     modId="recruits"
     mandatory=true
-    versionRange="[1.13.4, 1.14)"
+    versionRange="[1.14, 1.14.5)"
     ordering="AFTER"
     side="BOTH"
