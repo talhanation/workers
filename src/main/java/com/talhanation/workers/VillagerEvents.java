@@ -1,123 +1,44 @@
 package com.talhanation.workers;
 
+import com.talhanation.recruits.RecruitsHireTradesRegistry;
+import com.talhanation.recruits.world.RecruitsHireTrade;
+import com.talhanation.workers.config.WorkersServerConfig;
+import com.talhanation.workers.init.ModEntityTypes;
+import net.minecraft.network.chat.Component;
+import net.minecraftforge.event.server.ServerStartingEvent;
 import net.minecraftforge.event.village.VillagerTradesEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 
+import java.util.List;
+
 public class VillagerEvents {
-    /*
-    @SubscribeEvent
-    public void onVillagerLivingUpdate(LivingTickEvent event) {
-        HashMap<VillagerProfession, EntityType<? extends AbstractWorkerEntity>> entitiesByProfession = new HashMap<>(){{
 
-            put(ModProfessions.MINER.get(), ModEntityTypes.MINER.get());
-            put(ModProfessions.LUMBERJACK.get(), ModEntityTypes.LUMBERJACK.get());
-            put(ModProfessions.FISHER.get(), ModEntityTypes.FISHERMAN.get());
-            put(ModProfessions.SHEPHERD.get(), ModEntityTypes.SHEPHERD.get());
-            put(ModProfessions.FARMER.get(), ModEntityTypes.FARMER.get());
-            put(ModProfessions.MERCHANT.get(), ModEntityTypes.MERCHANT.get());
-            put(ModProfessions.CHICKEN_FARMER.get(), ModEntityTypes.CHICKEN_FARMER.get());
-            put(ModProfessions.CATTLE_FARMER.get(), ModEntityTypes.CATTLE_FARMER.get());
-            put(ModProfessions.SWINEHERD.get(), ModEntityTypes.SWINEHERD.get());
-        }};
-
-        Entity entity = event.getEntity();
-        if (entity instanceof Villager villager) {
-            VillagerProfession profession = villager.getVillagerData().getProfession();
-            
-            if (entitiesByProfession.containsKey(profession)) {
-                EntityType<? extends AbstractWorkerEntity> workerType = entitiesByProfession.get(profession);
-                createWorker(villager, workerType);
-            }
-        }
-    }
-    */
 
     @SubscribeEvent
-    public void WanderingVillagerTrades(VillagerTradesEvent event) {
-        
-    }
-
-    @SubscribeEvent
-    public void villagerTrades(VillagerTradesEvent event) {
+    public void onServerStarting(ServerStartingEvent event) {
+        RecruitsHireTradesRegistry.register(new RecruitsHireTrade(ModEntityTypes.FARMER.getId(), WorkersServerConfig.FarmerCost.get(), 1, 50, TITLE_FARMER, DESCRIPTION_FARMER, List.of(RecruitsHireTrade.RecruitsTradeTag.FARMER, RecruitsHireTrade.RecruitsTradeTag.MELEE)));
+        RecruitsHireTradesRegistry.register(new RecruitsHireTrade(ModEntityTypes.LUMBERJACK.getId(), WorkersServerConfig.LumberjackCost.get(), 1, 50, TITLE_LUMBERJACK, DESCRIPTION_LUMBERJACK, List.of(RecruitsHireTrade.RecruitsTradeTag.FARMER, RecruitsHireTrade.RecruitsTradeTag.MELEE)));
+        RecruitsHireTradesRegistry.register(new RecruitsHireTrade(ModEntityTypes.MINER.getId(), WorkersServerConfig.MinerCost.get(), 1, 50, TITLE_MINER, DESCRIPTION_MINER, List.of(RecruitsHireTrade.RecruitsTradeTag.FARMER, RecruitsHireTrade.RecruitsTradeTag.MELEE)));
+        RecruitsHireTradesRegistry.register(new RecruitsHireTrade(ModEntityTypes.BUILDER.getId(), WorkersServerConfig.BuilderCost.get(), 1, 50, TITLE_BUILDER, DESCRIPTION_BUILDER, List.of(RecruitsHireTrade.RecruitsTradeTag.WORKER, RecruitsHireTrade.RecruitsTradeTag.MELEE)));
+        //RecruitsHireTradesRegistry.register(new RecruitsHireTrade(ModEntityTypes.MERCHANT.getId(), WorkersServerConfig.MerchantCost.get(),1, 50));
         /*
-        if (event.getType() == VillagerProfession.MASON) {
-            Trade block_trade = new Trade(Items.EMERALD, 30, ModBlocks.MINER_BLOCK.get(), 1, 4,
-                    20);
-            List<ItemListing> list = event.getTrades().get(2);
-            list.add(block_trade);
-            event.getTrades().put(2, list);
-        }
-        if (event.getType() == VillagerProfession.FARMER) {
-            Trade block_trade = new Trade(Items.EMERALD, 23, ModBlocks.LUMBERJACK_BLOCK.get(), 1,
-                    4, 20);
-            List<ItemListing> list = event.getTrades().get(2);
-            list.add(block_trade);
-            event.getTrades().put(2, list);
-        }
+        RecruitsHireTradesRegistry.register(new RecruitsHireTrade(ModEntityTypes.FISHERMAN.getId(), WorkersServerConfig.FishermanCost.get(),3, 50));
+        RecruitsHireTradesRegistry.register(new RecruitsHireTrade(ModEntityTypes.CATTLE_FARMER.getId(), WorkersServerConfig.CattleFarmerCost.get(),3, 50));
+        RecruitsHireTradesRegistry.register(new RecruitsHireTrade(ModEntityTypes.CHICKEN_FARMER.getId(), WorkersServerConfig.ChickenFarmer.get(),3, 50));
+        RecruitsHireTradesRegistry.register(new RecruitsHireTrade(ModEntityTypes.SWINEHERD.getId(), WorkersServerConfig.SwineFarmerCost.get(),3, 50));
+        RecruitsHireTradesRegistry.register(new RecruitsHireTrade(ModEntityTypes.RABBIT_FARMER.getId(), WorkersServerConfig.RabbitFarmerCost.get(),3, 50));
+        RecruitsHireTradesRegistry.register(new RecruitsHireTrade(ModEntityTypes.BEE_KEEPER.getId(), WorkersServerConfig.BeeKeeperCost.get(),3, 50));
 
-        if (event.getType() == VillagerProfession.FISHERMAN) {
-            Trade block_trade = new Trade(Items.EMERALD, 32, ModBlocks.FISHER_BLOCK.get(), 1, 4,
-                    20);
-            List<ItemListing> list = event.getTrades().get(2);
-            list.add(block_trade);
-            event.getTrades().put(2, list);
-        }
-
-        if (event.getType() == VillagerProfession.BUTCHER) {
-            Trade block_trade = new Trade(Items.EMERALD, 35, ModBlocks.SHEPHERD_BLOCK.get(), 1, 4,
-                    20);
-            List<ItemListing> list = event.getTrades().get(2);
-            list.add(block_trade);
-            event.getTrades().put(2, list);
-        }
-
-        if (event.getType() == VillagerProfession.SHEPHERD) {
-            Trade block_trade = new Trade(Items.EMERALD, 25, ModBlocks.SHEPHERD_BLOCK.get(), 1, 4,
-                    20);
-            List<ItemListing> list = event.getTrades().get(2);
-            list.add(block_trade);
-            event.getTrades().put(2, list);
-        }
-
-        if (event.getType() == VillagerProfession.LIBRARIAN) {
-            Trade block_trade = new Trade(Items.EMERALD, 45, ModBlocks.MERCHANT_BLOCK.get(), 1, 4,
-                    20);
-            List<ItemListing> list = event.getTrades().get(2);
-            list.add(block_trade);
-            event.getTrades().put(2, list);
-        }
-
-        if (event.getType() == VillagerProfession.FARMER) {
-            Trade block_trade = new Trade(Items.EMERALD, 28, ModBlocks.FARMER_BLOCK.get(), 1, 4,
-                    20);
-            List<ItemListing> list = event.getTrades().get(2);
-            list.add(block_trade);
-            event.getTrades().put(2, list);
-        }
-
-        if (event.getType() == VillagerProfession.BUTCHER) {
-            Trade block_trade = new Trade(Items.EMERALD, 40, ModBlocks.CATTLE_FARMER_BLOCK.get(),
-                    1, 4, 20);
-            List<ItemListing> list = event.getTrades().get(2);
-            list.add(block_trade);
-            event.getTrades().put(2, list);
-        }
-
-        if (event.getType() == VillagerProfession.BUTCHER) {
-            Trade block_trade = new Trade(Items.EMERALD, 32, ModBlocks.CHICKEN_FARMER_BLOCK.get(),
-                    1, 4, 20);
-            List<ItemListing> list = event.getTrades().get(2);
-            list.add(block_trade);
-            event.getTrades().put(2, list);
-        }
-
-        if (event.getType() == VillagerProfession.BUTCHER) {
-            VillagerTrades.ItemListing block_trade = new Trade(Items.EMERALD, 38, ModBlocks.SWINEHERD_BLOCK.get(), 1, 4,
-                    20);
-            List<ItemListing> list = event.getTrades().get(2);
-            list.add(block_trade);
-            event.getTrades().put(2, list);
-        }
-         */
+        RecruitsHireTradesRegistry.register(new RecruitsHireTrade(ModEntityTypes.CHEF.getId(), WorkersServerConfig.ChefCost.get(),4, 50));
+        */
     }
+    private static final Component TITLE_FARMER = Component.translatable("description.workers.title.farmer");
+    private static final Component TITLE_MINER = Component.translatable("description.workers.title.miner");
+    private static final Component TITLE_LUMBERJACK = Component.translatable("description.workers.title.lumberjack");
+    private static final Component TITLE_BUILDER = Component.translatable("description.workers.title.builder");
+
+    private static final Component DESCRIPTION_FARMER = Component.translatable("description.workers.farmer");
+    private static final Component DESCRIPTION_MINER = Component.translatable("description.workers.miner");
+    private static final Component DESCRIPTION_LUMBERJACK = Component.translatable("description.workers.lumberjack");
+    private static final Component DESCRIPTION_BUILDER = Component.translatable("description.workers.builder");
 }

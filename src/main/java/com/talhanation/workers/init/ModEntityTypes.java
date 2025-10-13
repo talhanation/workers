@@ -86,6 +86,13 @@ public class ModEntityTypes {
                         .setShouldReceiveVelocityUpdates(true)
                         .build(new ResourceLocation(Main.MOD_ID, "builder").toString()));
 
+        /*public static final RegistryObject<EntityType<MerchantEntity>> MERCHANT = ENTITY_TYPES.register("merchant",
+                () -> EntityType.Builder.of(MerchantEntity::new, MobCategory.CREATURE)
+                        .sized(0.6F, 1.95F)
+                        .canSpawnFarFromPlayer()
+                        .setTrackingRange(32)
+                        .setShouldReceiveVelocityUpdates(true)
+                        .build(new ResourceLocation(Main.MOD_ID, "merchant").toString()));*/
 /*
         public static final RegistryObject<EntityType<FishermanEntity>> FISHERMAN = ENTITY_TYPES.register("fisherman",
                         () -> EntityType.Builder.of(FishermanEntity::new, MobCategory.CREATURE)

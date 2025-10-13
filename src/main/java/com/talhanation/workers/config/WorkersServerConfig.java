@@ -2,6 +2,7 @@ package com.talhanation.workers.config;
 
 import net.minecraftforge.common.ForgeConfigSpec;
 import net.minecraftforge.fml.common.Mod;
+import net.royawesome.jlibnoise.module.combiner.Min;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -10,6 +11,10 @@ import java.util.Arrays;
 public class WorkersServerConfig {
     private static final ForgeConfigSpec.Builder BUILDER = new ForgeConfigSpec.Builder();
     public static ForgeConfigSpec SERVER;
+    public static ForgeConfigSpec.IntValue FarmerCost;
+    public static ForgeConfigSpec.IntValue LumberjackCost;
+    public static ForgeConfigSpec.IntValue MinerCost;
+    public static ForgeConfigSpec.IntValue BuilderCost;
     public static ArrayList<String> FARMER_PICKUP = new ArrayList<>(
             Arrays.asList(
                     "minecraft:wheat",
@@ -71,4 +76,42 @@ public class WorkersServerConfig {
                     "minecraft:soul_wall_torch",
                     "minecraft:netherrack"
             ));
+
+    static {
+        BUILDER.comment("Workers Config:").push("Workers");
+        FarmerCost = BUILDER.comment("""
+                        
+                        The amount of currency required to hire a recruit.
+                        \t(takes effect after restart)
+                        \tdefault: 4""")
+                .worldRestart()
+                .defineInRange("RecruitCost", 10, 0, 1453);
+
+        LumberjackCost = BUILDER.comment("""
+                        
+                        The amount of currency required to hire a bowman.
+                        \t(takes effect after restart)
+                        \tdefault: 6""")
+                .worldRestart()
+                .defineInRange("BowmanCost", 12, 0, 1453);
+
+        MinerCost = BUILDER.comment("""
+                        
+                        The amount of currency required to hire a crossbowman.
+                        \t(takes effect after restart)
+                        \tdefault: 8""")
+                .worldRestart()
+                .defineInRange("CrossbowmanCost", 16, 0, 1453);
+
+        BuilderCost = BUILDER.comment("""
+                        
+                        The amount of currency required to hire a shieldman.
+                        \t(takes effect after restart)
+                        \tdefault: 10""")
+                .worldRestart()
+                .defineInRange("ShieldmanCost", 20, 0, 1453);
+
+
+        SERVER = BUILDER.build();
+    }
 }

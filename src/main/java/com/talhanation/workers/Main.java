@@ -1,14 +1,20 @@
 package com.talhanation.workers;
 
+import com.talhanation.recruits.RecruitsHireTradesRegistry;
 import com.talhanation.recruits.client.events.CommandCategoryManager;
 import com.talhanation.recruits.config.RecruitsServerConfig;
+import com.talhanation.recruits.world.RecruitsHireTrade;
 import com.talhanation.workers.client.events.ScreenEvents;
 import com.talhanation.workers.client.gui.WorkerCommandScreen;
+import com.talhanation.workers.config.WorkersServerConfig;
 import com.talhanation.workers.network.*;
+import net.minecraft.network.chat.Component;
 import net.minecraft.world.item.CreativeModeTabs;
 import net.minecraftforge.event.BuildCreativeModeTabContentsEvent;
 import net.minecraftforge.event.RegisterCommandsEvent;
 import net.minecraftforge.fml.DistExecutor;
+import net.minecraftforge.fml.ModLoadingContext;
+import net.minecraftforge.fml.config.ModConfig;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -32,6 +38,8 @@ import net.minecraftforge.fml.event.lifecycle.FMLCommonSetupEvent;
 import net.minecraftforge.fml.javafmlmod.FMLJavaModLoadingContext;
 import net.minecraftforge.network.simple.SimpleChannel;
 
+import java.util.List;
+
 @Mod(Main.MOD_ID)
 public class Main {
     public static final String MOD_ID = "workers";
@@ -41,8 +49,7 @@ public class Main {
     public static boolean isSmallShipsInstalled;
 
     public Main() {
-        //ModLoadingContext.get().registerConfig(ModConfig.Type.COMMON, WorkersModConfig.CONFIG);
-        //WorkersModConfig.loadConfig(WorkersModConfig.CONFIG, FMLPaths.CONFIGDIR.get().resolve("workers-common.toml"));
+        ModLoadingContext.get().registerConfig(ModConfig.Type.SERVER, WorkersServerConfig.SERVER);
 
         final IEventBus modEventBus = FMLJavaModLoadingContext.get().getModEventBus();
         modEventBus.addListener(this::setup);
@@ -77,23 +84,6 @@ public class Main {
         MinecraftForge.EVENT_BUS.register(this);
         MinecraftForge.EVENT_BUS.register(new UpdateChecker());
 
-        /*
-        RecruitsHireTradesRegistry.register(new RecruitsHireTrade(ModEntityTypes.FARMER.getId(), WorkersServerConfig.FarmerCost.get(),1, 50));
-        RecruitsHireTradesRegistry.register(new RecruitsHireTrade(ModEntityTypes.LUMBERJACK.getId(), WorkersServerConfig.LumberjackCost.get(),1, 50));
-        RecruitsHireTradesRegistry.register(new RecruitsHireTrade(ModEntityTypes.MINER.getId(), WorkersServerConfig.MinerCost.get(),1, 50));
-
-        RecruitsHireTradesRegistry.register(new RecruitsHireTrade(ModEntityTypes.BUILDER.getId(), WorkersServerConfig.BuilderCost.get(),2, 50));
-        RecruitsHireTradesRegistry.register(new RecruitsHireTrade(ModEntityTypes.MERCHANT.getId(), WorkersServerConfig.MerchantCost.get(),2, 50));
-
-        RecruitsHireTradesRegistry.register(new RecruitsHireTrade(ModEntityTypes.FISHERMAN.getId(), WorkersServerConfig.FishermanCost.get(),3, 50));
-        RecruitsHireTradesRegistry.register(new RecruitsHireTrade(ModEntityTypes.CATTLE_FARMER.getId(), WorkersServerConfig.CattleFarmerCost.get(),3, 50));
-        RecruitsHireTradesRegistry.register(new RecruitsHireTrade(ModEntityTypes.CHICKEN_FARMER.getId(), WorkersServerConfig.ChickenFarmer.get(),3, 50));
-        RecruitsHireTradesRegistry.register(new RecruitsHireTrade(ModEntityTypes.SWINEHERD.getId(), WorkersServerConfig.SwineFarmerCost.get(),3, 50));
-        RecruitsHireTradesRegistry.register(new RecruitsHireTrade(ModEntityTypes.RABBIT_FARMER.getId(), WorkersServerConfig.RabbitFarmerCost.get(),3, 50));
-        RecruitsHireTradesRegistry.register(new RecruitsHireTrade(ModEntityTypes.BEE_KEEPER.getId(), WorkersServerConfig.BeeKeeperCost.get(),3, 50));
-
-        RecruitsHireTradesRegistry.register(new RecruitsHireTrade(ModEntityTypes.CHEF.getId(), WorkersServerConfig.ChefCost.get(),4, 50));
-        */
         SIMPLE_CHANNEL = CommonRegistry.registerChannel(Main.MOD_ID, "default");
 
         Class[] messages = {

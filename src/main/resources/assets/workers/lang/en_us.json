@@ -40,6 +40,17 @@
   "gui.workers.command.text.shearLeaves":"Shear Leaves",
   "gui.workers.command.text.stripLogs":"Strip Logs",
   "gui.workers.command.text.replant":"Replant",
-  "gui.workers.command.text.anySapling":"Any Sapling"
+  "gui.workers.command.text.anySapling":"Any Sapling",
 
+  "description.workers.title.farmer" : "Farmer",
+  "description.workers.farmer" : "Farmer",
+
+  "description.workers.title.miner" : "Miner",
+  "description.workers.miner" : "Miner",
+
+  "description.workers.title.lumberjack" : "Lumberjack",
+  "description.workers.lumberjack" : "Lumberjack",
+
+  "description.workers.title.builder" : "Builder",
+  "description.workers.builder" : "Builder"
 }
