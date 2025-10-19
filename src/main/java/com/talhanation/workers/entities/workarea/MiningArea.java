@@ -1,6 +1,6 @@
 package com.talhanation.workers.entities.workarea;
 
-import com.talhanation.workers.Main;
+import com.talhanation.workers.WorkersMain;
 import com.talhanation.workers.client.gui.MiningAreaScreen;
 import com.talhanation.workers.config.WorkersServerConfig;
 import com.talhanation.workers.entities.MinerEntity;
@@ -25,6 +25,8 @@ import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.material.FluidState;
 import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
+import net.minecraftforge.api.distmarker.Dist;
+import net.minecraftforge.api.distmarker.OnlyIn;
 import net.minecraftforge.common.Tags;
 import net.minecraftforge.network.PacketDistributor;
 import net.minecraftforge.registries.ForgeRegistries;
@@ -70,6 +72,7 @@ public class MiningArea extends AbstractWorkAreaEntity {
     }
 
     @Override
+    @OnlyIn(Dist.CLIENT)
     public Screen getScreen(Player player) {
         return new MiningAreaScreen(this, player);
     }
@@ -81,7 +84,7 @@ public class MiningArea extends AbstractWorkAreaEntity {
             return InteractionResult.CONSUME;
         }
         else{
-            Main.SIMPLE_CHANNEL.send(PacketDistributor.PLAYER.with(() -> (ServerPlayer) player), new MessageToClientOpenWorkAreaScreen(this.getUUID()));
+            WorkersMain.SIMPLE_CHANNEL.send(PacketDistributor.PLAYER.with(() -> (ServerPlayer) player), new MessageToClientOpenWorkAreaScreen(this.getUUID()));
             return InteractionResult.CONSUME;
         }
     }

@@ -1,6 +1,6 @@
 package com.talhanation.workers.entities.workarea;
 
-import com.talhanation.workers.Main;
+import com.talhanation.workers.WorkersMain;
 import com.talhanation.workers.client.gui.CropAreaScreen;
 import com.talhanation.workers.entities.FarmerEntity;
 import com.talhanation.workers.network.MessageToClientOpenWorkAreaScreen;
@@ -22,6 +22,8 @@ import net.minecraft.world.level.block.*;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.material.Fluid;
 import net.minecraft.world.level.material.Fluids;
+import net.minecraftforge.api.distmarker.Dist;
+import net.minecraftforge.api.distmarker.OnlyIn;
 import net.minecraftforge.network.PacketDistributor;
 
 import java.util.Stack;
@@ -67,6 +69,7 @@ public class CropArea extends AbstractWorkAreaEntity {
     }
 
     @Override
+    @OnlyIn(Dist.CLIENT)
     public Screen getScreen(Player player) {
         return new CropAreaScreen(this, player);
     }
@@ -78,7 +81,7 @@ public class CropArea extends AbstractWorkAreaEntity {
             return InteractionResult.CONSUME;
         }
         else{
-            Main.SIMPLE_CHANNEL.send(PacketDistributor.PLAYER.with(() -> (ServerPlayer) player), new MessageToClientOpenWorkAreaScreen(this.getUUID()));
+            WorkersMain.SIMPLE_CHANNEL.send(PacketDistributor.PLAYER.with(() -> (ServerPlayer) player), new MessageToClientOpenWorkAreaScreen(this.getUUID()));
             return InteractionResult.CONSUME;
         }
     }

@@ -1,10 +1,9 @@
 package com.talhanation.workers.client.gui;
 
 import com.talhanation.recruits.client.gui.RecruitsScreenBase;
-import com.talhanation.workers.Main;
+import com.talhanation.workers.WorkersMain;
 import com.talhanation.workers.entities.workarea.AbstractWorkAreaEntity;
 import com.talhanation.workers.network.MessageUpdateWorkArea;
-import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.components.Button;
 import net.minecraft.client.gui.components.EditBox;
 import net.minecraft.network.chat.Component;
@@ -16,7 +15,7 @@ import net.minecraftforge.client.gui.widget.ExtendedButton;
 
 public abstract class WorkAreaScreen extends RecruitsScreenBase {
 
-    private static final ResourceLocation TEXTURE = new ResourceLocation(Main.MOD_ID, "textures/gui/workareascreen.png");
+    private static final ResourceLocation TEXTURE = new ResourceLocation(WorkersMain.MOD_ID, "textures/gui/workareascreen.png");
 
     private static final MutableComponent TEXT_FORWARD = Component.translatable("gui.workers.command.text.forward");
     private static final MutableComponent TEXT_BACKWARD = Component.translatable("gui.workers.command.text.back");
@@ -63,7 +62,7 @@ public abstract class WorkAreaScreen extends RecruitsScreenBase {
                         x = 5;
                     }
                     Vec3 newPos = workArea.position().relative(player.getDirection(), x);
-                    Main.SIMPLE_CHANNEL.sendToServer(new MessageUpdateWorkArea(this.workArea.getUUID(), this.workArea.getCustomName().getString(), newPos, false));
+                    WorkersMain.SIMPLE_CHANNEL.sendToServer(new MessageUpdateWorkArea(this.workArea.getUUID(), this.workArea.getCustomName().getString(), newPos, false));
                     this.onAreaMoved();
                 }
         ));
@@ -77,7 +76,7 @@ public abstract class WorkAreaScreen extends RecruitsScreenBase {
                         x = 5;
                     }
                     Vec3 newPos = workArea.position().relative(player.getDirection().getOpposite(), x);
-                    Main.SIMPLE_CHANNEL.sendToServer(new MessageUpdateWorkArea(this.workArea.getUUID(), this.workArea.getCustomName().getString(), newPos, false));
+                    WorkersMain.SIMPLE_CHANNEL.sendToServer(new MessageUpdateWorkArea(this.workArea.getUUID(), this.workArea.getCustomName().getString(), newPos, false));
                     this.onAreaMoved();
                 }
         ));
@@ -91,7 +90,7 @@ public abstract class WorkAreaScreen extends RecruitsScreenBase {
                         x = 5;
                     }
                     Vec3 newPos = workArea.position().relative(player.getDirection().getCounterClockWise(), x);
-                    Main.SIMPLE_CHANNEL.sendToServer(new MessageUpdateWorkArea(this.workArea.getUUID(), this.workArea.getCustomName().getString(), newPos, false));
+                    WorkersMain.SIMPLE_CHANNEL.sendToServer(new MessageUpdateWorkArea(this.workArea.getUUID(), this.workArea.getCustomName().getString(), newPos, false));
                     this.onAreaMoved();
                 }
         ));
@@ -105,7 +104,7 @@ public abstract class WorkAreaScreen extends RecruitsScreenBase {
                         x = 5;
                     }
                     Vec3 newPos = workArea.position().relative(player.getDirection().getClockWise(), x);
-                    Main.SIMPLE_CHANNEL.sendToServer(new MessageUpdateWorkArea(this.workArea.getUUID(), this.workArea.getCustomName().getString(), newPos, false));
+                    WorkersMain.SIMPLE_CHANNEL.sendToServer(new MessageUpdateWorkArea(this.workArea.getUUID(), this.workArea.getCustomName().getString(), newPos, false));
                     this.onAreaMoved();
                 }
         ));
@@ -113,7 +112,7 @@ public abstract class WorkAreaScreen extends RecruitsScreenBase {
         // Destroy
         destroy = addRenderableWidget(new ExtendedButton(x - buttonWidth / 2, y - buttonHeight / 2, buttonWidth, buttonHeight, TEXT_DESTROY,
                 btn -> {
-                    Main.SIMPLE_CHANNEL.sendToServer(new MessageUpdateWorkArea(this.workArea.getUUID(), this.workArea.getCustomName().getString(), workArea.position(), true));
+                    WorkersMain.SIMPLE_CHANNEL.sendToServer(new MessageUpdateWorkArea(this.workArea.getUUID(), this.workArea.getCustomName().getString(), workArea.position(), true));
                     this.onClose();
                 }
         ));

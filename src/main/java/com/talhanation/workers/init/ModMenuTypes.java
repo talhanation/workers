@@ -4,9 +4,18 @@ import java.util.Arrays;
 import java.util.UUID;
 import javax.annotation.Nullable;
 
+import com.talhanation.workers.client.gui.MerchantAddEditTradeScreen;
+import com.talhanation.workers.client.gui.MerchantTradeScreen;
+import com.talhanation.workers.entities.MerchantEntity;
+import com.talhanation.workers.inventory.MerchantAddEditTradeContainer;
+import com.talhanation.workers.inventory.MerchantTradeContainer;
+import com.talhanation.workers.world.WorkersMerchantTrade;
+import net.minecraft.nbt.CompoundTag;
+import net.minecraftforge.common.extensions.IForgeMenuType;
+import net.minecraftforge.registries.RegistryObject;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import com.talhanation.workers.Main;
+import com.talhanation.workers.WorkersMain;
 
 import com.talhanation.workers.entities.AbstractWorkerEntity;
 
@@ -22,13 +31,34 @@ import net.minecraftforge.registries.DeferredRegister;
 import net.minecraftforge.registries.ForgeRegistries;
 
 public class ModMenuTypes {
-    private static final Logger logger = LogManager.getLogger(Main.MOD_ID);
+    private static final Logger logger = LogManager.getLogger(WorkersMain.MOD_ID);
     public static final DeferredRegister<MenuType<?>> MENU_TYPES =
-            DeferredRegister.create(ForgeRegistries.MENU_TYPES, Main.MOD_ID);
+            DeferredRegister.create(ForgeRegistries.MENU_TYPES, WorkersMain.MOD_ID);
 
     public static void registerMenus() {
-
+        registerMenu(MERCHANT_ADD_EDIT_TRADE_CONTAINER_TYPE.get(), MerchantAddEditTradeScreen::new);
+        registerMenu(MERCHANT_TRADE_CONTAINER_TYPE.get(), MerchantTradeScreen::new);
     }
+
+    public static final RegistryObject<MenuType<MerchantAddEditTradeContainer>> MERCHANT_ADD_EDIT_TRADE_CONTAINER_TYPE =
+            MENU_TYPES.register("merchant_add_edit_trade_container", () -> IForgeMenuType.create((windowId, inv, data) -> {
+                MerchantEntity merchant = (MerchantEntity) getRecruitByUUID(inv.player, data.readUUID());
+                CompoundTag nbt = data.readNbt();
+                if (merchant == null || nbt == null) {
+                    return null;
+                }
+                WorkersMerchantTrade trade = WorkersMerchantTrade.fromNbt(nbt);
+                return new MerchantAddEditTradeContainer(windowId, merchant, inv, trade);
+            }));
+
+    public static final RegistryObject<MenuType<MerchantTradeContainer>> MERCHANT_TRADE_CONTAINER_TYPE =
+            MENU_TYPES.register("merchant_trade_container", () -> IForgeMenuType.create((windowId, inv, data) -> {
+                MerchantEntity merchant = (MerchantEntity) getRecruitByUUID(inv.player, data.readUUID());
+                if (merchant == null) {
+                    return null;
+                }
+                return new MerchantTradeContainer(windowId, merchant, inv);
+            }));
 
     /**
      * Registers a menuType/container with a screen constructor.

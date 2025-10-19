@@ -1,12 +1,10 @@
 package com.talhanation.workers.entities.workarea;
 
-import com.talhanation.workers.Main;
+import com.talhanation.workers.WorkersMain;
 import com.talhanation.workers.client.gui.BuildAreaScreen;
 import com.talhanation.workers.network.MessageToClientOpenWorkAreaScreen;
 import com.talhanation.workers.world.BuildBlock;
 import com.talhanation.workers.world.BuildBlockParse;
-import com.talhanation.workers.world.ScannedBlock;
-import com.talhanation.workers.world.StructureManager;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
@@ -30,10 +28,11 @@ import net.minecraft.world.item.Items;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.Blocks;
-import net.minecraft.world.level.block.FlowerPotBlock;
 import net.minecraft.world.level.block.StairBlock;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.block.state.properties.*;
+import net.minecraftforge.api.distmarker.Dist;
+import net.minecraftforge.api.distmarker.OnlyIn;
 import net.minecraftforge.network.PacketDistributor;
 
 import javax.annotation.Nullable;
@@ -68,6 +67,7 @@ public class BuildArea extends AbstractWorkAreaEntity {
     }
 
     @Override
+    @OnlyIn(Dist.CLIENT)
     public Screen getScreen(Player player) {
         return new BuildAreaScreen(this, player);
     }
@@ -79,7 +79,7 @@ public class BuildArea extends AbstractWorkAreaEntity {
             return InteractionResult.CONSUME;
         }
         else{
-            Main.SIMPLE_CHANNEL.send(PacketDistributor.PLAYER.with(() -> (ServerPlayer) player), new MessageToClientOpenWorkAreaScreen(this.getUUID()));
+            WorkersMain.SIMPLE_CHANNEL.send(PacketDistributor.PLAYER.with(() -> (ServerPlayer) player), new MessageToClientOpenWorkAreaScreen(this.getUUID()));
             return InteractionResult.CONSUME;
         }
     }

@@ -32,6 +32,7 @@ public class VillagerEvents {
         RecruitsHireTradesRegistry.register(new RecruitsHireTrade(ModEntityTypes.CHEF.getId(), WorkersServerConfig.ChefCost.get(),4, 50));
         */
     }
+
     private static final Component TITLE_FARMER = Component.translatable("description.workers.title.farmer");
     private static final Component TITLE_MINER = Component.translatable("description.workers.title.miner");
     private static final Component TITLE_LUMBERJACK = Component.translatable("description.workers.title.lumberjack");

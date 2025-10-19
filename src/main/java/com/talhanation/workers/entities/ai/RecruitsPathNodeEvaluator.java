@@ -1,6 +1,5 @@
 package com.talhanation.workers.entities.ai;
 
-import com.talhanation.workers.Main;
 import it.unimi.dsi.fastutil.longs.Long2ObjectMap;
 import it.unimi.dsi.fastutil.longs.Long2ObjectOpenHashMap;
 import it.unimi.dsi.fastutil.objects.Object2BooleanMap;

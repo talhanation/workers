@@ -1,11 +1,8 @@
 package com.talhanation.workers.init;
 
-import com.talhanation.workers.Main;
+import com.talhanation.workers.WorkersMain;
 
-import com.talhanation.workers.entities.BuilderEntity;
-import com.talhanation.workers.entities.FarmerEntity;
-import com.talhanation.workers.entities.LumberjackEntity;
-import com.talhanation.workers.entities.MinerEntity;
+import com.talhanation.workers.entities.*;
 import com.talhanation.workers.entities.workarea.BuildArea;
 import com.talhanation.workers.entities.workarea.CropArea;
 import com.talhanation.workers.entities.workarea.LumberArea;
@@ -20,28 +17,28 @@ import net.minecraftforge.registries.RegistryObject;
 public class ModEntityTypes {
 
         public static final DeferredRegister<EntityType<?>> ENTITY_TYPES = DeferredRegister
-                        .create(ForgeRegistries.ENTITY_TYPES, Main.MOD_ID);
+                        .create(ForgeRegistries.ENTITY_TYPES, WorkersMain.MOD_ID);
 
         public static final RegistryObject<EntityType<CropArea>> CROPAREA = ENTITY_TYPES.register("croparea",
                 () -> EntityType.Builder.of(CropArea::new, MobCategory.MISC)
                         .sized(1.2F, 2.00F)
                         .fireImmune().noSummon()
-                        .build(new ResourceLocation(Main.MOD_ID, "croparea").toString()));
+                        .build(new ResourceLocation(WorkersMain.MOD_ID, "croparea").toString()));
         public static final RegistryObject<EntityType<LumberArea>> LUMBERAREA = ENTITY_TYPES.register("lumberarea",
                 () -> EntityType.Builder.of(LumberArea::new, MobCategory.MISC)
                         .sized(1.2F, 2.00F)
                         .fireImmune().noSummon()
-                        .build(new ResourceLocation(Main.MOD_ID, "lumberarea").toString()));
+                        .build(new ResourceLocation(WorkersMain.MOD_ID, "lumberarea").toString()));
         public static final RegistryObject<EntityType<BuildArea>> BUILDAREA = ENTITY_TYPES.register("buildarea",
                 () -> EntityType.Builder.of(BuildArea::new, MobCategory.MISC)
                         .sized(1.2F, 2.00F)
                         .fireImmune().noSummon()
-                        .build(new ResourceLocation(Main.MOD_ID, "buildarea").toString()));
+                        .build(new ResourceLocation(WorkersMain.MOD_ID, "buildarea").toString()));
         public static final RegistryObject<EntityType<MiningArea>> MININGAREA = ENTITY_TYPES.register("miningarea",
                 () -> EntityType.Builder.of(MiningArea::new, MobCategory.MISC)
                         .sized(1.2F, 2.00F)
                         .fireImmune().noSummon()
-                        .build(new ResourceLocation(Main.MOD_ID, "miningarea").toString()));
+                        .build(new ResourceLocation(WorkersMain.MOD_ID, "miningarea").toString()));
         /*
 
 
@@ -60,7 +57,7 @@ public class ModEntityTypes {
                         .canSpawnFarFromPlayer()
                         .setTrackingRange(32)
                         .setShouldReceiveVelocityUpdates(true)
-                        .build(new ResourceLocation(Main.MOD_ID, "lumberjack").toString()));
+                        .build(new ResourceLocation(WorkersMain.MOD_ID, "lumberjack").toString()));
 
         public static final RegistryObject<EntityType<FarmerEntity>> FARMER = ENTITY_TYPES.register("farmer",
                 () -> EntityType.Builder.of(FarmerEntity::new, MobCategory.CREATURE)
@@ -68,7 +65,7 @@ public class ModEntityTypes {
                         .canSpawnFarFromPlayer()
                         .setTrackingRange(32)
                         .setShouldReceiveVelocityUpdates(true)
-                        .build(new ResourceLocation(Main.MOD_ID, "farmer").toString()));
+                        .build(new ResourceLocation(WorkersMain.MOD_ID, "farmer").toString()));
 
         public static final RegistryObject<EntityType<MinerEntity>> MINER = ENTITY_TYPES.register("miner",
                 () -> EntityType.Builder.of(MinerEntity::new, MobCategory.CREATURE)
@@ -76,7 +73,7 @@ public class ModEntityTypes {
                         .canSpawnFarFromPlayer()
                         .setTrackingRange(32)
                         .setShouldReceiveVelocityUpdates(true)
-                        .build(new ResourceLocation(Main.MOD_ID, "miner").toString()));
+                        .build(new ResourceLocation(WorkersMain.MOD_ID, "miner").toString()));
 
         public static final RegistryObject<EntityType<BuilderEntity>> BUILDER = ENTITY_TYPES.register("builder",
                 () -> EntityType.Builder.of(BuilderEntity::new, MobCategory.CREATURE)
@@ -84,15 +81,15 @@ public class ModEntityTypes {
                         .canSpawnFarFromPlayer()
                         .setTrackingRange(32)
                         .setShouldReceiveVelocityUpdates(true)
-                        .build(new ResourceLocation(Main.MOD_ID, "builder").toString()));
+                        .build(new ResourceLocation(WorkersMain.MOD_ID, "builder").toString()));
 
-        /*public static final RegistryObject<EntityType<MerchantEntity>> MERCHANT = ENTITY_TYPES.register("merchant",
+       public static final RegistryObject<EntityType<MerchantEntity>> MERCHANT = ENTITY_TYPES.register("merchant",
                 () -> EntityType.Builder.of(MerchantEntity::new, MobCategory.CREATURE)
                         .sized(0.6F, 1.95F)
                         .canSpawnFarFromPlayer()
                         .setTrackingRange(32)
                         .setShouldReceiveVelocityUpdates(true)
-                        .build(new ResourceLocation(Main.MOD_ID, "merchant").toString()));*/
+                        .build(new ResourceLocation(WorkersMain.MOD_ID, "merchant").toString()));
 /*
         public static final RegistryObject<EntityType<FishermanEntity>> FISHERMAN = ENTITY_TYPES.register("fisherman",
                         () -> EntityType.Builder.of(FishermanEntity::new, MobCategory.CREATURE)

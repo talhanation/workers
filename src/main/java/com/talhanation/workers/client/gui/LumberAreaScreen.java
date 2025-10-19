@@ -1,13 +1,11 @@
 package com.talhanation.workers.client.gui;
 
-import com.talhanation.workers.Main;
+import com.talhanation.recruits.client.gui.widgets.RecruitsCheckBox;
+import com.talhanation.workers.WorkersMain;
 import com.talhanation.workers.client.gui.widgets.ItemScrollDropDownMenu;
-import com.talhanation.workers.client.gui.widgets.WorkersCheckBox;
 import com.talhanation.workers.entities.workarea.LumberArea;
-import com.talhanation.workers.network.MessageUpdateCropArea;
 import com.talhanation.workers.network.MessageUpdateLumberArea;
 import net.minecraft.client.gui.GuiGraphics;
-import net.minecraft.client.gui.components.Checkbox;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.MutableComponent;
 import net.minecraft.util.FastColor;
@@ -34,9 +32,9 @@ public class LumberAreaScreen extends WorkAreaScreen {
     private boolean stripLogs;
     private boolean shearLeaves;
     private List<ItemStack> possibleSeeds;
-    private WorkersCheckBox replantCheckBox;
-    private WorkersCheckBox stripLogsCheckBox;
-    private WorkersCheckBox shearLeavesCheckBox;
+    private RecruitsCheckBox replantCheckBox;
+    private RecruitsCheckBox stripLogsCheckBox;
+    private RecruitsCheckBox shearLeavesCheckBox;
     public LumberAreaScreen(LumberArea lumberArea, Player player) {
         super(lumberArea.getCustomName(), lumberArea, player);
         this.lumberArea = lumberArea;
@@ -72,36 +70,36 @@ public class LumberAreaScreen extends WorkAreaScreen {
 
         addRenderableWidget(seedItemSelectionDropDownMenu);
 
-        this.shearLeavesCheckBox = new WorkersCheckBox(checkBoxX, 50 + checkBoxY, checkBoxWidth, checkBoxHeight, TEXT_SHEAR_LEAVES,
+        this.shearLeavesCheckBox = new RecruitsCheckBox(checkBoxX, 50 + checkBoxY, checkBoxWidth, checkBoxHeight, TEXT_SHEAR_LEAVES,
             this.shearLeaves,
             (bool) -> {
                 this.shearLeaves = bool;
-                Main.SIMPLE_CHANNEL.sendToServer(new MessageUpdateLumberArea(lumberArea.getUUID(), currentSapling, shearLeaves, stripLogs, replant));
+                WorkersMain.SIMPLE_CHANNEL.sendToServer(new MessageUpdateLumberArea(lumberArea.getUUID(), currentSapling, shearLeaves, stripLogs, replant));
             }
         );
         addRenderableWidget(shearLeavesCheckBox);
 
-        this.stripLogsCheckBox = new WorkersCheckBox(checkBoxX, 70 + checkBoxY, checkBoxWidth, checkBoxHeight, TEXT_STRIP_LOGS,
+        this.stripLogsCheckBox = new RecruitsCheckBox(checkBoxX, 70 + checkBoxY, checkBoxWidth, checkBoxHeight, TEXT_STRIP_LOGS,
                 this.stripLogs,
                 (bool) -> {
                     this.stripLogs = bool;
-                    Main.SIMPLE_CHANNEL.sendToServer(new MessageUpdateLumberArea(lumberArea.getUUID(), currentSapling, shearLeaves, stripLogs, replant));
+                    WorkersMain.SIMPLE_CHANNEL.sendToServer(new MessageUpdateLumberArea(lumberArea.getUUID(), currentSapling, shearLeaves, stripLogs, replant));
                 }
         );
         addRenderableWidget(stripLogsCheckBox);
 
-        this.replantCheckBox = new WorkersCheckBox(checkBoxX, 90 + checkBoxY, checkBoxWidth, checkBoxHeight, TEXT_REPLANT,
+        this.replantCheckBox = new RecruitsCheckBox(checkBoxX, 90 + checkBoxY, checkBoxWidth, checkBoxHeight, TEXT_REPLANT,
                 this.replant,
                 (bool) -> {
                     this.replant = bool;
-                    Main.SIMPLE_CHANNEL.sendToServer(new MessageUpdateLumberArea(lumberArea.getUUID(), currentSapling, shearLeaves, stripLogs, replant));
+                    WorkersMain.SIMPLE_CHANNEL.sendToServer(new MessageUpdateLumberArea(lumberArea.getUUID(), currentSapling, shearLeaves, stripLogs, replant));
                 }
         );
         addRenderableWidget(replantCheckBox);
     }
 
     public void setCurrentSapling(ItemStack currentSapling) {
-        Main.SIMPLE_CHANNEL.sendToServer(new MessageUpdateLumberArea(lumberArea.getUUID(), currentSapling, shearLeaves, stripLogs, replant));
+        WorkersMain.SIMPLE_CHANNEL.sendToServer(new MessageUpdateLumberArea(lumberArea.getUUID(), currentSapling, shearLeaves, stripLogs, replant));
         this.currentSapling = currentSapling;
     }
 

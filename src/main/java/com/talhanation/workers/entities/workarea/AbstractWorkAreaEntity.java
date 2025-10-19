@@ -15,6 +15,8 @@ import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.phys.AABB;
+import net.minecraftforge.api.distmarker.Dist;
+import net.minecraftforge.api.distmarker.OnlyIn;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -255,6 +257,7 @@ public abstract class AbstractWorkAreaEntity extends Entity {
     }
 
     public abstract Item getRenderItem();
+    @OnlyIn(Dist.CLIENT)
     public abstract Screen getScreen(Player player);
 
     public BlockPos getOriginPos() {

@@ -1,6 +1,6 @@
 package com.talhanation.workers.entities.workarea;
 
-import com.talhanation.workers.Main;
+import com.talhanation.workers.WorkersMain;
 import com.talhanation.workers.client.gui.LumberAreaScreen;
 import com.talhanation.workers.entities.LumberjackEntity;
 import com.talhanation.workers.network.MessageToClientOpenWorkAreaScreen;
@@ -24,7 +24,8 @@ import net.minecraft.world.item.*;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.block.state.properties.BlockStateProperties;
-import net.minecraftforge.common.Tags;
+import net.minecraftforge.api.distmarker.Dist;
+import net.minecraftforge.api.distmarker.OnlyIn;
 import net.minecraftforge.network.PacketDistributor;
 
 import java.util.*;
@@ -79,6 +80,7 @@ public class LumberArea extends AbstractWorkAreaEntity {
     }
 
     @Override
+    @OnlyIn(Dist.CLIENT)
     public Screen getScreen(Player player) {
         return new LumberAreaScreen(this, player);
     }
@@ -90,7 +92,7 @@ public class LumberArea extends AbstractWorkAreaEntity {
             return InteractionResult.CONSUME;
         }
         else{
-            Main.SIMPLE_CHANNEL.send(PacketDistributor.PLAYER.with(() -> (ServerPlayer) player), new MessageToClientOpenWorkAreaScreen(this.getUUID()));
+            WorkersMain.SIMPLE_CHANNEL.send(PacketDistributor.PLAYER.with(() -> (ServerPlayer) player), new MessageToClientOpenWorkAreaScreen(this.getUUID()));
             return InteractionResult.CONSUME;
         }
     }

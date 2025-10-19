@@ -1,14 +1,10 @@
 package com.talhanation.workers;
 
-import com.talhanation.recruits.RecruitsHireTradesRegistry;
 import com.talhanation.recruits.client.events.CommandCategoryManager;
-import com.talhanation.recruits.config.RecruitsServerConfig;
-import com.talhanation.recruits.world.RecruitsHireTrade;
 import com.talhanation.workers.client.events.ScreenEvents;
 import com.talhanation.workers.client.gui.WorkerCommandScreen;
 import com.talhanation.workers.config.WorkersServerConfig;
 import com.talhanation.workers.network.*;
-import net.minecraft.network.chat.Component;
 import net.minecraft.world.item.CreativeModeTabs;
 import net.minecraftforge.event.BuildCreativeModeTabContentsEvent;
 import net.minecraftforge.event.RegisterCommandsEvent;
@@ -38,17 +34,13 @@ import net.minecraftforge.fml.event.lifecycle.FMLCommonSetupEvent;
 import net.minecraftforge.fml.javafmlmod.FMLJavaModLoadingContext;
 import net.minecraftforge.network.simple.SimpleChannel;
 
-import java.util.List;
-
-@Mod(Main.MOD_ID)
-public class Main {
+@Mod(WorkersMain.MOD_ID)
+public class WorkersMain {
     public static final String MOD_ID = "workers";
     public static final Logger LOGGER = LogManager.getLogger(MOD_ID);
     public static SimpleChannel SIMPLE_CHANNEL;
 
-    public static boolean isSmallShipsInstalled;
-
-    public Main() {
+    public WorkersMain() {
         ModLoadingContext.get().registerConfig(ModConfig.Type.SERVER, WorkersServerConfig.SERVER);
 
         final IEventBus modEventBus = FMLJavaModLoadingContext.get().getModEventBus();
@@ -64,7 +56,7 @@ public class Main {
         FMLJavaModLoadingContext.get().getModEventBus().addListener(this::addCreativeTabs);
 
         DistExecutor.unsafeRunWhenOn(Dist.CLIENT, () -> () -> {
-            FMLJavaModLoadingContext.get().getModEventBus().addListener(Main.this::clientSetup);
+            FMLJavaModLoadingContext.get().getModEventBus().addListener(WorkersMain.this::clientSetup);
             FMLJavaModLoadingContext.get().getModEventBus().addListener(ModShortcuts::registerBindings);
         });
 
@@ -84,7 +76,7 @@ public class Main {
         MinecraftForge.EVENT_BUS.register(this);
         MinecraftForge.EVENT_BUS.register(new UpdateChecker());
 
-        SIMPLE_CHANNEL = CommonRegistry.registerChannel(Main.MOD_ID, "default");
+        SIMPLE_CHANNEL = CommonRegistry.registerChannel(WorkersMain.MOD_ID, "default");
 
         Class[] messages = {
             MessageAddWorkArea.class,
@@ -94,7 +86,13 @@ public class Main {
             MessageAddDepositPos.class,
             MessageUpdateLumberArea.class,
             MessageUpdateBuildArea.class,
-            MessageUpdateMiningArea.class
+            MessageUpdateMiningArea.class,
+            MessageUpdateMerchantTrade.class,
+            MessageUpdateMerchant.class,
+            MessageDoTradeWithMerchant.class,
+            MessageOpenMerchantEditTradeScreen.class,
+            MessageOpenMerchantTradeScreen.class,
+            WorkersMessageWriteSpawnEgg.class
         };
         for (int i = 0; i < messages.length; i++) CommonRegistry.registerMessage(SIMPLE_CHANNEL, i, messages[i]);
     }
@@ -112,6 +110,7 @@ public class Main {
             event.accept(ModItems.FARMER_SPAWN_EGG.get());
             event.accept(ModItems.LUMBERJACK_SPAWN_EGG.get());
             event.accept(ModItems.MINER_SPAWN_EGG.get());
+            event.accept(ModItems.MERCHANT_SPAWN_EGG.get());
         }
     }
 }

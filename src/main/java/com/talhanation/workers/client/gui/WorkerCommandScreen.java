@@ -4,7 +4,7 @@ import com.talhanation.recruits.client.gui.CommandScreen;
 import com.talhanation.recruits.client.gui.commandscreen.ICommandCategory;
 import com.talhanation.recruits.client.gui.group.RecruitsCommandButton;
 import com.talhanation.recruits.client.gui.group.RecruitsGroup;
-import com.talhanation.workers.Main;
+import com.talhanation.workers.WorkersMain;
 import com.talhanation.workers.network.MessageAddDepositPos;
 import com.talhanation.workers.network.MessageAddWorkArea;
 import net.minecraft.client.gui.components.Tooltip;
@@ -51,7 +51,7 @@ public class WorkerCommandScreen implements ICommandCategory {
                 button -> {
                     if(screen.rayBlockPos == null) return;
                     Vec3 pos = screen.rayBlockPos.getCenter();
-                    Main.SIMPLE_CHANNEL.sendToServer(new MessageAddWorkArea((float) pos.x(), (int) pos.y(), (float) pos.z(), 0));
+                    WorkersMain.SIMPLE_CHANNEL.sendToServer(new MessageAddWorkArea((float) pos.x(), (int) pos.y(), (float) pos.z(), 0));
                 });
 
         addCropFieldButton.setTooltip(Tooltip.create(TOOLTIP_ADD_FIELD));
@@ -62,7 +62,7 @@ public class WorkerCommandScreen implements ICommandCategory {
                 button -> {
                     if(screen.rayBlockPos == null) return;
                     Vec3 pos = screen.rayBlockPos.getCenter();
-                    Main.SIMPLE_CHANNEL.sendToServer(new MessageAddWorkArea((float) pos.x(), (int) pos.y(), (float) pos.z(), 1));
+                    WorkersMain.SIMPLE_CHANNEL.sendToServer(new MessageAddWorkArea((float) pos.x(), (int) pos.y(), (float) pos.z(), 1));
                 });
 
         addLumberArea.setTooltip(Tooltip.create(TOOLTIP_ADD_LUMBER));
@@ -73,20 +73,20 @@ public class WorkerCommandScreen implements ICommandCategory {
                 button -> {
                     if(screen.rayBlockPos == null) return;
                     Vec3 pos = screen.rayBlockPos.getCenter();
-                    Main.SIMPLE_CHANNEL.sendToServer(new MessageAddWorkArea((float) pos.x(), (int) pos.y(), (float) pos.z(), 3));
+                    WorkersMain.SIMPLE_CHANNEL.sendToServer(new MessageAddWorkArea((float) pos.x(), (int) pos.y(), (float) pos.z(), 3));
                 });
 
         addMine.setTooltip(Tooltip.create(TOOLTIP_ADD_MINE));
         addMine.active = screen.rayBlockPos != null;
         screen.addRenderableWidget(addMine);
 
-        RecruitsCommandButton addDepositPosition = new RecruitsCommandButton(x, y - 150, TEXT_ADD_DEPOSIT,
+        RecruitsCommandButton addDepositPosition = new RecruitsCommandButton(x - 100, y - 0, TEXT_ADD_DEPOSIT,
             button -> {
                 if(screen.rayBlockPos == null) return;
                 if (!groups.isEmpty()) {
                     for (RecruitsGroup group : groups) {
                         if (!group.isDisabled() && screen.rayBlockPos != null)
-                            Main.SIMPLE_CHANNEL.sendToServer(new MessageAddDepositPos(player.getUUID(), group.getId(), screen.rayBlockPos));
+                            WorkersMain.SIMPLE_CHANNEL.sendToServer(new MessageAddDepositPos(player.getUUID(), group.getId(), screen.rayBlockPos));
                     }
                 }
             });
@@ -99,10 +99,9 @@ public class WorkerCommandScreen implements ICommandCategory {
                 button -> {
                     if(screen.rayBlockPos == null) return;
                     Vec3 pos = screen.rayBlockPos.getCenter();
-                    Main.SIMPLE_CHANNEL.sendToServer(new MessageAddWorkArea((float) pos.x(), (int) pos.y(), (float) pos.z(), 2));
+                    WorkersMain.SIMPLE_CHANNEL.sendToServer(new MessageAddWorkArea((float) pos.x(), (int) pos.y(), (float) pos.z(), 2));
                 });
 
-        //addBuilding.setTooltip(Tooltip.create(TOOLTIP_ADD_LUMBER));
         addBuilding.active = screen.rayBlockPos != null;
         screen.addRenderableWidget(addBuilding);
     }

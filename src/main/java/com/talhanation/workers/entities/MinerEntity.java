@@ -55,14 +55,13 @@ public class MinerEntity extends AbstractWorkerEntity{
                 .add(Attributes.FOLLOW_RANGE, 32.0D)
                 .add(ForgeMod.ENTITY_REACH.get(), 0D)
                 .add(Attributes.ATTACK_SPEED);
-
     }
 
     @Nullable
     public SpawnGroupData finalizeSpawn(ServerLevelAccessor world, DifficultyInstance difficultyInstance, MobSpawnType reason, @Nullable SpawnGroupData data, @Nullable CompoundTag nbt) {
         RandomSource randomsource = world.getRandom();
         SpawnGroupData ilivingentitydata = super.finalizeSpawn(world, difficultyInstance, reason, data, nbt);
-        //((AsyncGroundPathNavigation)this.getNavigation()).setCanOpenDoors(true);
+        ((AsyncGroundPathNavigation)this.getNavigation()).setCanOpenDoors(true);
         this.populateDefaultEquipmentEnchantments(randomsource, difficultyInstance);
 
         this.initSpawn();

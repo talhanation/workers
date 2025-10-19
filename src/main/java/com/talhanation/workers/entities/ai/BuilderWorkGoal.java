@@ -223,7 +223,7 @@ public class BuilderWorkGoal extends Goal {
     }
 
     public void setState(State state) {
-         if(builderEntity.getOwner() != null) builderEntity.getOwner().sendSystemMessage(Component.literal(state.toString()));
+        //if(builderEntity.getOwner() != null) builderEntity.getOwner().sendSystemMessage(Component.literal(state.toString()));
         this.state = state;
     }
 

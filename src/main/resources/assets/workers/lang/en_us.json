@@ -42,6 +42,18 @@
   "gui.workers.command.text.replant":"Replant",
   "gui.workers.command.text.anySapling":"Any Sapling",
 
+  "gui.workers.button.reset": "Reset",
+  "gui.workers.button.add": "Add",
+  "gui.workers.button.remove": "Remove",
+  "gui.workers.button.save": "Save",
+  "gui.workers.button.back": "Back",
+  "gui.workers.button.trade": "Trade",
+  "gui.workers.button.cancel": "Cancel",
+  "gui.workers.button.edit": "Edit",
+  "gui.workers.button.copy": "Copy",
+
+  "gui.workers.text.creative": "Creative",
+
   "description.workers.title.farmer" : "Farmer",
   "description.workers.farmer" : "Farmer",
 
@@ -52,5 +64,8 @@
   "description.workers.lumberjack" : "Lumberjack",
 
   "description.workers.title.builder" : "Builder",
-  "description.workers.builder" : "Builder"
+  "description.workers.builder" : "Builder",
+
+  "description.workers.title.merchant" : "Merchant",
+  "description.workers.merchant" : "Merchant"
 }

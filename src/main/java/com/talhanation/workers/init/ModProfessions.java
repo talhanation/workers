@@ -4,7 +4,7 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 import com.google.common.collect.ImmutableSet;
-import com.talhanation.workers.Main;
+import com.talhanation.workers.WorkersMain;
 
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.world.entity.ai.village.poi.PoiType;
@@ -14,9 +14,9 @@ import net.minecraftforge.registries.ForgeRegistries;
 import net.minecraftforge.registries.RegistryObject;
 
 public class ModProfessions {
-    private static final Logger logger = LogManager.getLogger(Main.MOD_ID);
+    private static final Logger logger = LogManager.getLogger(WorkersMain.MOD_ID);
     public static final DeferredRegister<VillagerProfession> PROFESSIONS =
-            DeferredRegister.create(ForgeRegistries.VILLAGER_PROFESSIONS, Main.MOD_ID);
+            DeferredRegister.create(ForgeRegistries.VILLAGER_PROFESSIONS, WorkersMain.MOD_ID);
 
     private static final RegistryObject<VillagerProfession> makeProfession(String name,
             RegistryObject<PoiType> pointOfInterest) {

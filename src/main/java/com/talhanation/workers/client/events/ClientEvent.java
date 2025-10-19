@@ -1,7 +1,7 @@
 package com.talhanation.workers.client.events;
 
 import com.talhanation.recruits.config.RecruitsClientConfig;
-import com.talhanation.workers.Main;
+import com.talhanation.workers.WorkersMain;
 import com.talhanation.workers.client.render.WorkerAreaRenderer;
 import com.talhanation.workers.client.render.WorkerVillagerRenderer;
 import com.talhanation.workers.init.ModEntityTypes;
@@ -13,7 +13,7 @@ import net.minecraftforge.client.event.EntityRenderersEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.common.Mod;
 
-@Mod.EventBusSubscriber(modid = Main.MOD_ID, bus = Mod.EventBusSubscriber.Bus.MOD , value = Dist.CLIENT)
+@Mod.EventBusSubscriber(modid = WorkersMain.MOD_ID, bus = Mod.EventBusSubscriber.Bus.MOD , value = Dist.CLIENT)
 public class ClientEvent {
     @SubscribeEvent
     @OnlyIn(Dist.CLIENT)
@@ -28,12 +28,14 @@ public class ClientEvent {
             EntityRenderers.register(ModEntityTypes.LUMBERJACK.get(), WorkerVillagerRenderer::new);
             EntityRenderers.register(ModEntityTypes.MINER.get(), WorkerVillagerRenderer::new);
             EntityRenderers.register(ModEntityTypes.BUILDER.get(), WorkerVillagerRenderer::new);
+            EntityRenderers.register(ModEntityTypes.MERCHANT.get(), WorkerVillagerRenderer::new);
         }
         else{
             EntityRenderers.register(ModEntityTypes.FARMER.get(), WorkerHumanRenderer::new);
             EntityRenderers.register(ModEntityTypes.LUMBERJACK.get(), WorkerHumanRenderer::new);
             EntityRenderers.register(ModEntityTypes.MINER.get(), WorkerHumanRenderer::new);
-            EntityRenderers.register(ModEntityTypes.BUILDER.get(), WorkerVillagerRenderer::new);
+            EntityRenderers.register(ModEntityTypes.BUILDER.get(), WorkerHumanRenderer::new);
+            EntityRenderers.register(ModEntityTypes.MERCHANT.get(), WorkerHumanRenderer::new);
         }
     }
 }

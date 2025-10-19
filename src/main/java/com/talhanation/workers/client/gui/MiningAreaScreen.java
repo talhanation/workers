@@ -1,8 +1,7 @@
 package com.talhanation.workers.client.gui;
 
 import com.talhanation.recruits.client.gui.widgets.BlackShowingTextField;
-import com.talhanation.recruits.client.gui.widgets.DropDownMenu;
-import com.talhanation.workers.Main;
+import com.talhanation.workers.WorkersMain;
 import com.talhanation.workers.entities.workarea.MiningArea;
 import com.talhanation.workers.network.MessageUpdateMiningArea;
 import net.minecraft.client.gui.GuiGraphics;
@@ -12,7 +11,6 @@ import net.minecraft.util.Mth;
 import net.minecraft.world.entity.player.Player;
 import net.minecraftforge.client.gui.widget.ExtendedButton;
 
-import java.util.List;
 import java.util.UUID;
 
 public class MiningAreaScreen extends WorkAreaScreen {
@@ -70,7 +68,7 @@ public class MiningAreaScreen extends WorkAreaScreen {
                     areaXSize = Mth.clamp(areaXSize, 1, 16);
 
                     this.miningArea.setWidthSize(areaXSize);
-                    Main.SIMPLE_CHANNEL.sendToServer(new MessageUpdateMiningArea(this.miningArea.getUUID(), areaXSize, areaYSize, areaZSize, areaYOffset));
+                    WorkersMain.SIMPLE_CHANNEL.sendToServer(new MessageUpdateMiningArea(this.miningArea.getUUID(), areaXSize, areaYSize, areaZSize, areaYOffset));
                     this.setButtons();
                 }
         ));
@@ -82,7 +80,7 @@ public class MiningAreaScreen extends WorkAreaScreen {
                     areaXSize = Mth.clamp(areaXSize, 1, 16);
 
                     this.miningArea.setWidthSize(areaXSize);
-                    Main.SIMPLE_CHANNEL.sendToServer(new MessageUpdateMiningArea(this.miningArea.getUUID(), areaXSize, areaYSize, areaZSize, areaYOffset));
+                    WorkersMain.SIMPLE_CHANNEL.sendToServer(new MessageUpdateMiningArea(this.miningArea.getUUID(), areaXSize, areaYSize, areaZSize, areaYOffset));
                     this.setButtons();
                 }
         ));
@@ -94,7 +92,7 @@ public class MiningAreaScreen extends WorkAreaScreen {
                     areaYSize = Mth.clamp(areaYSize, 2, 8);
 
                     this.miningArea.setHeightSize(areaYSize);
-                    Main.SIMPLE_CHANNEL.sendToServer(new MessageUpdateMiningArea(this.miningArea.getUUID(), areaXSize, areaYSize, areaZSize, areaYOffset));
+                    WorkersMain.SIMPLE_CHANNEL.sendToServer(new MessageUpdateMiningArea(this.miningArea.getUUID(), areaXSize, areaYSize, areaZSize, areaYOffset));
                     this.setButtons();
                 }
         ));
@@ -107,7 +105,7 @@ public class MiningAreaScreen extends WorkAreaScreen {
 
                     this.miningArea.setHeightSize(areaYSize);
                     UUID uuid = this.miningArea.getUUID();
-                    Main.SIMPLE_CHANNEL.sendToServer(new MessageUpdateMiningArea(uuid, areaXSize, areaYSize, areaZSize, areaYOffset));
+                    WorkersMain.SIMPLE_CHANNEL.sendToServer(new MessageUpdateMiningArea(uuid, areaXSize, areaYSize, areaZSize, areaYOffset));
                     this.setButtons();
                 }
         ));
@@ -119,7 +117,7 @@ public class MiningAreaScreen extends WorkAreaScreen {
                     areaZSize = Mth.clamp(areaZSize, 1, 16);
 
                     this.miningArea.setDepthSize(areaZSize);
-                    Main.SIMPLE_CHANNEL.sendToServer(new MessageUpdateMiningArea(this.miningArea.getUUID(), areaXSize, areaYSize, areaZSize, areaYOffset));
+                    WorkersMain.SIMPLE_CHANNEL.sendToServer(new MessageUpdateMiningArea(this.miningArea.getUUID(), areaXSize, areaYSize, areaZSize, areaYOffset));
                     this.setButtons();
                 }
         ));
@@ -132,7 +130,7 @@ public class MiningAreaScreen extends WorkAreaScreen {
 
                     this.miningArea.setDepthSize(areaZSize);
                     UUID uuid = this.miningArea.getUUID();
-                    Main.SIMPLE_CHANNEL.sendToServer(new MessageUpdateMiningArea(uuid, areaXSize, areaYSize, areaZSize, areaYOffset));
+                    WorkersMain.SIMPLE_CHANNEL.sendToServer(new MessageUpdateMiningArea(uuid, areaXSize, areaYSize, areaZSize, areaYOffset));
                     this.setButtons();
                 }
         ));

@@ -1,7 +1,5 @@
 package com.talhanation.workers.entities.ai;
 
-import com.talhanation.recruits.entities.ai.RecruitFollowOwnerGoal;
-import com.talhanation.workers.Main;
 import com.talhanation.workers.entities.AbstractWorkerEntity;
 import com.talhanation.workers.entities.MinerEntity;
 import net.minecraft.world.entity.ai.navigation.GroundPathNavigation;

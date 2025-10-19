@@ -15,6 +15,7 @@ public class WorkersServerConfig {
     public static ForgeConfigSpec.IntValue LumberjackCost;
     public static ForgeConfigSpec.IntValue MinerCost;
     public static ForgeConfigSpec.IntValue BuilderCost;
+    public static ForgeConfigSpec.IntValue MerchantCost;
     public static ArrayList<String> FARMER_PICKUP = new ArrayList<>(
             Arrays.asList(
                     "minecraft:wheat",
@@ -83,34 +84,41 @@ public class WorkersServerConfig {
                         
                         The amount of currency required to hire a recruit.
                         \t(takes effect after restart)
-                        \tdefault: 4""")
+                        \tdefault: 10""")
                 .worldRestart()
-                .defineInRange("RecruitCost", 10, 0, 1453);
+                .defineInRange("FarmerCost", 10, 0, 1453);
 
         LumberjackCost = BUILDER.comment("""
                         
                         The amount of currency required to hire a bowman.
                         \t(takes effect after restart)
-                        \tdefault: 6""")
+                        \tdefault: 12""")
                 .worldRestart()
-                .defineInRange("BowmanCost", 12, 0, 1453);
+                .defineInRange("LumberjackCost", 12, 0, 1453);
 
         MinerCost = BUILDER.comment("""
                         
                         The amount of currency required to hire a crossbowman.
                         \t(takes effect after restart)
-                        \tdefault: 8""")
+                        \tdefault: 16""")
                 .worldRestart()
-                .defineInRange("CrossbowmanCost", 16, 0, 1453);
+                .defineInRange("MinerCost", 16, 0, 1453);
 
         BuilderCost = BUILDER.comment("""
                         
                         The amount of currency required to hire a shieldman.
                         \t(takes effect after restart)
-                        \tdefault: 10""")
+                        \tdefault: 20""")
                 .worldRestart()
-                .defineInRange("ShieldmanCost", 20, 0, 1453);
+                .defineInRange("BuilderCost", 20, 0, 1453);
 
+        MerchantCost = BUILDER.comment("""
+                        
+                        The amount of currency required to hire a shieldman.
+                        \t(takes effect after restart)
+                        \tdefault: 30""")
+                .worldRestart()
+                .defineInRange("MerchantCost", 30, 0, 1453);
 
         SERVER = BUILDER.build();
     }

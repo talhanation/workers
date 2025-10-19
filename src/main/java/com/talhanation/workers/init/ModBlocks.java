@@ -1,13 +1,13 @@
 package com.talhanation.workers.init;
 
-import com.talhanation.workers.Main;
+import com.talhanation.workers.WorkersMain;
 import net.minecraft.world.level.block.Block;
 import net.minecraftforge.registries.DeferredRegister;
 import net.minecraftforge.registries.ForgeRegistries;
 
 public class ModBlocks {
 
-    public static final DeferredRegister<Block> BLOCKS = DeferredRegister.create(ForgeRegistries.BLOCKS, Main.MOD_ID);
+    public static final DeferredRegister<Block> BLOCKS = DeferredRegister.create(ForgeRegistries.BLOCKS, WorkersMain.MOD_ID);
 
     /*
     public static final RegistryObject<Block> MINER_BLOCK = BLOCKS.register("miner_block",

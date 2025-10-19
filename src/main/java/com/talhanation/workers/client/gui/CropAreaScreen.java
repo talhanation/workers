@@ -1,7 +1,6 @@
 package com.talhanation.workers.client.gui;
 
-import com.talhanation.recruits.client.gui.widgets.ScrollDropDownMenu;
-import com.talhanation.workers.Main;
+import com.talhanation.workers.WorkersMain;
 import com.talhanation.workers.client.gui.widgets.ItemScrollDropDownMenu;
 import com.talhanation.workers.entities.workarea.CropArea;
 import com.talhanation.workers.network.MessageUpdateCropArea;
@@ -54,7 +53,7 @@ public class CropAreaScreen extends WorkAreaScreen {
 
 
     public void setCurrentSeeds(ItemStack currentSeeds) {
-        Main.SIMPLE_CHANNEL.sendToServer(new MessageUpdateCropArea(this.cropArea.getUUID(), currentSeeds));
+        WorkersMain.SIMPLE_CHANNEL.sendToServer(new MessageUpdateCropArea(this.cropArea.getUUID(), currentSeeds));
         this.currentSeeds = currentSeeds;
     }
 

@@ -2,7 +2,6 @@ package com.talhanation.workers;
 
 
 import net.minecraft.ChatFormatting;
-import net.minecraft.client.Minecraft;
 import net.minecraft.network.chat.ClickEvent;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.MutableComponent;
@@ -30,12 +29,12 @@ public class UpdateChecker {
                     player.sendSystemMessage(link);
                 }
                 else{
-                    Main.LOGGER.warn("Villager workers is outdated!");
+                    WorkersMain.LOGGER.warn("Villager workers is outdated!");
                 }
             }
 
             case FAILED -> {
-                Main.LOGGER.error("Villager workers could not check for updates!");
+                WorkersMain.LOGGER.error("Villager workers could not check for updates!");
             }
         }
     }
@@ -46,12 +45,12 @@ public class UpdateChecker {
 
         switch (status){
             case OUTDATED -> {
-                Main.LOGGER.warn("A new version of Villager Workers is available!");
-                Main.LOGGER.warn("Download the new update here: https://www.curseforge.com/minecraft/mc-mods/workers/files");
+                WorkersMain.LOGGER.warn("A new version of Villager Workers is available!");
+                WorkersMain.LOGGER.warn("Download the new update here: https://www.curseforge.com/minecraft/mc-mods/workers/files");
             }
 
             case FAILED -> {
-                Main.LOGGER.error("Villager workers could not check for updates!");
+                WorkersMain.LOGGER.error("Villager workers could not check for updates!");
             }
         }
     }

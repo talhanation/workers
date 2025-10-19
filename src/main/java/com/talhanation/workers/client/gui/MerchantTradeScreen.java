@@ -1,0 +1,373 @@
+package com.talhanation.workers.client.gui;
+
+import com.mojang.blaze3d.systems.RenderSystem;
+import com.talhanation.recruits.Main;
+import com.talhanation.recruits.client.gui.widgets.RecruitsCheckBox;
+import com.talhanation.workers.CommandEvents;
+import com.talhanation.workers.WorkersMain;
+import com.talhanation.workers.entities.MerchantEntity;
+import com.talhanation.workers.inventory.MerchantTradeContainer;
+import com.talhanation.workers.network.MessageDoTradeWithMerchant;
+import com.talhanation.workers.network.MessageUpdateMerchant;
+import com.talhanation.workers.network.MessageUpdateMerchantTrade;
+import com.talhanation.workers.world.WorkersMerchantTrade;
+import de.maxhenkel.corelib.inventory.ScreenBase;
+import net.minecraft.client.Minecraft;
+import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.client.gui.components.AbstractButton;
+import net.minecraft.client.gui.components.ObjectSelectionList;
+import net.minecraft.network.chat.Component;
+import net.minecraft.network.chat.MutableComponent;
+import net.minecraft.resources.ResourceLocation;
+import net.minecraft.world.entity.player.Inventory;
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.Items;
+import net.minecraftforge.client.gui.widget.ExtendedButton;
+
+import javax.annotation.Nullable;
+import java.util.List;
+import java.util.UUID;
+
+public class MerchantTradeScreen extends ScreenBase<MerchantTradeContainer> {
+
+    private static final ResourceLocation RESOURCE_LOCATION = new ResourceLocation(WorkersMain.MOD_ID,"textures/gui/merchant.png" );
+    private static final ResourceLocation ARROW_IMAGE = new ResourceLocation(WorkersMain.MOD_ID, "textures/gui/arrow.png");
+    private static final MutableComponent BUTTON_ADD = Component.translatable("gui.workers.button.add");
+    private static final MutableComponent BUTTON_EDIT = Component.translatable("gui.workers.button.edit");
+    private static final MutableComponent BUTTON_REMOVE = Component.translatable("gui.workers.button.remove");
+    private static final MutableComponent BUTTON_COPY = Component.translatable("gui.workers.button.copy");
+    private static final MutableComponent BUTTON_TRADE = Component.translatable("gui.workers.button.trade");
+    private static final MutableComponent TEXT_CREATIVE = Component.translatable("gui.workers.text.creative");
+    private static final int fontColor = 4210752;
+    private final MerchantEntity merchantEntity;
+    private final Player player;
+    public WorkersMerchantTrade selection;
+    public MerchantTradeContainer tradeContainer;
+    private ExtendedButton tradeButton;
+    private ExtendedButton addEditTradeButton;
+    private ExtendedButton removeTradeButton;
+    private RecruitsCheckBox creativeCheckbox;
+    private ExtendedButton copyTradeButton;
+    private boolean isCreative;
+    private ItemStack hoveredTooltipStack = ItemStack.EMPTY;
+    private int hoveredTooltipX = 0;
+    private int hoveredTooltipY = 0;
+    private TradeList tradeList;
+
+    private static final int LIST_X = 5;
+    private static final int LIST_Y = 18;
+    private static final int LIST_W = 85;
+    private static final int LIST_H = 170;
+    private static final int TRADE_TITLE_X = 98;
+    private static final int TRADE_TITLE_Y = 58;
+
+    public MerchantTradeScreen(MerchantTradeContainer tradeContainer, Inventory playerInventory, Component title) {
+        super(RESOURCE_LOCATION, tradeContainer, playerInventory, Component.literal("Trades"));
+        this.tradeContainer = tradeContainer;
+        this.merchantEntity = tradeContainer.getMerchantEntity();
+        this.player = playerInventory.player;
+        imageWidth = 256;
+        imageHeight = 197;
+    }
+
+    @Override
+    protected void init() {
+        super.init();
+        this.isCreative = merchantEntity.isCreative();
+        this.setWidgets();
+    }
+
+    @Override
+    protected void containerTick() {
+        super.containerTick();
+        //this.loadTrades();
+    }
+
+    public void setWidgets(){
+        this.clearWidgets();
+
+
+        int listLeft = leftPos + LIST_X;
+        int listTop = topPos + LIST_Y;
+        int listBottom = listTop + LIST_H;
+        int listWidth = LIST_W;
+        int listHeight = LIST_H;
+        int itemHeight = 40;
+        int itemWidth = LIST_W - 10;
+
+        this.tradeList = new TradeList(Minecraft.getInstance(), listWidth, listHeight, listTop, listBottom, itemHeight, itemWidth);
+        this.tradeList.setRenderBackground(false);
+        this.tradeList.setRenderTopAndBottom(false);
+
+        this.tradeList.setLeftPos(listLeft);
+        this.tradeList.setRenderSelection(false);
+
+        this.loadTrades();
+
+        this.addRenderableWidget(this.tradeList);
+
+        if((player.isCreative() && merchantEntity.isCreative()) || player.getUUID().equals(merchantEntity.getOwnerUUID())){
+            tradeButton = new ExtendedButton(leftPos + 88, topPos + 58, 60, 18, BUTTON_TRADE,
+                    button -> {
+                        WorkersMain.SIMPLE_CHANNEL.sendToServer(new MessageDoTradeWithMerchant(merchantEntity.getUUID(), selection.uuid));
+                        this.selection.currentTrades++;
+                        this.updateButtonState();
+                    });
+            addRenderableWidget(tradeButton);
+
+            addEditTradeButton = new ExtendedButton(leftPos + 186, topPos + 58, 60, 18, Component.empty(),
+                    button -> {
+                        WorkersMerchantTrade trade = selection == null ? new WorkersMerchantTrade() : selection;
+                        merchantEntity.openAddEditTradeGUI(player, trade);
+                        tradeList.addEntry(this.tradeList.new TradeEntry(trade));
+
+                        this.selection = null;
+                        tradeList.setSelected(null);
+                        updateButtonState();
+                    });
+            addRenderableWidget(addEditTradeButton);
+
+            copyTradeButton = new ExtendedButton(leftPos + 88, topPos + 77, 60, 18, BUTTON_COPY,
+                    button -> {
+                        WorkersMerchantTrade trade = selection == null ? new WorkersMerchantTrade() : selection.copy();
+                        WorkersMain.SIMPLE_CHANNEL.sendToServer(new MessageUpdateMerchantTrade(this.merchantEntity.getUUID(), trade, false));
+                        tradeList.addEntry(this.tradeList.new TradeEntry(trade));
+
+                        this.selection = null;
+                        tradeList.setSelected(null);
+                        updateButtonState();
+                    });
+            addRenderableWidget(copyTradeButton);
+
+            removeTradeButton = new ExtendedButton(leftPos + 186, topPos + 77, 60, 18, BUTTON_REMOVE,
+                    button -> {
+                        tradeList.children().removeIf(tradeEntry -> tradeEntry.trade.uuid.equals(selection.uuid));
+
+
+                        WorkersMain.SIMPLE_CHANNEL.sendToServer(new MessageUpdateMerchantTrade(merchantEntity.getUUID(), selection, true));
+                        this.selection = null;
+                        tradeList.setSelected(null);
+                        updateButtonState();
+                    });
+            addRenderableWidget(removeTradeButton);
+
+            if(player.isCreative()) {
+                this.creativeCheckbox = new RecruitsCheckBox(leftPos + 256, topPos + 172, 100, 20, TEXT_CREATIVE,
+                        this.isCreative,
+                        (bool) -> {
+                            this.isCreative = bool;
+                            WorkersMain.SIMPLE_CHANNEL.sendToServer(new MessageUpdateMerchant(merchantEntity.getUUID(), isCreative, true));
+                            this.updateButtonState();
+                        }
+                );
+                addRenderableWidget(creativeCheckbox);
+            }
+        }
+        else{
+            tradeButton = new ExtendedButton(leftPos + 97, topPos + 66, 140, 20, BUTTON_TRADE,
+                    button -> {
+                        WorkersMain.SIMPLE_CHANNEL.sendToServer(new MessageDoTradeWithMerchant(merchantEntity.getUUID(), selection.uuid));
+                        this.selection.currentTrades++;
+                        this.updateButtonState();
+                    });
+            addRenderableWidget(tradeButton);
+        }
+        this.updateButtonState();
+    }
+
+    @Override
+    public boolean mouseClicked(double mouseX, double mouseY, int button) {
+        boolean clicked = super.mouseClicked(mouseX, mouseY, button);
+
+        boolean overAddEdit = this.addEditTradeButton != null && this.addEditTradeButton.isHovered();
+        boolean overTrade = this.tradeButton != null && this.tradeButton.isHovered();
+        boolean overTradeList = this.tradeList != null && this.tradeList.isMouseOver(mouseX, mouseY);
+        boolean overCopy = this.copyTradeButton != null && this.copyTradeButton.isMouseOver(mouseX, mouseY);
+
+        if (!overAddEdit && !overTrade && !overTradeList && !overCopy) {
+            this.selection = null;
+            if (this.tradeList != null)
+                this.tradeList.setSelected(null);
+            this.updateButtonState();
+        }
+
+        return clicked;
+    }
+
+    public void loadTrades(){
+        this.tradeList.clearEntries();
+
+        List<WorkersMerchantTrade> trades = merchantEntity.getTrades();
+        for(WorkersMerchantTrade merchantTrade : trades){
+            tradeList.addEntry(this.tradeList.new TradeEntry(merchantTrade));
+        }
+    }
+
+    public void onSelected(TradeList.TradeEntry entry){
+        this.selection = entry.trade;
+        this.updateButtonState();
+    }
+
+    public void updateButtonState(){
+        if(addEditTradeButton != null){
+            this.addEditTradeButton.setMessage(selection != null ? BUTTON_EDIT : BUTTON_ADD);
+        }
+        if(removeTradeButton != null){
+            removeTradeButton.active = selection != null;
+        }
+        if(copyTradeButton != null){
+            copyTradeButton.active = selection != null;
+        }
+
+        this.tradeButton.active = false;
+
+        if(selection != null){
+            boolean playerFreeSlot = player.getInventory().getFreeSlot() != -1;
+            this.tradeButton.active =  playerFreeSlot && (selection.currentTrades < selection.maxTrades || selection.maxTrades == -1);
+        }
+    }
+
+    @Override
+    public void render(GuiGraphics guiGraphics, int x, int y, float partialTicks) {
+        this.hoveredTooltipStack = ItemStack.EMPTY;
+        super.render(guiGraphics, x, y, partialTicks);
+        if (!this.hoveredTooltipStack.isEmpty()) {
+            this.renderItemStackTooltip(guiGraphics, this.hoveredTooltipStack, this.hoveredTooltipX, this.hoveredTooltipY);
+        }
+    }
+
+    @Override
+    protected void renderLabels(GuiGraphics guiGraphics, int mouseX, int mouseY) {
+        guiGraphics.drawString(font, title, 8, 5, fontColor, false);
+        guiGraphics.drawString(font, merchantEntity.getDisplayName(), 92, 5, fontColor, false);
+        guiGraphics.drawString(font, player.getInventory().getDisplayName().getVisualOrderText(), 92, this.imageHeight - 96 + 2, fontColor, false);
+    }
+
+    protected void renderItemStackTooltip(GuiGraphics guiGraphics, ItemStack itemstack, int mouseX, int mouseY) {
+        guiGraphics.renderTooltip(this.font, this.getTooltipFromContainerItem(itemstack), itemstack.getTooltipImage(), itemstack, mouseX, mouseY);
+    }
+
+
+    int xOffset = 4;
+    int yOffset = 2;
+    private class TradeList extends ObjectSelectionList<TradeList.TradeEntry> {
+        public int itemWidth;
+        public TradeList(Minecraft mc, int width, int height, int top, int bottom, int itemHeight, int itemWidth) {
+            super(mc, width, height, top, bottom, itemHeight);
+            this.itemWidth = itemWidth;
+        }
+
+        @Override
+        protected int addEntry(TradeList.TradeEntry p_93487_) {
+            return super.addEntry(p_93487_);
+        }
+
+        @Override
+        protected void clearEntries() {
+            super.clearEntries();
+        }
+
+        @Override
+        protected int getScrollbarPosition() {
+            return this.getRowLeft() + this.getRowWidth() + 5;
+        }
+
+        @Override
+        public int getRowLeft() {
+            return super.getRowLeft() - 7;
+        }
+
+        @Override
+        public int getRowWidth() {
+            return LIST_W - 12;
+        }
+
+        public void setSelected(@Nullable TradeList.TradeEntry entry) {
+            super.setSelected(entry);
+            if(entry == null) return;
+            MerchantTradeScreen.this.onSelected(entry);
+        }
+
+        public class TradeEntry extends ObjectSelectionList.Entry<TradeList.TradeEntry> {
+            private final WorkersMerchantTrade trade;
+            public TradeEntry(WorkersMerchantTrade trade) {
+                this.trade = trade;
+            }
+            @Override
+            public void render(GuiGraphics guiGraphics, int index, int top, int left, int entryWidth, int entryHeight, int mouseX, int mouseY, boolean hovered, float partialTicks) {
+                int rowLeft = TradeList.this.getRowLeft();
+                int rowWidth = TradeList.this.itemWidth;
+                int x = rowLeft + 4;
+                int y = top + 7;
+
+                boolean selected = (TradeList.this.getSelected() == this);
+                boolean out = trade.currentTrades == trade.maxTrades;
+                int textureY = getButtonTextureY(hovered, selected, out);
+
+                guiGraphics.setColor(1.0F, 1.0F, 1.0F, 1.0F);
+                RenderSystem.enableBlend();
+                RenderSystem.enableDepthTest();
+                guiGraphics.blitNineSliced(AbstractButton.WIDGETS_LOCATION, rowLeft, top, rowWidth, entryHeight, 20, 4, 200, 20, 0, textureY);
+                guiGraphics.setColor(1.0F, 1.0F, 1.0F, 1.0F);
+
+                RenderSystem.setShaderTexture(0, ARROW_IMAGE);
+                guiGraphics.blit(ARROW_IMAGE, 5, 5, 0, 0, 21, 21, 21, 21);
+
+                // Positionen der beiden Items (16x16 Icons)
+                final int item1X = x + xOffset;
+                final int item1Y = y + yOffset;
+                final int item2X = item1X + 44;
+                final int item2Y = item1Y;
+
+                // Render erster (currency) Item
+                guiGraphics.renderFakeItem(trade.currencyItem, item1X, item1Y);
+                guiGraphics.renderItemDecorations(font, trade.currencyItem, item1X, item1Y);
+
+                // Render zweiter (trade) Item
+                guiGraphics.renderFakeItem(trade.tradeItem, item2X, item2Y);
+                guiGraphics.renderItemDecorations(font, trade.tradeItem, item2X, item2Y);
+
+
+                if (!trade.currencyItem.isEmpty()
+                        && mouseX >= item1X && mouseX < item1X + 16
+                        && mouseY >= item1Y && mouseY < item1Y + 16) {
+                    MerchantTradeScreen.this.hoveredTooltipStack = trade.currencyItem;
+                    MerchantTradeScreen.this.hoveredTooltipX = mouseX;
+                    MerchantTradeScreen.this.hoveredTooltipY = mouseY;
+                } else if (!trade.tradeItem.isEmpty()
+                        && mouseX >= item2X && mouseX < item2X + 16
+                        && mouseY >= item2Y && mouseY < item2Y + 16) {
+                    MerchantTradeScreen.this.hoveredTooltipStack = trade.tradeItem;
+                    MerchantTradeScreen.this.hoveredTooltipX = mouseX;
+                    MerchantTradeScreen.this.hoveredTooltipY = mouseY;
+                }
+            }
+
+            @Override
+            public boolean mouseClicked(double mouseX, double mouseY, int button) {
+                TradeList.this.setSelected(this);
+                MerchantTradeScreen.this.selection = this.trade;
+                MerchantTradeScreen.this.updateButtonState();
+                return true;
+            }
+
+            @Override
+            public Component getNarration() {
+                return Component.empty();
+            }
+            private int getButtonTextureY(boolean hovered, boolean selected, boolean out) {
+                final int BUTTON_Y_OUT = 46;
+                final int BUTTON_Y_NORMAL = 66;
+                final int BUTTON_Y_HOVER = 86;
+                final int BUTTON_Y_PRESSED = 86;
+
+                if (out) return BUTTON_Y_OUT;
+                if (selected) return BUTTON_Y_PRESSED;
+                if (hovered) return BUTTON_Y_HOVER;
+
+                return BUTTON_Y_NORMAL;
+            }
+        }
+    }
+}

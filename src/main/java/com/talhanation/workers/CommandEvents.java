@@ -1,6 +1,5 @@
 package com.talhanation.workers;
 
-import com.talhanation.recruits.entities.AbstractRecruitEntity;
 import com.talhanation.workers.entities.*;
 import net.minecraft.core.BlockPos;
 import net.minecraft.world.entity.LivingEntity;
@@ -18,5 +17,4 @@ public class CommandEvents {
             worker.addDepositPosition(blockPos);
         }
     }
-
 }
