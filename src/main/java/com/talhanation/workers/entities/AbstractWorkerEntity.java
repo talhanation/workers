@@ -388,7 +388,8 @@ public abstract class AbstractWorkerEntity extends AbstractChunkLoaderEntity {
         }
 
         if (currentTimeBreak >= breakingTime) {
-            level.destroyBlock(pos, true, this); // funktioniert für normale Blöcke
+            level.destroyBlock(pos, true, this);
+            this.damageMainHandItem();
             currentTimeBreak = 0;
             breakingTime = 0;
             previousTimeBreak = 0;

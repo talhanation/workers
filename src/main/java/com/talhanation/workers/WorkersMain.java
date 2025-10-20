@@ -91,8 +91,7 @@ public class WorkersMain {
             MessageUpdateMerchant.class,
             MessageDoTradeWithMerchant.class,
             MessageOpenMerchantEditTradeScreen.class,
-            MessageOpenMerchantTradeScreen.class,
-            WorkersMessageWriteSpawnEgg.class
+            MessageOpenMerchantTradeScreen.class
         };
         for (int i = 0; i < messages.length; i++) CommonRegistry.registerMessage(SIMPLE_CHANNEL, i, messages[i]);
     }

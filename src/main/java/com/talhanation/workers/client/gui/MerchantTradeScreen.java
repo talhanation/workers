@@ -3,6 +3,7 @@ package com.talhanation.workers.client.gui;
 import com.mojang.blaze3d.systems.RenderSystem;
 import com.talhanation.recruits.Main;
 import com.talhanation.recruits.client.gui.widgets.RecruitsCheckBox;
+import com.talhanation.recruits.network.MessageHireFromNobleVillager;
 import com.talhanation.workers.CommandEvents;
 import com.talhanation.workers.WorkersMain;
 import com.talhanation.workers.entities.MerchantEntity;
@@ -107,7 +108,7 @@ public class MerchantTradeScreen extends ScreenBase<MerchantTradeContainer> {
 
         this.addRenderableWidget(this.tradeList);
 
-        if((player.isCreative() && merchantEntity.isCreative()) || player.getUUID().equals(merchantEntity.getOwnerUUID())){
+        if((merchantEntity.isCreative()) || player.getUUID().equals(merchantEntity.getOwnerUUID())){
             tradeButton = new ExtendedButton(leftPos + 88, topPos + 58, 60, 18, BUTTON_TRADE,
                     button -> {
                         WorkersMain.SIMPLE_CHANNEL.sendToServer(new MessageDoTradeWithMerchant(merchantEntity.getUUID(), selection.uuid));
@@ -165,6 +166,18 @@ public class MerchantTradeScreen extends ScreenBase<MerchantTradeContainer> {
             }
         }
         else{
+            if(player.isCreative()) {
+                this.creativeCheckbox = new RecruitsCheckBox(leftPos + 256, topPos + 172, 100, 20, TEXT_CREATIVE,
+                        this.isCreative,
+                        (bool) -> {
+                            this.isCreative = bool;
+                            WorkersMain.SIMPLE_CHANNEL.sendToServer(new MessageUpdateMerchant(merchantEntity.getUUID(), isCreative, true));
+                            this.updateButtonState();
+                        }
+                );
+                addRenderableWidget(creativeCheckbox);
+            }
+
             tradeButton = new ExtendedButton(leftPos + 97, topPos + 66, 140, 20, BUTTON_TRADE,
                     button -> {
                         WorkersMain.SIMPLE_CHANNEL.sendToServer(new MessageDoTradeWithMerchant(merchantEntity.getUUID(), selection.uuid));
@@ -370,4 +383,11 @@ public class MerchantTradeScreen extends ScreenBase<MerchantTradeContainer> {
             }
         }
     }
+
+    @Override
+    public void onClose() {
+        super.onClose();
+        WorkersMain.SIMPLE_CHANNEL.sendToServer(new MessageUpdateMerchant(merchantEntity.getUUID(), isCreative, false));
+    }
+
 }

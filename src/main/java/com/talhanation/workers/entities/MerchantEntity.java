@@ -51,10 +51,9 @@ public class MerchantEntity extends AbstractWorkerEntity {
     private static final EntityDataAccessor<Integer> TRADER_LEVEL = SynchedEntityData.defineId(MerchantEntity.class, EntityDataSerializers.INT);
     private static final EntityDataAccessor<Boolean> IS_TRADING = SynchedEntityData.defineId(MerchantEntity.class, EntityDataSerializers.BOOLEAN);
     private static final EntityDataAccessor<Boolean> IS_CREATIVE = SynchedEntityData.defineId(MerchantEntity.class, EntityDataSerializers.BOOLEAN);
+    private static final EntityDataAccessor<Boolean> CREATIVE_RESTORE = SynchedEntityData.defineId(MerchantEntity.class, EntityDataSerializers.BOOLEAN);
     private final Predicate<ItemEntity> ALLOWED_ITEMS = (item) ->
             (!item.hasPickUpDelay() && item.isAlive() && getInventory().canAddItem(item.getItem()) && this.wantsToPickUp(item.getItem()));
-    private int restoreTimer;
-    public boolean isTrading;
     public boolean needsNewTrades;
     public MerchantEntity(EntityType<? extends AbstractWorkerEntity> entityType, Level world) {
         super(entityType, world);
@@ -84,9 +83,8 @@ public class MerchantEntity extends AbstractWorkerEntity {
                 this.switchMainHandItem(ItemStack::isEmpty);
                 this.switchOffHandItem(ItemStack::isEmpty);
             }
-        }
 
-        if(restoreTimer > 0) restoreTimer--;
+        }
     }
 
     @Override
@@ -112,6 +110,8 @@ public class MerchantEntity extends AbstractWorkerEntity {
         nbt.putInt("TraderProgress", this.getTraderProgress());
         nbt.putInt("TraderLevel", this.getTraderLevel());
         nbt.putBoolean("isCreative", this.isCreative());
+        nbt.putBoolean("creativeRestore", this.shouldRestoreCreative());
+
     }
 
     @Override
@@ -121,6 +121,7 @@ public class MerchantEntity extends AbstractWorkerEntity {
         this.setTraderProgress(nbt.getInt("TraderProgress"));
         this.setTraderLevel(nbt.getInt("TraderLevel"));
         this.setCreative(nbt.getBoolean("isCreative"));
+        this.setCreativeRestore(nbt.getBoolean("creativeRestore"));
     }
 
     //ATTRIBUTES
@@ -151,25 +152,27 @@ public class MerchantEntity extends AbstractWorkerEntity {
 
     @Override
     public InteractionResult mobInteract(@NotNull Player player, @NotNull InteractionHand hand) {
+        if(this.isTrading()){
+            return InteractionResult.PASS;
+        }
+
         if (this.getCommandSenderWorld().isClientSide()) {
-            if(this.isTrading){
-                return InteractionResult.PASS;
-            }
-            else return InteractionResult.SUCCESS;
+            return InteractionResult.SUCCESS;
         }
         else {
-            if(!player.isCrouching()){
-                openTradeGUI(player);
-                return InteractionResult.SUCCESS;
+            if(this.isOwned()){
+                if(!player.isCrouching()){
+                    openTradeGUI(player);
+                    return InteractionResult.SUCCESS;
+                }
             }
-
             return super.mobInteract(player, hand);
         }
     }
 
     @Override
     public boolean canBeHired() {
-        return false;
+        return true;
     }
 
     @Override
@@ -184,6 +187,7 @@ public class MerchantEntity extends AbstractWorkerEntity {
         this.setPersistenceRequired();
 
         this.setGroup(1);
+        this.setFollowState(2);
 
         AbstractRecruitEntity.applySpawnValues(this);
     }
@@ -503,6 +507,14 @@ public class MerchantEntity extends AbstractWorkerEntity {
 
     public boolean isCreative(){
         return this.entityData.get(IS_CREATIVE);
+    }
+
+    public void setCreativeRestore(boolean restore) {
+        this.entityData.set(CREATIVE_RESTORE, restore);
+    }
+
+    public boolean shouldRestoreCreative(){
+        return this.entityData.get(CREATIVE_RESTORE) && isCreative();
     }
 
     @Override

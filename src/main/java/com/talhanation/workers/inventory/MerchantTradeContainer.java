@@ -4,6 +4,7 @@ import com.talhanation.workers.entities.MerchantEntity;
 import com.talhanation.workers.init.ModMenuTypes;
 import de.maxhenkel.corelib.inventory.ContainerBase;
 import net.minecraft.world.Container;
+import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.inventory.Slot;
 
 public class MerchantTradeContainer extends ContainerBase {
@@ -42,5 +43,12 @@ public class MerchantTradeContainer extends ContainerBase {
                 this.addSlot(new Slot(this.playerInventory, k, this.getInvXOffset() + 8 + k * 18, 142 + this.getInvYOffset()));
             }
         }
+    }
+
+
+    @Override
+    public void removed(Player player) {
+        merchant.setTrading(false);
+        super.removed(player);
     }
 }
