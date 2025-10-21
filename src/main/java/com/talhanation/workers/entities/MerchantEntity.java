@@ -71,6 +71,7 @@ public class MerchantEntity extends AbstractWorkerEntity {
         this.entityData.define(TRADER_LEVEL, 1);
         this.entityData.define(IS_TRADING, false);
         this.entityData.define(IS_CREATIVE, false);
+        this.entityData.define(CREATIVE_RESTORE, false);
     }
 
     @Override
@@ -110,7 +111,7 @@ public class MerchantEntity extends AbstractWorkerEntity {
         nbt.putInt("TraderProgress", this.getTraderProgress());
         nbt.putInt("TraderLevel", this.getTraderLevel());
         nbt.putBoolean("isCreative", this.isCreative());
-        nbt.putBoolean("creativeRestore", this.shouldRestoreCreative());
+        if(nbt.contains("creativeRestore")) nbt.putBoolean("creativeRestore", this.shouldRestoreCreative());
 
     }
 
@@ -121,7 +122,7 @@ public class MerchantEntity extends AbstractWorkerEntity {
         this.setTraderProgress(nbt.getInt("TraderProgress"));
         this.setTraderLevel(nbt.getInt("TraderLevel"));
         this.setCreative(nbt.getBoolean("isCreative"));
-        this.setCreativeRestore(nbt.getBoolean("creativeRestore"));
+        if(nbt.contains("creativeRestore"))this.setCreativeRestore(nbt.getBoolean("creativeRestore"));
     }
 
     //ATTRIBUTES
@@ -160,11 +161,9 @@ public class MerchantEntity extends AbstractWorkerEntity {
             return InteractionResult.SUCCESS;
         }
         else {
-            if(this.isOwned()){
-                if(!player.isCrouching()){
-                    openTradeGUI(player);
-                    return InteractionResult.SUCCESS;
-                }
+            if(!player.isCrouching()){
+                openTradeGUI(player);
+                return InteractionResult.SUCCESS;
             }
             return super.mobInteract(player, hand);
         }
@@ -172,7 +171,7 @@ public class MerchantEntity extends AbstractWorkerEntity {
 
     @Override
     public boolean canBeHired() {
-        return true;
+        return !isCreative();
     }
 
     @Override

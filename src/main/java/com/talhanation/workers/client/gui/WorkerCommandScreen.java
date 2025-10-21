@@ -91,7 +91,7 @@ public class WorkerCommandScreen implements ICommandCategory {
                 }
             });
 
-        addDepositPosition.setTooltip(Tooltip.create(TOOLTIP_ADD_FIELD));
+        //addDepositPosition.setTooltip(Tooltip.create(TOOLTIP_ADD_FIELD));
         addDepositPosition.active = isOneGroupActive && isDepositPosition(screen.rayBlockPos, player);
         screen.addRenderableWidget(addDepositPosition);
 

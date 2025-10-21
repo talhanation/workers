@@ -108,7 +108,7 @@ public class MerchantTradeScreen extends ScreenBase<MerchantTradeContainer> {
 
         this.addRenderableWidget(this.tradeList);
 
-        if((merchantEntity.isCreative()) || player.getUUID().equals(merchantEntity.getOwnerUUID())){
+        if((merchantEntity.isCreative() && player.isCreative()) || player.getUUID().equals(merchantEntity.getOwnerUUID())){
             tradeButton = new ExtendedButton(leftPos + 88, topPos + 58, 60, 18, BUTTON_TRADE,
                     button -> {
                         WorkersMain.SIMPLE_CHANNEL.sendToServer(new MessageDoTradeWithMerchant(merchantEntity.getUUID(), selection.uuid));
@@ -262,7 +262,7 @@ public class MerchantTradeScreen extends ScreenBase<MerchantTradeContainer> {
     }
 
 
-    int xOffset = 4;
+    int xOffset = 2;
     int yOffset = 2;
     private class TradeList extends ObjectSelectionList<TradeList.TradeEntry> {
         public int itemWidth;
@@ -313,7 +313,8 @@ public class MerchantTradeScreen extends ScreenBase<MerchantTradeContainer> {
                 int rowWidth = TradeList.this.itemWidth;
                 int x = rowLeft + 4;
                 int y = top + 7;
-
+                int iconX = 23;
+                int iconY = 0;
                 boolean selected = (TradeList.this.getSelected() == this);
                 boolean out = trade.currentTrades == trade.maxTrades;
                 int textureY = getButtonTextureY(hovered, selected, out);
@@ -325,12 +326,12 @@ public class MerchantTradeScreen extends ScreenBase<MerchantTradeContainer> {
                 guiGraphics.setColor(1.0F, 1.0F, 1.0F, 1.0F);
 
                 RenderSystem.setShaderTexture(0, ARROW_IMAGE);
-                guiGraphics.blit(ARROW_IMAGE, 5, 5, 0, 0, 21, 21, 21, 21);
+                guiGraphics.blit(ARROW_IMAGE,  x + iconX, y + iconY, 0, 0, 21, 21, 21, 21);
 
                 // Positionen der beiden Items (16x16 Icons)
                 final int item1X = x + xOffset;
                 final int item1Y = y + yOffset;
-                final int item2X = item1X + 44;
+                final int item2X = item1X + 46;
                 final int item2Y = item1Y;
 
                 // Render erster (currency) Item
