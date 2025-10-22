@@ -82,17 +82,18 @@ public class BuildAreaScreen extends WorkAreaScreen {
 
     @Override
     public void setButtons() {
+        this.clearWidgets();
         super.setButtons();
-        this.structureOptions = null;
+        structureOptions = null;
         int buttonWidth = 80;
         int buttonHeight = 20;
         int previewWidth = 200;
         int previewHeight = 100;
         int boxWidth = 80;
         int boxHeight = 20;
-
+        y = y - 20;
         //MODE
-        modeScanButton = addRenderableWidget(new ActivateableButton(x - buttonWidth - 100, y - previewHeight / 2 + 130, buttonWidth, buttonHeight, Component.literal("Scan"),
+        modeScanButton = addRenderableWidget(new ActivateableButton(x - buttonWidth - 101, y - previewHeight / 2 + 130, buttonWidth, buttonHeight, Component.literal("Scan"),
                 btn -> {
                     this.mode = Mode.SCAN;
 
@@ -102,7 +103,7 @@ public class BuildAreaScreen extends WorkAreaScreen {
         ));
         modeScanButton.active = this.mode == Mode.SCAN;
 
-        modeLoadButton = addRenderableWidget(new ActivateableButton(x - buttonWidth - 100 , y - previewHeight / 2 + 130 + buttonHeight, buttonWidth, buttonHeight, Component.literal("Load"),
+        modeLoadButton = addRenderableWidget(new ActivateableButton(x - buttonWidth - 101 , y - previewHeight / 2 + 130 + buttonHeight, buttonWidth, buttonHeight, Component.literal("Load"),
                 btn -> {
                     this.mode = Mode.LOAD;
 
@@ -111,11 +112,10 @@ public class BuildAreaScreen extends WorkAreaScreen {
                 }
         ));
         modeLoadButton.active = this.mode == Mode.LOAD;
-        int sizeButtonX = 60;
-        int sizeButtonY = 130;
+
         switch (mode){
             case SCAN -> {
-                xSizePlusButton = addRenderableWidget(new ExtendedButton(x + previewWidth/2 + sizeButtonX, y - previewHeight / 2 + sizeButtonY, 20, 20, Component.literal("+"),
+                xSizePlusButton = addRenderableWidget(new ExtendedButton(x - buttonWidth - 61, y + 121, 20, 20, Component.literal("+"),
                         btn -> {
                             if(hasShiftDown()) areaXSize += 5;
                             else areaXSize++;
@@ -129,7 +129,7 @@ public class BuildAreaScreen extends WorkAreaScreen {
                         }
                 ));
 
-                xSizeMinusButton = addRenderableWidget(new ExtendedButton(x + previewWidth/2 + sizeButtonX + 20, y - previewHeight / 2 + sizeButtonY, 20, 20, Component.literal("-"),
+                xSizeMinusButton = addRenderableWidget(new ExtendedButton(x - buttonWidth - 41, y + 121, 20, 20, Component.literal("-"),
                         btn -> {
                             if(hasShiftDown()) areaXSize -= 5;
                             else areaXSize--;
@@ -143,7 +143,7 @@ public class BuildAreaScreen extends WorkAreaScreen {
                         }
                 ));
 
-                ySizePlusButton = addRenderableWidget(new ExtendedButton(x + previewWidth/2 + sizeButtonX, y - previewHeight / 2 + sizeButtonY + 20, 20, 20, Component.literal("+"),
+                ySizePlusButton = addRenderableWidget(new ExtendedButton(x - buttonWidth - 61, y + 141, 20, 20, Component.literal("+"),
                         btn -> {
                             if(hasShiftDown()) areaYSize += 5;
                             else areaYSize++;
@@ -157,7 +157,7 @@ public class BuildAreaScreen extends WorkAreaScreen {
                         }
                 ));
 
-                ySizeMinusButton = addRenderableWidget(new ExtendedButton(x + previewWidth/2 + sizeButtonX + 20, y - previewHeight / 2 + sizeButtonY + 20, 20, 20, Component.literal("-"),
+                ySizeMinusButton = addRenderableWidget(new ExtendedButton(x - buttonWidth - 41, y + 141, 20, 20, Component.literal("-"),
                         btn -> {
                             if(hasShiftDown()) areaYSize -= 5;
                             else areaYSize--;
@@ -171,7 +171,7 @@ public class BuildAreaScreen extends WorkAreaScreen {
                         }
                 ));
 
-                zSizePlusButton = addRenderableWidget(new ExtendedButton(x + previewWidth/2 + sizeButtonX, y - previewHeight / 2 + sizeButtonY + 40, 20, 20, Component.literal("+"),
+                zSizePlusButton = addRenderableWidget(new ExtendedButton(x - buttonWidth - 61, y + 161, 20, 20, Component.literal("+"),
                         btn -> {
                             if(hasShiftDown()) areaZSize += 5;
                             else areaZSize++;
@@ -184,7 +184,7 @@ public class BuildAreaScreen extends WorkAreaScreen {
                         }
                 ));
 
-                zSizeMinusButton = addRenderableWidget(new ExtendedButton(x + previewWidth/2 + sizeButtonX + 20, y - previewHeight / 2 + sizeButtonY + 40, 20, 20, Component.literal("-"),
+                zSizeMinusButton = addRenderableWidget(new ExtendedButton(x - buttonWidth - 41, y + 161, 20, 20, Component.literal("-"),
                         btn -> {
                             if(hasShiftDown()) areaZSize -= 5;
                             else areaZSize--;
@@ -217,7 +217,7 @@ public class BuildAreaScreen extends WorkAreaScreen {
                         }
                 ));
 
-                saveButton = addRenderableWidget(new ExtendedButton(x + previewWidth/2 + 1, y + previewHeight + previewHeight/2 + 11, buttonWidth, buttonHeight, Component.literal("Save"),
+                saveButton = addRenderableWidget(new ExtendedButton(x - buttonWidth / 2, y + 182, buttonWidth, buttonHeight, Component.literal("Save"),
                         btn -> StructureManager.saveStructureToFile(this.scanNameEditBox.getValue(), structure, this.buildArea.getWidthSize(), this.buildArea.getHeightSize(), this.buildArea.getDepthSize(), this.buildArea.getFacing())
                 ));
 
@@ -229,7 +229,7 @@ public class BuildAreaScreen extends WorkAreaScreen {
             case LOAD -> {
                 List<String> scans = StructureManager.loadAvailableScans();
                 String title = scans.isEmpty() ? "Empty" : "Select NBT-File";
-                structureOptions = new ScrollDropDownMenu<>(title, x - previewWidth/2 -1 , y - previewHeight / 2 + 130 - boxHeight - 2, previewWidth +2, boxHeight +2,
+                structureOptions = new ScrollDropDownMenu<>(title, x - previewWidth/2 -1 , y - previewHeight / 2 + 131 - boxHeight - 2, previewWidth +2, boxHeight +2,
                         scans,
                         string -> string,
                         selectedName -> {
@@ -258,21 +258,21 @@ public class BuildAreaScreen extends WorkAreaScreen {
                 );
                 addRenderableWidget(structureOptions);
 
-                buildButton = addRenderableWidget(new ExtendedButton(x + previewWidth/2, y + previewHeight + previewHeight/2 + 11, buttonWidth, buttonHeight, Component.literal("Build"),
+                buildButton = addRenderableWidget(new ExtendedButton(x - buttonWidth / 2, y + 182, buttonWidth, buttonHeight, Component.literal("Build"),
                         btn -> {
                             WorkersMain.SIMPLE_CHANNEL.sendToServer(new MessageUpdateBuildArea(this.buildArea.getUUID(), this.buildArea.getWidthSize(), this.buildArea.getHeightSize(), areaZSize, this.structureNBT, true, false));
                         }
                 ));
 
                 if(player.isCreative()){
-                    placeButton = addRenderableWidget(new ExtendedButton(x + previewWidth/2, y + previewHeight + previewHeight/2 + 11 + 20, buttonWidth, buttonHeight, Component.literal("Place"),
+                    placeButton = addRenderableWidget(new ExtendedButton(x - buttonWidth/2 + buttonWidth, y + 182, buttonWidth, buttonHeight, Component.literal("Place"),
                             btn -> {
                                 WorkersMain.SIMPLE_CHANNEL.sendToServer(new MessageUpdateBuildArea(this.buildArea.getUUID(), this.buildArea.getWidthSize(), this.buildArea.getHeightSize(), areaZSize, this.structureNBT, true, true));
                             }
                     ));
                 }
 
-                requiredItemsDropDownMenu = new DisplayTextItemScrollDropDownMenu(ItemStack.EMPTY, "Required Items", x + previewWidth/2 + buttonWidth + 3, y + previewHeight + previewHeight/2 + 11, 120, 20, requiredItems, null);
+                requiredItemsDropDownMenu = new DisplayTextItemScrollDropDownMenu(ItemStack.EMPTY, "Blocks", x + 101 , y + 60, 110, boxHeight, requiredItems, null);
                 requiredItemsDropDownMenu.setBgFillSelected(FastColor.ARGB32.color(255, 139, 139, 139));
                 requiredItemsDropDownMenu.setCanSelectItem(false);
                 requiredItemsDropDownMenu.setResetCount(false);
@@ -283,18 +283,17 @@ public class BuildAreaScreen extends WorkAreaScreen {
                 addRenderableWidget(structurePreview);
                 if(structure != null) structurePreview.setStructure(this.structure, this.structureNBT);
                 checkBuildButtonActive();
+
             }
         }
 
-        addRenderableWidget(new BlackShowingTextField(x + previewWidth/2, y - previewHeight / 2 + 130, boxWidth, boxHeight, Component.literal("x: " + areaXSize)));
-        addRenderableWidget(new BlackShowingTextField(x + previewWidth/2, y - previewHeight / 2 + 130 + boxHeight, boxWidth, boxHeight, Component.literal( "y: " + areaYSize)));
-        addRenderableWidget(new BlackShowingTextField(x + previewWidth/2, y - previewHeight / 2 + 130 + boxHeight*2, boxWidth, boxHeight, Component.literal( "z: " + areaZSize)));
-
-
-        String string = null;
-        if(scanNameEditBox != null) string = this.scanNameEditBox.getValue();
-        checkSaveButtonActive(string);
-        checkBuildButtonActive();
+        int blackboxWidth = mode == Mode.SCAN ? 40 : 80;
+        int blackboxHeight = 20;
+        int blackBoxPosX = x - 181;
+        int blackBoxPosY = y + 100;
+        addRenderableWidget(new BlackShowingTextField(blackBoxPosX, blackBoxPosY + 21, blackboxWidth, blackboxHeight, Component.literal("x: " + areaXSize)));
+        addRenderableWidget(new BlackShowingTextField(blackBoxPosX, blackBoxPosY + 41, blackboxWidth, blackboxHeight, Component.literal("y: " + areaYSize)));
+        addRenderableWidget(new BlackShowingTextField(blackBoxPosX, blackBoxPosY + 61, blackboxWidth, blackboxHeight, Component.literal("z: " + areaZSize)));
     }
 
     private void setStructure(List<ScannedBlock> structure, CompoundTag structureNBT) {
@@ -326,7 +325,7 @@ public class BuildAreaScreen extends WorkAreaScreen {
         if(this.buildButton == null) return;
 
         this.buildButton.active = this.structure != null;
-        this.placeButton.active = this.buildButton.active;
+        if(placeButton != null) this.placeButton.active = this.buildButton.active;
     }
 
     private void checkSaveButtonActive(String s) {
@@ -379,12 +378,6 @@ public class BuildAreaScreen extends WorkAreaScreen {
     @Override
     public void render(GuiGraphics guiGraphics, int mouseX, int mouseY, float partialTicks) {
         super.render(guiGraphics, mouseX, mouseY, partialTicks);
-        if (structureOptions != null) {
-            structureOptions.renderWidget(guiGraphics, mouseX, mouseY, partialTicks);
-        }
-        if (requiredItemsDropDownMenu != null) {
-            requiredItemsDropDownMenu.renderWidget(guiGraphics, mouseX, mouseY, partialTicks);
-        }
     }
 
     @Override

@@ -5,6 +5,7 @@ import com.talhanation.recruits.client.gui.commandscreen.ICommandCategory;
 import com.talhanation.recruits.client.gui.group.RecruitsCommandButton;
 import com.talhanation.recruits.client.gui.group.RecruitsGroup;
 import com.talhanation.workers.WorkersMain;
+import com.talhanation.workers.client.WorkersClientManager;
 import com.talhanation.workers.network.MessageAddDepositPos;
 import com.talhanation.workers.network.MessageAddWorkArea;
 import net.minecraft.client.gui.components.Tooltip;
@@ -55,7 +56,7 @@ public class WorkerCommandScreen implements ICommandCategory {
                 });
 
         addCropFieldButton.setTooltip(Tooltip.create(TOOLTIP_ADD_FIELD));
-        addCropFieldButton.active = screen.rayBlockPos != null;
+        addCropFieldButton.active = screen.rayBlockPos != null && WorkersClientManager.isInFactionClaim(screen.rayBlockPos);;
         screen.addRenderableWidget(addCropFieldButton);
 
         RecruitsCommandButton addLumberArea = new RecruitsCommandButton(x, y + 0, TEXT_ADD_LUMBER,
@@ -66,7 +67,7 @@ public class WorkerCommandScreen implements ICommandCategory {
                 });
 
         addLumberArea.setTooltip(Tooltip.create(TOOLTIP_ADD_LUMBER));
-        addLumberArea.active = screen.rayBlockPos != null;
+        addLumberArea.active = screen.rayBlockPos != null && WorkersClientManager.isInFactionClaim(screen.rayBlockPos);
         screen.addRenderableWidget(addLumberArea);
 
         RecruitsCommandButton addMine = new RecruitsCommandButton(x + 100, y + 0, TEXT_ADD_MINE,
@@ -77,7 +78,7 @@ public class WorkerCommandScreen implements ICommandCategory {
                 });
 
         addMine.setTooltip(Tooltip.create(TOOLTIP_ADD_MINE));
-        addMine.active = screen.rayBlockPos != null;
+        addMine.active = screen.rayBlockPos != null && WorkersClientManager.isInFactionClaim(screen.rayBlockPos);;
         screen.addRenderableWidget(addMine);
 
         RecruitsCommandButton addDepositPosition = new RecruitsCommandButton(x - 100, y - 0, TEXT_ADD_DEPOSIT,
@@ -102,7 +103,7 @@ public class WorkerCommandScreen implements ICommandCategory {
                     WorkersMain.SIMPLE_CHANNEL.sendToServer(new MessageAddWorkArea((float) pos.x(), (int) pos.y(), (float) pos.z(), 2));
                 });
 
-        addBuilding.active = screen.rayBlockPos != null;
+        addBuilding.active = screen.rayBlockPos != null && WorkersClientManager.isInFactionClaim(screen.rayBlockPos);;
         screen.addRenderableWidget(addBuilding);
     }
 

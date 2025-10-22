@@ -2,7 +2,6 @@ package com.talhanation.workers.config;
 
 import net.minecraftforge.common.ForgeConfigSpec;
 import net.minecraftforge.fml.common.Mod;
-import net.royawesome.jlibnoise.module.combiner.Min;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -16,6 +15,8 @@ public class WorkersServerConfig {
     public static ForgeConfigSpec.IntValue MinerCost;
     public static ForgeConfigSpec.IntValue BuilderCost;
     public static ForgeConfigSpec.IntValue MerchantCost;
+
+    public static ForgeConfigSpec.BooleanValue ShouldWorkAreaOnlyBeInFactionClaim;
     public static ArrayList<String> FARMER_PICKUP = new ArrayList<>(
             Arrays.asList(
                     "minecraft:wheat",
@@ -119,6 +120,14 @@ public class WorkersServerConfig {
                         \tdefault: 30""")
                 .worldRestart()
                 .defineInRange("MerchantCost", 30, 0, 1453);
+
+        ShouldWorkAreaOnlyBeInFactionClaim = BUILDER.comment("""
+                        
+                        Should placing a work ara or a building only be allowed when in a claim of the own faction.
+                        \t(takes effect after restart)
+                        \tdefault: false""")
+                .worldRestart()
+                .define("ShouldWorkAreaOnlyBeInFactionClaim", false);
 
         SERVER = BUILDER.build();
     }

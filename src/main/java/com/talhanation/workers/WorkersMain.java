@@ -1,6 +1,7 @@
 package com.talhanation.workers;
 
 import com.talhanation.recruits.client.events.CommandCategoryManager;
+import com.talhanation.workers.network.MessageToClientUpdateConfig;
 import com.talhanation.workers.client.events.ScreenEvents;
 import com.talhanation.workers.client.gui.WorkerCommandScreen;
 import com.talhanation.workers.config.WorkersServerConfig;
@@ -91,7 +92,8 @@ public class WorkersMain {
             MessageUpdateMerchant.class,
             MessageDoTradeWithMerchant.class,
             MessageOpenMerchantEditTradeScreen.class,
-            MessageOpenMerchantTradeScreen.class
+            MessageOpenMerchantTradeScreen.class,
+            MessageToClientUpdateConfig.class
         };
         for (int i = 0; i < messages.length; i++) CommonRegistry.registerMessage(SIMPLE_CHANNEL, i, messages[i]);
     }

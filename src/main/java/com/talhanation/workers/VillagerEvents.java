@@ -1,19 +1,30 @@
 package com.talhanation.workers;
 
 import com.talhanation.recruits.RecruitsHireTradesRegistry;
+import com.talhanation.workers.network.MessageToClientUpdateConfig;
 import com.talhanation.recruits.world.RecruitsHireTrade;
 import com.talhanation.workers.config.WorkersServerConfig;
 import com.talhanation.workers.init.ModEntityTypes;
 import net.minecraft.network.chat.Component;
+import net.minecraft.server.level.ServerPlayer;
+import net.minecraftforge.event.entity.EntityJoinLevelEvent;
 import net.minecraftforge.event.server.ServerStartingEvent;
-import net.minecraftforge.event.village.VillagerTradesEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
+import net.minecraftforge.network.PacketDistributor;
 
 import java.util.List;
 
 public class VillagerEvents {
 
+    @SubscribeEvent
+    public void onPlayerJoinWorld(EntityJoinLevelEvent event) {
+        if(event.getLevel().isClientSide()) return;
 
+        if(event.getEntity() instanceof ServerPlayer player){
+                WorkersMain.SIMPLE_CHANNEL.send(PacketDistributor.PLAYER.with(() -> player),
+                        new MessageToClientUpdateConfig(WorkersServerConfig.ShouldWorkAreaOnlyBeInFactionClaim.get()));
+        }
+    }
     @SubscribeEvent
     public void onServerStarting(ServerStartingEvent event) {
         RecruitsHireTradesRegistry.register(new RecruitsHireTrade(ModEntityTypes.FARMER.getId(), WorkersServerConfig.FarmerCost.get(), 1, 50, TITLE_FARMER, DESCRIPTION_FARMER, List.of(RecruitsHireTrade.RecruitsTradeTag.FARMER, RecruitsHireTrade.RecruitsTradeTag.MELEE)));
