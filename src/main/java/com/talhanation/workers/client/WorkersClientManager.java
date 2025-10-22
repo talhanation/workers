@@ -18,6 +18,8 @@ public class WorkersClientManager {
         ChunkPos chunkPos = new ChunkPos(chunkX, chunkZ);
         RecruitsClaim claim = RecruitsClaimManager.getClaimAt(chunkPos, ClientManager.recruitsClaims);
         if (claim == null) return false;
+        if(ClientManager.ownFaction == null) return false;
+
         return claim.containsChunk(chunkPos) && claim.getOwnerFaction().getStringID().equals(ClientManager.ownFaction.getStringID());
     }
 }
