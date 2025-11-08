@@ -1,9 +1,7 @@
 package com.talhanation.workers.entities.workarea;
 
-import com.talhanation.workers.WorkersMain;
 import com.talhanation.workers.client.gui.CropAreaScreen;
 import com.talhanation.workers.entities.FarmerEntity;
-import com.talhanation.workers.network.MessageToClientOpenWorkAreaScreen;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
@@ -11,9 +9,6 @@ import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.syncher.EntityDataAccessor;
 import net.minecraft.network.syncher.EntityDataSerializers;
 import net.minecraft.network.syncher.SynchedEntityData;
-import net.minecraft.server.level.ServerPlayer;
-import net.minecraft.world.InteractionHand;
-import net.minecraft.world.InteractionResult;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.*;
@@ -24,7 +19,6 @@ import net.minecraft.world.level.material.Fluid;
 import net.minecraft.world.level.material.Fluids;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
-import net.minecraftforge.network.PacketDistributor;
 
 import java.util.Stack;
 
@@ -73,19 +67,6 @@ public class CropArea extends AbstractWorkAreaEntity {
     public Screen getScreen(Player player) {
         return new CropAreaScreen(this, player);
     }
-
-    public InteractionResult interact(Player player, InteractionHand hand) {
-        if(!player.getUUID().equals(this.getPlayerUUID())) return InteractionResult.PASS;
-
-        if (this.getCommandSenderWorld().isClientSide()) {
-            return InteractionResult.CONSUME;
-        }
-        else{
-            WorkersMain.SIMPLE_CHANNEL.send(PacketDistributor.PLAYER.with(() -> (ServerPlayer) player), new MessageToClientOpenWorkAreaScreen(this.getUUID()));
-            return InteractionResult.CONSUME;
-        }
-    }
-
     public void scanBreakArea(){
         if(area == null) area = this.getArea();
 

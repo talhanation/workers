@@ -27,12 +27,13 @@ public class VillagerEvents {
     }
     @SubscribeEvent
     public void onServerStarting(ServerStartingEvent event) {
+             /*
         RecruitsHireTradesRegistry.register(new RecruitsHireTrade(ModEntityTypes.FARMER.getId(), WorkersServerConfig.FarmerCost.get(), 1, 50, TITLE_FARMER, DESCRIPTION_FARMER, List.of(RecruitsHireTrade.RecruitsTradeTag.FARMER, RecruitsHireTrade.RecruitsTradeTag.MELEE)));
         RecruitsHireTradesRegistry.register(new RecruitsHireTrade(ModEntityTypes.LUMBERJACK.getId(), WorkersServerConfig.LumberjackCost.get(), 1, 50, TITLE_LUMBERJACK, DESCRIPTION_LUMBERJACK, List.of(RecruitsHireTrade.RecruitsTradeTag.FARMER, RecruitsHireTrade.RecruitsTradeTag.MELEE)));
         RecruitsHireTradesRegistry.register(new RecruitsHireTrade(ModEntityTypes.MINER.getId(), WorkersServerConfig.MinerCost.get(), 1, 50, TITLE_MINER, DESCRIPTION_MINER, List.of(RecruitsHireTrade.RecruitsTradeTag.FARMER, RecruitsHireTrade.RecruitsTradeTag.MELEE)));
         RecruitsHireTradesRegistry.register(new RecruitsHireTrade(ModEntityTypes.BUILDER.getId(), WorkersServerConfig.BuilderCost.get(), 1, 50, TITLE_BUILDER, DESCRIPTION_BUILDER, List.of(RecruitsHireTrade.RecruitsTradeTag.WORKER, RecruitsHireTrade.RecruitsTradeTag.MELEE)));
         //RecruitsHireTradesRegistry.register(new RecruitsHireTrade(ModEntityTypes.MERCHANT.getId(), WorkersServerConfig.MerchantCost.get(),1, 50));
-        /*
+
         RecruitsHireTradesRegistry.register(new RecruitsHireTrade(ModEntityTypes.FISHERMAN.getId(), WorkersServerConfig.FishermanCost.get(),3, 50));
         RecruitsHireTradesRegistry.register(new RecruitsHireTrade(ModEntityTypes.CATTLE_FARMER.getId(), WorkersServerConfig.CattleFarmerCost.get(),3, 50));
         RecruitsHireTradesRegistry.register(new RecruitsHireTrade(ModEntityTypes.CHICKEN_FARMER.getId(), WorkersServerConfig.ChickenFarmer.get(),3, 50));
