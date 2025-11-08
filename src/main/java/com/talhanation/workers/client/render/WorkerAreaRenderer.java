@@ -58,11 +58,10 @@ public class WorkerAreaRenderer extends EntityRenderer<AbstractWorkAreaEntity> {
     //ItemEntityRenderer
     @Override
     public void render(@NotNull AbstractWorkAreaEntity abstractWorkAreaEntity, float entityYaw, float partialTicks, PoseStack poseStack, MultiBufferSource bufferSource, int packedLight) {
-        super.render(abstractWorkAreaEntity, entityYaw, partialTicks, poseStack, bufferSource, packedLight);
         Player player = Minecraft.getInstance().player;
         if(player == null) return;
 
-        if(!player.getUUID().equals(abstractWorkAreaEntity.getPlayerUUID()) || (player.getTeam() != null && !player.getTeam().getName().equals(abstractWorkAreaEntity.getTeamStringID()))) return;
+        super.render(abstractWorkAreaEntity, entityYaw, partialTicks, poseStack, bufferSource, packedLight);
 
         poseStack.pushPose();
 
@@ -80,6 +79,8 @@ public class WorkerAreaRenderer extends EntityRenderer<AbstractWorkAreaEntity> {
         poseStack.popPose();
 
         Entity looking = ClientEvent.getEntityByLooking();
+
+        if(!abstractWorkAreaEntity.canPlayerSee(player)) return;
 
         if(!abstractWorkAreaEntity.showBox && (looking == null || !looking.equals(abstractWorkAreaEntity))) return;
 

@@ -99,15 +99,14 @@ public abstract class AbstractWorkAreaEntity extends Entity {
     }
     @Override
     public @NotNull InteractionResult interact(Player player, @NotNull InteractionHand hand) {
-        if(!player.getUUID().equals(this.getPlayerUUID()) && !player.isCreative()) return InteractionResult.PASS;
+        if(canPlayerSee(player)){
+            if (this.getCommandSenderWorld().isClientSide()) {
+                return InteractionResult.SUCCESS;
+            }
+            else{
 
-        if (this.getCommandSenderWorld().isClientSide()) {
-            return InteractionResult.CONSUME;
-        }
-        else{
-            if(player.getUUID().equals(this.getPlayerUUID()) || player.isCreative() && player.hasPermissions(2)){
                 WorkersMain.SIMPLE_CHANNEL.send(PacketDistributor.PLAYER.with(() -> (ServerPlayer) player), new MessageToClientOpenWorkAreaScreen(this.getUUID()));
-                return InteractionResult.CONSUME;
+                return InteractionResult.SUCCESS;
             }
         }
         return super.interact(player, hand);
@@ -151,6 +150,14 @@ public abstract class AbstractWorkAreaEntity extends Entity {
     @Override
     public boolean canFreeze() {
         return false;
+    }
+
+    public boolean canPlayerSee(Player player){
+        boolean owner = player.getUUID().equals(this.getPlayerUUID());
+        boolean sameTeam = player.getTeam() != null && player.getTeam().getName().equals(this.getTeamStringID());
+        boolean admin = player.isCreative() && player.hasPermissions(2);
+
+        return admin || owner || sameTeam;
     }
 
     @Override
