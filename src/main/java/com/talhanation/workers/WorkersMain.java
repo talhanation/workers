@@ -112,6 +112,7 @@ public class WorkersMain {
             event.accept(ModItems.LUMBERJACK_SPAWN_EGG.get());
             event.accept(ModItems.MINER_SPAWN_EGG.get());
             event.accept(ModItems.MERCHANT_SPAWN_EGG.get());
+            event.accept(ModItems.BUILDER_SPAWN_EGG.get());
         }
     }
 }

@@ -10,6 +10,7 @@
   "entity.workers.cattle_farmer": "Cattle Farmer",
   "entity.workers.beekeeper": "Beekeeper",
   "entity.workers.rabbit_farmer": "Rabbit Farmer",
+  "entity.workers.builder": "Builder",
 
   "item.workers.miner_spawn_egg": "Miner Spawn Egg",
   "item.workers.farmer_spawn_egg": "Farmer Spawn Egg",
@@ -20,6 +21,7 @@
   "item.workers.swineherd_spawn_egg": "Swineherd Spawn Egg",
   "item.workers.cattle_farmer_spawn_egg": "Cattle Farmer Spawn Egg",
   "item.workers.chicken_farmer_spawn_egg": "Chicken Farmer Spawn Egg",
+  "item.workers.builder_spawn_egg": "Builder Spawn Egg",
 
   "gui.workers.command.tooltip.workers": "Workers",
   "gui.workers.command.text.add_field": "Add Crop field",

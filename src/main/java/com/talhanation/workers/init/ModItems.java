@@ -28,6 +28,8 @@ public class ModItems {
     public static final RegistryObject<SpawnEggItem> LUMBERJACK_SPAWN_EGG = createSpawnEggItem("lumberjack", ModEntityTypes.LUMBERJACK, 16755200, 16777045);
     public static final RegistryObject<SpawnEggItem> MINER_SPAWN_EGG = createSpawnEggItem("miner", ModEntityTypes.MINER, 16755200, 16777045);
     public static final RegistryObject<SpawnEggItem> MERCHANT_SPAWN_EGG = createSpawnEggItem("merchant", ModEntityTypes.MERCHANT, 16755200, 16777045);
+    public static final RegistryObject<SpawnEggItem> BUILDER_SPAWN_EGG = createSpawnEggItem("builder", ModEntityTypes.BUILDER, 16755200, 16777045);
+
     /*
     public static final RegistryObject<Item> MINER_SPAWN_EGG = RegistryUtils.createSpawnEggItem("miner", ModEntityTypes.MINER::get, 16755200, 16777045);
     public static final RegistryObject<Item> LUMBER_SPAWN_EGG = RegistryUtils.createSpawnEggItem("lumberjack", ModEntityTypes.LUMBERJACK::get, 16755200, 16777045);

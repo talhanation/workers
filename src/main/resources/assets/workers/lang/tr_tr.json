@@ -10,6 +10,7 @@
   "entity.workers.cattle_farmer": "Sığır Çiftçisi",
   "entity.workers.beekeeper": "Arıcı",
   "entity.workers.rabbit_farmer": "Tavşan Çiftçisi",
+  "entity.workers.builder": "İnşaatçı",
 
   "item.workers.miner_spawn_egg": "Madenci Yumurtası",
   "item.workers.farmer_spawn_egg": "Çiftçi Yumurtası",
@@ -19,5 +20,6 @@
   "item.workers.fisherman_spawn_egg": "Balıkçı Yumurtası",
   "item.workers.swineherd_spawn_egg": "Domuz Çobanı Yumurtası",
   "item.workers.cattle_farmer_spawn_egg": "Sığır Çiftçisi Yumurtası",
-  "item.workers.chicken_farmer_spawn_egg": "Tavuk Çiftçisi Yumurtası"
+  "item.workers.chicken_farmer_spawn_egg": "Tavuk Çiftçisi Yumurtası",
+  "item.workers.builder_spawn_egg": "İnşaatçı Yumurtası"
 }
