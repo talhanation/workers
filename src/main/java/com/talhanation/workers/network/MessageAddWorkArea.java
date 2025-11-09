@@ -3,6 +3,7 @@ package com.talhanation.workers.network;
 import com.talhanation.workers.entities.workarea.*;
 import com.talhanation.workers.init.ModEntityTypes;
 import de.maxhenkel.corelib.net.Message;
+import net.minecraft.core.BlockPos;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerPlayer;
@@ -10,18 +11,14 @@ import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.network.NetworkEvent;
 
 public class MessageAddWorkArea implements Message<MessageAddWorkArea> {
-    public float x;
-    public float y;
-    public float z;
+    public BlockPos pos;
     public int type;
     public MessageAddWorkArea() {
 
     }
 
-    public MessageAddWorkArea(float x, float y, float z, int type) {
-        this.x = x;
-        this.y = y;
-        this.z = z;
+    public MessageAddWorkArea(BlockPos pos, int type) {
+        this.pos = pos;
         this.type = type;
     }
 
@@ -73,23 +70,18 @@ public class MessageAddWorkArea implements Message<MessageAddWorkArea> {
         workArea.setPlayerUUID(player.getUUID());
         workArea.setCustomName(Component.literal(""));
 
-        workArea.moveTo(this.x, this.y, this.z);
+        workArea.moveTo(pos.above(), 0, 0);
         player.level().addFreshEntity(workArea);
     }
     public MessageAddWorkArea fromBytes(FriendlyByteBuf buf) {
-        this.x = buf.readFloat();
-        this.y = buf.readFloat();
-        this.z = buf.readFloat();
+        this.pos = buf.readBlockPos();
         this.type = buf.readInt();
-        //this.recruit = buf.readUUID();
 
         return this;
     }
 
     public void toBytes(FriendlyByteBuf buf) {
-        buf.writeFloat(x);
-        buf.writeFloat(y);
-        buf.writeFloat(z);
+        buf.writeBlockPos(pos);
         buf.writeInt(type);
     }
 

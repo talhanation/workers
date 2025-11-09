@@ -51,8 +51,8 @@ public class WorkerCommandScreen implements ICommandCategory {
         RecruitsCommandButton addCropFieldButton = new RecruitsCommandButton(x, y - 50, TEXT_ADD_FIELD,
                 button -> {
                     if(screen.rayBlockPos == null) return;
-                    Vec3 pos = screen.rayBlockPos.getCenter();
-                    WorkersMain.SIMPLE_CHANNEL.sendToServer(new MessageAddWorkArea((float) pos.x(), (int) pos.y(), (float) pos.z(), 0));
+                    BlockPos pos = screen.rayBlockPos;
+                    WorkersMain.SIMPLE_CHANNEL.sendToServer(new MessageAddWorkArea(pos, 0));
                 });
 
         addCropFieldButton.setTooltip(Tooltip.create(TOOLTIP_ADD_FIELD));
@@ -62,8 +62,8 @@ public class WorkerCommandScreen implements ICommandCategory {
         RecruitsCommandButton addLumberArea = new RecruitsCommandButton(x, y + 0, TEXT_ADD_LUMBER,
                 button -> {
                     if(screen.rayBlockPos == null) return;
-                    Vec3 pos = screen.rayBlockPos.getCenter();
-                    WorkersMain.SIMPLE_CHANNEL.sendToServer(new MessageAddWorkArea((float) pos.x(), (int) pos.y(), (float) pos.z(), 1));
+                    BlockPos pos = screen.rayBlockPos;
+                    WorkersMain.SIMPLE_CHANNEL.sendToServer(new MessageAddWorkArea(pos, 1));
                 });
 
         addLumberArea.setTooltip(Tooltip.create(TOOLTIP_ADD_LUMBER));
@@ -73,8 +73,8 @@ public class WorkerCommandScreen implements ICommandCategory {
         RecruitsCommandButton addMine = new RecruitsCommandButton(x + 100, y + 0, TEXT_ADD_MINE,
                 button -> {
                     if(screen.rayBlockPos == null) return;
-                    Vec3 pos = screen.rayBlockPos.getCenter();
-                    WorkersMain.SIMPLE_CHANNEL.sendToServer(new MessageAddWorkArea((float) pos.x(), (int) pos.y(), (float) pos.z(), 3));
+                    BlockPos pos = screen.rayBlockPos;
+                    WorkersMain.SIMPLE_CHANNEL.sendToServer(new MessageAddWorkArea(pos, 3));
                 });
 
         addMine.setTooltip(Tooltip.create(TOOLTIP_ADD_MINE));
@@ -99,8 +99,8 @@ public class WorkerCommandScreen implements ICommandCategory {
         RecruitsCommandButton addBuilding = new RecruitsCommandButton(x, y + 30, TEXT_ADD_BUILDING,
                 button -> {
                     if(screen.rayBlockPos == null) return;
-                    Vec3 pos = screen.rayBlockPos.getCenter();
-                    WorkersMain.SIMPLE_CHANNEL.sendToServer(new MessageAddWorkArea((float) pos.x(), (int) pos.y(), (float) pos.z(), 2));
+                    BlockPos pos = screen.rayBlockPos;
+                    WorkersMain.SIMPLE_CHANNEL.sendToServer(new MessageAddWorkArea(pos, 2));
                 });
 
         addBuilding.active = screen.rayBlockPos != null && WorkersClientManager.isInFactionClaim(screen.rayBlockPos);;

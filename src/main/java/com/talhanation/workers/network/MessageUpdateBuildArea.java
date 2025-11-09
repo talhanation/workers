@@ -61,7 +61,7 @@ public class MessageUpdateBuildArea implements Message<MessageUpdateBuildArea> {
             buildArea.setStartBuild(this.isCreative);
         }
     }
-    
+
     @Override
     public MessageUpdateBuildArea fromBytes(FriendlyByteBuf buf) {
         this.uuid = buf.readUUID();
