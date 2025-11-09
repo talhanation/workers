@@ -61,10 +61,7 @@ public class MessageUpdateBuildArea implements Message<MessageUpdateBuildArea> {
             buildArea.setStartBuild(this.isCreative);
         }
     }
-
-    // ------------------------------
-    //  🔹 Komprimiertes Lesen
-    // ------------------------------
+    
     @Override
     public MessageUpdateBuildArea fromBytes(FriendlyByteBuf buf) {
         this.uuid = buf.readUUID();
@@ -72,7 +69,6 @@ public class MessageUpdateBuildArea implements Message<MessageUpdateBuildArea> {
         this.ySize = buf.readInt();
         this.zSize = buf.readInt();
 
-        // Komprimierte NBT lesen
         byte[] compressed = buf.readByteArray();
         try {
             this.structureNBT = NbtIo.readCompressed(new ByteArrayInputStream(compressed));
@@ -86,9 +82,6 @@ public class MessageUpdateBuildArea implements Message<MessageUpdateBuildArea> {
         return this;
     }
 
-    // ------------------------------
-    //  🔹 Komprimiertes Schreiben
-    // ------------------------------
     @Override
     public void toBytes(FriendlyByteBuf buf) {
         buf.writeUUID(uuid);
@@ -96,7 +89,6 @@ public class MessageUpdateBuildArea implements Message<MessageUpdateBuildArea> {
         buf.writeInt(ySize);
         buf.writeInt(zSize);
 
-        // NBT komprimieren
         try {
             ByteArrayOutputStream out = new ByteArrayOutputStream();
             NbtIo.writeCompressed(structureNBT, out);
