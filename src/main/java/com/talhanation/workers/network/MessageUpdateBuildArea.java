@@ -3,11 +3,15 @@ package com.talhanation.workers.network;
 import com.talhanation.workers.entities.workarea.BuildArea;
 import de.maxhenkel.corelib.net.Message;
 import net.minecraft.nbt.CompoundTag;
+import net.minecraft.nbt.NbtIo;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.network.NetworkEvent;
 
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
 import java.util.UUID;
 public class MessageUpdateBuildArea implements Message<MessageUpdateBuildArea> {
 
@@ -58,23 +62,51 @@ public class MessageUpdateBuildArea implements Message<MessageUpdateBuildArea> {
         }
     }
 
+    // ------------------------------
+    //  🔹 Komprimiertes Lesen
+    // ------------------------------
+    @Override
     public MessageUpdateBuildArea fromBytes(FriendlyByteBuf buf) {
         this.uuid = buf.readUUID();
         this.xSize = buf.readInt();
         this.ySize = buf.readInt();
         this.zSize = buf.readInt();
-        this.structureNBT = buf.readNbt();
+
+        // Komprimierte NBT lesen
+        byte[] compressed = buf.readByteArray();
+        try {
+            this.structureNBT = NbtIo.readCompressed(new ByteArrayInputStream(compressed));
+        } catch (IOException e) {
+            e.printStackTrace();
+            this.structureNBT = new CompoundTag(); // Fallback
+        }
+
         this.build = buf.readBoolean();
         this.isCreative = buf.readBoolean();
         return this;
     }
 
+    // ------------------------------
+    //  🔹 Komprimiertes Schreiben
+    // ------------------------------
+    @Override
     public void toBytes(FriendlyByteBuf buf) {
         buf.writeUUID(uuid);
         buf.writeInt(xSize);
         buf.writeInt(ySize);
         buf.writeInt(zSize);
-        buf.writeNbt(structureNBT);
+
+        // NBT komprimieren
+        try {
+            ByteArrayOutputStream out = new ByteArrayOutputStream();
+            NbtIo.writeCompressed(structureNBT, out);
+            byte[] compressed = out.toByteArray();
+            buf.writeByteArray(compressed);
+        } catch (IOException e) {
+            e.printStackTrace();
+            buf.writeByteArray(new byte[0]);
+        }
+
         buf.writeBoolean(build);
         buf.writeBoolean(isCreative);
     }
