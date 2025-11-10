@@ -12,14 +12,64 @@
   "entity.workers.rabbit_farmer": "Tavşan Çiftçisi",
   "entity.workers.builder": "İnşaatçı",
 
-  "item.workers.miner_spawn_egg": "Madenci Yumurtası",
-  "item.workers.farmer_spawn_egg": "Çiftçi Yumurtası",
-  "item.workers.shepherd_spawn_egg": "Çoban Yumurtası",
-  "item.workers.merchant_spawn_egg": "Tüccar Yumurtası",
-  "item.workers.lumberjack_spawn_egg": "Oduncu Yumurtası",
-  "item.workers.fisherman_spawn_egg": "Balıkçı Yumurtası",
-  "item.workers.swineherd_spawn_egg": "Domuz Çobanı Yumurtası",
-  "item.workers.cattle_farmer_spawn_egg": "Sığır Çiftçisi Yumurtası",
-  "item.workers.chicken_farmer_spawn_egg": "Tavuk Çiftçisi Yumurtası",
-  "item.workers.builder_spawn_egg": "İnşaatçı Yumurtası"
+  "item.workers.miner_spawn_egg": "Madenci Yaratma Yumurtası",
+  "item.workers.farmer_spawn_egg": "Çiftçi Yaratma Yumurtası",
+  "item.workers.shepherd_spawn_egg": "Çoban Yaratma Yumurtası",
+  "item.workers.merchant_spawn_egg": "Tüccar Yaratma Yumurtası",
+  "item.workers.lumberjack_spawn_egg": "Oduncu Yaratma Yumurtası",
+  "item.workers.fisherman_spawn_egg": "Balıkçı Yaratma Yumurtası",
+  "item.workers.swineherd_spawn_egg": "Domuz Çobanı Yaratma Yumurtası",
+  "item.workers.cattle_farmer_spawn_egg": "Sığır Çiftçisi Yaratma Yumurtası",
+  "item.workers.chicken_farmer_spawn_egg": "Tavuk Çiftçisi Yaratma Yumurtası",
+  "item.workers.builder_spawn_egg": "İnşaatçı Yaratma Yumurtası",
+
+  "gui.workers.command.tooltip.workers": "İşçiler",
+  "gui.workers.command.text.add_field": "Ekin Alanı Ekle",
+  "gui.workers.command.tooltip.add_field": "Baktığın konuma bir ekin alanı ekler.",
+  "gui.workers.command.text.add_deposit": "Depo Konumu Ekle",
+  "gui.workers.command.text.add_lumber": "Odun Alanı Ekle",
+  "gui.workers.command.tooltip.add_lumber": "Baktığın konuma bir odun alanı ekler.",
+  "gui.workers.command.tooltip.add_mine": "Baktığın konuma bir maden alanı ekler.",
+  "gui.workers.command.text.add_building": "Bina Ekle",
+  "gui.workers.command.text.add_mine": "Maden Ekle",
+
+  "gui.workers.command.text.forward": "İleri",
+  "gui.workers.command.text.back": "Geri",
+  "gui.workers.command.text.left": "Sol",
+  "gui.workers.command.text.right": "Sağ",
+  "gui.workers.command.text.destroy": "Yık",
+
+  "gui.workers.command.text.shearLeaves":"Yaprakları Kırp",
+  "gui.workers.command.text.stripLogs":"Kütükleri Soy",
+  "gui.workers.command.text.replant":"Yeniden Dik",
+  "gui.workers.command.text.anySapling":"Herhangi Bir Fidan",
+  "gui.workers.command.text.allowDamagedCurrency":"Hasarlı Eşyaya İzin Ver",
+
+  "gui.workers.button.reset": "Sıfırla",
+  "gui.workers.button.add": "Ekle",
+  "gui.workers.button.remove": "Kaldır",
+  "gui.workers.button.save": "Kaydet",
+  "gui.workers.button.back": "Geri",
+  "gui.workers.button.trade": "Ticaret",
+  "gui.workers.button.cancel": "İptal",
+  "gui.workers.button.edit": "Düzenle",
+  "gui.workers.button.copy": "Kopyala",
+
+  "gui.workers.text.creative": "Yaratıcı",
+
+  "description.workers.title.farmer" : "Çiftçi",
+  "description.workers.farmer" : "Çiftçi",
+
+  "description.workers.title.miner" : "Madenci",
+  "description.workers.miner" : "Madenci",
+
+  "description.workers.title.lumberjack" : "Oduncu",
+  "description.workers.lumberjack" : "Oduncu",
+
+  "description.workers.title.builder" : "İnşaatçı",
+  "description.workers.builder" : "İnşaatçı",
+
+  "description.workers.title.merchant" : "Tüccar",
+  "description.workers.merchant" : "Tüccar"
+
 }

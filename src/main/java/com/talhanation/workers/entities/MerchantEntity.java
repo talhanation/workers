@@ -355,7 +355,7 @@ public class MerchantEntity extends AbstractWorkerEntity {
         for (int i = 0; i < playerInv.getContainerSize(); i++) {
             ItemStack itemStackInSlot = playerInv.getItem(i);
 
-            if (areItemStacksEqual(itemStackInSlot, currencyItem)) {
+            if (areItemStacksEqual(itemStackInSlot, currencyItem, trade.allowDamagedCurrency)) {
                 playerEmeralds = playerEmeralds + itemStackInSlot.getCount();
             }
         }
@@ -364,7 +364,7 @@ public class MerchantEntity extends AbstractWorkerEntity {
         for (int i = 0; i < merchantInv.getContainerSize(); i++) {
             ItemStack itemStackInSlot = merchantInv.getItem(i);
 
-            if (areItemStacksEqual(itemStackInSlot, currencyItem)) {
+            if (areItemStacksEqual(itemStackInSlot, currencyItem, trade.allowDamagedCurrency)) {
                 merchantEmeralds = merchantEmeralds + itemStackInSlot.getCount();
             }
         }
@@ -373,7 +373,7 @@ public class MerchantEntity extends AbstractWorkerEntity {
         for (int i = 0; i < playerInv.getContainerSize(); i++) {
             ItemStack itemStackInSlot = playerInv.getItem(i);
 
-            if (areItemStacksEqual(itemStackInSlot, tradeItemStack)) {
+            if (areItemStacksEqual(itemStackInSlot, tradeItemStack, trade.allowDamagedCurrency)) {
                 playerTradeItem = playerTradeItem + itemStackInSlot.getCount();
             }
         }
@@ -382,7 +382,7 @@ public class MerchantEntity extends AbstractWorkerEntity {
         for (int i = 0; i < merchantInv.getContainerSize(); i++) {
             ItemStack itemStackInSlot = merchantInv.getItem(i);
 
-            if (areItemStacksEqual(itemStackInSlot, tradeItemStack)) {
+            if (areItemStacksEqual(itemStackInSlot, tradeItemStack, trade.allowDamagedCurrency)) {
                 merchantTradeItem = merchantTradeItem + itemStackInSlot.getCount();
             }
         }
@@ -410,7 +410,7 @@ public class MerchantEntity extends AbstractWorkerEntity {
             for (int i = 0; i < merchantInv.getContainerSize(); i++) {
                 ItemStack itemStackInSlot = merchantInv.getItem(i);
 
-                if (areItemStacksEqual(itemStackInSlot, tradeItemStack)) {
+                if (areItemStacksEqual(itemStackInSlot, tradeItemStack, trade.allowDamagedCurrency)) {
                     merchantInv.removeItemNoUpdate(i);
                 }
             }
@@ -434,7 +434,7 @@ public class MerchantEntity extends AbstractWorkerEntity {
         for (int i = 0; i < playerInv.getContainerSize(); i++) {
             ItemStack itemStackInSlot = playerInv.getItem(i);
 
-            if (areItemStacksEqual(itemStackInSlot, currencyItem)) {
+            if (areItemStacksEqual(itemStackInSlot, currencyItem, trade.allowDamagedCurrency)) {
                 playerInv.removeItemNoUpdate(i);
             }
         }
@@ -486,10 +486,16 @@ public class MerchantEntity extends AbstractWorkerEntity {
         }
     }
 
-    public static boolean areItemStacksEqual(ItemStack a, ItemStack b) {
+    public static boolean areItemStacksEqual(ItemStack a, ItemStack b, boolean allowDamagedCurrency) {
         if (a.isEmpty() && b.isEmpty()) return true;
         if (a.isEmpty() || b.isEmpty()) return false;
-        return ItemStack.isSameItemSameTags(a, b);
+
+        if (allowDamagedCurrency) {
+            return a.getItem() == b.getItem();
+        }
+        else{
+            return ItemStack.isSameItemSameTags(a, b);
+        }
     }
 
     public void setTrading(boolean trading) {

@@ -13,24 +13,26 @@ public class WorkersMerchantTrade {
     public int maxTrades;
     public int currentTrades;
     public ItemStack currencyItem;
+    public boolean allowDamagedCurrency;
     public ItemStack tradeItem;
     public UUID uuid;
 
     public WorkersMerchantTrade copy(){
-        return new WorkersMerchantTrade(this.currencyItem, this.tradeItem, this.maxTrades);
+        return new WorkersMerchantTrade(this.currencyItem, this.tradeItem, this.maxTrades, this.allowDamagedCurrency);
     }
 
     public WorkersMerchantTrade(){
-        this(ItemStack.EMPTY, ItemStack.EMPTY, 16);
+        this(ItemStack.EMPTY, ItemStack.EMPTY, 16, false);
     }
-    public WorkersMerchantTrade(ItemStack currencyItem, ItemStack tradeItem, int maxTrades){
-        this(UUID.randomUUID(), currencyItem, tradeItem, maxTrades);
+    public WorkersMerchantTrade(ItemStack currencyItem, ItemStack tradeItem, int maxTrades, boolean allowDamagedCurrency){
+        this(UUID.randomUUID(), currencyItem, tradeItem, maxTrades, allowDamagedCurrency);
     }
-    private WorkersMerchantTrade(UUID uuid, ItemStack currencyItem, ItemStack tradeItem, int maxTrades) {
+    private WorkersMerchantTrade(UUID uuid, ItemStack currencyItem, ItemStack tradeItem, int maxTrades, boolean allowDamagedCurrency) {
         this.uuid = uuid;
         this.currencyItem = currencyItem;
         this.tradeItem = tradeItem;
         this.maxTrades = maxTrades;
+        this.allowDamagedCurrency = allowDamagedCurrency;
     }
 
     public CompoundTag toNbt() {
@@ -42,6 +44,8 @@ public class WorkersMerchantTrade {
         tag.putInt("maxTrades", maxTrades);
         tag.putInt("currentTrades", currentTrades);
 
+        tag.putBoolean("allowDamagedCurrency", this.allowDamagedCurrency);
+
         return tag;
     }
 
@@ -51,8 +55,9 @@ public class WorkersMerchantTrade {
         UUID uuid = tag.getUUID("uuid");
         int maxTrades = tag.getInt("maxTrades");
         int currentTrades = tag.getInt("currentTrades");
+        boolean allowDamaged = tag.getBoolean("allowDamagedCurrency");
 
-        WorkersMerchantTrade trade = new WorkersMerchantTrade(currencyItem, tradeItem, maxTrades);
+        WorkersMerchantTrade trade = new WorkersMerchantTrade(currencyItem, tradeItem, maxTrades, allowDamaged);
         trade.currentTrades = currentTrades;
         trade.uuid = uuid;
         return trade;

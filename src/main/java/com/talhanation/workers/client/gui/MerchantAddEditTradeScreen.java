@@ -1,14 +1,17 @@
 package com.talhanation.workers.client.gui;
 
 import com.talhanation.recruits.client.gui.widgets.BlackShowingTextField;
+import com.talhanation.recruits.client.gui.widgets.RecruitsCheckBox;
 import com.talhanation.workers.WorkersMain;
 import com.talhanation.workers.entities.MerchantEntity;
 import com.talhanation.workers.inventory.MerchantAddEditTradeContainer;
+import com.talhanation.workers.network.MessageUpdateLumberArea;
 import com.talhanation.workers.network.MessageUpdateMerchantTrade;
 import com.talhanation.workers.world.WorkersMerchantTrade;
 import de.maxhenkel.corelib.inventory.ScreenBase;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.client.gui.components.Checkbox;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.MutableComponent;
 import net.minecraft.resources.ResourceLocation;
@@ -24,6 +27,7 @@ public class MerchantAddEditTradeScreen extends ScreenBase<MerchantAddEditTradeC
     private static final MutableComponent BUTTON_SAVE = Component.translatable("gui.workers.button.save");
     private static final MutableComponent BUTTON_EDIT = Component.translatable("gui.workers.button.edit");
     private static final MutableComponent BUTTON_RESET = Component.translatable("gui.workers.button.reset");
+    private static final MutableComponent TEXT_ALLOW_DAMAGED_ITEMS = Component.translatable("gui.workers.checkbox.allowDamagedCurrency");
     private static final int fontColor = 4210752;
     private final MerchantEntity merchantEntity;
     private final Player player;
@@ -34,8 +38,10 @@ public class MerchantAddEditTradeScreen extends ScreenBase<MerchantAddEditTradeC
     private ExtendedButton cancelButton;
     private ExtendedButton plusMaxTradesButton;
     private ExtendedButton minusMaxTradesButton;
+    private RecruitsCheckBox allowDamagedCurrencyCheckBox;
     private int currentTrades;
     private int maxTrades;
+    private boolean allowDamagedCurrency;
     public MerchantAddEditTradeScreen(MerchantAddEditTradeContainer tradeContainer, Inventory playerInventory, Component title) {
         super(RESOURCE_LOCATION, tradeContainer, playerInventory, Component.literal("Add or Edit Merchant Trade"));
         this.tradeContainer = tradeContainer;
@@ -51,6 +57,7 @@ public class MerchantAddEditTradeScreen extends ScreenBase<MerchantAddEditTradeC
         super.init();
         this.currentTrades = this.trade.currentTrades;
         this.maxTrades = this.trade.maxTrades;
+        this.allowDamagedCurrency = this.trade.allowDamagedCurrency;
 
         this.setWidgets();
     }
@@ -72,6 +79,7 @@ public class MerchantAddEditTradeScreen extends ScreenBase<MerchantAddEditTradeC
                     this.trade.tradeItem = tradeContainer.getTradeItem();
                     this.trade.currentTrades = currentTrades;
                     this.trade.maxTrades = maxTrades;
+                    this.trade.allowDamagedCurrency = allowDamagedCurrency;
                     WorkersMain.SIMPLE_CHANNEL.sendToServer(new MessageUpdateMerchantTrade(this.merchantEntity.getUUID(), this.trade, false));
 
                     new java.util.Timer().schedule(new java.util.TimerTask() {
@@ -115,6 +123,14 @@ public class MerchantAddEditTradeScreen extends ScreenBase<MerchantAddEditTradeC
                     this.setWidgets();
                 });
         addRenderableWidget(minusMaxTradesButton);
+
+        this.allowDamagedCurrencyCheckBox = new RecruitsCheckBox(x + 170, y + 15, 100, 20, TEXT_ALLOW_DAMAGED_ITEMS,
+                this.allowDamagedCurrency,
+                (bool) -> {
+                    this.allowDamagedCurrency = bool;
+                }
+        );
+        addRenderableWidget(allowDamagedCurrencyCheckBox);
     }
 
     public String formatValue(int x){

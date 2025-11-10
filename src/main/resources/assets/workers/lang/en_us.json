@@ -38,11 +38,12 @@
   "gui.workers.command.text.left": "Left",
   "gui.workers.command.text.right": "Right",
   "gui.workers.command.text.destroy": "Destroy",
-
-  "gui.workers.command.text.shearLeaves":"Shear Leaves",
-  "gui.workers.command.text.stripLogs":"Strip Logs",
-  "gui.workers.command.text.replant":"Replant",
   "gui.workers.command.text.anySapling":"Any Sapling",
+
+  "gui.workers.checkbox.shearLeaves":"Shear Leaves",
+  "gui.workers.checkbox.stripLogs":"Strip Logs",
+  "gui.workers.checkbox.replant":"Replant",
+  "gui.workers.checkbox.allowDamagedCurrency":"Allow Damaged Item",
 
   "gui.workers.button.reset": "Reset",
   "gui.workers.button.add": "Add",

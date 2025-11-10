@@ -21,9 +21,9 @@ import java.util.List;
 public class LumberAreaScreen extends WorkAreaScreen {
 
 
-    private static final MutableComponent TEXT_SHEAR_LEAVES = Component.translatable("gui.workers.command.text.shearLeaves");
-    private static final MutableComponent TEXT_STRIP_LOGS = Component.translatable("gui.workers.command.text.stripLogs");
-    private static final MutableComponent TEXT_REPLANT = Component.translatable("gui.workers.command.text.replant");
+    private static final MutableComponent TEXT_SHEAR_LEAVES = Component.translatable("gui.workers.checkbox.shearLeaves");
+    private static final MutableComponent TEXT_STRIP_LOGS = Component.translatable("gui.workers.checkbox.stripLogs");
+    private static final MutableComponent TEXT_REPLANT = Component.translatable("gui.workers.checkbox.replant");
     private static final MutableComponent TEXT_ANY_SAPLING = Component.translatable("gui.workers.command.text.anySapling");
     public final LumberArea lumberArea;
     private ItemScrollDropDownMenu seedItemSelectionDropDownMenu;
