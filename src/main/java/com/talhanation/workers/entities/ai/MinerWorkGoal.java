@@ -102,8 +102,9 @@ public class MinerWorkGoal extends Goal {
             }
 
             case MOVE_TO_WORK_AREA ->{
-                if(this.moveToPosition(minerEntity.currentMiningArea.getOnPos(), 70)) return;
                 this.blockPos = null;
+                if(this.moveToPosition(minerEntity.currentMiningArea.getOnPos(), 70)) return;
+
                 setState(State.PREPARE_CLOSE_FLOOR);
             }
 

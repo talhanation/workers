@@ -87,8 +87,9 @@ public class LumberjackWorkGoal extends Goal {
             }
 
             case MOVE_TO_WORK_AREA ->{
-                if(this.moveToPosition(lumberjack.currentLumberArea.getOnPos(), 100)) return;
                 this.blockPos = null;
+                if(this.moveToPosition(lumberjack.currentLumberArea.getOnPos(), 100)) return;
+
                 setState(State.SCAN_TREES);
             }
 

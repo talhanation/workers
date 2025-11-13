@@ -103,8 +103,9 @@ public class BuilderWorkGoal extends Goal {
             }
 
             case MOVE_TO_WORK_AREA ->{
-                if(this.moveToPosition(builderEntity.currentBuildArea.getOnPos(), 70)) return;
                 this.blockPos = null;
+                if(this.moveToPosition(builderEntity.currentBuildArea.getOnPos(), 70)) return;
+
                 setState(State.PREPARE_BREAK_BLOCKS);
             }
 

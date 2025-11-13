@@ -5,6 +5,7 @@ import com.talhanation.workers.entities.FarmerEntity;
 import com.talhanation.workers.entities.workarea.CropArea;
 import com.talhanation.workers.world.NeededItem;
 import net.minecraft.core.BlockPos;
+import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.sounds.SoundSource;
@@ -70,6 +71,7 @@ public class FarmerWorkGoal extends Goal {
         }
 
         if(blockPos != null && moveToPosition(blockPos, 20)) return;
+
         switch(state){
             case SELECT_WORK_AREA -> {
                 if(this.farmer.currentCropArea != null) setState(State.MOVE_TO_WORK_AREA);
@@ -85,16 +87,15 @@ public class FarmerWorkGoal extends Goal {
 
                 if(this.farmer.currentCropArea == null) return;
 
-
                 this.farmer.currentCropArea.setBeingWorkedOn(true);
                 this.farmer.currentCropArea.setTime(0);
-                workDone = false;
+                this.workDone = false;
                 setState(State.MOVE_TO_WORK_AREA);
             }
 
             case MOVE_TO_WORK_AREA ->{
-                if(this.moveToPosition(this.farmer.currentCropArea.getOnPos(), 20)) return;
                 this.blockPos = null;
+                if(this.moveToPosition(this.farmer.currentCropArea.getOnPos(), 20)) return;
                 setState(State.PREPARE_BREAK_BLOCKS);
             }
             case PREPARE_BREAK_BLOCKS -> {
