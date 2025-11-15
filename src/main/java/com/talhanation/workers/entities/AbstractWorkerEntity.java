@@ -19,6 +19,7 @@ import net.minecraft.world.*;
 import net.minecraft.world.damagesource.DamageSource;
 import net.minecraft.world.entity.*;
 import net.minecraft.world.entity.item.ItemEntity;
+import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.ShearsItem;
@@ -409,8 +410,9 @@ public abstract class AbstractWorkerEntity extends AbstractChunkLoaderEntity {
         neededItems.add(neededItem);
     }
     //@Override
-    public void onItemStackAdded(ItemStack itemStack){
+    public void onItemStackAdded(ItemStack itemStack1){
         //super.onItemStackAdded(itemStack);
+        ItemStack itemStack = itemStack1.copy();
         for(NeededItem neededItem : neededItems){
             if(neededItem.matches(itemStack)){
                 NeededItem.applyToNeededItems(itemStack, neededItems);;
@@ -468,5 +470,9 @@ public abstract class AbstractWorkerEntity extends AbstractChunkLoaderEntity {
             }
         }
         return false;
+    }
+
+    public void openDepositsGUI(Player player) {
+
     }
 }
