@@ -89,8 +89,6 @@ public class MinerEntity extends AbstractWorkerEntity{
         this.setRandomSpawnBonus();
         this.setPersistenceRequired();
 
-        this.setGroup(0);
-
         AbstractRecruitEntity.applySpawnValues(this);
     }
 

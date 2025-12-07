@@ -15,13 +15,13 @@ import java.util.UUID;
 public class MessageAddDepositPos implements Message<MessageAddDepositPos> {
 
     private UUID player;
-    private int group;
+    private UUID group;
     private BlockPos pos;
 
     public MessageAddDepositPos() {
     }
 
-    public MessageAddDepositPos(UUID player, int group, BlockPos pos) {
+    public MessageAddDepositPos(UUID player, UUID group, BlockPos pos) {
         this.player = player;
         this.group = group;
         this.pos = pos;
@@ -46,14 +46,14 @@ public class MessageAddDepositPos implements Message<MessageAddDepositPos> {
 
     public MessageAddDepositPos fromBytes(FriendlyByteBuf buf) {
         this.player = buf.readUUID();
-        this.group = buf.readInt();
+        this.group = buf.readUUID();
         this.pos = buf.readBlockPos();
         return this;
     }
 
     public void toBytes(FriendlyByteBuf buf) {
         buf.writeUUID(this.player);
-        buf.writeInt(this.group);
+        buf.writeUUID(this.group);
         buf.writeBlockPos(this.pos);
     }
 }

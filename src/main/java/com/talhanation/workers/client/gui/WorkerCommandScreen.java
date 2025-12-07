@@ -3,7 +3,7 @@ package com.talhanation.workers.client.gui;
 import com.talhanation.recruits.client.gui.CommandScreen;
 import com.talhanation.recruits.client.gui.commandscreen.ICommandCategory;
 import com.talhanation.recruits.client.gui.group.RecruitsCommandButton;
-import com.talhanation.recruits.client.gui.group.RecruitsGroup;
+import com.talhanation.recruits.world.RecruitsGroup;
 import com.talhanation.workers.WorkersMain;
 import com.talhanation.workers.client.WorkersClientManager;
 import com.talhanation.workers.network.MessageAddDepositPos;
@@ -19,12 +19,10 @@ import net.minecraft.world.item.Items;
 import net.minecraft.world.level.block.ChestBlock;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
-import net.minecraft.world.phys.Vec3;
 
 import java.util.List;
 
 public class WorkerCommandScreen implements ICommandCategory {
-
 
     private static final MutableComponent TEXT_ADD_FIELD = Component.translatable("gui.workers.command.text.add_field");
     private static final MutableComponent TEXT_ADD_LUMBER = Component.translatable("gui.workers.command.text.add_lumber");
@@ -87,7 +85,7 @@ public class WorkerCommandScreen implements ICommandCategory {
                 if (!groups.isEmpty()) {
                     for (RecruitsGroup group : groups) {
                         if (!group.isDisabled() && screen.rayBlockPos != null)
-                            WorkersMain.SIMPLE_CHANNEL.sendToServer(new MessageAddDepositPos(player.getUUID(), group.getId(), screen.rayBlockPos));
+                            WorkersMain.SIMPLE_CHANNEL.sendToServer(new MessageAddDepositPos(player.getUUID(), group.getUUID(), screen.rayBlockPos));
                     }
                 }
             });

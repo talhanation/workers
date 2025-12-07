@@ -67,8 +67,14 @@ public class DepositItemsInChestsGoal extends AbstractChestGoal {
 
             case CHECK_CHEST -> {
                 container = getContainer(chestPos);
-                if(container == null || this.isContainerFull(container)){
-                    worker.chestPositions.remove(chestPos);
+                if(container == null){
+                    worker.removeDepositPosition(chestPos);
+
+                    if(!blockPosStack.isEmpty()) chestPos = blockPosStack.pop();
+                    state = State.SELECT_CHEST;
+                    return;
+                }
+                else if(this.isContainerFull(container)){
                     if(!blockPosStack.isEmpty()) chestPos = blockPosStack.pop();
                     state = State.SELECT_CHEST;
                     return;

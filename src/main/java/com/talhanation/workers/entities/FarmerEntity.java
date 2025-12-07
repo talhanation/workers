@@ -97,8 +97,6 @@ public class FarmerEntity extends AbstractWorkerEntity{
         this.setRandomSpawnBonus();
         this.setPersistenceRequired();
 
-        this.setGroup(0);
-
         AbstractRecruitEntity.applySpawnValues(this);
     }
 

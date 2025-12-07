@@ -185,7 +185,6 @@ public class MerchantEntity extends AbstractWorkerEntity {
         this.setRandomSpawnBonus();
         this.setPersistenceRequired();
 
-        this.setGroup(1);
         this.setFollowState(2);
 
         AbstractRecruitEntity.applySpawnValues(this);

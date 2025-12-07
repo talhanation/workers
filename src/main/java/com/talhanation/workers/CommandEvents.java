@@ -12,7 +12,7 @@ public class CommandEvents {
         LivingEntity owner = worker.getOwner();
     }
 
-    public static void onAddDepositCommand(UUID player_uuid, AbstractWorkerEntity worker, int group, BlockPos blockPos) {
+    public static void onAddDepositCommand(UUID player_uuid, AbstractWorkerEntity worker, UUID group, BlockPos blockPos) {
         if (worker.isEffectedByCommand(player_uuid, group)) {
             worker.addDepositPosition(blockPos);
         }
