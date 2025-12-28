@@ -84,7 +84,6 @@ public class WorkersMain {
             MessageToClientOpenWorkAreaScreen.class,
             MessageUpdateWorkArea.class,
             MessageUpdateCropArea.class,
-            MessageAddDepositPos.class,
             MessageUpdateLumberArea.class,
             MessageUpdateBuildArea.class,
             MessageUpdateMiningArea.class,
@@ -93,7 +92,8 @@ public class WorkersMain {
             MessageDoTradeWithMerchant.class,
             MessageOpenMerchantEditTradeScreen.class,
             MessageOpenMerchantTradeScreen.class,
-            MessageToClientUpdateConfig.class
+            MessageToClientUpdateConfig.class,
+            MessageUpdateStorageArea.class
         };
         for (int i = 0; i < messages.length; i++) CommonRegistry.registerMessage(SIMPLE_CHANNEL, i, messages[i]);
     }

@@ -63,10 +63,10 @@ public class CropAreaScreen extends WorkAreaScreen {
         for (ItemStack itemStack : player.getInventory().items) {
             if (itemStack.getItem() instanceof BlockItem blockItem && !items.contains(itemStack.getItem())) {
 
-                if(blockItem.getBlock() instanceof SaplingBlock ) continue;
+                if(blockItem.getBlock() instanceof SaplingBlock) continue;
 
                 if (blockItem.getBlock() instanceof CropBlock || blockItem.getBlock() instanceof StemBlock || blockItem.getBlock() instanceof BushBlock){
-                    stacks.add(itemStack);
+                    stacks.add(itemStack.copy());
                     items.add(itemStack.getItem());
                 }
             }

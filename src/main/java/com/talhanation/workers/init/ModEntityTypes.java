@@ -3,10 +3,7 @@ package com.talhanation.workers.init;
 import com.talhanation.workers.WorkersMain;
 
 import com.talhanation.workers.entities.*;
-import com.talhanation.workers.entities.workarea.BuildArea;
-import com.talhanation.workers.entities.workarea.CropArea;
-import com.talhanation.workers.entities.workarea.LumberArea;
-import com.talhanation.workers.entities.workarea.MiningArea;
+import com.talhanation.workers.entities.workarea.*;
 import net.minecraft.world.entity.MobCategory;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.resources.ResourceLocation;
@@ -39,6 +36,11 @@ public class ModEntityTypes {
                         .sized(1.2F, 2.00F)
                         .fireImmune().noSummon()
                         .build(new ResourceLocation(WorkersMain.MOD_ID, "miningarea").toString()));
+        public static final RegistryObject<EntityType<StorageArea>> STORAGEAREA = ENTITY_TYPES.register("storagearea",
+                () -> EntityType.Builder.of(StorageArea::new, MobCategory.MISC)
+                        .sized(1.2F, 2.00F)
+                        .fireImmune().noSummon()
+                        .build(new ResourceLocation(WorkersMain.MOD_ID, "storagearea").toString()));
         /*
 
 

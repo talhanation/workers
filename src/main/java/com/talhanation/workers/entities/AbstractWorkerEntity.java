@@ -3,8 +3,8 @@ package com.talhanation.workers.entities;
 import com.google.common.collect.ImmutableSet;
 import com.talhanation.recruits.config.RecruitsClientConfig;
 import com.talhanation.recruits.entities.AbstractChunkLoaderEntity;
-import com.talhanation.workers.entities.ai.DepositItemsInChestsGoal;
-import com.talhanation.workers.entities.ai.GetNeededItemsFromChestsGoal;
+import com.talhanation.workers.entities.ai.DepositItemsToStorage;
+import com.talhanation.workers.entities.ai.GetNeededItemsFromStorage;
 import com.talhanation.workers.entities.workarea.AbstractWorkAreaEntity;
 import com.talhanation.workers.world.NeededItem;
 import net.minecraft.core.BlockPos;
@@ -51,15 +51,15 @@ public abstract class AbstractWorkerEntity extends AbstractChunkLoaderEntity {
     public AbstractWorkerEntity(EntityType<? extends AbstractWorkerEntity> entityType, Level world) {
         super(entityType, world);
     }
-    public List<BlockPos> chestPositions = new ArrayList<>();
     public List<NeededItem> neededItems = new ArrayList<>();
     public int farmedItems;
     public boolean forcedDeposit;
+    public UUID lastStorage;
     @Override
     protected void registerGoals() {
         super.registerGoals();
-        this.goalSelector.addGoal(0, new DepositItemsInChestsGoal(this));
-        this.goalSelector.addGoal(0, new GetNeededItemsFromChestsGoal(this));
+        this.goalSelector.addGoal(0, new DepositItemsToStorage(this));
+        this.goalSelector.addGoal(0, new GetNeededItemsFromStorage(this));
     }
 
     public abstract AbstractWorkAreaEntity getCurrentWorkArea();
@@ -219,35 +219,16 @@ public abstract class AbstractWorkerEntity extends AbstractChunkLoaderEntity {
 
     public void addAdditionalSaveData(@NotNull CompoundTag nbt) {
         super.addAdditionalSaveData(nbt);
-        if (this.chestPositions != null && !this.chestPositions.isEmpty()) {
-            ListTag listTag = new ListTag();
-            for (BlockPos pos : this.chestPositions) {
-                CompoundTag compoundTag = new CompoundTag();
-                compoundTag.putInt("x", pos.getX());
-                compoundTag.putInt("y", pos.getY());
-                compoundTag.putInt("z", pos.getZ());
-                listTag.add(compoundTag);
-            }
 
-            nbt.put("ChestPositions", listTag);
-        }
         nbt.putInt("farmedItems", farmedItems);
+        if(lastStorage != null) nbt.putUUID("lastStorage", lastStorage);
     }
 
     public void readAdditionalSaveData(@NotNull CompoundTag nbt) {
         super.readAdditionalSaveData(nbt);
-        if (nbt.contains("ChestPositions", Tag.TAG_LIST)) {
-            ListTag listTag = nbt.getList("ChestPositions", Tag.TAG_COMPOUND);
-            this.chestPositions = new ArrayList<>();
-            for (Tag t : listTag) {
-                CompoundTag compoundTag = (CompoundTag) t;
-                int x = compoundTag.getInt("x");
-                int y = compoundTag.getInt("y");
-                int z = compoundTag.getInt("z");
-                this.chestPositions.add(new BlockPos(x, y, z));
-            }
-        }
+
         this.farmedItems = nbt.getInt("farmedItems");
+        if(nbt.contains("lastStorage")) this.lastStorage = nbt.getUUID("lastStorage");
     }
 
     @OnlyIn(Dist.CLIENT)
@@ -286,16 +267,6 @@ public abstract class AbstractWorkerEntity extends AbstractChunkLoaderEntity {
     }
 
     //////////////////////////////////// SET////////////////////////////////////
-
-    public void addDepositPosition(BlockPos pos){
-        if(chestPositions.contains(pos)) return;
-
-        this.chestPositions.add(pos);
-    }
-
-    public void removeDepositPosition(BlockPos pos){
-        this.chestPositions.remove(pos);
-    }
 
     public void setEquipment() {
     }

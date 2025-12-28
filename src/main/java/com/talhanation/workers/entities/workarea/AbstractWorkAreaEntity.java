@@ -293,4 +293,9 @@ public abstract class AbstractWorkAreaEntity extends Entity {
     public BlockPos getOriginPos() {
         return this.getOnPos();
     }
+
+    @Override
+    public boolean isCustomNameVisible() {
+        return false;
+    }
 }

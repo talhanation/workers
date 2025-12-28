@@ -22,6 +22,7 @@ public class ClientEvent {
         EntityRenderers.register(ModEntityTypes.LUMBERAREA.get(), WorkerAreaRenderer::new);
         EntityRenderers.register(ModEntityTypes.BUILDAREA.get(), WorkerAreaRenderer::new);
         EntityRenderers.register(ModEntityTypes.MININGAREA.get(), WorkerAreaRenderer::new);
+        EntityRenderers.register(ModEntityTypes.STORAGEAREA.get(), WorkerAreaRenderer::new);
 
         if (RecruitsClientConfig.RecruitsLookLikeVillagers.get()) {
             EntityRenderers.register(ModEntityTypes.FARMER.get(), WorkerVillagerRenderer::new);

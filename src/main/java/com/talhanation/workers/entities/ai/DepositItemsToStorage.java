@@ -1,6 +1,7 @@
 package com.talhanation.workers.entities.ai;
 
 import com.talhanation.workers.entities.AbstractWorkerEntity;
+import com.talhanation.workers.entities.workarea.StorageArea;
 import net.minecraft.core.BlockPos;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.Container;
@@ -8,13 +9,11 @@ import net.minecraft.world.SimpleContainer;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
 
-import java.util.Comparator;
-import java.util.EnumSet;
-import java.util.Stack;
+import java.util.*;
 
-public class DepositItemsInChestsGoal extends AbstractChestGoal {
+public class DepositItemsToStorage extends AbstractChestGoal {
 
-    public DepositItemsInChestsGoal(AbstractWorkerEntity worker){
+    public DepositItemsToStorage(AbstractWorkerEntity worker){
         super(worker);
         setFlags(EnumSet.of(Flag.LOOK, Flag.MOVE));
     }
@@ -25,66 +24,101 @@ public class DepositItemsInChestsGoal extends AbstractChestGoal {
 
     @Override
     public void start() {
-        state = State.SELECT_CHEST;
+        this.visited = new ArrayList<>();
+        errorMessageDone = false;
+        setState(State.SELECT_STORAGE);
         timer = 0;
-
     }
+
     int timer;
     public State state;
-    public String errorMessage;
     public boolean errorMessageDone;
+    public int retryTime;
+    public boolean chestFull;
     public void tick(){
         if(this.worker.getCommandSenderWorld().isClientSide()) return;
 
         if(this.chestPos != null) worker.getLookControl().setLookAt(chestPos.getCenter());
 
         switch (state){
-            case SELECT_CHEST -> {
+            case SELECT_STORAGE -> {
+                errorMessageDone = false;
+                List<StorageArea> areas = getAvailableStorageAreas();
+
+                if (!areas.isEmpty()) {
+                    this.storageArea = areas.get(0);
+                }
+                else{
+                    setState(State.ERROR_NO_STORAGE_FOUND);
+                    return;
+                }
+
+                setState(State.MOVE_TO_STORAGE);
+            }
+
+            case MOVE_TO_STORAGE -> {
+                if(moveToPosition(storageArea.getOnPos())) return;
+
+                setState(State.SCAN_STORAGE);
+            }
+
+            case SCAN_STORAGE -> {
+                storageArea.scanStorageBlocks();
                 blockPosStack = new Stack<>();
-                for(BlockPos pos : worker.chestPositions){
+
+                for(BlockPos pos : storageArea.storageMap.keySet()){
                     this.blockPosStack.push(pos);
                 }
 
                 if(blockPosStack.isEmpty()) {
-                    state = State.ERROR;
-                    errorMessage = worker.getName().getString() + ": No Deposit Chests, please assign me Chests";
+                    this.visited.add(storageArea.getUUID());
+
+                    setState(State.ERROR_STORAGE_NO_CONTAINERS);
                     return;
                 }
 
-                blockPosStack.sort(Comparator.comparing(pos -> pos.getCenter().distanceToSqr(worker.position())));
-                blockPosStack.sort(Comparator.reverseOrder());
+                setState(State.SELECT_CHEST);
+            }
 
-                chestPos = blockPosStack.pop();
+            case SELECT_CHEST -> {
+                if(blockPosStack.isEmpty()){
+                    this.visited.add(storageArea.getUUID());
+                    setState(State.ERROR_STORAGE_FULL);
+                    return;
+                }
+                else{
+                    blockPosStack.sort(Comparator.comparing(pos -> pos.getCenter().distanceToSqr(worker.position())));
+                    blockPosStack.sort(Comparator.reverseOrder());
 
-                state = State.MOVE_TO_CHEST;
+                    chestPos = blockPosStack.pop();
+                }
+
+                setState(State.MOVE_TO_CHEST);
             }
 
             case MOVE_TO_CHEST -> {
                 if(moveToPosition(chestPos)) return;
 
-                state = State.CHECK_CHEST;
+                setState(State.CHECK_CHEST);
             }
 
             case CHECK_CHEST -> {
                 container = getContainer(chestPos);
                 if(container == null){
-                    worker.removeDepositPosition(chestPos);
-
-                    if(!blockPosStack.isEmpty()) chestPos = blockPosStack.pop();
-                    state = State.SELECT_CHEST;
+                    this.storageArea.storageMap.remove(chestPos);
+                    setState(State.SELECT_CHEST);
                     return;
                 }
                 else if(this.isContainerFull(container)){
-                    if(!blockPosStack.isEmpty()) chestPos = blockPosStack.pop();
-                    state = State.SELECT_CHEST;
+                    chestFull = true;
+                    setState(State.SELECT_CHEST);
                     return;
                 }
 
-                state = State.OPEN_CHEST;
+                setState(State.OPEN_CHEST);
             }
 
             case OPEN_CHEST -> {
-
                 this.interactChest(container, true);
 
                 if(timer++ < 40){
@@ -92,15 +126,15 @@ public class DepositItemsInChestsGoal extends AbstractChestGoal {
                 }
                 timer = 0;
 
-                state = State.DEPOSIT;
+                setState(State.DEPOSIT);
             }
 
             case DEPOSIT -> {
                 if(depositItems()){
-                    state = State.CLOSE_CHEST_DEPOSIT_DONE;
+                    setState(State.CLOSE_CHEST_DEPOSIT_DONE);
                 }
                 else{
-                    state = State.CLOSE_CHEST_FULL_CHEST;
+                    setState(State.CLOSE_CHEST_FULL_CHEST);
                 }
 
             }
@@ -113,7 +147,7 @@ public class DepositItemsInChestsGoal extends AbstractChestGoal {
                 }
                 timer = 0;
 
-                state = State.DONE;
+                setState(State.DONE);
             }
 
             case CLOSE_CHEST_FULL_CHEST -> {
@@ -124,23 +158,44 @@ public class DepositItemsInChestsGoal extends AbstractChestGoal {
                 }
                 timer = 0;
 
-                state = State.SELECT_CHEST;
+                setState(State.SELECT_CHEST);
             }
 
             case DONE -> {
                 worker.farmedItems = 0;
                 worker.forcedDeposit = false;
+                this.worker.lastStorage = storageArea.getUUID();
             }
 
-            case ERROR -> {
+            case ERROR_NO_STORAGE_FOUND -> {
                 if(!errorMessageDone){
-                    if(worker.getOwner() != null) worker.getOwner().sendSystemMessage(Component.literal(errorMessage));
+                    if(worker.getOwner() != null) worker.getOwner().sendSystemMessage(Component.literal("No available Storage found nearby."));
                     errorMessageDone = true;
                 }
 
-                if(!worker.chestPositions.isEmpty()){
-                    state = State.SELECT_CHEST;
+                if(++retryTime >= 20*60){
+                    retryTime = 0;
+                    this.start();
                 }
+            }
+
+            case ERROR_STORAGE_FULL -> {
+                if(!errorMessageDone){
+                    if(worker.getOwner() != null && storageArea != null) worker.getOwner().sendSystemMessage(Component.literal("" + storageArea.getName().getString() + " is full!"));
+                    errorMessageDone = true;
+                }
+                if(storageArea != null) this.visited.add(storageArea.getUUID());
+                setState(State.SELECT_STORAGE);
+            }
+
+            case ERROR_STORAGE_NO_CONTAINERS -> {
+                if(!errorMessageDone){
+                    if(worker.getOwner() != null && storageArea != null) worker.getOwner().sendSystemMessage(Component.literal("" + storageArea.getName().getString() + " has no containers!"));
+                    errorMessageDone = true;
+                }
+
+                if(storageArea != null) this.visited.add(storageArea.getUUID());
+                setState(State.SELECT_STORAGE);
             }
         }
     }
@@ -198,7 +253,15 @@ public class DepositItemsInChestsGoal extends AbstractChestGoal {
         return stack;
     }
 
+    public void setState(State state) {
+        //if(worker.getOwner() != null) worker.getOwner().sendSystemMessage(Component.literal(state.toString()));
+        this.state = state;
+    }
+
     public enum State{
+        SELECT_STORAGE,
+        MOVE_TO_STORAGE,
+        SCAN_STORAGE,
         SELECT_CHEST,
         MOVE_TO_CHEST,
         CHECK_CHEST,
@@ -207,7 +270,9 @@ public class DepositItemsInChestsGoal extends AbstractChestGoal {
         CLOSE_CHEST_FULL_CHEST,
         CLOSE_CHEST_DEPOSIT_DONE,
         DONE,
-        ERROR
+        ERROR_NO_STORAGE_FOUND,
+        ERROR_STORAGE_FULL,
+        ERROR_STORAGE_NO_CONTAINERS
 
     }
 }

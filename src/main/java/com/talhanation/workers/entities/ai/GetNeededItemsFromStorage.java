@@ -1,6 +1,7 @@
 package com.talhanation.workers.entities.ai;
 
 import com.talhanation.workers.entities.AbstractWorkerEntity;
+import com.talhanation.workers.entities.workarea.StorageArea;
 import com.talhanation.workers.world.NeededItem;
 import net.minecraft.core.BlockPos;
 import net.minecraft.network.chat.Component;
@@ -9,13 +10,13 @@ import net.minecraft.world.item.ItemStack;
 
 import java.util.*;
 
-public class GetNeededItemsFromChestsGoal extends AbstractChestGoal {
+public class GetNeededItemsFromStorage extends AbstractChestGoal {
     int timer;
     public State state;
-    public String errorMessage;
     public boolean errorMessageDone;
     private int retryTime;
-    public GetNeededItemsFromChestsGoal(AbstractWorkerEntity worker) {
+    boolean itemNotInStorage;
+    public GetNeededItemsFromStorage(AbstractWorkerEntity worker) {
         super(worker);
         setFlags(EnumSet.of(Flag.LOOK));
     }
@@ -29,33 +30,65 @@ public class GetNeededItemsFromChestsGoal extends AbstractChestGoal {
     public void start() {
         super.start();
         errorMessageDone = false;
-        if(worker.chestPositions.isEmpty()) {
-            setState(State.ERROR_NO_CHESTS);
-            errorMessage = worker.getName().getString() + ": I have no Chests assigned";
-            return;
-        }
-        this.blockPosStack = new Stack<>();
-        for(BlockPos pos : worker.chestPositions){
-            this.blockPosStack.push(pos);
-        }
-        setState(State.SELECT_CHEST);
+        retryTime = 0;
+        setState(State.SELECT_STORAGE);
     }
+
     public void tick(){
         if(this.worker.getCommandSenderWorld().isClientSide()) return;
 
         switch (state){
+            case SELECT_STORAGE -> {
+                errorMessageDone = false;
+                List<StorageArea> areas = getAvailableStorageAreas();
+
+                if (!areas.isEmpty()) {
+                    this.storageArea = areas.get(0);
+                }
+                else{
+                    setState(State.ERROR_NO_STORAGE_FOUND);
+                    return;
+                }
+
+                setState(State.MOVE_TO_STORAGE);
+            }
+
+            case MOVE_TO_STORAGE -> {
+                if(moveToPosition(storageArea.getOnPos())) return;
+
+                setState(State.SCAN_STORAGE);
+            }
+
+            case SCAN_STORAGE -> {
+                storageArea.scanStorageBlocks();
+                blockPosStack = new Stack<>();
+
+                for(BlockPos pos : storageArea.storageMap.keySet()){
+                    this.blockPosStack.push(pos);
+                }
+
+                if(blockPosStack.isEmpty()) {
+                    if(storageArea != null) this.visited.add(storageArea.getUUID());
+                    setState(State.ERROR_STORAGE_NO_CONTAINERS);
+                    return;
+                }
+
+                setState(State.SELECT_CHEST);
+            }
+
             case SELECT_CHEST -> {
-                if(!blockPosStack.isEmpty()){
+                if(blockPosStack.isEmpty()){
+                    if(storageArea != null) this.visited.add(storageArea.getUUID());
+                    setState(State.ERROR_ITEM_NOT_IN_STORAGE);
+                    return;
+                }
+                else{
                     blockPosStack.sort(Comparator.comparing(pos -> pos.getCenter().distanceToSqr(worker.position())));
                     blockPosStack.sort(Comparator.reverseOrder());
 
                     chestPos = blockPosStack.pop();
                 }
-                else{
-                    setState(State.ERROR_ITEMS_NOT_FOUND);
-                    errorMessage = worker.getName().getString() + ": I need " + worker.neededItems;
-                    return;
-                }
+
                 setState(State.MOVE_TO_CHEST);
             }
 
@@ -80,8 +113,7 @@ public class GetNeededItemsFromChestsGoal extends AbstractChestGoal {
             case OPEN_CHEST -> {
                 worker.getLookControl().setLookAt(chestPos.getCenter());
                 this.interactChest(container, true);
-
-                if(timer++ < 40){
+                if(timer++ < 20){
                     return;
                 }
                 timer = 0;
@@ -123,54 +155,67 @@ public class GetNeededItemsFromChestsGoal extends AbstractChestGoal {
 
                 if(!worker.hasFreeInvSlot()){
                     setState(State.ERROR_OWN_INVENTORY_FULL);
-                    errorMessage = worker.getName().getString() + ": My Inventory is full!";
                     return;
                 }
-
 
                 setState(State.SELECT_CHEST);
             }
 
             case DONE -> {
                 worker.neededItems.clear();
+                worker.lastStorage = this.storageArea.getUUID();
             }
 
-            case ERROR_NO_CHESTS -> {
-                if(!errorMessageDone){
-                    if(worker.getOwner() != null) worker.getOwner().sendSystemMessage(Component.literal(errorMessage));
-                    errorMessageDone = true;
-                }
-
-                if(!worker.chestPositions.isEmpty()){
-                    this.start();
-                }
-            }
-
-            case ERROR_ITEMS_NOT_FOUND -> {
-                if(!errorMessageDone){
-                    errorMessageDone = true;
-                    if(worker.getOwner() != null) worker.getOwner().sendSystemMessage(Component.literal(errorMessage));
+            case ERROR_NO_STORAGE_FOUND -> {
+                if(!errorMessageDone) {
+                    if (worker.getOwner() != null){
+                        worker.getOwner().sendSystemMessage(Component.literal(worker.getName().getString() + ": No available storage found nearby... I need "  + worker.neededItems));
+                    }
 
                     worker.neededItems.removeIf(neededItem -> neededItem.optional);
+                    errorMessageDone = true;
                 }
 
-                if(++retryTime >= 20*15 * 2){
+                if(itemNotInStorage){
+                    visited.clear();
+                    this.worker.lastStorage = null;
+                }
+
+                if(++retryTime >= 20*60){
                     retryTime = 0;
                     this.start();
                 }
             }
 
+            case ERROR_ITEM_NOT_IN_STORAGE -> {
+                if(!errorMessageDone){
+                    if(worker.getOwner() != null && storageArea != null)
+                        worker.getOwner().sendSystemMessage(Component.literal(worker.getName().getString() + ": Storage [" + storageArea.getName().getString() + "] has no: " + worker.neededItems));
+                    errorMessageDone = true;
+                }
+                itemNotInStorage = true;
+                setState(State.SELECT_STORAGE);
+            }
+
+            case ERROR_STORAGE_NO_CONTAINERS -> {
+                if(!errorMessageDone){
+                    if(worker.getOwner() != null && storageArea != null) worker.getOwner().sendSystemMessage(Component.literal(worker.getName().getString() + ": Storage [" + storageArea.getName().getString() + "] has no containers!"));
+                    errorMessageDone = true;
+                }
+
+                setState(State.SELECT_STORAGE);
+            }
+
             case ERROR_OWN_INVENTORY_FULL -> {
                 if(!errorMessageDone){
                     errorMessageDone = true;
-                    if(worker.getOwner() != null) worker.getOwner().sendSystemMessage(Component.literal(errorMessage));
+                    if(worker.getOwner() != null) worker.getOwner().sendSystemMessage(Component.literal(worker.getName().getString() + ": My Inventory is full!"));
 
                     worker.forcedDeposit = true;
                 }
             }
         }
     }
-
 
     private boolean takeNeededItems() {
         SimpleContainer inventory = worker.getInventory();
@@ -235,6 +280,9 @@ public class GetNeededItemsFromChestsGoal extends AbstractChestGoal {
     }
 
     public enum State{
+        SELECT_STORAGE,
+        MOVE_TO_STORAGE,
+        SCAN_STORAGE,
         SELECT_CHEST,
         MOVE_TO_CHEST,
         CHECK_CHEST,
@@ -243,9 +291,9 @@ public class GetNeededItemsFromChestsGoal extends AbstractChestGoal {
         CLOSE_CHEST_NOT_DONE,
         CLOSE_CHEST_DONE,
         DONE,
-        ERROR_NO_CHESTS,
-        ERROR_ITEMS_NOT_FOUND,
+        ERROR_NO_STORAGE_FOUND,
+        ERROR_ITEM_NOT_IN_STORAGE,
+        ERROR_STORAGE_NO_CONTAINERS,
         ERROR_OWN_INVENTORY_FULL
-
     }
 }

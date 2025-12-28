@@ -12,6 +12,12 @@
   "entity.workers.rabbit_farmer": "Rabbit Farmer",
   "entity.workers.builder": "Builder",
 
+  "entity.workers.storage": "Storage",
+  "entity.workers.mine": "Mine",
+  "entity.workers.tree_field": "Tree Field",
+  "entity.workers.building": "Building",
+  "entity.workers.crop_field": "Crop Field",
+
   "item.workers.miner_spawn_egg": "Miner Spawn Egg",
   "item.workers.farmer_spawn_egg": "Farmer Spawn Egg",
   "item.workers.shepherd_spawn_egg": "Shepherd Spawn Egg",
@@ -26,10 +32,11 @@
   "gui.workers.command.tooltip.workers": "Workers",
   "gui.workers.command.text.add_field": "Add Crop field",
   "gui.workers.command.tooltip.add_field": "Adds a Crop field on the position you are pointing at.",
-  "gui.workers.command.text.add_deposit": "Add Deposit Pos",
+  "gui.workers.command.text.add_storage": "Add Storage area",
   "gui.workers.command.text.add_lumber": "Add Lumber area",
   "gui.workers.command.tooltip.add_lumber": "Adds a Lumber Area on the position you are pointing at.",
   "gui.workers.command.tooltip.add_mine": "Adds a Mining Area on the position you are pointing at.",
+  "gui.workers.command.tooltip.add_storage": "Adds a Storage Area on the position you are pointing at.",
   "gui.workers.command.text.add_building": "Add Building",
   "gui.workers.command.text.add_mine": "Add Mine",
 
@@ -44,6 +51,13 @@
   "gui.workers.checkbox.stripLogs":"Strip Logs",
   "gui.workers.checkbox.replant":"Replant",
   "gui.workers.checkbox.allowDamagedCurrency":"Allow Damaged Item",
+  "gui.workers.checkbox.all":"All",
+  "gui.workers.checkbox.miners":"Miners",
+  "gui.workers.checkbox.lumbers":"Lumbers",
+  "gui.workers.checkbox.builders":"Builders",
+  "gui.workers.checkbox.farmers":"Farmers",
+  "gui.workers.checkbox.merchants":"Merchants",
+  "gui.workers.checkbox.animalFarmers":"Animal Farmers",
 
   "gui.workers.button.reset": "Reset",
   "gui.workers.button.add": "Add",
@@ -71,4 +85,5 @@
 
   "description.workers.title.merchant" : "Merchant",
   "description.workers.merchant" : "Merchant"
+
 }

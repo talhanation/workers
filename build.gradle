@@ -123,6 +123,8 @@ dependencies {
     runtimeOnly fg.deobf("de.maxhenkel.corelib:corelib:1.20.1-1.0.0:javadoc")
     implementation fg.deobf("curse.maven:recruits-523860:7374573")
 
+    implementation fg.deobf("curse.maven:architectury-api-419699:5137938")
+    implementation fg.deobf("curse.maven:lets-do-herbal-brews-951221:6458889")
     implementation fg.deobf("curse.maven:supplementaries-412082:6615104")
     implementation fg.deobf("curse.maven:selene-499980:6681465")
     //implementation fg.deobf("curse.maven:small-ships-450659:5324996")

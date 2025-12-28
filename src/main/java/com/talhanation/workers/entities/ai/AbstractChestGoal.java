@@ -1,8 +1,12 @@
 package com.talhanation.workers.entities.ai;
 
 import com.talhanation.workers.entities.AbstractWorkerEntity;
+import com.talhanation.workers.entities.FarmerEntity;
+import com.talhanation.workers.entities.workarea.CropArea;
+import com.talhanation.workers.entities.workarea.StorageArea;
 import net.minecraft.core.BlockPos;
 import net.minecraft.nbt.CompoundTag;
+import net.minecraft.server.level.ServerLevel;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.world.CompoundContainer;
 import net.minecraft.world.Container;
@@ -16,14 +20,16 @@ import net.minecraft.world.level.block.entity.ChestBlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.gameevent.GameEvent;
 
-import java.util.Stack;
+import javax.annotation.Nullable;
+import java.util.*;
 
 public abstract class AbstractChestGoal extends Goal {
+    public StorageArea storageArea;
     public Stack<BlockPos> blockPosStack = new Stack<>();
     public Container container;
     public AbstractWorkerEntity worker;
     public BlockPos chestPos;
-
+    public List<UUID> visited = new ArrayList<>();
     public AbstractChestGoal(AbstractWorkerEntity worker){
         this.worker = worker;
     }
@@ -104,17 +110,22 @@ public abstract class AbstractChestGoal extends Goal {
         }
     }
     public Container getContainer(BlockPos chestPos) {
-        BlockEntity entity = worker.getCommandSenderWorld().getBlockEntity(chestPos);
-        BlockState blockState = worker.getCommandSenderWorld().getBlockState(chestPos);
-        if (blockState.getBlock() instanceof ChestBlock chestBlock) {
-            return ChestBlock.getContainer(chestBlock, blockState, worker.getCommandSenderWorld(), chestPos, false);
-        } else if (entity instanceof Container containerEntity) {
-            return containerEntity;
+        return this.storageArea.storageMap.get(chestPos);
+    }
+
+    public List<StorageArea> getAvailableStorageAreas() {
+        List<StorageArea> list = this.worker.getCommandSenderWorld().getEntitiesOfClass(StorageArea.class, this.worker.getBoundingBox().inflate(100));
+
+        if(this.worker.lastStorage != null && list.stream().anyMatch(area -> area.getUUID().equals(this.worker.lastStorage))){
+            list.removeIf(area -> !area.getUUID().equals(this.worker.lastStorage));
+            return list;
         }
-        else {
-            //messageCantFindChest = true;
-        }
-        return null;
+
+        list.removeIf(storageArea -> this.visited.contains(storageArea.getUUID()));
+
+        list.sort(Comparator.comparing(area -> area.distanceToSqr(this.worker.position())));
+
+        return list;
     }
 
     @Override

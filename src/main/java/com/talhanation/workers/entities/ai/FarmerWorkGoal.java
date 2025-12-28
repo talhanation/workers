@@ -304,8 +304,8 @@ public class FarmerWorkGoal extends Goal {
             else{
                 this.farmer.swing(InteractionHand.MAIN_HAND);
                 farmer.getCommandSenderWorld().setBlock(blockPos, Blocks.FARMLAND.defaultBlockState(), 3);
-                farmer.getCommandSenderWorld().playSound(null, blockPos.getX(), blockPos.getY(), blockPos.getZ(), SoundEvents.HOE_TILL,
-                        SoundSource.BLOCKS, 1.0F, 1.0F);
+                farmer.getCommandSenderWorld().playSound(null, blockPos.getX(), blockPos.getY(), blockPos.getZ(), SoundEvents.HOE_TILL, SoundSource.BLOCKS, 1.0F, 1.0F);
+                this.farmer.damageMainHandItem();
             }
             return true;
         }

@@ -55,7 +55,7 @@ public class CropArea extends AbstractWorkAreaEntity {
         CompoundTag nbt = new CompoundTag();
         this.getSeedStack().save(nbt);
         tag.put("seedItem", nbt);
-        tag.putInt("fieldType", fieldType.getIndex());
+        if(fieldType != null) tag.putInt("fieldType", fieldType.getIndex());
     }
 
     public Item getRenderItem(){

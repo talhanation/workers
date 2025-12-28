@@ -6,7 +6,6 @@ import com.talhanation.recruits.client.gui.group.RecruitsCommandButton;
 import com.talhanation.recruits.world.RecruitsGroup;
 import com.talhanation.workers.WorkersMain;
 import com.talhanation.workers.client.WorkersClientManager;
-import com.talhanation.workers.network.MessageAddDepositPos;
 import com.talhanation.workers.network.MessageAddWorkArea;
 import net.minecraft.client.gui.components.Tooltip;
 import net.minecraft.core.BlockPos;
@@ -30,8 +29,9 @@ public class WorkerCommandScreen implements ICommandCategory {
     private static final MutableComponent TOOLTIP_ADD_FIELD = Component.translatable("gui.workers.command.tooltip.add_field");
     private static final MutableComponent TOOLTIP_ADD_LUMBER = Component.translatable("gui.workers.command.tooltip.add_lumber");
     private static final MutableComponent TOOLTIP_ADD_MINE = Component.translatable("gui.workers.command.tooltip.add_mine");
-    private static final MutableComponent TEXT_ADD_DEPOSIT = Component.translatable("gui.workers.command.text.add_deposit");
+    private static final MutableComponent TOOLTIP_ADD_STORAGE = Component.translatable("gui.workers.command.tooltip.add_storage");
     private static final MutableComponent TEXT_ADD_BUILDING = Component.translatable("gui.workers.command.text.add_building");
+    private static final MutableComponent TEXT_ADD_STORAGE = Component.translatable("gui.workers.command.text.add_storage");
     @Override
     public Component getToolTipName() {
         return Component.translatable("gui.workers.command.tooltip.workers");
@@ -76,23 +76,19 @@ public class WorkerCommandScreen implements ICommandCategory {
                 });
 
         addMine.setTooltip(Tooltip.create(TOOLTIP_ADD_MINE));
-        addMine.active = screen.rayBlockPos != null && WorkersClientManager.isInFactionClaim(screen.rayBlockPos);;
+        addMine.active = screen.rayBlockPos != null && WorkersClientManager.isInFactionClaim(screen.rayBlockPos);
         screen.addRenderableWidget(addMine);
 
-        RecruitsCommandButton addDepositPosition = new RecruitsCommandButton(x - 100, y - 0, TEXT_ADD_DEPOSIT,
+        RecruitsCommandButton addStorageArea = new RecruitsCommandButton(x - 100, y - 0, TEXT_ADD_STORAGE,
             button -> {
                 if(screen.rayBlockPos == null) return;
-                if (!groups.isEmpty()) {
-                    for (RecruitsGroup group : groups) {
-                        if (!group.isDisabled() && screen.rayBlockPos != null)
-                            WorkersMain.SIMPLE_CHANNEL.sendToServer(new MessageAddDepositPos(player.getUUID(), group.getUUID(), screen.rayBlockPos));
-                    }
-                }
+                BlockPos pos = screen.rayBlockPos;
+                WorkersMain.SIMPLE_CHANNEL.sendToServer(new MessageAddWorkArea(pos, 4));
             });
 
-        //addDepositPosition.setTooltip(Tooltip.create(TOOLTIP_ADD_FIELD));
-        addDepositPosition.active = isOneGroupActive && isDepositPosition(screen.rayBlockPos, player);
-        screen.addRenderableWidget(addDepositPosition);
+        addStorageArea.setTooltip(Tooltip.create(TOOLTIP_ADD_STORAGE));
+        addStorageArea.active = screen.rayBlockPos != null && WorkersClientManager.isInFactionClaim(screen.rayBlockPos);
+        screen.addRenderableWidget(addStorageArea);
 
         RecruitsCommandButton addBuilding = new RecruitsCommandButton(x, y + 30, TEXT_ADD_BUILDING,
                 button -> {
