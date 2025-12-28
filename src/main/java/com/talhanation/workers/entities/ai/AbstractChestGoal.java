@@ -114,7 +114,9 @@ public abstract class AbstractChestGoal extends Goal {
     }
 
     public List<StorageArea> getAvailableStorageAreas() {
-        List<StorageArea> list = this.worker.getCommandSenderWorld().getEntitiesOfClass(StorageArea.class, this.worker.getBoundingBox().inflate(100));
+        List<StorageArea> list = this.worker.getCommandSenderWorld().getEntitiesOfClass(StorageArea.class, this.worker.getBoundingBox().inflate(64));
+
+        list.removeIf(storageArea -> !storageArea.canWorkHere(worker));
 
         if(this.worker.lastStorage != null && list.stream().anyMatch(area -> area.getUUID().equals(this.worker.lastStorage))){
             list.removeIf(area -> !area.getUUID().equals(this.worker.lastStorage));
@@ -122,7 +124,6 @@ public abstract class AbstractChestGoal extends Goal {
         }
 
         list.removeIf(storageArea -> this.visited.contains(storageArea.getUUID()));
-
         list.sort(Comparator.comparing(area -> area.distanceToSqr(this.worker.position())));
 
         return list;

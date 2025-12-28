@@ -31,7 +31,9 @@ public class WorkersServerConfig {
                     "minecraft:melon",
                     "minecraft:melon_seeds",
                     "minecraft:melon_slice",
-                    "supplementaries:flax"
+                    "supplementaries:flax",
+                    "herbalbrews:green_tea_leaf"
+
             ));
 
     public static ArrayList<String> LUMBERMAN_PICKUP = new ArrayList<>(
@@ -83,7 +85,7 @@ public class WorkersServerConfig {
         BUILDER.comment("Workers Config:").push("Workers");
         FarmerCost = BUILDER.comment("""
                         
-                        The amount of currency required to hire a recruit.
+                        The amount of currency required to hire a farmer.
                         \t(takes effect after restart)
                         \tdefault: 10""")
                 .worldRestart()
@@ -91,7 +93,7 @@ public class WorkersServerConfig {
 
         LumberjackCost = BUILDER.comment("""
                         
-                        The amount of currency required to hire a bowman.
+                        The amount of currency required to hire a lumberjack.
                         \t(takes effect after restart)
                         \tdefault: 12""")
                 .worldRestart()
@@ -99,7 +101,7 @@ public class WorkersServerConfig {
 
         MinerCost = BUILDER.comment("""
                         
-                        The amount of currency required to hire a crossbowman.
+                        The amount of currency required to hire a miner.
                         \t(takes effect after restart)
                         \tdefault: 16""")
                 .worldRestart()
@@ -107,7 +109,7 @@ public class WorkersServerConfig {
 
         BuilderCost = BUILDER.comment("""
                         
-                        The amount of currency required to hire a shieldman.
+                        The amount of currency required to hire a builder.
                         \t(takes effect after restart)
                         \tdefault: 20""")
                 .worldRestart()
@@ -115,7 +117,7 @@ public class WorkersServerConfig {
 
         MerchantCost = BUILDER.comment("""
                         
-                        The amount of currency required to hire a shieldman.
+                        The amount of currency required to hire a merchant.
                         \t(takes effect after restart)
                         \tdefault: 30""")
                 .worldRestart()

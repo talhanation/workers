@@ -42,11 +42,11 @@ public class StorageAreaScreen extends WorkAreaScreen {
         super(storageArea.getCustomName(), storageArea, player);
         this.storageArea = storageArea;
         this.types = storageArea.getStorageTypes();
-        this.miners = types.contains(StorageArea.StorageType.MINER);
-        this.lumbers = types.contains(StorageArea.StorageType.LUMBER);
-        this.builders = types.contains(StorageArea.StorageType.BUILDER);
-        this.farmers = types.contains(StorageArea.StorageType.FARMER);
-        this.merchants = types.contains(StorageArea.StorageType.MERCHANT);
+        this.miners = types.contains(StorageArea.StorageType.MINERS);
+        this.lumbers = types.contains(StorageArea.StorageType.LUMBERS);
+        this.builders = types.contains(StorageArea.StorageType.BUILDERS);
+        this.farmers = types.contains(StorageArea.StorageType.FARMERS);
+        this.merchants = types.contains(StorageArea.StorageType.MERCHANTS);
     }
 
     @Override
@@ -82,10 +82,10 @@ public class StorageAreaScreen extends WorkAreaScreen {
                 (bool) -> {
                     this.miners = bool;
                     if(miners){
-                        types.add(StorageArea.StorageType.MINER);
+                        types.add(StorageArea.StorageType.MINERS);
                     }
                     else{
-                        types.remove(StorageArea.StorageType.MINER);
+                        types.remove(StorageArea.StorageType.MINERS);
                     }
 
                     sendMessage();
@@ -98,10 +98,10 @@ public class StorageAreaScreen extends WorkAreaScreen {
                 (bool) -> {
                     this.lumbers = bool;
                     if(lumbers){
-                        types.add(StorageArea.StorageType.LUMBER);
+                        types.add(StorageArea.StorageType.LUMBERS);
                     }
                     else{
-                        types.remove(StorageArea.StorageType.LUMBER);
+                        types.remove(StorageArea.StorageType.LUMBERS);
                     }
                     sendMessage();
                 }
@@ -113,10 +113,10 @@ public class StorageAreaScreen extends WorkAreaScreen {
                 (bool) -> {
                     this.builders = bool;
                     if(builders){
-                        types.add(StorageArea.StorageType.BUILDER);
+                        types.add(StorageArea.StorageType.BUILDERS);
                     }
                     else{
-                        types.remove(StorageArea.StorageType.LUMBER);
+                        types.remove(StorageArea.StorageType.LUMBERS);
                     }
                     sendMessage();
                 }
@@ -128,10 +128,10 @@ public class StorageAreaScreen extends WorkAreaScreen {
                 (bool) -> {
                     this.farmers = bool;
                     if(farmers){
-                        types.add(StorageArea.StorageType.FARMER);
+                        types.add(StorageArea.StorageType.FARMERS);
                     }
                     else{
-                        types.remove(StorageArea.StorageType.FARMER);
+                        types.remove(StorageArea.StorageType.FARMERS);
                     }
                     sendMessage();
                 }
@@ -143,10 +143,10 @@ public class StorageAreaScreen extends WorkAreaScreen {
                 (bool) -> {
                     this.merchants = bool;
                     if(merchants){
-                        types.add(StorageArea.StorageType.MERCHANT);
+                        types.add(StorageArea.StorageType.MERCHANTS);
                     }
                     else{
-                        types.remove(StorageArea.StorageType.MERCHANT);
+                        types.remove(StorageArea.StorageType.MERCHANTS);
                     }
                     sendMessage();
                 }

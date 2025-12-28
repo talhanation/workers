@@ -1,10 +1,10 @@
 package com.talhanation.workers.entities.workarea;
 
 import com.talhanation.workers.client.gui.StorageAreaScreen;
+import com.talhanation.workers.entities.*;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.core.BlockPos;
 import net.minecraft.nbt.CompoundTag;
-import net.minecraft.network.chat.Component;
 import net.minecraft.network.syncher.EntityDataAccessor;
 import net.minecraft.network.syncher.EntityDataSerializers;
 import net.minecraft.network.syncher.SynchedEntityData;
@@ -107,12 +107,12 @@ public class StorageArea extends AbstractWorkAreaEntity {
     }
 
     public enum StorageType {
-        MINER(0),
-        LUMBER(1),
-        BUILDER(2),
-        FARMER(3),
-        MERCHANT(4),
-        ANIMAL_FARMER(5);
+        MINERS(0),
+        LUMBERS(1),
+        BUILDERS(2),
+        FARMERS(3),
+        MERCHANTS(4),
+        ANIMAL_FARMERS(5);
 
         private final int index;
         StorageType(int index){
@@ -130,5 +130,32 @@ public class StorageArea extends AbstractWorkAreaEntity {
             }
             throw new IllegalArgumentException("Invalid State index: " + index);
         }
+    }
+
+    public boolean canWorkHere(AbstractWorkerEntity worker){
+        EnumSet<StorageType> types = this.getStorageTypes();
+        if(super.canWorkHere(worker)){
+            if(worker instanceof FarmerEntity){
+                return types.contains(StorageType.FARMERS);
+            }
+            else if( worker instanceof LumberjackEntity){
+                return types.contains(StorageType.LUMBERS);
+            }
+            else if( worker instanceof MinerEntity){
+                return types.contains(StorageType.MINERS);
+            }
+            else if( worker instanceof BuilderEntity){
+                return types.contains(StorageType.BUILDERS);
+            }
+            else if( worker instanceof MerchantEntity){
+                return types.contains(StorageType.MERCHANTS);
+            }
+            /*
+            else if( worker instanceof AnimalFarmerEntity){
+                return this.getStorageTypes().contains(StorageType.ANIMAL_FARMERS);
+            }*/
+
+        }
+        return false;
     }
 }
