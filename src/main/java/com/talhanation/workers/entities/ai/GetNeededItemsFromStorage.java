@@ -172,7 +172,7 @@ public class GetNeededItemsFromStorage extends AbstractChestGoal {
                         worker.getOwner().sendSystemMessage(Component.literal(worker.getName().getString() + ": No available storage found nearby... I need "  + worker.neededItems));
                     }
 
-                    worker.neededItems.removeIf(neededItem -> neededItem.optional);
+                    worker.neededItems.removeIf(neededItem -> neededItem.required);
                     errorMessageDone = true;
                 }
 
@@ -266,7 +266,7 @@ public class GetNeededItemsFromStorage extends AbstractChestGoal {
 
 
         for (NeededItem needed : neededItems) {
-            if (!needed.optional) {
+            if (!needed.required) {
                 return false;
             }
         }

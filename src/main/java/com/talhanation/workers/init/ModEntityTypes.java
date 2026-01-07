@@ -41,6 +41,12 @@ public class ModEntityTypes {
                         .sized(1.2F, 2.00F)
                         .fireImmune().noSummon()
                         .build(new ResourceLocation(WorkersMain.MOD_ID, "storagearea").toString()));
+
+        public static final RegistryObject<EntityType<FishingArea>> FISHINGAREA = ENTITY_TYPES.register("fishingarea",
+                () -> EntityType.Builder.of(FishingArea::new, MobCategory.MISC)
+                        .sized(1.2F, 2.00F)
+                        .fireImmune().noSummon()
+                        .build(new ResourceLocation(WorkersMain.MOD_ID, "fishingarea").toString()));
         /*
 
 
@@ -92,6 +98,23 @@ public class ModEntityTypes {
                         .setTrackingRange(32)
                         .setShouldReceiveVelocityUpdates(true)
                         .build(new ResourceLocation(WorkersMain.MOD_ID, "merchant").toString()));
+
+
+       public static final RegistryObject<EntityType<FishermanEntity>> FISHERMAN = ENTITY_TYPES.register("fisherman",
+                () -> EntityType.Builder.of(FishermanEntity::new, MobCategory.CREATURE)
+                        .sized(0.6F, 1.95F)
+                        .canSpawnFarFromPlayer()
+                        .setTrackingRange(32)
+                        .setShouldReceiveVelocityUpdates(true)
+                        .build(new ResourceLocation(WorkersMain.MOD_ID, "fisherman").toString()));
+
+       public static final RegistryObject<EntityType<FishingBobberEntity>> FISHING_BOBBER = ENTITY_TYPES.register("fishing_bobber",
+                        () -> EntityType.Builder.<FishingBobberEntity>of(FishingBobberEntity::new, MobCategory.MISC)
+                                .sized(0.25F, 0.25F)
+                                .clientTrackingRange(4)
+                                .updateInterval(5)
+                                .build(new ResourceLocation(WorkersMain.MOD_ID, "fishing_bobber").toString()));
+
 /*
         public static final RegistryObject<EntityType<FishermanEntity>> FISHERMAN = ENTITY_TYPES.register("fisherman",
                         () -> EntityType.Builder.of(FishermanEntity::new, MobCategory.CREATURE)

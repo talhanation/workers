@@ -40,7 +40,7 @@ public class LumberjackWorkGoal extends Goal {
 
     @Override
     public boolean canUse() {
-        return !lumberjack.needsToSleep() && lumberjack.getFollowState() != 1 && !lumberjack.needsToGetToChest();
+        return !lumberjack.needsToSleep() && lumberjack.shouldWork() && !lumberjack.needsToGetToChest();
     }
 
     @Override
@@ -135,7 +135,7 @@ public class LumberjackWorkGoal extends Goal {
 
                 boolean hasShears = lumberjack.getMainHandItem().getItem() instanceof ShearsItem;
                 if(!hasShears){
-                    lumberjack.addNeededItem(new NeededItem(stack -> stack.getItem() instanceof ShearsItem, 1, false));
+                    lumberjack.addNeededItem(new NeededItem(stack -> stack.getItem() instanceof ShearsItem, 1, true));
                     this.blockPos = null;
                     return;
                 }
@@ -157,7 +157,7 @@ public class LumberjackWorkGoal extends Goal {
 
                 boolean hasAxe = lumberjack.getMainHandItem().getItem() instanceof AxeItem;
                 if(!hasAxe){
-                    lumberjack.addNeededItem(new NeededItem(stack -> stack.getItem() instanceof AxeItem, 1, false));
+                    lumberjack.addNeededItem(new NeededItem(stack -> stack.getItem() instanceof AxeItem, 1, true));
                     this.blockPos = null;
                     return;
                 }
@@ -174,7 +174,7 @@ public class LumberjackWorkGoal extends Goal {
 
                 boolean hasAxe = lumberjack.getMainHandItem().getItem() instanceof AxeItem;
                 if(!hasAxe){
-                    lumberjack.addNeededItem(new NeededItem(stack -> stack.getItem() instanceof AxeItem, 1, false));
+                    lumberjack.addNeededItem(new NeededItem(stack -> stack.getItem() instanceof AxeItem, 1, true));
                     this.blockPos = null;
                     return;
                 }
@@ -328,7 +328,7 @@ public class LumberjackWorkGoal extends Goal {
             if(lumberjack.currentLumberArea.getSaplingStack().isEmpty()){
                 saplingFromInv = lumberjack.getMatchingItem(itemStack -> itemStack.getItem() instanceof BlockItem blockItem && blockItem.getBlock() instanceof SaplingBlock);
                 if(saplingFromInv == null){
-                    lumberjack.addNeededItem(new NeededItem(itemStack -> itemStack.getItem() instanceof BlockItem blockItem && blockItem.getBlock() instanceof SaplingBlock,  8, true));
+                    lumberjack.addNeededItem(new NeededItem(itemStack -> itemStack.getItem() instanceof BlockItem blockItem && blockItem.getBlock() instanceof SaplingBlock,  8, false));
                     this.blockPos = null;
                     return false;
                 }
@@ -337,7 +337,7 @@ public class LumberjackWorkGoal extends Goal {
             else{
                 saplingFromInv = lumberjack.getMatchingItem(itemStack -> itemStack.is(lumberjack.currentLumberArea.getSaplingStack().getItem()));
                 if(saplingFromInv == null){
-                    lumberjack.addNeededItem(new NeededItem(itemStack -> ItemStack.isSameItemSameTags(itemStack, lumberjack.currentLumberArea.getSaplingStack()),  8, true));
+                    lumberjack.addNeededItem(new NeededItem(itemStack -> ItemStack.isSameItemSameTags(itemStack, lumberjack.currentLumberArea.getSaplingStack()),  8, false));
                     this.blockPos = null;
                     return false;
                 }

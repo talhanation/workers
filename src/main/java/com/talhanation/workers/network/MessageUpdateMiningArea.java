@@ -16,14 +16,16 @@ public class MessageUpdateMiningArea implements Message<MessageUpdateMiningArea>
     public int ySize;
     public int zSize;
     public int yOffset;
+    public boolean closeFloor;
     public MessageUpdateMiningArea() {}
 
-    public MessageUpdateMiningArea(UUID uuid, int xSize, int ySize, int zSize, int yOffset) {
+    public MessageUpdateMiningArea(UUID uuid, int xSize, int ySize, int zSize, int yOffset, boolean closeFloor) {
         this.uuid = uuid;
         this.xSize = xSize;
         this.ySize = ySize;
         this.zSize = zSize;
         this.yOffset = yOffset;
+        this.closeFloor = closeFloor;
     }
 
     @Override
@@ -49,6 +51,7 @@ public class MessageUpdateMiningArea implements Message<MessageUpdateMiningArea>
         miningArea.setHeightSize(this.ySize);
         miningArea.setDepthSize(this.zSize);
         miningArea.setHeightOffset(this.yOffset);
+        miningArea.setCloseFloor(this.closeFloor);
     }
 
     public MessageUpdateMiningArea fromBytes(FriendlyByteBuf buf) {
@@ -57,6 +60,7 @@ public class MessageUpdateMiningArea implements Message<MessageUpdateMiningArea>
         this.ySize = buf.readInt();
         this.zSize = buf.readInt();
         this.yOffset = buf.readInt();
+        this.closeFloor = buf.readBoolean();
         return this;
     }
 
@@ -66,5 +70,6 @@ public class MessageUpdateMiningArea implements Message<MessageUpdateMiningArea>
         buf.writeInt(ySize);
         buf.writeInt(zSize);
         buf.writeInt(yOffset);
+        buf.writeBoolean(closeFloor);
     }
 }

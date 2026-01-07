@@ -45,7 +45,7 @@ public class BuilderWorkGoal extends Goal {
 
     @Override
     public boolean canUse() {
-        return !builderEntity.needsToSleep() && builderEntity.getFollowState() != 1 && !builderEntity.needsToGetToChest() && this.isBuildingAreaAvailable();
+        return !builderEntity.needsToSleep() && builderEntity.shouldWork() && !builderEntity.needsToGetToChest() && this.isBuildingAreaAvailable();
     }
 
     @Override
@@ -123,7 +123,7 @@ public class BuilderWorkGoal extends Goal {
 
                 boolean hasAxe = builderEntity.getMainHandItem().getItem() instanceof PickaxeItem;
                 if(!hasAxe){
-                    builderEntity.addNeededItem(new NeededItem(stack -> stack.getItem() instanceof PickaxeItem, 1, false));
+                    builderEntity.addNeededItem(new NeededItem(stack -> stack.getItem() instanceof PickaxeItem, 1, true));
                     this.blockPos = null;
                     return;
                 }
@@ -178,7 +178,7 @@ public class BuilderWorkGoal extends Goal {
                         int amount = Math.min(64, neededItem.getCount());
 
                         builderEntity.addNeededItem(new NeededItem(
-                                itemStack -> itemStack.is(neededItem.getItem()), amount, false
+                                itemStack -> itemStack.is(neededItem.getItem()), amount, true
                         ));
                     }
                 }

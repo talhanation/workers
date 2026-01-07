@@ -26,8 +26,10 @@ public class WorkerCommandScreen implements ICommandCategory {
     private static final MutableComponent TEXT_ADD_FIELD = Component.translatable("gui.workers.command.text.add_field");
     private static final MutableComponent TEXT_ADD_LUMBER = Component.translatable("gui.workers.command.text.add_lumber");
     private static final MutableComponent TEXT_ADD_MINE = Component.translatable("gui.workers.command.text.add_mine");
+    private static final MutableComponent TEXT_ADD_FISHING = Component.translatable("gui.workers.command.text.add_fishing");
     private static final MutableComponent TOOLTIP_ADD_FIELD = Component.translatable("gui.workers.command.tooltip.add_field");
     private static final MutableComponent TOOLTIP_ADD_LUMBER = Component.translatable("gui.workers.command.tooltip.add_lumber");
+    private static final MutableComponent TOOLTIP_ADD_FISHING = Component.translatable("gui.workers.command.tooltip.add_fishing");
     private static final MutableComponent TOOLTIP_ADD_MINE = Component.translatable("gui.workers.command.tooltip.add_mine");
     private static final MutableComponent TOOLTIP_ADD_STORAGE = Component.translatable("gui.workers.command.tooltip.add_storage");
     private static final MutableComponent TEXT_ADD_BUILDING = Component.translatable("gui.workers.command.text.add_building");
@@ -56,6 +58,17 @@ public class WorkerCommandScreen implements ICommandCategory {
         addCropFieldButton.setTooltip(Tooltip.create(TOOLTIP_ADD_FIELD));
         addCropFieldButton.active = screen.rayBlockPos != null && WorkersClientManager.isInFactionClaim(screen.rayBlockPos);;
         screen.addRenderableWidget(addCropFieldButton);
+
+        RecruitsCommandButton addFishingAreaButton = new RecruitsCommandButton(x - 100, y - 50, TEXT_ADD_FISHING,
+                button -> {
+                    if(screen.rayBlockPos == null) return;
+                    BlockPos pos = screen.rayBlockPos;
+                    WorkersMain.SIMPLE_CHANNEL.sendToServer(new MessageAddWorkArea(pos, 5));
+                });
+
+        addFishingAreaButton.setTooltip(Tooltip.create(TOOLTIP_ADD_FISHING));
+        addFishingAreaButton.active = screen.rayBlockPos != null && WorkersClientManager.isInFactionClaim(screen.rayBlockPos);;
+        screen.addRenderableWidget(addFishingAreaButton);
 
         RecruitsCommandButton addLumberArea = new RecruitsCommandButton(x, y + 0, TEXT_ADD_LUMBER,
                 button -> {

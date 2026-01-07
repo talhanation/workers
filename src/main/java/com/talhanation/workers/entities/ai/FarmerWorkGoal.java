@@ -37,7 +37,7 @@ public class FarmerWorkGoal extends Goal {
 
     @Override
     public boolean canUse() {
-        return !farmer.needsToSleep() && farmer.getFollowState() != 1 && !farmer.needsToGetToChest() && this.isCropAreaNotRemoved();
+        return !farmer.needsToSleep() && farmer.shouldWork() && !farmer.needsToGetToChest() && this.isCropAreaNotRemoved();
     }
 
     private boolean isCropAreaNotRemoved() {
@@ -123,7 +123,7 @@ public class FarmerWorkGoal extends Goal {
 
                     ItemStack itemStack = farmer.getMatchingItem(item -> farmer.isBucketWithWater(item));
                     if(itemStack == null){
-                        farmer.addNeededItem(new NeededItem(item -> farmer.isBucketWithWater(item),  1, false));
+                        farmer.addNeededItem(new NeededItem(item -> farmer.isBucketWithWater(item),  1, true));
                         return;
                     }
                     else if(itemStack.getItem() instanceof BucketItem bucketItem){
@@ -149,7 +149,7 @@ public class FarmerWorkGoal extends Goal {
 
                 boolean hasHoe = farmer.getMainHandItem().getItem() instanceof HoeItem;
                 if(!hasHoe){
-                    this.farmer.addNeededItem(new NeededItem(stack -> stack.getItem() instanceof HoeItem, 1, false));
+                    this.farmer.addNeededItem(new NeededItem(stack -> stack.getItem() instanceof HoeItem, 1, true));
                     this.blockPos = null;
                     return;
                 }
@@ -178,7 +178,7 @@ public class FarmerWorkGoal extends Goal {
 
                 ItemStack seedFromInv = farmer.getMatchingItem(itemStack -> itemStack.is(this.farmer.currentCropArea.getSeedStack().getItem()));
                 if(seedFromInv == null){
-                    this.farmer.addNeededItem(new NeededItem(itemStack -> ItemStack.isSameItemSameTags(itemStack, this.farmer.currentCropArea.getSeedStack()),  16, true));
+                    this.farmer.addNeededItem(new NeededItem(itemStack -> ItemStack.isSameItemSameTags(itemStack, this.farmer.currentCropArea.getSeedStack()),  16, false));
                     this.blockPos = null;
                     return;
                 }

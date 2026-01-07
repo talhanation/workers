@@ -113,6 +113,7 @@ public class WorkersMain {
             event.accept(ModItems.MINER_SPAWN_EGG.get());
             event.accept(ModItems.MERCHANT_SPAWN_EGG.get());
             event.accept(ModItems.BUILDER_SPAWN_EGG.get());
+            event.accept(ModItems.FISHERMAN_SPAWN_EGG.get());
         }
     }
 }

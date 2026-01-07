@@ -20,6 +20,8 @@ public class StorageAreaScreen extends WorkAreaScreen {
     private static final MutableComponent TEXT_ANIMAL_FARMERS = Component.translatable("gui.workers.checkbox.animalFarmers");
     private static final MutableComponent TEXT_FARMERS = Component.translatable("gui.workers.checkbox.farmers");
     private static final MutableComponent TEXT_MERCHANTS = Component.translatable("gui.workers.checkbox.merchants");
+    private static final MutableComponent TEXT_FISHERMAN = Component.translatable("gui.workers.checkbox.fisherman");
+
     private static final Component TEXT_STORAGE_NAME = Component.translatable("entity.workers.storage");;
     public final StorageArea storageArea;
     private boolean replant;
@@ -30,11 +32,13 @@ public class StorageAreaScreen extends WorkAreaScreen {
     private RecruitsCheckBox buildersCheckBox;
     private RecruitsCheckBox farmersCheckBox;
     private RecruitsCheckBox merchantsCheckBox;
+    private RecruitsCheckBox fishermanCheckBox;
     private boolean miners;
     private boolean lumbers;
     private boolean builders;
     private boolean farmers;
     private boolean merchants;
+    private boolean fisherman;
     private EnumSet<StorageArea.StorageType> types;
     public EditBox nameEditBox;
     public Component savedName;
@@ -47,6 +51,7 @@ public class StorageAreaScreen extends WorkAreaScreen {
         this.builders = types.contains(StorageArea.StorageType.BUILDERS);
         this.farmers = types.contains(StorageArea.StorageType.FARMERS);
         this.merchants = types.contains(StorageArea.StorageType.MERCHANTS);
+        this.fisherman = types.contains(StorageArea.StorageType.FISHERMAN);
     }
 
     @Override
@@ -152,6 +157,21 @@ public class StorageAreaScreen extends WorkAreaScreen {
                 }
         );
         addRenderableWidget(merchantsCheckBox);
+
+        this.fishermanCheckBox = new RecruitsCheckBox(checkBoxX, 110 + checkBoxY, checkBoxWidth, checkBoxHeight, TEXT_FISHERMAN,
+                this.fisherman,
+                (bool) -> {
+                    this.fisherman = bool;
+                    if(fisherman){
+                        types.add(StorageArea.StorageType.FISHERMAN);
+                    }
+                    else{
+                        types.remove(StorageArea.StorageType.FISHERMAN);
+                    }
+                    sendMessage();
+                }
+        );
+        addRenderableWidget(fishermanCheckBox);
 
     }
 

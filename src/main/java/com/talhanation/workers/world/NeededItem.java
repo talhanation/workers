@@ -11,12 +11,12 @@ import java.util.function.Predicate;
 public class NeededItem {
     public final Predicate<ItemStack> matcher;
     public int count;
-    public final boolean optional;
+    public final boolean required;
 
-    public NeededItem(Predicate<ItemStack> matcher, int count, boolean optional) {
+    public NeededItem(Predicate<ItemStack> matcher, int count, boolean required) {
         this.matcher = matcher;
         this.count = count;
-        this.optional = optional;
+        this.required = required;
     }
 
     public boolean matches(ItemStack stack) {

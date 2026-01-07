@@ -9,8 +9,6 @@ import com.talhanation.workers.entities.workarea.AbstractWorkAreaEntity;
 import com.talhanation.workers.world.NeededItem;
 import net.minecraft.core.BlockPos;
 import net.minecraft.nbt.CompoundTag;
-import net.minecraft.nbt.ListTag;
-import net.minecraft.nbt.Tag;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.sounds.SoundEvent;
 import net.minecraft.sounds.SoundEvents;
@@ -302,7 +300,6 @@ public abstract class AbstractWorkerEntity extends AbstractChunkLoaderEntity {
     public boolean needsToDeposit() {
         return forcedDeposit || farmedItems > 128;
     }
-
     @Nullable
     public ItemStack getMatchingItem(Predicate<ItemStack> predicate) {
         for (ItemStack stack : this.getInventory().items) {
@@ -372,7 +369,7 @@ public abstract class AbstractWorkerEntity extends AbstractChunkLoaderEntity {
 
 
     public boolean needsToGetItems() {
-        return !neededItems.isEmpty();
+        return neededItems.stream().anyMatch(neededItem -> neededItem.required);
     }
 
     public void addNeededItem(NeededItem neededItem) {
@@ -445,5 +442,9 @@ public abstract class AbstractWorkerEntity extends AbstractChunkLoaderEntity {
 
     public void openDepositsGUI(Player player) {
 
+    }
+
+    public boolean shouldWork() {
+        return this.getFollowState() == 0 || this.getFollowState() == 6;
     }
 }

@@ -35,8 +35,15 @@ public class MessageAddWorkArea implements Message<MessageAddWorkArea> {
         }
         AbstractWorkAreaEntity workArea;
         switch (type){
+            case 5 -> {
+                workArea = new FishingArea(ModEntityTypes.FISHINGAREA.get(), player.level());
+                workArea.setWidthSize(9);
+                workArea.setHeightSize(2);
+                workArea.setDepthSize(9);
+            }
+
             case 4 -> {
-                workArea = new MiningArea(ModEntityTypes.STORAGEAREA.get(), player.level());
+                workArea = new StorageArea(ModEntityTypes.STORAGEAREA.get(), player.level());
                 workArea.setWidthSize(5);
                 workArea.setHeightSize(5);
                 workArea.setDepthSize(5);

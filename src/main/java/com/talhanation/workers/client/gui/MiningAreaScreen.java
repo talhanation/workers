@@ -1,12 +1,14 @@
 package com.talhanation.workers.client.gui;
 
 import com.talhanation.recruits.client.gui.widgets.BlackShowingTextField;
+import com.talhanation.recruits.client.gui.widgets.RecruitsCheckBox;
 import com.talhanation.workers.WorkersMain;
 import com.talhanation.workers.entities.workarea.MiningArea;
 import com.talhanation.workers.network.MessageUpdateMiningArea;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.components.Button;
 import net.minecraft.network.chat.Component;
+import net.minecraft.network.chat.MutableComponent;
 import net.minecraft.util.Mth;
 import net.minecraft.world.entity.player.Player;
 import net.minecraftforge.client.gui.widget.ExtendedButton;
@@ -14,7 +16,7 @@ import net.minecraftforge.client.gui.widget.ExtendedButton;
 import java.util.UUID;
 
 public class MiningAreaScreen extends WorkAreaScreen {
-
+    private static final MutableComponent TEXT_CLOSE_FLOOR = Component.translatable("gui.workers.checkbox.closeFloor");
     public final MiningArea miningArea;
     public Button xSizePlusButton;
     public Button xSizeMinusButton;
@@ -26,6 +28,8 @@ public class MiningAreaScreen extends WorkAreaScreen {
     public int areaYSize;
     public int areaZSize;
     public int areaYOffset;
+    private RecruitsCheckBox closeFloorCheckBox;
+    private boolean closeFloor;
     public MiningAreaScreen(MiningArea miningArea, Player player) {
         super(miningArea.getCustomName(), miningArea, player);
         this.miningArea = miningArea;
@@ -37,6 +41,7 @@ public class MiningAreaScreen extends WorkAreaScreen {
         this.areaYSize = miningArea.getHeightSize();
         this.areaZSize = miningArea.getDepthSize();
         this.areaYOffset = miningArea.getHeightOffset();
+        this.closeFloor = miningArea.getCloseFloor();
 
         this.setButtons();
     }
@@ -67,8 +72,7 @@ public class MiningAreaScreen extends WorkAreaScreen {
                     else areaXSize++;
                     areaXSize = Mth.clamp(areaXSize, 1, 16);
 
-                    this.miningArea.setWidthSize(areaXSize);
-                    WorkersMain.SIMPLE_CHANNEL.sendToServer(new MessageUpdateMiningArea(this.miningArea.getUUID(), areaXSize, areaYSize, areaZSize, areaYOffset));
+                    this.sendMessage();
                     this.setButtons();
                 }
         ));
@@ -80,7 +84,7 @@ public class MiningAreaScreen extends WorkAreaScreen {
                     areaXSize = Mth.clamp(areaXSize, 1, 16);
 
                     this.miningArea.setWidthSize(areaXSize);
-                    WorkersMain.SIMPLE_CHANNEL.sendToServer(new MessageUpdateMiningArea(this.miningArea.getUUID(), areaXSize, areaYSize, areaZSize, areaYOffset));
+                    this.sendMessage();
                     this.setButtons();
                 }
         ));
@@ -92,7 +96,7 @@ public class MiningAreaScreen extends WorkAreaScreen {
                     areaYSize = Mth.clamp(areaYSize, 2, 8);
 
                     this.miningArea.setHeightSize(areaYSize);
-                    WorkersMain.SIMPLE_CHANNEL.sendToServer(new MessageUpdateMiningArea(this.miningArea.getUUID(), areaXSize, areaYSize, areaZSize, areaYOffset));
+                    this.sendMessage();
                     this.setButtons();
                 }
         ));
@@ -104,8 +108,7 @@ public class MiningAreaScreen extends WorkAreaScreen {
                     areaYSize = Mth.clamp(areaYSize, 2, 8);
 
                     this.miningArea.setHeightSize(areaYSize);
-                    UUID uuid = this.miningArea.getUUID();
-                    WorkersMain.SIMPLE_CHANNEL.sendToServer(new MessageUpdateMiningArea(uuid, areaXSize, areaYSize, areaZSize, areaYOffset));
+                    this.sendMessage();
                     this.setButtons();
                 }
         ));
@@ -117,7 +120,7 @@ public class MiningAreaScreen extends WorkAreaScreen {
                     areaZSize = Mth.clamp(areaZSize, 1, 16);
 
                     this.miningArea.setDepthSize(areaZSize);
-                    WorkersMain.SIMPLE_CHANNEL.sendToServer(new MessageUpdateMiningArea(this.miningArea.getUUID(), areaXSize, areaYSize, areaZSize, areaYOffset));
+                    this.sendMessage();
                     this.setButtons();
                 }
         ));
@@ -129,13 +132,26 @@ public class MiningAreaScreen extends WorkAreaScreen {
                     areaZSize = Mth.clamp(areaZSize, 1, 16);
 
                     this.miningArea.setDepthSize(areaZSize);
-                    UUID uuid = this.miningArea.getUUID();
-                    WorkersMain.SIMPLE_CHANNEL.sendToServer(new MessageUpdateMiningArea(uuid, areaXSize, areaYSize, areaZSize, areaYOffset));
+                    this.sendMessage();
                     this.setButtons();
                 }
         ));
-    }
 
+        this.closeFloorCheckBox = new RecruitsCheckBox(x - boxWidth/2, y - previewHeight / 2 + 155 + boxHeight*2, boxWidth, boxHeight, TEXT_CLOSE_FLOOR,
+                this.closeFloor,
+                (bool) -> {
+                    this.closeFloor = bool;
+                    this.sendMessage();
+                }
+        );
+        addRenderableWidget(closeFloorCheckBox);
+    }
+    public void sendMessage(){
+        if(miningArea == null) return;
+
+        this.miningArea.setWidthSize(areaXSize);
+        WorkersMain.SIMPLE_CHANNEL.sendToServer(new MessageUpdateMiningArea(this.miningArea.getUUID(), areaXSize, areaYSize, areaZSize, areaYOffset, closeFloor));
+    }
     @Override
     public void mouseMoved(double x, double y) {
         super.mouseMoved(x, y);

@@ -43,7 +43,7 @@ public class MinerWorkGoal extends Goal {
 
     @Override
     public boolean canUse() {
-        return !minerEntity.needsToSleep() && minerEntity.getFollowState() != 1 && !minerEntity.needsToGetToChest() && this.isMiningAreaAvailable();
+        return !minerEntity.needsToSleep() && minerEntity.shouldWork() && !minerEntity.needsToGetToChest() && this.isMiningAreaAvailable();
     }
 
     @Override
@@ -82,6 +82,12 @@ public class MinerWorkGoal extends Goal {
             setState(State.PREPARE_MINE_WALLS);
         }
 
+        if(state == State.MINE_WALLS){
+            if(this.mineBlocks(this.stackToBreak)) return;
+
+            setState(State.CHECK);
+        }
+
         if(minerEntity.tickCount % 5 != 0) return;
         switch(state){
             case SELECT_WORK_AREA ->{
@@ -109,7 +115,11 @@ public class MinerWorkGoal extends Goal {
             }
 
             case PREPARE_MINING -> {
-                this.minerEntity.currentMiningArea.scanBreakArea();
+                this.blockPos = null;
+
+                if(this.minerEntity.currentMiningArea.stackToBreak.isEmpty()){
+                    this.minerEntity.currentMiningArea.scanBreakArea();
+                }
 
                 this.stackToBreak = this.minerEntity.currentMiningArea.stackToBreak;
 
@@ -122,10 +132,18 @@ public class MinerWorkGoal extends Goal {
 
                 boolean hasAxe = minerEntity.getMainHandItem().getItem() instanceof PickaxeItem;
                 if(!hasAxe){
-                    minerEntity.addNeededItem(new NeededItem(stack -> stack.getItem() instanceof PickaxeItem, 1, false));
+                    minerEntity.addNeededItem(new NeededItem(stack -> stack.getItem() instanceof PickaxeItem, 1, true));
                     this.blockPos = null;
                     return;
                 }
+
+                boolean hasShovel = minerEntity.getInventory().hasAnyMatching(itemStack -> itemStack.getItem() instanceof PickaxeItem);
+                if(!hasShovel){
+                    minerEntity.addNeededItem(new NeededItem(stack -> stack.getItem() instanceof PickaxeItem, 1, true));
+                    this.blockPos = null;
+                    return;
+                }
+
                 needToSeeBlock = true;
                 setState(State.MINING);
             }
@@ -135,7 +153,7 @@ public class MinerWorkGoal extends Goal {
 
                 this.stackToBreak = minerEntity.currentMiningArea.stackToBreak;
                 if(stackToBreak.isEmpty()){
-                    setState(State.PREPARE_CLOSE_FLOOR);
+                    setState(State.CHECK);
                     return;
                 }
 
@@ -143,21 +161,28 @@ public class MinerWorkGoal extends Goal {
 
                 boolean hasAxe = minerEntity.getMainHandItem().getItem() instanceof PickaxeItem;
                 if(!hasAxe){
-                    minerEntity.addNeededItem(new NeededItem(stack -> stack.getItem() instanceof PickaxeItem, 1, false));
+                    minerEntity.addNeededItem(new NeededItem(stack -> stack.getItem() instanceof PickaxeItem, 1, true));
                     this.blockPos = null;
                     return;
                 }
                 needToSeeBlock = false;
-                setState(State.MINING);
+                setState(State.MINE_WALLS);
             }
 
-
             case PREPARE_CLOSE_FLOOR -> {
-                this.minerEntity.currentMiningArea.scanFloorArea();
+                if(!this.minerEntity.currentMiningArea.getCloseFloor()){
+                    setState(State.PREPARE_MINING);
+                    return;
+                }
+
+                if(minerEntity.currentMiningArea.stackToPlace.isEmpty()){
+                    this.minerEntity.currentMiningArea.scanFloorArea();
+                }
+
                 this.stackToPlace = minerEntity.currentMiningArea.stackToPlace;
 
                 if(stackToPlace.isEmpty()){
-                    setState(State.DONE);
+                    setState(State.PREPARE_MINING);
                     return;
                 }
 
@@ -165,31 +190,38 @@ public class MinerWorkGoal extends Goal {
             }
 
             case CLOSE_FLOOR -> {
+                if(!this.minerEntity.currentMiningArea.getCloseFloor()){
+                    setState(State.PREPARE_MINING);
+                    return;
+                }
+
+                minerEntity.switchMainHandItem(itemStack -> itemStack.is(Items.COBBLESTONE));
+
                 if(this.closeHoles(this.stackToPlace)) return;
 
-                setState(State.DONE);
+                setState(State.PREPARE_MINING);
+            }
+
+            case CHECK -> {
+                this.minerEntity.currentMiningArea.scanBreakArea();
+                this.stackToBreak = this.minerEntity.currentMiningArea.stackToBreak;
+
+                if(stackToBreak.isEmpty()){
+                    setState(State.DONE);
+                }
+                else{
+                    setState(State.PREPARE_CLOSE_FLOOR);
+                }
             }
 
             case DONE -> {
-                if(!workDone){
-                    blockPos = null;
-                    this.minerEntity.currentMiningArea.scanBreakArea();
-                    if(!this.minerEntity.currentMiningArea.stackToBreak.isEmpty()){
-                        setState(State.PREPARE_MINING);
-                        return;
-                    }
-                    workDone = true;
-                    minerEntity.currentMiningArea.setBeingWorkedOn(false);
+                this.minerEntity.currentMiningArea.setDone(true);
 
-                    //ONLY FOR MINING AREA WILL REMOVE IT
-                    this.minerEntity.currentMiningArea.setDone(true);
+                blockPos = null;
+                minerEntity.currentMiningArea = null;
+                this.start();
 
-                    blockPos = null;
-                    minerEntity.currentMiningArea = null;
-                    this.start();
-
-                    this.minerEntity.forcedDeposit = true;
-                }
+                this.minerEntity.forcedDeposit = true;
             }
 
             case ERROR ->{
@@ -240,7 +272,7 @@ public class MinerWorkGoal extends Goal {
     }
 
     public void setState(State state) {
-        // if(minerEntity.getOwner() != null) minerEntity.getOwner().sendSystemMessage(Component.literal(state.toString()));
+        //if(minerEntity.getOwner() != null) minerEntity.getOwner().sendSystemMessage(Component.literal(state.toString()));
         this.state = state;
     }
 
@@ -440,13 +472,13 @@ public class MinerWorkGoal extends Goal {
     public enum State{
         SELECT_WORK_AREA,
         MOVE_TO_WORK_AREA,
-        CHECK_FLUIDS,
         PREPARE_MINE_WALLS,
         MINE_WALLS,
         PREPARE_CLOSE_FLOOR,
         CLOSE_FLOOR,
         PREPARE_MINING,
         MINING,
+        CHECK,
         DONE,
         ERROR
 

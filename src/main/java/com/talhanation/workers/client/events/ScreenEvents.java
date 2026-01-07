@@ -1,26 +1,14 @@
 package com.talhanation.workers.client.events;
 
 import com.mojang.blaze3d.vertex.PoseStack;
-import com.talhanation.recruits.Main;
 import com.talhanation.workers.client.gui.BuildAreaScreen;
-import com.talhanation.workers.entities.MerchantEntity;
 import com.talhanation.workers.entities.workarea.AbstractWorkAreaEntity;
-import com.talhanation.workers.inventory.MerchantAddEditTradeContainer;
-import com.talhanation.workers.network.MessageOpenMerchantEditTradeScreen;
-import com.talhanation.workers.world.WorkersMerchantTrade;
 import net.minecraft.client.Camera;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.client.renderer.LevelRenderer;
 import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.RenderType;
-import net.minecraft.network.chat.Component;
-import net.minecraft.server.level.ServerPlayer;
-import net.minecraft.util.Mth;
-import net.minecraft.world.MenuProvider;
-import net.minecraft.world.entity.player.Inventory;
-import net.minecraft.world.entity.player.Player;
-import net.minecraft.world.inventory.AbstractContainerMenu;
 import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
 import net.minecraftforge.api.distmarker.Dist;
@@ -28,8 +16,6 @@ import net.minecraftforge.api.distmarker.OnlyIn;
 import net.minecraftforge.client.event.RenderLevelStageEvent;
 import net.minecraftforge.client.event.ScreenEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
-import net.minecraftforge.network.NetworkHooks;
-import org.jetbrains.annotations.NotNull;
 
 @OnlyIn(Dist.CLIENT)
 public class ScreenEvents {
@@ -55,7 +41,8 @@ public class ScreenEvents {
         if (event.getStage() != RenderLevelStageEvent.Stage.AFTER_PARTICLES) return;
 
         Minecraft mc = Minecraft.getInstance();
-        if (mc.player == null || mc.level == null || !mc.options.renderDebug) return; // nur im F3 Modus
+        if (mc.player == null || mc.level == null) return;
+        if(!mc.getEntityRenderDispatcher().shouldRenderHitBoxes()) return;
 
         PoseStack poseStack = event.getPoseStack();
         Camera camera = mc.gameRenderer.getMainCamera();

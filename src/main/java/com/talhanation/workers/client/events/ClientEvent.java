@@ -2,6 +2,7 @@ package com.talhanation.workers.client.events;
 
 import com.talhanation.recruits.config.RecruitsClientConfig;
 import com.talhanation.workers.WorkersMain;
+import com.talhanation.workers.client.render.FishingBobberRenderer;
 import com.talhanation.workers.client.render.WorkerAreaRenderer;
 import com.talhanation.workers.client.render.WorkerVillagerRenderer;
 import com.talhanation.workers.init.ModEntityTypes;
@@ -23,6 +24,10 @@ public class ClientEvent {
         EntityRenderers.register(ModEntityTypes.BUILDAREA.get(), WorkerAreaRenderer::new);
         EntityRenderers.register(ModEntityTypes.MININGAREA.get(), WorkerAreaRenderer::new);
         EntityRenderers.register(ModEntityTypes.STORAGEAREA.get(), WorkerAreaRenderer::new);
+        EntityRenderers.register(ModEntityTypes.FISHINGAREA.get(), WorkerAreaRenderer::new);
+
+        EntityRenderers.register(ModEntityTypes.FISHING_BOBBER.get(), FishingBobberRenderer::new);
+
 
         if (RecruitsClientConfig.RecruitsLookLikeVillagers.get()) {
             EntityRenderers.register(ModEntityTypes.FARMER.get(), WorkerVillagerRenderer::new);
@@ -30,6 +35,7 @@ public class ClientEvent {
             EntityRenderers.register(ModEntityTypes.MINER.get(), WorkerVillagerRenderer::new);
             EntityRenderers.register(ModEntityTypes.BUILDER.get(), WorkerVillagerRenderer::new);
             EntityRenderers.register(ModEntityTypes.MERCHANT.get(), WorkerVillagerRenderer::new);
+            EntityRenderers.register(ModEntityTypes.FISHERMAN.get(), WorkerVillagerRenderer::new);
         }
         else{
             EntityRenderers.register(ModEntityTypes.FARMER.get(), WorkerHumanRenderer::new);
@@ -37,6 +43,7 @@ public class ClientEvent {
             EntityRenderers.register(ModEntityTypes.MINER.get(), WorkerHumanRenderer::new);
             EntityRenderers.register(ModEntityTypes.BUILDER.get(), WorkerHumanRenderer::new);
             EntityRenderers.register(ModEntityTypes.MERCHANT.get(), WorkerHumanRenderer::new);
+            EntityRenderers.register(ModEntityTypes.FISHERMAN.get(), WorkerHumanRenderer::new);
         }
     }
 }

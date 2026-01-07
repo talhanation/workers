@@ -51,6 +51,8 @@ public class WorkersServerConfig {
                     "minecraft:sandstone",
                     "minecraft:sand",
                     "minecraft:gravel",
+                    "minecraft:flint",
+                    "minecraft:coal",
                     "minecraft:calcite",
                     "minecraft:clay",
                     "minecraft:dripstone_block",
@@ -79,6 +81,12 @@ public class WorkersServerConfig {
                     "minecraft:soul_torch",
                     "minecraft:soul_wall_torch",
                     "minecraft:netherrack"
+            ));
+
+
+    public static ArrayList<String> FISHERMAN_PICKUP = new ArrayList<>(
+            Arrays.asList(
+
             ));
 
     static {
