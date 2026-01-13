@@ -139,6 +139,13 @@ public class FishermanWorkGoal extends Goal {
             }
 
             case FISHING -> {
+                if(fishingBobber != null){
+                    if(fishingBobber.hooked){
+                        setState(State.CATCH);
+                        return;
+                    }
+                }
+
                 if(++throwTime > catchTime){
                     throwTime = 0;
                     this.fisherman.playSound(SoundEvents.FISHING_BOBBER_SPLASH, 1, 1);
@@ -198,6 +205,7 @@ public class FishermanWorkGoal extends Goal {
 
     public static List<FishingArea> getAvailableWorkAreasByPriority(ServerLevel level, FishermanEntity fisherman, @Nullable FishingArea currentArea) {
         List<FishingArea> list = level.getEntitiesOfClass(FishingArea.class, fisherman.getBoundingBox().inflate(64));
+
 
         return list;
     }

@@ -12,9 +12,10 @@ import net.minecraft.tags.FluidTags;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.MoverType;
-import net.minecraft.world.entity.projectile.FishingHook;
+import net.minecraft.world.entity.animal.AbstractFish;
+import net.minecraft.world.entity.item.ItemEntity;
 import net.minecraft.world.entity.projectile.Projectile;
-import net.minecraft.world.entity.projectile.ThrowableProjectile;
+import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.material.FluidState;
@@ -23,6 +24,7 @@ import net.minecraftforge.network.NetworkHooks;
 import org.jetbrains.annotations.NotNull;
 
 import javax.annotation.Nullable;
+import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -31,6 +33,8 @@ public class FishingBobberEntity extends Projectile {
     private int life;
     @Nullable
     private FishermanEntity owner;
+
+    public boolean hooked;
 
     public FishingBobberEntity(EntityType<? extends FishingBobberEntity> type, Level level) {
         super(type, level);
@@ -55,6 +59,9 @@ public class FishingBobberEntity extends Projectile {
     public void tick() {
         super.tick();
         if(!this.level().isClientSide()) {
+            this.checkForItems();
+            this.attractFish();
+            this.checkForFish();
             this.life++;
             if (this.life > 3000 || this.getOwner() == null) {
                 this.discard();
@@ -86,6 +93,48 @@ public class FishingBobberEntity extends Projectile {
         this.reapplyPosition();
 
         this.setDeltaMovement(this.getDeltaMovement().scale(0.92D));
+    }
+
+    private AbstractFish attractedFish;
+    private void attractFish() {
+        if(tickCount % 20 != 0) return;
+        if(!this.isInWater()) return;
+
+        if(attractedFish != null && attractedFish.isAlive()){
+            attractedFish.getNavigation().moveTo(this, 1.25F);
+        }
+        else{
+            List<AbstractFish> list = this.getCommandSenderWorld().getEntitiesOfClass(AbstractFish.class, this.getBoundingBox().inflate( 10 + getWaterDepth()));
+            if(list.isEmpty()) return;
+            attractedFish = list.get(0);
+        }
+    }
+
+    private void checkForFish() {
+        if(tickCount % 20 != 0) return;
+        if(!this.isInWater()) return;
+
+        List<AbstractFish> list = this.getCommandSenderWorld().getEntitiesOfClass(AbstractFish.class, this.getBoundingBox().inflate( 1));
+        if(list.isEmpty()) return;
+
+        AbstractFish fish = list.get(0);
+
+        fish.kill();
+    }
+
+    private void checkForItems() {
+        if(tickCount % 10 != 0) return;
+        if(!this.isInWater()) return;
+
+        List<ItemEntity> list = this.getCommandSenderWorld().getEntitiesOfClass(ItemEntity.class, this.getBoundingBox().inflate(3));
+        if(list.isEmpty() || this.getOwner() == null) return;
+
+        ItemEntity itemEntity = list.get(0);
+        ItemStack itemStack = itemEntity.getItem();
+        this.getOwner().getInventory().addItem(itemStack);
+        itemEntity.discard();
+        this.getOwner().farmedItems += itemStack.getCount();
+        this.hooked = true;
     }
 
     @Nullable

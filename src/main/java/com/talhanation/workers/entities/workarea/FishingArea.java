@@ -1,28 +1,28 @@
 package com.talhanation.workers.entities.workarea;
 
 import com.talhanation.workers.client.gui.FishingAreaScreen;
-import com.talhanation.workers.entities.FarmerEntity;
+import com.talhanation.workers.entities.AbstractWorkerEntity;
 import com.talhanation.workers.entities.FishermanEntity;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.core.BlockPos;
 import net.minecraft.nbt.CompoundTag;
-import net.minecraft.world.Container;
 import net.minecraft.world.entity.EntityType;
+import net.minecraft.world.entity.animal.AbstractFish;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.*;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.state.BlockState;
-import net.minecraft.world.level.material.Fluids;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
 
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Stack;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.UUID;
 
 public class FishingArea extends AbstractWorkAreaEntity {
 
-    public Map<BlockPos, Boolean> fishingSpots = new HashMap<>();
+    public List<UUID> fishers = new ArrayList<>();
+    public int MAX_FISHERS = 5;
 
     public FishingArea(EntityType<?> type, Level level) {
         super(type, level);
@@ -50,14 +50,21 @@ public class FishingArea extends AbstractWorkAreaEntity {
     public Screen getScreen(Player player) {
         return new FishingAreaScreen(this, player);
     }
-    public void scanBreakArea(){
 
+    @Override
+    public boolean canWorkHere(AbstractWorkerEntity worker){
+        if(super.canWorkHere(worker)) {
+            return fishers.size() < MAX_FISHERS;
+        }
+        return false;
     }
 
     public boolean isWorkerPerfectCandidate(FishermanEntity fisherman) {
-        if (fisherman.getMatchingItem(stack -> stack.getItem() instanceof FishingRodItem) == ItemStack.EMPTY) {
+        if(fisherman.getMatchingItem(stack -> stack.getItem() instanceof FishingRodItem) == ItemStack.EMPTY) {
             return false;
         }
+
+        if(!fishers.contains(fisherman.getUUID())) return false;
 
         return true;
     }
