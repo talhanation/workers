@@ -75,19 +75,22 @@
 
   "gui.workers.text.creative": "Creative",
 
-  "description.workers.title.farmer" : "Farmer",
-  "description.workers.farmer" : "Farmer",
+  "description.workers.title.farmer": "Farmer",
+  "description.workers.farmer": "Plants crops using seeds from nearby storage and harvests fields when they are ready. Automatically works on farmland within range and keeps crops growing efficiently.",
 
-  "description.workers.title.miner" : "Miner",
-  "description.workers.miner" : "Miner",
+  "description.workers.title.miner": "Miner",
+  "description.workers.miner": "Mines a defined area and places torches while working. Provides safety by filling holes with cobblestone and can optionally cover the ground to prevent dangerous falls.",
 
-  "description.workers.title.lumberjack" : "Lumberjack",
-  "description.workers.lumberjack" : "Lumberjack",
+  "description.workers.title.lumberjack": "Lumberjack",
+  "description.workers.lumberjack": "Cuts down trees inside a lumber area and can strip logs or replant saplings when instructed. Keeps forests managed and renewable.",
 
-  "description.workers.title.builder" : "Builder",
-  "description.workers.builder" : "Builder",
+  "description.workers.title.builder": "Builder",
+  "description.workers.builder": "Builds saved structures block by block and requires all needed materials. Collects resources from the nearest depot before starting construction.",
 
-  "description.workers.title.merchant" : "Merchant",
-  "description.workers.merchant" : "Merchant"
+  "description.workers.title.merchant": "Merchant",
+  "description.workers.merchant": "Trades with other players on your behalf using predefined trade offers. Can take required items from a dedicated depot if permitted.",
+
+  "description.workers.title.fisherman": "Fisherman",
+  "description.workers.fisherman": "Uses a fishing rod to fish in a defined fishing area and casts lines along a set route. Collects nearby fish and items, stores them in a nearby depot, and handles the rod carefully to extend its durability."
 
 }

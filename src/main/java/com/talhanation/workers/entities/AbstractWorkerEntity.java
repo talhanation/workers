@@ -445,6 +445,6 @@ public abstract class AbstractWorkerEntity extends AbstractChunkLoaderEntity {
     }
 
     public boolean shouldWork() {
-        return this.getFollowState() == 0 || this.getFollowState() == 6;
+        return this.isOwned() && (this.getFollowState() == 0 || this.getFollowState() == 6);
     }
 }
