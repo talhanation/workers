@@ -30,7 +30,7 @@ import java.util.UUID;
 
 public class FishingBobberEntity extends Projectile {
     private static final EntityDataAccessor<Optional<UUID>> OWNER_UUID = SynchedEntityData.defineId(FishingBobberEntity.class, EntityDataSerializers.OPTIONAL_UUID);
-    private int life;
+    public int life;
     @Nullable
     private FishermanEntity owner;
 

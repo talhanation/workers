@@ -144,6 +144,15 @@ public class FishermanWorkGoal extends Goal {
                         setState(State.CATCH);
                         return;
                     }
+                    else if(fishingBobber.onGround()){
+                        this.fisherman.swing(InteractionHand.MAIN_HAND);
+                        this.fisherman.playSound(SoundEvents.FISHING_BOBBER_RETRIEVE, 1, 1);
+                        this.fishingBobber.discard();
+                        this.fishingBobber = null;
+
+                        setState(State.MOVE_TO_WORK_AREA);
+                        return;
+                    }
                 }
 
                 if(++throwTime > catchTime){
@@ -163,7 +172,7 @@ public class FishermanWorkGoal extends Goal {
                     this.fishingBobber.discard();
                     this.fishingBobber = null;
                 }
-                this.fisherman.farmedItems ++;
+                this.fisherman.farmedItems++;
                 if(this.fisherman.tickCount % 2 == 0) this.fisherman.damageMainHandItem();
 
                 setState(State.PREPARE_FISHING);
