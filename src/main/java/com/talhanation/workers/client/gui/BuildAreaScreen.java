@@ -65,6 +65,7 @@ public class BuildAreaScreen extends WorkAreaScreen {
         if(structureNBT != null && !structureNBT.isEmpty()){
             mode = Mode.LOAD;
             structure = StructureManager.parseStructureFromNBT(structureNBT);
+            this.requiredItems = buildArea.getRequiredMaterials(structureNBT);
         }
         else mode = Mode.SCAN;
 

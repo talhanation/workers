@@ -13,8 +13,6 @@ import net.minecraftforge.event.server.ServerStartingEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.network.PacketDistributor;
 
-import java.util.List;
-
 public class VillagerEvents {
     public static final Component TITLE_FARMER = Component.translatable("description.workers.title.farmer");
     public static final Component TITLE_MINER = Component.translatable("description.workers.title.miner");
@@ -70,6 +68,4 @@ public class VillagerEvents {
         RecruitsHireTradesRegistry.addTrade("herd", 3, CHEF);
         */
     }
-
-
 }
