@@ -95,6 +95,19 @@ public class LumberjackEntity extends AbstractWorkerEntity{
         return null;
     }
 
+    public boolean wantsToKeep(ItemStack itemStack) {
+        if (itemStack.getItem() instanceof AxeItem) {
+            int items = countMatchingItems(stack -> stack.getItem() instanceof AxeItem);
+            return items <= 1;
+        }
+        if(currentLumberArea != null && itemStack.is(currentLumberArea.getSaplingStack().getItem())) {
+            int items = countMatchingStacks(stack -> stack.is(currentLumberArea.getSaplingStack().getItem()));
+            return items <= 1;
+        }
+
+
+        return super.wantsToKeep(itemStack);
+    }
     public boolean wantsToPickUp(ItemStack itemStack) {
         ResourceLocation id = ForgeRegistries.ITEMS.getKey(itemStack.getItem());
         if(id == null) return false;
@@ -104,9 +117,6 @@ public class LumberjackEntity extends AbstractWorkerEntity{
         if(itemStack.getItem() instanceof BlockItem blockItem && blockItem.getBlock().defaultBlockState().is(BlockTags.LOGS)) return true;
         if(itemStack.getItem() instanceof BlockItem blockItem && blockItem.getBlock().defaultBlockState().is(BlockTags.LEAVES)) return true;
 
-        if (itemStack.getItem() instanceof AxeItem && this.getMainHandItem().isEmpty()) {
-            return !this.hasSameTypeOfItem(itemStack);
-        }
         return super.wantsToPickUp(itemStack);
     }
 

@@ -210,13 +210,12 @@ public class DepositItemsToStorage extends AbstractChestGoal {
         for (int i = 0; i < inventory.getContainerSize(); i++) {
             ItemStack stack = inventory.getItem(i);
 
-            // This avoids depositing items such as tools, food,
-            // or anything the workers wouldn't pick up while they're working.
-            // It also avoids depositing items that the worker needs to continue working.
-            if (stack.is(Items.AIR) || stack.isEmpty() || !worker.wantsToPickUp(stack) || (worker.wantsToKeep(stack) && getAmountOfItem(stack.getItem()) <= 64)) {
+            boolean isAir = stack.is(Items.AIR) || stack.isEmpty();
+            boolean wantToKeep = worker.wantsToKeep(stack);
+            if (isAir || wantToKeep) {
                 continue;
             }
-            // Attempt to deposit the stack in the container, keep the remainder
+
             ItemStack remainder = this.deposit(stack, container);
             inventory.setItem(i, remainder);
         }

@@ -20,21 +20,19 @@ public class NeededItem {
     }
 
     public boolean matches(ItemStack stack) {
+        if(stack == null || stack.isEmpty()) return false;
         return matcher.test(stack);
     }
 
     @Nullable
     private Item tryExtractSingleItemFromMatcher() {
-        // Versuche, aus dem Predicate eine konkrete Item-Referenz zu erraten
-        // (funktioniert nur, wenn matcher sowas ist wie: stack -> stack.getItem() == Items.SOME_ITEM)
-
         for (Item item : BuiltInRegistries.ITEM) {
             if (matcher.test(new ItemStack(item))) {
                 return item;
             }
         }
 
-        return null; // Kein Match – generisches "Unbekanntes Item"
+        return null;
     }
 
     @Override

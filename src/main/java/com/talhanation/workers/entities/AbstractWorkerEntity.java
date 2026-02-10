@@ -16,6 +16,7 @@ import net.minecraft.sounds.SoundSource;
 import net.minecraft.world.*;
 import net.minecraft.world.damagesource.DamageSource;
 import net.minecraft.world.entity.*;
+import net.minecraft.world.entity.ai.goal.MoveTowardsTargetGoal;
 import net.minecraft.world.entity.item.ItemEntity;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.Item;
@@ -58,6 +59,8 @@ public abstract class AbstractWorkerEntity extends AbstractChunkLoaderEntity {
         super.registerGoals();
         this.goalSelector.addGoal(0, new DepositItemsToStorage(this));
         this.goalSelector.addGoal(0, new GetNeededItemsFromStorage(this));
+
+        this.goalSelector.removeGoal(new MoveTowardsTargetGoal(this, 0.9D, 32.0F));
     }
 
     public abstract AbstractWorkAreaEntity getCurrentWorkArea();
@@ -119,8 +122,13 @@ public abstract class AbstractWorkerEntity extends AbstractChunkLoaderEntity {
 
         return flag;
     }
+    public boolean wantsToKeep(ItemStack itemStack) {
+        return (itemStack.isEdible() && itemStack.getFoodProperties(this).getNutrition() > 4);
+    }
     @Override
     public boolean wantsToPickUp(ItemStack itemStack) {
+        if(wantsToKeep(itemStack)) return true;
+
         List<NeededItem> neededItems = this.neededItems;
 
         for (NeededItem needed : neededItems) {
@@ -251,19 +259,6 @@ public abstract class AbstractWorkerEntity extends AbstractChunkLoaderEntity {
         return 0.4F;
     }
 
-    /**
-     * This is used to determine whether the worker should store an ItemStack
-     * in a chest or keep it in its inventory.
-     * 
-     * For example, lumberjacks need saplings to replant trees, farmers need seeds, etc.
-     * 
-     * @param itemStack The ItemStack to compare against
-     * @return true if the ItemStack will be kept in inventory, false if it will be stored in a chest.
-     */
-    public boolean wantsToKeep(ItemStack itemStack) {
-        return (itemStack.isEdible() && itemStack.getFoodProperties(this).getNutrition() > 4);
-    }
-
     //////////////////////////////////// SET////////////////////////////////////
 
     public void setEquipment() {
@@ -308,6 +303,30 @@ public abstract class AbstractWorkerEntity extends AbstractChunkLoaderEntity {
             }
         }
         return null;
+    }
+
+    public int countMatchingItems(Predicate<ItemStack> predicate) {
+        int count = 0;
+
+        for (ItemStack stack : this.getInventory().items) {
+            if (!stack.isEmpty() && predicate.test(stack)) {
+                count += stack.getCount();
+            }
+        }
+
+        return count;
+    }
+
+    public int countMatchingStacks(Predicate<ItemStack> predicate) {
+        int count = 0;
+
+        for (ItemStack stack : this.getInventory().items) {
+            if (!stack.isEmpty() && predicate.test(stack)) {
+                count++;
+            }
+        }
+
+        return count;
     }
 
     int currentTimeBreak;

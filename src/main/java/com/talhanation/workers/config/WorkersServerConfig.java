@@ -15,7 +15,8 @@ public class WorkersServerConfig {
     public static ForgeConfigSpec.IntValue MinerCost;
     public static ForgeConfigSpec.IntValue BuilderCost;
     public static ForgeConfigSpec.IntValue MerchantCost;
-
+    public static ForgeConfigSpec.BooleanValue BuilderActive;
+    public static ForgeConfigSpec.IntValue AnimalPenMaxAnimals;
     public static ForgeConfigSpec.BooleanValue ShouldWorkAreaOnlyBeInFactionClaim;
     public static ArrayList<String> FARMER_PICKUP = new ArrayList<>(
             Arrays.asList(
@@ -83,6 +84,27 @@ public class WorkersServerConfig {
                     "minecraft:netherrack"
             ));
 
+    public static ArrayList<String> ANIMAL_FARMER_PICKUP = new ArrayList<>(
+            Arrays.asList(
+                    "minecraft:feather",
+                    "minecraft:leather",
+                    "minecraft:milk_bucket",
+                    "minecraft:chicken",
+                    "minecraft:lamb",
+                    "minecraft:egg",
+                    "minecraft:lamb",
+                    "minecraft:lamb",
+                    "minecraft:lamb",
+                    "minecraft:lamb",
+                    "minecraft:lamb",
+                    "minecraft:lamb",
+                    "minecraft:lamb",
+                    "minecraft:lamb",
+                    "minecraft:lamb",
+                    "minecraft:lamb",
+                    "minecraft:lamb"
+            ));
+
 
     public static ArrayList<String> FISHERMAN_PICKUP = new ArrayList<>(
             Arrays.asList(
@@ -138,6 +160,22 @@ public class WorkersServerConfig {
                         \tdefault: false""")
                 .worldRestart()
                 .define("ShouldWorkAreaOnlyBeInFactionClaim", false);
+
+        BuilderActive = BUILDER.comment("""
+                        
+                        WIP Builder.
+                        \t(takes effect after restart)
+                        \tdefault: false""")
+                .worldRestart()
+                .define("BuilderActive", false);
+
+        AnimalPenMaxAnimals = BUILDER.comment("""
+                        
+                        The max amount of animals in a pen. After the animal worker will not breed. 
+                        \t(takes effect after restart)
+                        \tdefault: 32""")
+                .worldRestart()
+                .defineInRange("LumberjackCost", 32, 0, 1453);
 
         SERVER = BUILDER.build();
     }

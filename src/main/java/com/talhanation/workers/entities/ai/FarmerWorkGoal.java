@@ -178,7 +178,7 @@ public class FarmerWorkGoal extends Goal {
 
                 ItemStack seedFromInv = farmer.getMatchingItem(itemStack -> itemStack.is(this.farmer.currentCropArea.getSeedStack().getItem()));
                 if(seedFromInv == null){
-                    this.farmer.addNeededItem(new NeededItem(itemStack -> ItemStack.isSameItemSameTags(itemStack, this.farmer.currentCropArea.getSeedStack()),  16, false));
+                    this.farmer.addNeededItem(new NeededItem(itemStack -> ItemStack.isSameItemSameTags(itemStack, this.farmer.currentCropArea.getSeedStack()),  16, true));
                     this.blockPos = null;
                     return;
                 }

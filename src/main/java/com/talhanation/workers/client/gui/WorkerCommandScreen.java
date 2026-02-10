@@ -34,6 +34,8 @@ public class WorkerCommandScreen implements ICommandCategory {
     private static final MutableComponent TOOLTIP_ADD_STORAGE = Component.translatable("gui.workers.command.tooltip.add_storage");
     private static final MutableComponent TEXT_ADD_BUILDING = Component.translatable("gui.workers.command.text.add_building");
     private static final MutableComponent TEXT_ADD_STORAGE = Component.translatable("gui.workers.command.text.add_storage");
+    private static final MutableComponent TEXT_ADD_ANIMAL_PEN = Component.translatable("gui.workers.command.text.add_animal_pen");
+    private static final MutableComponent TOOLTIP_ADD_ANIMAL_PEN = Component.translatable("gui.workers.command.tooltip.add_animal_pen");
     @Override
     public Component getToolTipName() {
         return Component.translatable("gui.workers.command.tooltip.workers");
@@ -47,6 +49,7 @@ public class WorkerCommandScreen implements ICommandCategory {
     @Override
     public void createButtons(CommandScreen screen, int x, int y, List<RecruitsGroup> groups, Player player) {
         boolean isOneGroupActive = groups.stream().anyMatch(g -> !g.isDisabled());
+        boolean canPlace = screen.rayBlockPos != null && WorkersClientManager.isInFactionClaim(screen.rayBlockPos);
 
         RecruitsCommandButton addCropFieldButton = new RecruitsCommandButton(x, y - 50, TEXT_ADD_FIELD,
                 button -> {
@@ -56,7 +59,7 @@ public class WorkerCommandScreen implements ICommandCategory {
                 });
 
         addCropFieldButton.setTooltip(Tooltip.create(TOOLTIP_ADD_FIELD));
-        addCropFieldButton.active = screen.rayBlockPos != null && WorkersClientManager.isInFactionClaim(screen.rayBlockPos);;
+        addCropFieldButton.active = canPlace;
         screen.addRenderableWidget(addCropFieldButton);
 
         RecruitsCommandButton addFishingAreaButton = new RecruitsCommandButton(x - 100, y - 50, TEXT_ADD_FISHING,
@@ -67,7 +70,7 @@ public class WorkerCommandScreen implements ICommandCategory {
                 });
 
         addFishingAreaButton.setTooltip(Tooltip.create(TOOLTIP_ADD_FISHING));
-        addFishingAreaButton.active = screen.rayBlockPos != null && WorkersClientManager.isInFactionClaim(screen.rayBlockPos);;
+        addFishingAreaButton.active = canPlace;
         screen.addRenderableWidget(addFishingAreaButton);
 
         RecruitsCommandButton addLumberArea = new RecruitsCommandButton(x, y + 0, TEXT_ADD_LUMBER,
@@ -78,7 +81,7 @@ public class WorkerCommandScreen implements ICommandCategory {
                 });
 
         addLumberArea.setTooltip(Tooltip.create(TOOLTIP_ADD_LUMBER));
-        addLumberArea.active = screen.rayBlockPos != null && WorkersClientManager.isInFactionClaim(screen.rayBlockPos);
+        addLumberArea.active = canPlace;
         screen.addRenderableWidget(addLumberArea);
 
         RecruitsCommandButton addMine = new RecruitsCommandButton(x + 100, y + 0, TEXT_ADD_MINE,
@@ -89,7 +92,7 @@ public class WorkerCommandScreen implements ICommandCategory {
                 });
 
         addMine.setTooltip(Tooltip.create(TOOLTIP_ADD_MINE));
-        addMine.active = screen.rayBlockPos != null && WorkersClientManager.isInFactionClaim(screen.rayBlockPos);
+        addMine.active = canPlace;
         screen.addRenderableWidget(addMine);
 
         RecruitsCommandButton addStorageArea = new RecruitsCommandButton(x - 100, y - 0, TEXT_ADD_STORAGE,
@@ -100,7 +103,7 @@ public class WorkerCommandScreen implements ICommandCategory {
             });
 
         addStorageArea.setTooltip(Tooltip.create(TOOLTIP_ADD_STORAGE));
-        addStorageArea.active = screen.rayBlockPos != null && WorkersClientManager.isInFactionClaim(screen.rayBlockPos);
+        addStorageArea.active = canPlace;
         screen.addRenderableWidget(addStorageArea);
 
         RecruitsCommandButton addBuilding = new RecruitsCommandButton(x, y + 30, TEXT_ADD_BUILDING,
@@ -110,8 +113,19 @@ public class WorkerCommandScreen implements ICommandCategory {
                     WorkersMain.SIMPLE_CHANNEL.sendToServer(new MessageAddWorkArea(pos, 2));
                 });
 
-        addBuilding.active = screen.rayBlockPos != null && WorkersClientManager.isInFactionClaim(screen.rayBlockPos);;
+        addBuilding.active = canPlace;
         screen.addRenderableWidget(addBuilding);
+
+        RecruitsCommandButton addAnimalPen = new RecruitsCommandButton(x + 100, y - 50, TEXT_ADD_ANIMAL_PEN,
+                button -> {
+                    if(screen.rayBlockPos == null) return;
+                    BlockPos pos = screen.rayBlockPos;
+                    WorkersMain.SIMPLE_CHANNEL.sendToServer(new MessageAddWorkArea(pos, 6));
+                });
+
+        addStorageArea.setTooltip(Tooltip.create(TOOLTIP_ADD_ANIMAL_PEN));
+        addAnimalPen.active = canPlace;
+        screen.addRenderableWidget(addAnimalPen);
     }
 
     private boolean isDepositPosition(BlockPos rayBlockPos, Player player) {

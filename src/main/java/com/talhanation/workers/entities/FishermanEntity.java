@@ -4,12 +4,10 @@ import com.talhanation.recruits.entities.AbstractRecruitEntity;
 import com.talhanation.recruits.pathfinding.AsyncGroundPathNavigation;
 import com.talhanation.workers.config.WorkersServerConfig;
 import com.talhanation.workers.entities.ai.FishermanWorkGoal;
-import com.talhanation.workers.entities.workarea.AbstractWorkAreaEntity;
 import com.talhanation.workers.entities.workarea.FishingArea;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
-import net.minecraft.tags.BlockTags;
 import net.minecraft.util.Mth;
 import net.minecraft.util.RandomSource;
 import net.minecraft.world.DifficultyInstance;
@@ -20,7 +18,6 @@ import net.minecraft.world.entity.SpawnGroupData;
 import net.minecraft.world.entity.ai.attributes.AttributeSupplier;
 import net.minecraft.world.entity.ai.attributes.Attributes;
 import net.minecraft.world.entity.item.ItemEntity;
-import net.minecraft.world.entity.projectile.Arrow;
 import net.minecraft.world.item.*;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.ServerLevelAccessor;
@@ -96,15 +93,23 @@ public class FishermanEntity extends AbstractWorkerEntity{
         return null;
     }
 
+    @Override
+    public boolean wantsToKeep(ItemStack itemStack) {
+        if (itemStack.getItem() instanceof FishingRodItem) {
+            int rods = countMatchingItems(stack -> stack.getItem() instanceof FishingRodItem);
+            return rods <= 1;
+        }
+
+        return super.wantsToKeep(itemStack);
+    }
+
     public boolean wantsToPickUp(ItemStack itemStack) {
         ResourceLocation id = ForgeRegistries.ITEMS.getKey(itemStack.getItem());
         if(id == null) return false;
 
         if(WorkersServerConfig.FISHERMAN_PICKUP.contains(id.toString())) return true;
 
-        if (itemStack.getItem() instanceof FishingRodItem && this.getMainHandItem().isEmpty()) {
-            return !this.hasSameTypeOfItem(itemStack);
-        }
+
         return super.wantsToPickUp(itemStack);
     }
 

@@ -1,60 +1,49 @@
 package com.talhanation.workers.entities;
 
-import com.google.common.collect.ImmutableSet;
 import com.talhanation.recruits.entities.AbstractRecruitEntity;
 import com.talhanation.recruits.pathfinding.AsyncGroundPathNavigation;
 import com.talhanation.workers.config.WorkersServerConfig;
-import com.talhanation.workers.entities.ai.FarmerWorkGoal;
+import com.talhanation.workers.entities.ai.AnimalFarmerWorkGoal;
 import com.talhanation.workers.entities.workarea.AbstractWorkAreaEntity;
-import com.talhanation.workers.entities.workarea.CropArea;
+import com.talhanation.workers.entities.workarea.AnimalPenArea;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
+import net.minecraft.tags.ItemTags;
 import net.minecraft.util.RandomSource;
 import net.minecraft.world.DifficultyInstance;
-import net.minecraft.world.entity.*;
+import net.minecraft.world.entity.EntityType;
+import net.minecraft.world.entity.Mob;
+import net.minecraft.world.entity.MobSpawnType;
+import net.minecraft.world.entity.SpawnGroupData;
 import net.minecraft.world.entity.ai.attributes.AttributeSupplier;
 import net.minecraft.world.entity.ai.attributes.Attributes;
 import net.minecraft.world.entity.item.ItemEntity;
 import net.minecraft.world.item.*;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.ServerLevelAccessor;
-import net.minecraft.world.level.block.Block;
-import net.minecraft.world.level.block.Blocks;
-import net.minecraft.world.level.block.CropBlock;
-import net.minecraft.world.level.material.Fluid;
-import net.minecraft.world.level.material.Fluids;
-import net.minecraft.world.level.material.WaterFluid;
 import net.minecraftforge.common.ForgeMod;
 import net.minecraftforge.registries.ForgeRegistries;
 
 import javax.annotation.Nullable;
 import java.util.List;
-import java.util.Set;
 import java.util.function.Predicate;
 
-public class FarmerEntity extends AbstractWorkerEntity{
-    public CropArea currentCropArea;
-    public static final Set<Block> TILLABLES = ImmutableSet.of(
-            Blocks.DIRT,
-            Blocks.ROOTED_DIRT,
-            Blocks.COARSE_DIRT,
-            Blocks.GRASS_BLOCK);
-
-    public FarmerEntity(EntityType<? extends AbstractWorkerEntity> entityType, Level world) {
+public class AnimalFarmerEntity extends AbstractWorkerEntity{
+    public AnimalPenArea currentAnimalPen;
+    public AnimalFarmerEntity(EntityType<? extends AbstractWorkerEntity> entityType, Level world) {
         super(entityType, world);
-
     }
 
     @Override
     protected void registerGoals() {
         super.registerGoals();
-        this.goalSelector.addGoal(0, new FarmerWorkGoal(this));
+        this.goalSelector.addGoal(0, new AnimalFarmerWorkGoal(this));
     }
 
     public static AttributeSupplier.Builder setAttributes() {
         return Mob.createMobAttributes()
-                .add(Attributes.MAX_HEALTH, 20.0D)
+                .add(Attributes.MAX_HEALTH, 40.0D)
                 .add(Attributes.MOVEMENT_SPEED, 0.3D)
                 .add(ForgeMod.SWIM_SPEED.get(), 0.3D)
                 .add(Attributes.KNOCKBACK_RESISTANCE, 0.1D)
@@ -88,14 +77,15 @@ public class FarmerEntity extends AbstractWorkerEntity{
 
     @Override
     public void initSpawn() {
-        this.setCustomName(Component.literal("Farmer"));
+        this.setCustomName(Component.literal("Animal Farmer"));
         //this.setCost(WorkersServerConfig.FarmerCost.get());
-        this.setCost(10);
+        this.setCost(20);
 
         this.setEquipment();
         this.setDropEquipment();
         this.setRandomSpawnBonus();
         this.setPersistenceRequired();
+
 
         AbstractRecruitEntity.applySpawnValues(this);
     }
@@ -104,40 +94,36 @@ public class FarmerEntity extends AbstractWorkerEntity{
     public List<Item> inventoryInputHelp() {
         return null;
     }
-    public boolean isBucketWithWater(ItemStack itemStack) {
-        if(itemStack.getItem() instanceof BucketItem bucketItem){
-            Fluid fluid = bucketItem.getFluid();
-            if(fluid instanceof WaterFluid || fluid.isSame(Fluids.WATER)) return true;
-        }
-        return false;
-    }
+
     public boolean wantsToKeep(ItemStack itemStack) {
-        if (itemStack.getItem() instanceof HoeItem) {
-            int items = countMatchingItems(stack -> stack.getItem() instanceof HoeItem);
+        if (itemStack.getItem() instanceof AxeItem) {
+            int items = countMatchingItems(stack -> stack.getItem() instanceof AxeItem);
             return items <= 1;
         }
-
-        if(currentCropArea != null) {
-            ItemStack crop = currentCropArea.getSeedStack();
-            if(ItemStack.isSameItem(crop, itemStack)){
-                int items = countMatchingStacks(stack -> crop.is(stack.getItem()));
+        if(currentAnimalPen != null) {
+            ItemStack breedItem = currentAnimalPen.getAnimalType().getBreedItem().getDefaultInstance();
+            if(ItemStack.isSameItem(breedItem, itemStack)){
+                int items = countMatchingStacks(stack -> breedItem.is(stack.getItem()));
                 return items <= 1;
             }
         }
-
         return super.wantsToKeep(itemStack);
     }
     public boolean wantsToPickUp(ItemStack itemStack) {
         ResourceLocation id = ForgeRegistries.ITEMS.getKey(itemStack.getItem());
         if(id == null) return false;
 
-        if(WorkersServerConfig.FARMER_PICKUP.contains(id.toString())) return true;
-        if(itemStack.getItem() instanceof BlockItem blockItem && blockItem.getBlock() instanceof CropBlock) return true;
+        if(WorkersServerConfig.ANIMAL_FARMER_PICKUP.contains(id.toString())) return true;
+        if(itemStack.is(ItemTags.WOOL)) return true;
 
         return super.wantsToPickUp(itemStack);
     }
 
-    public AbstractWorkAreaEntity getCurrentWorkArea(){
-        return currentCropArea;
+    @Override
+    public AbstractWorkAreaEntity getCurrentWorkArea() {
+        return currentAnimalPen;
     }
+
+
 }
+

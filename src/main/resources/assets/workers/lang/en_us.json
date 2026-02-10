@@ -11,6 +11,7 @@
   "entity.workers.beekeeper": "Beekeeper",
   "entity.workers.rabbit_farmer": "Rabbit Farmer",
   "entity.workers.builder": "Builder",
+  "entity.workers.animal_worker": "Animal Worker",
 
   "entity.workers.storage": "Storage",
   "entity.workers.mine": "Mine",
@@ -20,14 +21,11 @@
 
   "item.workers.miner_spawn_egg": "Miner Spawn Egg",
   "item.workers.farmer_spawn_egg": "Farmer Spawn Egg",
-  "item.workers.shepherd_spawn_egg": "Shepherd Spawn Egg",
   "item.workers.merchant_spawn_egg": "Merchant Spawn Egg",
   "item.workers.lumberjack_spawn_egg": "Lumberjack Spawn Egg",
   "item.workers.fisherman_spawn_egg": "Fisherman Spawn Egg",
-  "item.workers.swineherd_spawn_egg": "Swineherd Spawn Egg",
-  "item.workers.cattle_farmer_spawn_egg": "Cattle Farmer Spawn Egg",
-  "item.workers.chicken_farmer_spawn_egg": "Chicken Farmer Spawn Egg",
   "item.workers.builder_spawn_egg": "Builder Spawn Egg",
+  "item.workers.animal_farmer_spawn_egg": "Animal Farmer Spawn Egg",
 
   "gui.workers.command.tooltip.workers": "Workers",
   "gui.workers.command.text.add_field": "Add Crop field",
@@ -41,6 +39,8 @@
   "gui.workers.command.tooltip.add_storage": "Adds a Storage Area on the position you are pointing at.",
   "gui.workers.command.text.add_building": "Add Building",
   "gui.workers.command.text.add_mine": "Add Mine",
+  "gui.workers.command.text.add_animal_pen": "Add Animal Pen",
+  "gui.workers.command.tooltip.add_animal_pen": "Adds a Animal Pen on the position you are pointing at.",
 
   "gui.workers.command.text.forward": "Forward",
   "gui.workers.command.text.back": "Back",
@@ -61,7 +61,12 @@
   "gui.workers.checkbox.merchants":"Merchants",
   "gui.workers.checkbox.animalFarmers":"Animal Farmers",
   "gui.workers.checkbox.fisherman":"Fisherman",
-  "gui.workers.checkbox.closeFloor":"Close Floor",
+  "gui.workers.checkbox.breed":"Breed",
+  "gui.workers.checkbox.maxAnimals":"Max Animals:",
+  "gui.workers.checkbox.slaughter":"Slaughter",
+  "gui.workers.checkbox.shearSheep":"Shear Sheeps",
+  "gui.workers.checkbox.milkCow":"Milk Cow",
+  "gui.workers.checkbox.throwEggs":"Throw Eggs",
 
   "gui.workers.button.reset": "Reset",
   "gui.workers.button.add": "Add",

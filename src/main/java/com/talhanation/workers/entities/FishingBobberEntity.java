@@ -63,7 +63,7 @@ public class FishingBobberEntity extends Projectile {
             this.attractFish();
             this.checkForFish();
             this.life++;
-            if (this.life > 3000 || this.getOwner() == null) {
+            if (this.life > 3000 || this.getOwner() == null || !this.getOwner().isAlive()) {
                 this.discard();
             }
         }

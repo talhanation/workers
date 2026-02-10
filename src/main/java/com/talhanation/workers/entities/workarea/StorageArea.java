@@ -154,10 +154,9 @@ public class StorageArea extends AbstractWorkAreaEntity {
             else if( worker instanceof FishermanEntity){
                 return types.contains(StorageType.FISHERMAN);
             }
-            /*
             else if( worker instanceof AnimalFarmerEntity){
                 return this.getStorageTypes().contains(StorageType.ANIMAL_FARMERS);
-            }*/
+            }
 
         }
         return false;

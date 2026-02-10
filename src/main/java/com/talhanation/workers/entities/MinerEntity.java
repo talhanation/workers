@@ -97,6 +97,28 @@ public class MinerEntity extends AbstractWorkerEntity{
         return null;
     }
 
+    public boolean wantsToKeep(ItemStack itemStack) {
+        if (itemStack.getItem() instanceof PickaxeItem) {
+            int items = countMatchingItems(stack -> stack.getItem() instanceof PickaxeItem);
+            return items <= 1;
+        }
+        if (itemStack.getItem() instanceof ShovelItem) {
+            int items = countMatchingItems(stack -> stack.getItem() instanceof ShovelItem);
+            return items <= 1;
+        }
+
+        if (itemStack.is(Items.COBBLESTONE)) {
+            int items = countMatchingStacks(stack -> stack.is(Items.COBBLESTONE));
+            return items <= 1;
+        }
+
+        if (itemStack.is(Items.TORCH)) {
+            int items = countMatchingStacks(stack -> stack.is(Items.TORCH));
+            return items <= 1;
+        }
+
+        return super.wantsToKeep(itemStack);
+    }
     public boolean wantsToPickUp(ItemStack itemStack) {
         ResourceLocation id = ForgeRegistries.ITEMS.getKey(itemStack.getItem());
         if(id == null) return false;
@@ -121,9 +143,6 @@ public class MinerEntity extends AbstractWorkerEntity{
 
         if(itemStack.is(ItemTags.DIRT)) return true;
         if(itemStack.getItem() instanceof BlockItem blockItem && blockItem.getBlock().defaultBlockState().is(BlockTags.BASE_STONE_OVERWORLD)) return true;
-        if (itemStack.getItem() instanceof PickaxeItem && this.getMainHandItem().isEmpty()) {
-            return !this.hasSameTypeOfItem(itemStack);
-        }
         return super.wantsToPickUp(itemStack);
     }
 

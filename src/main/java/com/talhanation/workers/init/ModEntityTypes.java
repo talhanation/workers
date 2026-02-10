@@ -47,17 +47,21 @@ public class ModEntityTypes {
                         .sized(1.2F, 2.00F)
                         .fireImmune().noSummon()
                         .build(new ResourceLocation(WorkersMain.MOD_ID, "fishingarea").toString()));
-        /*
+
+    public static final RegistryObject<EntityType<AnimalPenArea>> ANIMAL_PEN_AREA = ENTITY_TYPES.register("animalpenarea",
+            () -> EntityType.Builder.of(AnimalPenArea::new, MobCategory.MISC)
+                    .sized(1.2F, 2.00F)
+                    .fireImmune().noSummon()
+                    .build(new ResourceLocation(WorkersMain.MOD_ID, "animalpenarea").toString()));
 
 
-        public static final RegistryObject<EntityType<ShepherdEntity>> SHEPHERD = ENTITY_TYPES.register("shepherd",
-                        () -> EntityType.Builder.of(ShepherdEntity::new, MobCategory.CREATURE)
+    public static final RegistryObject<EntityType<AnimalFarmerEntity>> ANIMAL_FARMER = ENTITY_TYPES.register("animal_farmer",
+                        () -> EntityType.Builder.of(AnimalFarmerEntity::new, MobCategory.CREATURE)
                                         .sized(0.6F, 1.95F)
                                         .canSpawnFarFromPlayer()
                                         .setTrackingRange(32)
                                         .setShouldReceiveVelocityUpdates(true)
-                                        .build(new ResourceLocation(Main.MOD_ID, "shepherd").toString()));
-        */
+                                        .build(new ResourceLocation(WorkersMain.MOD_ID, "animal_farmer").toString()));
 
         public static final RegistryObject<EntityType<LumberjackEntity>> LUMBERJACK = ENTITY_TYPES.register("lumberjack",
                 () -> EntityType.Builder.of(LumberjackEntity::new, MobCategory.CREATURE)

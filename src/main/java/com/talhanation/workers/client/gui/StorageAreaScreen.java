@@ -33,12 +33,14 @@ public class StorageAreaScreen extends WorkAreaScreen {
     private RecruitsCheckBox farmersCheckBox;
     private RecruitsCheckBox merchantsCheckBox;
     private RecruitsCheckBox fishermanCheckBox;
+    private RecruitsCheckBox animalFarmerCheckBox;
     private boolean miners;
     private boolean lumbers;
     private boolean builders;
     private boolean farmers;
     private boolean merchants;
     private boolean fisherman;
+    private boolean animalFarmer;
     private EnumSet<StorageArea.StorageType> types;
     public EditBox nameEditBox;
     public Component savedName;
@@ -52,6 +54,7 @@ public class StorageAreaScreen extends WorkAreaScreen {
         this.farmers = types.contains(StorageArea.StorageType.FARMERS);
         this.merchants = types.contains(StorageArea.StorageType.MERCHANTS);
         this.fisherman = types.contains(StorageArea.StorageType.FISHERMAN);
+        this.animalFarmer = types.contains(StorageArea.StorageType.ANIMAL_FARMERS);
     }
 
     @Override
@@ -121,7 +124,7 @@ public class StorageAreaScreen extends WorkAreaScreen {
                         types.add(StorageArea.StorageType.BUILDERS);
                     }
                     else{
-                        types.remove(StorageArea.StorageType.LUMBERS);
+                        types.remove(StorageArea.StorageType.BUILDERS);
                     }
                     sendMessage();
                 }
@@ -172,6 +175,21 @@ public class StorageAreaScreen extends WorkAreaScreen {
                 }
         );
         addRenderableWidget(fishermanCheckBox);
+
+        this.animalFarmerCheckBox = new RecruitsCheckBox(checkBoxX, 140 + checkBoxY, checkBoxWidth, checkBoxHeight, TEXT_ANIMAL_FARMERS,
+                this.animalFarmer,
+                (bool) -> {
+                    this.animalFarmer = bool;
+                    if(animalFarmer){
+                        types.add(StorageArea.StorageType.ANIMAL_FARMERS);
+                    }
+                    else{
+                        types.remove(StorageArea.StorageType.ANIMAL_FARMERS);
+                    }
+                    sendMessage();
+                }
+        );
+        addRenderableWidget(animalFarmerCheckBox);
 
     }
 

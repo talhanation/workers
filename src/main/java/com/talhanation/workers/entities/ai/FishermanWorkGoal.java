@@ -115,6 +115,11 @@ public class FishermanWorkGoal extends Goal {
                 if(++cooldown < 20) return;
                 this.cooldown = 0;
 
+                if(!fisherman.hasFreeInvSlot()){
+                    fisherman.forcedDeposit = true;
+                    return;
+                }
+
                 boolean hasFishingRod = fisherman.getInventory().hasAnyMatching(itemStack -> itemStack.getItem() instanceof FishingRodItem);
                 if(!hasFishingRod){
                     fisherman.addNeededItem(new NeededItem(stack -> stack.getItem() instanceof FishingRodItem, 1, true));

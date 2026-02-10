@@ -1,6 +1,6 @@
 package com.talhanation.workers;
 
-
+import com.talhanation.workers.entities.ai.animals.WorkerTemptGoal;
 import com.talhanation.workers.init.ModEntityTypes;
 import com.talhanation.recruits.world.RecruitsHireTradesRegistry;
 import com.talhanation.workers.network.MessageToClientUpdateConfig;
@@ -8,6 +8,13 @@ import com.talhanation.recruits.world.RecruitsHireTrade;
 import com.talhanation.workers.config.WorkersServerConfig;
 import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.world.entity.Entity;
+import net.minecraft.world.entity.animal.Chicken;
+import net.minecraft.world.entity.animal.Cow;
+import net.minecraft.world.entity.animal.Pig;
+import net.minecraft.world.entity.animal.Sheep;
+import net.minecraft.world.item.Items;
+import net.minecraft.world.item.crafting.Ingredient;
 import net.minecraftforge.event.entity.EntityJoinLevelEvent;
 import net.minecraftforge.event.server.ServerStartingEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
@@ -35,7 +42,6 @@ public class VillagerEvents {
                         new MessageToClientUpdateConfig(WorkersServerConfig.ShouldWorkAreaOnlyBeInFactionClaim.get()));
         }
     }
-
     @SubscribeEvent
     public void onServerStarting(ServerStartingEvent event) {
         RecruitsHireTrade FARMER = new RecruitsHireTrade(ModEntityTypes.FARMER.getId(), WorkersServerConfig.FarmerCost.get(), TITLE_FARMER, DESCRIPTION_FARMER);
@@ -67,5 +73,23 @@ public class VillagerEvents {
         RecruitsHireTradesRegistry.addTrade("herd", 2, MERCHANT);
         RecruitsHireTradesRegistry.addTrade("herd", 3, CHEF);
         */
+    }
+
+    @SubscribeEvent
+    public void onAnimalJoinWorld(EntityJoinLevelEvent event) {
+        Entity entity = event.getEntity();
+
+        if (entity instanceof Chicken chicken) {
+            chicken.goalSelector.addGoal(3, new WorkerTemptGoal(chicken,1.0, Chicken.FOOD_ITEMS));
+        }
+        else if(entity instanceof Cow cow) {
+            cow.goalSelector.addGoal(3, new WorkerTemptGoal(cow,1.0, Ingredient.of(Items.WHEAT)));
+        }
+        else if(entity instanceof Sheep sheep) {
+            sheep.goalSelector.addGoal(3, new WorkerTemptGoal(sheep,1.0, Ingredient.of(Items.WHEAT)));
+        }
+        else if(entity instanceof Pig pig) {
+            pig.goalSelector.addGoal(3, new WorkerTemptGoal(pig,1.0, Pig.FOOD_ITEMS));
+        }
     }
 }
