@@ -31,6 +31,7 @@ public class AnimalFarmerWorkGoal extends Goal {
     public int amountToBreed;
     public int amountToSlaughter;
     public Stack<Animal> stackOfAnimals = new Stack<>();
+    public List<NeededItem> neededItems = new ArrayList<>();
     public int time;
     public boolean isHolding;
 
@@ -49,7 +50,6 @@ public class AnimalFarmerWorkGoal extends Goal {
         super.start();
         if(this.animalFarmerEntity.getCommandSenderWorld().isClientSide()) return;
         animalFarmerEntity.setAggroState(3);
-
         setState(State.SELECT_WORK_AREA);
     }
 
@@ -91,11 +91,18 @@ public class AnimalFarmerWorkGoal extends Goal {
                 this.animal = null;
                 if(this.moveToPosition(animalFarmerEntity.currentAnimalPen.position(), 100)) return;
 
+                setState(State.MOVE_TO_CENTER);
+            }
+
+            case MOVE_TO_CENTER ->{
+                this.animal = null;
+                if(this.moveToPosition(animalFarmerEntity.currentAnimalPen.position(), 30)) return;
+
                 setState(State.PREPARE_BREED);
             }
 
             case PREPARE_BREED -> {
-                if(!animalFarmerEntity.currentAnimalPen.getBreed() && animalFarmerEntity.currentAnimalPen.isBreedTime()){
+                if(!animalFarmerEntity.currentAnimalPen.getBreed() || !animalFarmerEntity.currentAnimalPen.isBreedTime()){
                     setState(State.PREPARE_SPECIAL_TASK);
                     return;
                 }
@@ -117,9 +124,9 @@ public class AnimalFarmerWorkGoal extends Goal {
 
                 boolean hasBreedItem = mainHandItem.is(breedItem);
                 if(!hasBreedItem){
-                    animalFarmerEntity.addNeededItem(new NeededItem(stack -> stack.is(breedItem), amountToBreed, true));
+                    this.neededItems.add(new NeededItem(stack -> stack.is(breedItem), amountToBreed, true));
                     this.animal = null;
-                    setState(State.ERROR);
+                    setState(State.PREPARE_SPECIAL_TASK);
                     return;
                 }
 
@@ -201,6 +208,13 @@ public class AnimalFarmerWorkGoal extends Goal {
             }
 
             case DONE -> {
+                if(!this.neededItems.isEmpty()){
+                    for(NeededItem neededItem : neededItems){
+                        this.animalFarmerEntity.addNeededItem(neededItem);
+                    }
+                    this.neededItems.clear();
+                }
+
                 animal = null;
                 animalFarmerEntity.currentAnimalPen = null;
                 animalFarmerEntity.switchMainHandItem(ItemStack::isEmpty);
@@ -258,16 +272,18 @@ public class AnimalFarmerWorkGoal extends Goal {
 
         ItemStack mainHandItem = animalFarmerEntity.getMainHandItem();
 
-        if(animalType == AnimalPenArea.AnimalTypes.CHICKEN){
-            return throwEggs();
-        }
-
         boolean hasSpecialItem = mainHandItem.is(specialItem);
         if(!hasSpecialItem){
-            animalFarmerEntity.addNeededItem(new NeededItem(stack -> stack.is(specialItem), 1, true));
+            boolean chicken = animalType == AnimalPenArea.AnimalTypes.CHICKEN;
+
+            this.neededItems.add(new NeededItem(stack -> stack.is(specialItem),  chicken ? 32 : 1, !chicken));
             this.animal = null;
-            setState(State.ERROR);
+            setState(State.DONE);
             return true;
+        }
+        if(animalType == AnimalPenArea.AnimalTypes.CHICKEN){
+
+            return throwEggs();
         }
 
         if(this.animal == null) {
@@ -448,6 +464,7 @@ public class AnimalFarmerWorkGoal extends Goal {
     public enum State{
         SELECT_WORK_AREA,
         MOVE_TO_WORK_AREA,
+        MOVE_TO_CENTER,
         PREPARE_BREED,
         BREED,
         PREPARE_SLAUGHTER,

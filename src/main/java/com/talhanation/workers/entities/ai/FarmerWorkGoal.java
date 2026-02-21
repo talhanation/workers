@@ -30,6 +30,7 @@ public class FarmerWorkGoal extends Goal {
     public Stack<BlockPos> stackToPlant;
     public Stack<BlockPos> stackToBreak;
     public Stack<BlockPos> stackToPlow;
+    public List<NeededItem> neededItems = new ArrayList<>();
     public FarmerWorkGoal(FarmerEntity farmer) {
         this.farmer = farmer;
         setFlags(EnumSet.of(Flag.LOOK, Flag.MOVE));
@@ -51,6 +52,7 @@ public class FarmerWorkGoal extends Goal {
     @Override
     public void start() {
         super.start();
+
         setState(State.SELECT_WORK_AREA);
     }
     boolean workDone;
@@ -59,6 +61,7 @@ public class FarmerWorkGoal extends Goal {
     public void tick() {
         super.tick();
         if(this.farmer.getCommandSenderWorld().isClientSide()) return;
+
         if(state == null) return;
         if(blockPos != null) this.farmer.getLookControl().setLookAt(blockPos.getCenter());
         if(farmer.tickCount % 5 != 0) return;
@@ -149,8 +152,9 @@ public class FarmerWorkGoal extends Goal {
 
                 boolean hasHoe = farmer.getMainHandItem().getItem() instanceof HoeItem;
                 if(!hasHoe){
-                    this.farmer.addNeededItem(new NeededItem(stack -> stack.getItem() instanceof HoeItem, 1, true));
+                    this.neededItems.add(new NeededItem(stack -> stack.getItem() instanceof HoeItem, 1, true));
                     this.blockPos = null;
+                    setState(State.PREPARE_PLANT_SEEDS);
                     return;
                 }
 
@@ -178,7 +182,9 @@ public class FarmerWorkGoal extends Goal {
 
                 ItemStack seedFromInv = farmer.getMatchingItem(itemStack -> itemStack.is(this.farmer.currentCropArea.getSeedStack().getItem()));
                 if(seedFromInv == null){
-                    this.farmer.addNeededItem(new NeededItem(itemStack -> ItemStack.isSameItemSameTags(itemStack, this.farmer.currentCropArea.getSeedStack()),  16, true));
+                    ItemStack seedStack = this.farmer.currentCropArea.getSeedStack();
+                    this.neededItems.add(new NeededItem(itemStack -> ItemStack.isSameItemSameTags(itemStack, seedStack),  stackToPlant.size(), true));
+                    setState(State.DONE);
                     this.blockPos = null;
                     return;
                 }
@@ -197,6 +203,14 @@ public class FarmerWorkGoal extends Goal {
             case DONE -> {
                 if(!workDone){
                     workDone = true;
+
+                    if(!this.neededItems.isEmpty()){
+                        for(NeededItem neededItem : neededItems){
+                            this.farmer.addNeededItem(neededItem);
+                        }
+                        this.neededItems.clear();
+                    }
+
                     this.farmer.currentCropArea.setBeingWorkedOn(false);
                     blockPos = null;
                     this.farmer.currentCropArea = null;

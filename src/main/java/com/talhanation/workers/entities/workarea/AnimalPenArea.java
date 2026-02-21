@@ -2,7 +2,6 @@ package com.talhanation.workers.entities.workarea;
 
 import com.talhanation.workers.client.gui.AnimalPenAreaScreen;
 import com.talhanation.workers.entities.AnimalFarmerEntity;
-import com.talhanation.workers.entities.ai.animals.WorkerTemptGoal;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.syncher.EntityDataAccessor;
@@ -10,13 +9,16 @@ import net.minecraft.network.syncher.EntityDataSerializers;
 import net.minecraft.network.syncher.SynchedEntityData;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.animal.*;
+import net.minecraft.world.entity.animal.camel.Camel;
+import net.minecraft.world.entity.animal.goat.Goat;
+import net.minecraft.world.entity.animal.horse.AbstractHorse;
+import net.minecraft.world.entity.animal.horse.Horse;
+import net.minecraft.world.entity.animal.horse.Mule;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.*;
-import net.minecraft.world.item.crafting.Ingredient;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.pathfinder.BlockPathTypes;
-import net.minecraft.world.phys.Vec3;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
 
@@ -161,10 +163,6 @@ public class AnimalPenArea extends AbstractWorkAreaEntity {
         this.getCommandSenderWorld().getEntitiesOfClass(Animal.class, area)
             .forEach(animal -> {
                 if(isCorrectAnimal(animal)){
-
-                    animal.setPathfindingMalus(BlockPathTypes.DOOR_OPEN, -1.0F);
-                    animal.setPathfindingMalus(BlockPathTypes.WALKABLE_DOOR, -1.0F);
-
                     if(!animal.isBaby()) animalsToSlaughter.push(animal);
                 }
             }
@@ -178,15 +176,12 @@ public class AnimalPenArea extends AbstractWorkAreaEntity {
         this.getCommandSenderWorld().getEntitiesOfClass(Animal.class, area)
             .forEach(animal -> {
                     if(isCorrectAnimal(animal)){
-
-                        animal.setPathfindingMalus(BlockPathTypes.DOOR_OPEN, -1.0F);
-                        animal.setPathfindingMalus(BlockPathTypes.WALKABLE_DOOR, -1.0F);
-
                         if(!animal.isBaby() && isForSpecial(animal)) animalsForSpecialTask.push(animal);
                     }
                 }
             );
     }
+
 
     private boolean isForSpecial(Animal animal) {
         switch (getAnimalType()){
@@ -217,12 +212,6 @@ public class AnimalPenArea extends AbstractWorkAreaEntity {
         this.getCommandSenderWorld().getEntitiesOfClass(Animal.class, area)
             .forEach(animal -> {
                 if(isCorrectAnimal(animal)){
-
-                    animal.setPathfindingMalus(BlockPathTypes.DOOR_WOOD_CLOSED, -1.0F);
-                    animal.setPathfindingMalus(BlockPathTypes.DOOR_OPEN, -1.0F);
-                    animal.setPathfindingMalus(BlockPathTypes.WALKABLE_DOOR, -1.0F);
-                    animal.setPathfindingMalus(BlockPathTypes.OPEN, -1.0F);
-
                     if(!animal.isBaby()) animalsToBreed.push(animal);
                 }
             }
@@ -243,6 +232,18 @@ public class AnimalPenArea extends AbstractWorkAreaEntity {
             case PIG -> {
                 return animal instanceof Pig;
             }
+            case GOAT -> {
+                return animal instanceof Goat;
+            }
+            case CAMEL -> {
+                return animal instanceof Camel;
+            }
+            case HORSE -> {
+                return animal instanceof AbstractHorse && !(animal instanceof Camel);
+            }
+            case RABBIT -> {
+                return animal instanceof Rabbit;
+            }
             default -> {
                 return false;
             }
@@ -253,12 +254,12 @@ public class AnimalPenArea extends AbstractWorkAreaEntity {
         CHICKEN(0, Items.WHEAT_SEEDS, Items.EGG),
         COW(1, Items.WHEAT, Items.BUCKET),
         SHEEP(2, Items.WHEAT, Items.SHEARS),
-        PIG(3, Items.CARROT);
-        //GOAT(4, Items.
-        //CAMEL(5, Items.CACTUS),
-        //HORSE(6, Items.CACTUS),
+        PIG(3, Items.CARROT),
+        GOAT(4, Items.WHEAT),
+        CAMEL(5, Items.CACTUS),
+        HORSE(6, Items.GOLDEN_CARROT),
+        RABBIT(7, Items.DANDELION);
 
-        //RABBIT(7 Items.DANDELION);
         private final int index;
         private final Item breeditem;
         private final Item specialItem;
