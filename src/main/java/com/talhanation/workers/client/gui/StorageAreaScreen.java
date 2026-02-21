@@ -176,7 +176,7 @@ public class StorageAreaScreen extends WorkAreaScreen {
         );
         addRenderableWidget(fishermanCheckBox);
 
-        this.animalFarmerCheckBox = new RecruitsCheckBox(checkBoxX, 140 + checkBoxY, checkBoxWidth, checkBoxHeight, TEXT_ANIMAL_FARMERS,
+        this.animalFarmerCheckBox = new RecruitsCheckBox(checkBoxX, 130 + checkBoxY, checkBoxWidth, checkBoxHeight, TEXT_ANIMAL_FARMERS,
                 this.animalFarmer,
                 (bool) -> {
                     this.animalFarmer = bool;
