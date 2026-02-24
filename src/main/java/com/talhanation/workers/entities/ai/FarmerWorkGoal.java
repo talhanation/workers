@@ -203,6 +203,11 @@ public class FarmerWorkGoal extends Goal {
             case DONE -> {
                 if(!workDone){
                     workDone = true;
+                    setState(State.SELECT_WORK_AREA);
+
+                    this.farmer.currentCropArea.setBeingWorkedOn(false);
+                    blockPos = null;
+                    this.farmer.currentCropArea = null;
 
                     if(!this.neededItems.isEmpty()){
                         for(NeededItem neededItem : neededItems){
@@ -210,12 +215,6 @@ public class FarmerWorkGoal extends Goal {
                         }
                         this.neededItems.clear();
                     }
-
-                    this.farmer.currentCropArea.setBeingWorkedOn(false);
-                    blockPos = null;
-                    this.farmer.currentCropArea = null;
-
-                    setState(State.SELECT_WORK_AREA);
                 }
             }
 

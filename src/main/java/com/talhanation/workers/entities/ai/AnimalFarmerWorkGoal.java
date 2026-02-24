@@ -208,17 +208,17 @@ public class AnimalFarmerWorkGoal extends Goal {
             }
 
             case DONE -> {
+                animal = null;
+                animalFarmerEntity.currentAnimalPen = null;
+                animalFarmerEntity.switchMainHandItem(ItemStack::isEmpty);
+                setState(State.SELECT_WORK_AREA);
+
                 if(!this.neededItems.isEmpty()){
                     for(NeededItem neededItem : neededItems){
                         this.animalFarmerEntity.addNeededItem(neededItem);
                     }
                     this.neededItems.clear();
                 }
-
-                animal = null;
-                animalFarmerEntity.currentAnimalPen = null;
-                animalFarmerEntity.switchMainHandItem(ItemStack::isEmpty);
-                this.start();
             }
 
             case ERROR ->{

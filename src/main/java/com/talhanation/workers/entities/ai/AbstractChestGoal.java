@@ -26,6 +26,7 @@ import java.util.*;
 public abstract class AbstractChestGoal extends Goal {
     public StorageArea storageArea;
     public Stack<BlockPos> blockPosStack = new Stack<>();
+    public Stack<StorageArea> storageAreaStack = new Stack<>();
     public Container container;
     public AbstractWorkerEntity worker;
     public BlockPos chestPos;
@@ -113,20 +114,19 @@ public abstract class AbstractChestGoal extends Goal {
         return this.storageArea.storageMap.get(chestPos);
     }
 
-    public List<StorageArea> getAvailableStorageAreas() {
+    public void scanAvailableStorageAreas() {
         List<StorageArea> list = this.worker.getCommandSenderWorld().getEntitiesOfClass(StorageArea.class, this.worker.getBoundingBox().inflate(64));
 
         list.removeIf(storageArea -> !storageArea.canWorkHere(worker));
 
         if(this.worker.lastStorage != null && list.stream().anyMatch(area -> area.getUUID().equals(this.worker.lastStorage))){
             list.removeIf(area -> !area.getUUID().equals(this.worker.lastStorage));
-            return list;
         }
 
         list.removeIf(storageArea -> this.visited.contains(storageArea.getUUID()));
         list.sort(Comparator.comparing(area -> area.distanceToSqr(this.worker.position())));
 
-        return list;
+        list.forEach(area -> storageAreaStack.push(area));
     }
 
     @Override

@@ -40,15 +40,18 @@ public class GetNeededItemsFromStorage extends AbstractChestGoal {
         switch (state){
             case SELECT_STORAGE -> {
                 errorMessageDone = false;
-                List<StorageArea> areas = getAvailableStorageAreas();
 
-                if (!areas.isEmpty()) {
-                    this.storageArea = areas.get(0);
+                if (storageAreaStack.isEmpty()) {
+
+                    scanAvailableStorageAreas();
+
+                    if(storageAreaStack.isEmpty()){
+                        setState(State.ERROR_NO_STORAGE_FOUND);
+                        return;
+                    }
                 }
-                else{
-                    setState(State.ERROR_NO_STORAGE_FOUND);
-                    return;
-                }
+
+                this.storageArea = storageAreaStack.pop();
 
                 setState(State.MOVE_TO_STORAGE);
             }
@@ -194,6 +197,11 @@ public class GetNeededItemsFromStorage extends AbstractChestGoal {
                     errorMessageDone = true;
                 }
                 itemNotInStorage = true;
+
+                if(this.storageAreaStack.isEmpty()){
+                    worker.neededItems.clear();
+                }
+
                 setState(State.SELECT_STORAGE);
             }
 
