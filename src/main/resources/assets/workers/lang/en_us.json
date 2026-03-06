@@ -96,6 +96,9 @@
   "description.workers.merchant": "Trades with other players on your behalf using predefined trade offers. Can take required items from a dedicated depot if permitted.",
 
   "description.workers.title.fisherman": "Fisherman",
-  "description.workers.fisherman": "Uses a fishing rod to fish in a defined fishing area and casts lines along a set route. Collects nearby fish and items, stores them in a nearby depot, and handles the rod carefully to extend its durability."
+  "description.workers.fisherman": "Uses a fishing rod to fish in a defined fishing area and casts lines along a set route. Collects nearby fish and items, stores them in a nearby depot, and handles the rod carefully to extend its durability.",
+
+  "description.workers.title.animalFarmer": "Animal Farmer",
+  "description.workers.animalFarmer": "Takes care of animals in defined pens. Breeds the animals faster and efficient ."
 
 }
