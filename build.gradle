@@ -117,10 +117,10 @@ repositories {
 }
 
 dependencies {
-    minecraft 'net.minecraftforge:forge:1.20.1-47.1.0'
-    shadow fg.deobf("de.maxhenkel.corelib:corelib:1.20.1-1.0.0:api")
-    runtimeOnly fg.deobf("de.maxhenkel.corelib:corelib:1.20.1-1.0.0")
-    runtimeOnly fg.deobf("de.maxhenkel.corelib:corelib:1.20.1-1.0.0:javadoc")
+    minecraft 'net.minecraftforge:forge:1.20.1-47.4.1'
+    shadow fg.deobf("de.maxhenkel.corelib:corelib:1.20.1-1.1.3:api")
+    runtimeOnly fg.deobf("de.maxhenkel.corelib:corelib:1.20.1-1.1.3")
+    runtimeOnly fg.deobf("de.maxhenkel.corelib:corelib:1.20.1-1.1.3:javadoc")
     implementation fg.deobf("curse.maven:recruits-523860:7374573")
 
     implementation fg.deobf("curse.maven:architectury-api-419699:5137938")

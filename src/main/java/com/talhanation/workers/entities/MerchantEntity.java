@@ -422,32 +422,24 @@ public class MerchantEntity extends AbstractWorkerEntity {
         ItemStack tradeGood = tradeItemStack.copy();
         addItemWithMaxStackCount(playerInv, tradeGood, tradeCount);
 
-        // give player tradeGood
-        // remove playerEmeralds ->add left
-        //
-        playerEmeralds = playerEmeralds - price;
-
-        // merchantEmeralds = merchantEmeralds + price;
-
-        // remove playerEmeralds
-        for (int i = 0; i < playerInv.getContainerSize(); i++) {
+        // Remove exactly `price` currency items from the player's inventory.
+        // We shrink existing stacks directly instead of removing-all-then-adding-back,
+        // which avoids accidentally "repairing" damaged currency items.
+        int toRemove = price;
+        for (int i = 0; i < playerInv.getContainerSize() && toRemove > 0; i++) {
             ItemStack itemStackInSlot = playerInv.getItem(i);
-
             if (areItemStacksEqual(itemStackInSlot, currencyItem, trade.allowDamagedCurrency)) {
-                playerInv.removeItemNoUpdate(i);
+                int removeCount = Math.min(toRemove, itemStackInSlot.getCount());
+                itemStackInSlot.shrink(removeCount);
+                toRemove -= removeCount;
             }
         }
 
-        // add emeralds to merchantInventory
+        // add currency to merchantInventory
         if(!this.isCreative()) {
             ItemStack emeraldsKar = currencyItem.copy();
             addItemWithMaxStackCount(merchantInv, emeraldsKar, price);
         }
-
-
-        // add leftEmeralds to playerInventory
-        ItemStack emeraldsLeft = currencyItem.copy();
-        addItemWithMaxStackCount(playerInv, emeraldsLeft, playerEmeralds);
 
         trade.currentTrades++;
         this.setTrades(currents);
