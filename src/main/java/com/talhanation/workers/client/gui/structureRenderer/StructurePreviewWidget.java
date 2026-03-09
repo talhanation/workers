@@ -16,6 +16,7 @@ import net.minecraft.client.renderer.block.BlockRenderDispatcher;
 import net.minecraft.client.renderer.blockentity.BlockEntityRenderer;
 import net.minecraft.client.renderer.texture.OverlayTexture;
 import net.minecraft.core.BlockPos;
+import net.minecraft.core.Direction;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.chat.Component;
 import net.minecraft.util.Mth;
@@ -26,6 +27,7 @@ import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.material.FluidState;
 import net.minecraft.world.phys.AABB;
 import net.minecraftforge.client.model.data.ModelData;
+import com.talhanation.workers.entities.workarea.BuildArea;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -96,34 +98,41 @@ public class StructurePreviewWidget extends AbstractWidget {
         poseStack.mulPose(Axis.YP.rotationDegrees(rotationY));
         poseStack.translate(-pivotX, 0, -pivotZ);
 
+        String dir = structureNBT.getString("facing");
+        Direction scanFacing = Direction.byName(dir);
+        if (scanFacing == null) scanFacing = Direction.SOUTH;
+        int rotationSteps = ((Direction.SOUTH.get2DDataValue() - scanFacing.get2DDataValue()) % 4 + 4) % 4;
+
         Minecraft mc = Minecraft.getInstance();
         BlockRenderDispatcher dispatcher = mc.getBlockRenderer();
         MultiBufferSource.BufferSource bufferSource = mc.renderBuffers().bufferSource();
 
         for (ScannedBlock block : structure) {
             BlockState state = block.state();
+            BlockState rotatedState = BuildArea.rotateBlockState(state, rotationSteps);
+            if (rotatedState == null) rotatedState = state;
             BlockPos relPos = block.relativePos();
 
             poseStack.pushPose();
             poseStack.translate(relPos.getX(), relPos.getY(), relPos.getZ());
 
-            if (state.getRenderShape() == RenderShape.MODEL) {
-                // Normal block: render via BlockRenderDispatcher
-                FluidState fluidState = state.getFluidState();
+            if (rotatedState.getRenderShape() == RenderShape.MODEL) {
+                FluidState fluidState = rotatedState.getFluidState();
                 RenderType renderType = fluidState.isEmpty() ? null : ItemBlockRenderTypes.getRenderLayer(fluidState);
 
                 ModelData modelData = ModelData.EMPTY;
-                if (state.getBlock() instanceof EntityBlock entityBlock) {
-                    BlockEntity be = entityBlock.newBlockEntity(BlockPos.ZERO, state);
+                if (rotatedState.getBlock() instanceof EntityBlock entityBlock) {
+                    BlockEntity be = entityBlock.newBlockEntity(BlockPos.ZERO, rotatedState);
                     if (be != null) modelData = be.getModelData();
                 }
 
-                dispatcher.renderSingleBlock(state, poseStack, bufferSource, 15728880, OverlayTexture.NO_OVERLAY, modelData, renderType);
+                dispatcher.renderSingleBlock(rotatedState, poseStack, bufferSource, 15728880, OverlayTexture.NO_OVERLAY, modelData, renderType);
 
-            } else if (state.getBlock() instanceof EntityBlock entityBlock) {
-                BlockEntity be = entityBlock.newBlockEntity(relPos, state);
+            } else if (rotatedState.getBlock() instanceof EntityBlock entityBlock) {
+                BlockEntity be = entityBlock.newBlockEntity(relPos, rotatedState);
                 if (be != null) {
                     if (mc.level != null) be.setLevel(mc.level);
+                    @SuppressWarnings("unchecked")
                     BlockEntityRenderer<BlockEntity> renderer =
                             (BlockEntityRenderer<BlockEntity>) mc.getBlockEntityRenderDispatcher().getRenderer(be);
                     if (renderer != null) {
