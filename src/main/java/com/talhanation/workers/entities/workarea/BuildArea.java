@@ -2,6 +2,7 @@ package com.talhanation.workers.entities.workarea;
 
 import com.talhanation.workers.WorkersMain;
 import com.talhanation.workers.client.gui.BuildAreaScreen;
+import com.talhanation.workers.entities.workarea.AbstractWorkAreaEntity;
 import com.talhanation.workers.network.MessageToClientOpenWorkAreaScreen;
 import com.talhanation.workers.world.BuildBlock;
 import com.talhanation.workers.world.BuildBlockParse;
@@ -16,8 +17,12 @@ import net.minecraft.nbt.Tag;
 import net.minecraft.network.syncher.EntityDataAccessor;
 import net.minecraft.network.syncher.EntityDataSerializers;
 import net.minecraft.network.syncher.SynchedEntityData;
+import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.player.Player;
+import net.minecraft.resources.ResourceLocation;
+import net.minecraft.server.level.ServerLevel;
+import net.minecraftforge.registries.ForgeRegistries;
 import net.minecraft.world.item.BlockItem;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
@@ -126,6 +131,59 @@ public class BuildArea extends AbstractWorkAreaEntity {
                     }
                 }
             }
+        }
+
+        // For creative (Place), spawn entities immediately after all blocks are placed
+        if (isCreative) {
+            spawnScannedEntities(tag, scanFacing, facing, origin, width);
+        }
+    }
+
+    /**
+     * Spawns work-area entities stored in the structure NBT.
+     * Rotates their facing from scan direction to build direction and transfers owner/team.
+     */
+    private void spawnScannedEntities(CompoundTag tag, Direction scanFacing, Direction buildFacing, BlockPos origin, int width) {
+        if (!(this.getCommandSenderWorld() instanceof ServerLevel serverLevel)) return;
+        if (!tag.contains("entities", Tag.TAG_LIST)) return;
+
+        ListTag entityList = tag.getList("entities", Tag.TAG_COMPOUND);
+        Direction buildRight = buildFacing.getClockWise();
+        int rotSteps = ((buildFacing.get2DDataValue() - scanFacing.get2DDataValue()) % 4 + 4) % 4;
+
+        for (Tag t : entityList) {
+            CompoundTag entityTag = (CompoundTag) t;
+            String typeId = entityTag.getString("entity_type");
+            int relX = entityTag.getInt("x");
+            int relY = entityTag.getInt("y");
+            int relZ = entityTag.getInt("z");
+            int scanFacingVal = entityTag.getInt("facing");
+
+            ResourceLocation rl = new ResourceLocation(typeId);
+            EntityType<?> entityType = ForgeRegistries.ENTITY_TYPES.getValue(rl);
+            if (entityType == null) continue;
+
+            BlockPos worldPos = origin
+                    .relative(buildFacing, relZ)
+                    .relative(buildRight, width - 1 - relX)
+                    .above(relY);
+
+            Entity entity = entityType.create(serverLevel);
+            if (entity == null) continue;
+
+            entity.moveTo(worldPos.getX() + 0.5, worldPos.getY(), worldPos.getZ() + 0.5, 0, 0);
+
+            if (entity instanceof AbstractWorkAreaEntity wa) {
+                Direction entityFacing = Direction.from2DDataValue(scanFacingVal);
+                // rotate clockwise rotSteps times
+                for (int i = 0; i < rotSteps; i++) entityFacing = entityFacing.getClockWise();
+                wa.setFacing(entityFacing);
+                if (this.getPlayerUUID() != null) wa.setPlayerUUID(this.getPlayerUUID());
+                String team = this.getTeamStringID();
+                if (team != null && !team.isEmpty()) wa.setTeamStringID(team);
+            }
+
+            serverLevel.addFreshEntity(entity);
         }
     }
 

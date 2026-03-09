@@ -1,16 +1,24 @@
 package com.talhanation.workers.entities.ai;
 
 import com.talhanation.workers.entities.BuilderEntity;
+import com.talhanation.workers.entities.workarea.AbstractWorkAreaEntity;
 import com.talhanation.workers.entities.workarea.BuildArea;
 import com.talhanation.workers.world.BuildBlock;
 import com.talhanation.workers.world.BuildBlockParse;
 import com.talhanation.workers.world.NeededItem;
 import net.minecraft.core.BlockPos;
+import net.minecraft.core.Direction;
+import net.minecraft.nbt.CompoundTag;
+import net.minecraft.nbt.ListTag;
+import net.minecraft.nbt.Tag;
 import net.minecraft.network.chat.Component;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.sounds.SoundSource;
 import net.minecraft.world.InteractionHand;
+import net.minecraft.world.entity.Entity;
+import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.ai.goal.Goal;
 import net.minecraft.world.item.BlockItem;
 import net.minecraft.world.item.Item;
@@ -24,6 +32,7 @@ import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.material.FluidState;
 import net.minecraft.world.phys.Vec3;
+import net.minecraftforge.registries.ForgeRegistries;
 
 import javax.annotation.Nullable;
 import java.util.*;
@@ -227,6 +236,10 @@ public class BuilderWorkGoal extends Goal {
             case DONE -> {
                 if(!workDone){
                     workDone = true;
+
+                    // Spawn any entities that were scanned with the structure (work areas, etc.)
+                    spawnScannedEntities(builderEntity.currentBuildArea);
+
                     builderEntity.currentBuildArea.setBeingWorkedOn(false);
 
                     //ONLY FOR BUILDING AREA WILL REMOVE IT
@@ -323,6 +336,84 @@ public class BuilderWorkGoal extends Goal {
         positions.remove(newPosition);
         return newPosition;
     }
+    /**
+     * Spawns work-area entities that were recorded during the structure scan.
+     * Each entity is placed at the world position corresponding to its scanned relative offset,
+     * rotated from scan-facing to build-facing, and inherits the owner UUID + team of the BuildArea.
+     */
+    private void spawnScannedEntities(BuildArea buildArea) {
+        Level level = builderEntity.getCommandSenderWorld();
+        if (!(level instanceof ServerLevel serverLevel)) return;
+
+        CompoundTag nbt = buildArea.getStructureNBT();
+        if (nbt == null || !nbt.contains("entities", Tag.TAG_LIST)) return;
+
+        ListTag entityList = nbt.getList("entities", Tag.TAG_COMPOUND);
+        if (entityList.isEmpty()) return;
+
+        Direction scanFacing  = Direction.byName(nbt.getString("facing"));
+        Direction buildFacing = buildArea.getFacing();
+        Direction buildRight  = buildFacing.getClockWise();
+        BlockPos  origin      = buildArea.getOriginPos();
+        int       width       = buildArea.getWidthSize();
+
+        if (scanFacing == null) scanFacing = Direction.SOUTH;
+
+        // Rotation steps: from scan-facing to build-facing (same formula as block rotation)
+        int rotSteps = ((buildFacing.get2DDataValue() - scanFacing.get2DDataValue()) % 4 + 4) % 4;
+
+        for (Tag t : entityList) {
+            CompoundTag entityTag = (CompoundTag) t;
+            String typeId   = entityTag.getString("entity_type");
+            int relX        = entityTag.getInt("x");
+            int relY        = entityTag.getInt("y");
+            int relZ        = entityTag.getInt("z");
+            int scanFacingVal = entityTag.getInt("facing");
+
+            // Look up entity type
+            ResourceLocation rl = new ResourceLocation(typeId);
+            EntityType<?> entityType = ForgeRegistries.ENTITY_TYPES.getValue(rl);
+            if (entityType == null) continue;
+
+            // Compute world position using same formula as setStartBuild / WorkerAreaRenderer
+            BlockPos worldPos = origin
+                    .relative(buildFacing, relZ)
+                    .relative(buildRight, width - 1 - relX)
+                    .above(relY);
+
+            // Create the entity
+            Entity entity = entityType.create(serverLevel);
+            if (entity == null) continue;
+
+            entity.moveTo(worldPos.getX() + 0.5, worldPos.getY(), worldPos.getZ() + 0.5, 0, 0);
+
+            // Apply facing rotation: rotate the scanned facing by the same rotSteps
+            if (entity instanceof AbstractWorkAreaEntity wa) {
+                Direction entityFacing = Direction.from2DDataValue(scanFacingVal);
+                Direction rotatedFacing = rotateDirection(entityFacing, rotSteps);
+                wa.setFacing(rotatedFacing);
+
+                // Transfer owner and team from the BuildArea
+                if (buildArea.getPlayerUUID() != null) {
+                    wa.setPlayerUUID(buildArea.getPlayerUUID());
+                }
+                String team = buildArea.getTeamStringID();
+                if (team != null && !team.isEmpty()) {
+                    wa.setTeamStringID(team);
+                }
+            }
+
+            serverLevel.addFreshEntity(entity);
+        }
+    }
+
+    /** Rotates a horizontal Direction clockwise by the given number of 90° steps. */
+    private static Direction rotateDirection(Direction dir, int steps) {
+        steps = ((steps % 4) + 4) % 4;
+        for (int i = 0; i < steps; i++) dir = dir.getClockWise();
+        return dir;
+    }
+
     public boolean placeBlocks(Stack<BlockPos> positions){
         if(positions != null){
             if(blockPos == null){
