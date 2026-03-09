@@ -35,6 +35,7 @@ import net.minecraftforge.fml.event.lifecycle.FMLClientSetupEvent;
 import net.minecraftforge.fml.event.lifecycle.FMLCommonSetupEvent;
 import net.minecraftforge.fml.javafmlmod.FMLJavaModLoadingContext;
 import net.minecraftforge.network.simple.SimpleChannel;
+import com.talhanation.workers.world.StructureManager;
 
 @Mod(WorkersMain.MOD_ID)
 public class WorkersMain {
@@ -105,6 +106,7 @@ public class WorkersMain {
     @OnlyIn(Dist.CLIENT)
     public void clientSetup(FMLClientSetupEvent event) {
         event.enqueueWork(ModMenuTypes::registerMenus);
+        event.enqueueWork(StructureManager::copyDefaultStructuresIfMissing);
         CommandCategoryManager.register(new WorkerCommandScreen());
         MinecraftForge.EVENT_BUS.register(new ScreenEvents());
     }
