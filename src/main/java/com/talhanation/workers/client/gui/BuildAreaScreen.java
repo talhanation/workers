@@ -2,9 +2,9 @@ package com.talhanation.workers.client.gui;
 
 import com.talhanation.recruits.client.gui.component.ActivateableButton;
 import com.talhanation.recruits.client.gui.widgets.BlackShowingTextField;
-import com.talhanation.recruits.client.gui.widgets.ScrollDropDownMenu;
 import com.talhanation.workers.WorkersMain;
 import com.talhanation.workers.client.gui.widgets.DisplayTextItemScrollDropDownMenu;
+import com.talhanation.workers.client.gui.widgets.ScrollDropDownMenuWithFolders;
 import com.talhanation.workers.world.ScannedBlock;
 import com.talhanation.workers.client.gui.structureRenderer.StructurePreviewWidget;
 import com.talhanation.workers.entities.workarea.BuildArea;
@@ -34,7 +34,7 @@ public class BuildAreaScreen extends WorkAreaScreen {
     public Button buildButton;
     public Button placeButton;
     public StructurePreviewWidget structurePreview;
-    public ScrollDropDownMenu<String> structureOptions;
+    public ScrollDropDownMenuWithFolders structureOptions;
     public CompoundTag structureNBT;
     public List<ScannedBlock> structure;
     public Mode mode;
@@ -200,12 +200,14 @@ public class BuildAreaScreen extends WorkAreaScreen {
                 ));
 
                 scanNameEditBox = new EditBox(font, x - previewWidth/2 , y - previewHeight / 2 + 130 - boxHeight - 2, previewWidth, boxHeight, Component.literal(""));
-                scanNameEditBox.setValue(savedName != null ? savedName : "");
+                scanNameEditBox.setValue(savedName != null ? savedName.toLowerCase(java.util.Locale.ROOT) : "");
                 scanNameEditBox.setTextColor(-1);
                 scanNameEditBox.setTextColorUneditable(-1);
                 scanNameEditBox.setBordered(true);
                 scanNameEditBox.setMaxLength(32);
                 scanNameEditBox.setEditable(mode == Mode.SCAN);
+                // Only allow lowercase letters, digits, underscores and slashes — no capitals
+                scanNameEditBox.setFilter(s -> s.equals(s.toLowerCase(java.util.Locale.ROOT)));
                 scanNameEditBox.setResponder(this::checkScanNameUpdate);
                 this.addRenderableWidget(scanNameEditBox);
 
@@ -219,7 +221,7 @@ public class BuildAreaScreen extends WorkAreaScreen {
                 ));
 
                 saveButton = addRenderableWidget(new ExtendedButton(x - buttonWidth / 2, y + 182, buttonWidth, buttonHeight, Component.literal("Save"),
-                        btn -> StructureManager.saveStructureToFile(this.scanNameEditBox.getValue(), structure, this.buildArea.getWidthSize(), this.buildArea.getHeightSize(), this.buildArea.getDepthSize(), this.buildArea.getFacing())
+                        btn -> StructureManager.saveStructureToFile(this.scanNameEditBox.getValue(), this.structureNBT)
                 ));
                 saveButton.active = false;
 
@@ -229,31 +231,34 @@ public class BuildAreaScreen extends WorkAreaScreen {
             }
 
             case LOAD -> {
-                List<String> scans = StructureManager.loadAvailableScans();
-                String title = scans.isEmpty() ? "Empty" : "Select NBT-File";
-                structureOptions = new ScrollDropDownMenu<>(title, x - previewWidth/2 -1 , y - previewHeight / 2 + 131 - boxHeight - 2, previewWidth +2, boxHeight +2,
-                        scans,
-                        string -> string,
-                        selectedName -> {
-                            CompoundTag tag = StructureManager.loadScanNbt(selectedName);
+                java.nio.file.Path scanRoot = java.nio.file.Path.of(
+                        Minecraft.getInstance().gameDirectory.getAbsolutePath(), "workers", "scan");
+
+                structureOptions = new ScrollDropDownMenuWithFolders(
+                        x - previewWidth / 2 - 1,
+                        y - previewHeight / 2 + 131 - boxHeight - 2,
+                        previewWidth + 2,
+                        boxHeight + 2,
+                        scanRoot,
+                        selectedRelPath -> {
+                            CompoundTag tag = StructureManager.loadScanNbt(selectedRelPath);
                             if (tag != null) {
-                                int width = tag.getInt("width");
-                                int height = tag.getInt("height");;
-                                int depth = tag.getInt("depth");;
-                                this.savedName = tag.getString("name");
-                                this.areaWidthSize = width;
+                                int width  = tag.getInt("width");
+                                int height = tag.getInt("height");
+                                int depth  = tag.getInt("depth");
+                                this.savedName      = tag.getString("name");
+                                this.areaWidthSize  = width;
                                 this.areaHeightSize = height;
-                                this.areaDepthSize = depth;
+                                this.areaDepthSize  = depth;
                                 this.buildArea.setWidthSize(width);
                                 this.buildArea.setHeightSize(height);
                                 this.buildArea.setDepthSize(depth);
-                                WorkersMain.SIMPLE_CHANNEL.sendToServer(new MessageUpdateBuildArea(this.buildArea.getUUID(), width, height, depth, tag, false, false));
-
+                                WorkersMain.SIMPLE_CHANNEL.sendToServer(
+                                        new MessageUpdateBuildArea(this.buildArea.getUUID(), width, height, depth, tag, false, false));
                                 this.structureNBT = tag;
-                                this.structure = StructureManager.parseStructureFromNBT(tag);
+                                this.structure    = StructureManager.parseStructureFromNBT(tag);
                                 this.setStructure(this.structure, this.structureNBT);
                                 checkBuildButtonActive();
-
                                 this.setButtons();
                             }
                         }
