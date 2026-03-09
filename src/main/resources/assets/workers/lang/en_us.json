@@ -47,6 +47,8 @@
   "gui.workers.command.text.left": "Left",
   "gui.workers.command.text.right": "Right",
   "gui.workers.command.text.destroy": "Destroy",
+  "gui.workers.command.text.rotate_right": "Rotate R",
+  "gui.workers.command.text.rotate_left": "Rotate L",
   "gui.workers.command.text.anySapling":"Any Sapling",
 
   "gui.workers.checkbox.shearLeaves":"Shear Leaves",

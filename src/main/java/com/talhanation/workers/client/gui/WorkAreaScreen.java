@@ -3,6 +3,7 @@ package com.talhanation.workers.client.gui;
 import com.talhanation.recruits.client.gui.RecruitsScreenBase;
 import com.talhanation.workers.WorkersMain;
 import com.talhanation.workers.entities.workarea.AbstractWorkAreaEntity;
+import com.talhanation.workers.network.MessageRotateWorkArea;
 import com.talhanation.workers.network.MessageUpdateWorkArea;
 import net.minecraft.client.gui.components.Button;
 import net.minecraft.client.gui.components.EditBox;
@@ -22,12 +23,16 @@ public abstract class WorkAreaScreen extends RecruitsScreenBase {
     private static final MutableComponent TEXT_LEFT = Component.translatable("gui.workers.command.text.left");
     private static final MutableComponent TEXT_RIGHT = Component.translatable("gui.workers.command.text.right");
     private static final MutableComponent TEXT_DESTROY = Component.translatable("gui.workers.command.text.destroy");
+    private static final MutableComponent TEXT_ROTATE_LEFT  = Component.literal("gui.workers.command.text.rotate_left");
+    private static final MutableComponent TEXT_ROTATE_RIGHT = Component.literal("gui.workers.command.text.rotate_right");
     private EditBox textFieldName;
     private Button moveForward;
     private Button moveBackward;
     private Button moveLeft;
     private Button moveRight;
     private Button destroy;
+    private Button rotateLeft;
+    private Button rotateRight;
 
     public Player player;
     public AbstractWorkAreaEntity workArea;
@@ -114,6 +119,24 @@ public abstract class WorkAreaScreen extends RecruitsScreenBase {
                 btn -> {
                     WorkersMain.SIMPLE_CHANNEL.sendToServer(new MessageUpdateWorkArea(this.workArea.getUUID(), this.workArea.getCustomName().getString(), workArea.position(), true));
                     this.onClose();
+                }
+        ));
+
+        rotateLeft = addRenderableWidget(new ExtendedButton(x - buttonWidth / 2 - buttonWidth, y - buttonHeight / 2 + buttonHeight, buttonWidth, buttonHeight, TEXT_ROTATE_LEFT,
+                btn -> {
+                    this.workArea.showBox = true;
+                    WorkersMain.SIMPLE_CHANNEL.sendToServer(new MessageRotateWorkArea(this.workArea.getUUID(), false));
+                    this.workArea.setFacing(this.workArea.getFacing().getCounterClockWise());
+                    this.onAreaMoved();
+                }
+        ));
+
+        rotateRight = addRenderableWidget(new ExtendedButton(x - buttonWidth / 2 + buttonWidth, y - buttonHeight / 2 + buttonHeight, buttonWidth, buttonHeight, TEXT_ROTATE_RIGHT,
+                btn -> {
+                    this.workArea.showBox = true;
+                    WorkersMain.SIMPLE_CHANNEL.sendToServer(new MessageRotateWorkArea(this.workArea.getUUID(), true));
+                    this.workArea.setFacing(this.workArea.getFacing().getClockWise());
+                    this.onAreaMoved();
                 }
         ));
     }
