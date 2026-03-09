@@ -15,6 +15,7 @@ import net.minecraft.client.renderer.LevelRenderer;
 import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.RenderType;
 import net.minecraft.client.renderer.block.BlockRenderDispatcher;
+import net.minecraft.client.renderer.blockentity.BlockEntityRenderer;
 import net.minecraft.client.renderer.entity.EntityRenderer;
 import net.minecraft.client.renderer.entity.EntityRendererProvider;
 import net.minecraft.client.renderer.entity.ItemRenderer;
@@ -23,6 +24,7 @@ import net.minecraft.client.renderer.texture.TextureAtlas;
 import net.minecraft.client.resources.model.BakedModel;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
+import net.minecraft.nbt.CompoundTag;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.util.Mth;
 import net.minecraft.world.entity.Entity;
@@ -30,6 +32,7 @@ import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemDisplayContext;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.block.EntityBlock;
+import net.minecraft.world.level.block.RenderShape;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.material.FluidState;
@@ -37,7 +40,6 @@ import net.minecraft.world.phys.AABB;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
 import net.minecraftforge.client.model.data.ModelData;
-import net.royawesome.jlibnoise.module.combiner.Min;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
@@ -118,27 +120,45 @@ public class WorkerAreaRenderer extends EntityRenderer<AbstractWorkAreaEntity> {
     }
 
     private void renderStructurePreview(PoseStack poseStack, BuildArea buildArea) {
-        if (buildArea.getStructureNBT() == null) return;
-        List<ScannedBlock> structure = StructureManager.parseStructureFromNBT(buildArea.getStructureNBT());
+        CompoundTag nbt = buildArea.getStructureNBT();
+        if (nbt == null || nbt.isEmpty()) return;
+        List<ScannedBlock> structure = StructureManager.parseStructureFromNBT(nbt);
         if (structure.isEmpty()) return;
+
+        int width = nbt.getInt("width");
+        Direction scanFacing = Direction.byName(nbt.getString("facing"));
+        Direction facing = buildArea.getFacing();
+        Direction right = facing.getClockWise();
+        int rotationSteps = (4 + facing.get2DDataValue() - scanFacing.get2DDataValue()) % 4;
+        BlockPos origin = buildArea.getOriginPos();
+
         Minecraft mc = Minecraft.getInstance();
         BlockRenderDispatcher dispatcher = mc.getBlockRenderer();
         MultiBufferSource.BufferSource bufferSource = mc.renderBuffers().bufferSource();
 
         poseStack.pushPose();
 
-        poseStack.translate(-buildArea.getWidthSize() + 0.5, -1, -0.5);  // nur zentrieren
+        for (ScannedBlock scannedBlock : structure) {
+            BlockPos relPos = scannedBlock.relativePos();
+            int relX = relPos.getX();
+            int relY = relPos.getY();
+            int relZ = relPos.getZ();
 
-        for (ScannedBlock block : structure) {
-            BlockState state = block.state();
+            // Compute world block position using the same formula as setStartBuild
+            BlockPos worldPos = origin
+                    .relative(facing, relZ)
+                    .relative(right, width - 1 - relX)
+                    .above(relY);
+
+            // Offset relative to entity render origin (poseStack is already at entity position)
+            double dx = worldPos.getX() - buildArea.getX();
+            double dy = worldPos.getY() - buildArea.getY();
+            double dz = worldPos.getZ() - buildArea.getZ();
+
+            BlockState state = scannedBlock.state();
+            BlockState rotatedState = BuildArea.rotateBlockState(state, rotationSteps);
+
             FluidState fluidState = state.getFluidState();
-            BlockPos relPos = block.relativePos();
-
-            BlockPos rotatedPos = rotateRelativePos(relPos, buildArea.getFacing());
-
-            poseStack.pushPose();
-            poseStack.translate(rotatedPos.getX(), rotatedPos.getY(), rotatedPos.getZ());
-
             RenderType renderType = null;
             if (!fluidState.isEmpty()) {
                 renderType = ItemBlockRenderTypes.getRenderLayer(fluidState);
@@ -147,37 +167,33 @@ public class WorkerAreaRenderer extends EntityRenderer<AbstractWorkAreaEntity> {
             ModelData modelData = ModelData.EMPTY;
             if (state.getBlock() instanceof EntityBlock entityBlock) {
                 BlockEntity be = entityBlock.newBlockEntity(BlockPos.ZERO, state);
-                if (be != null) {
-                    modelData = be.getModelData();
-                }
+                if (be != null) modelData = be.getModelData();
             }
 
-            BlockState rotatedState = BuildArea.rotateBlockState(state, 4 - buildArea.getFacing().get2DDataValue());
-
-            dispatcher.renderSingleBlock(
-                    rotatedState,
-                    poseStack,
-                    bufferSource,
-                    0xF000F0,
-                    OverlayTexture.NO_OVERLAY,
-                    modelData,
-                    renderType
-            );
-            poseStack.popPose();
+            if (rotatedState.getRenderShape() == RenderShape.MODEL) {
+                poseStack.pushPose();
+                poseStack.translate(dx, dy, dz);
+                dispatcher.renderSingleBlock(rotatedState, poseStack, bufferSource, 0xF000F0, OverlayTexture.NO_OVERLAY, modelData, renderType);
+                poseStack.popPose();
+            } else if (rotatedState.getBlock() instanceof EntityBlock entityBlock) {
+                BlockEntity be = entityBlock.newBlockEntity(worldPos, rotatedState);
+                if (be != null) {
+                    if (mc.level != null) be.setLevel(mc.level);
+                    @SuppressWarnings("unchecked")
+                    BlockEntityRenderer<BlockEntity> renderer =
+                            (BlockEntityRenderer<BlockEntity>) mc.getBlockEntityRenderDispatcher().getRenderer(be);
+                    if (renderer != null) {
+                        poseStack.pushPose();
+                        poseStack.translate(dx, dy, dz);
+                        renderer.render(be, 0f, poseStack, bufferSource, 0xF000F0, OverlayTexture.NO_OVERLAY);
+                        poseStack.popPose();
+                    }
+                }
+            }
         }
 
         bufferSource.endBatch();
         poseStack.popPose();
-    }
-
-    private BlockPos rotateRelativePos(BlockPos pos, Direction facing) {
-        return switch (facing) {
-            case SOUTH -> pos;
-            case WEST -> new BlockPos(pos.getZ(), pos.getY(), -pos.getX());
-            case NORTH -> new BlockPos(-pos.getX(), pos.getY(), -pos.getZ());
-            case EAST -> new BlockPos(-pos.getZ(), pos.getY(), pos.getX());
-            default -> pos;
-        };
     }
 
 }

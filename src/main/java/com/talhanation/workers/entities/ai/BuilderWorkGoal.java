@@ -15,9 +15,11 @@ import net.minecraft.world.entity.ai.goal.Goal;
 import net.minecraft.world.item.BlockItem;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.DiggerItem;
 import net.minecraft.world.item.PickaxeItem;
 import net.minecraft.world.level.ClipContext;
 import net.minecraft.world.level.Level;
+import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.material.FluidState;
@@ -119,20 +121,29 @@ public class BuilderWorkGoal extends Goal {
                     return;
                 }
 
-                builderEntity.switchMainHandItem(itemStack -> itemStack.getItem() instanceof PickaxeItem);
-
-                boolean hasAxe = builderEntity.getMainHandItem().getItem() instanceof PickaxeItem;
-                if(!hasAxe){
-                    builderEntity.addNeededItem(new NeededItem(stack -> stack.getItem() instanceof PickaxeItem, 1, true));
+                boolean hasDigger = builderEntity.getInventory().hasAnyMatching(
+                        itemStack -> itemStack.getItem() instanceof DiggerItem);
+                if (!hasDigger) {
+                    builderEntity.addNeededItem(new NeededItem(
+                            stack -> stack.getItem() instanceof PickaxeItem, 1, true));
                     this.blockPos = null;
                     return;
+                }
+                if (!stackToBreak.isEmpty()) {
+                    BlockState firstState = builderEntity.getCommandSenderWorld()
+                            .getBlockState(stackToBreak.peek());
+                    builderEntity.changeTool(firstState);
                 }
                 setState(State.BREAK_BLOCKS);
             }
 
             case PREPARE_PLACE_BLOCKS -> {
                 if (builderEntity.currentBuildArea.stackToPlace.isEmpty()) {
-                    setState(State.DONE);
+                    if (!builderEntity.currentBuildArea.stackToPlaceMultiBlock.isEmpty()) {
+                        setState(State.PREPARE_PLACE_MULTIBLOCK);
+                    } else {
+                        setState(State.DONE);
+                    }
                     return;
                 }
 
@@ -191,6 +202,26 @@ public class BuilderWorkGoal extends Goal {
                 if(this.placeBlocks(this.stackToPlace)) return;
 
                 setState(State.PREPARE_PLACE_BLOCKS);
+            }
+
+            case PREPARE_PLACE_MULTIBLOCK -> {
+                if (builderEntity.currentBuildArea.stackToPlaceMultiBlock.isEmpty()) {
+                    setState(State.DONE);
+                    return;
+                }
+
+                this.stackToPlace = new Stack<>();
+                for (BuildBlock bb : builderEntity.currentBuildArea.stackToPlaceMultiBlock) {
+                    stackToPlace.push(bb.getPos());
+                }
+
+                setState(State.PLACE_MULTIBLOCK);
+            }
+
+            case PLACE_MULTIBLOCK -> {
+                if (this.placeMultiBlocks(this.stackToPlace)) return;
+
+                setState(State.DONE);
             }
 
             case DONE -> {
@@ -315,6 +346,13 @@ public class BuilderWorkGoal extends Goal {
                 }
             }
             else if(buildingState != null) {
+                if (!levelState.isAir() && !BuildArea.canDirectlyReplace(levelState, buildingState)) {
+                    this.builderEntity.changeTool(levelState);
+                    this.builderEntity.mineBlock(blockPos);
+                    this.builderEntity.swing(InteractionHand.MAIN_HAND);
+                    return true;
+                }
+
                 BuildBlockParse blockParse = BuildBlockParse.parseBlock(buildingState.getBlock());
                 ItemStack buildingItem = builderEntity.getMatchingItem(itemStack -> itemStack.is(blockParse.getItem()));
                 if(buildingItem != null){
@@ -326,15 +364,21 @@ public class BuilderWorkGoal extends Goal {
                         buildingState = blockItem.getBlock().defaultBlockState();
                     }
 
-                    builderEntity.getCommandSenderWorld().setBlockAndUpdate(blockPos, buildingState);
+                    BlockState secondaryState = builderEntity.currentBuildArea.findPairedMultiBlockState(blockPos);
+                    if (secondaryState != null) {
+                        BlockPos secondaryPos = builderEntity.currentBuildArea.findPairedMultiBlockPos(blockPos);
+                        builderEntity.getCommandSenderWorld().setBlock(blockPos, buildingState, Block.UPDATE_CLIENTS);
+                        builderEntity.getCommandSenderWorld().setBlock(secondaryPos, secondaryState, Block.UPDATE_ALL);
+                        builderEntity.getCommandSenderWorld().blockUpdated(blockPos, buildingState.getBlock());
+                        builderEntity.currentBuildArea.removeMultiBlockToPlace(secondaryPos);
+                    } else {
+                        builderEntity.getCommandSenderWorld().setBlockAndUpdate(blockPos, buildingState);
+                    }
+
                     builderEntity.getCommandSenderWorld().playSound(null, blockPos.getX(), blockPos.getY(), blockPos.getZ(), buildingState.getSoundType().getPlaceSound(), SoundSource.BLOCKS, 1.0F, 1.0F);
-
                     this.builderEntity.swing(InteractionHand.MAIN_HAND);
-
                     buildingItem.shrink(1);
-
                     builderEntity.currentBuildArea.removeBuildBlockToPlace(blockPos);
-                    //this.blockPos = null;
                 }
                 else{
                     return false;
@@ -346,6 +390,37 @@ public class BuilderWorkGoal extends Goal {
         return false;
     }
 
+
+    public boolean placeMultiBlocks(Stack<BlockPos> positions) {
+        if (positions == null || positions.isEmpty()) {
+            this.blockPos = null;
+            return false;
+        }
+
+        if (blockPos == null) {
+            blockPos = positions.pop();
+        }
+
+        BlockState buildingState = builderEntity.currentBuildArea.getStateFromMultiBlockPos(blockPos);
+        if (buildingState != null) {
+            BlockState levelState = builderEntity.getCommandSenderWorld().getBlockState(blockPos);
+            if (!levelState.equals(buildingState)) {
+                builderEntity.getCommandSenderWorld().setBlockAndUpdate(blockPos, buildingState);
+                builderEntity.getCommandSenderWorld().playSound(null, blockPos.getX(), blockPos.getY(), blockPos.getZ(),
+                        buildingState.getSoundType().getPlaceSound(), SoundSource.BLOCKS, 1.0F, 1.0F);
+                builderEntity.swing(InteractionHand.MAIN_HAND);
+            }
+            builderEntity.currentBuildArea.removeMultiBlockToPlace(blockPos);
+        }
+
+        if (!positions.isEmpty()) {
+            blockPos = positions.pop();
+            return true;
+        }
+
+        blockPos = null;
+        return false;
+    }
 
     //PERFORMANCE HEAVY DO NOT USE FREQUENTLY
     private boolean canSeeBlock(Level level, Vec3 start, BlockPos target) {
@@ -438,8 +513,9 @@ public class BuilderWorkGoal extends Goal {
         BREAK_BLOCKS,
         PREPARE_PLACE_BLOCKS,
         PLACE_BLOCKS,
+        PREPARE_PLACE_MULTIBLOCK,
+        PLACE_MULTIBLOCK,
         DONE,
         ERROR
-
     }
 }

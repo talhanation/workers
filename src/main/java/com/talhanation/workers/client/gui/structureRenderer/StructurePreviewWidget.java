@@ -3,7 +3,6 @@ package com.talhanation.workers.client.gui.structureRenderer;
 import com.mojang.blaze3d.systems.RenderSystem;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.math.Axis;
-import com.talhanation.workers.entities.workarea.BuildArea;
 import com.talhanation.workers.world.ScannedBlock;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphics;
@@ -14,22 +13,20 @@ import net.minecraft.client.renderer.LevelRenderer;
 import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.RenderType;
 import net.minecraft.client.renderer.block.BlockRenderDispatcher;
+import net.minecraft.client.renderer.blockentity.BlockEntityRenderer;
 import net.minecraft.client.renderer.texture.OverlayTexture;
 import net.minecraft.core.BlockPos;
-import net.minecraft.core.Direction;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.chat.Component;
 import net.minecraft.util.Mth;
 import net.minecraft.world.level.block.EntityBlock;
+import net.minecraft.world.level.block.RenderShape;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
-import net.minecraft.world.level.block.state.properties.DirectionProperty;
-import net.minecraft.world.level.block.state.properties.Property;
 import net.minecraft.world.level.material.FluidState;
 import net.minecraft.world.phys.AABB;
 import net.minecraftforge.client.model.data.ModelData;
 
-import javax.annotation.Nullable;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -49,6 +46,7 @@ public class StructurePreviewWidget extends AbstractWidget {
     private float offsetY = 0;
     private boolean isRightDragging = false;
     private long lastClickTime = 0;
+
     public StructurePreviewWidget(int x, int y, int width, int height, int areaX, int areaY) {
         super(x, y, width, height, Component.empty());
         this.areaX = areaX;
@@ -75,14 +73,16 @@ public class StructurePreviewWidget extends AbstractWidget {
 
         RenderSystem.enableScissor(scissorX, scissorY, scissorWidth, scissorHeight);
 
-        renderStructurePreview(guiGraphics.pose(), getX() + getWidth() / 2, getY() + getHeight() / 2);
+        renderStructurePreview(guiGraphics.pose(), getX() + getWidth() / 2, getY() + getHeight() / 2, partialTicks);
 
         RenderSystem.disableScissor();
     }
 
-    private void renderStructurePreview(PoseStack poseStack, int previewX, int previewY) {
+    @SuppressWarnings("unchecked")
+    private void renderStructurePreview(PoseStack poseStack, int previewX, int previewY, float partialTicks) {
         if (structure == null || structure.isEmpty()) return;
         if (structureNBT == null) return;
+
         poseStack.pushPose();
 
         poseStack.translate(previewX, previewY, 1000);
@@ -102,70 +102,51 @@ public class StructurePreviewWidget extends AbstractWidget {
 
         for (ScannedBlock block : structure) {
             BlockState state = block.state();
-            FluidState fluidState = state.getFluidState();
             BlockPos relPos = block.relativePos();
 
             poseStack.pushPose();
             poseStack.translate(relPos.getX(), relPos.getY(), relPos.getZ());
 
-            RenderType renderType = null;
-            if (!fluidState.isEmpty()) {
-                renderType = ItemBlockRenderTypes.getRenderLayer(fluidState);
-            }
+            if (state.getRenderShape() == RenderShape.MODEL) {
+                // Normal block: render via BlockRenderDispatcher
+                FluidState fluidState = state.getFluidState();
+                RenderType renderType = fluidState.isEmpty() ? null : ItemBlockRenderTypes.getRenderLayer(fluidState);
 
-            ModelData modelData = ModelData.EMPTY;
-            if (state.getBlock() instanceof EntityBlock entityBlock) {
-                BlockEntity be = entityBlock.newBlockEntity(BlockPos.ZERO, state);
+                ModelData modelData = ModelData.EMPTY;
+                if (state.getBlock() instanceof EntityBlock entityBlock) {
+                    BlockEntity be = entityBlock.newBlockEntity(BlockPos.ZERO, state);
+                    if (be != null) modelData = be.getModelData();
+                }
+
+                dispatcher.renderSingleBlock(state, poseStack, bufferSource, 15728880, OverlayTexture.NO_OVERLAY, modelData, renderType);
+
+            } else if (state.getBlock() instanceof EntityBlock entityBlock) {
+                BlockEntity be = entityBlock.newBlockEntity(relPos, state);
                 if (be != null) {
-                    modelData = be.getModelData();
+                    if (mc.level != null) be.setLevel(mc.level);
+                    BlockEntityRenderer<BlockEntity> renderer =
+                            (BlockEntityRenderer<BlockEntity>) mc.getBlockEntityRenderDispatcher().getRenderer(be);
+                    if (renderer != null) {
+                        renderer.render(be, partialTicks, poseStack, bufferSource, 15728880, OverlayTexture.NO_OVERLAY);
+                    }
                 }
             }
-
-            String dir = structureNBT.getString("facing");
-            Direction areaFacing = Direction.byName(dir);;
-
-            BlockState rotatedState = BuildArea.rotateBlockState(state, 4 - areaFacing.get2DDataValue());
-
-            dispatcher.renderSingleBlock(
-                    rotatedState,
-                    poseStack,
-                    bufferSource,
-                    15728880,
-                    OverlayTexture.NO_OVERLAY,
-                    modelData,
-                    renderType
-            );
 
             poseStack.popPose();
         }
 
         poseStack.pushPose();
         poseStack.translate(areaX - 1, 0, 0);
-
-        AABB originBox = new AABB(
-                0, 0, 0,
-                1, 2, 1
-        ).inflate(0.01);
-
         LevelRenderer.renderLineBox(
                 poseStack,
                 bufferSource.getBuffer(RenderType.lines()),
-                originBox,
+                new AABB(0, 0, 0, 1, 2, 1).inflate(0.01),
                 1.0f, 0.0f, 0.0f, 1.0f
         );
         poseStack.popPose();
 
         bufferSource.endBatch();
         poseStack.popPose();
-    }
-
-    public static @Nullable Direction getFacing(BlockState state) {
-        for (Property<?> prop : state.getProperties()) {
-            if (prop instanceof DirectionProperty dirProp) {
-                return state.getValue(dirProp);
-            }
-        }
-        return null;
     }
 
     public void onGlobalMouseDragged(double mouseX, double mouseY, int button, double dragX, double dragY) {
@@ -178,6 +159,7 @@ public class StructurePreviewWidget extends AbstractWidget {
             rotationX = Mth.clamp(rotationX, -90f, 90f);
         }
     }
+
     @Override
     public boolean mouseClicked(double mouseX, double mouseY, int button) {
         if (isMouseWithinRenderArea(mouseX, mouseY)) {
@@ -189,7 +171,6 @@ public class StructurePreviewWidget extends AbstractWidget {
                     return true;
                 }
                 lastClickTime = currentTime;
-
                 isDragging = true;
             }
             if (button == 1) isRightDragging = true;
@@ -235,9 +216,7 @@ public class StructurePreviewWidget extends AbstractWidget {
     }
 
     @Override
-    protected void updateWidgetNarration(NarrationElementOutput p_259858_) {
-
-    }
+    protected void updateWidgetNarration(NarrationElementOutput p_259858_) {}
 
     private void resetView() {
         rotationX = 30;
@@ -256,3 +235,5 @@ public class StructurePreviewWidget extends AbstractWidget {
         return false;
     }
 }
+
+

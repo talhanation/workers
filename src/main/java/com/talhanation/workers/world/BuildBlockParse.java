@@ -3,10 +3,7 @@ package com.talhanation.workers.world;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.Blocks;
-import net.minecraft.world.level.block.DoorBlock;
 import net.minecraft.world.level.block.FlowerPotBlock;
-import net.minecraft.world.level.block.state.properties.BlockStateProperties;
-import net.minecraft.world.level.block.state.properties.DoubleBlockHalf;
 
 public class BuildBlockParse {
     private final Item item;
@@ -35,14 +32,6 @@ public class BuildBlockParse {
         }
         else if (block instanceof FlowerPotBlock) {
             return new BuildBlockParse(Item.BY_BLOCK.get(Blocks.FLOWER_POT), true);
-        }
-        else if (block instanceof DoorBlock doorBlock) {
-            if (doorBlock.defaultBlockState().hasProperty(BlockStateProperties.DOUBLE_BLOCK_HALF)) {
-                DoubleBlockHalf half = doorBlock.defaultBlockState().getValue(BlockStateProperties.DOUBLE_BLOCK_HALF);
-                if (half == DoubleBlockHalf.UPPER) {
-                    new BuildBlockParse(Item.BY_BLOCK.get(Blocks.AIR), false);
-                }
-            }
         }
 
         return new BuildBlockParse(Item.BY_BLOCK.get(block), false);

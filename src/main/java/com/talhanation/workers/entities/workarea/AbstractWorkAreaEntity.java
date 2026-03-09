@@ -204,8 +204,8 @@ public abstract class AbstractWorkAreaEntity extends Entity {
         switch (facing) {
             case NORTH -> end = start.offset(width, height, -depth);
             case SOUTH -> end = start.offset(-width, height, depth);
-            case WEST  -> end = start.offset(-width, height, -depth);
-            default  -> end = start.offset(width, height, depth);//EAST
+            case EAST  -> end = start.offset(depth, height, width);   // depth entlang +X, width entlang +Z
+            default    -> end = start.offset(-depth, height, -width); // WEST: depth entlang -X, width entlang -Z
         }
         return new AABB(start, end);
     }

@@ -25,7 +25,6 @@ import net.minecraft.world.item.Items;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.Blocks;
-import net.minecraft.world.level.block.StairBlock;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.block.state.properties.*;
 import net.minecraftforge.api.distmarker.Dist;
@@ -39,6 +38,7 @@ public class BuildArea extends AbstractWorkAreaEntity {
     public static final EntityDataAccessor<CompoundTag> STRUCTURE = SynchedEntityData.defineId(BuildArea.class, EntityDataSerializers.COMPOUND_TAG);
     public Stack<BlockPos> stackToBreak = new Stack<>();
     public Stack<BuildBlock> stackToPlace = new Stack<>();
+    public Stack<BuildBlock> stackToPlaceMultiBlock = new Stack<>();
     public BuildArea(EntityType<?> type, Level level) {
         super(type, level);
     }
@@ -85,6 +85,7 @@ public class BuildArea extends AbstractWorkAreaEntity {
 
     public void setStartBuild(boolean isCreative) {
         stackToPlace.clear();
+        stackToPlaceMultiBlock.clear();
 
         CompoundTag tag = getStructureNBT();
         if (tag == null || !tag.contains("blocks", Tag.TAG_LIST)) return;
@@ -113,101 +114,45 @@ public class BuildArea extends AbstractWorkAreaEntity {
             BlockState state = NbtUtils.readBlockState(BuiltInRegistries.BLOCK.asLookup(), stateTag);
             BlockState rotatedState = rotateBlockState(state, rotationSteps);
 
-
-            if(isCreative){
+            if (isCreative) {
                 this.getCommandSenderWorld().setBlock(worldPos, rotatedState, 3);
-            }
-            else{
-                BlockState levelState = this.getCommandSenderWorld().getBlockState(worldPos);
-                if(rotatedState != null && !statesMatch(levelState, rotatedState)){
-                    this.stackToPlace.push(new BuildBlock(worldPos, rotatedState));
+            } else {
+                if (isMultiBlockSecondary(rotatedState)) {
+                    this.stackToPlaceMultiBlock.push(new BuildBlock(worldPos, rotatedState));
+                } else {
+                    BlockState levelState = this.getCommandSenderWorld().getBlockState(worldPos);
+                    if (rotatedState != null && !statesMatch(levelState, rotatedState)) {
+                        this.stackToPlace.push(new BuildBlock(worldPos, rotatedState));
+                    }
                 }
             }
         }
     }
 
+    /**
+     * Returns true for secondary parts of multi-block structures (upper door/plant half, bed head).
+     * These are placed in a dedicated second stage without consuming extra items.
+     */
+    public static boolean isMultiBlockSecondary(BlockState state) {
+        if (state == null) return false;
+        if (state.hasProperty(BlockStateProperties.DOUBLE_BLOCK_HALF)) {
+            return state.getValue(BlockStateProperties.DOUBLE_BLOCK_HALF) == DoubleBlockHalf.UPPER;
+        }
+        if (state.hasProperty(BlockStateProperties.BED_PART)) {
+            return state.getValue(BlockStateProperties.BED_PART) == BedPart.HEAD;
+        }
+        return false;
+    }
+
     public static BlockState rotateBlockState(BlockState state, int steps) {
-        steps = steps % 4;
-        if (steps == 0) return state;
-        
-        Property<?> pN = state.getBlock().getStateDefinition().getProperty("north");
-        Property<?> pE = state.getBlock().getStateDefinition().getProperty("east");
-        Property<?> pS = state.getBlock().getStateDefinition().getProperty("south");
-        Property<?> pW = state.getBlock().getStateDefinition().getProperty("west");
-
-        if (pN instanceof BooleanProperty north &&
-                pE instanceof BooleanProperty east &&
-                pS instanceof BooleanProperty south &&
-                pW instanceof BooleanProperty west) {
-
-            Map<Direction, BooleanProperty> connectionProps = Map.of(
-                    Direction.NORTH, north,
-                    Direction.EAST,  east,
-                    Direction.SOUTH, south,
-                    Direction.WEST,  west
-            );
-
-            Map<Direction, Boolean> values = new EnumMap<>(Direction.class);
-            for (Direction dir : Direction.Plane.HORIZONTAL) {
-                BooleanProperty prop = connectionProps.get(dir);
-                values.put(dir, state.getValue(prop));
-            }
-
-            // Neue rotierte Werte
-            Map<Direction, Boolean> rotatedValues = new EnumMap<>(Direction.class);
-            for (Direction dir : Direction.Plane.HORIZONTAL) {
-                Direction rotated = Direction.from2DDataValue((dir.get2DDataValue() + steps) % 4);
-                rotatedValues.put(rotated, values.get(dir));
-            }
-
-            // Setze neue Verbindungen
-            for (Map.Entry<Direction, Boolean> entry : rotatedValues.entrySet()) {
-                BooleanProperty prop = connectionProps.get(entry.getKey());
-                state = state.setValue(prop, entry.getValue());
-            }
-        }
-
-
-        Property<?> facingProp = state.getProperties().stream()
-                .filter(p -> p.getName().equals("facing") || p.getName().equals("rotation") || p.getName().equals("axis") || p.getName().equals("horizontal_facing"))
-                .findFirst().orElse(null);
-
-        if (facingProp instanceof DirectionProperty dirProp) {
-            Direction current = state.getValue(dirProp);
-            if (current.getAxis().isHorizontal()) {
-                Direction rotated = Direction.from2DDataValue((current.get2DDataValue() + steps) % 4);
-                return state.setValue(dirProp, rotated);
-            }
-        }
-
-        if (facingProp instanceof EnumProperty<?> enumProp && enumProp.getName().equals("rotation")) {
-            // For blocks like signs with integer rotation from 0-15 (0 = south)
-            IntegerProperty rotationProp = (IntegerProperty) facingProp;
-            int current = state.getValue(rotationProp);
-            int rotated = (current + steps * 4) % 16; // 4 steps per 90°
-            return state.setValue(rotationProp, rotated);
-        }
-
-        // Axis (e.g. logs, pistons)
-        if (facingProp instanceof EnumProperty<?> axisProp && axisProp.getName().equals("axis")) {
-            Direction.Axis axis = state.getValue((EnumProperty<Direction.Axis>) axisProp);
-            if (steps % 2 == 1) {
-                // Swap X <-> Z if 90° or 270°
-                Direction.Axis rotated = axis == Direction.Axis.X ? Direction.Axis.Z : axis == Direction.Axis.Z ? Direction.Axis.X : axis;
-                return state.setValue((EnumProperty<Direction.Axis>) axisProp, rotated);
-            }
-        }
-
-        if (state.hasProperty(StairBlock.SHAPE)) {
-            StairsShape shape = state.getValue(StairBlock.SHAPE);
-            if (shape == StairsShape.INNER_LEFT) shape = StairsShape.INNER_RIGHT;
-            else if (shape == StairsShape.INNER_RIGHT) shape = StairsShape.INNER_LEFT;
-            else if (shape == StairsShape.OUTER_LEFT) shape = StairsShape.OUTER_RIGHT;
-            else if (shape == StairsShape.OUTER_RIGHT) shape = StairsShape.OUTER_LEFT;
-            state = state.setValue(StairBlock.SHAPE, shape);
-        }
-
-        return state;
+        if (state == null) return null;
+        steps = ((steps % 4) + 4) % 4;
+        return switch (steps) {
+            case 1 -> state.rotate(net.minecraft.world.level.block.Rotation.CLOCKWISE_90);
+            case 2 -> state.rotate(net.minecraft.world.level.block.Rotation.CLOCKWISE_180);
+            case 3 -> state.rotate(net.minecraft.world.level.block.Rotation.COUNTERCLOCKWISE_90);
+            default -> state;
+        };
     }
 
 
@@ -219,10 +164,23 @@ public class BuildArea extends AbstractWorkAreaEntity {
             BlockState buildingState = this.getStateFromPos(pos);
             BlockState levelState = level.getBlockState(pos);
 
-            if(buildingState != null && !levelState.isAir() && !statesMatch(levelState, buildingState)){
+            if (buildingState != null && !levelState.isAir()
+                    && !statesMatch(levelState, buildingState)
+                    && !canDirectlyReplace(levelState, buildingState)) {
                 stackToBreak.push(pos.immutable());
             }
         });
+    }
+
+    public static boolean canDirectlyReplace(BlockState levelState, BlockState buildingState) {
+        if (levelState.isAir()) return true;
+        if (buildingState.is(Blocks.DIRT_PATH)) {
+            return levelState.is(Blocks.GRASS_BLOCK)
+                    || levelState.is(Blocks.DIRT)
+                    || levelState.is(Blocks.FARMLAND)
+                    || levelState.is(Blocks.COARSE_DIRT);
+        }
+        return false;
     }
 
     public boolean statesMatch(BlockState levelState, BlockState buildingState) {
@@ -262,6 +220,13 @@ public class BuildArea extends AbstractWorkAreaEntity {
                 }
             }
 
+            if (state.hasProperty(BlockStateProperties.BED_PART)) {
+                BedPart part = state.getValue(BlockStateProperties.BED_PART);
+                if (part != BedPart.FOOT) {
+                    continue;
+                }
+            }
+
 
             if (item instanceof BlockItem) {
                 materialMap.merge(item, 1, Integer::sum);
@@ -280,21 +245,50 @@ public class BuildArea extends AbstractWorkAreaEntity {
     }
     @Nullable
     public BlockState getStateFromPos(BlockPos blockPos) {
-        for(BuildBlock buildBlock : stackToPlace){
-            if(buildBlock.getPos().equals(blockPos)){
+        for (BuildBlock buildBlock : stackToPlace) {
+            if (buildBlock.getPos().equals(blockPos)) {
+                return buildBlock.getState();
+            }
+        }
+        for (BuildBlock buildBlock : stackToPlaceMultiBlock) {
+            if (buildBlock.getPos().equals(blockPos)) {
                 return buildBlock.getState();
             }
         }
         return null;
     }
 
-    public void removeBuildBlockToPlace(BlockPos blockPos) {
-        for(BuildBlock buildBlock : stackToPlace){
-            if(buildBlock.getPos().equals(blockPos)){
-                stackToPlace.remove(buildBlock);
-                return;
+    @Nullable
+    public BlockState getStateFromMultiBlockPos(BlockPos blockPos) {
+        for (BuildBlock buildBlock : stackToPlaceMultiBlock) {
+            if (buildBlock.getPos().equals(blockPos)) {
+                return buildBlock.getState();
             }
         }
+        return null;
+    }
+
+    @Nullable
+    public BlockState findPairedMultiBlockState(BlockPos primaryPos) {
+        BlockPos above = primaryPos.above();
+        return getStateFromMultiBlockPos(above);
+    }
+
+    @Nullable
+    public BlockPos findPairedMultiBlockPos(BlockPos primaryPos) {
+        BlockPos above = primaryPos.above();
+        for (BuildBlock bb : stackToPlaceMultiBlock) {
+            if (bb.getPos().equals(above)) return above;
+        }
+        return null;
+    }
+
+    public void removeBuildBlockToPlace(BlockPos blockPos) {
+        stackToPlace.removeIf(buildBlock -> buildBlock.getPos().equals(blockPos));
+    }
+
+    public void removeMultiBlockToPlace(BlockPos blockPos) {
+        stackToPlaceMultiBlock.removeIf(buildBlock -> buildBlock.getPos().equals(blockPos));
     }
 }
 
