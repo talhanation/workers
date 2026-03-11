@@ -86,7 +86,7 @@ public class BuildAreaScreen extends WorkAreaScreen {
         this.clearWidgets();
         super.setButtons();
         structureOptions = null;
-        int buttonWidth = 80;
+        int buttonWidth = 100;
         int buttonHeight = 20;
         int previewWidth = 200;
         int previewHeight = 100;
@@ -116,7 +116,7 @@ public class BuildAreaScreen extends WorkAreaScreen {
 
         switch (mode){
             case SCAN -> {
-                xSizePlusButton = addRenderableWidget(new ExtendedButton(x - buttonWidth - 61, y + 121, 20, 20, Component.literal("+"),
+                xSizePlusButton = addRenderableWidget(new ExtendedButton(x - buttonWidth - 41, y + 121, 20, 20, Component.literal("+"),
                         btn -> {
                             if(hasShiftDown()) areaWidthSize += 5;
                             else areaWidthSize++;
@@ -130,7 +130,7 @@ public class BuildAreaScreen extends WorkAreaScreen {
                         }
                 ));
 
-                xSizeMinusButton = addRenderableWidget(new ExtendedButton(x - buttonWidth - 41, y + 121, 20, 20, Component.literal("-"),
+                xSizeMinusButton = addRenderableWidget(new ExtendedButton(x - buttonWidth - 21, y + 121, 20, 20, Component.literal("-"),
                         btn -> {
                             if(hasShiftDown()) areaWidthSize -= 5;
                             else areaWidthSize--;
@@ -144,7 +144,7 @@ public class BuildAreaScreen extends WorkAreaScreen {
                         }
                 ));
 
-                ySizePlusButton = addRenderableWidget(new ExtendedButton(x - buttonWidth - 61, y + 141, 20, 20, Component.literal("+"),
+                ySizePlusButton = addRenderableWidget(new ExtendedButton(x - buttonWidth - 41, y + 141, 20, 20, Component.literal("+"),
                         btn -> {
                             if(hasShiftDown()) areaHeightSize += 5;
                             else areaHeightSize++;
@@ -158,7 +158,7 @@ public class BuildAreaScreen extends WorkAreaScreen {
                         }
                 ));
 
-                ySizeMinusButton = addRenderableWidget(new ExtendedButton(x - buttonWidth - 41, y + 141, 20, 20, Component.literal("-"),
+                ySizeMinusButton = addRenderableWidget(new ExtendedButton(x - buttonWidth - 21, y + 141, 20, 20, Component.literal("-"),
                         btn -> {
                             if(hasShiftDown()) areaHeightSize -= 5;
                             else areaHeightSize--;
@@ -172,7 +172,7 @@ public class BuildAreaScreen extends WorkAreaScreen {
                         }
                 ));
 
-                zSizePlusButton = addRenderableWidget(new ExtendedButton(x - buttonWidth - 61, y + 161, 20, 20, Component.literal("+"),
+                zSizePlusButton = addRenderableWidget(new ExtendedButton(x - buttonWidth - 41, y + 161, 20, 20, Component.literal("+"),
                         btn -> {
                             if(hasShiftDown()) areaDepthSize += 5;
                             else areaDepthSize++;
@@ -185,7 +185,7 @@ public class BuildAreaScreen extends WorkAreaScreen {
                         }
                 ));
 
-                zSizeMinusButton = addRenderableWidget(new ExtendedButton(x - buttonWidth - 41, y + 161, 20, 20, Component.literal("-"),
+                zSizeMinusButton = addRenderableWidget(new ExtendedButton(x - buttonWidth - 21, y + 161, 20, 20, Component.literal("-"),
                         btn -> {
                             if(hasShiftDown()) areaDepthSize -= 5;
                             else areaDepthSize--;
@@ -294,13 +294,17 @@ public class BuildAreaScreen extends WorkAreaScreen {
             }
         }
 
-        int blackboxWidth = mode == Mode.SCAN ? 40 : 80;
+        int blackboxWidth = mode == Mode.SCAN ? 40 : 70;
+        int blackboxWidth2 = mode == Mode.SCAN ? 20 : 30;
         int blackboxHeight = 20;
-        int blackBoxPosX = x - 181;
+        int blackBoxPosX = x - 201;
         int blackBoxPosY = y + 100;
-        addRenderableWidget(new BlackShowingTextField(blackBoxPosX, blackBoxPosY + 21, blackboxWidth, blackboxHeight, Component.literal("Width:  " + areaWidthSize)));
-        addRenderableWidget(new BlackShowingTextField(blackBoxPosX, blackBoxPosY + 41, blackboxWidth, blackboxHeight, Component.literal("Height: " + areaHeightSize)));
-        addRenderableWidget(new BlackShowingTextField(blackBoxPosX, blackBoxPosY + 61, blackboxWidth, blackboxHeight, Component.literal("Depth:  " + areaDepthSize)));
+        addRenderableWidget(new BlackShowingTextField(blackBoxPosX, blackBoxPosY + 21, blackboxWidth, blackboxHeight, Component.literal("Width:")));
+        addRenderableWidget(new BlackShowingTextField(blackBoxPosX, blackBoxPosY + 41, blackboxWidth, blackboxHeight, Component.literal("Height:")));
+        addRenderableWidget(new BlackShowingTextField(blackBoxPosX, blackBoxPosY + 61, blackboxWidth, blackboxHeight, Component.literal("Depth:")));
+        addRenderableWidget(new BlackShowingTextField(blackBoxPosX + blackboxWidth, blackBoxPosY + 21, blackboxWidth2, blackboxHeight, Component.literal("" + areaWidthSize)));
+        addRenderableWidget(new BlackShowingTextField(blackBoxPosX + blackboxWidth, blackBoxPosY + 41, blackboxWidth2, blackboxHeight, Component.literal("" + areaHeightSize)));
+        addRenderableWidget(new BlackShowingTextField(blackBoxPosX + blackboxWidth, blackBoxPosY + 61, blackboxWidth2, blackboxHeight, Component.literal("" + areaDepthSize)));
     }
 
     private void setStructure(List<ScannedBlock> structure, CompoundTag structureNBT) {
