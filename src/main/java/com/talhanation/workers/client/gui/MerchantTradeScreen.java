@@ -156,10 +156,12 @@ public class MerchantTradeScreen extends ScreenBase<MerchantTradeContainer> {
 
             moveUpButton = new ExtendedButton(leftPos + 158, topPos + 58, 18, 18, Component.literal("\u21E7"),//do not replace
                     button -> {
-                        WorkersMain.SIMPLE_CHANNEL.sendToServer(new MessageMoveMerchantTrade(merchantEntity.getUUID(), selection.uuid, true));
+                        if (selection == null) return;
+                        UUID selectedUuid = selection.uuid;
+                        WorkersMain.SIMPLE_CHANNEL.sendToServer(new MessageMoveMerchantTrade(merchantEntity.getUUID(), selectedUuid, true));
                         List<WorkersMerchantTrade> list = new java.util.ArrayList<>(merchantEntity.getTrades());
                         for (int i = 1; i < list.size(); i++) {
-                            if (list.get(i).uuid.equals(selection.uuid)) {
+                            if (list.get(i).uuid.equals(selectedUuid)) {
                                 WorkersMerchantTrade tmp = list.get(i - 1);
                                 list.set(i - 1, list.get(i));
                                 list.set(i, tmp);
@@ -168,16 +170,18 @@ public class MerchantTradeScreen extends ScreenBase<MerchantTradeContainer> {
                         }
                         merchantEntity.setTrades(list);
                         loadTrades();
-                        updateButtonState();
+                        restoreSelection(selectedUuid);
                     });
             addRenderableWidget(moveUpButton);
 
             moveDownButton = new ExtendedButton(leftPos + 158, topPos + 77, 18, 18, Component.literal("\u21E9"),//do not replace
                     button -> {
-                        WorkersMain.SIMPLE_CHANNEL.sendToServer(new MessageMoveMerchantTrade(merchantEntity.getUUID(), selection.uuid, false));
+                        if (selection == null) return;
+                        UUID selectedUuid = selection.uuid;
+                        WorkersMain.SIMPLE_CHANNEL.sendToServer(new MessageMoveMerchantTrade(merchantEntity.getUUID(), selectedUuid, false));
                         List<WorkersMerchantTrade> list = new java.util.ArrayList<>(merchantEntity.getTrades());
                         for (int i = 0; i < list.size() - 1; i++) {
-                            if (list.get(i).uuid.equals(selection.uuid)) {
+                            if (list.get(i).uuid.equals(selectedUuid)) {
                                 WorkersMerchantTrade tmp = list.get(i + 1);
                                 list.set(i + 1, list.get(i));
                                 list.set(i, tmp);
@@ -186,7 +190,7 @@ public class MerchantTradeScreen extends ScreenBase<MerchantTradeContainer> {
                         }
                         merchantEntity.setTrades(list);
                         loadTrades();
-                        updateButtonState();
+                        restoreSelection(selectedUuid);
                     });
             addRenderableWidget(moveDownButton);
 
@@ -243,6 +247,20 @@ public class MerchantTradeScreen extends ScreenBase<MerchantTradeContainer> {
         }
 
         return clicked;
+    }
+
+    private void restoreSelection(UUID tradeUuid) {
+        for (TradeList.TradeEntry entry : tradeList.children()) {
+            if (entry.trade.uuid.equals(tradeUuid)) {
+                tradeList.setSelected(entry);
+                this.selection = entry.trade;
+                updateButtonState();
+                return;
+            }
+        }
+        this.selection = null;
+        tradeList.setSelected(null);
+        updateButtonState();
     }
 
     public void loadTrades(){
