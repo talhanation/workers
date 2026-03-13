@@ -1,10 +1,7 @@
 package com.talhanation.workers.client.gui;
 
 import com.mojang.blaze3d.systems.RenderSystem;
-import com.talhanation.recruits.Main;
 import com.talhanation.recruits.client.gui.widgets.RecruitsCheckBox;
-import com.talhanation.recruits.network.MessageHireFromNobleVillager;
-import com.talhanation.workers.CommandEvents;
 import com.talhanation.workers.WorkersMain;
 import com.talhanation.workers.entities.MerchantEntity;
 import com.talhanation.workers.inventory.MerchantTradeContainer;
@@ -24,7 +21,6 @@ import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
-import net.minecraft.world.item.Items;
 import net.minecraftforge.client.gui.widget.ExtendedButton;
 
 import javax.annotation.Nullable;
@@ -238,8 +234,10 @@ public class MerchantTradeScreen extends ScreenBase<MerchantTradeContainer> {
         boolean overTrade = this.tradeButton != null && this.tradeButton.isHovered();
         boolean overTradeList = this.tradeList != null && this.tradeList.isMouseOver(mouseX, mouseY);
         boolean overCopy = this.copyTradeButton != null && this.copyTradeButton.isMouseOver(mouseX, mouseY);
+        boolean overUp = this.moveUpButton != null && this.moveUpButton.isMouseOver(mouseX, mouseY);
+        boolean overDown = this.moveDownButton != null && this.moveDownButton.isMouseOver(mouseX, mouseY);
 
-        if (!overAddEdit && !overTrade && !overTradeList && !overCopy) {
+        if (!overAddEdit && !overTrade && !overTradeList && !overCopy && !overUp && !overDown) {
             this.selection = null;
             if (this.tradeList != null)
                 this.tradeList.setSelected(null);
@@ -252,9 +250,8 @@ public class MerchantTradeScreen extends ScreenBase<MerchantTradeContainer> {
     private void restoreSelection(UUID tradeUuid) {
         for (TradeList.TradeEntry entry : tradeList.children()) {
             if (entry.trade.uuid.equals(tradeUuid)) {
-                tradeList.setSelected(entry);
+                this.tradeList.setSelected(entry);
                 this.selection = entry.trade;
-                updateButtonState();
                 return;
             }
         }
@@ -357,7 +354,6 @@ public class MerchantTradeScreen extends ScreenBase<MerchantTradeContainer> {
         public int getRowWidth() {
             return LIST_W - 12;
         }
-
         public void setSelected(@Nullable TradeList.TradeEntry entry) {
             super.setSelected(entry);
             if(entry == null) return;
