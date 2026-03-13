@@ -14,11 +14,14 @@ public class WorkersMerchantTrade {
     public int currentTrades;
     public ItemStack currencyItem;
     public boolean allowDamagedCurrency;
+    public boolean enabled;
     public ItemStack tradeItem;
     public UUID uuid;
 
     public WorkersMerchantTrade copy(){
-        return new WorkersMerchantTrade(this.currencyItem, this.tradeItem, this.maxTrades, this.allowDamagedCurrency);
+        WorkersMerchantTrade t = new WorkersMerchantTrade(this.currencyItem, this.tradeItem, this.maxTrades, this.allowDamagedCurrency);
+        t.enabled = this.enabled;
+        return t;
     }
 
     public WorkersMerchantTrade(){
@@ -33,6 +36,7 @@ public class WorkersMerchantTrade {
         this.tradeItem = tradeItem;
         this.maxTrades = maxTrades;
         this.allowDamagedCurrency = allowDamagedCurrency;
+        this.enabled = true;
     }
 
     public CompoundTag toNbt() {
@@ -40,12 +44,10 @@ public class WorkersMerchantTrade {
         tag.putUUID("uuid", this.uuid);
         tag.put("currencyItem", this.currencyItem.serializeNBT());
         tag.put("tradeItem", this.tradeItem.serializeNBT());
-
         tag.putInt("maxTrades", maxTrades);
         tag.putInt("currentTrades", currentTrades);
-
         tag.putBoolean("allowDamagedCurrency", this.allowDamagedCurrency);
-
+        tag.putBoolean("enabled", this.enabled);
         return tag;
     }
 
@@ -57,9 +59,11 @@ public class WorkersMerchantTrade {
         int currentTrades = tag.getInt("currentTrades");
         boolean allowDamaged = tag.getBoolean("allowDamagedCurrency");
 
-        WorkersMerchantTrade trade = new WorkersMerchantTrade(currencyItem, tradeItem, maxTrades, allowDamaged);
+        boolean enabled = !tag.contains("enabled") || tag.getBoolean("enabled");
+
+        WorkersMerchantTrade trade = new WorkersMerchantTrade(uuid, currencyItem, tradeItem, maxTrades, allowDamaged);
         trade.currentTrades = currentTrades;
-        trade.uuid = uuid;
+        trade.enabled = enabled;
         return trade;
     }
     public static CompoundTag listToNbt(List<WorkersMerchantTrade> trades) {

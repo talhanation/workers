@@ -23,8 +23,6 @@ public abstract class WorkAreaScreen extends RecruitsScreenBase {
     private static final MutableComponent TEXT_LEFT = Component.translatable("gui.workers.command.text.left");
     private static final MutableComponent TEXT_RIGHT = Component.translatable("gui.workers.command.text.right");
     private static final MutableComponent TEXT_DESTROY = Component.translatable("gui.workers.command.text.destroy");
-    private static final MutableComponent TEXT_ROTATE_LEFT  = Component.literal("gui.workers.command.text.rotate_left");
-    private static final MutableComponent TEXT_ROTATE_RIGHT = Component.literal("gui.workers.command.text.rotate_right");
     private EditBox textFieldName;
     private Button moveForward;
     private Button moveBackward;
@@ -122,7 +120,7 @@ public abstract class WorkAreaScreen extends RecruitsScreenBase {
                 }
         ));
 
-        rotateLeft = addRenderableWidget(new ExtendedButton(x - buttonWidth / 2 - buttonWidth, y - buttonHeight / 2 + buttonHeight, buttonWidth, buttonHeight, TEXT_ROTATE_LEFT,
+        rotateLeft = addRenderableWidget(new ExtendedButton(x - buttonWidth / 2 - buttonWidth, y - buttonHeight / 2 + buttonHeight, buttonWidth, buttonHeight, Component.literal("\u21BB"),
                 btn -> {
                     this.workArea.showBox = true;
                     WorkersMain.SIMPLE_CHANNEL.sendToServer(new MessageRotateWorkArea(this.workArea.getUUID(), false));
@@ -131,7 +129,7 @@ public abstract class WorkAreaScreen extends RecruitsScreenBase {
                 }
         ));
 
-        rotateRight = addRenderableWidget(new ExtendedButton(x - buttonWidth / 2 + buttonWidth, y - buttonHeight / 2 + buttonHeight, buttonWidth, buttonHeight, TEXT_ROTATE_RIGHT,
+        rotateRight = addRenderableWidget(new ExtendedButton(x - buttonWidth / 2 + buttonWidth, y - buttonHeight / 2 + buttonHeight, buttonWidth, buttonHeight, Component.literal("\u21BA"),
                 btn -> {
                     this.workArea.showBox = true;
                     WorkersMain.SIMPLE_CHANNEL.sendToServer(new MessageRotateWorkArea(this.workArea.getUUID(), true));

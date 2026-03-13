@@ -9,6 +9,7 @@ import com.talhanation.workers.WorkersMain;
 import com.talhanation.workers.entities.MerchantEntity;
 import com.talhanation.workers.inventory.MerchantTradeContainer;
 import com.talhanation.workers.network.MessageDoTradeWithMerchant;
+import com.talhanation.workers.network.MessageMoveMerchantTrade;
 import com.talhanation.workers.network.MessageUpdateMerchant;
 import com.talhanation.workers.network.MessageUpdateMerchantTrade;
 import com.talhanation.workers.world.WorkersMerchantTrade;
@@ -43,6 +44,7 @@ public class MerchantTradeScreen extends ScreenBase<MerchantTradeContainer> {
     private static final int fontColor = 4210752;
     private final MerchantEntity merchantEntity;
     private final Player player;
+    private final boolean isOwner;
     public WorkersMerchantTrade selection;
     public MerchantTradeContainer tradeContainer;
     private ExtendedButton tradeButton;
@@ -50,6 +52,8 @@ public class MerchantTradeScreen extends ScreenBase<MerchantTradeContainer> {
     private ExtendedButton removeTradeButton;
     private RecruitsCheckBox creativeCheckbox;
     private ExtendedButton copyTradeButton;
+    private ExtendedButton moveUpButton;
+    private ExtendedButton moveDownButton;
     private boolean isCreative;
     private ItemStack hoveredTooltipStack = ItemStack.EMPTY;
     private int hoveredTooltipX = 0;
@@ -68,6 +72,7 @@ public class MerchantTradeScreen extends ScreenBase<MerchantTradeContainer> {
         this.tradeContainer = tradeContainer;
         this.merchantEntity = tradeContainer.getMerchantEntity();
         this.player = playerInventory.player;
+        this.isOwner = player.getUUID().equals(merchantEntity.getOwnerUUID());
         imageWidth = 256;
         imageHeight = 197;
     }
@@ -108,7 +113,7 @@ public class MerchantTradeScreen extends ScreenBase<MerchantTradeContainer> {
 
         this.addRenderableWidget(this.tradeList);
 
-        if((merchantEntity.isCreative() && player.isCreative()) || player.getUUID().equals(merchantEntity.getOwnerUUID())){
+        if((merchantEntity.isCreative() && player.isCreative()) || isOwner){
             tradeButton = new ExtendedButton(leftPos + 88, topPos + 58, 60, 18, BUTTON_TRADE,
                     button -> {
                         WorkersMain.SIMPLE_CHANNEL.sendToServer(new MessageDoTradeWithMerchant(merchantEntity.getUUID(), selection.uuid));
@@ -122,7 +127,6 @@ public class MerchantTradeScreen extends ScreenBase<MerchantTradeContainer> {
                         WorkersMerchantTrade trade = selection == null ? new WorkersMerchantTrade() : selection;
                         merchantEntity.openAddEditTradeGUI(player, trade);
                         tradeList.addEntry(this.tradeList.new TradeEntry(trade));
-
                         this.selection = null;
                         tradeList.setSelected(null);
                         updateButtonState();
@@ -134,7 +138,6 @@ public class MerchantTradeScreen extends ScreenBase<MerchantTradeContainer> {
                         WorkersMerchantTrade trade = selection == null ? new WorkersMerchantTrade() : selection.copy();
                         WorkersMain.SIMPLE_CHANNEL.sendToServer(new MessageUpdateMerchantTrade(this.merchantEntity.getUUID(), trade, false));
                         tradeList.addEntry(this.tradeList.new TradeEntry(trade));
-
                         this.selection = null;
                         tradeList.setSelected(null);
                         updateButtonState();
@@ -144,14 +147,48 @@ public class MerchantTradeScreen extends ScreenBase<MerchantTradeContainer> {
             removeTradeButton = new ExtendedButton(leftPos + 186, topPos + 77, 60, 18, BUTTON_REMOVE,
                     button -> {
                         tradeList.children().removeIf(tradeEntry -> tradeEntry.trade.uuid.equals(selection.uuid));
-
-
                         WorkersMain.SIMPLE_CHANNEL.sendToServer(new MessageUpdateMerchantTrade(merchantEntity.getUUID(), selection, true));
                         this.selection = null;
                         tradeList.setSelected(null);
                         updateButtonState();
                     });
             addRenderableWidget(removeTradeButton);
+
+            moveUpButton = new ExtendedButton(leftPos + 158, topPos + 58, 18, 18, Component.literal("\u21E7"),//do not replace
+                    button -> {
+                        WorkersMain.SIMPLE_CHANNEL.sendToServer(new MessageMoveMerchantTrade(merchantEntity.getUUID(), selection.uuid, true));
+                        List<WorkersMerchantTrade> list = new java.util.ArrayList<>(merchantEntity.getTrades());
+                        for (int i = 1; i < list.size(); i++) {
+                            if (list.get(i).uuid.equals(selection.uuid)) {
+                                WorkersMerchantTrade tmp = list.get(i - 1);
+                                list.set(i - 1, list.get(i));
+                                list.set(i, tmp);
+                                break;
+                            }
+                        }
+                        merchantEntity.setTrades(list);
+                        loadTrades();
+                        updateButtonState();
+                    });
+            addRenderableWidget(moveUpButton);
+
+            moveDownButton = new ExtendedButton(leftPos + 158, topPos + 77, 18, 18, Component.literal("\u21E9"),//do not replace
+                    button -> {
+                        WorkersMain.SIMPLE_CHANNEL.sendToServer(new MessageMoveMerchantTrade(merchantEntity.getUUID(), selection.uuid, false));
+                        List<WorkersMerchantTrade> list = new java.util.ArrayList<>(merchantEntity.getTrades());
+                        for (int i = 0; i < list.size() - 1; i++) {
+                            if (list.get(i).uuid.equals(selection.uuid)) {
+                                WorkersMerchantTrade tmp = list.get(i + 1);
+                                list.set(i + 1, list.get(i));
+                                list.set(i, tmp);
+                                break;
+                            }
+                        }
+                        merchantEntity.setTrades(list);
+                        loadTrades();
+                        updateButtonState();
+                    });
+            addRenderableWidget(moveDownButton);
 
             if(player.isCreative()) {
                 this.creativeCheckbox = new RecruitsCheckBox(leftPos + 256, topPos + 172, 100, 20, TEXT_CREATIVE,
@@ -210,9 +247,9 @@ public class MerchantTradeScreen extends ScreenBase<MerchantTradeContainer> {
 
     public void loadTrades(){
         this.tradeList.clearEntries();
-
         List<WorkersMerchantTrade> trades = merchantEntity.getTrades();
         for(WorkersMerchantTrade merchantTrade : trades){
+            if(!merchantTrade.enabled && !isOwner) continue;
             tradeList.addEntry(this.tradeList.new TradeEntry(merchantTrade));
         }
     }
@@ -232,12 +269,19 @@ public class MerchantTradeScreen extends ScreenBase<MerchantTradeContainer> {
         if(copyTradeButton != null){
             copyTradeButton.active = selection != null;
         }
+        if(moveUpButton != null){
+            moveUpButton.active = selection != null;
+        }
+        if(moveDownButton != null){
+            moveDownButton.active = selection != null;
+        }
 
         this.tradeButton.active = false;
 
         if(selection != null){
             boolean playerFreeSlot = player.getInventory().getFreeSlot() != -1;
-            this.tradeButton.active =  playerFreeSlot && (selection.currentTrades < selection.maxTrades || selection.maxTrades == -1);
+            boolean withinLimit = selection.maxTrades == -1 || selection.currentTrades < selection.maxTrades;
+            this.tradeButton.active = playerFreeSlot && withinLimit && selection.enabled;
         }
     }
 
@@ -316,14 +360,16 @@ public class MerchantTradeScreen extends ScreenBase<MerchantTradeContainer> {
                 int iconX = 23;
                 int iconY = 0;
                 boolean selected = (TradeList.this.getSelected() == this);
-                boolean out = trade.currentTrades == trade.maxTrades;
-                int textureY = getButtonTextureY(hovered, selected, out);
+                boolean out = trade.maxTrades != -1 && trade.currentTrades >= trade.maxTrades;
+                boolean disabled = !trade.enabled;
+                int textureY = getButtonTextureY(hovered, selected, out || disabled);
 
-                guiGraphics.setColor(1.0F, 1.0F, 1.0F, 1.0F);
+                float alpha = disabled ? 0.45f : 1.0f;
+                guiGraphics.setColor(1.0F, 1.0F, 1.0F, alpha);
                 RenderSystem.enableBlend();
                 RenderSystem.enableDepthTest();
                 guiGraphics.blitNineSliced(AbstractButton.WIDGETS_LOCATION, rowLeft, top, rowWidth, entryHeight, 20, 4, 200, 20, 0, textureY);
-                guiGraphics.setColor(1.0F, 1.0F, 1.0F, 1.0F);
+                guiGraphics.setColor(1.0F, 1.0F, 1.0F, alpha);
 
                 RenderSystem.setShaderTexture(0, ARROW_IMAGE);
                 guiGraphics.blit(ARROW_IMAGE,  x + iconX, y + iconY, 0, 0, 21, 21, 21, 21);
@@ -341,6 +387,8 @@ public class MerchantTradeScreen extends ScreenBase<MerchantTradeContainer> {
                 // Render zweiter (trade) Item
                 guiGraphics.renderFakeItem(trade.tradeItem, item2X, item2Y);
                 guiGraphics.renderItemDecorations(font, trade.tradeItem, item2X, item2Y);
+
+                guiGraphics.setColor(1.0F, 1.0F, 1.0F, 1.0F);
 
 
                 if (!trade.currencyItem.isEmpty()

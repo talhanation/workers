@@ -28,6 +28,7 @@ public class MerchantAddEditTradeScreen extends ScreenBase<MerchantAddEditTradeC
     private static final MutableComponent BUTTON_EDIT = Component.translatable("gui.workers.button.edit");
     private static final MutableComponent BUTTON_RESET = Component.translatable("gui.workers.button.reset");
     private static final MutableComponent TEXT_ALLOW_DAMAGED_ITEMS = Component.translatable("gui.workers.checkbox.allowDamagedCurrency");
+    private static final MutableComponent TEXT_ENABLED = Component.translatable("gui.workers.checkbox.enabled");
     private static final int fontColor = 4210752;
     private final MerchantEntity merchantEntity;
     private final Player player;
@@ -39,9 +40,11 @@ public class MerchantAddEditTradeScreen extends ScreenBase<MerchantAddEditTradeC
     private ExtendedButton plusMaxTradesButton;
     private ExtendedButton minusMaxTradesButton;
     private RecruitsCheckBox allowDamagedCurrencyCheckBox;
+    private RecruitsCheckBox enabledCheckBox;
     private int currentTrades;
     private int maxTrades;
     private boolean allowDamagedCurrency;
+    private boolean enabled;
     public MerchantAddEditTradeScreen(MerchantAddEditTradeContainer tradeContainer, Inventory playerInventory, Component title) {
         super(RESOURCE_LOCATION, tradeContainer, playerInventory, Component.literal("Add or Edit Merchant Trade"));
         this.tradeContainer = tradeContainer;
@@ -58,6 +61,7 @@ public class MerchantAddEditTradeScreen extends ScreenBase<MerchantAddEditTradeC
         this.currentTrades = this.trade.currentTrades;
         this.maxTrades = this.trade.maxTrades;
         this.allowDamagedCurrency = this.trade.allowDamagedCurrency;
+        this.enabled = this.trade.enabled;
 
         this.setWidgets();
     }
@@ -80,6 +84,7 @@ public class MerchantAddEditTradeScreen extends ScreenBase<MerchantAddEditTradeC
                     this.trade.currentTrades = currentTrades;
                     this.trade.maxTrades = maxTrades;
                     this.trade.allowDamagedCurrency = allowDamagedCurrency;
+                    this.trade.enabled = enabled;
                     WorkersMain.SIMPLE_CHANNEL.sendToServer(new MessageUpdateMerchantTrade(this.merchantEntity.getUUID(), this.trade, false));
 
                     new java.util.Timer().schedule(new java.util.TimerTask() {
@@ -131,6 +136,14 @@ public class MerchantAddEditTradeScreen extends ScreenBase<MerchantAddEditTradeC
                 }
         );
         addRenderableWidget(allowDamagedCurrencyCheckBox);
+
+        this.enabledCheckBox = new RecruitsCheckBox(x + 170, y + 40, 100, 20, TEXT_ENABLED,
+                this.enabled,
+                (bool) -> {
+                    this.enabled = bool;
+                }
+        );
+        addRenderableWidget(enabledCheckBox);
     }
 
     public String formatValue(int x){

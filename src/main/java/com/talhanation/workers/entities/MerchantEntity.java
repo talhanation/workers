@@ -1,10 +1,7 @@
 package com.talhanation.workers.entities;
 
-import com.talhanation.recruits.Main;
 import com.talhanation.recruits.entities.AbstractRecruitEntity;
-import com.talhanation.recruits.entities.MessengerEntity;
 import com.talhanation.recruits.pathfinding.AsyncGroundPathNavigation;
-import com.talhanation.workers.Translatable;
 import com.talhanation.workers.WorkersMain;
 import com.talhanation.workers.config.WorkersServerConfig;
 import com.talhanation.workers.entities.workarea.AbstractWorkAreaEntity;
@@ -335,6 +332,7 @@ public class MerchantEntity extends AbstractWorkerEntity {
         }
 
         if(trade == null) return;
+        if(!trade.enabled) return;
 
         Inventory playerInv = player.getInventory();
         SimpleContainer merchantInv = this.getInventory();// supply and money
@@ -511,6 +509,32 @@ public class MerchantEntity extends AbstractWorkerEntity {
 
     public boolean shouldRestoreCreative(){
         return this.entityData.get(CREATIVE_RESTORE) && isCreative();
+    }
+
+    public void moveTradeUp(UUID tradeUuid) {
+        List<WorkersMerchantTrade> list = new ArrayList<>(getTrades());
+        for (int i = 1; i < list.size(); i++) {
+            if (list.get(i).uuid.equals(tradeUuid)) {
+                WorkersMerchantTrade tmp = list.get(i - 1);
+                list.set(i - 1, list.get(i));
+                list.set(i, tmp);
+                setTrades(list);
+                return;
+            }
+        }
+    }
+
+    public void moveTradeDown(UUID tradeUuid) {
+        List<WorkersMerchantTrade> list = new ArrayList<>(getTrades());
+        for (int i = 0; i < list.size() - 1; i++) {
+            if (list.get(i).uuid.equals(tradeUuid)) {
+                WorkersMerchantTrade tmp = list.get(i + 1);
+                list.set(i + 1, list.get(i));
+                list.set(i, tmp);
+                setTrades(list);
+                return;
+            }
+        }
     }
 
     @Override
