@@ -37,6 +37,7 @@ public class MerchantTradeScreen extends ScreenBase<MerchantTradeContainer> {
     private static final MutableComponent BUTTON_COPY = Component.translatable("gui.workers.button.copy");
     private static final MutableComponent BUTTON_TRADE = Component.translatable("gui.workers.button.trade");
     private static final MutableComponent TEXT_CREATIVE = Component.translatable("gui.workers.text.creative");
+    private static final MutableComponent TEXT_DAILY_REFRESH = Component.translatable("gui.workers.text.dailyRefresh");
     private static final int fontColor = 4210752;
     private final MerchantEntity merchantEntity;
     private final Player player;
@@ -47,10 +48,12 @@ public class MerchantTradeScreen extends ScreenBase<MerchantTradeContainer> {
     private ExtendedButton addEditTradeButton;
     private ExtendedButton removeTradeButton;
     private RecruitsCheckBox creativeCheckbox;
+    private RecruitsCheckBox dailyRefreshCheckbox;
     private ExtendedButton copyTradeButton;
     private ExtendedButton moveUpButton;
     private ExtendedButton moveDownButton;
     private boolean isCreative;
+    private boolean isDailyRefresh;
     private ItemStack hoveredTooltipStack = ItemStack.EMPTY;
     private int hoveredTooltipX = 0;
     private int hoveredTooltipY = 0;
@@ -77,6 +80,7 @@ public class MerchantTradeScreen extends ScreenBase<MerchantTradeContainer> {
     protected void init() {
         super.init();
         this.isCreative = merchantEntity.isCreative();
+        this.isDailyRefresh = merchantEntity.isDailyRefresh();
         this.setWidgets();
     }
 
@@ -195,11 +199,22 @@ public class MerchantTradeScreen extends ScreenBase<MerchantTradeContainer> {
                         this.isCreative,
                         (bool) -> {
                             this.isCreative = bool;
-                            WorkersMain.SIMPLE_CHANNEL.sendToServer(new MessageUpdateMerchant(merchantEntity.getUUID(), isCreative, true));
-                            this.updateButtonState();
+                            WorkersMain.SIMPLE_CHANNEL.sendToServer(new MessageUpdateMerchant(merchantEntity.getUUID(), isCreative, true, isDailyRefresh));
+                            setWidgets(); // rebuild so daily-refresh checkbox shows/hides
                         }
                 );
                 addRenderableWidget(creativeCheckbox);
+
+                if (this.isCreative) {
+                    this.dailyRefreshCheckbox = new RecruitsCheckBox(leftPos + 256, topPos + 192, 100, 20, TEXT_DAILY_REFRESH,
+                            this.isDailyRefresh,
+                            (bool) -> {
+                                this.isDailyRefresh = bool;
+                                WorkersMain.SIMPLE_CHANNEL.sendToServer(new MessageUpdateMerchant(merchantEntity.getUUID(), isCreative, true, isDailyRefresh));
+                            }
+                    );
+                    addRenderableWidget(dailyRefreshCheckbox);
+                }
             }
         }
         else{
@@ -208,11 +223,22 @@ public class MerchantTradeScreen extends ScreenBase<MerchantTradeContainer> {
                         this.isCreative,
                         (bool) -> {
                             this.isCreative = bool;
-                            WorkersMain.SIMPLE_CHANNEL.sendToServer(new MessageUpdateMerchant(merchantEntity.getUUID(), isCreative, true));
-                            this.updateButtonState();
+                            WorkersMain.SIMPLE_CHANNEL.sendToServer(new MessageUpdateMerchant(merchantEntity.getUUID(), isCreative, true, isDailyRefresh));
+                            setWidgets(); // rebuild so daily-refresh checkbox shows/hides
                         }
                 );
                 addRenderableWidget(creativeCheckbox);
+
+                if (this.isCreative) {
+                    this.dailyRefreshCheckbox = new RecruitsCheckBox(leftPos + 256, topPos + 192, 100, 20, TEXT_DAILY_REFRESH,
+                            this.isDailyRefresh,
+                            (bool) -> {
+                                this.isDailyRefresh = bool;
+                                WorkersMain.SIMPLE_CHANNEL.sendToServer(new MessageUpdateMerchant(merchantEntity.getUUID(), isCreative, true, isDailyRefresh));
+                            }
+                    );
+                    addRenderableWidget(dailyRefreshCheckbox);
+                }
             }
 
             tradeButton = new ExtendedButton(leftPos + 97, topPos + 66, 140, 20, BUTTON_TRADE,
@@ -457,7 +483,7 @@ public class MerchantTradeScreen extends ScreenBase<MerchantTradeContainer> {
     @Override
     public void onClose() {
         super.onClose();
-        WorkersMain.SIMPLE_CHANNEL.sendToServer(new MessageUpdateMerchant(merchantEntity.getUUID(), isCreative, false));
+        WorkersMain.SIMPLE_CHANNEL.sendToServer(new MessageUpdateMerchant(merchantEntity.getUUID(), isCreative, false, isDailyRefresh));
     }
 
 }

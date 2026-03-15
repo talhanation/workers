@@ -52,6 +52,9 @@ public class MerchantEntity extends AbstractWorkerEntity {
     private static final EntityDataAccessor<Boolean> IS_TRADING = SynchedEntityData.defineId(MerchantEntity.class, EntityDataSerializers.BOOLEAN);
     private static final EntityDataAccessor<Boolean> IS_CREATIVE = SynchedEntityData.defineId(MerchantEntity.class, EntityDataSerializers.BOOLEAN);
     private static final EntityDataAccessor<String> MARKET_NAME = SynchedEntityData.defineId(MerchantEntity.class, EntityDataSerializers.STRING);
+    private static final EntityDataAccessor<Boolean> DAILY_REFRESH = SynchedEntityData.defineId(MerchantEntity.class, EntityDataSerializers.BOOLEAN);
+
+    private boolean lastWasDawn = false;
 
     private final Predicate<ItemEntity> ALLOWED_ITEMS = (item) ->
             (!item.hasPickUpDelay() && item.isAlive() && getInventory().canAddItem(item.getItem()) && this.wantsToPickUp(item.getItem()));
@@ -77,6 +80,7 @@ public class MerchantEntity extends AbstractWorkerEntity {
         this.entityData.define(IS_TRADING, false);
         this.entityData.define(IS_CREATIVE, false);
         this.entityData.define(MARKET_NAME, "");
+        this.entityData.define(DAILY_REFRESH, false);
     }
 
     @Override
@@ -90,6 +94,14 @@ public class MerchantEntity extends AbstractWorkerEntity {
                 this.switchOffHandItem(ItemStack::isEmpty);
             }
 
+            if (this.isCreative() && this.isDailyRefresh()) {
+                long timeOfDay = this.level().getDayTime() % 24000L;
+                boolean isDawn = timeOfDay < 2000L;
+                if (isDawn && !lastWasDawn) {
+                    refreshAllTrades();
+                }
+                lastWasDawn = isDawn;
+            }
         }
     }
 
@@ -115,6 +127,7 @@ public class MerchantEntity extends AbstractWorkerEntity {
         nbt.putInt("TraderProgress", this.getTraderProgress());
         nbt.putInt("TraderLevel", this.getTraderLevel());
         nbt.putBoolean("isCreative", this.isCreative());
+        nbt.putBoolean("dailyRefresh", this.isDailyRefresh());
     }
 
     @Override
@@ -124,6 +137,7 @@ public class MerchantEntity extends AbstractWorkerEntity {
         this.setTraderProgress(nbt.getInt("TraderProgress"));
         this.setTraderLevel(nbt.getInt("TraderLevel"));
         this.setCreative(nbt.getBoolean("isCreative"));
+        this.setDailyRefresh(nbt.getBoolean("dailyRefresh"));
     }
 
     public static AttributeSupplier.Builder setAttributes() {
@@ -547,6 +561,18 @@ public class MerchantEntity extends AbstractWorkerEntity {
     }
     public String getCurrentMarketName(){
         return this.entityData.get(MARKET_NAME);
+    }
+    public void setDailyRefresh(boolean b){
+        this.entityData.set(DAILY_REFRESH, b);
+    }
+    public boolean isDailyRefresh(){
+        return this.entityData.get(DAILY_REFRESH);
+    }
+
+    public void refreshAllTrades() {
+        List<WorkersMerchantTrade> list = getTrades();
+        list.forEach(t -> t.currentTrades = 0);
+        setTrades(list);
     }
 
     @Override

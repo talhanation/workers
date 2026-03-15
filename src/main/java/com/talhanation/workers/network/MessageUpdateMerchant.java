@@ -16,11 +16,18 @@ public class MessageUpdateMerchant implements Message<MessageUpdateMerchant> {
     public UUID merchantUuid;
     public boolean isCreative;
     public boolean isTrading;
+    public boolean dailyRefresh;
     public MessageUpdateMerchant() {}
     public MessageUpdateMerchant(UUID merchantUuid, boolean isCreative, boolean isTrading) {
         this.merchantUuid = merchantUuid;
         this.isCreative = isCreative;
         this.isTrading = isTrading;
+    }
+    public MessageUpdateMerchant(UUID merchantUuid, boolean isCreative, boolean isTrading, boolean dailyRefresh) {
+        this.merchantUuid  = merchantUuid;
+        this.isCreative    = isCreative;
+        this.isTrading     = isTrading;
+        this.dailyRefresh  = dailyRefresh;
     }
 
     @Override
@@ -45,11 +52,13 @@ public class MessageUpdateMerchant implements Message<MessageUpdateMerchant> {
     private void update(MerchantEntity merchant){
         merchant.setCreative(this.isCreative);
         merchant.setTrading(this.isTrading);
+        merchant.setDailyRefresh(this.dailyRefresh);
     }
     public MessageUpdateMerchant fromBytes(FriendlyByteBuf buf) {
-        this.merchantUuid = buf.readUUID();
-        this.isCreative = buf.readBoolean();
-        this.isTrading = buf.readBoolean();
+        this.merchantUuid  = buf.readUUID();
+        this.isCreative    = buf.readBoolean();
+        this.isTrading     = buf.readBoolean();
+        this.dailyRefresh  = buf.readBoolean();
         return this;
     }
 
@@ -57,5 +66,6 @@ public class MessageUpdateMerchant implements Message<MessageUpdateMerchant> {
         buf.writeUUID(merchantUuid);
         buf.writeBoolean(this.isCreative);
         buf.writeBoolean(this.isTrading);
+        buf.writeBoolean(this.dailyRefresh);
     }
 }
