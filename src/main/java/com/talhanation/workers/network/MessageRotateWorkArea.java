@@ -43,7 +43,16 @@ public class MessageRotateWorkArea implements Message<MessageRotateWorkArea> {
     public void rotate(AbstractWorkAreaEntity workArea) {
         Direction current = workArea.getFacing();
         Direction next = clockwise ? current.getClockWise() : current.getCounterClockWise();
+
+        // Test the rotated area before committing
         workArea.setFacing(next);
+        workArea.createArea();
+
+        if (AbstractWorkAreaEntity.isAreaOverlapping(workArea.level(), workArea, workArea.getArea())) {
+            // Revert to original facing
+            workArea.setFacing(current);
+            workArea.createArea();
+        }
     }
 
     @Override

@@ -89,6 +89,7 @@ public class MessageAddWorkArea implements Message<MessageAddWorkArea> {
             }
         }
         workArea.setFacing(player.getDirection());
+        workArea.moveTo(pos.above(), 0, 0);
         workArea.createArea();
         workArea.setTeamStringID(teamStringID);
         workArea.setDone(false);
@@ -96,7 +97,11 @@ public class MessageAddWorkArea implements Message<MessageAddWorkArea> {
         workArea.setPlayerUUID(player.getUUID());
         workArea.setCustomName(Component.literal(""));
 
-        workArea.moveTo(pos.above(), 0, 0);
+        if (AbstractWorkAreaEntity.isAreaOverlapping(player.level(), null, workArea.getArea())) {
+            player.sendSystemMessage(Component.translatable("gui.workers.area.overlapping"));
+            return;
+        }
+
         player.level().addFreshEntity(workArea);
     }
     public MessageAddWorkArea fromBytes(FriendlyByteBuf buf) {

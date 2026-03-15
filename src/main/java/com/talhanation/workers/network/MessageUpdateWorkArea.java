@@ -6,6 +6,7 @@ import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.Entity;
+import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.network.NetworkEvent;
@@ -57,11 +58,23 @@ public class MessageUpdateWorkArea implements Message<MessageUpdateWorkArea> {
     }
 
     public void updateWorkArea(AbstractWorkAreaEntity workArea){
-        if(destroy) workArea.remove(Entity.RemovalReason.DISCARDED);
+        if (destroy) {
+            workArea.remove(Entity.RemovalReason.DISCARDED);
+            return;
+        }
 
         workArea.setCustomName(Component.literal(name));
 
+        Vec3 oldPos = workArea.position();
         workArea.moveTo(this.x, this.y, this.z);
+        workArea.createArea();
+        AABB newArea = workArea.getArea();
+
+        if (AbstractWorkAreaEntity.isAreaOverlapping(workArea.level(), workArea, newArea)) {
+            workArea.moveTo(oldPos);
+            workArea.createArea();
+            return;
+        }
 
         workArea.setTime(workArea.getTime() + DONE_TIME);
     }
