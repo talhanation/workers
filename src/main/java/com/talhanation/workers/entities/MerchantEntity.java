@@ -1,10 +1,13 @@
 package com.talhanation.workers.entities;
 
+import com.talhanation.recruits.Main;
 import com.talhanation.recruits.entities.AbstractRecruitEntity;
 import com.talhanation.recruits.pathfinding.AsyncGroundPathNavigation;
 import com.talhanation.workers.WorkersMain;
 import com.talhanation.workers.config.WorkersServerConfig;
+import com.talhanation.workers.entities.ai.MerchantWorkGoal;
 import com.talhanation.workers.entities.workarea.AbstractWorkAreaEntity;
+import com.talhanation.workers.entities.workarea.MarketArea;
 import com.talhanation.workers.inventory.MerchantAddEditTradeContainer;
 import com.talhanation.workers.inventory.MerchantTradeContainer;
 import com.talhanation.workers.network.MessageOpenMerchantEditTradeScreen;
@@ -48,13 +51,18 @@ public class MerchantEntity extends AbstractWorkerEntity {
     private static final EntityDataAccessor<Integer> TRADER_LEVEL = SynchedEntityData.defineId(MerchantEntity.class, EntityDataSerializers.INT);
     private static final EntityDataAccessor<Boolean> IS_TRADING = SynchedEntityData.defineId(MerchantEntity.class, EntityDataSerializers.BOOLEAN);
     private static final EntityDataAccessor<Boolean> IS_CREATIVE = SynchedEntityData.defineId(MerchantEntity.class, EntityDataSerializers.BOOLEAN);
-    private static final EntityDataAccessor<Boolean> CREATIVE_RESTORE = SynchedEntityData.defineId(MerchantEntity.class, EntityDataSerializers.BOOLEAN);
+    private static final EntityDataAccessor<String> MARKET_NAME = SynchedEntityData.defineId(MerchantEntity.class, EntityDataSerializers.STRING);
+
     private final Predicate<ItemEntity> ALLOWED_ITEMS = (item) ->
             (!item.hasPickUpDelay() && item.isAlive() && getInventory().canAddItem(item.getItem()) && this.wantsToPickUp(item.getItem()));
+
     public boolean needsNewTrades;
+    public MarketArea currentMarketArea;
+
     public MerchantEntity(EntityType<? extends AbstractWorkerEntity> entityType, Level world) {
         super(entityType, world);
     }
+
     @Override
     public boolean shouldLoadChunk() {
         return false;
@@ -68,7 +76,7 @@ public class MerchantEntity extends AbstractWorkerEntity {
         this.entityData.define(TRADER_LEVEL, 1);
         this.entityData.define(IS_TRADING, false);
         this.entityData.define(IS_CREATIVE, false);
-        this.entityData.define(CREATIVE_RESTORE, false);
+        this.entityData.define(MARKET_NAME, "");
     }
 
     @Override
@@ -93,13 +101,12 @@ public class MerchantEntity extends AbstractWorkerEntity {
     @Override
     protected void registerGoals() {
         super.registerGoals();
-
+        this.goalSelector.addGoal(3, new MerchantWorkGoal(this));
     }
 
     @Override
-    public AbstractWorkAreaEntity getCurrentWorkArea() {
-        return null;
-    }
+    public AbstractWorkAreaEntity getCurrentWorkArea() { return currentMarketArea; }
+
 
     @Override
     public void addAdditionalSaveData(CompoundTag nbt) {
@@ -108,8 +115,6 @@ public class MerchantEntity extends AbstractWorkerEntity {
         nbt.putInt("TraderProgress", this.getTraderProgress());
         nbt.putInt("TraderLevel", this.getTraderLevel());
         nbt.putBoolean("isCreative", this.isCreative());
-        if(nbt.contains("creativeRestore")) nbt.putBoolean("creativeRestore", this.shouldRestoreCreative());
-
     }
 
     @Override
@@ -119,10 +124,8 @@ public class MerchantEntity extends AbstractWorkerEntity {
         this.setTraderProgress(nbt.getInt("TraderProgress"));
         this.setTraderLevel(nbt.getInt("TraderLevel"));
         this.setCreative(nbt.getBoolean("isCreative"));
-        if(nbt.contains("creativeRestore"))this.setCreativeRestore(nbt.getBoolean("creativeRestore"));
     }
 
-    //ATTRIBUTES
     public static AttributeSupplier.Builder setAttributes() {
         return Mob.createMobAttributes()
                 .add(Attributes.MAX_HEALTH, 50.0D)
@@ -133,37 +136,28 @@ public class MerchantEntity extends AbstractWorkerEntity {
                 .add(Attributes.FOLLOW_RANGE, 32.0D)
                 .add(ForgeMod.ENTITY_REACH.get(), 0D)
                 .add(Attributes.ATTACK_SPEED);
-
     }
+
     @Nullable
     public SpawnGroupData finalizeSpawn(ServerLevelAccessor world, DifficultyInstance difficultyInstance, MobSpawnType reason, @Nullable SpawnGroupData data, @Nullable CompoundTag nbt) {
         RandomSource randomsource = world.getRandom();
         SpawnGroupData ilivingentitydata = super.finalizeSpawn(world, difficultyInstance, reason, data, nbt);
-        ((AsyncGroundPathNavigation)this.getNavigation()).setCanOpenDoors(true);
+        ((AsyncGroundPathNavigation) this.getNavigation()).setCanOpenDoors(true);
         this.populateDefaultEquipmentEnchantments(randomsource, difficultyInstance);
-
         this.initSpawn();
-
         return ilivingentitydata;
     }
 
 
     @Override
     public InteractionResult mobInteract(@NotNull Player player, @NotNull InteractionHand hand) {
-        if(this.isTrading()){
-            return InteractionResult.PASS;
-        }
-
-        if (this.getCommandSenderWorld().isClientSide()) {
+        if (this.isTrading()) return InteractionResult.PASS;
+        if (this.getCommandSenderWorld().isClientSide()) return InteractionResult.SUCCESS;
+        if (!player.isCrouching()) {
+            openTradeGUI(player);
             return InteractionResult.SUCCESS;
         }
-        else {
-            if(!player.isCrouching()){
-                openTradeGUI(player);
-                return InteractionResult.SUCCESS;
-            }
-            return super.mobInteract(player, hand);
-        }
+        return super.mobInteract(player, hand);
     }
 
     @Override
@@ -175,71 +169,56 @@ public class MerchantEntity extends AbstractWorkerEntity {
     public void initSpawn() {
         this.setCustomName(Component.literal("Merchant"));
         this.setCost(WorkersServerConfig.MerchantCost.get());
-
         this.setEquipment();
-
         this.setDropEquipment();
         this.setRandomSpawnBonus();
         this.setPersistenceRequired();
-
         this.setFollowState(2);
-
         AbstractRecruitEntity.applySpawnValues(this);
     }
 
     @Override
     public boolean wantsToPickUp(ItemStack itemStack) {
-        if((itemStack.getItem() instanceof SwordItem && this.getMainHandItem().isEmpty()) ||
+        if ((itemStack.getItem() instanceof SwordItem && this.getMainHandItem().isEmpty()) ||
                 (itemStack.getItem() instanceof ShieldItem) && this.getOffhandItem().isEmpty())
             return !hasSameTypeOfItem(itemStack);
-
-        else return super.wantsToPickUp(itemStack);
+        return super.wantsToPickUp(itemStack);
     }
 
-    public Predicate<ItemEntity> getAllowedItems(){
+    public Predicate<ItemEntity> getAllowedItems() {
         return ALLOWED_ITEMS;
     }
 
     @Override
-    public boolean canHoldItem(ItemStack itemStack){
+    public boolean canHoldItem(ItemStack itemStack) {
         return !(itemStack.getItem() instanceof CrossbowItem || itemStack.getItem() instanceof BowItem);
     }
-    public void openTradeGUI(Player player){
+
+
+    public void openTradeGUI(Player player) {
         this.setTrading(true);
-
-        if (player instanceof ServerPlayer) {
-            NetworkHooks.openScreen((ServerPlayer)player, new MenuProvider() {
-                public @NotNull Component getDisplayName() {
-                    return MerchantEntity.this.getName();
+        if (player instanceof ServerPlayer sp) {
+            NetworkHooks.openScreen(sp, new MenuProvider() {
+                public @NotNull Component getDisplayName() { return MerchantEntity.this.getName(); }
+                public @NotNull AbstractContainerMenu createMenu(int i, @NotNull Inventory inv, @NotNull Player p) {
+                    return new MerchantTradeContainer(i, MerchantEntity.this, inv);
                 }
-
-                public @NotNull AbstractContainerMenu createMenu(int i, @NotNull Inventory playerInventory, @NotNull Player playerEntity) {
-                    return new MerchantTradeContainer(i, MerchantEntity.this, playerInventory);
-                }
-            }, (packetBuffer) -> {
-                packetBuffer.writeUUID(this.getUUID());
-            });
+            }, buf -> buf.writeUUID(this.getUUID()));
         } else {
             WorkersMain.SIMPLE_CHANNEL.sendToServer(new MessageOpenMerchantTradeScreen(player, this.getUUID()));
         }
     }
 
-    public void openAddEditTradeGUI(Player player, WorkersMerchantTrade trade){
-        if (player instanceof ServerPlayer) {
+    public void openAddEditTradeGUI(Player player, WorkersMerchantTrade trade) {
+        if (player instanceof ServerPlayer sp) {
             this.setTrading(true);
-            NetworkHooks.openScreen((ServerPlayer)player, new MenuProvider() {
-                public @NotNull Component getDisplayName() {
-                    return Component.literal("trade_edit_screen");
+            NetworkHooks.openScreen(sp, new MenuProvider() {
+                public @NotNull Component getDisplayName() { return Component.literal("trade_edit_screen"); }
+                public @NotNull AbstractContainerMenu createMenu(int i, @NotNull Inventory inv, @NotNull Player p) {
+                    return new MerchantAddEditTradeContainer(i, MerchantEntity.this, inv, trade);
                 }
-                public @NotNull AbstractContainerMenu createMenu(int i, @NotNull Inventory playerInventory, @NotNull Player playerEntity) {
-                    return new MerchantAddEditTradeContainer(i, MerchantEntity.this, playerInventory, trade);
-                }
-            }, (packetBuffer) -> {
-                packetBuffer.writeUUID(this.getUUID());
-                packetBuffer.writeNbt(trade.toNbt());
-            });
-        }
-        else {
+            }, buf -> { buf.writeUUID(this.getUUID()); buf.writeNbt(trade.toNbt()); });
+        } else {
             WorkersMain.SIMPLE_CHANNEL.sendToServer(new MessageOpenMerchantEditTradeScreen(player, this.getUUID(), trade));
         }
     }
@@ -255,28 +234,22 @@ public class MerchantEntity extends AbstractWorkerEntity {
     public int getTraderProgress() {
         return entityData.get(TRADER_PROGRESS);
     }
-
-    public void setTraderProgress(int x) {
+    public void setTraderProgress(int x){
         this.entityData.set(TRADER_PROGRESS, x);
     }
     public void setTraderLevel(int x) {
         this.entityData.set(TRADER_LEVEL, x);
     }
+
     public void addTraderProgress(int x) {
-        int current = this.getTraderProgress();
         if (x == 0) return;
-
-        int newProgress = current + x;
-
-        //LevelUp
-        if(newProgress >= 100){
+        int newProgress = getTraderProgress() + x;
+        if (newProgress >= 100) {
             newProgress -= 100;
-
-            this.setTraderLevel(getTraderLevel() + 1);
-            this.needsNewTrades = true;
+            setTraderLevel(getTraderLevel() + 1);
+            needsNewTrades = true;
         }
-
-        this.setTraderProgress(newProgress);
+        setTraderProgress(newProgress);
     }
 
     public int getMaxAvailableTrades(){
@@ -335,16 +308,14 @@ public class MerchantEntity extends AbstractWorkerEntity {
         if(!trade.enabled) return;
 
         Inventory playerInv = player.getInventory();
-        SimpleContainer merchantInv = this.getInventory();// supply and money
 
         int playerEmeralds = 0;
         int merchantEmeralds = 0;
         int playerTradeItem = 0;
-        int merchantTradeItem = 0;
+        int merchantTradeItemCount = 0;
 
         ItemStack currencyItem = trade.currencyItem;
         int price = currencyItem.getCount();
-
         ItemStack tradeItemStack = trade.tradeItem;
         int tradeCount = tradeItemStack.getCount();
 
@@ -358,13 +329,7 @@ public class MerchantEntity extends AbstractWorkerEntity {
         }
 
         // checkMerchantMoney
-        for (int i = 0; i < merchantInv.getContainerSize(); i++) {
-            ItemStack itemStackInSlot = merchantInv.getItem(i);
-
-            if (areItemStacksEqual(itemStackInSlot, currencyItem, trade.allowDamagedCurrency)) {
-                merchantEmeralds = merchantEmeralds + itemStackInSlot.getCount();
-            }
-        }
+        merchantEmeralds = this.countMerchantItemStack(currencyItem, trade.allowDamagedCurrency);
 
         // checkPlayerTradeGood
         for (int i = 0; i < playerInv.getContainerSize(); i++) {
@@ -376,74 +341,124 @@ public class MerchantEntity extends AbstractWorkerEntity {
         }
 
         // checkMerchantTradeGood
-        for (int i = 0; i < merchantInv.getContainerSize(); i++) {
-            ItemStack itemStackInSlot = merchantInv.getItem(i);
+        merchantTradeItemCount = this.countMerchantItemStack(tradeItemStack, trade.allowDamagedCurrency);
 
-            if (areItemStacksEqual(itemStackInSlot, tradeItemStack, trade.allowDamagedCurrency)) {
-                merchantTradeItem = merchantTradeItem + itemStackInSlot.getCount();
-            }
-        }
 
-        boolean merchantHasItems = merchantTradeItem >= tradeCount;
+        boolean merchantHasItems = merchantTradeItemCount >= tradeCount;
         boolean playerCanPay = playerEmeralds >= price;
-        boolean canAddItemToInv = merchantInv.canAddItem(currencyItem);
+        boolean canAddItemToInv = canAddItemToMerchant(currencyItem);
 
         if(!canAddItemToInv) {
+            player.sendSystemMessage(TEXT_NO_SPACE());
+            if(this.getOwner() != null) this.getOwner().sendSystemMessage(TEXT_NO_SPACE_OWNER());
             return;
         }
 
         if(!merchantHasItems && !this.isCreative()) {
+            player.sendSystemMessage(TEXT_NO_ITEM_LEFT(tradeItemStack.getItem().toString()));
+            if(this.getOwner() != null) this.getOwner().sendSystemMessage(TEXT_NO_ITEM_LEFT_OWNER(tradeItemStack.getItem().toString()));
             return;
         }
 
         if (!playerCanPay) {
+            player.sendSystemMessage(TEXT_NOT_ENOUGH_ITEMS(currencyItem.getItem().toString()));
             return;
         }
 
-        merchantTradeItem = merchantTradeItem - tradeCount;
-
-        // remove merchant tradeItem
-        if(!this.isCreative()){
-            for (int i = 0; i < merchantInv.getContainerSize(); i++) {
-                ItemStack itemStackInSlot = merchantInv.getItem(i);
-
-                if (areItemStacksEqual(itemStackInSlot, tradeItemStack, trade.allowDamagedCurrency)) {
-                    merchantInv.removeItemNoUpdate(i);
-                }
-            }
-
-            // add tradeGoodLeft to merchantInv
-            ItemStack tradeGoodLeft = tradeItemStack.copy();
-            addItemWithMaxStackCount(merchantInv, tradeGoodLeft, merchantTradeItem);
+        if(playerInv.getFreeSlot() == -1){
+            player.sendSystemMessage(TEXT_CUSTOMER_NO_SPACE());
+            return;
         }
-        // add tradeItem to playerInventory
-        ItemStack tradeGood = tradeItemStack.copy();
-        addItemWithMaxStackCount(playerInv, tradeGood, tradeCount);
 
-        // Remove exactly `price` currency items from the player's inventory.
-        // We shrink existing stacks directly instead of removing-all-then-adding-back,
-        // which avoids accidentally "repairing" damaged currency items.
+        if(trade.maxTrades != -1 && trade.currentTrades +1 >= trade.maxTrades){
+            player.sendSystemMessage(TEXT_LIMIT_REACHED());
+            if(this.getOwner() != null) this.getOwner().sendSystemMessage(TEXT_LIMIT_REACHED_OWNER(tradeItemStack.getItem().toString(), currencyItem.getItem().toString()));
+        }
+
+        // shrink merchant tradeItem
+        if(!this.isCreative()){
+            shrinkMerchantItemStack(tradeItemStack, tradeCount, trade.allowDamagedCurrency);
+        }
+
         int toRemove = price;
         for (int i = 0; i < playerInv.getContainerSize() && toRemove > 0; i++) {
             ItemStack itemStackInSlot = playerInv.getItem(i);
             if (areItemStacksEqual(itemStackInSlot, currencyItem, trade.allowDamagedCurrency)) {
-                int removeCount = Math.min(toRemove, itemStackInSlot.getCount());
-                itemStackInSlot.shrink(removeCount);
-                toRemove -= removeCount;
+                int amount = Math.min(toRemove, itemStackInSlot.getCount());
+
+
+                if(!this.isCreative()){
+                    addItemToMerchant(itemStackInSlot, amount);
+                }
+                itemStackInSlot.shrink(amount);
+
+                toRemove -= amount;
             }
         }
 
-        // add currency to merchantInventory
-        if(!this.isCreative()) {
-            ItemStack emeraldsKar = currencyItem.copy();
-            addItemWithMaxStackCount(merchantInv, emeraldsKar, price);
-        }
+        ItemStack tradeGood = tradeItemStack.copy();
+        addItemWithMaxStackCount(playerInv, tradeGood, tradeCount);
 
         trade.currentTrades++;
         this.setTrades(currents);
     }
 
-    private static void addItemWithMaxStackCount(SimpleContainer merchantInv, ItemStack stack, int count) {
+    private boolean canAddItemToMerchant(ItemStack itemStack){
+        boolean can;
+        if(this.currentMarketArea != null) {
+            can = this.currentMarketArea.canAddItem(itemStack);
+        }
+        else{
+            can = this.getInventory().canAddItem(itemStack);
+        }
+
+        return can;
+    }
+
+    private void shrinkMerchantItemStack(ItemStack itemStack, int amount, boolean allowDamagedCurrency) {
+        if(this.currentMarketArea != null) {
+            this.currentMarketArea.shrinkItemFromContainers(itemStack, amount, allowDamagedCurrency);
+        }
+        else{
+            int toRemove = amount;
+            for (int i = 0; i < this.getInventory().getContainerSize() && toRemove > 0; i++) {
+                ItemStack itemStackInSlot = this.getInventory().getItem(i);
+                if (areItemStacksEqual(itemStackInSlot, itemStack, allowDamagedCurrency)) {
+                    int removeCount = Math.min(toRemove, itemStackInSlot.getCount());
+                    itemStackInSlot.shrink(removeCount);
+                    toRemove -= removeCount;
+                }
+            }
+        }
+    }
+    private int countMerchantItemStack(ItemStack itemStack, boolean allowDamaged) {
+        int x = -1;
+        if(this.currentMarketArea != null) {
+            x = this.currentMarketArea.countItemInContainers(itemStack, allowDamaged);
+        }
+        else{
+            for (int i = 0; i < this.getInventory().getContainerSize(); i++) {
+                ItemStack itemStackInSlot = this.getInventory().getItem(i);
+
+                if (areItemStacksEqual(itemStackInSlot, itemStack, allowDamaged)) {
+                    x = x + itemStackInSlot.getCount();
+                }
+            }
+        }
+
+        return x;
+    }
+
+    private void addItemToMerchant(ItemStack itemStack, int amount) {
+        if(this.currentMarketArea != null) {
+            this.currentMarketArea.depositItemToContainers(itemStack, amount);
+        }
+        else{
+            addItemWithMaxStackCount(this.getInventory(), itemStack, amount);
+        }
+    }
+
+    private static void addItemWithMaxStackCount(SimpleContainer inv, ItemStack stack, int count) {
         int maxStackCount = stack.getMaxStackSize();
 
         while (count > 0) {
@@ -453,12 +468,11 @@ public class MerchantEntity extends AbstractWorkerEntity {
             ItemStack newStack = stack.copy();
             newStack.setCount(currentStackCount);
 
-            merchantInv.addItem(newStack);
+            inv.addItem(newStack);
 
             count -= currentStackCount;
         }
     }
-
     private static void addItemWithMaxStackCount(Inventory inv, ItemStack stack, int count) {
         int maxStackCount = stack.getMaxStackSize();
 
@@ -487,29 +501,6 @@ public class MerchantEntity extends AbstractWorkerEntity {
         }
     }
 
-    public void setTrading(boolean trading) {
-        this.entityData.set(IS_TRADING, trading);
-    }
-
-    public boolean isTrading(){
-        return this.entityData.get(IS_TRADING);
-    }
-
-    public void setCreative(boolean creative) {
-        this.entityData.set(IS_CREATIVE, creative);
-    }
-
-    public boolean isCreative(){
-        return this.entityData.get(IS_CREATIVE);
-    }
-
-    public void setCreativeRestore(boolean restore) {
-        this.entityData.set(CREATIVE_RESTORE, restore);
-    }
-
-    public boolean shouldRestoreCreative(){
-        return this.entityData.get(CREATIVE_RESTORE) && isCreative();
-    }
 
     public void moveTradeUp(UUID tradeUuid) {
         List<WorkersMerchantTrade> list = new ArrayList<>(getTrades());
@@ -537,6 +528,27 @@ public class MerchantEntity extends AbstractWorkerEntity {
         }
     }
 
+    // ── Synced data getters / setters ─────────────────────────────────────────
+
+    public void setTrading(boolean b){
+        this.entityData.set(IS_TRADING, b);
+    }
+    public boolean isTrading(){
+        return this.entityData.get(IS_TRADING);
+    }
+    public void setCreative(boolean b){
+        this.entityData.set(IS_CREATIVE, b);
+    }
+    public boolean isCreative(){
+        return this.entityData.get(IS_CREATIVE);
+    }
+    public void setCurrentMarketName(String n){
+        this.entityData.set(MARKET_NAME, n);
+    }
+    public String getCurrentMarketName(){
+        return this.entityData.get(MARKET_NAME);
+    }
+
     @Override
     public boolean hurt(@NotNull DamageSource dmg, float amt) {
         if(!this.isCreative()){
@@ -545,4 +557,35 @@ public class MerchantEntity extends AbstractWorkerEntity {
         else return false;
     }
 
+    public Component TEXT_NO_ITEM_LEFT(String s){
+        return Component.translatable("chat.workers.text.merchantNoItemsLeft", this.getName().getString(), s);
+    }
+
+    public Component TEXT_NO_ITEM_LEFT_OWNER(String s){
+        return Component.translatable("chat.workers.text.merchantNoItemsLeftOwner", this.getName().getString(), s);
+    }
+
+    public Component TEXT_LIMIT_REACHED_OWNER(String currency, String goods){
+        return Component.translatable("chat.workers.text.merchantLimitReachedOwner", this.getName().getString(), currency, goods);
+    }
+
+    public Component TEXT_LIMIT_REACHED(){
+        return Component.translatable("chat.workers.text.merchantLimitReached", this.getName().getString());
+    }
+
+    public Component TEXT_NOT_ENOUGH_ITEMS(String s){
+        return Component.translatable("chat.workers.text.merchantNotEnoughItems", this.getName().getString(), s);
+    }
+
+    public Component TEXT_CUSTOMER_NO_SPACE(){
+        return Component.translatable("chat.workers.text.merchantCustomerNoSpace", this.getName().getString());
+    }
+
+    public Component TEXT_NO_SPACE(){
+        return Component.translatable("chat.workers.text.merchantNoSpace", this.getName().getString());
+    }
+
+    public Component TEXT_NO_SPACE_OWNER(){
+        return Component.translatable("chat.workers.text.merchantNoSpaceOwner", this.getName().getString());
+    }
 }

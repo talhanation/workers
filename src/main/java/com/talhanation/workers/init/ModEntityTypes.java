@@ -42,6 +42,12 @@ public class ModEntityTypes {
                         .fireImmune().noSummon()
                         .build(new ResourceLocation(WorkersMain.MOD_ID, "storagearea").toString()));
 
+        public static final RegistryObject<EntityType<MarketArea>> MARKETAREA = ENTITY_TYPES.register("marketarea",
+                () -> EntityType.Builder.of(MarketArea::new, MobCategory.MISC)
+                        .sized(1.2F, 2.00F)
+                        .fireImmune().noSummon()
+                        .build(new ResourceLocation(WorkersMain.MOD_ID, "marketarea").toString()));
+
         public static final RegistryObject<EntityType<FishingArea>> FISHINGAREA = ENTITY_TYPES.register("fishingarea",
                 () -> EntityType.Builder.of(FishingArea::new, MobCategory.MISC)
                         .sized(1.2F, 2.00F)

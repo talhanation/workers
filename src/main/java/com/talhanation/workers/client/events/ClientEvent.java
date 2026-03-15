@@ -24,6 +24,7 @@ public class ClientEvent {
         EntityRenderers.register(ModEntityTypes.BUILDAREA.get(), WorkerAreaRenderer::new);
         EntityRenderers.register(ModEntityTypes.MININGAREA.get(), WorkerAreaRenderer::new);
         EntityRenderers.register(ModEntityTypes.STORAGEAREA.get(), WorkerAreaRenderer::new);
+        EntityRenderers.register(ModEntityTypes.MARKETAREA.get(), WorkerAreaRenderer::new);
         EntityRenderers.register(ModEntityTypes.FISHINGAREA.get(), WorkerAreaRenderer::new);
         EntityRenderers.register(ModEntityTypes.ANIMAL_PEN_AREA.get(), WorkerAreaRenderer::new);
 

@@ -41,6 +41,8 @@
   "gui.workers.command.text.add_mine": "Add Mine",
   "gui.workers.command.text.add_animal_pen": "Add Animal Pen",
   "gui.workers.command.tooltip.add_animal_pen": "Adds a Animal Pen on the position you are pointing at.",
+  "gui.workers.command.text.add_market": "Add Market",
+  "gui.workers.command.tooltip.add_market": "Adds a Market Area on the position you are pointing at.",
 
   "gui.workers.command.text.forward": "Forward",
   "gui.workers.command.text.back": "Back",
@@ -70,6 +72,7 @@
   "gui.workers.checkbox.shearSheep":"Shear Sheeps",
   "gui.workers.checkbox.milkCow":"Milk Cow",
   "gui.workers.checkbox.throwEggs":"Throw Eggs",
+  "gui.workers.checkbox.marketOpen": "Open",
 
   "gui.workers.button.reset": "Reset",
   "gui.workers.button.add": "Add",
@@ -102,6 +105,19 @@
   "description.workers.fisherman": "Uses a fishing rod to fish in a defined fishing area and casts lines along a set route. Collects nearby fish and items, stores them in a nearby depot, and handles the rod carefully to extend its durability.",
 
   "description.workers.title.animalFarmer": "Animal Farmer",
-  "description.workers.animalFarmer": "Takes care of animals in defined pens. Breeds the animals faster and efficient ."
+  "description.workers.animalFarmer": "Takes care of animals in defined pens. Breeds the animals faster and efficient .",
 
+  "gui.workers.text.noMerchant": "No Merchant",
+  "gui.workers.text.merchantPresent": "Merchant Present",
+
+  "gui.workers.text.space": "Space",
+
+  "chat.workers.text.merchantNoItemsLeftOwner": "%s: I have no more %s left, i will resupply if possible from a close deposit soon!",
+  "chat.workers.text.merchantNoItemsLeft": "%s: Sorry, there is no more %s left.",
+  "chat.workers.text.merchantLimitReachedOwner": "%s: Limit reached on trade %s for %s!",
+  "chat.workers.text.merchantLimitReached": "%s: Sorry, but now i reached the limit on this trade.",
+  "chat.workers.text.merchantNotEnoughItems": "%s: Sorry, you don't have enough of %s.",
+  "chat.workers.text.merchantCustomerNoSpace": "%s: Sorry, it seems don't have enough space in your inventory.",
+  "chat.workers.text.merchantNoSpace": "%s: Sorry, i don't have any space left.",
+  "chat.workers.text.merchantNoSpaceOwner": "%s: I need more storage space to continue trading!"
 }

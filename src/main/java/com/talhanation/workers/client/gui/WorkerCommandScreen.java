@@ -36,6 +36,8 @@ public class WorkerCommandScreen implements ICommandCategory {
     private static final MutableComponent TEXT_ADD_STORAGE = Component.translatable("gui.workers.command.text.add_storage");
     private static final MutableComponent TEXT_ADD_ANIMAL_PEN = Component.translatable("gui.workers.command.text.add_animal_pen");
     private static final MutableComponent TOOLTIP_ADD_ANIMAL_PEN = Component.translatable("gui.workers.command.tooltip.add_animal_pen");
+    private static final MutableComponent TEXT_ADD_MARKET_AREA = Component.translatable("gui.workers.command.text.add_market");
+    private static final MutableComponent TOOLTIP_ADD_MARKET_AREA = Component.translatable("gui.workers.command.tooltip.add_market");
     @Override
     public Component getToolTipName() {
         return Component.translatable("gui.workers.command.tooltip.workers");
@@ -123,9 +125,20 @@ public class WorkerCommandScreen implements ICommandCategory {
                     WorkersMain.SIMPLE_CHANNEL.sendToServer(new MessageAddWorkArea(pos, 6));
                 });
 
-        addStorageArea.setTooltip(Tooltip.create(TOOLTIP_ADD_ANIMAL_PEN));
+        addAnimalPen.setTooltip(Tooltip.create(TOOLTIP_ADD_ANIMAL_PEN));
         addAnimalPen.active = canPlace;
         screen.addRenderableWidget(addAnimalPen);
+
+        RecruitsCommandButton addMarket = new RecruitsCommandButton(x + 130, y - 50, TEXT_ADD_MARKET_AREA,
+                button -> {
+                    if(screen.rayBlockPos == null) return;
+                    BlockPos pos = screen.rayBlockPos;
+                    WorkersMain.SIMPLE_CHANNEL.sendToServer(new MessageAddWorkArea(pos, 7));
+                });
+
+        addMarket.setTooltip(Tooltip.create(TOOLTIP_ADD_MARKET_AREA));
+        addMarket.active = canPlace;
+        screen.addRenderableWidget(addMarket);
     }
 
     private boolean isDepositPosition(BlockPos rayBlockPos, Player player) {

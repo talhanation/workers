@@ -1,24 +1,34 @@
 package com.talhanation.workers;
 
 import com.talhanation.workers.entities.ai.animals.WorkerTemptGoal;
+import com.talhanation.workers.entities.workarea.MarketArea;
 import com.talhanation.workers.init.ModEntityTypes;
 import com.talhanation.recruits.world.RecruitsHireTradesRegistry;
 import com.talhanation.workers.network.MessageToClientUpdateConfig;
 import com.talhanation.recruits.world.RecruitsHireTrade;
 import com.talhanation.workers.config.WorkersServerConfig;
+import net.minecraft.core.BlockPos;
 import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.world.Container;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.animal.Chicken;
 import net.minecraft.world.entity.animal.Cow;
 import net.minecraft.world.entity.animal.Pig;
 import net.minecraft.world.entity.animal.Sheep;
+import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.Items;
 import net.minecraft.world.item.crafting.Ingredient;
+import net.minecraft.world.level.Level;
+import net.minecraft.world.phys.AABB;
 import net.minecraftforge.event.entity.EntityJoinLevelEvent;
+import net.minecraftforge.event.entity.player.PlayerInteractEvent;
 import net.minecraftforge.event.server.ServerStartingEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.network.PacketDistributor;
+
+import java.util.List;
+import java.util.UUID;
 
 public class VillagerEvents {
     public static final Component TITLE_FARMER = Component.translatable("description.workers.title.farmer");
@@ -98,4 +108,43 @@ public class VillagerEvents {
             pig.goalSelector.addGoal(3, new WorkerTemptGoal(pig,1.0, Pig.FOOD_ITEMS));
         }
     }
+
+    @SubscribeEvent
+    public void onRightClickBlock(PlayerInteractEvent event) {
+        if (event.getLevel() == null || event.getEntity() == null) return;
+
+        if(!(event instanceof PlayerInteractEvent.RightClickBlock) && !(event instanceof PlayerInteractEvent.LeftClickBlock)) {
+            return;
+        }
+
+        if(disableInteractionInMarketArea(event.getEntity(), event.getLevel(), event.getPos())){
+            event.setCanceled(true);
+        }
+
+    }
+
+    public static boolean disableInteractionInMarketArea(Player player, Level level, BlockPos pos) {
+        List<MarketArea> markets = level.getEntitiesOfClass(MarketArea.class, new AABB(pos).inflate(8));
+        if (markets.isEmpty()) return false;
+
+        markets.removeIf(marketArea -> {
+            AABB area = marketArea.getArea();
+            return !(pos.getX() >= area.minX && pos.getX() <= area.maxX
+                    && pos.getY() >= area.minY && pos.getY() <= area.maxY
+                    && pos.getZ() >= area.minZ && pos.getZ() <= area.maxZ);
+        });
+        if (markets.isEmpty()) return false;
+
+        boolean isContainer = level.getBlockEntity(pos) instanceof Container;
+        if (!isContainer) return false;
+
+        MarketArea market = markets.get(0);
+        UUID ownerUUID = market.getPlayerUUID();
+
+        boolean isOwner  = ownerUUID != null && player.getUUID().equals(ownerUUID);
+        boolean isAdmin  = player.isCreative() && player.hasPermissions(2);
+
+        return !isOwner && !isAdmin;
+    }
 }
+

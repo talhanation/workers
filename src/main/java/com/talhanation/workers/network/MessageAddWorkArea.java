@@ -35,6 +35,12 @@ public class MessageAddWorkArea implements Message<MessageAddWorkArea> {
         }
         AbstractWorkAreaEntity workArea;
         switch (type){
+            case 7 -> {
+                workArea = new MarketArea(ModEntityTypes.MARKETAREA.get(), player.level());
+                workArea.setWidthSize(4);
+                workArea.setHeightSize(8);
+                workArea.setDepthSize(4);
+            }
             case 6 -> {
                 workArea = new AnimalPenArea(ModEntityTypes.ANIMAL_PEN_AREA.get(), player.level());
                 workArea.setWidthSize(12);

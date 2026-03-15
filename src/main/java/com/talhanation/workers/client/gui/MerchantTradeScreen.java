@@ -312,7 +312,14 @@ public class MerchantTradeScreen extends ScreenBase<MerchantTradeContainer> {
     @Override
     protected void renderLabels(GuiGraphics guiGraphics, int mouseX, int mouseY) {
         guiGraphics.drawString(font, title, 8, 5, fontColor, false);
-        guiGraphics.drawString(font, merchantEntity.getDisplayName(), 92, 5, fontColor, false);
+
+        // Show "MerchantName - MarketName" if merchant is in a market, else just merchant name
+        String marketName = merchantEntity.getCurrentMarketName();
+        Component nameLabel = marketName.isEmpty()
+                ? merchantEntity.getDisplayName()
+                : Component.literal(merchantEntity.getDisplayName().getString() + " - " + marketName);
+        guiGraphics.drawString(font, nameLabel, 92, 5, fontColor, false);
+
         guiGraphics.drawString(font, player.getInventory().getDisplayName().getVisualOrderText(), 92, this.imageHeight - 96 + 2, fontColor, false);
     }
 
