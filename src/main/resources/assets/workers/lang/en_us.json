@@ -119,5 +119,6 @@
   "chat.workers.text.merchantNotEnoughItems": "%s: Sorry, you don't have enough of %s.",
   "chat.workers.text.merchantCustomerNoSpace": "%s: Sorry, it seems don't have enough space in your inventory.",
   "chat.workers.text.merchantNoSpace": "%s: Sorry, i don't have any space left.",
-  "chat.workers.text.merchantNoSpaceOwner": "%s: I need more storage space to continue trading!"
+  "chat.workers.text.merchantNoSpaceOwner": "%s: I need more storage space to continue trading!",
+  "gui.workers.area.overlapping": "Areas cannot overlap!"
 }

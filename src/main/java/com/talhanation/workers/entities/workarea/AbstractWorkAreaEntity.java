@@ -119,6 +119,12 @@ public abstract class AbstractWorkAreaEntity extends Entity {
 
     @Override
     public boolean hurt(DamageSource damageSource, float a) {
+        if(damageSource.getEntity() instanceof Player player){
+            if(player.isCreative() && player.isCrouching() && player.hasPermissions(2)){
+                this.discard();
+            }
+        }
+
         return false;
     }
 

@@ -385,21 +385,23 @@ public class BuilderWorkGoal extends Goal {
             Entity entity = entityType.create(serverLevel);
             if (entity == null) continue;
 
-            entity.moveTo(worldPos.getX() + 0.5, worldPos.getY(), worldPos.getZ() + 0.5, 0, 0);
+            entity.moveTo(worldPos.getX() + 0.5, worldPos.getY() + 0.5, worldPos.getZ() + 0.5, 0, 0);
 
             // Apply facing rotation: rotate the scanned facing by the same rotSteps
-            if (entity instanceof AbstractWorkAreaEntity wa) {
+            if (entity instanceof AbstractWorkAreaEntity workArea) {
                 Direction entityFacing = Direction.from2DDataValue(scanFacingVal);
                 Direction rotatedFacing = rotateDirection(entityFacing, rotSteps);
-                wa.setFacing(rotatedFacing);
-
-                // Transfer owner and team from the BuildArea
+                workArea.setFacing(rotatedFacing);
+                workArea.setCustomName(Component.literal(""));
+                workArea.setDone(false);
+                workArea.createArea();
                 if (buildArea.getPlayerUUID() != null) {
-                    wa.setPlayerUUID(buildArea.getPlayerUUID());
+                    workArea.setPlayerUUID(buildArea.getPlayerUUID());
                 }
+
                 String team = buildArea.getTeamStringID();
                 if (team != null && !team.isEmpty()) {
-                    wa.setTeamStringID(team);
+                    workArea.setTeamStringID(team);
                 }
             }
 
