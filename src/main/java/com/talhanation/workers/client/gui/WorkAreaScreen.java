@@ -1,9 +1,14 @@
 package com.talhanation.workers.client.gui;
 
 import com.talhanation.recruits.client.gui.RecruitsScreenBase;
+import com.talhanation.recruits.client.gui.player.PlayersList;
+import com.talhanation.recruits.client.gui.player.SelectPlayerScreen;
+import com.talhanation.recruits.client.gui.widgets.SelectedPlayerWidget;
+import com.talhanation.recruits.world.RecruitsPlayerInfo;
 import com.talhanation.workers.WorkersMain;
 import com.talhanation.workers.entities.workarea.AbstractWorkAreaEntity;
 import com.talhanation.workers.network.MessageRotateWorkArea;
+import com.talhanation.workers.network.MessageUpdateOwner;
 import com.talhanation.workers.network.MessageUpdateWorkArea;
 import net.minecraft.client.gui.components.Button;
 import net.minecraft.client.gui.components.EditBox;
@@ -17,7 +22,6 @@ import net.minecraftforge.client.gui.widget.ExtendedButton;
 public abstract class WorkAreaScreen extends RecruitsScreenBase {
 
     private static final ResourceLocation TEXTURE = new ResourceLocation(WorkersMain.MOD_ID, "textures/gui/workareascreen.png");
-
     private static final MutableComponent TEXT_FORWARD = Component.translatable("gui.workers.command.text.forward");
     private static final MutableComponent TEXT_BACKWARD = Component.translatable("gui.workers.command.text.back");
     private static final MutableComponent TEXT_LEFT = Component.translatable("gui.workers.command.text.left");
@@ -35,6 +39,9 @@ public abstract class WorkAreaScreen extends RecruitsScreenBase {
     public Player player;
     public AbstractWorkAreaEntity workArea;
 
+    public SelectedPlayerWidget selectedPlayerWidget;
+    public RecruitsPlayerInfo playerInfo;
+
     protected WorkAreaScreen(Component title, AbstractWorkAreaEntity workArea, Player player) {
         super(title, 200, 222);
         this.workArea = workArea;
@@ -45,6 +52,7 @@ public abstract class WorkAreaScreen extends RecruitsScreenBase {
     protected void init() {
         super.init();
         workArea.showBox = true;
+        playerInfo = new RecruitsPlayerInfo(workArea.getPlayerUUID(), workArea.getPlayerName());
         setButtons();
     }
     public int x;
@@ -58,85 +66,114 @@ public abstract class WorkAreaScreen extends RecruitsScreenBase {
 
         // Move Forward
         moveForward = addRenderableWidget(new ExtendedButton(x - buttonWidth / 2, y + buttonHeight / 2 - buttonHeight*2, buttonWidth, buttonHeight, TEXT_FORWARD,
-                btn -> {
-                    this.workArea.showBox = true;
-                    int x = 1;
-                    if(hasShiftDown()){
-                        x = 5;
-                    }
-                    Vec3 newPos = workArea.position().relative(player.getDirection(), x);
-                    WorkersMain.SIMPLE_CHANNEL.sendToServer(new MessageUpdateWorkArea(this.workArea.getUUID(), this.workArea.getCustomName().getString(), newPos, false));
-                    this.onAreaMoved();
+            btn -> {
+                this.workArea.showBox = true;
+                int x = 1;
+                if(hasShiftDown()){
+                    x = 5;
                 }
+                Vec3 newPos = workArea.position().relative(player.getDirection(), x);
+                WorkersMain.SIMPLE_CHANNEL.sendToServer(new MessageUpdateWorkArea(this.workArea.getUUID(), this.workArea.getCustomName().getString(), newPos, false));
+                this.onAreaMoved();
+            }
         ));
 
         // Move Backward
         moveBackward = addRenderableWidget(new ExtendedButton(x - buttonWidth / 2, y - buttonHeight / 2 + buttonHeight, buttonWidth, buttonHeight, TEXT_BACKWARD,
-                btn -> {
-                    this.workArea.showBox = true;
-                    int x = 1;
-                    if(hasShiftDown()){
-                        x = 5;
+                    btn -> {
+                        this.workArea.showBox = true;
+                        int x = 1;
+                        if(hasShiftDown()){
+                            x = 5;
+                        }
+                        Vec3 newPos = workArea.position().relative(player.getDirection().getOpposite(), x);
+                        WorkersMain.SIMPLE_CHANNEL.sendToServer(new MessageUpdateWorkArea(this.workArea.getUUID(), this.workArea.getCustomName().getString(), newPos, false));
+                        this.onAreaMoved();
                     }
-                    Vec3 newPos = workArea.position().relative(player.getDirection().getOpposite(), x);
-                    WorkersMain.SIMPLE_CHANNEL.sendToServer(new MessageUpdateWorkArea(this.workArea.getUUID(), this.workArea.getCustomName().getString(), newPos, false));
-                    this.onAreaMoved();
-                }
         ));
 
         // Move Left
         moveLeft = addRenderableWidget(new ExtendedButton(x - buttonWidth / 2 - buttonWidth, y - buttonHeight / 2, buttonWidth, buttonHeight, TEXT_LEFT,
-                btn -> {
-                    this.workArea.showBox = true;
-                    int x = 1;
-                    if(hasShiftDown()){
-                        x = 5;
-                    }
-                    Vec3 newPos = workArea.position().relative(player.getDirection().getCounterClockWise(), x);
-                    WorkersMain.SIMPLE_CHANNEL.sendToServer(new MessageUpdateWorkArea(this.workArea.getUUID(), this.workArea.getCustomName().getString(), newPos, false));
-                    this.onAreaMoved();
+            btn -> {
+                this.workArea.showBox = true;
+                int x = 1;
+                if(hasShiftDown()){
+                    x = 5;
                 }
+                Vec3 newPos = workArea.position().relative(player.getDirection().getCounterClockWise(), x);
+                WorkersMain.SIMPLE_CHANNEL.sendToServer(new MessageUpdateWorkArea(this.workArea.getUUID(), this.workArea.getCustomName().getString(), newPos, false));
+                this.onAreaMoved();
+            }
         ));
 
         // Move Right
         moveRight = addRenderableWidget(new ExtendedButton(x - buttonWidth / 2 + buttonWidth, y - buttonHeight / 2, buttonWidth, buttonHeight,  TEXT_RIGHT,
-                btn -> {
-                    this.workArea.showBox = true;
-                    int x = 1;
-                    if(hasShiftDown()){
-                        x = 5;
-                    }
-                    Vec3 newPos = workArea.position().relative(player.getDirection().getClockWise(), x);
-                    WorkersMain.SIMPLE_CHANNEL.sendToServer(new MessageUpdateWorkArea(this.workArea.getUUID(), this.workArea.getCustomName().getString(), newPos, false));
-                    this.onAreaMoved();
+            btn -> {
+                this.workArea.showBox = true;
+                int x = 1;
+                if(hasShiftDown()){
+                    x = 5;
                 }
+                Vec3 newPos = workArea.position().relative(player.getDirection().getClockWise(), x);
+                WorkersMain.SIMPLE_CHANNEL.sendToServer(new MessageUpdateWorkArea(this.workArea.getUUID(), this.workArea.getCustomName().getString(), newPos, false));
+                this.onAreaMoved();
+            }
         ));
 
         // Destroy
         destroy = addRenderableWidget(new ExtendedButton(x - buttonWidth / 2, y - buttonHeight / 2, buttonWidth, buttonHeight, TEXT_DESTROY,
-                btn -> {
-                    WorkersMain.SIMPLE_CHANNEL.sendToServer(new MessageUpdateWorkArea(this.workArea.getUUID(), this.workArea.getCustomName().getString(), workArea.position(), true));
-                    this.onClose();
-                }
+            btn -> {
+                WorkersMain.SIMPLE_CHANNEL.sendToServer(new MessageUpdateWorkArea(this.workArea.getUUID(), this.workArea.getCustomName().getString(), workArea.position(), true));
+                this.onClose();
+            }
         ));
 
         rotateLeft = addRenderableWidget(new ExtendedButton(x - buttonWidth / 2 - buttonWidth, y - buttonHeight / 2 + buttonHeight, buttonWidth, buttonHeight, Component.literal("\u21BB"),
-                btn -> {
-                    this.workArea.showBox = true;
-                    WorkersMain.SIMPLE_CHANNEL.sendToServer(new MessageRotateWorkArea(this.workArea.getUUID(), false));
-                    this.workArea.setFacing(this.workArea.getFacing().getCounterClockWise());
-                    this.onAreaMoved();
-                }
+            btn -> {
+                this.workArea.showBox = true;
+                WorkersMain.SIMPLE_CHANNEL.sendToServer(new MessageRotateWorkArea(this.workArea.getUUID(), false));
+                this.workArea.setFacing(this.workArea.getFacing().getCounterClockWise());
+                this.onAreaMoved();
+            }
         ));
 
         rotateRight = addRenderableWidget(new ExtendedButton(x - buttonWidth / 2 + buttonWidth, y - buttonHeight / 2 + buttonHeight, buttonWidth, buttonHeight, Component.literal("\u21BA"),
-                btn -> {
-                    this.workArea.showBox = true;
-                    WorkersMain.SIMPLE_CHANNEL.sendToServer(new MessageRotateWorkArea(this.workArea.getUUID(), true));
-                    this.workArea.setFacing(this.workArea.getFacing().getClockWise());
-                    this.onAreaMoved();
-                }
+            btn -> {
+                this.workArea.showBox = true;
+                WorkersMain.SIMPLE_CHANNEL.sendToServer(new MessageRotateWorkArea(this.workArea.getUUID(), true));
+                this.workArea.setFacing(this.workArea.getFacing().getClockWise());
+                this.onAreaMoved();
+            }
         ));
+        //OWNER STUFF
+        if(playerInfo != null){
+            this.selectedPlayerWidget = new SelectedPlayerWidget(font, x + 80, y - 50, 120, 20, Component.literal("x"), // Button label
+                () -> {
+                    playerInfo = null;
+                    this.selectedPlayerWidget.setPlayer(null, null);
+                    this.setButtons();
+                }
+            );
+
+            this.selectedPlayerWidget.setPlayer(playerInfo.getUUID(), playerInfo.getName());
+            addRenderableWidget(this.selectedPlayerWidget);
+        }
+        else {
+            Button selectPlayerButton = addRenderableWidget(new ExtendedButton(x + 80, y - 50 , 120, 20, SelectPlayerScreen.TITLE,
+                button -> {
+                    minecraft.setScreen(new SelectPlayerScreen(this, player, SelectPlayerScreen.TITLE, SelectPlayerScreen.BUTTON_SELECT, SelectPlayerScreen.BUTTON_SELECT_TOOLTIP, false, PlayersList.FilterType.NONE,
+                            (playerInfo) -> {
+                                this.playerInfo = playerInfo;
+                                WorkersMain.SIMPLE_CHANNEL.sendToServer(new MessageUpdateOwner(this.workArea.getUUID(), playerInfo));
+                                this.workArea.setPlayerName(playerInfo.getName());
+                                this.workArea.setPlayerUUID(playerInfo.getUUID());
+                                minecraft.setScreen(this);
+                                this.onClose();
+                            }
+                    ));
+                }
+            ));
+        }
     }
 
     public void onAreaMoved() {}

@@ -44,7 +44,7 @@ public class MarketAreaScreen extends WorkAreaScreen {
         int w = 120;
         int h = 20;
         int bx = x - w / 2;
-        int by = y + h / 2 + 40;
+        int by = y + h / 2 + 42;
 
         nameEditBox = new EditBox(font, bx, by - h, w, h, Component.literal(""));
         nameEditBox.setValue(marketName);
@@ -61,16 +61,16 @@ public class MarketAreaScreen extends WorkAreaScreen {
 
         int slots = marketArea.getTotalSlots();
 
-        addRenderableWidget(new BlackShowingTextField(bx, by + 21, w, h, Component.literal( TEXT_MERCHANT.getString() + ":")));
-        addRenderableWidget(new BlackShowingTextField(bx, by + 41, w, h, Component.literal(TEXT_SPACE.getString() + ": ")));
+        addRenderableWidget(new BlackShowingTextField(bx, by + 30, w, h, Component.literal( TEXT_MERCHANT.getString() + ":")));
+        addRenderableWidget(new BlackShowingTextField(bx, by + 50, w, h, Component.literal(TEXT_SPACE.getString() + ": ")));
         //addRenderableWidget(new BlackShowingTextField(bx, by + 61, w, h, Component.literal("Depth:")));
-        addRenderableWidget(new BlackShowingTextField(bx + w/2, by + 21, w/2, h, Component.literal("" + merchantName)));
-        addRenderableWidget(new BlackShowingTextField(bx + w/2, by + 41, w/2, h, Component.literal("" + slots)));
+        addRenderableWidget(new BlackShowingTextField(bx + w/2, by + 30, w/2, h, Component.literal("" + merchantName)));
+        addRenderableWidget(new BlackShowingTextField(bx + w/2, by + 50, w/2, h, Component.literal("" + slots)));
         //addRenderableWidget(new BlackShowingTextField(bx + w/2, by + 61, w/2, h, Component.literal("" + areaDepthSize)));
 
 
 
-        openCheckBox = new RecruitsCheckBox(bx, by + 5, w, h,
+        openCheckBox = new RecruitsCheckBox(bx, by + 7, w, h,
                 TEXT_OPEN,
                 isOpen,
                 bool -> {

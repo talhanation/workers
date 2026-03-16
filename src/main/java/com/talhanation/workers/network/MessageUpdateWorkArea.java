@@ -1,5 +1,6 @@
 package com.talhanation.workers.network;
 
+import com.talhanation.recruits.world.RecruitsPlayerInfo;
 import com.talhanation.workers.entities.workarea.AbstractWorkAreaEntity;
 import de.maxhenkel.corelib.net.Message;
 import net.minecraft.network.FriendlyByteBuf;
@@ -22,6 +23,8 @@ public class MessageUpdateWorkArea implements Message<MessageUpdateWorkArea> {
     public UUID uuid;
     public String name;
     public boolean destroy;
+    public UUID playerUUID;
+    public String playerName;
     public MessageUpdateWorkArea() {
 
     }
