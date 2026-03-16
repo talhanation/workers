@@ -385,24 +385,35 @@ public class BuilderWorkGoal extends Goal {
             Entity entity = entityType.create(serverLevel);
             if (entity == null) continue;
 
-            entity.moveTo(worldPos.getX() + 0.5, worldPos.getY() + 0.5, worldPos.getZ() + 0.5, 0, 0);
+            entity.moveTo(worldPos.getX() + 0.5, worldPos.getY() + 1.0, worldPos.getZ() + 0.5, 0, 0);
 
             // Apply facing rotation: rotate the scanned facing by the same rotSteps
-            if (entity instanceof AbstractWorkAreaEntity workArea) {
+            if (entity instanceof AbstractWorkAreaEntity wa) {
                 Direction entityFacing = Direction.from2DDataValue(scanFacingVal);
                 Direction rotatedFacing = rotateDirection(entityFacing, rotSteps);
-                workArea.setFacing(rotatedFacing);
-                workArea.setCustomName(Component.literal(""));
-                workArea.setDone(false);
-                workArea.createArea();
-                if (buildArea.getPlayerUUID() != null) {
-                    workArea.setPlayerUUID(buildArea.getPlayerUUID());
+                wa.setFacing(rotatedFacing);
+
+                // Restore stored dimensions, swapping width↔depth for 90° / 270° rotations
+                if (entityTag.contains("wa_width")) {
+                    int waW = entityTag.getInt("wa_width");
+                    int waH = entityTag.getInt("wa_height");
+                    int waD = entityTag.getInt("wa_depth");
+                    if (rotSteps % 2 == 1) { int tmp = waW; waW = waD; waD = tmp; }
+                    wa.setWidthSize(waW);
+                    wa.setHeightSize(waH);
+                    wa.setDepthSize(waD);
                 }
 
+                // Transfer owner and team from the BuildArea
+                if (buildArea.getPlayerUUID() != null) {
+                    wa.setPlayerUUID(buildArea.getPlayerUUID());
+                }
                 String team = buildArea.getTeamStringID();
                 if (team != null && !team.isEmpty()) {
-                    workArea.setTeamStringID(team);
+                    wa.setTeamStringID(team);
                 }
+
+                wa.setCustomName(Component.literal(""));
             }
 
             serverLevel.addFreshEntity(entity);

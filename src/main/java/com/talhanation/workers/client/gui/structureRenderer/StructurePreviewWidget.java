@@ -18,6 +18,8 @@ import net.minecraft.client.renderer.texture.OverlayTexture;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.nbt.CompoundTag;
+import net.minecraft.nbt.ListTag;
+import net.minecraft.nbt.Tag;
 import net.minecraft.network.chat.Component;
 import net.minecraft.util.Mth;
 import net.minecraft.world.level.block.EntityBlock;
@@ -153,6 +155,25 @@ public class StructurePreviewWidget extends AbstractWidget {
                 1.0f, 0.0f, 0.0f, 1.0f
         );
         poseStack.popPose();
+
+        // Green 1x1x2 marker for each scanned WorkArea entity (simple, no dimension/rotation handling)
+        if (structureNBT.contains("entities", Tag.TAG_LIST)) {
+            ListTag entityList = structureNBT.getList("entities", Tag.TAG_COMPOUND);
+            for (int i = 0; i < entityList.size(); i++) {
+                CompoundTag entityTag = entityList.getCompound(i);
+                int relX = entityTag.getInt("x");
+                int relY = entityTag.getInt("y");
+                int relZ = entityTag.getInt("z");
+                poseStack.pushPose();
+                LevelRenderer.renderLineBox(
+                        poseStack,
+                        bufferSource.getBuffer(RenderType.lines()),
+                        new AABB(relX, relY, relZ, relX + 1, relY + 2, relZ + 1).inflate(0.01),
+                        0.2f, 1.0f, 0.2f, 1.0f
+                );
+                poseStack.popPose();
+            }
+        }
 
         bufferSource.endBatch();
         poseStack.popPose();

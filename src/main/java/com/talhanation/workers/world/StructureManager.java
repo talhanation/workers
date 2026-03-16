@@ -60,10 +60,10 @@ public class StructureManager {
 
         ListTag entityList = new ListTag();
         List<AbstractWorkAreaEntity> workAreas = level.getEntitiesOfClass(AbstractWorkAreaEntity.class, buildArea.getArea());
-        for (AbstractWorkAreaEntity workArea : workAreas) {
-            ResourceLocation typeKey = ForgeRegistries.ENTITY_TYPES.getKey(workArea.getType());
-            if (typeKey == null || workArea instanceof BuildArea) continue;
-            BlockPos delta = workArea.getOnPos().subtract(origin);
+        for (AbstractWorkAreaEntity wa : workAreas) {
+            ResourceLocation typeKey = ForgeRegistries.ENTITY_TYPES.getKey(wa.getType());
+            if (typeKey == null || wa instanceof BuildArea) continue;
+            BlockPos delta = wa.getOnPos().subtract(origin);
             int relZ = dotHorizontal(delta, facing);
             int relX = width - 1 - dotHorizontal(delta, right);
             int relY = delta.getY();
@@ -73,7 +73,11 @@ public class StructureManager {
             entityTag.putInt("x", relX);
             entityTag.putInt("y", relY);
             entityTag.putInt("z", relZ);
-            entityTag.putInt("facing", workArea.getFacing().get2DDataValue());
+            entityTag.putInt("facing", wa.getFacing().get2DDataValue());
+            // Store dimensions so they can be restored (with rotation correction) on placement
+            entityTag.putInt("wa_width",  wa.getWidthSize());
+            entityTag.putInt("wa_height", wa.getHeightSize());
+            entityTag.putInt("wa_depth",  wa.getDepthSize());
             entityList.add(entityTag);
         }
 

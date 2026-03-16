@@ -73,6 +73,7 @@
   "gui.workers.checkbox.milkCow":"Milk Cow",
   "gui.workers.checkbox.throwEggs":"Throw Eggs",
   "gui.workers.checkbox.marketOpen": "Open",
+  "gui.workers.checkbox.closeFloor": "Close Floor",
 
   "gui.workers.button.reset": "Reset",
   "gui.workers.button.add": "Add",

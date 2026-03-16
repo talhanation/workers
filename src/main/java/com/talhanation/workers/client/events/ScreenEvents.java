@@ -3,6 +3,7 @@ package com.talhanation.workers.client.events;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.talhanation.workers.client.gui.BuildAreaScreen;
 import com.talhanation.workers.entities.workarea.AbstractWorkAreaEntity;
+import com.talhanation.workers.entities.workarea.BuildArea;
 import com.talhanation.workers.entities.workarea.MarketArea;
 import net.minecraft.client.Camera;
 import net.minecraft.client.Minecraft;
@@ -60,13 +61,23 @@ public class ScreenEvents {
 
         MultiBufferSource.BufferSource bufferSource = mc.renderBuffers().bufferSource();
 
+        UUID openBuildAreaUuid = null;
+        if (mc.screen instanceof BuildAreaScreen bas) {
+            openBuildAreaUuid = bas.workArea.getUUID();
+        }
+
         for (AbstractWorkAreaEntity workArea : mc.level.getEntitiesOfClass(AbstractWorkAreaEntity.class, mc.player.getBoundingBox().inflate(100))) {
             AABB area = workArea.getArea();
             AABB worldBox = new AABB(area.minX, area.minY, area.minZ, area.maxX + 1, area.maxY, area.maxZ + 1);
             AABB shifted = worldBox.move(-camPos.x, -camPos.y, -camPos.z);
 
+            boolean isActive = openBuildAreaUuid != null && workArea.getUUID().equals(openBuildAreaUuid);
+            float r = isActive ? 0.2F : 1.0F;
+            float g = isActive ? 1.0F : 1.0F;
+            float b = isActive ? 0.2F : 1.0F;
+
             LevelRenderer.renderLineBox(poseStack, bufferSource.getBuffer(RenderType.lines()),
-                    shifted, 1.0F, 1.0F, 1.0F, 1.0F);
+                    shifted, r, g, b, 1.0F);
         }
 
         bufferSource.endBatch(RenderType.lines());

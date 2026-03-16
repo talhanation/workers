@@ -14,6 +14,7 @@ import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.ListTag;
 import net.minecraft.nbt.NbtUtils;
 import net.minecraft.nbt.Tag;
+import net.minecraft.network.chat.Component;
 import net.minecraft.network.syncher.EntityDataAccessor;
 import net.minecraft.network.syncher.EntityDataSerializers;
 import net.minecraft.network.syncher.SynchedEntityData;
@@ -171,16 +172,31 @@ public class BuildArea extends AbstractWorkAreaEntity {
             Entity entity = entityType.create(serverLevel);
             if (entity == null) continue;
 
-            entity.moveTo(worldPos.getX() + 0.5, worldPos.getY(), worldPos.getZ() + 0.5, 0, 0);
+            entity.moveTo(worldPos.getX() + 0.5, worldPos.getY() + 1.0, worldPos.getZ() + 0.5, 0, 0);
 
             if (entity instanceof AbstractWorkAreaEntity wa) {
                 Direction entityFacing = Direction.from2DDataValue(scanFacingVal);
                 // rotate clockwise rotSteps times
                 for (int i = 0; i < rotSteps; i++) entityFacing = entityFacing.getClockWise();
                 wa.setFacing(entityFacing);
+
+                // Restore stored dimensions, swapping width↔depth for 90° / 270° rotations
+                if (entityTag.contains("wa_width")) {
+                    int waW = entityTag.getInt("wa_width");
+                    int waH = entityTag.getInt("wa_height");
+                    int waD = entityTag.getInt("wa_depth");
+                    // width is perpendicular to facing, depth is parallel — swapped on odd rotations
+                    if (rotSteps % 2 == 1) { int tmp = waW; waW = waD; waD = tmp; }
+                    wa.setWidthSize(waW);
+                    wa.setHeightSize(waH);
+                    wa.setDepthSize(waD);
+                }
+
                 if (this.getPlayerUUID() != null) wa.setPlayerUUID(this.getPlayerUUID());
                 String team = this.getTeamStringID();
                 if (team != null && !team.isEmpty()) wa.setTeamStringID(team);
+
+                wa.setCustomName(Component.literal(""));
             }
 
             serverLevel.addFreshEntity(entity);
