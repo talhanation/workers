@@ -113,8 +113,8 @@ public class StorageArea extends AbstractWorkAreaEntity {
         FARMERS(3),
         MERCHANTS(4),
         FISHERMAN(5),
-        ANIMAL_FARMERS(6);
-
+        ANIMAL_FARMERS(6),
+        COURIER(7);
         private final int index;
         StorageType(int index){
             this.index = index;
@@ -156,6 +156,9 @@ public class StorageArea extends AbstractWorkAreaEntity {
             }
             else if( worker instanceof AnimalFarmerEntity){
                 return this.getStorageTypes().contains(StorageType.ANIMAL_FARMERS);
+            }
+            else if( worker instanceof CourierEntity){
+                return this.getStorageTypes().contains(StorageType.COURIER);
             }
 
         }

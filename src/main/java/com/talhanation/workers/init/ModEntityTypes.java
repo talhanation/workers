@@ -125,64 +125,10 @@ public class ModEntityTypes {
                                 .updateInterval(5)
                                 .build(new ResourceLocation(WorkersMain.MOD_ID, "fishing_bobber").toString()));
 
-/*
-        public static final RegistryObject<EntityType<FishermanEntity>> FISHERMAN = ENTITY_TYPES.register("fisherman",
-                        () -> EntityType.Builder.of(FishermanEntity::new, MobCategory.CREATURE)
-                                        .sized(0.6F, 1.95F)
-                                        .canSpawnFarFromPlayer()
-                                        .setTrackingRange(32)
-                                        .setShouldReceiveVelocityUpdates(true)
-                                        .build(new ResourceLocation(Main.MOD_ID, "fisherman").toString()));
-
-        public static final RegistryObject<EntityType<MerchantEntity>> MERCHANT = ENTITY_TYPES.register("merchant",
-                        () -> EntityType.Builder.of(MerchantEntity::new, MobCategory.CREATURE)
-                                        .sized(0.6F, 1.95F)
-                                        .canSpawnFarFromPlayer()
-                                        .setTrackingRange(32)
-                                        .setShouldReceiveVelocityUpdates(true)
-                                        .build(new ResourceLocation(Main.MOD_ID, "merchant").toString()));
-
-        public static final RegistryObject<EntityType<CattleFarmerEntity>> CATTLE_FARMER = ENTITY_TYPES.register(
-                        "cattle_farmer",
-                        () -> EntityType.Builder.of(CattleFarmerEntity::new, MobCategory.CREATURE)
-                                        .sized(0.6F, 1.95F)
-                                        .canSpawnFarFromPlayer()
-                                        .setTrackingRange(32)
-                                        .setShouldReceiveVelocityUpdates(true)
-                                        .build(new ResourceLocation(Main.MOD_ID, "cattle_farmer").toString()));
-
-        public static final RegistryObject<EntityType<ChickenFarmerEntity>> CHICKEN_FARMER = ENTITY_TYPES.register(
-                        "chicken_farmer",
-                        () -> EntityType.Builder.of(ChickenFarmerEntity::new, MobCategory.CREATURE)
-                                        .sized(0.6F, 1.95F)
-                                        .canSpawnFarFromPlayer()
-                                        .setTrackingRange(32)
-                                        .setShouldReceiveVelocityUpdates(true)
-                                        .build(new ResourceLocation(Main.MOD_ID, "chicken_farmer").toString()));
-
-        public static final RegistryObject<EntityType<SwineherdEntity>> SWINEHERD = ENTITY_TYPES.register("swineherd",
-                        () -> EntityType.Builder.of(SwineherdEntity::new, MobCategory.CREATURE)
-                                        .sized(0.6F, 1.95F)
-                                        .canSpawnFarFromPlayer()
-                                        .setTrackingRange(32)
-                                        .setShouldReceiveVelocityUpdates(true)
-                                        .build(new ResourceLocation(Main.MOD_ID, "swineherd").toString()));
-
-        public static final RegistryObject<EntityType<RabbitFarmerEntity>> RABBIT_FARMER = ENTITY_TYPES.register(
-                        "rabbit_farmer",
-                        () -> EntityType.Builder.of(RabbitFarmerEntity::new, MobCategory.CREATURE)
-                                        .sized(0.6F, 1.95F)
-                                        .canSpawnFarFromPlayer()
-                                        .setTrackingRange(32)
-                                        .setShouldReceiveVelocityUpdates(true)
-                                        .build(new ResourceLocation(Main.MOD_ID, "rabbit_farmer").toString()));
-
-        public static final RegistryObject<EntityType<BeekeeperEntity>> BEEKEEPER = ENTITY_TYPES.register("beekeeper",
-                        () -> EntityType.Builder.of(BeekeeperEntity::new, MobCategory.CREATURE)
-                                        .sized(0.6F, 1.95F)
-                                        .canSpawnFarFromPlayer()
-                                        .setTrackingRange(32)
-                                        .setShouldReceiveVelocityUpdates(true)
-                                        .build(new ResourceLocation(Main.MOD_ID, "beekeeper").toString()));
-*/
+        public static final RegistryObject<EntityType<CourierEntity>> COURIER = ENTITY_TYPES.register("courier",
+                () -> EntityType.Builder.of(CourierEntity::new, MobCategory.MISC)
+                        .sized(0.6F, 1.95F)
+                        .canSpawnFarFromPlayer()
+                        .setTrackingRange(32)
+                        .build(new ResourceLocation(WorkersMain.MOD_ID, "courier").toString()));
 }

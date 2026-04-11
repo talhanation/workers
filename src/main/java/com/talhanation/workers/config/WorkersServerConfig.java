@@ -15,6 +15,7 @@ public class WorkersServerConfig {
     public static ForgeConfigSpec.IntValue MinerCost;
     public static ForgeConfigSpec.IntValue BuilderCost;
     public static ForgeConfigSpec.IntValue MerchantCost;
+    public static ForgeConfigSpec.IntValue CourierCost;
     public static ForgeConfigSpec.BooleanValue BuilderActive;
     public static ForgeConfigSpec.IntValue AnimalPenMaxAnimals;
     public static ForgeConfigSpec.BooleanValue ShouldWorkAreaOnlyBeInFactionClaim;
@@ -152,6 +153,14 @@ public class WorkersServerConfig {
                         \tdefault: 30""")
                 .worldRestart()
                 .defineInRange("MerchantCost", 30, 0, 1453);
+
+        CourierCost = BUILDER.comment("""
+                        
+                        The amount of currency required to hire a courier.
+                        \t(takes effect after restart)
+                        \tdefault: 30""")
+                .worldRestart()
+                .defineInRange("CourierCost", 20, 0, 1453);
 
         ShouldWorkAreaOnlyBeInFactionClaim = BUILDER.comment("""
                         

@@ -39,6 +39,7 @@ public class ClientEvent {
             EntityRenderers.register(ModEntityTypes.MERCHANT.get(), WorkerVillagerRenderer::new);
             EntityRenderers.register(ModEntityTypes.FISHERMAN.get(), WorkerVillagerRenderer::new);
             EntityRenderers.register(ModEntityTypes.ANIMAL_FARMER.get(), WorkerVillagerRenderer::new);
+            EntityRenderers.register(ModEntityTypes.COURIER.get(), WorkerVillagerRenderer::new);
         }
         else{
             EntityRenderers.register(ModEntityTypes.FARMER.get(), WorkerHumanRenderer::new);
@@ -48,6 +49,7 @@ public class ClientEvent {
             EntityRenderers.register(ModEntityTypes.MERCHANT.get(), WorkerHumanRenderer::new);
             EntityRenderers.register(ModEntityTypes.FISHERMAN.get(), WorkerHumanRenderer::new);
             EntityRenderers.register(ModEntityTypes.ANIMAL_FARMER.get(), WorkerHumanRenderer::new);
+            EntityRenderers.register(ModEntityTypes.COURIER.get(), WorkerHumanRenderer::new);
         }
     }
 }

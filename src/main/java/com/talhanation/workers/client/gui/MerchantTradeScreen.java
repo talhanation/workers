@@ -63,8 +63,6 @@ public class MerchantTradeScreen extends ScreenBase<MerchantTradeContainer> {
     private static final int LIST_Y = 18;
     private static final int LIST_W = 85;
     private static final int LIST_H = 170;
-    private static final int TRADE_TITLE_X = 98;
-    private static final int TRADE_TITLE_Y = 58;
 
     public MerchantTradeScreen(MerchantTradeContainer tradeContainer, Inventory playerInventory, Component title) {
         super(RESOURCE_LOCATION, tradeContainer, playerInventory, Component.literal("Trades"));

@@ -21,7 +21,7 @@ public class StorageAreaScreen extends WorkAreaScreen {
     private static final MutableComponent TEXT_FARMERS = Component.translatable("gui.workers.checkbox.farmers");
     private static final MutableComponent TEXT_MERCHANTS = Component.translatable("gui.workers.checkbox.merchants");
     private static final MutableComponent TEXT_FISHERMAN = Component.translatable("gui.workers.checkbox.fisherman");
-
+    private static final MutableComponent TEXT_COURIERS = Component.translatable("gui.workers.checkbox.couriers");
     private static final Component TEXT_STORAGE_NAME = Component.translatable("entity.workers.storage");;
     public final StorageArea storageArea;
     private boolean replant;
@@ -34,6 +34,7 @@ public class StorageAreaScreen extends WorkAreaScreen {
     private RecruitsCheckBox merchantsCheckBox;
     private RecruitsCheckBox fishermanCheckBox;
     private RecruitsCheckBox animalFarmerCheckBox;
+    private RecruitsCheckBox courierCheckBox;
     private boolean miners;
     private boolean lumbers;
     private boolean builders;
@@ -41,6 +42,7 @@ public class StorageAreaScreen extends WorkAreaScreen {
     private boolean merchants;
     private boolean fisherman;
     private boolean animalFarmer;
+    private boolean courier;
     private EnumSet<StorageArea.StorageType> types;
     public EditBox nameEditBox;
     public Component savedName;
@@ -55,6 +57,7 @@ public class StorageAreaScreen extends WorkAreaScreen {
         this.merchants = types.contains(StorageArea.StorageType.MERCHANTS);
         this.fisherman = types.contains(StorageArea.StorageType.FISHERMAN);
         this.animalFarmer = types.contains(StorageArea.StorageType.ANIMAL_FARMERS);
+        this.courier = types.contains(StorageArea.StorageType.COURIER);
     }
 
     @Override
@@ -190,6 +193,21 @@ public class StorageAreaScreen extends WorkAreaScreen {
                 }
         );
         addRenderableWidget(animalFarmerCheckBox);
+
+        this.courierCheckBox = new RecruitsCheckBox(checkBoxX, 150 + checkBoxY, checkBoxWidth, checkBoxHeight, TEXT_COURIERS,
+                this.courier,
+                (bool) -> {
+                    this.courier = bool;
+                    if(courier){
+                        types.add(StorageArea.StorageType.COURIER);
+                    }
+                    else{
+                        types.remove(StorageArea.StorageType.COURIER);
+                    }
+                    sendMessage();
+                }
+        );
+        addRenderableWidget(courierCheckBox);
 
     }
 

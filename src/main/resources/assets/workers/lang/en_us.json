@@ -60,6 +60,7 @@
   "gui.workers.checkbox.merchants":"Merchants",
   "gui.workers.checkbox.animalFarmers":"Animal Farmers",
   "gui.workers.checkbox.fisherman":"Fisherman",
+  "gui.workers.checkbox.couriers":"Couriers",
   "gui.workers.checkbox.breed":"Breed",
   "gui.workers.checkbox.maxAnimals":"Max Animals:",
   "gui.workers.checkbox.slaughter":"Slaughter",
@@ -102,6 +103,10 @@
   "description.workers.title.animalFarmer": "Animal Farmer",
   "description.workers.animalFarmer": "Takes care of animals in defined pens. Breeds the animals faster and efficient than a player could .",
 
+  "description.workers.title.courier": "Courier",
+  "description.workers.courier": "",
+
+
   "gui.workers.text.noMerchant": "No Merchant",
   "gui.workers.text.merchantPresent": "Merchant Present",
 
@@ -116,5 +121,16 @@
   "chat.workers.text.merchantNoSpace": "%s: Sorry, i don't have any space left.",
   "chat.workers.text.merchantNoSpaceOwner": "%s: I need more storage space to continue trading!",
   "gui.workers.area.overlapping": "Areas cannot overlap!",
-  "gui.workers.text.dailyRefresh": "Daily Restock"
+  "gui.workers.text.dailyRefresh": "Daily Restock",
+
+  "chat.workers.courier.noTargetFound": "%s: Target: %s could not be found!",
+  "chat.workers.courier.sourceEmpty": "%s: Could not take %s from %s, its empty!",
+  "chat.workers.courier.targetFull": "%s: Could not take %s from %s, its Full!",
+  "gui.workers.courier.route" : "Route",
+  "gui.workers.courier.noRoute": "No Route",
+  "gui.workers.courier.waypoints": "Waypoints",
+  "gui.workers.courier.actions": "Actions",
+  "gui.workers.courier.map": "Map",
+  "gui.workers.courier.apply": "Apply",
+  "gui.workers.courier.waypointName" : "Name"
 }

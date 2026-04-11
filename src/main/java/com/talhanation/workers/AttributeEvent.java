@@ -18,6 +18,7 @@ public class AttributeEvent {
         event.put(ModEntityTypes.MERCHANT.get(), MerchantEntity.setAttributes().build());
         event.put(ModEntityTypes.FISHERMAN.get(), FishermanEntity.setAttributes().build());
         event.put(ModEntityTypes.ANIMAL_FARMER.get(), AnimalFarmerEntity.setAttributes().build());
+        event.put(ModEntityTypes.COURIER.get(), AnimalFarmerEntity.setAttributes().build());
         /*
         event.put(ModEntityTypes.SHEPHERD.get(), ShepherdEntity.setAttributes().build());
         event.put(ModEntityTypes.CATTLE_FARMER.get(), CattleFarmerEntity.setAttributes().build());

@@ -98,7 +98,9 @@ public class WorkersMain {
             MessageRotateWorkArea.class,
             MessageMoveMerchantTrade.class,
             MessageUpdateMarketArea.class,
-            MessageUpdateOwner.class
+            MessageUpdateOwner.class,
+            MessageCourierSetRoute.class,
+            MessageOpenCourierScreen.class
         };
         for (int i = 0; i < messages.length; i++) CommonRegistry.registerMessage(SIMPLE_CHANNEL, i, messages[i]);
     }
@@ -121,6 +123,7 @@ public class WorkersMain {
             event.accept(ModItems.BUILDER_SPAWN_EGG.get());
             event.accept(ModItems.FISHERMAN_SPAWN_EGG.get());
             event.accept(ModItems.ANIMAL_FARMER_SPAWN_EGG.get());
+            event.accept(ModItems.COURIER_SPAWN_EGG.get());
         }
     }
 }

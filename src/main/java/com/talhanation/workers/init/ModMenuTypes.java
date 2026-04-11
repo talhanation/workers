@@ -4,9 +4,12 @@ import java.util.Arrays;
 import java.util.UUID;
 import javax.annotation.Nullable;
 
+import com.talhanation.workers.client.gui.CourierScreen;
 import com.talhanation.workers.client.gui.MerchantAddEditTradeScreen;
 import com.talhanation.workers.client.gui.MerchantTradeScreen;
+import com.talhanation.workers.entities.CourierEntity;
 import com.talhanation.workers.entities.MerchantEntity;
+import com.talhanation.workers.inventory.CourierContainer;
 import com.talhanation.workers.inventory.MerchantAddEditTradeContainer;
 import com.talhanation.workers.inventory.MerchantTradeContainer;
 import com.talhanation.workers.world.WorkersMerchantTrade;
@@ -38,6 +41,7 @@ public class ModMenuTypes {
     public static void registerMenus() {
         registerMenu(MERCHANT_ADD_EDIT_TRADE_CONTAINER_TYPE.get(), MerchantAddEditTradeScreen::new);
         registerMenu(MERCHANT_TRADE_CONTAINER_TYPE.get(), MerchantTradeScreen::new);
+        registerMenu(COURIER_CONTAINER_TYPE.get(), CourierScreen::new);
     }
 
     public static final RegistryObject<MenuType<MerchantAddEditTradeContainer>> MERCHANT_ADD_EDIT_TRADE_CONTAINER_TYPE =
@@ -59,6 +63,14 @@ public class ModMenuTypes {
                 }
                 return new MerchantTradeContainer(windowId, merchant, inv);
             }));
+
+    public static final RegistryObject<MenuType<CourierContainer>> COURIER_CONTAINER_TYPE =
+            MENU_TYPES.register("courier_container", () -> IForgeMenuType.create((windowId, inv, data) -> {
+                CourierEntity courier = (CourierEntity) getRecruitByUUID(inv.player, data.readUUID());
+                if (courier == null) return null;
+                return new CourierContainer(windowId, courier, inv);
+            }));
+
 
     /**
      * Registers a menuType/container with a screen constructor.

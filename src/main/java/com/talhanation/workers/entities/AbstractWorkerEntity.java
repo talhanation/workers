@@ -459,10 +459,6 @@ public abstract class AbstractWorkerEntity extends AbstractChunkLoaderEntity {
         return false;
     }
 
-    public void openDepositsGUI(Player player) {
-
-    }
-
     public boolean shouldWork() {
         return this.isOwned() && (this.getFollowState() == 0 || this.getFollowState() == 6);
     }

@@ -2,6 +2,7 @@ package com.talhanation.workers.entities;
 
 import com.talhanation.recruits.Main;
 import com.talhanation.recruits.entities.AbstractRecruitEntity;
+import com.talhanation.recruits.entities.ICanTradeEmbargo;
 import com.talhanation.recruits.pathfinding.AsyncGroundPathNavigation;
 import com.talhanation.workers.WorkersMain;
 import com.talhanation.workers.config.WorkersServerConfig;
@@ -45,7 +46,7 @@ import java.util.List;
 import java.util.UUID;
 import java.util.function.Predicate;
 
-public class MerchantEntity extends AbstractWorkerEntity {
+public class MerchantEntity extends AbstractWorkerEntity implements ICanTradeEmbargo {
     private static final EntityDataAccessor<CompoundTag> TRADES = SynchedEntityData.defineId(MerchantEntity.class, EntityDataSerializers.COMPOUND_TAG);
     private static final EntityDataAccessor<Integer> TRADER_PROGRESS = SynchedEntityData.defineId(MerchantEntity.class, EntityDataSerializers.INT);
     private static final EntityDataAccessor<Integer> TRADER_LEVEL = SynchedEntityData.defineId(MerchantEntity.class, EntityDataSerializers.INT);
@@ -68,7 +69,7 @@ public class MerchantEntity extends AbstractWorkerEntity {
 
     @Override
     public boolean shouldLoadChunk() {
-        return false;
+        return true;
     }
 
     @Override
@@ -613,5 +614,10 @@ public class MerchantEntity extends AbstractWorkerEntity {
 
     public Component TEXT_NO_SPACE_OWNER(){
         return Component.translatable("chat.workers.text.merchantNoSpaceOwner", this.getName().getString());
+    }
+
+    @Override
+    public String getEmbargoTeamID() {
+        return this.getTeam() != null ? this.getTeam().getName() : "";
     }
 }
