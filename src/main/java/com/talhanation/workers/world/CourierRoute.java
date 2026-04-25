@@ -92,11 +92,6 @@ public class CourierRoute {
         if (wps.isEmpty() && routeId == null) return null;
         return new CourierRoute(routeId, wps);
     }
-
-    // ═════════════════════════════════════════════════════════════════════════
-    // Nested class
-    // ═════════════════════════════════════════════════════════════════════════
-
     public static class CourierWaypoint {
 
         private final BlockPos             position;

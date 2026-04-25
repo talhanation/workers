@@ -3,6 +3,7 @@ package com.talhanation.workers.client.gui;
 import com.mojang.blaze3d.systems.RenderSystem;
 import com.talhanation.recruits.client.gui.worldmap.WorldMapScreen;
 import com.talhanation.recruits.client.gui.widgets.ScrollDropDownMenu;
+import com.talhanation.recruits.client.gui.widgets.RecruitsCheckBox;
 import com.talhanation.recruits.world.RecruitsRoute;
 import com.talhanation.workers.WorkersMain;
 import com.talhanation.workers.entities.CourierEntity;
@@ -15,6 +16,7 @@ import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.components.AbstractWidget;
 import net.minecraft.client.gui.components.ObjectSelectionList;
+import net.minecraft.client.gui.components.Tooltip;
 import net.minecraft.client.gui.components.events.GuiEventListener;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.MutableComponent;
@@ -35,90 +37,76 @@ import static net.minecraft.client.gui.components.AbstractWidget.WIDGETS_LOCATIO
 
 public class CourierScreen extends ScreenBase<CourierContainer> {
 
-    // ── Texture & image size ───────────────────────────────────────────────────
-
     private static final ResourceLocation TEXTURE =
             new ResourceLocation(WorkersMain.MOD_ID, "textures/gui/courier.png");
 
     private static final int IMG_W = 256;
     private static final int IMG_H = 197;
-
-    // ── Layout constants (image-relative) ─────────────────────────────────────
-
-    // Header row (all image-relative x/y)
     private static final int ROUTE_X = 3;
     private static final int ROUTE_Y = 4;
-    private static final int ROUTE_W = 200;   // wide: spans to map button
+    private static final int ROUTE_W = 200;
     private static final int ROUTE_H = 16;
 
-    private static final int MAP_X   = 208;
-    private static final int MAP_Y   = 4;
-    private static final int MAP_W   = 44;
-    private static final int MAP_H   = 16;
-
-    // Apply button — outside the image, bottom-right
+    private static final int MAP_X = 208;
+    private static final int MAP_Y = 4;
+    private static final int MAP_W = 44;
+    private static final int MAP_H = 16;
     private static final int APPLY_W = 60;
-    private static final int APPLY_H = 16;
+    private static final int APPLY_H = 20;
 
-    // Waypoint list (left panel)
-    private static final int WP_X      = 4;
-    private static final int WP_Y      = 22;
-    private static final int WP_W      = 78;
-    private static final int WP_H      = 166;
+    private static final int WP_X = 4;
+    private static final int WP_Y = 22;
+    private static final int WP_W = 78;
+    private static final int WP_H = 166;
     private static final int WP_ITEM_H = 20;
-
-    // Action area (right panel)
-    private static final int ACT_X         = 87;
-    private static final int ACT_Y         = 22;
-    private static final int ACT_W         = 159;
-    private static final int ACT_H         = 87;
-    private static final int ACT_ROW_H     = 20;
-    private static final int ACT_MAX_VIS   = 4;
-    private static final int ACT_PAD_X     = 2;
-
-    // Action scrollbar — right edge
+    private static final int ACT_X = 87;
+    private static final int ACT_Y = 22;
+    private static final int ACT_W = 159;
+    private static final int ACT_H = 87;
+    private static final int ACT_ROW_H = 20;
+    private static final int ACT_MAX_VIS = 4;
+    private static final int ACT_PAD_X = 2;
     private static final int ACT_SB_W = 5;
     private static final int ACT_SB_X = ACT_X + ACT_W - ACT_SB_W;  // = 241
     private static final int ACT_SB_H = ACT_MAX_VIS * ACT_ROW_H;   // = 72
-
-    // Action row columns (PICKUP/DEPOSIT: TYPE|SRC|ITEM|NUM|REM, WAIT: TYPE|ADJ|NUM|REM)
     private static final int COL_TYPE = 50;
     private static final int COL_SRC  = 50;
     private static final int COL_ITEM = 16;
-    private static final int COL_ADJ  = 12;   // +/- button width (WAIT only)
+    private static final int COL_ADJ  = 12;
     private static final int COL_GAP  = 3;
 
-    // Inventory label (7px above default)
-    private static final int INV_LABEL_Y = ACT_Y + ACT_H - 5;  // = 104
+    private static final int INV_LABEL_Y = ACT_Y + ACT_H - 5;
 
-    // Colours
-    private static final int FONT_COLOR      = 4210752;
-    private static final int ROW_BG_COLOR    = FastColor.ARGB32.color(200, 40, 40, 40);
+    private static final int FONT_COLOR = 4210752;
+    private static final int ROW_BG_COLOR = FastColor.ARGB32.color(200, 40, 40, 40);
     private static final int ADD_ENTRY_COLOR = FastColor.ARGB32.color(160, 30, 30, 30);
-    private static final int ADD_TEXT_COLOR  = FastColor.ARGB32.color(255, 180, 180, 180);
-    // MC-style inventory slot
-    private static final int SLOT_BORDER     = 0xFF000000;
-    private static final int SLOT_FILL       = 0xFF8B8B8B;
+    private static final int ADD_TEXT_COLOR = FastColor.ARGB32.color(255, 180, 180, 180);
+
+    private static final int SLOT_BORDER = 0xFF000000;
+    private static final int SLOT_FILL = 0xFF8B8B8B;
 
     // ── i18n ──────────────────────────────────────────────────────────────────
 
     private static final MutableComponent TEXT_NO_ROUTE = Component.translatable("gui.workers.courier.noRoute");
-    private static final MutableComponent TEXT_APPLY    = Component.translatable("gui.workers.courier.apply");
-    private static final MutableComponent TEXT_MAP      = Component.translatable("gui.workers.courier.map");
-
+    private static final MutableComponent TEXT_APPLY = Component.translatable("gui.workers.courier.apply");
+    private static final MutableComponent TEXT_MAP = Component.translatable("gui.workers.courier.map");
+    private static final MutableComponent TEXT_VEHICLE_INV = Component.translatable("gui.workers.checkbox.useVehicleInventory");
+    private static final MutableComponent TOOLTIP_VEHICLE_INV = Component.translatable("gui.workers.checkbox.tooltip.useVehicleInventory");
     // ── Screen state ──────────────────────────────────────────────────────────
 
     private final CourierEntity courierEntity;
-    private final Player        player;
+    private final Player player;
 
     private final List<RecruitsRoute> availableRoutes = new ArrayList<>();
-    @Nullable private RecruitsRoute   selectedRoute   = null;
-    @Nullable private CourierRoute    workingRoute    = null;
+    @Nullable private RecruitsRoute selectedRoute   = null;
+    @Nullable private CourierRoute workingRoute    = null;
 
-    private int  selectedWaypointIndex = -1;
-    private int  actionScrollOffset    = 0;
+    private int selectedWaypointIndex = -1;
+    private int actionScrollOffset = 0;
     private boolean isDraggingScrollbar = false;
-    private int     scrollbarDragStartY = 0;
+    private int     scrollbarDragStartY  = 0;
+    /** Whether the courier should use the vehicle's inventory instead of its own. */
+    private boolean useVehicleInventory  = false;
 
     // ── Tracked widgets ───────────────────────────────────────────────────────
 
@@ -175,6 +163,7 @@ public class CourierScreen extends ScreenBase<CourierContainer> {
                 if (r.getId().equals(id)) { selectedRoute = r; break; }
             }
         }
+        useVehicleInventory = routeData.getBoolean("useVehicleInventory");
     }
 
     // ── Widget construction ────────────────────────────────────────────────────
@@ -212,7 +201,13 @@ public class CourierScreen extends ScreenBase<CourierContainer> {
 
         ExtendedButton mapBtn = new ExtendedButton(
                 x + MAP_X, y + MAP_Y, MAP_W, MAP_H,
-                TEXT_MAP, b -> Minecraft.getInstance().setScreen(new WorldMapScreen()));
+                TEXT_MAP, b -> {
+                    WorldMapScreen mapScreen = new WorldMapScreen();
+                    if(selectedRoute != null){
+                        mapScreen.selectedRoute = this.selectedRoute;
+                    }
+                    Minecraft.getInstance().setScreen(mapScreen);
+        });
         mapBtn.active = selectedRoute != null;
         addRenderableWidget(mapBtn);
 
@@ -220,11 +215,22 @@ public class CourierScreen extends ScreenBase<CourierContainer> {
         // Positioned to the right of the image panel.
 
         ExtendedButton applyBtn = new ExtendedButton(
-                x + IMG_W + 4, y + IMG_H - APPLY_H,
+                x + IMG_W + 4, y + IMG_H - APPLY_H - 1,
                 APPLY_W, APPLY_H,
-                TEXT_APPLY, b -> applyChanges());
+                TEXT_APPLY, b -> applyChanges(true));
         applyBtn.active = workingRoute != null;
         addRenderableWidget(applyBtn);
+
+        // ── Vehicle inventory checkbox — right of map button ───────────────────
+
+        RecruitsCheckBox vehicleCheckbox = new RecruitsCheckBox(
+                x + MAP_X + MAP_W + 4,
+                applyBtn.getY() - 1 - 20,
+                20, 20,
+                TEXT_VEHICLE_INV, useVehicleInventory, false,
+                val -> { useVehicleInventory = val; applyChanges(false); });
+        vehicleCheckbox.setTooltip(Tooltip.create(TOOLTIP_VEHICLE_INV));
+        addRenderableWidget(vehicleCheckbox);
 
         // ── Waypoint list (MerchantTradeScreen pattern) ────────────────────────
 
@@ -300,13 +306,13 @@ public class CourierScreen extends ScreenBase<CourierContainer> {
                 action.getActionType(),
                 x, rowY, COL_TYPE, h,
                 List.of(CourierAction.ActionType.PICKUP,
+                        CourierAction.ActionType.PICKUP_ANY,
+                        CourierAction.ActionType.PICKUP_ALL,
                         CourierAction.ActionType.DEPOSIT,
+                        CourierAction.ActionType.DEPOSIT_ANY,
+                        CourierAction.ActionType.DEPOSIT_ALL,
                         CourierAction.ActionType.WAIT),
-                t -> switch (t) {
-                    case PICKUP  -> "Pickup";
-                    case DEPOSIT -> "Deposit";
-                    case WAIT    -> "Wait";
-                },
+                CourierAction.ActionType::displayLabel,
                 t -> {
                     action.setActionType(t);
                     if (t == CourierAction.ActionType.WAIT) {
@@ -316,8 +322,8 @@ public class CourierScreen extends ScreenBase<CourierContainer> {
                     } else {
                         if (action.getSourceType() == null)
                             action.setSourceType(CourierAction.SourceType.CHEST);
-                        if (action.getItemStack() == null)
-                            action.setItemStack(ItemStack.EMPTY);
+                        if (!t.hasItemSlot()) action.setItemStack(null);
+                        else if (action.getItemStack() == null) action.setItemStack(ItemStack.EMPTY);
                     }
                     buildWidgets();
                 });
@@ -362,9 +368,9 @@ public class CourierScreen extends ScreenBase<CourierContainer> {
             sourceTypeDDs.add(srcDD);
             x += COL_SRC + COL_GAP;
 
-            // Item slot — rendered manually; no +/− buttons
-            itemSlotPos.add(new int[]{ x, rowY, actionIdx });
-            // count label drawn in renderActionRows
+            // Item slot — rendered manually; only for types that need a filter
+            if (action.getActionType().hasItemSlot())
+                itemSlotPos.add(new int[]{ x, rowY, actionIdx });
 
         } else {
 
@@ -395,16 +401,16 @@ public class CourierScreen extends ScreenBase<CourierContainer> {
 
     // ── Apply / save ──────────────────────────────────────────────────────────
 
-    private void applyChanges() {
+    private void applyChanges(boolean start) {
         if (workingRoute == null) return;
         WorkersMain.SIMPLE_CHANNEL.sendToServer(
-                new MessageCourierSetRoute(courierEntity.getUUID(), workingRoute));
+                new MessageCourierSetRoute(courierEntity.getUUID(), workingRoute, useVehicleInventory, start));
     }
 
     /** Auto-save on close (ESC, map button, etc.). */
     @Override
     public void onClose() {
-        applyChanges();
+        applyChanges(false);
         super.onClose();
     }
 
@@ -459,7 +465,7 @@ public class CourierScreen extends ScreenBase<CourierContainer> {
             RenderSystem.enableBlend();
             guiGraphics.fill(rowX, rowY, rowX + ACT_W, rowY + ACT_ROW_H - 1, ROW_BG_COLOR);
 
-            if (action.getActionType() != CourierAction.ActionType.WAIT) {
+            if (action.getActionType().hasItemSlot()) {
 
                 // ── Item slot (MC style: black border, gray fill) ──────────────
                 for (int[] slot : itemSlotPos) {
@@ -515,32 +521,32 @@ public class CourierScreen extends ScreenBase<CourierContainer> {
     }
 
     @Override
-    protected void renderLabels(GuiGraphics g, int mouseX, int mouseY) {
-        g.drawString(font, title, 8, 5, FONT_COLOR, false);
-        g.drawString(font,
-                player.getInventory().getDisplayName().getVisualOrderText(),
-                menu.getInvXOffset() + 8, INV_LABEL_Y, FONT_COLOR, false);
+    protected void renderLabels(GuiGraphics guiGraphics, int mouseX, int mouseY) {
+        guiGraphics.drawString(font, player.getInventory().getDisplayName().getVisualOrderText(), menu.getInvXOffset() + 8, INV_LABEL_Y, FONT_COLOR, false);
     }
 
     // ── Scrollbar helpers ──────────────────────────────────────────────────────
 
     @Nullable
     private int[] actionScrollbarHandle() {
-        if (workingRoute == null || selectedWaypointIndex < 0
-                || selectedWaypointIndex >= workingRoute.size()) return null;
+        if (workingRoute == null || selectedWaypointIndex < 0 || selectedWaypointIndex >= workingRoute.size()) return null;
+
         var wp = workingRoute.getWaypoints().get(selectedWaypointIndex);
         int total = totalListItems(wp);
+
         if (total <= ACT_MAX_VIS) return null;
+
         int max     = total - ACT_MAX_VIS;
         int trackH  = ACT_SB_H;
         int handleH = Math.max(8, (ACT_MAX_VIS * trackH) / total);
         int handleY = topPos + ACT_Y + (max == 0 ? 0 : (actionScrollOffset * (trackH - handleH)) / max);
+
         return new int[]{ leftPos + ACT_SB_X, handleY, ACT_SB_W, handleH };
     }
 
     private int actionScrollbarMaxScroll() {
-        if (workingRoute == null || selectedWaypointIndex < 0
-                || selectedWaypointIndex >= workingRoute.size()) return 0;
+        if (workingRoute == null || selectedWaypointIndex < 0 || selectedWaypointIndex >= workingRoute.size()) return 0;
+        
         return Math.max(0, totalListItems(workingRoute.getWaypoints().get(selectedWaypointIndex)) - ACT_MAX_VIS);
     }
 
@@ -598,7 +604,7 @@ public class CourierScreen extends ScreenBase<CourierContainer> {
                 if (idx >= wp.actions.size()) continue;
                 if (mx >= sx && mx < sx + COL_ITEM && my >= sy && my < sy + COL_ITEM) {
                     CourierAction action = wp.actions.get(idx);
-                    if (action.getActionType() == CourierAction.ActionType.WAIT) continue;
+                    if (!action.getActionType().hasItemSlot()) continue;
 
                     if (button == 1) {
                         // Right-click: clear slot
@@ -652,7 +658,14 @@ public class CourierScreen extends ScreenBase<CourierContainer> {
 
     @Override
     public boolean mouseScrolled(double mx, double my, double delta) {
-        // Action area scroll
+        // Action dropdowns get priority — isMouseOver() returns true for the expanded list
+        // only when the dropdown is open, so this naturally lets open dropdowns consume scroll.
+        for (var dd : actionTypeDDs)
+            if (dd.isMouseOver(mx, my)) return dd.mouseScrolled(mx, my, delta);
+        for (var dd : sourceTypeDDs)
+            if (dd.isMouseOver(mx, my)) return dd.mouseScrolled(mx, my, delta);
+
+        // Action area row scroll (only reached when no action dropdown is open over it)
         if (workingRoute != null && selectedWaypointIndex >= 0
                 && selectedWaypointIndex < workingRoute.size()) {
             int ax = leftPos + ACT_X, ay = topPos + ACT_Y;
@@ -666,10 +679,6 @@ public class CourierScreen extends ScreenBase<CourierContainer> {
         }
         if (routeDropDown != null && routeDropDown.isMouseOver(mx, my))
             return routeDropDown.mouseScrolled(mx, my, delta);
-        for (var dd : actionTypeDDs)
-            if (dd.isMouseOver(mx, my)) return dd.mouseScrolled(mx, my, delta);
-        for (var dd : sourceTypeDDs)
-            if (dd.isMouseOver(mx, my)) return dd.mouseScrolled(mx, my, delta);
         if (waypointList != null && waypointList.isMouseOver(mx, my))
             return waypointList.mouseScrolled(mx, my, delta);
         return super.mouseScrolled(mx, my, delta);

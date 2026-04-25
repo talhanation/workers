@@ -20,6 +20,7 @@
   "item.workers.fisherman_spawn_egg": "Fisherman Spawn Egg",
   "item.workers.builder_spawn_egg": "Builder Spawn Egg",
   "item.workers.animal_farmer_spawn_egg": "Animal Farmer Spawn Egg",
+  "item.workers.courier_spawn_egg": "Courier Spawn Egg",
 
   "gui.workers.command.tooltip.workers": "Workers",
   "gui.workers.command.text.add_field": "Add Crop field",
@@ -69,7 +70,8 @@
   "gui.workers.checkbox.throwEggs":"Throw Eggs",
   "gui.workers.checkbox.marketOpen": "Open",
   "gui.workers.checkbox.closeFloor": "Close Floor",
-
+  "gui.workers.checkbox.useVehicleInventory": "Use Vehicle Inventory",
+  "gui.workers.checkbox.tooltip.useVehicleInventory": "If true the items will be filled in the vehicles inventory",
   "gui.workers.button.reset": "Reset",
   "gui.workers.button.add": "Add",
   "gui.workers.button.remove": "Remove",

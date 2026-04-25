@@ -35,7 +35,6 @@ import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.ServerLevelAccessor;
 import net.minecraftforge.common.ForgeMod;
-import net.minecraftforge.common.WorldWorkerManager;
 import net.minecraftforge.network.NetworkHooks;
 import org.jetbrains.annotations.NotNull;
 
@@ -54,6 +53,12 @@ public class CourierEntity extends AbstractWorkerEntity implements IVillagerWork
 
     @Nullable public CourierRoute currentRoute = null;
     public int currentWaypointIndex = 0;
+
+    /**
+     * When true the courier uses the vehicle's inventory (chest minecart, donkey, etc.)
+     * as its working storage instead of its own personal inventory.
+     */
+    public boolean useVehicleInventory = false;
 
     private final Predicate<ItemEntity> ALLOWED_ITEMS =
             item -> !item.hasPickUpDelay() && item.isAlive()
@@ -82,6 +87,7 @@ public class CourierEntity extends AbstractWorkerEntity implements IVillagerWork
             nbt.put("route", currentRoute.toNBT());
             nbt.putInt("currentIndex", currentWaypointIndex);
         }
+        nbt.putBoolean("useVehicleInventory", useVehicleInventory);
         this.entityData.set(ROUTE_DATA, nbt);
     }
 
@@ -124,22 +130,14 @@ public class CourierEntity extends AbstractWorkerEntity implements IVillagerWork
 
     @Override
     public AbstractWorkAreaEntity getCurrentWorkArea() {
-        return null; // Courier uses a route, not a work-area entity.
+        return null;
     }
 
-    /**
-     * Prevent the base {@link com.talhanation.workers.entities.ai.DepositItemsToStorage}
-     * goal from triggering — the courier manages its own transfers in {@link CourierWorkGoal}.
-     */
     @Override
     public boolean needsToDeposit() {
         return false;
     }
 
-    /**
-     * Prevent storage-related goals from interrupting the work goal entirely.
-     * Food-based logic in the parent still applies via {@code needsToGetFood()}.
-     */
     @Override
     public boolean needsToGetToChest() {
         return needsToGetFood();
@@ -214,6 +212,7 @@ public class CourierEntity extends AbstractWorkerEntity implements IVillagerWork
     public void addAdditionalSaveData(@NotNull CompoundTag nbt) {
         super.addAdditionalSaveData(nbt);
         nbt.putInt("currentWaypointIndex", currentWaypointIndex);
+        nbt.putBoolean("useVehicleInventory", useVehicleInventory);
         if (currentRoute != null) {
             nbt.put("CourierRoute", currentRoute.toNBT());
         }
@@ -232,6 +231,8 @@ public class CourierEntity extends AbstractWorkerEntity implements IVillagerWork
         this.currentWaypointIndex = (currentRoute != null && !currentRoute.isEmpty())
                 ? Math.max(0, Math.min(savedIndex, currentRoute.size() - 1))
                 : 0;
+
+        this.useVehicleInventory = nbt.getBoolean("useVehicleInventory");
 
         syncRouteData();
     }
