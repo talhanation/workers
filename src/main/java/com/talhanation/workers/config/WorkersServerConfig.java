@@ -19,6 +19,7 @@ public class WorkersServerConfig {
     public static ForgeConfigSpec.BooleanValue BuilderActive;
     public static ForgeConfigSpec.IntValue AnimalPenMaxAnimals;
     public static ForgeConfigSpec.BooleanValue ShouldWorkAreaOnlyBeInFactionClaim;
+    public static ForgeConfigSpec.BooleanValue ShouldOnlyPlacingBuildingsBePossible;
     public static ArrayList<String> FARMER_PICKUP = new ArrayList<>(
             Arrays.asList(
                     "minecraft:wheat",
@@ -170,13 +171,13 @@ public class WorkersServerConfig {
                 .worldRestart()
                 .define("ShouldWorkAreaOnlyBeInFactionClaim", false);
 
-        BuilderActive = BUILDER.comment("""
+        ShouldOnlyPlacingBuildingsBePossible = BUILDER.comment("""
                         
-                        WIP Builder.
+                        Should only buildings be allowed to place.
                         \t(takes effect after restart)
                         \tdefault: false""")
                 .worldRestart()
-                .define("BuilderActive", false);
+                .define("ShouldOnlyPlacingBuildingsBePossible", false);
 
         AnimalPenMaxAnimals = BUILDER.comment("""
                         
@@ -184,7 +185,7 @@ public class WorkersServerConfig {
                         \t(takes effect after restart)
                         \tdefault: 32""")
                 .worldRestart()
-                .defineInRange("LumberjackCost", 32, 0, 1453);
+                .defineInRange("AnimalPenMaxAnimals", 32, 0, 1453);
 
         SERVER = BUILDER.build();
     }

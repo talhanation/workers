@@ -1,17 +1,27 @@
 package com.talhanation.workers.client;
 
+import com.talhanation.recruits.ClaimEvents;
+import com.talhanation.recruits.FactionEvents;
 import com.talhanation.recruits.client.ClientManager;
 import com.talhanation.recruits.world.RecruitsClaim;
 import com.talhanation.recruits.world.RecruitsClaimManager;
+import com.talhanation.recruits.world.RecruitsFaction;
+import com.talhanation.workers.WorkAreaTypes;
+import com.talhanation.workers.WorkersMain;
+import com.talhanation.workers.config.WorkersServerConfig;
 import net.minecraft.core.BlockPos;
+import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.level.ChunkPos;
 
 public class WorkersClientManager {
 
     public static boolean configValueWorkAreaOnlyInFactionClaim;
+    public static boolean configValueOnlyBuildings;
+    public static boolean isInFactionClaim(BlockPos pos, WorkAreaTypes type){
+        if(configValueOnlyBuildings && type != WorkAreaTypes.BUILDING) return false;
 
-    public static boolean isInFactionClaim(BlockPos pos){
         if(!configValueWorkAreaOnlyInFactionClaim) return true;
+
         if (pos == null) return false;
         int chunkX = pos.getX() >> 4;
         int chunkZ = pos.getZ() >> 4;
