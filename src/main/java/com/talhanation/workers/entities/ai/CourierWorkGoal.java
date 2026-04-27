@@ -88,7 +88,9 @@ public class CourierWorkGoal extends Goal {
         double distSq = courier.distanceToSqr(target.getX() + 0.5, target.getY(), target.getZ() + 0.5);
         if (distSq <= ARRIVAL_DIST_SQ){
             courier.getNavigation().stop();
-            actionIndex = 0; state = State.EXECUTE_ACTIONS;
+
+            actionIndex = 0;
+            state = State.EXECUTE_ACTIONS;
             return;
         }
         if (navigationTicks % REPATH_INTERVAL == 0){
@@ -102,12 +104,16 @@ public class CourierWorkGoal extends Goal {
         }
 
         courier.setFollowState(6);
-        courier.getLookControl().setLookAt(target.getX() + 0.5, target.getY() + 0.5, target.getZ() + 0.5);
+        courier.getLookControl().setLookAt(target.getX() + 0.5, courier.getY() + 0.5, target.getZ() + 0.5);
     }
 
     private void tickExecute(){
         CourierRoute.CourierWaypoint wp = courier.getCurrentWaypoint();
-        if (wp == null){
+        if(courier.returning && courier.currentWaypointIndex == 0){
+            courier.returning = false;
+        }
+
+        if (wp == null || courier.returning){
             advanceAndNavigate();
             return;
         }
@@ -180,44 +186,84 @@ public class CourierWorkGoal extends Goal {
 
     private void executePickup(CourierAction action, CourierRoute.CourierWaypoint wp){
         if (action.getItemStack() == null || action.getItemStack().isEmpty()) return;
+
         ItemStack tpl = action.getItemStack();
         List<Container> targets = findContainers(action.getSourceType(), wp.getPosition());
-        if (targets.isEmpty()){ notifyOwner(courier.TEXT_NO_TARGET_FOUND(wp.displayName)); return; }
+
+        if (targets.isEmpty()){
+            notifyOwner(courier.TEXT_NO_TARGET_FOUND(wp.displayName));
+            return;
+        }
+
         int total = 0, max = tpl.getCount();
-        for (Container c : targets){ if (total >= max) break; total += transferToWorkingInv(c, tpl, max - total); }
-        if (total == 0) notifyOwner(courier.TEXT_SOURCE_EMPTY(wp.displayName, tpl.getHoverName().getString()));
+
+        for (Container c : targets){
+            if (total >= max) break;
+
+            total += transferToWorkingInv(c, tpl, max - total);
+        }
+
+        if (total == 0)
+            notifyOwner(courier.TEXT_SOURCE_EMPTY(wp.displayName, tpl.getHoverName().getString()));
     }
 
     private void executeDeposit(CourierAction action, CourierRoute.CourierWaypoint wp){
         if (action.getItemStack() == null || action.getItemStack().isEmpty()) return;
+
         ItemStack tpl = action.getItemStack();
         List<Container> targets = findContainers(action.getSourceType(), wp.getPosition());
-        if (targets.isEmpty()){ notifyOwner(courier.TEXT_NO_TARGET_FOUND(wp.displayName)); return; }
-        int total = 0, max = tpl.getCount();
-        for (Container c : targets){ if (total >= max) break; total += transferFromWorkingInv(c, tpl, max - total); }
-        if (total == 0) notifyOwner(courier.TEXT_TARGET_FULL(wp.displayName, tpl.getHoverName().getString()));
-    }
 
-    // ── Transfer logic — specific item, no count cap ──────────────────────────
+        if (targets.isEmpty()){
+            notifyOwner(courier.TEXT_NO_TARGET_FOUND(wp.displayName));
+            return;
+        }
+
+        int total = 0, max = tpl.getCount();
+
+        for (Container c : targets){
+            if (total >= max) break;
+            total += transferFromWorkingInv(c, tpl, max - total);
+        }
+
+        if (total == 0)
+            notifyOwner(courier.TEXT_TARGET_FULL(wp.displayName, tpl.getHoverName().getString()));
+    }
 
     private void executePickupAny(CourierAction action, CourierRoute.CourierWaypoint wp){
         if (action.getItemStack() == null || action.getItemStack().isEmpty()) return;
+
         ItemStack tpl = action.getItemStack();
         List<Container> targets = findContainers(action.getSourceType(), wp.getPosition());
-        if (targets.isEmpty()){ notifyOwner(courier.TEXT_NO_TARGET_FOUND(wp.displayName)); return; }
+
+        if (targets.isEmpty()){
+            notifyOwner(courier.TEXT_NO_TARGET_FOUND(wp.displayName));
+            return;
+        }
+
         int total = 0;
-        for (Container c : targets) total += transferToWorkingInv(c, tpl, Integer.MAX_VALUE);
-        if (total == 0) notifyOwner(courier.TEXT_SOURCE_EMPTY(wp.displayName, tpl.getHoverName().getString()));
+        for (Container c : targets)
+            total += transferToWorkingInv(c, tpl, Integer.MAX_VALUE);
+
+        if (total == 0)
+            notifyOwner(courier.TEXT_SOURCE_EMPTY(wp.displayName, tpl.getHoverName().getString()));
     }
 
     private void executeDepositAny(CourierAction action, CourierRoute.CourierWaypoint wp){
         if (action.getItemStack() == null || action.getItemStack().isEmpty()) return;
         ItemStack tpl = action.getItemStack();
         List<Container> targets = findContainers(action.getSourceType(), wp.getPosition());
-        if (targets.isEmpty()){ notifyOwner(courier.TEXT_NO_TARGET_FOUND(wp.displayName)); return; }
+
+        if (targets.isEmpty()){
+            notifyOwner(courier.TEXT_NO_TARGET_FOUND(wp.displayName));
+            return;
+        }
+
         int total = 0;
-        for (Container c : targets) total += transferFromWorkingInv(c, tpl, Integer.MAX_VALUE);
-        if (total == 0) notifyOwner(courier.TEXT_TARGET_FULL(wp.displayName, tpl.getHoverName().getString()));
+        for (Container c : targets)
+            total += transferFromWorkingInv(c, tpl, Integer.MAX_VALUE);
+
+        if (total == 0)
+            notifyOwner(courier.TEXT_TARGET_FULL(wp.displayName, tpl.getHoverName().getString()));
     }
 
     // ── Transfer logic — bulk / wildcard ─────────────────────────────────────
@@ -236,8 +282,14 @@ public class CourierWorkGoal extends Goal {
 
     private void executeDepositAll(CourierAction action, CourierRoute.CourierWaypoint wp){
         List<Container> targets = findContainers(action.getSourceType(), wp.getPosition());
-        if (targets.isEmpty()){ notifyOwner(courier.TEXT_NO_TARGET_FOUND(wp.displayName)); return; }
+
+        if (targets.isEmpty()){
+            notifyOwner(courier.TEXT_NO_TARGET_FOUND(wp.displayName));
+            return;
+        }
+
         Container workInv = getWorkingInventory();
+
         int startSlot = (workInv == courier.getInventory()) ? 6 : 0;
         for (int i = startSlot; i < workInv.getContainerSize(); i++){
             ItemStack slot = workInv.getItem(i);
@@ -270,14 +322,23 @@ public class CourierWorkGoal extends Goal {
         int transferred = 0;
         for (int i = startSlot; i < workInv.getContainerSize(); i++){
             ItemStack slot = workInv.getItem(i);
-            if (slot.isEmpty() || !ItemStack.isSameItem(slot, template)) continue;
+
+            if (slot.isEmpty() || !ItemStack.isSameItem(slot, template))
+                continue;
+
             int toMove = maxAmount == Integer.MAX_VALUE ? slot.getCount() : Math.min(slot.getCount(), maxAmount - transferred);
             int inserted = insertIntoContainer(destination, slot, toMove);
-            if (inserted == 0) break;
+
+            if (inserted == 0)
+                break;
+
             slot.shrink(inserted);
             workInv.setItem(i, slot.isEmpty() ? ItemStack.EMPTY : slot);
             transferred += inserted;
-            if (maxAmount != Integer.MAX_VALUE && transferred >= maxAmount) break;
+
+            if (maxAmount != Integer.MAX_VALUE && transferred >= maxAmount)
+                break;
+
             playChestSound(destination);
         }
         return transferred;
@@ -291,6 +352,7 @@ public class CourierWorkGoal extends Goal {
 
             int take = maxAmount == Integer.MAX_VALUE ? slot.getCount() : Math.min(slot.getCount(), maxAmount - transferred);
             int inserted = insertIntoContainer(destination, slot, take);
+
             if (inserted == 0) break;
 
             slot.shrink(inserted);
@@ -298,7 +360,9 @@ public class CourierWorkGoal extends Goal {
             container.setChanged();
             transferred += inserted;
             playChestSound(container);
-            if (maxAmount != Integer.MAX_VALUE && transferred >= maxAmount) break;
+
+            if (maxAmount != Integer.MAX_VALUE && transferred >= maxAmount)
+                break;
         }
         return transferred;
     }
@@ -323,6 +387,7 @@ public class CourierWorkGoal extends Goal {
             container.setChanged();
             transferred += added;
             playChestSound(container);
+
             if (maxAmount != Integer.MAX_VALUE && transferred >= maxAmount) break;
         }
         return transferred;
@@ -336,17 +401,16 @@ public class CourierWorkGoal extends Goal {
         ServerLevel level = (ServerLevel) courier.getCommandSenderWorld();
 
         switch (type){
-            case CHEST -> BlockPos.betweenClosed(
-                    center.offset(-SCAN_RADIUS, -SCAN_RADIUS, -SCAN_RADIUS),
-                    center.offset( SCAN_RADIUS,  SCAN_RADIUS,  SCAN_RADIUS)
-            ).forEach(pos -> {
-                BlockState st = level.getBlockState(pos);
+            case CHEST -> BlockPos.betweenClosed(center.offset(-SCAN_RADIUS, -SCAN_RADIUS, -SCAN_RADIUS), center.offset( SCAN_RADIUS,  SCAN_RADIUS,  SCAN_RADIUS))
+                    .forEach(pos -> {
+                        BlockState st = level.getBlockState(pos);
 
-                if (st.getBlock() instanceof ChestBlock chestBlock){
-                    Container c = ChestBlock.getContainer(chestBlock, st, level, pos, true);
-                    if (c != null) result.add(c);
-                }
-            });
+                        if (st.getBlock() instanceof ChestBlock chestBlock){
+                            Container c = ChestBlock.getContainer(chestBlock, st, level, pos, true);
+                            if (c != null) result.add(c);
+                        }
+                    }
+            );
             case STORAGE -> {
                 List<StorageArea> areas = level.getEntitiesOfClass(StorageArea.class, scanBox, s -> s.canWorkHere(courier));
 
@@ -385,7 +449,9 @@ public class CourierWorkGoal extends Goal {
     }
 
     private void advanceAndNavigate(){
-        courier.advanceWaypoint(); actionIndex = 0; navigationTicks = 0;
+        courier.advanceWaypoint();
+        actionIndex = 0;
+        navigationTicks = 0;
         state = State.NAVIGATE_TO_WAYPOINT;
     }
 

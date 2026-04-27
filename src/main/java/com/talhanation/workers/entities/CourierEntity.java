@@ -3,12 +3,10 @@ package com.talhanation.workers.entities;
 import com.talhanation.recruits.compat.workers.IVillagerWorker;
 import com.talhanation.recruits.entities.AbstractRecruitEntity;
 import com.talhanation.recruits.pathfinding.AsyncGroundPathNavigation;
-import com.talhanation.workers.WorkersMain;
 import com.talhanation.workers.config.WorkersServerConfig;
 import com.talhanation.workers.entities.ai.CourierWorkGoal;
 import com.talhanation.workers.entities.workarea.AbstractWorkAreaEntity;
 import com.talhanation.workers.inventory.CourierContainer;
-import com.talhanation.workers.network.MessageOpenCourierScreen;
 import com.talhanation.workers.world.CourierRoute;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.nbt.CompoundTag;
@@ -19,7 +17,6 @@ import net.minecraft.network.syncher.SynchedEntityData;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.util.RandomSource;
 import net.minecraft.world.*;
-import net.minecraft.world.damagesource.DamageSource;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.Mob;
 import net.minecraft.world.entity.MobSpawnType;
@@ -44,21 +41,16 @@ import java.util.function.Predicate;
 
 public class CourierEntity extends AbstractWorkerEntity implements IVillagerWorker {
 
-    // Synced so the client GUI can read the full route (names, actions, positions)
-    // without needing access to server-only fields.
-    private static final EntityDataAccessor<CompoundTag> ROUTE_DATA =
-            SynchedEntityData.defineId(CourierEntity.class, EntityDataSerializers.COMPOUND_TAG);
-
-    // ── Server-side state ─────────────────────────────────────────────────────
-
+    private static final EntityDataAccessor<CompoundTag> ROUTE_DATA = SynchedEntityData.defineId(CourierEntity.class, EntityDataSerializers.COMPOUND_TAG);
     @Nullable public CourierRoute currentRoute = null;
     public int currentWaypointIndex = 0;
-
+    public boolean returning = false;
     /**
      * When true the courier uses the vehicle's inventory (chest minecart, donkey, etc.)
      * as its working storage instead of its own personal inventory.
      */
     public boolean useVehicleInventory = false;
+    public boolean shouldCycle = false;
 
     private final Predicate<ItemEntity> ALLOWED_ITEMS =
             item -> !item.hasPickUpDelay() && item.isAlive()
@@ -88,6 +80,7 @@ public class CourierEntity extends AbstractWorkerEntity implements IVillagerWork
             nbt.putInt("currentIndex", currentWaypointIndex);
         }
         nbt.putBoolean("useVehicleInventory", useVehicleInventory);
+        nbt.putBoolean("shouldCycle", this.shouldCycle);
         this.entityData.set(ROUTE_DATA, nbt);
     }
 
@@ -115,8 +108,25 @@ public class CourierEntity extends AbstractWorkerEntity implements IVillagerWork
     }
 
     public void advanceWaypoint() {
-        if (!hasRoute()) return;
-        currentWaypointIndex = (currentWaypointIndex + 1) % currentRoute.size();
+        if(!hasRoute()) return;
+
+        if(currentWaypointIndex == 0 && returning){
+            returning = false;
+        }
+
+        if(currentWaypointIndex == currentRoute.size() - 1 && !shouldCycle){
+            returning = true;
+        }
+
+        if(returning){
+            if(currentWaypointIndex > 0)
+                currentWaypointIndex--;
+        }
+        else{
+            if(currentWaypointIndex < currentRoute.size() - 1)
+                currentWaypointIndex++;
+        }
+
         syncRouteData();
     }
 
@@ -163,20 +173,18 @@ public class CourierEntity extends AbstractWorkerEntity implements IVillagerWork
                 .add(Attributes.ATTACK_SPEED);
     }
 
-    // ── Spawn / Interaction ────────────────────────────────────────────────────
-
     @Nullable
     @Override
-    public SpawnGroupData finalizeSpawn(@NotNull ServerLevelAccessor world,
-                                        @NotNull DifficultyInstance difficulty,
-                                        @NotNull MobSpawnType reason,
-                                        @Nullable SpawnGroupData data,
-                                        @Nullable CompoundTag nbt) {
+    public SpawnGroupData finalizeSpawn(@NotNull ServerLevelAccessor world, @NotNull DifficultyInstance difficulty, @NotNull MobSpawnType reason, @Nullable SpawnGroupData data, @Nullable CompoundTag nbt) {
         RandomSource rand = world.getRandom();
         SpawnGroupData result = super.finalizeSpawn(world, difficulty, reason, data, nbt);
+
         ((AsyncGroundPathNavigation) this.getNavigation()).setCanOpenDoors(true);
+
         this.populateDefaultEquipmentEnchantments(rand, difficulty);
+
         this.initSpawn();
+
         return result;
     }
 
@@ -189,6 +197,7 @@ public class CourierEntity extends AbstractWorkerEntity implements IVillagerWork
         this.setRandomSpawnBonus();
         this.setPersistenceRequired();
         this.setFollowState(2);
+        this.setXpLevel(3);//TODO: REMOVE TEMPORARY FIX
         AbstractRecruitEntity.applySpawnValues(this);
     }
     @Override
@@ -213,6 +222,9 @@ public class CourierEntity extends AbstractWorkerEntity implements IVillagerWork
         super.addAdditionalSaveData(nbt);
         nbt.putInt("currentWaypointIndex", currentWaypointIndex);
         nbt.putBoolean("useVehicleInventory", useVehicleInventory);
+        nbt.putBoolean("returning", returning);
+        nbt.putBoolean("shouldCycle", shouldCycle);
+
         if (currentRoute != null) {
             nbt.put("CourierRoute", currentRoute.toNBT());
         }
@@ -233,11 +245,11 @@ public class CourierEntity extends AbstractWorkerEntity implements IVillagerWork
                 : 0;
 
         this.useVehicleInventory = nbt.getBoolean("useVehicleInventory");
+        this.returning = nbt.getBoolean("returning");
+        this.shouldCycle = nbt.getBoolean("shouldCycle");
 
         syncRouteData();
     }
-
-    // ── Chat messages ─────────────────────────────────────────────────────────
 
     public Component TEXT_NO_TARGET_FOUND(String waypointName) {
         return Component.translatable("chat.workers.courier.noTargetFound",

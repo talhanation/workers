@@ -92,6 +92,8 @@ public class CourierScreen extends ScreenBase<CourierContainer> {
     private static final MutableComponent TEXT_MAP = Component.translatable("gui.workers.courier.map");
     private static final MutableComponent TEXT_VEHICLE_INV = Component.translatable("gui.workers.checkbox.useVehicleInventory");
     private static final MutableComponent TOOLTIP_VEHICLE_INV = Component.translatable("gui.workers.checkbox.tooltip.useVehicleInventory");
+    private static final MutableComponent TEXT_CYCLE = Component.translatable("gui.workers.checkbox.cycle");
+    private static final MutableComponent TOOLTIP_CYCLE = Component.translatable("gui.workers.checkbox.tooltip.cycle");
     // ── Screen state ──────────────────────────────────────────────────────────
 
     private final CourierEntity courierEntity;
@@ -107,7 +109,7 @@ public class CourierScreen extends ScreenBase<CourierContainer> {
     private int     scrollbarDragStartY  = 0;
     /** Whether the courier should use the vehicle's inventory instead of its own. */
     private boolean useVehicleInventory  = false;
-
+    private boolean shouldCycle = false;
     // ── Tracked widgets ───────────────────────────────────────────────────────
 
     @Nullable private ScrollDropDownMenu<RecruitsRoute>                  routeDropDown;
@@ -221,14 +223,31 @@ public class CourierScreen extends ScreenBase<CourierContainer> {
         applyBtn.active = workingRoute != null;
         addRenderableWidget(applyBtn);
 
+        RecruitsCheckBox shouldCycleCheckbox = new RecruitsCheckBox(
+            x + MAP_X + MAP_W + 4,
+            applyBtn.getY() - 1 - 41,
+            20, 20,
+                TEXT_CYCLE, shouldCycle, false,
+            val -> {
+                shouldCycle = val;
+                applyChanges(false);
+            }
+        );
+        shouldCycleCheckbox.setTooltip(Tooltip.create(TOOLTIP_CYCLE));
+        addRenderableWidget(shouldCycleCheckbox);
+
         // ── Vehicle inventory checkbox — right of map button ───────────────────
 
         RecruitsCheckBox vehicleCheckbox = new RecruitsCheckBox(
-                x + MAP_X + MAP_W + 4,
-                applyBtn.getY() - 1 - 20,
-                20, 20,
-                TEXT_VEHICLE_INV, useVehicleInventory, false,
-                val -> { useVehicleInventory = val; applyChanges(false); });
+            x + MAP_X + MAP_W + 4,
+            applyBtn.getY() - 1 - 20,
+            20, 20,
+            TEXT_VEHICLE_INV, useVehicleInventory, false,
+            val -> {
+                useVehicleInventory = val;
+                applyChanges(false);
+            }
+        );
         vehicleCheckbox.setTooltip(Tooltip.create(TOOLTIP_VEHICLE_INV));
         addRenderableWidget(vehicleCheckbox);
 
