@@ -21,10 +21,11 @@ public class MessageCourierSetRoute implements Message<MessageCourierSetRoute> {
     private boolean     hasRoute;
     private CompoundTag routeNBT;
     private boolean     useVehicleInventory;
+    private boolean     shouldCycle;
     private boolean     start;
     public MessageCourierSetRoute() {}
 
-    public MessageCourierSetRoute(UUID courierUuid, CourierRoute routeNBT, boolean useVehicleInventory, boolean start) {
+    public MessageCourierSetRoute(UUID courierUuid, CourierRoute routeNBT, boolean useVehicleInventory, boolean shouldCycle, boolean start) {
         this.courierUuid = courierUuid;
         this.hasRoute = routeNBT != null;
         if(hasRoute){
@@ -32,6 +33,7 @@ public class MessageCourierSetRoute implements Message<MessageCourierSetRoute> {
         }
 
         this.useVehicleInventory  = useVehicleInventory;
+        this.shouldCycle  = shouldCycle;
         this.start  = start;
     }
 
@@ -56,6 +58,7 @@ public class MessageCourierSetRoute implements Message<MessageCourierSetRoute> {
                         c -> c.getUUID().equals(this.courierUuid) && c.isAlive())
                 .forEach(courier -> {
                     courier.useVehicleInventory = this.useVehicleInventory;
+                    courier.shouldCycle = this.shouldCycle;
 
                     if (!hasRoute) {
                         courier.clearRoute();
@@ -74,6 +77,7 @@ public class MessageCourierSetRoute implements Message<MessageCourierSetRoute> {
     public MessageCourierSetRoute fromBytes(FriendlyByteBuf buf) {
         this.courierUuid         = buf.readUUID();
         this.useVehicleInventory = buf.readBoolean();
+        this.shouldCycle         = buf.readBoolean();
         this.hasRoute            = buf.readBoolean();
         if (this.hasRoute) {
             byte[] compressed = buf.readByteArray();
@@ -92,6 +96,7 @@ public class MessageCourierSetRoute implements Message<MessageCourierSetRoute> {
     public void toBytes(FriendlyByteBuf buf) {
         buf.writeUUID(courierUuid);
         buf.writeBoolean(useVehicleInventory);
+        buf.writeBoolean(shouldCycle);
         buf.writeBoolean(hasRoute);
 
         if(hasRoute && routeNBT != null){

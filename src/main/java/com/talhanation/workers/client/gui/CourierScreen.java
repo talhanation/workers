@@ -423,7 +423,7 @@ public class CourierScreen extends ScreenBase<CourierContainer> {
     private void applyChanges(boolean start) {
         if (workingRoute == null) return;
         WorkersMain.SIMPLE_CHANNEL.sendToServer(
-                new MessageCourierSetRoute(courierEntity.getUUID(), workingRoute, useVehicleInventory, start));
+                new MessageCourierSetRoute(courierEntity.getUUID(), workingRoute, useVehicleInventory, shouldCycle, start));
     }
 
     /** Auto-save on close (ESC, map button, etc.). */
