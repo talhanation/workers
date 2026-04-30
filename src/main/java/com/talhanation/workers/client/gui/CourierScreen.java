@@ -166,6 +166,7 @@ public class CourierScreen extends ScreenBase<CourierContainer> {
             }
         }
         useVehicleInventory = routeData.getBoolean("useVehicleInventory");
+        shouldCycle = routeData.getBoolean("shouldCycle");
     }
 
     // ── Widget construction ────────────────────────────────────────────────────

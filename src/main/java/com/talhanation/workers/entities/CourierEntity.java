@@ -51,6 +51,13 @@ public class CourierEntity extends AbstractWorkerEntity implements IVillagerWork
      */
     public boolean useVehicleInventory = false;
     public boolean shouldCycle = false;
+    /**
+     * True while the courier is navigating back to waypoint 0 before activating cycle mode.
+     * Set when Apply+Start fires with shouldCycle=true but the nearest waypoint is not 0.
+     * Cleared and shouldCycle is set to true the first time advanceWaypoint leaves index 0
+     * going forward.
+     */
+    public boolean pendingShouldCycle = false;
 
     private final Predicate<ItemEntity> ALLOWED_ITEMS =
             item -> !item.hasPickUpDelay() && item.isAlive()
@@ -81,6 +88,7 @@ public class CourierEntity extends AbstractWorkerEntity implements IVillagerWork
         }
         nbt.putBoolean("useVehicleInventory", useVehicleInventory);
         nbt.putBoolean("shouldCycle", this.shouldCycle);
+        nbt.putBoolean("pendingShouldCycle", this.pendingShouldCycle);
         this.entityData.set(ROUTE_DATA, nbt);
     }
 
@@ -94,6 +102,36 @@ public class CourierEntity extends AbstractWorkerEntity implements IVillagerWork
     public void loadRoute(CourierRoute route) {
         this.currentRoute         = route;
         this.currentWaypointIndex = 0;
+        this.returning            = true;
+        syncRouteData();
+    }
+
+    /**
+     * Like {@link #loadRoute}, but starts at the waypoint closest to the courier's
+     * current world position instead of always index 0.
+     * Called when the player presses Apply and starts the route immediately.
+     */
+    public void loadRouteFromNearestWaypoint(CourierRoute route) {
+        this.currentRoute         = route;
+        this.returning            = true;
+
+        if (route != null && !route.isEmpty()) {
+            int    nearestIdx = 0;
+            double minDistSq  = Double.MAX_VALUE;
+            var    waypoints  = route.getWaypoints();
+            for (int i = 0; i < waypoints.size(); i++) {
+                net.minecraft.core.BlockPos pos = waypoints.get(i).getPosition();
+                double distSq = distanceToSqr(pos.getX() + 0.5, pos.getY(), pos.getZ() + 0.5);
+                if (distSq < minDistSq) {
+                    minDistSq  = distSq;
+                    nearestIdx = i;
+                }
+            }
+            this.currentWaypointIndex = nearestIdx;
+        } else {
+            this.currentWaypointIndex = 0;
+        }
+
         syncRouteData();
     }
 
@@ -224,6 +262,7 @@ public class CourierEntity extends AbstractWorkerEntity implements IVillagerWork
         nbt.putBoolean("useVehicleInventory", useVehicleInventory);
         nbt.putBoolean("returning", returning);
         nbt.putBoolean("shouldCycle", shouldCycle);
+        nbt.putBoolean("pendingShouldCycle", pendingShouldCycle);
 
         if (currentRoute != null) {
             nbt.put("CourierRoute", currentRoute.toNBT());
@@ -245,8 +284,9 @@ public class CourierEntity extends AbstractWorkerEntity implements IVillagerWork
                 : 0;
 
         this.useVehicleInventory = nbt.getBoolean("useVehicleInventory");
-        this.returning = nbt.getBoolean("returning");
-        this.shouldCycle = nbt.getBoolean("shouldCycle");
+        this.returning          = nbt.getBoolean("returning");
+        this.shouldCycle        = nbt.getBoolean("shouldCycle");
+        this.pendingShouldCycle = nbt.getBoolean("pendingShouldCycle");
 
         syncRouteData();
     }

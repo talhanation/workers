@@ -30,7 +30,7 @@ public class CourierWorkGoal extends Goal {
     private static final int ARRIVAL_DIST_SQ = 9;
     private static final int SCAN_RADIUS = 16;
     private static final int NAVIGATION_TIMEOUT = 2000;
-    private static final int REPATH_INTERVAL = 40;
+    private static final int REPATH_INTERVAL = 20;
     private static final float WALK_SPEED = 0.85F;
     private final CourierEntity courier;
     private State state;
@@ -111,6 +111,7 @@ public class CourierWorkGoal extends Goal {
         CourierRoute.CourierWaypoint wp = courier.getCurrentWaypoint();
         if(courier.returning && courier.currentWaypointIndex == 0){
             courier.returning = false;
+            courier.shouldCycle = courier.pendingShouldCycle;
         }
 
         if (wp == null || courier.returning){

@@ -58,7 +58,14 @@ public class MessageCourierSetRoute implements Message<MessageCourierSetRoute> {
                         c -> c.getUUID().equals(this.courierUuid) && c.isAlive())
                 .forEach(courier -> {
                     courier.useVehicleInventory = this.useVehicleInventory;
-                    courier.shouldCycle = this.shouldCycle;
+
+                    if(this.shouldCycle){
+                        courier.pendingShouldCycle = true;
+                    }
+                    else{
+                        courier.shouldCycle = false;
+                    }
+
 
                     if (!hasRoute) {
                         courier.clearRoute();
@@ -68,8 +75,16 @@ public class MessageCourierSetRoute implements Message<MessageCourierSetRoute> {
                         courier.clearRoute();
                         return;
                     }
-                    courier.loadRoute(CourierRoute.fromNBT(routeNBT));
-                    if(this.start) courier.setFollowState(6);
+                    CourierRoute route = CourierRoute.fromNBT(routeNBT);
+                    if (this.start) {
+
+                        courier.loadRouteFromNearestWaypoint(route);
+                        courier.setFollowState(6);
+                    }
+                    else {
+
+                        courier.loadRoute(route);
+                    }
                 });
     }
 
