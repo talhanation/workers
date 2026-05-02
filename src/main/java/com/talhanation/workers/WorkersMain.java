@@ -8,6 +8,7 @@ import com.talhanation.workers.network.*;
 import net.minecraft.world.item.CreativeModeTabs;
 import net.minecraftforge.event.BuildCreativeModeTabContentsEvent;
 import net.minecraftforge.event.RegisterCommandsEvent;
+import net.minecraftforge.event.server.ServerStartingEvent;
 import net.minecraftforge.fml.DistExecutor;
 import net.minecraftforge.fml.ModLoadingContext;
 import net.minecraftforge.fml.config.ModConfig;
@@ -69,6 +70,18 @@ public class WorkersMain {
         //MerchantResetCommand.register(event.getDispatcher());
     }
 
+    @SubscribeEvent
+    public void onServerStarting(ServerStartingEvent event) {
+        if (WorkersServerConfig.BuildModeConfig.get() == com.talhanation.workers.config.BuildMode.PRESET_FACTIONS) {
+            java.io.File factionsDir = event.getServer().getServerDirectory()
+                    .toPath().resolve("workers").resolve("scan").resolve("factions").toFile();
+            if (!factionsDir.exists()) {
+                factionsDir.mkdirs();
+                LOGGER.info("[Workers] Created factions scan folder: {}", factionsDir.getAbsolutePath());
+            }
+        }
+    }
+
 
     @SuppressWarnings({"unchecked", "rawtypes"})
     private void setup(final FMLCommonSetupEvent event) {
@@ -80,27 +93,31 @@ public class WorkersMain {
         SIMPLE_CHANNEL = CommonRegistry.registerChannel(WorkersMain.MOD_ID, "default");
 
         Class[] messages = {
-            MessageAddWorkArea.class,
-            MessageToClientOpenWorkAreaScreen.class,
-            MessageUpdateWorkArea.class,
-            MessageUpdateCropArea.class,
-            MessageUpdateLumberArea.class,
-            MessageUpdateBuildArea.class,
-            MessageUpdateMiningArea.class,
-            MessageUpdateMerchantTrade.class,
-            MessageUpdateMerchant.class,
-            MessageDoTradeWithMerchant.class,
-            MessageOpenMerchantEditTradeScreen.class,
-            MessageOpenMerchantTradeScreen.class,
-            MessageToClientUpdateConfig.class,
-            MessageUpdateStorageArea.class,
-            MessageUpdateAnimalPenArea.class,
-            MessageRotateWorkArea.class,
-            MessageMoveMerchantTrade.class,
-            MessageUpdateMarketArea.class,
-            MessageUpdateOwner.class,
-            MessageCourierSetRoute.class,
-            MessageOpenCourierScreen.class
+                MessageAddWorkArea.class,
+                MessageToClientOpenWorkAreaScreen.class,
+                MessageUpdateWorkArea.class,
+                MessageUpdateCropArea.class,
+                MessageUpdateLumberArea.class,
+                MessageUpdateBuildArea.class,
+                MessageUpdateMiningArea.class,
+                MessageUpdateMerchantTrade.class,
+                MessageUpdateMerchant.class,
+                MessageDoTradeWithMerchant.class,
+                MessageOpenMerchantEditTradeScreen.class,
+                MessageOpenMerchantTradeScreen.class,
+                MessageToClientUpdateConfig.class,
+                MessageUpdateStorageArea.class,
+                MessageUpdateAnimalPenArea.class,
+                MessageRotateWorkArea.class,
+                MessageMoveMerchantTrade.class,
+                MessageUpdateMarketArea.class,
+                MessageUpdateOwner.class,
+                MessageCourierSetRoute.class,
+                MessageOpenCourierScreen.class,
+                MessageRequestPresetList.class,
+                MessageToClientPresetList.class,
+                MessageRequestPresetContent.class,
+                MessageToClientPresetContent.class
         };
         for (int i = 0; i < messages.length; i++) CommonRegistry.registerMessage(SIMPLE_CHANNEL, i, messages[i]);
     }

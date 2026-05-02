@@ -1,5 +1,6 @@
 package com.talhanation.workers.config;
 
+import com.talhanation.workers.config.BuildMode;
 import net.minecraftforge.common.ForgeConfigSpec;
 import net.minecraftforge.fml.common.Mod;
 
@@ -20,6 +21,7 @@ public class WorkersServerConfig {
     public static ForgeConfigSpec.IntValue AnimalPenMaxAnimals;
     public static ForgeConfigSpec.BooleanValue ShouldWorkAreaOnlyBeInFactionClaim;
     public static ForgeConfigSpec.BooleanValue ShouldOnlyPlacingBuildingsBePossible;
+    public static ForgeConfigSpec.EnumValue<BuildMode> BuildModeConfig;
     public static ArrayList<String> FARMER_PICKUP = new ArrayList<>(
             Arrays.asList(
                     "minecraft:wheat",
@@ -186,6 +188,16 @@ public class WorkersServerConfig {
                         \tdefault: 32""")
                 .worldRestart()
                 .defineInRange("AnimalPenMaxAnimals", 32, 0, 1453);
+
+        BuildModeConfig = BUILDER.comment("""
+
+                        Controls which build mode is active on this server.
+                        \t FREE           - clients may use local scans (default)
+                        \t PRESET         - only server-side preset files can be loaded
+                        \t PRESET_FACTIONS - like PRESET but filtered by team folder
+                        \t(takes effect after restart)""")
+                .worldRestart()
+                .defineEnum("BuildMode", BuildMode.FREE);
 
         SERVER = BUILDER.build();
     }

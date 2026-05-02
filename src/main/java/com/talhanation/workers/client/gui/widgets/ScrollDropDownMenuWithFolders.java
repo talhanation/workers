@@ -23,11 +23,8 @@ import java.util.function.Consumer;
 
 public class ScrollDropDownMenuWithFolders extends AbstractWidget {
 
-    private static final ResourceLocation FOLDER_ICON =
-            new ResourceLocation(WorkersMain.MOD_ID, "textures/gui/folder_image.png");
-
+    private static final ResourceLocation FOLDER_ICON = new ResourceLocation(WorkersMain.MOD_ID, "textures/gui/folder_image.png");
     private static final ItemStack PICKAXE_STACK = new ItemStack(Items.IRON_PICKAXE);
-
     private static final int ICON_SIZE   = 16;
     private static final int ICON_MARGIN = 2;
 
@@ -42,9 +39,7 @@ public class ScrollDropDownMenuWithFolders extends AbstractWidget {
 
     private final Path scanRoot;
     private Path currentRelativePath;
-
     private List<Entry> entries = new ArrayList<>();
-
     private final Consumer<String> onSelectNbt;
 
     private boolean isOpen       = false;
@@ -67,15 +62,27 @@ public class ScrollDropDownMenuWithFolders extends AbstractWidget {
         }
     }
 
-    public ScrollDropDownMenuWithFolders(int x, int y, int width, int height,
-                                         Path scanRoot,
-                                         Consumer<String> onSelectNbt) {
+    public ScrollDropDownMenuWithFolders(int x, int y, int width, int height, Path scanRoot, Consumer<String> onSelectNbt) {
         super(x, y, width, height, Component.empty());
         this.scanRoot            = scanRoot;
         this.currentRelativePath = Path.of("");
         this.onSelectNbt         = onSelectNbt;
         this.optionHeight        = height;
         navigateTo(Path.of(""));
+    }
+
+    public ScrollDropDownMenuWithFolders(int x, int y, int width, int height, List<String> presetNames, Consumer<String> onSelectNbt) {
+        super(x, y, width, height, Component.empty());
+        this.scanRoot            = null;
+        this.currentRelativePath = Path.of("");
+        this.onSelectNbt         = onSelectNbt;
+        this.optionHeight        = height;
+        this.entries = new java.util.ArrayList<>();
+        for (String name : presetNames) {
+
+            this.entries.add(new Entry(name, false, false, name));
+        }
+        this.maxVisibleOptions = Math.min(5, Math.max(1, entries.size()));
     }
 
     private void navigateTo(Path relativePath) {

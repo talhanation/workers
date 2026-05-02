@@ -24,9 +24,9 @@ public class MessageAddWorkArea implements Message<MessageAddWorkArea> {
 
     }
 
-    public MessageAddWorkArea(BlockPos pos, WorkAreaTypes typeIndex) {
+    public MessageAddWorkArea(BlockPos pos, WorkAreaTypes type) {
         this.pos = pos;
-        this.typeIndex = typeIndex.getIndex();
+        this.typeIndex = type.getIndex();
     }
 
     public Dist getExecutingSide() {
@@ -140,7 +140,7 @@ public class MessageAddWorkArea implements Message<MessageAddWorkArea> {
             return claim.containsChunk(chunkPos) && claim.getOwnerFaction().getStringID().equals(ownFaction.getStringID());
         }
 
-        return false;
+        return true;
     }
 
     public MessageAddWorkArea fromBytes(FriendlyByteBuf buf) {

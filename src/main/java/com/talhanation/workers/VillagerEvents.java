@@ -52,7 +52,10 @@ public class VillagerEvents {
 
         if(event.getEntity() instanceof ServerPlayer player){
                 WorkersMain.SIMPLE_CHANNEL.send(PacketDistributor.PLAYER.with(() -> player),
-                        new MessageToClientUpdateConfig(WorkersServerConfig.ShouldWorkAreaOnlyBeInFactionClaim.get()));
+                        new MessageToClientUpdateConfig(
+                                WorkersServerConfig.ShouldWorkAreaOnlyBeInFactionClaim.get(),
+                                WorkersServerConfig.BuildModeConfig.get()
+                        ));
         }
     }
     @SubscribeEvent
