@@ -391,7 +391,7 @@ public class AnimalFarmerWorkGoal extends Goal {
     }
 
     public void setState(State state) {
-        if(animalFarmerEntity.getOwner() != null) animalFarmerEntity.getOwner().sendSystemMessage(Component.literal(state.toString()));
+        //if(animalFarmerEntity.getOwner() != null) animalFarmerEntity.getOwner().sendSystemMessage(Component.literal(state.toString()));
         this.state = state;
     }
 
