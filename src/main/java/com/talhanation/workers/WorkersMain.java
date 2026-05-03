@@ -10,6 +10,7 @@ import net.minecraftforge.event.BuildCreativeModeTabContentsEvent;
 import net.minecraftforge.event.RegisterCommandsEvent;
 import net.minecraftforge.event.server.ServerStartingEvent;
 import net.minecraftforge.fml.DistExecutor;
+import net.minecraftforge.fml.ModList;
 import net.minecraftforge.fml.ModLoadingContext;
 import net.minecraftforge.fml.config.ModConfig;
 import org.apache.logging.log4j.LogManager;
@@ -42,6 +43,8 @@ public class WorkersMain {
     public static final Logger LOGGER = LogManager.getLogger(MOD_ID);
     public static SimpleChannel SIMPLE_CHANNEL;
 
+    public static boolean isDynamicTreesInstalled;
+
     public WorkersMain() {
         ModLoadingContext.get().registerConfig(ModConfig.Type.SERVER, WorkersServerConfig.SERVER);
 
@@ -63,6 +66,12 @@ public class WorkersMain {
         });
 
         MinecraftForge.EVENT_BUS.register(this);
+
+
+        //Compat
+        ModList modList = ModList.get();
+
+        isDynamicTreesInstalled = modList.isLoaded("dynamictrees");
     }
 
     @SubscribeEvent

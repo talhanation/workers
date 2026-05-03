@@ -3,6 +3,7 @@ package com.talhanation.workers.client.gui;
 import com.talhanation.recruits.client.gui.widgets.RecruitsCheckBox;
 import com.talhanation.workers.WorkersMain;
 import com.talhanation.workers.client.gui.widgets.ItemScrollDropDownMenu;
+import com.talhanation.workers.compat.DynamicTrees;
 import com.talhanation.workers.entities.workarea.LumberArea;
 import com.talhanation.workers.network.MessageUpdateLumberArea;
 import net.minecraft.client.gui.GuiGraphics;
@@ -107,7 +108,7 @@ public class LumberAreaScreen extends WorkAreaScreen {
         List<Item> items = new ArrayList<>();
         List<ItemStack> stacks = new ArrayList<>();
         for (ItemStack itemStack : player.getInventory().items) {
-            if (itemStack.getItem() instanceof BlockItem blockItem && blockItem.getBlock() instanceof SaplingBlock) {
+            if (itemStack.getItem() instanceof BlockItem blockItem && blockItem.getBlock() instanceof SaplingBlock || WorkersMain.isDynamicTreesInstalled && DynamicTrees.isDynamicTreesSeed(itemStack)) {
                 if(!items.contains(itemStack.getItem())){
                     stacks.add(itemStack);
                     items.add(itemStack.getItem());

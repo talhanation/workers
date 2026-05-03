@@ -11,9 +11,16 @@ public class Tree {
     private final String treeType;
     private final BlockPos position;
     private boolean isInWorks;
+    private final boolean isDynamicTree;
+
     public Tree(String treeType, BlockPos position) {
+        this(treeType, position, false);
+    }
+
+    public Tree(String treeType, BlockPos position, boolean isDynamicTree) {
         this.treeType = treeType;
         this.position = position;
+        this.isDynamicTree = isDynamicTree;
     }
 
     public String toString() {
@@ -51,10 +58,16 @@ public class Tree {
     public boolean isEmpty() {
         return stackToShear.isEmpty() && stackToStrip.isEmpty() && stackToBreak.isEmpty();
     }
-    public void setInWork(boolean isInWorks){
+
+    public void setInWork(boolean isInWorks) {
         this.isInWorks = isInWorks;
     }
+
     public boolean isInWorks() {
         return isInWorks;
+    }
+
+    public boolean isDynamicTree() {
+        return isDynamicTree;
     }
 }

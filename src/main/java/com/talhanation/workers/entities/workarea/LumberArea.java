@@ -1,6 +1,8 @@
 package com.talhanation.workers.entities.workarea;
 
+import com.talhanation.workers.WorkersMain;
 import com.talhanation.workers.client.gui.LumberAreaScreen;
+import com.talhanation.workers.compat.DynamicTrees;
 import com.talhanation.workers.entities.LumberjackEntity;
 import com.talhanation.workers.world.Tree;
 import net.minecraft.client.gui.screens.Screen;
@@ -107,28 +109,97 @@ public class LumberArea extends AbstractWorkAreaEntity {
         BlockPos.betweenClosedStream(area).forEach(pos -> {
             BlockState state = this.getCommandSenderWorld().getBlockState(pos);
             if (isLog(state) && !visited.contains(pos)) {
+                boolean isDT = WorkersMain.isDynamicTreesInstalled && DynamicTrees.isDynamicTreesBranch(state.getBlock());
                 String treeType = getTreeType(state);
 
-                Tree tempTree = new Tree(treeType, pos);
-                scanTree(this.getCommandSenderWorld(), pos.immutable(), visited, tempTree);
+                Tree tempTree = new Tree(treeType, pos, isDT);
 
-                // NEU: Überprüfe, ob verbundenes Laub existiert
-                if (!hasNaturalLeavesConnected(tempTree, this.getCommandSenderWorld())) return;
+                if (isDT) {
+                    scanDynamicTree(this.getCommandSenderWorld(), pos.immutable(), visited, tempTree);
 
-                if (!tempTree.isEmpty()) {
-                    BlockPos origin = getLowestLog(tempTree.getStackToBreak());
+                    if (!DynamicTrees.isGrownDynamicTree(new ArrayList<>(tempTree.getStackToBreak()), this.getCommandSenderWorld())) return;
 
-                    Tree finalTree = new Tree(treeType, origin);
+                    // Nur den Basisblock (oder Rooty Soil darunter) in den finalen Stack
+                    BlockPos baseBlock = getBaseBlockForDynamicTree(tempTree.getStackToBreak(), this.getCommandSenderWorld());
+                    if (baseBlock == null) return;
 
-                    for (BlockPos p : tempTree.getStackToBreak()) finalTree.addToBreak(p);
-                    for (BlockPos p : tempTree.getStackToStrip()) finalTree.addToStrip(p);
+                    Tree finalTree = new Tree(treeType, baseBlock, true);
+                    finalTree.addToBreak(baseBlock);
                     for (BlockPos p : tempTree.getStackToShear()) finalTree.addToShear(p);
 
                     stackOfTrees.push(finalTree);
+
+                } else {
+                    // Vanilla: normaler Scan + Blatt-Validierung
+                    scanTree(this.getCommandSenderWorld(), pos.immutable(), visited, tempTree);
+
+                    if (!hasNaturalLeavesConnected(tempTree, this.getCommandSenderWorld())) return;
+
+                    if (!tempTree.isEmpty()) {
+                        BlockPos origin = getLowestLog(tempTree.getStackToBreak());
+
+                        Tree finalTree = new Tree(treeType, origin);
+
+                        for (BlockPos p : tempTree.getStackToBreak()) finalTree.addToBreak(p);
+                        for (BlockPos p : tempTree.getStackToStrip()) finalTree.addToStrip(p);
+                        for (BlockPos p : tempTree.getStackToShear()) finalTree.addToShear(p);
+
+                        stackOfTrees.push(finalTree);
+                    }
                 }
             }
         });
     }
+
+    // Scannt alle DT-Branch-Blöcke via BFS und sammelt Vanilla-Blätter.
+    // stackToBreak enthält nach dem Scan alle Ast-Positionen (für die Reifeprüfung).
+    private void scanDynamicTree(Level level, BlockPos start, Set<BlockPos> visited, Tree tree) {
+        tree.getStackToShear().clear();
+        tree.getStackToStrip().clear();
+        tree.getStackToBreak().clear();
+
+        Queue<BlockPos> toVisit = new ArrayDeque<>();
+        toVisit.add(start);
+
+        while (!toVisit.isEmpty()) {
+            BlockPos pos = toVisit.poll();
+            if (!visited.add(pos)) continue;
+
+            BlockState state = level.getBlockState(pos);
+
+            if (DynamicTrees.isDynamicTreesBranch(state.getBlock())) {
+                tree.addToBreak(pos.immutable());
+
+                // Vanilla-Blätter in der Nähe sammeln
+                int range = 4;
+                for (int x = -range; x < range; x++) {
+                    for (int y = -range; y < range; y++) {
+                        for (int z = -range; z < range; z++) {
+                            BlockPos pos1 = pos.offset(x, y, z);
+                            BlockState state1 = level.getBlockState(pos1);
+                            if (isLeaf(state1) && !tree.getStackToShear().contains(pos1)) {
+                                tree.addToShear(pos1.immutable());
+                            }
+                        }
+                    }
+                }
+
+                for (Direction dir : Direction.values()) {
+                    toVisit.add(pos.relative(dir));
+                }
+            }
+        }
+
+        tree.getStackToShear().sort(Comparator.reverseOrder());
+    }
+
+    // Gibt den untersten Branch-Block zurück – dieser wird gebrochen und triggert DT's Fäll-Logik
+    private BlockPos getBaseBlockForDynamicTree(Stack<BlockPos> branches, Level level) {
+        return branches.stream()
+                .min(Comparator.comparingInt(BlockPos::getY))
+                .orElse(null);
+    }
+
     private boolean hasNaturalLeavesConnected(Tree tree, Level level) {
         for (BlockPos logPos : tree.getStackToBreak()) {
             for (BlockPos offset : BlockPos.betweenClosed(
@@ -138,9 +209,7 @@ public class LumberArea extends AbstractWorkAreaEntity {
                 BlockState state = level.getBlockState(offset);
 
                 if (isLeaf(state)) {
-                    // Nur Leaves zählen, die NICHT persistent sind
                     if (!state.getOptionalValue(BlockStateProperties.PERSISTENT).orElse(false)) {
-                        // Zusätzlich checken, ob distance < 7 (also verbunden)
                         if (state.getOptionalValue(BlockStateProperties.DISTANCE).orElse(7) < 7) {
                             return true;
                         }
@@ -150,13 +219,15 @@ public class LumberArea extends AbstractWorkAreaEntity {
         }
         return false;
     }
+
     private BlockPos getLowestLog(Stack<BlockPos> logStack) {
         return logStack.stream().min(Comparator.comparingInt(BlockPos::getY)).orElse(null);
     }
 
     private String getTreeType(BlockState state) {
         ResourceLocation id = BuiltInRegistries.BLOCK.getKey(state.getBlock());
-        return id != null ? id.getPath().replace("_log", "") : "unknown";
+        if (id == null) return "unknown";
+        return id.getPath().replace("_log", "").replace("_branch", "");
     }
 
     private void scanTree(Level level, BlockPos start, Set<BlockPos> visited, Tree tree) {
@@ -201,6 +272,7 @@ public class LumberArea extends AbstractWorkAreaEntity {
         tree.getStackToStrip().sort(Comparator.reverseOrder());
         tree.getStackToBreak().sort(Comparator.reverseOrder());
     }
+
     public void scanPlantArea() {
         if (area == null) this.area = getArea();
 
@@ -211,7 +283,6 @@ public class LumberArea extends AbstractWorkAreaEntity {
 
         BlockPos center = new BlockPos((int) area.getCenter().x(), this.getOnPos().getY(), (int) area.getCenter().z());
 
-        // Füge potenzielle XZ-Positionen hinzu, die später auf Y geprüft werden
         for (Direction dir : Direction.Plane.HORIZONTAL) {
             possiblePositions.add(center.relative(dir, 5));
         }
@@ -242,7 +313,7 @@ public class LumberArea extends AbstractWorkAreaEntity {
 
                     if (enoughSpace) {
                         stackToPlant.add(pos.immutable());
-                        break; // gültige Stelle gefunden, keine weitere Y-Suche nötig
+                        break;
                     }
                 }
             }
@@ -264,7 +335,10 @@ public class LumberArea extends AbstractWorkAreaEntity {
     }
 
     private boolean isLog(BlockState state) {
-        return state.is(BlockTags.LOGS);
+        if (state.is(BlockTags.LOGS)) return true;
+        // DynamicTrees: Branches sind nicht im LOGS-Tag
+        if (WorkersMain.isDynamicTreesInstalled && DynamicTrees.isDynamicTreesBranch(state.getBlock())) return true;
+        return false;
     }
 
     private boolean isLeaf(BlockState state) {

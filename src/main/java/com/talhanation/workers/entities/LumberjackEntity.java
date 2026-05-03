@@ -2,7 +2,11 @@ package com.talhanation.workers.entities;
 
 import com.talhanation.recruits.entities.AbstractRecruitEntity;
 import com.talhanation.recruits.pathfinding.AsyncGroundPathNavigation;
+import com.talhanation.workers.WorkersMain;
+import com.talhanation.workers.compat.DynamicTrees;
 import com.talhanation.workers.config.WorkersServerConfig;
+import net.minecraft.core.BlockPos;
+import net.minecraft.server.level.ServerLevel;
 import com.talhanation.workers.entities.ai.LumberjackWorkGoal;
 import com.talhanation.workers.entities.workarea.AbstractWorkAreaEntity;
 import com.talhanation.workers.entities.workarea.LumberArea;
@@ -12,6 +16,7 @@ import net.minecraft.resources.ResourceLocation;
 import net.minecraft.tags.BlockTags;
 import net.minecraft.util.RandomSource;
 import net.minecraft.world.DifficultyInstance;
+import net.minecraft.world.damagesource.DamageSource;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.Mob;
 import net.minecraft.world.entity.MobSpawnType;
@@ -23,8 +28,10 @@ import net.minecraft.world.item.*;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.ServerLevelAccessor;
 import net.minecraft.world.level.block.SaplingBlock;
+import net.minecraft.world.level.block.state.BlockState;
 import net.minecraftforge.common.ForgeMod;
 import net.minecraftforge.registries.ForgeRegistries;
+import org.jetbrains.annotations.NotNull;
 
 import javax.annotation.Nullable;
 import java.util.List;
@@ -117,11 +124,39 @@ public class LumberjackEntity extends AbstractWorkerEntity{
         if(itemStack.getItem() instanceof BlockItem blockItem && blockItem.getBlock().defaultBlockState().is(BlockTags.LOGS)) return true;
         if(itemStack.getItem() instanceof BlockItem blockItem && blockItem.getBlock().defaultBlockState().is(BlockTags.LEAVES)) return true;
 
+        if(WorkersMain.isDynamicTreesInstalled && DynamicTrees.isDynamicTreesSeed(itemStack)) return true;
         return super.wantsToPickUp(itemStack);
+    }
+
+    @Override
+    protected void finalizeBlockBreak(BlockPos pos) {
+        if (WorkersMain.isDynamicTreesInstalled) {
+            Level level = this.getCommandSenderWorld();
+            BlockState state = level.getBlockState(pos);
+
+            if(level.isClientSide()) return;
+
+            if (DynamicTrees.isDynamicTreesBranch(state.getBlock())) {
+                DynamicTrees.fellTree((ServerLevel)level, pos, this);
+                this.damageMainHandItem();
+                return;
+            }
+        }
+        super.finalizeBlockBreak(pos);
     }
 
     @Override
     public AbstractWorkAreaEntity getCurrentWorkArea() {
         return currentLumberArea;
+    }
+
+    @Override
+    public boolean hurt(@NotNull DamageSource dmg, float amt) {
+        String id = dmg.getMsgId();
+        if(id.contains("falling_tree")){//Compat dynamic trees
+            return false;
+        }
+
+        return super.hurt(dmg, amt);
     }
 }

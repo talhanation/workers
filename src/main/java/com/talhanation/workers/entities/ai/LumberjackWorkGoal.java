@@ -1,5 +1,6 @@
 package com.talhanation.workers.entities.ai;
 
+import com.talhanation.workers.WorkersMain;
 import com.talhanation.workers.entities.LumberjackEntity;
 import com.talhanation.workers.entities.workarea.LumberArea;
 import com.talhanation.workers.world.NeededItem;
@@ -10,6 +11,8 @@ import net.minecraft.sounds.SoundEvents;
 import net.minecraft.sounds.SoundSource;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.entity.ai.goal.Goal;
+import com.talhanation.workers.WorkersMain;
+import com.talhanation.workers.compat.DynamicTrees;
 import net.minecraft.world.item.AxeItem;
 import net.minecraft.world.item.BlockItem;
 import net.minecraft.world.item.ItemStack;
@@ -33,6 +36,8 @@ public class LumberjackWorkGoal extends Goal {
     public Stack<BlockPos> stackToPlant;
     public Tree currentTree;
 
+
+
     public LumberjackWorkGoal(LumberjackEntity lumberjack) {
         this.lumberjack = lumberjack;
         setFlags(EnumSet.of(Flag.LOOK, Flag.MOVE));
@@ -48,10 +53,11 @@ public class LumberjackWorkGoal extends Goal {
         super.start();
         if(this.lumberjack.getCommandSenderWorld().isClientSide()) return;
 
-
         setState(State.SELECT_WORK_AREA);
     }
+
     boolean workDone;
+
     @Override
     public void tick() {
         super.tick();
@@ -102,7 +108,6 @@ public class LumberjackWorkGoal extends Goal {
                 this.stackOfTrees.sort(Comparator.comparing(tree -> tree.getPosition().getCenter().distanceToSqr(lumberjack.position())));
 
                 if(stackOfTrees.isEmpty()){
-
                     setState(State.PREPARE_PLANT_SAPLINGS);
                     return;
                 }
@@ -126,6 +131,7 @@ public class LumberjackWorkGoal extends Goal {
 
                 setState(State.PREPARE_SHEAR_LEAVES);
             }
+
             case PREPARE_SHEAR_LEAVES -> {
                 if(!lumberjack.currentLumberArea.getShearLeaves()){
                     setState(State.PREPARE_STRIP_LOGS);
@@ -142,13 +148,16 @@ public class LumberjackWorkGoal extends Goal {
 
                 setState(State.SHEAR_LEAVES);
             }
+
             case SHEAR_LEAVES -> {
                 if(lumberjack.currentLumberArea.getShearLeaves() && this.shearLeaves(currentTree.getStackToShear())) return;
 
                 setState(State.PREPARE_STRIP_LOGS);
             }
+
             case PREPARE_STRIP_LOGS -> {
-                if(!lumberjack.currentLumberArea.getStripLogs()){
+                // DT-Bäume haben keine strippbaren Logs – direkt überspringen
+                if(currentTree.isDynamicTree() || !lumberjack.currentLumberArea.getStripLogs()){
                     setState(State.PREPARE_WOOD_CUTTING);
                     return;
                 }
@@ -164,11 +173,13 @@ public class LumberjackWorkGoal extends Goal {
 
                 setState(State.STRIP_WOOD);
             }
+
             case STRIP_WOOD -> {
                 if(lumberjack.currentLumberArea.getStripLogs() && this.stripLogs(currentTree.getStackToStrip())) return;
 
                 setState(State.PREPARE_WOOD_CUTTING);
             }
+
             case PREPARE_WOOD_CUTTING -> {
                 lumberjack.switchMainHandItem(itemStack -> itemStack.getItem() instanceof AxeItem);
 
@@ -181,6 +192,7 @@ public class LumberjackWorkGoal extends Goal {
 
                 setState(State.WOOD_CUTTING);
             }
+
             case WOOD_CUTTING -> {
 
             }
@@ -230,6 +242,7 @@ public class LumberjackWorkGoal extends Goal {
         //if(lumberjack.getOwner() != null) lumberjack.getOwner().sendSystemMessage(Component.literal(state.toString()));
         this.state = state;
     }
+
 
     int blockBreakTime;
     public boolean breakBlocks(Stack<BlockPos> positions){
@@ -325,10 +338,17 @@ public class LumberjackWorkGoal extends Goal {
     public boolean plantSaplings(Stack<BlockPos> positions){
         if(positions != null){
             ItemStack saplingFromInv;
+
             if(lumberjack.currentLumberArea.getSaplingStack().isEmpty()){
-                saplingFromInv = lumberjack.getMatchingItem(itemStack -> itemStack.getItem() instanceof BlockItem blockItem && blockItem.getBlock() instanceof SaplingBlock);
+                saplingFromInv = lumberjack.getMatchingItem(itemStack ->
+                        (itemStack.getItem() instanceof BlockItem blockItem && blockItem.getBlock() instanceof SaplingBlock)
+                                || (WorkersMain.isDynamicTreesInstalled && DynamicTrees.isDynamicTreesSeed(itemStack))
+                );
                 if(saplingFromInv == null){
-                    lumberjack.addNeededItem(new NeededItem(itemStack -> itemStack.getItem() instanceof BlockItem blockItem && blockItem.getBlock() instanceof SaplingBlock,  8, false));
+                    lumberjack.addNeededItem(new NeededItem(itemStack ->
+                            (itemStack.getItem() instanceof BlockItem blockItem && blockItem.getBlock() instanceof SaplingBlock)
+                                    || (WorkersMain.isDynamicTreesInstalled && DynamicTrees.isDynamicTreesSeed(itemStack)),
+                            8, false));
                     this.blockPos = null;
                     return false;
                 }
@@ -358,6 +378,14 @@ public class LumberjackWorkGoal extends Goal {
                     return false;
                 }
             }
+            // DT-Seeds: via DT API pflanzen (setzt Rooty Soil, triggert DT-Wachstumslogik)
+            else if (WorkersMain.isDynamicTreesInstalled && DynamicTrees.isDynamicTreesSeed(saplingFromInv)) {
+                if (DynamicTrees.plantSeed(lumberjack.getCommandSenderWorld(), blockPos, saplingFromInv)) {
+                    lumberjack.getCommandSenderWorld().playSound(null, blockPos.getX(), blockPos.getY(), blockPos.getZ(), SoundEvents.CROP_PLANTED, SoundSource.BLOCKS, 1.0F, 1.0F);
+                    saplingFromInv.shrink(1);
+                    this.lumberjack.swing(InteractionHand.MAIN_HAND);
+                }
+            }
             else if (saplingFromInv.getItem() instanceof BlockItem blockItem) {
                 lumberjack.getCommandSenderWorld().setBlockAndUpdate(blockPos, blockItem.getBlock().defaultBlockState());
 
@@ -370,6 +398,7 @@ public class LumberjackWorkGoal extends Goal {
         this.blockPos = null;
         return false;
     }
+
     @Override
     public boolean canContinueToUse() {
         return canUse();
@@ -408,9 +437,6 @@ public class LumberjackWorkGoal extends Goal {
             }
 
             priority += area.time;
-
-            //double dist = area.position().distanceToSqr(lumberjack.position());
-            //priority -= dist / 10.0;
 
             priorityMap.put(area, priority);
         }

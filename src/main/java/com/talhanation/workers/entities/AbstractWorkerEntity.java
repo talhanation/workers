@@ -376,8 +376,7 @@ public abstract class AbstractWorkerEntity extends AbstractChunkLoaderEntity {
         }
 
         if (currentTimeBreak >= breakingTime) {
-            level.destroyBlock(pos, true, this);
-            this.damageMainHandItem();
+            this.finalizeBlockBreak(pos);
             currentTimeBreak = 0;
             breakingTime = 0;
             previousTimeBreak = 0;
@@ -386,6 +385,11 @@ public abstract class AbstractWorkerEntity extends AbstractChunkLoaderEntity {
         this.swing(InteractionHand.MAIN_HAND);
     }
 
+    protected void finalizeBlockBreak(BlockPos pos) {
+        Level level = this.getCommandSenderWorld();
+        level.destroyBlock(pos, true, this);
+        this.damageMainHandItem();
+    }
 
     public boolean needsToGetItems() {
         return neededItems.stream().anyMatch(neededItem -> neededItem.required);
