@@ -45,7 +45,15 @@ public class LumberjackWorkGoal extends Goal {
 
     @Override
     public boolean canUse() {
-        return !lumberjack.needsToSleep() && lumberjack.shouldWork() && !lumberjack.needsToGetToChest();
+        return !lumberjack.needsToSleep() && lumberjack.shouldWork() && !lumberjack.needsToGetToChest() && this.isAreaNotRemoved();
+    }
+
+    private boolean isAreaNotRemoved() {
+        if(lumberjack.currentLumberArea == null || !lumberjack.currentLumberArea.isRemoved()) return true;
+        else {
+            lumberjack.currentLumberArea = null;
+        }
+        return false;
     }
 
     @Override

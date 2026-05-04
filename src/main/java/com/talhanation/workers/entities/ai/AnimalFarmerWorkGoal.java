@@ -42,9 +42,16 @@ public class AnimalFarmerWorkGoal extends Goal {
 
     @Override
     public boolean canUse() {
-        return !animalFarmerEntity.needsToSleep() && animalFarmerEntity.shouldWork() && !animalFarmerEntity.needsToGetToChest();
+        return !animalFarmerEntity.needsToSleep() && animalFarmerEntity.shouldWork() && !animalFarmerEntity.needsToGetToChest() && this.isAreaNotRemoved();
     }
 
+    private boolean isAreaNotRemoved() {
+        if(animalFarmerEntity.currentAnimalPen == null || !animalFarmerEntity.currentAnimalPen.isRemoved()) return true;
+        else {
+            animalFarmerEntity.currentAnimalPen = null;
+        }
+        return false;
+    }
     @Override
     public void start() {
         super.start();

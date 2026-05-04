@@ -24,8 +24,17 @@ public class MerchantWorkGoal extends Goal {
     @Override
     public boolean canUse() {
         if (merchant.isCreative()) return false;
-        return merchant.shouldWork() && !merchant.needsToGetToChest();
+        return merchant.shouldWork() && !merchant.needsToGetToChest() && this.isAreaNotRemoved();
     }
+
+    private boolean isAreaNotRemoved() {
+        if(merchant.currentMarketArea == null || !merchant.currentMarketArea.isRemoved()) return true;
+        else {
+            merchant.currentMarketArea = null;
+        }
+        return false;
+    }
+
 
     @Override
     public boolean canContinueToUse() {
