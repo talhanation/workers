@@ -21,7 +21,7 @@ import net.minecraftforge.api.distmarker.OnlyIn;
 
 import java.util.*;
 
-public class StorageArea extends AbstractWorkAreaEntity {
+public class StorageArea extends AbstractWorkAreaEntity implements IPermissionArea {
 
     public static final EntityDataAccessor<Integer> STORAGE_TYPES = SynchedEntityData.defineId(StorageArea.class, EntityDataSerializers.INT);
     public Map<BlockPos, Container> storageMap = new HashMap<>();

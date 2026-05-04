@@ -1,6 +1,8 @@
 package com.talhanation.workers;
 
 import com.talhanation.workers.entities.ai.animals.WorkerTemptGoal;
+import com.talhanation.workers.entities.workarea.AbstractWorkAreaEntity;
+import com.talhanation.workers.entities.workarea.IPermissionArea;
 import com.talhanation.workers.entities.workarea.MarketArea;
 import com.talhanation.workers.init.ModEntityTypes;
 import com.talhanation.recruits.world.RecruitsHireTradesRegistry;
@@ -122,32 +124,33 @@ public class VillagerEvents {
             return;
         }
 
-        if(disableInteractionInMarketArea(event.getEntity(), event.getLevel(), event.getPos())){
+        if(disableInteractionInPermissionArea(event.getEntity(), event.getLevel(), event.getPos())){
             event.setCanceled(true);
         }
-
     }
 
-    public static boolean disableInteractionInMarketArea(Player player, Level level, BlockPos pos) {
-        List<MarketArea> markets = level.getEntitiesOfClass(MarketArea.class, new AABB(pos).inflate(8));
-        if (markets.isEmpty()) return false;
+    public static boolean disableInteractionInPermissionArea(Player player, Level level, BlockPos pos) {
+        List<AbstractWorkAreaEntity> areas = level.getEntitiesOfClass(AbstractWorkAreaEntity.class, new AABB(pos).inflate(8));
+        if (areas.isEmpty()) return false;
 
-        markets.removeIf(marketArea -> {
-            AABB area = marketArea.getArea();
+        areas.removeIf(workArea -> !(workArea instanceof IPermissionArea));
+
+        areas.removeIf(permissionArea -> {
+            AABB area = permissionArea.getArea();
             return !(pos.getX() >= area.minX && pos.getX() <= area.maxX
                     && pos.getY() >= area.minY && pos.getY() <= area.maxY
                     && pos.getZ() >= area.minZ && pos.getZ() <= area.maxZ);
         });
-        if (markets.isEmpty()) return false;
+        if (areas.isEmpty()) return false;
 
         boolean isContainer = level.getBlockEntity(pos) instanceof Container;
         if (!isContainer) return false;
 
-        MarketArea market = markets.get(0);
-        UUID ownerUUID = market.getPlayerUUID();
+        IPermissionArea permissionArea = (IPermissionArea) areas.get(0);
+        UUID ownerUUID = permissionArea.getPlayerUUID();
 
         boolean isOwner  = ownerUUID != null && player.getUUID().equals(ownerUUID);
-        boolean isTeamMate = market.getTeamAccess() && player.getTeam() != null && market.getTeamStringID().equals(player.getTeam().getName());
+        boolean isTeamMate = permissionArea.getTeamAccess() && player.getTeam() != null && permissionArea.getTeamStringID().equals(player.getTeam().getName());
         boolean isAdmin  = player.isCreative() && player.hasPermissions(2);
 
         return !isOwner && !isTeamMate && !isAdmin;

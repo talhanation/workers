@@ -24,7 +24,7 @@ import net.minecraftforge.api.distmarker.OnlyIn;
 
 import java.util.*;
 
-public class MarketArea extends AbstractWorkAreaEntity {
+public class MarketArea extends AbstractWorkAreaEntity implements IPermissionArea {
 
     public static final EntityDataAccessor<Boolean> IS_OPEN = SynchedEntityData.defineId(MarketArea.class, EntityDataSerializers.BOOLEAN);
     public static final EntityDataAccessor<String> MARKET_NAME = SynchedEntityData.defineId(MarketArea.class, EntityDataSerializers.STRING);
