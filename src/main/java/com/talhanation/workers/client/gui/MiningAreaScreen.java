@@ -37,6 +37,7 @@ public class MiningAreaScreen extends WorkAreaScreen {
 
     @Override
     protected void init() {
+        super.init();
         this.areaXSize = miningArea.getWidthSize();
         this.areaYSize = miningArea.getHeightSize();
         this.areaZSize = miningArea.getDepthSize();

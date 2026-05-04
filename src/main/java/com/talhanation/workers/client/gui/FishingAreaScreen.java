@@ -16,6 +16,7 @@ public class FishingAreaScreen extends WorkAreaScreen {
 
     @Override
     protected void init() {
+        super.init();
         setButtons();
     }
 

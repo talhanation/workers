@@ -47,6 +47,7 @@ public class LumberAreaScreen extends WorkAreaScreen {
 
     @Override
     protected void init() {
+        super.init();
         this.possibleSeeds = getPossibleSaplingsFromInventory();
 
         setButtons();

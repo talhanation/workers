@@ -69,6 +69,7 @@ public class BuildAreaScreen extends WorkAreaScreen {
 
     @Override
     protected void init() {
+        super.init();
         structureNBT = buildArea.getStructureNBT();
         if (structureNBT != null && !structureNBT.isEmpty()) {
             mode = Mode.LOAD;

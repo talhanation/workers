@@ -62,6 +62,7 @@ public class StorageAreaScreen extends WorkAreaScreen {
 
     @Override
     protected void init() {
+        super.init();
         this.savedName = workArea.getCustomName();
         if(this.savedName == null || this.savedName.getString().isEmpty()){
             this.savedName = TEXT_STORAGE_NAME;

@@ -55,6 +55,7 @@ public class AnimalPenAreaScreen extends WorkAreaScreen {
 
     @Override
     protected void init() {
+        super.init();
         this.possibleAnimalTypes = getPossibleAnimalTypes();
 
         setButtons();
