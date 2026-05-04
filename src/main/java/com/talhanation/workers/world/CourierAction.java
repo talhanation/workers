@@ -49,7 +49,9 @@ public class CourierAction {
     }
 
     public enum SourceType {
-        CHEST, STORAGE, WORKER;
+        CHEST,
+        STORAGE;
+        //WORKER;
 
         public static SourceType fromString(String s) {
             try { return valueOf(s); } catch (Exception e) { return CHEST; }

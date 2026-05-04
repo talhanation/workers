@@ -375,12 +375,12 @@ public class CourierScreen extends ScreenBase<CourierContainer> {
                             : CourierAction.SourceType.CHEST,
                     x, rowY, COL_SRC, h,
                     List.of(CourierAction.SourceType.CHEST,
-                            CourierAction.SourceType.STORAGE,
-                            CourierAction.SourceType.WORKER),
+                            CourierAction.SourceType.STORAGE),
+                            //CourierAction.SourceType.WORKER),
                     s -> switch (s) {
                         case CHEST   -> "Chest";
                         case STORAGE -> "Storage";
-                        case WORKER  -> "Worker";
+                        //case WORKER  -> "Worker";
                     },
                     s -> { action.setSourceType(s); buildWidgets(); });
             addRenderableWidget(srcDD);

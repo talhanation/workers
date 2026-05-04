@@ -420,9 +420,11 @@ public class CourierWorkGoal extends Goal {
                     result.addAll(a.storageMap.values());
                 }
             }
+            /*
             case WORKER -> level.getEntitiesOfClass(AbstractWorkerEntity.class, scanBox,
                     w -> w != courier && w.getOwnerUUID() != null && w.getOwnerUUID().equals(courier.getOwnerUUID()))
                     .forEach(w -> result.add(w.getInventory()));
+            */
         }
         return result;
     }
