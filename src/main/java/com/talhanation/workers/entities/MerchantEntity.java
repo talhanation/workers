@@ -13,6 +13,7 @@ import com.talhanation.workers.inventory.MerchantAddEditTradeContainer;
 import com.talhanation.workers.inventory.MerchantTradeContainer;
 import com.talhanation.workers.network.MessageOpenMerchantEditTradeScreen;
 import com.talhanation.workers.network.MessageOpenMerchantTradeScreen;
+import com.talhanation.workers.world.VillagerInviteRegistry;
 import com.talhanation.workers.world.WorkersMerchantTrade;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.chat.Component;
@@ -30,10 +31,12 @@ import net.minecraft.world.entity.SpawnGroupData;
 import net.minecraft.world.entity.ai.attributes.AttributeSupplier;
 import net.minecraft.world.entity.ai.attributes.Attributes;
 import net.minecraft.world.entity.item.ItemEntity;
+import net.minecraft.world.entity.npc.Villager;
 import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.inventory.AbstractContainerMenu;
 import net.minecraft.world.item.*;
+import net.minecraft.world.item.trading.MerchantOffer;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.ServerLevelAccessor;
 import net.minecraftforge.common.ForgeMod;
@@ -62,6 +65,11 @@ public class MerchantEntity extends AbstractWorkerEntity implements ICanTradeEmb
 
     public boolean needsNewTrades;
     public MarketArea currentMarketArea;
+
+    @Nullable public Villager activeTradingVillager;
+    @Nullable public WorkersMerchantTrade activeVillagerTrade;
+    @Nullable public MerchantOffer activeVillagerOffer;
+    public int villagerTradeTimeout;
 
     public MerchantEntity(EntityType<? extends AbstractWorkerEntity> entityType, Level world) {
         super(entityType, world);
@@ -418,7 +426,32 @@ public class MerchantEntity extends AbstractWorkerEntity implements ICanTradeEmb
         this.setTrades(currents);
     }
 
-    private boolean canAddItemToMerchant(ItemStack itemStack){
+    public boolean tryExecuteVillagerTrade(WorkersMerchantTrade trade, ItemStack costItem, ItemStack reward) {
+        if(countMerchantItemStack(trade.tradeItem, false) < costItem.getCount()) return false;
+        if(!canAddItemToMerchant(reward)) return false;
+
+        shrinkMerchantItemStack(trade.tradeItem, costItem.getCount(), false);
+        addItemToMerchant(reward, reward.getCount());
+
+        trade.currentTrades++;
+        List<WorkersMerchantTrade> list = getTrades();
+        setTrades(list);
+
+        return true;
+    }
+
+    public void clearVillagerTrade() {
+        if(this.activeTradingVillager != null) {
+            VillagerInviteRegistry.release(this.activeTradingVillager.getUUID());
+        }
+        this.activeTradingVillager = null;
+        this.activeVillagerTrade = null;
+        this.activeVillagerOffer = null;
+        this.villagerTradeTimeout = 0;
+    }
+
+
+    public boolean canAddItemToMerchant(ItemStack itemStack){
         boolean can;
         if(this.currentMarketArea != null) {
             can = this.currentMarketArea.canAddItem(itemStack);
@@ -430,7 +463,7 @@ public class MerchantEntity extends AbstractWorkerEntity implements ICanTradeEmb
         return can;
     }
 
-    private void shrinkMerchantItemStack(ItemStack itemStack, int amount, boolean allowDamagedCurrency) {
+    public void shrinkMerchantItemStack(ItemStack itemStack, int amount, boolean allowDamagedCurrency) {
         if(this.currentMarketArea != null) {
             this.currentMarketArea.shrinkItemFromContainers(itemStack, amount, allowDamagedCurrency);
         }
@@ -446,7 +479,8 @@ public class MerchantEntity extends AbstractWorkerEntity implements ICanTradeEmb
             }
         }
     }
-    private int countMerchantItemStack(ItemStack itemStack, boolean allowDamaged) {
+
+    public int countMerchantItemStack(ItemStack itemStack, boolean allowDamaged) {
         int x = -1;
         if(this.currentMarketArea != null) {
             x = this.currentMarketArea.countItemInContainers(itemStack, allowDamaged);
@@ -464,7 +498,7 @@ public class MerchantEntity extends AbstractWorkerEntity implements ICanTradeEmb
         return x;
     }
 
-    private void addItemToMerchant(ItemStack itemStack, int amount) {
+    public void addItemToMerchant(ItemStack itemStack, int amount) {
         if(this.currentMarketArea != null) {
             this.currentMarketArea.depositItemToContainers(itemStack, amount);
         }

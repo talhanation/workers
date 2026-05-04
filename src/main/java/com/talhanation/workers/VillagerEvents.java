@@ -1,5 +1,6 @@
 package com.talhanation.workers;
 
+import com.talhanation.workers.entities.ai.VillagerRespondToMerchantGoal;
 import com.talhanation.workers.entities.ai.animals.WorkerTemptGoal;
 import com.talhanation.workers.entities.workarea.AbstractWorkAreaEntity;
 import com.talhanation.workers.entities.workarea.IPermissionArea;
@@ -9,6 +10,7 @@ import com.talhanation.recruits.world.RecruitsHireTradesRegistry;
 import com.talhanation.workers.network.MessageToClientUpdateConfig;
 import com.talhanation.recruits.world.RecruitsHireTrade;
 import com.talhanation.workers.config.WorkersServerConfig;
+import com.talhanation.workers.world.VillagerInviteRegistry;
 import net.minecraft.core.BlockPos;
 import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerPlayer;
@@ -18,6 +20,7 @@ import net.minecraft.world.entity.animal.Chicken;
 import net.minecraft.world.entity.animal.Cow;
 import net.minecraft.world.entity.animal.Pig;
 import net.minecraft.world.entity.animal.Sheep;
+import net.minecraft.world.entity.npc.Villager;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.Items;
 import net.minecraft.world.item.crafting.Ingredient;
@@ -26,6 +29,7 @@ import net.minecraft.world.phys.AABB;
 import net.minecraftforge.event.entity.EntityJoinLevelEvent;
 import net.minecraftforge.event.entity.player.PlayerInteractEvent;
 import net.minecraftforge.event.server.ServerStartingEvent;
+import net.minecraftforge.event.server.ServerStoppingEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.network.PacketDistributor;
 
@@ -99,6 +103,11 @@ public class VillagerEvents {
     }
 
     @SubscribeEvent
+    public void onServerStopping(ServerStoppingEvent event) {
+        VillagerInviteRegistry.clear();
+    }
+
+    @SubscribeEvent
     public void onAnimalJoinWorld(EntityJoinLevelEvent event) {
         Entity entity = event.getEntity();
 
@@ -113,6 +122,9 @@ public class VillagerEvents {
         }
         else if(entity instanceof Pig pig) {
             pig.goalSelector.addGoal(3, new WorkerTemptGoal(pig,1.0, Pig.FOOD_ITEMS));
+        }
+        else if(entity instanceof Villager villager) {
+            villager.goalSelector.addGoal(4, new VillagerRespondToMerchantGoal(villager));
         }
     }
 

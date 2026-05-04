@@ -15,12 +15,14 @@ public class WorkersMerchantTrade {
     public ItemStack currencyItem;
     public boolean allowDamagedCurrency;
     public boolean enabled;
+    public boolean isVillagerTrade;
     public ItemStack tradeItem;
     public UUID uuid;
 
     public WorkersMerchantTrade copy(){
         WorkersMerchantTrade t = new WorkersMerchantTrade(this.currencyItem, this.tradeItem, this.maxTrades, this.allowDamagedCurrency);
         t.enabled = this.enabled;
+        t.isVillagerTrade = this.isVillagerTrade;
         return t;
     }
 
@@ -37,6 +39,7 @@ public class WorkersMerchantTrade {
         this.maxTrades = maxTrades;
         this.allowDamagedCurrency = allowDamagedCurrency;
         this.enabled = true;
+        this.isVillagerTrade = false;
     }
 
     public CompoundTag toNbt() {
@@ -48,6 +51,7 @@ public class WorkersMerchantTrade {
         tag.putInt("currentTrades", currentTrades);
         tag.putBoolean("allowDamagedCurrency", this.allowDamagedCurrency);
         tag.putBoolean("enabled", this.enabled);
+        tag.putBoolean("isVillagerTrade", this.isVillagerTrade);
         return tag;
     }
 
@@ -64,6 +68,7 @@ public class WorkersMerchantTrade {
         WorkersMerchantTrade trade = new WorkersMerchantTrade(uuid, currencyItem, tradeItem, maxTrades, allowDamaged);
         trade.currentTrades = currentTrades;
         trade.enabled = enabled;
+        trade.isVillagerTrade = tag.getBoolean("isVillagerTrade");
         return trade;
     }
     public static CompoundTag listToNbt(List<WorkersMerchantTrade> trades) {

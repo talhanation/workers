@@ -289,6 +289,7 @@ public class MerchantTradeScreen extends ScreenBase<MerchantTradeContainer> {
         List<WorkersMerchantTrade> trades = merchantEntity.getTrades();
         for(WorkersMerchantTrade merchantTrade : trades){
             if(!merchantTrade.enabled && !isOwner) continue;
+            if(merchantTrade.isVillagerTrade && !isOwner) continue;
             tradeList.addEntry(this.tradeList.new TradeEntry(merchantTrade));
         }
     }
@@ -414,6 +415,11 @@ public class MerchantTradeScreen extends ScreenBase<MerchantTradeContainer> {
                 RenderSystem.enableBlend();
                 RenderSystem.enableDepthTest();
                 guiGraphics.blitNineSliced(AbstractButton.WIDGETS_LOCATION, rowLeft, top, rowWidth, entryHeight, 20, 4, 200, 20, 0, textureY);
+
+                if(trade.isVillagerTrade) {
+                    guiGraphics.fill(rowLeft, top, rowLeft + rowWidth, top + entryHeight, 0x5500AA44);
+                }
+
                 guiGraphics.setColor(1.0F, 1.0F, 1.0F, alpha);
 
                 RenderSystem.setShaderTexture(0, ARROW_IMAGE);

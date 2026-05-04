@@ -5,19 +5,19 @@ import com.talhanation.recruits.client.gui.widgets.RecruitsCheckBox;
 import com.talhanation.workers.WorkersMain;
 import com.talhanation.workers.entities.MerchantEntity;
 import com.talhanation.workers.inventory.MerchantAddEditTradeContainer;
-import com.talhanation.workers.network.MessageUpdateLumberArea;
 import com.talhanation.workers.network.MessageUpdateMerchantTrade;
 import com.talhanation.workers.world.WorkersMerchantTrade;
 import de.maxhenkel.corelib.inventory.ScreenBase;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphics;
-import net.minecraft.client.gui.components.Checkbox;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.MutableComponent;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.util.Mth;
 import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.Items;
 import net.minecraftforge.client.gui.widget.ExtendedButton;
 
 public class MerchantAddEditTradeScreen extends ScreenBase<MerchantAddEditTradeContainer> {
@@ -29,6 +29,7 @@ public class MerchantAddEditTradeScreen extends ScreenBase<MerchantAddEditTradeC
     private static final MutableComponent BUTTON_RESET = Component.translatable("gui.workers.button.reset");
     private static final MutableComponent TEXT_ALLOW_DAMAGED_ITEMS = Component.translatable("gui.workers.checkbox.allowDamagedCurrency");
     private static final MutableComponent TEXT_ENABLED = Component.translatable("gui.workers.checkbox.enabled");
+    private static final MutableComponent TEXT_VILLAGER_TRADE = Component.translatable("gui.workers.checkbox.villagerTrade");
     private static final int fontColor = 4210752;
     private final MerchantEntity merchantEntity;
     private final Player player;
@@ -41,10 +42,13 @@ public class MerchantAddEditTradeScreen extends ScreenBase<MerchantAddEditTradeC
     private ExtendedButton minusMaxTradesButton;
     private RecruitsCheckBox allowDamagedCurrencyCheckBox;
     private RecruitsCheckBox enabledCheckBox;
+    private RecruitsCheckBox villagerTradeCheckBox;
     private int currentTrades;
     private int maxTrades;
     private boolean allowDamagedCurrency;
     private boolean enabled;
+    private boolean isVillagerTrade;
+
     public MerchantAddEditTradeScreen(MerchantAddEditTradeContainer tradeContainer, Inventory playerInventory, Component title) {
         super(RESOURCE_LOCATION, tradeContainer, playerInventory, Component.literal("Add or Edit Merchant Trade"));
         this.tradeContainer = tradeContainer;
@@ -62,6 +66,7 @@ public class MerchantAddEditTradeScreen extends ScreenBase<MerchantAddEditTradeC
         this.maxTrades = this.trade.maxTrades;
         this.allowDamagedCurrency = this.trade.allowDamagedCurrency;
         this.enabled = this.trade.enabled;
+        this.isVillagerTrade = this.trade.isVillagerTrade;
 
         this.setWidgets();
     }
@@ -79,12 +84,22 @@ public class MerchantAddEditTradeScreen extends ScreenBase<MerchantAddEditTradeC
         int y2 = y + 65;
         saveButton = new ExtendedButton(x, y2, 80, 20, BUTTON_SAVE,
                 button -> {
-                    this.trade.currencyItem = tradeContainer.getCurrencyItem();
                     this.trade.tradeItem = tradeContainer.getTradeItem();
                     this.trade.currentTrades = currentTrades;
                     this.trade.maxTrades = maxTrades;
-                    this.trade.allowDamagedCurrency = allowDamagedCurrency;
                     this.trade.enabled = enabled;
+                    this.trade.isVillagerTrade = isVillagerTrade;
+
+                    if(isVillagerTrade) {
+                        // Currency is always emerald for villager trades – auto-set
+                        this.trade.currencyItem = new ItemStack(Items.EMERALD);
+                        this.trade.allowDamagedCurrency = false;
+                    }
+                    else {
+                        this.trade.currencyItem = tradeContainer.getCurrencyItem();
+                        this.trade.allowDamagedCurrency = allowDamagedCurrency;
+                    }
+
                     WorkersMain.SIMPLE_CHANNEL.sendToServer(new MessageUpdateMerchantTrade(this.merchantEntity.getUUID(), this.trade, false));
 
                     new java.util.Timer().schedule(new java.util.TimerTask() {
@@ -129,13 +144,25 @@ public class MerchantAddEditTradeScreen extends ScreenBase<MerchantAddEditTradeC
                 });
         addRenderableWidget(minusMaxTradesButton);
 
-        this.allowDamagedCurrencyCheckBox = new RecruitsCheckBox(x + 170, y + 15, 100, 20, TEXT_ALLOW_DAMAGED_ITEMS,
-                this.allowDamagedCurrency,
+        this.villagerTradeCheckBox = new RecruitsCheckBox(x + 170, y + 65, 100, 20, TEXT_VILLAGER_TRADE,
+                this.isVillagerTrade,
                 (bool) -> {
-                    this.allowDamagedCurrency = bool;
+                    this.isVillagerTrade = bool;
+                    this.setWidgets();
                 }
         );
-        addRenderableWidget(allowDamagedCurrencyCheckBox);
+        addRenderableWidget(villagerTradeCheckBox);
+
+        // allowDamagedCurrency not applicable for villager trades
+        if(!isVillagerTrade) {
+            this.allowDamagedCurrencyCheckBox = new RecruitsCheckBox(x + 170, y + 15, 100, 20, TEXT_ALLOW_DAMAGED_ITEMS,
+                    this.allowDamagedCurrency,
+                    (bool) -> {
+                        this.allowDamagedCurrency = bool;
+                    }
+            );
+            addRenderableWidget(allowDamagedCurrencyCheckBox);
+        }
 
         this.enabledCheckBox = new RecruitsCheckBox(x + 170, y + 40, 100, 20, TEXT_ENABLED,
                 this.enabled,
@@ -156,5 +183,10 @@ public class MerchantAddEditTradeScreen extends ScreenBase<MerchantAddEditTradeC
     protected void renderLabels(GuiGraphics guiGraphics, int mouseX, int mouseY) {
         guiGraphics.drawString(font, title, 8, 5, fontColor, false);
         guiGraphics.drawString(font, player.getInventory().getDisplayName().getVisualOrderText(), 8, this.imageHeight - 96 + 2, fontColor, false);
+
+        if(isVillagerTrade) {
+            // Currency slot (at container x=44, y=28) is ignored for villager trades
+            guiGraphics.drawString(font, Component.literal("auto"), 42, 20, 0x55AA55, false);
+        }
     }
 }
