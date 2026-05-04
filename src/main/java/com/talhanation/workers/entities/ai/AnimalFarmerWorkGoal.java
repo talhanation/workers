@@ -57,6 +57,7 @@ public class AnimalFarmerWorkGoal extends Goal {
         super.start();
         if(this.animalFarmerEntity.getCommandSenderWorld().isClientSide()) return;
         animalFarmerEntity.setAggroState(3);
+        animalFarmerEntity.setFollowState(6); //Working
         setState(State.SELECT_WORK_AREA);
     }
 
@@ -218,6 +219,8 @@ public class AnimalFarmerWorkGoal extends Goal {
                 animal = null;
                 animalFarmerEntity.currentAnimalPen = null;
                 animalFarmerEntity.switchMainHandItem(ItemStack::isEmpty);
+
+                this.animalFarmerEntity.setFollowState(0);//Wander
                 setState(State.SELECT_WORK_AREA);
 
                 if(!this.neededItems.isEmpty()){

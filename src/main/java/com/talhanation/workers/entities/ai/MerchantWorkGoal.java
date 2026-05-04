@@ -53,6 +53,7 @@ public class MerchantWorkGoal extends Goal {
 
     @Override
     public void start() {
+        merchant.setFollowState(6); //Working
         setState(State.SELECT_WORK_AREA);
     }
 
@@ -60,6 +61,7 @@ public class MerchantWorkGoal extends Goal {
     public void stop() {
         if (merchant.currentMarketArea != null) {
             merchant.currentMarketArea.setBeingWorkedOn(false);
+            this.merchant.setFollowState(0);//Wander
             merchant.currentMarketArea = null;
             merchant.setCurrentMarketName("");
         }

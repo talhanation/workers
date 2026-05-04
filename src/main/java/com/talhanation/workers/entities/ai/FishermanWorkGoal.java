@@ -54,6 +54,7 @@ public class FishermanWorkGoal extends Goal {
     @Override
     public void start() {
         super.start();
+        fisherman.setFollowState(6); //Working
         setState(State.SELECT_WORK_AREA);
     }
 
@@ -185,6 +186,7 @@ public class FishermanWorkGoal extends Goal {
 
             case DONE -> {
                 this.fisherman.currentFishingArea.setBeingWorkedOn(false);
+                this.fisherman.setFollowState(0);//Wander
                 blockPos = null;
                 this.fisherman.currentFishingArea = null;
             }

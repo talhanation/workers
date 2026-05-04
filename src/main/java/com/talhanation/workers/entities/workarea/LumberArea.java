@@ -19,11 +19,14 @@ import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.*;
 import net.minecraft.world.level.Level;
+import net.minecraft.world.level.block.Block;
+import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.block.state.properties.BlockStateProperties;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
 
+import javax.annotation.Nullable;
 import java.util.*;
 
 public class LumberArea extends AbstractWorkAreaEntity {
@@ -125,7 +128,9 @@ public class LumberArea extends AbstractWorkAreaEntity {
 
                     Tree finalTree = new Tree(treeType, baseBlock, true);
                     finalTree.addToBreak(baseBlock);
+
                     for (BlockPos p : tempTree.getStackToShear()) finalTree.addToShear(p);
+                    for (BlockPos p : tempTree.getStackToStrip()) finalTree.addToStrip(p);
 
                     stackOfTrees.push(finalTree);
 
@@ -151,8 +156,6 @@ public class LumberArea extends AbstractWorkAreaEntity {
         });
     }
 
-    // Scannt alle DT-Branch-Blöcke via BFS und sammelt Vanilla-Blätter.
-    // stackToBreak enthält nach dem Scan alle Ast-Positionen (für die Reifeprüfung).
     private void scanDynamicTree(Level level, BlockPos start, Set<BlockPos> visited, Tree tree) {
         tree.getStackToShear().clear();
         tree.getStackToStrip().clear();
@@ -168,6 +171,10 @@ public class LumberArea extends AbstractWorkAreaEntity {
             BlockState state = level.getBlockState(pos);
 
             if (DynamicTrees.isDynamicTreesBranch(state.getBlock())) {
+                if (getStrippedBlock(state) != null) {
+                    tree.addToStrip(pos.immutable());
+                }
+
                 tree.addToBreak(pos.immutable());
 
                 // Vanilla-Blätter in der Nähe sammeln
@@ -246,7 +253,7 @@ public class LumberArea extends AbstractWorkAreaEntity {
 
             if (isLog(state)) {
                 tree.addToBreak(pos);
-                if (AxeItem.STRIPPABLES.containsKey(state.getBlock())) {
+                if (getStrippedBlock(state) != null) {
                     tree.addToStrip(pos);
                 }
 
@@ -336,9 +343,29 @@ public class LumberArea extends AbstractWorkAreaEntity {
 
     private boolean isLog(BlockState state) {
         if (state.is(BlockTags.LOGS)) return true;
-        // DynamicTrees: Branches sind nicht im LOGS-Tag
         if (WorkersMain.isDynamicTreesInstalled && DynamicTrees.isDynamicTreesBranch(state.getBlock())) return true;
         return false;
+    }
+
+    @Nullable
+    public static Block getStrippedBlock(BlockState state) {
+        Block strippedBlock = AxeItem.STRIPPABLES.get(state.getBlock());
+        if(strippedBlock != null) return strippedBlock;
+
+        ResourceLocation id = BuiltInRegistries.BLOCK.getKey(state.getBlock());
+        if(id == null) return null;
+
+        ResourceLocation strippedId = new ResourceLocation(id.getNamespace(), "stripped_" + id.getPath());
+        Block candidate = BuiltInRegistries.BLOCK.get(strippedId);
+
+        if(candidate.getDescriptionId().contains("dynamictrees")){
+            int radius = DynamicTrees.getDynamicTreeRadius(state);
+            if(radius < 6) return null;
+        }
+
+        if(candidate == Blocks.AIR) return null;
+
+        return candidate;
     }
 
     private boolean isLeaf(BlockState state) {

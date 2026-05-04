@@ -50,7 +50,7 @@ public class MinerWorkGoal extends Goal {
     public void start() {
         super.start();
         if(this.minerEntity.getCommandSenderWorld().isClientSide()) return;
-
+        minerEntity.setFollowState(6); //Working
 
         setState(State.SELECT_WORK_AREA);
     }
@@ -216,7 +216,7 @@ public class MinerWorkGoal extends Goal {
 
             case DONE -> {
                 this.minerEntity.currentMiningArea.setDone(true);
-
+                this.minerEntity.setFollowState(0);//Wander
                 blockPos = null;
                 minerEntity.currentMiningArea = null;
                 this.start();

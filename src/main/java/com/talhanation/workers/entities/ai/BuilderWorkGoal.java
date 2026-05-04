@@ -63,7 +63,7 @@ public class BuilderWorkGoal extends Goal {
     public void start() {
         super.start();
         if(this.builderEntity.getCommandSenderWorld().isClientSide()) return;
-
+        builderEntity.setFollowState(6); //Working
 
         setState(State.SELECT_WORK_AREA);
     }
@@ -241,7 +241,7 @@ public class BuilderWorkGoal extends Goal {
                     spawnScannedEntities(builderEntity.currentBuildArea);
 
                     builderEntity.currentBuildArea.setBeingWorkedOn(false);
-
+                    this.builderEntity.setFollowState(0);//Wander
                     //ONLY FOR BUILDING AREA WILL REMOVE IT
                     this.builderEntity.currentBuildArea.setDone(true);
 

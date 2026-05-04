@@ -61,6 +61,7 @@ public class CourierWorkGoal extends Goal {
         actionIndex = 0;
         navigationTicks = 0;
         waitTicks = 0;
+        courier.setFollowState(6); //Working
         state = State.NAVIGATE_TO_WAYPOINT;
     }
 
