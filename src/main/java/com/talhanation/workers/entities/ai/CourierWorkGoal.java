@@ -3,6 +3,7 @@ package com.talhanation.workers.entities.ai;
 import com.talhanation.workers.entities.AbstractWorkerEntity;
 import com.talhanation.workers.entities.CourierEntity;
 import com.talhanation.workers.entities.workarea.StorageArea;
+import com.talhanation.workers.entities.workarea.MarketArea;
 import com.talhanation.workers.world.CourierAction;
 import com.talhanation.workers.world.CourierRoute;
 import net.minecraft.core.BlockPos;
@@ -21,9 +22,7 @@ import net.minecraft.world.level.block.entity.ChestBlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.AABB;
 
-import java.util.ArrayList;
-import java.util.EnumSet;
-import java.util.List;
+import java.util.*;
 
 public class CourierWorkGoal extends Goal {
 
@@ -403,22 +402,53 @@ public class CourierWorkGoal extends Goal {
         ServerLevel level = (ServerLevel) courier.getCommandSenderWorld();
 
         switch (type){
-            case CHEST -> BlockPos.betweenClosed(center.offset(-SCAN_RADIUS, -SCAN_RADIUS, -SCAN_RADIUS), center.offset( SCAN_RADIUS,  SCAN_RADIUS,  SCAN_RADIUS))
-                    .forEach(pos -> {
-                        BlockState st = level.getBlockState(pos);
+            case CHEST -> {
+                List<MarketArea> blockedMarkets = level.getEntitiesOfClass(
+                        MarketArea.class, scanBox, m -> !canAccessMarket(m));
+                List<MarketArea> allowedMarkets = level.getEntitiesOfClass(
+                        MarketArea.class, scanBox, this::canAccessMarket);
 
-                        if (st.getBlock() instanceof ChestBlock chestBlock){
-                            Container c = ChestBlock.getContainer(chestBlock, st, level, pos, true);
-                            if (c != null) result.add(c);
-                        }
+                Set<BlockPos> blockedPositions = new HashSet<>();
+                for (MarketArea bm : blockedMarkets) {
+                    bm.scanContainers();
+                    blockedPositions.addAll(bm.containerMap.keySet());
+                }
+
+                Set<BlockPos> allowedMarketPositions = new java.util.HashSet<>();
+                for (MarketArea am : allowedMarkets) {
+                    am.scanContainers();
+                    allowedMarketPositions.addAll(am.containerMap.keySet());
+                }
+
+                BlockPos.betweenClosed(
+                        center.offset(-SCAN_RADIUS, -SCAN_RADIUS, -SCAN_RADIUS),
+                        center.offset( SCAN_RADIUS,  SCAN_RADIUS,  SCAN_RADIUS)
+                ).forEach(pos -> {
+                    if (blockedPositions.contains(pos.immutable())) return;
+                    if (allowedMarketPositions.contains(pos.immutable())) return;
+
+                    BlockState st = level.getBlockState(pos);
+                    if (st.getBlock() instanceof ChestBlock chestBlock){
+                        Container c = ChestBlock.getContainer(chestBlock, st, level, pos, true);
+                        if (c != null) result.add(c);
                     }
-            );
+                });
+            }
             case STORAGE -> {
                 List<StorageArea> areas = level.getEntitiesOfClass(StorageArea.class, scanBox, s -> s.canWorkHere(courier));
 
                 for (StorageArea a : areas){
                     a.scanStorageBlocks();
                     result.addAll(a.storageMap.values());
+                }
+            }
+            case MARKET -> {
+                List<MarketArea> markets = level.getEntitiesOfClass(
+                        MarketArea.class, scanBox, this::canAccessMarket);
+
+                for (MarketArea m : markets){
+                    m.scanContainers();
+                    result.addAll(m.containerMap.values());
                 }
             }
             /*
@@ -428,6 +458,17 @@ public class CourierWorkGoal extends Goal {
             */
         }
         return result;
+    }
+
+    private boolean canAccessMarket(MarketArea market) {
+        if (!courier.isOwned()) return false;
+
+        boolean sameOwner = courier.getOwnerUUID().equals(market.getPlayerUUID());
+        boolean sameTeam  = market.getTeamAccess() && courier.getTeam() != null
+                && market.getTeamStringID() != null
+                && !market.getTeamStringID().isEmpty()
+                && market.getTeamStringID().equals(courier.getTeam().getName());
+        return sameOwner || sameTeam;
     }
 
     private int insertIntoContainer(Container destination, ItemStack stack, int amount){

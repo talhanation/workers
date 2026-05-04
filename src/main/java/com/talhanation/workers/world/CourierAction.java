@@ -50,7 +50,8 @@ public class CourierAction {
 
     public enum SourceType {
         CHEST,
-        STORAGE;
+        STORAGE,
+        MARKET;
         //WORKER;
 
         public static SourceType fromString(String s) {
