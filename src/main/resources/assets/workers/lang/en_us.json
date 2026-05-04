@@ -74,6 +74,9 @@
   "gui.workers.checkbox.tooltip.useVehicleInventory": "If true the items will be filled in the vehicles inventory",
   "gui.workers.checkbox.cycle": "Cycle",
   "gui.workers.checkbox.tooltip.cycle": "If true navigation will start at 1 waypoint otherwise the path will be followed backwards",
+  "gui.workers.checkbox.access": "Faction Access",
+  "gui.workers.checkbox.tooltip.access": "If true faction members and workers, have access / can work in this area.",
+
   "gui.workers.button.reset": "Reset",
   "gui.workers.button.add": "Add",
   "gui.workers.button.remove": "Remove",

@@ -23,19 +23,20 @@ public class MessageUpdateWorkArea implements Message<MessageUpdateWorkArea> {
     public UUID uuid;
     public String name;
     public boolean destroy;
-    public UUID playerUUID;
-    public String playerName;
+    public boolean teamAccess;
+
     public MessageUpdateWorkArea() {
 
     }
 
-    public MessageUpdateWorkArea(UUID uuid, String name, Vec3 vec3, boolean destroy) {
+    public MessageUpdateWorkArea(UUID uuid, String name, Vec3 vec3, boolean destroy, boolean teamAccess) {
         this.x = (float) vec3.x;
         this.y = (float) vec3.y;
         this.z = (float) vec3.z;
         this.uuid = uuid;
         this.name = name;
         this.destroy = destroy;
+        this.teamAccess = teamAccess;
     }
 
     public Dist getExecutingSide() {
@@ -45,10 +46,6 @@ public class MessageUpdateWorkArea implements Message<MessageUpdateWorkArea> {
     public void executeServerSide(NetworkEvent.Context context){
         ServerPlayer player = context.getSender();
         if(player == null) return;
-        String teamStringID = "";
-        if(player.getTeam() != null){
-            teamStringID = player.getTeam().getName();
-        }
 
         player.getCommandSenderWorld().getEntitiesOfClass(AbstractWorkAreaEntity.class, player.getBoundingBox()
                         .inflate(16.0D), v -> v
@@ -67,6 +64,7 @@ public class MessageUpdateWorkArea implements Message<MessageUpdateWorkArea> {
         }
 
         workArea.setCustomName(Component.literal(name));
+        workArea.setTeamAccess(teamAccess);
 
         Vec3 oldPos = workArea.position();
         workArea.moveTo(this.x, this.y, this.z);
@@ -89,6 +87,7 @@ public class MessageUpdateWorkArea implements Message<MessageUpdateWorkArea> {
         this.uuid = buf.readUUID();
         this.name = buf.readUtf();
         this.destroy = buf.readBoolean();
+        this.teamAccess = buf.readBoolean();
         return this;
     }
 
@@ -99,6 +98,7 @@ public class MessageUpdateWorkArea implements Message<MessageUpdateWorkArea> {
         buf.writeUUID(uuid);
         buf.writeUtf(name);
         buf.writeBoolean(destroy);
+        buf.writeBoolean(teamAccess);
     }
 
 }

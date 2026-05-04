@@ -3,6 +3,7 @@ package com.talhanation.workers.client.gui;
 import com.talhanation.recruits.client.gui.RecruitsScreenBase;
 import com.talhanation.recruits.client.gui.player.PlayersList;
 import com.talhanation.recruits.client.gui.player.SelectPlayerScreen;
+import com.talhanation.recruits.client.gui.widgets.RecruitsCheckBox;
 import com.talhanation.recruits.client.gui.widgets.SelectedPlayerWidget;
 import com.talhanation.recruits.world.RecruitsPlayerInfo;
 import com.talhanation.workers.WorkersMain;
@@ -12,6 +13,7 @@ import com.talhanation.workers.network.MessageUpdateOwner;
 import com.talhanation.workers.network.MessageUpdateWorkArea;
 import net.minecraft.client.gui.components.Button;
 import net.minecraft.client.gui.components.EditBox;
+import net.minecraft.client.gui.components.Tooltip;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.MutableComponent;
 import net.minecraft.resources.ResourceLocation;
@@ -27,6 +29,8 @@ public abstract class WorkAreaScreen extends RecruitsScreenBase {
     private static final MutableComponent TEXT_LEFT = Component.translatable("gui.workers.command.text.left");
     private static final MutableComponent TEXT_RIGHT = Component.translatable("gui.workers.command.text.right");
     private static final MutableComponent TEXT_DESTROY = Component.translatable("gui.workers.command.text.destroy");
+    private static final MutableComponent TEXT_TEAM_ACCESS = Component.translatable("gui.workers.checkbox.access");
+    private static final MutableComponent TOOLTIP_TEAM_ACCESS = Component.translatable("gui.workers.checkbox.tooltip.access");
     private EditBox textFieldName;
     private Button moveForward;
     private Button moveBackward;
@@ -41,6 +45,8 @@ public abstract class WorkAreaScreen extends RecruitsScreenBase {
 
     public SelectedPlayerWidget selectedPlayerWidget;
     public RecruitsPlayerInfo playerInfo;
+    public RecruitsCheckBox teamAccessCheckBox;
+    public boolean teamAccess;
 
     protected WorkAreaScreen(Component title, AbstractWorkAreaEntity workArea, Player player) {
         super(title, 200, 222);
@@ -53,7 +59,7 @@ public abstract class WorkAreaScreen extends RecruitsScreenBase {
         super.init();
         workArea.showBox = true;
         playerInfo = new RecruitsPlayerInfo(workArea.getPlayerUUID(), workArea.getPlayerName());
-        setButtons();
+        teamAccess = workArea.getTeamAccess();
     }
     public int x;
     public int y;
@@ -73,7 +79,7 @@ public abstract class WorkAreaScreen extends RecruitsScreenBase {
                     x = 5;
                 }
                 Vec3 newPos = workArea.position().relative(player.getDirection(), x);
-                WorkersMain.SIMPLE_CHANNEL.sendToServer(new MessageUpdateWorkArea(this.workArea.getUUID(), this.workArea.getCustomName().getString(), newPos, false));
+                WorkersMain.SIMPLE_CHANNEL.sendToServer(new MessageUpdateWorkArea(this.workArea.getUUID(), this.workArea.getCustomName().getString(), newPos, false, teamAccess));
                 this.onAreaMoved();
             }
         ));
@@ -87,7 +93,7 @@ public abstract class WorkAreaScreen extends RecruitsScreenBase {
                             x = 5;
                         }
                         Vec3 newPos = workArea.position().relative(player.getDirection().getOpposite(), x);
-                        WorkersMain.SIMPLE_CHANNEL.sendToServer(new MessageUpdateWorkArea(this.workArea.getUUID(), this.workArea.getCustomName().getString(), newPos, false));
+                        WorkersMain.SIMPLE_CHANNEL.sendToServer(new MessageUpdateWorkArea(this.workArea.getUUID(), this.workArea.getCustomName().getString(), newPos, false, teamAccess));
                         this.onAreaMoved();
                     }
         ));
@@ -101,7 +107,7 @@ public abstract class WorkAreaScreen extends RecruitsScreenBase {
                     x = 5;
                 }
                 Vec3 newPos = workArea.position().relative(player.getDirection().getCounterClockWise(), x);
-                WorkersMain.SIMPLE_CHANNEL.sendToServer(new MessageUpdateWorkArea(this.workArea.getUUID(), this.workArea.getCustomName().getString(), newPos, false));
+                WorkersMain.SIMPLE_CHANNEL.sendToServer(new MessageUpdateWorkArea(this.workArea.getUUID(), this.workArea.getCustomName().getString(), newPos, false, teamAccess));
                 this.onAreaMoved();
             }
         ));
@@ -115,7 +121,7 @@ public abstract class WorkAreaScreen extends RecruitsScreenBase {
                     x = 5;
                 }
                 Vec3 newPos = workArea.position().relative(player.getDirection().getClockWise(), x);
-                WorkersMain.SIMPLE_CHANNEL.sendToServer(new MessageUpdateWorkArea(this.workArea.getUUID(), this.workArea.getCustomName().getString(), newPos, false));
+                WorkersMain.SIMPLE_CHANNEL.sendToServer(new MessageUpdateWorkArea(this.workArea.getUUID(), this.workArea.getCustomName().getString(), newPos, false, teamAccess));
                 this.onAreaMoved();
             }
         ));
@@ -123,7 +129,7 @@ public abstract class WorkAreaScreen extends RecruitsScreenBase {
         // Destroy
         destroy = addRenderableWidget(new ExtendedButton(x - buttonWidth / 2, y - buttonHeight / 2, buttonWidth, buttonHeight, TEXT_DESTROY,
             btn -> {
-                WorkersMain.SIMPLE_CHANNEL.sendToServer(new MessageUpdateWorkArea(this.workArea.getUUID(), this.workArea.getCustomName().getString(), workArea.position(), true));
+                WorkersMain.SIMPLE_CHANNEL.sendToServer(new MessageUpdateWorkArea(this.workArea.getUUID(), this.workArea.getCustomName().getString(), workArea.position(), true, teamAccess));
                 this.onClose();
             }
         ));
@@ -151,12 +157,20 @@ public abstract class WorkAreaScreen extends RecruitsScreenBase {
                 () -> {
                     playerInfo = null;
                     this.selectedPlayerWidget.setPlayer(null, null);
-                    this.setButtons();
                 }
             );
 
             this.selectedPlayerWidget.setPlayer(playerInfo.getUUID(), playerInfo.getName());
             addRenderableWidget(this.selectedPlayerWidget);
+
+            this.teamAccessCheckBox = new RecruitsCheckBox(x + 80, y - 30, 120, 20, TEXT_TEAM_ACCESS, teamAccess,
+                b ->{
+                    teamAccess = b;
+                    WorkersMain.SIMPLE_CHANNEL.sendToServer(new MessageUpdateWorkArea(this.workArea.getUUID(), this.workArea.getCustomName().getString(), workArea.position(), false, teamAccess));
+                }
+            );
+            this.teamAccessCheckBox.setTooltip(Tooltip.create(TOOLTIP_TEAM_ACCESS));
+            addRenderableWidget(this.teamAccessCheckBox);
         }
         else {
             Button selectPlayerButton = addRenderableWidget(new ExtendedButton(x + 80, y - 50 , 120, 20, SelectPlayerScreen.TITLE,

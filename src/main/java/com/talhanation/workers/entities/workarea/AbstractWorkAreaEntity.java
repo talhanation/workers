@@ -38,6 +38,7 @@ public abstract class AbstractWorkAreaEntity extends Entity {
     public static final EntityDataAccessor<Integer> HEIGHT = SynchedEntityData.defineId(AbstractWorkAreaEntity.class, EntityDataSerializers.INT);
     public static final EntityDataAccessor<String> TEAM_STRING_ID = SynchedEntityData.defineId(AbstractWorkAreaEntity.class, EntityDataSerializers.STRING);
     public static final EntityDataAccessor<Direction> FACING = SynchedEntityData.defineId(AbstractWorkAreaEntity.class, EntityDataSerializers.DIRECTION);
+    public static final EntityDataAccessor<Boolean> TEAM_ACCESS = SynchedEntityData.defineId(AbstractWorkAreaEntity.class, EntityDataSerializers.BOOLEAN);
     public boolean isDone;
     public boolean isBeingWorkedOn;
     public static int DONE_TIME =  20*60;
@@ -59,6 +60,7 @@ public abstract class AbstractWorkAreaEntity extends Entity {
         this.entityData.define(DEPTH, 0);
         this.entityData.define(FACING, Direction.SOUTH);
         this.entityData.define(TEAM_STRING_ID, "");
+        this.entityData.define(TEAM_ACCESS, true);
     }
 
     @Override
@@ -67,6 +69,7 @@ public abstract class AbstractWorkAreaEntity extends Entity {
         this.time = tag.getInt("time");
         this.isBeingWorkedOn = tag.getBoolean("isBeingWorkedOn");
         this.setPlayerUUID(tag.getUUID("playerUUID"));
+        this.setPlayerName(tag.getString("playerName"));
         this.setWidthSize(tag.getInt("width"));
         this.setHeightSize(tag.getInt("height"));
         this.setDepthSize(tag.getInt("depth"));
@@ -74,11 +77,13 @@ public abstract class AbstractWorkAreaEntity extends Entity {
         if(tag.contains("teamStringID")){
             this.setTeamStringID(tag.getString("teamStringID"));
         }
+        this.setTeamAccess(tag.getBoolean("teamAccess"));
     }
 
     @Override
     public void addAdditionalSaveData(CompoundTag tag) {
         tag.putUUID("playerUUID", getPlayerUUID());
+        tag.putString("playerName", getPlayerName());
         tag.putBoolean("isDone", isDone);
         tag.putBoolean("isBeingWorkedOn", isBeingWorkedOn);
         tag.putInt("width", getWidthSize());
@@ -89,6 +94,7 @@ public abstract class AbstractWorkAreaEntity extends Entity {
             tag.putString("teamStringID", getTeamStringID());
         }
         tag.putInt("time", time);
+        tag.putBoolean("teamAccess", this.getTeamAccess());
     }
 
     public int time;
@@ -172,7 +178,8 @@ public abstract class AbstractWorkAreaEntity extends Entity {
     }
 
     public boolean canWorkHere(AbstractWorkerEntity worker) {
-        return worker.isOwned() && (worker.getOwnerUUID().equals(this.getPlayerUUID()) || (worker.getTeam() != null && this.getTeamStringID() != null && this.getTeamStringID().equals(worker.getTeam().getName())));
+        return worker.isOwned() && (worker.getOwnerUUID().equals(this.getPlayerUUID())
+                || getTeamAccess() && (worker.getTeam() != null && this.getTeamStringID() != null && this.getTeamStringID().equals(worker.getTeam().getName())));
     }
 
     public void setDone(boolean b) {
@@ -264,7 +271,12 @@ public abstract class AbstractWorkAreaEntity extends Entity {
     public void setTeamStringID(String teamStringID) {
         this.entityData.set(TEAM_STRING_ID, teamStringID);
     }
-
+    public void setTeamAccess(boolean access){
+        this.entityData.set(TEAM_ACCESS, access);
+    }
+    public boolean getTeamAccess() {
+        return this.entityData.get(TEAM_ACCESS);
+    }
     public int getHeightSize() {
         return this.entityData.get(HEIGHT);
     }

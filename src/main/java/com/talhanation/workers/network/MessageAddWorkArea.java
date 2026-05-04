@@ -69,6 +69,7 @@ public class MessageAddWorkArea implements Message<MessageAddWorkArea> {
                 workArea.setWidthSize(5);
                 workArea.setHeightSize(5);
                 workArea.setDepthSize(5);
+                workArea.setTeamAccess(false);
 
             }
             case MINING -> {
@@ -97,6 +98,14 @@ public class MessageAddWorkArea implements Message<MessageAddWorkArea> {
                 workArea.setHeightSize(2);
                 workArea.setDepthSize(9);
             }
+            case MARKET -> {
+                workArea = new MarketArea(ModEntityTypes.MARKETAREA.get(), player.level());
+                workArea.setWidthSize(5);
+                workArea.setHeightSize(5);
+                workArea.setDepthSize(5);
+                workArea.setTeamAccess(false);
+            }
+
             default -> {
                 //IGNORE
                 return;
