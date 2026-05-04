@@ -108,7 +108,7 @@
   "description.workers.animalFarmer": "Takes care of animals in defined pens. Breeds the animals faster and efficient than a player could .",
 
   "description.workers.title.courier": "Courier",
-  "description.workers.courier": "",
+  "description.workers.courier": "Transports items along a defined route. Picks up goods from a source location and delivers them to a target location, keeping your supply chains running smoothly.",
 
 
   "gui.workers.text.noMerchant": "No Merchant",

@@ -38,6 +38,7 @@ public class VillagerEvents {
     public static final Component TITLE_MERCHANT = Component.translatable("description.workers.title.merchant");
     public static final Component TITLE_FISHERMAN = Component.translatable("description.workers.title.fisherman");
     public static final Component TITLE_ANIMAL_FARMER = Component.translatable("description.workers.title.animalFarmer");
+    public static final Component TITLE_COURIER = Component.translatable("description.workers.title.courier");
     public static final Component DESCRIPTION_FARMER = Component.translatable("description.workers.farmer");
     public static final Component DESCRIPTION_MINER = Component.translatable("description.workers.miner");
     public static final Component DESCRIPTION_LUMBERJACK = Component.translatable("description.workers.lumberjack");
@@ -45,6 +46,7 @@ public class VillagerEvents {
     public static final Component DESCRIPTION_MERCHANT = Component.translatable("description.workers.merchant");
     public static final Component DESCRIPTION_FISHERMAN = Component.translatable("description.workers.fisherman");
     public static final Component DESCRIPTION_ANIMAL_FARMER = Component.translatable("description.workers.animalFarmer");
+    public static final Component DESCRIPTION_COURIER = Component.translatable("description.workers.courier");
 
     @SubscribeEvent
     public void onPlayerJoinWorld(EntityJoinLevelEvent event) {
@@ -69,29 +71,29 @@ public class VillagerEvents {
         RecruitsHireTrade FISHERMAN = new RecruitsHireTrade(ModEntityTypes.FISHERMAN.getId(), WorkersServerConfig.BuilderCost.get(), TITLE_FISHERMAN, DESCRIPTION_FISHERMAN);
 
         RecruitsHireTrade ANIMAL_FARMER = new RecruitsHireTrade(ModEntityTypes.ANIMAL_FARMER.getId(), WorkersServerConfig.BuilderCost.get(), TITLE_ANIMAL_FARMER, DESCRIPTION_ANIMAL_FARMER);
+        RecruitsHireTrade COURIER = new RecruitsHireTrade(ModEntityTypes.COURIER.getId(), WorkersServerConfig.CourierCost.get(), TITLE_COURIER, DESCRIPTION_COURIER);
 
 
         RecruitsHireTradesRegistry.addTrade("workers", 1, FARMER, LUMBERJACK);
-        RecruitsHireTradesRegistry.addTrade("workers", 2, ANIMAL_FARMER);
-        RecruitsHireTradesRegistry.addTrade("workers", 3, BUILDER);
+        RecruitsHireTradesRegistry.addTrade("workers", 2, COURIER);
+        RecruitsHireTradesRegistry.addTrade("workers", 3, MERCHANT, BUILDER);
 
         RecruitsHireTradesRegistry.addTrade("workers2", 1, FARMER, MINER);
-        RecruitsHireTradesRegistry.addTrade("workers2", 2, ANIMAL_FARMER);
-        RecruitsHireTradesRegistry.addTrade("workers2", 3, BUILDER);
+        RecruitsHireTradesRegistry.addTrade("workers2", 2, COURIER);
+        RecruitsHireTradesRegistry.addTrade("workers2", 3, MERCHANT, BUILDER);
 
-        RecruitsHireTradesRegistry.addTrade("workers3", 1, FARMER, FISHERMAN);
-        RecruitsHireTradesRegistry.addTrade("workers3", 2, ANIMAL_FARMER);
-        RecruitsHireTradesRegistry.addTrade("workers3", 3, BUILDER);
+        RecruitsHireTradesRegistry.addTrade("workers3", 1, FARMER, ANIMAL_FARMER);
+        RecruitsHireTradesRegistry.addTrade("workers3", 2, COURIER);
+        RecruitsHireTradesRegistry.addTrade("workers3", 3, MERCHANT, BUILDER);
 
-        /*
-        RecruitsHireTradesRegistry.addTrade("herd", 1, ANIMAL_FARMER, FISHERMAN);
-        RecruitsHireTradesRegistry.addTrade("herd", 2, MERCHANT);
-        RecruitsHireTradesRegistry.addTrade("herd", 3, CHEF);
+        RecruitsHireTradesRegistry.addTrade("workers4", 1, FARMER, FISHERMAN);
+        RecruitsHireTradesRegistry.addTrade("workers4", 2, COURIER);
+        RecruitsHireTradesRegistry.addTrade("workers4", 3, MERCHANT, BUILDER);
 
-        RecruitsHireTradesRegistry.addTrade("herd", 1, ANIMAL_FARMER, BEE_KEEPER);
-        RecruitsHireTradesRegistry.addTrade("herd", 2, MERCHANT);
-        RecruitsHireTradesRegistry.addTrade("herd", 3, CHEF);
-        */
+        RecruitsHireTradesRegistry.addTrade("workers5", 1, MINER, LUMBERJACK);
+        RecruitsHireTradesRegistry.addTrade("workers5", 2, BUILDER, COURIER);
+        RecruitsHireTradesRegistry.addTrade("workers5", 3, MERCHANT);
+
     }
 
     @SubscribeEvent
@@ -145,9 +147,10 @@ public class VillagerEvents {
         UUID ownerUUID = market.getPlayerUUID();
 
         boolean isOwner  = ownerUUID != null && player.getUUID().equals(ownerUUID);
+        boolean isTeamMate = market.getTeamAccess() && player.getTeam() != null && market.getTeamStringID().equals(player.getTeam().getName());
         boolean isAdmin  = player.isCreative() && player.hasPermissions(2);
 
-        return !isOwner && !isAdmin;
+        return !isOwner && !isTeamMate && !isAdmin;
     }
 }
 
