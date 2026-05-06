@@ -148,6 +148,8 @@ public class MerchantAddEditTradeScreen extends ScreenBase<MerchantAddEditTradeC
                 this.isVillagerTrade,
                 (bool) -> {
                     this.isVillagerTrade = bool;
+                    this.tradeContainer.isVillagerTrade = bool;
+                    this.tradeContainer.setUpSlots();
                     this.setWidgets();
                 }
         );
@@ -185,8 +187,7 @@ public class MerchantAddEditTradeScreen extends ScreenBase<MerchantAddEditTradeC
         guiGraphics.drawString(font, player.getInventory().getDisplayName().getVisualOrderText(), 8, this.imageHeight - 96 + 2, fontColor, false);
 
         if(isVillagerTrade) {
-            // Currency slot (at container x=44, y=28) is ignored for villager trades
-            guiGraphics.drawString(font, Component.literal("auto"), 42, 20, 0x55AA55, false);
+            guiGraphics.drawString(font, Component.literal("auto"), 42, 28, 0x55AA55, false);
         }
     }
 }

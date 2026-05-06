@@ -70,6 +70,8 @@ public class MerchantEntity extends AbstractWorkerEntity implements ICanTradeEmb
     @Nullable public WorkersMerchantTrade activeVillagerTrade;
     @Nullable public MerchantOffer activeVillagerOffer;
     public int villagerTradeTimeout;
+    public int villagerTradesRemaining;  // how many trades left in the current session
+    public int villagerTradeCooldown;    // ticks until the next trade in the session
 
     public MerchantEntity(EntityType<? extends AbstractWorkerEntity> entityType, Level world) {
         super(entityType, world);
@@ -448,6 +450,8 @@ public class MerchantEntity extends AbstractWorkerEntity implements ICanTradeEmb
         this.activeVillagerTrade = null;
         this.activeVillagerOffer = null;
         this.villagerTradeTimeout = 0;
+        this.villagerTradesRemaining = 0;
+        this.villagerTradeCooldown = 0;
     }
 
 

@@ -115,8 +115,8 @@ public class CourierScreen extends ScreenBase<CourierContainer> {
     @Nullable private ScrollDropDownMenu<RecruitsRoute>                  routeDropDown;
     @Nullable private WaypointList                                        waypointList;
     private final List<AbstractWidget>                                    actionWidgets = new ArrayList<>();
-    private final List<ScrollDropDownMenu<CourierAction.ActionType>>      actionTypeDDs = new ArrayList<>();
-    private final List<ScrollDropDownMenu<CourierAction.SourceType>>      sourceTypeDDs = new ArrayList<>();
+    private final List<ScrollDropDownMenu<CourierAction.ActionType>> actionTypeDropDowns = new ArrayList<>();
+    private final List<ScrollDropDownMenu<CourierAction.SourceType>> sourceTypeDropDowns = new ArrayList<>();
     /** [screenX, screenY, actionIndex] for each visible item slot. */
     private final List<int[]> itemSlotPos = new ArrayList<>();
 
@@ -174,8 +174,8 @@ public class CourierScreen extends ScreenBase<CourierContainer> {
     private void buildWidgets() {
         clearWidgets();
         actionWidgets.clear();
-        actionTypeDDs.clear();
-        sourceTypeDDs.clear();
+        actionTypeDropDowns.clear();
+        sourceTypeDropDowns.clear();
         itemSlotPos.clear();
 
         int x = leftPos, y = topPos;
@@ -218,14 +218,14 @@ public class CourierScreen extends ScreenBase<CourierContainer> {
         // Positioned to the right of the image panel.
 
         ExtendedButton applyBtn = new ExtendedButton(
-                x + IMG_W + 4, y + IMG_H - APPLY_H - 1,
+                x + IMG_W + 2, y + IMG_H - APPLY_H - 1,
                 APPLY_W, APPLY_H,
                 TEXT_APPLY, b -> applyChanges(true));
         applyBtn.active = workingRoute != null;
         addRenderableWidget(applyBtn);
 
         RecruitsCheckBox shouldCycleCheckbox = new RecruitsCheckBox(
-            x + MAP_X + MAP_W + 4,
+            x + IMG_W + 2,
             applyBtn.getY() - 1 - 41,
             20, 20,
                 TEXT_CYCLE, shouldCycle, false,
@@ -237,10 +237,8 @@ public class CourierScreen extends ScreenBase<CourierContainer> {
         shouldCycleCheckbox.setTooltip(Tooltip.create(TOOLTIP_CYCLE));
         addRenderableWidget(shouldCycleCheckbox);
 
-        // ── Vehicle inventory checkbox — right of map button ───────────────────
-
         RecruitsCheckBox vehicleCheckbox = new RecruitsCheckBox(
-            x + MAP_X + MAP_W + 4,
+            x + IMG_W + 2,
             applyBtn.getY() - 1 - 20,
             20, 20,
             TEXT_VEHICLE_INV, useVehicleInventory, false,
@@ -288,8 +286,8 @@ public class CourierScreen extends ScreenBase<CourierContainer> {
     private void buildActionArea() {
         for (AbstractWidget w : actionWidgets) removeWidget(w);
         actionWidgets.clear();
-        actionTypeDDs.clear();
-        sourceTypeDDs.clear();
+        actionTypeDropDowns.clear();
+        sourceTypeDropDowns.clear();
         itemSlotPos.clear();
 
         if (selectedWaypointIndex < 0 || workingRoute == null
@@ -349,7 +347,7 @@ public class CourierScreen extends ScreenBase<CourierContainer> {
                 });
         addRenderableWidget(typeDD);
         actionWidgets.add(typeDD);
-        actionTypeDDs.add(typeDD);
+        actionTypeDropDowns.add(typeDD);
         x += COL_TYPE + COL_GAP;
 
         // ── Remove button — 16×16, flush right before scrollbar ───────────────
@@ -387,7 +385,7 @@ public class CourierScreen extends ScreenBase<CourierContainer> {
                     s -> { action.setSourceType(s); buildWidgets(); });
             addRenderableWidget(srcDD);
             actionWidgets.add(srcDD);
-            sourceTypeDDs.add(srcDD);
+            sourceTypeDropDowns.add(srcDD);
             x += COL_SRC + COL_GAP;
 
             // Item slot — rendered manually; only for types that need a filter
@@ -398,16 +396,23 @@ public class CourierScreen extends ScreenBase<CourierContainer> {
 
             // ── Wait seconds +/− ──────────────────────────────────────────────
 
-            ExtendedButton minus = new ExtendedButton(x, rowY, h, h,
-                    Component.literal("-"),
-                    b -> { action.setWaitSeconds(Math.max(1, action.getWaitSeconds() - 1)); buildWidgets(); });
+            ExtendedButton minus = new ExtendedButton(x, rowY, h, h, Component.literal("-"),
+                b -> {
+                    int amt = hasShiftDown() ? 5 : 1;
+                    action.setWaitSeconds(Math.max(1, action.getWaitSeconds() - amt));
+                    buildWidgets();
+                }
+            );
             addRenderableWidget(minus);
             actionWidgets.add(minus);
-            x += 40;
+            x += 52;
 
-            ExtendedButton plus = new ExtendedButton(x, rowY, h, h,
-                    Component.literal("+"),
-                    b -> { action.setWaitSeconds(action.getWaitSeconds() + 1); buildWidgets(); });
+            ExtendedButton plus = new ExtendedButton(x, rowY, h, h, Component.literal("+"),
+                b -> {
+                    int amt = hasShiftDown() ? 5 : 1;
+                    action.setWaitSeconds(Math.max(1, action.getWaitSeconds() + amt)); buildWidgets();
+                }
+            );
             addRenderableWidget(plus);
             actionWidgets.add(plus);
         }
@@ -416,8 +421,10 @@ public class CourierScreen extends ScreenBase<CourierContainer> {
     // ── Waypoint selection ─────────────────────────────────────────────────────
 
     private void onWaypointSelected(int index) {
+        if (index != selectedWaypointIndex) {
+            actionScrollOffset = 0;
+        }
         selectedWaypointIndex = index;
-        actionScrollOffset    = 0;
         buildActionArea();
     }
 
@@ -455,8 +462,7 @@ public class CourierScreen extends ScreenBase<CourierContainer> {
 
     /** Draws all visible rows of the action list including the add-entry. */
     private void renderActionRows(GuiGraphics guiGraphics, int mouseX, int mouseY) {
-        if (workingRoute == null || selectedWaypointIndex < 0
-                || selectedWaypointIndex >= workingRoute.size()) return;
+        if (workingRoute == null || selectedWaypointIndex < 0 || selectedWaypointIndex >= workingRoute.size()) return;
 
         var wp = workingRoute.getWaypoints().get(selectedWaypointIndex);
         int visible = Math.min(totalListItems(wp) - actionScrollOffset, ACT_MAX_VIS);
@@ -511,12 +517,10 @@ public class CourierScreen extends ScreenBase<CourierContainer> {
                 }
 
             }
-            else {
-
-                // ── Wait label (white) — Layout: ACT_X + PAD + TYPE + GAP + ADJ + [NUM] ─
+            else if(action.getActionType().hasTime()) {
                 int numX = leftPos + ACT_X + ACT_PAD_X + COL_TYPE + COL_GAP + COL_ADJ;
                 String sec = action.getWaitSeconds() + "s";
-                guiGraphics.drawString(font, sec, numX + (font.width(sec)) / 2, rowY + 5, 0xFFFFFF, false);
+                guiGraphics.drawString(font, sec, numX + (font.width(sec)) / 2 + 3, rowY + 5, 0xFFFFFF, false);
             }
         }
     }
@@ -607,12 +611,12 @@ public class CourierScreen extends ScreenBase<CourierContainer> {
         // its expanded list — which isMouseOver() covers), deliver it ONLY to the
         // dropdowns and swallow the event so no other widget is accidentally activated.
         boolean clickedOnActionDD =
-                actionTypeDDs.stream().anyMatch(dd -> dd.isMouseOver(mx, my)) ||
-                sourceTypeDDs.stream().anyMatch(dd -> dd.isMouseOver(mx, my));
+                actionTypeDropDowns.stream().anyMatch(dd -> dd.isMouseOver(mx, my)) ||
+                sourceTypeDropDowns.stream().anyMatch(dd -> dd.isMouseOver(mx, my));
 
         // Always forward to dropdowns (they close themselves if clicked outside).
-        new ArrayList<>(actionTypeDDs).forEach(dd -> dd.onMouseClick(mx, my));
-        new ArrayList<>(sourceTypeDDs).forEach(dd -> dd.onMouseClick(mx, my));
+        new ArrayList<>(actionTypeDropDowns).forEach(dd -> dd.onMouseClick(mx, my));
+        new ArrayList<>(sourceTypeDropDowns).forEach(dd -> dd.onMouseClick(mx, my));
 
         if (clickedOnActionDD) return true; // swallow — don't bleed through to slots or add-entry
 
@@ -673,8 +677,8 @@ public class CourierScreen extends ScreenBase<CourierContainer> {
     public void mouseMoved(double mx, double my) {
         if (routeDropDown != null) routeDropDown.onMouseMove(mx, my);
         // Snapshot copies — onMouseMove can trigger buildWidgets() via dropdown close
-        new ArrayList<>(actionTypeDDs).forEach(dd -> dd.onMouseMove(mx, my));
-        new ArrayList<>(sourceTypeDDs).forEach(dd -> dd.onMouseMove(mx, my));
+        new ArrayList<>(actionTypeDropDowns).forEach(dd -> dd.onMouseMove(mx, my));
+        new ArrayList<>(sourceTypeDropDowns).forEach(dd -> dd.onMouseMove(mx, my));
         super.mouseMoved(mx, my);
     }
 
@@ -682,10 +686,10 @@ public class CourierScreen extends ScreenBase<CourierContainer> {
     public boolean mouseScrolled(double mx, double my, double delta) {
         // Action dropdowns get priority — isMouseOver() returns true for the expanded list
         // only when the dropdown is open, so this naturally lets open dropdowns consume scroll.
-        for (var dd : actionTypeDDs)
-            if (dd.isMouseOver(mx, my)) return dd.mouseScrolled(mx, my, delta);
-        for (var dd : sourceTypeDDs)
-            if (dd.isMouseOver(mx, my)) return dd.mouseScrolled(mx, my, delta);
+        for (var dropDownMenu : actionTypeDropDowns)
+            if (dropDownMenu.isMouseOver(mx, my)) return dropDownMenu.mouseScrolled(mx, my, delta);
+        for (var dropDownMenu : sourceTypeDropDowns)
+            if (dropDownMenu.isMouseOver(mx, my)) return dropDownMenu.mouseScrolled(mx, my, delta);
 
         // Action area row scroll (only reached when no action dropdown is open over it)
         if (workingRoute != null && selectedWaypointIndex >= 0

@@ -17,10 +17,13 @@ public class MerchantAddEditTradeContainer extends ContainerBase {
     private final SimpleContainer currencyContainer;
     private final SimpleContainer tradeItemContainer;
     private final WorkersMerchantTrade trade;
+    public Boolean isVillagerTrade;
+
     public MerchantAddEditTradeContainer(int id, MerchantEntity worker, Inventory playerInventory, WorkersMerchantTrade trade) {
         super(ModMenuTypes.MERCHANT_ADD_EDIT_TRADE_CONTAINER_TYPE.get(), id, playerInventory, worker.getInventory());
         this.merchantEntity = worker;
         this.trade = trade;
+        this.isVillagerTrade = trade.isVillagerTrade;
         this.currencyContainer = new SimpleContainer(1);
         this.tradeItemContainer = new SimpleContainer(1);
         this.currencyContainer.setItem(0, trade.currencyItem);
@@ -28,8 +31,12 @@ public class MerchantAddEditTradeContainer extends ContainerBase {
 
         addPlayerInventorySlots();
 
-        addItemSlot(currencyContainer, 44, 28);
-        addItemSlot(tradeItemContainer, 116, 28);
+        setUpSlots();
+    }
+
+    public void setUpSlots(){
+        addItemSlot(currencyContainer, 44, 28, !isVillagerTrade);
+        addItemSlot(tradeItemContainer, 116, 28, true);
     }
 
     public WorkersMerchantTrade getTrade(){
@@ -52,11 +59,11 @@ public class MerchantAddEditTradeContainer extends ContainerBase {
     public MerchantEntity getMerchantEntity() {
         return merchantEntity;
     }
-    public void addItemSlot(SimpleContainer slotContainer, int x, int y){
+    public void addItemSlot(SimpleContainer slotContainer, int x, int y, boolean mayplace){
         this.addSlot(new Slot(slotContainer, 0, x, y) {
             @Override
             public boolean mayPlace(@NotNull ItemStack itemStack) {
-                slotContainer.setItem(this.getSlotIndex(), itemStack.copy());
+                if(mayplace) slotContainer.setItem(this.getSlotIndex(), itemStack.copy());
                 return false;
             }
 

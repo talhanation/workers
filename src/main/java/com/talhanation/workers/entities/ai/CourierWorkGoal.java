@@ -203,9 +203,6 @@ public class CourierWorkGoal extends Goal {
 
             total += transferToWorkingInv(c, tpl, max - total);
         }
-
-        if (total == 0)
-            notifyOwner(courier.TEXT_SOURCE_EMPTY(wp.displayName, tpl.getHoverName().getString()));
     }
 
     private void executeDeposit(CourierAction action, CourierRoute.CourierWaypoint wp){
@@ -244,9 +241,6 @@ public class CourierWorkGoal extends Goal {
         int total = 0;
         for (Container c : targets)
             total += transferToWorkingInv(c, tpl, Integer.MAX_VALUE);
-
-        if (total == 0)
-            notifyOwner(courier.TEXT_SOURCE_EMPTY(wp.displayName, tpl.getHoverName().getString()));
     }
 
     private void executeDepositAny(CourierAction action, CourierRoute.CourierWaypoint wp){

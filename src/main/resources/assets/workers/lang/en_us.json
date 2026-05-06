@@ -76,6 +76,8 @@
   "gui.workers.checkbox.tooltip.cycle": "If true navigation will start at 1 waypoint otherwise the path will be followed backwards",
   "gui.workers.checkbox.access": "Faction Access",
   "gui.workers.checkbox.tooltip.access": "If true faction members and workers, have access / can work in this area.",
+  "gui.workers.checkbox.villagerTrade": "Villager Trade",
+  "gui.workers.checkbox.tooltip.villagerTrade": "If true merchant will sell selected items to nearby villagers to generate income.",
 
   "gui.workers.button.reset": "Reset",
   "gui.workers.button.add": "Add",

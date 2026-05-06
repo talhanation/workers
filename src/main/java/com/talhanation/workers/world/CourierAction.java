@@ -21,8 +21,14 @@ public class CourierAction {
 
         /** True if this action type needs an ItemStack filter in the GUI. */
         public boolean hasItemSlot() {
-            return this == PICKUP || this == DEPOSIT
-                    || this == PICKUP_ANY || this == DEPOSIT_ANY;
+            return this == PICKUP
+                    || this == DEPOSIT
+                    || this == PICKUP_ANY
+                    || this == DEPOSIT_ANY;
+        }
+
+        public boolean hasTime() {
+            return this == WAIT;
         }
 
         /** True if the count field (stack size) is meaningful for this type. */

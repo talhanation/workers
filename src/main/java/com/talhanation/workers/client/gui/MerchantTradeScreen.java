@@ -39,6 +39,13 @@ public class MerchantTradeScreen extends ScreenBase<MerchantTradeContainer> {
     private static final MutableComponent TEXT_CREATIVE = Component.translatable("gui.workers.text.creative");
     private static final MutableComponent TEXT_DAILY_REFRESH = Component.translatable("gui.workers.text.dailyRefresh");
     private static final int fontColor = 4210752;
+
+    private static final int LIST_X       = 5;
+    private static final int LIST_Y       = 18;
+    private static final int LIST_W       = 85;
+    private static final int LIST_H       = 170;
+    private static final int LIST_ITEM_H  = 28;  // was 40, compacted like CourierScreen
+
     private final MerchantEntity merchantEntity;
     private final Player player;
     private final boolean isOwner;
@@ -58,11 +65,6 @@ public class MerchantTradeScreen extends ScreenBase<MerchantTradeContainer> {
     private int hoveredTooltipX = 0;
     private int hoveredTooltipY = 0;
     private TradeList tradeList;
-
-    private static final int LIST_X = 5;
-    private static final int LIST_Y = 18;
-    private static final int LIST_W = 85;
-    private static final int LIST_H = 170;
 
     public MerchantTradeScreen(MerchantTradeContainer tradeContainer, Inventory playerInventory, Component title) {
         super(RESOURCE_LOCATION, tradeContainer, playerInventory, Component.literal("Trades"));
@@ -91,24 +93,17 @@ public class MerchantTradeScreen extends ScreenBase<MerchantTradeContainer> {
     public void setWidgets(){
         this.clearWidgets();
 
-
-        int listLeft = leftPos + LIST_X;
-        int listTop = topPos + LIST_Y;
+        int listLeft   = leftPos + LIST_X;
+        int listTop    = topPos  + LIST_Y;
         int listBottom = listTop + LIST_H;
-        int listWidth = LIST_W;
-        int listHeight = LIST_H;
-        int itemHeight = 40;
-        int itemWidth = LIST_W - 10;
 
-        this.tradeList = new TradeList(Minecraft.getInstance(), listWidth, listHeight, listTop, listBottom, itemHeight, itemWidth);
+        this.tradeList = new TradeList(Minecraft.getInstance(), LIST_W, LIST_H, listTop, listBottom, LIST_ITEM_H, LIST_W);
+        this.tradeList.setLeftPos(listLeft);
         this.tradeList.setRenderBackground(false);
         this.tradeList.setRenderTopAndBottom(false);
-
-        this.tradeList.setLeftPos(listLeft);
         this.tradeList.setRenderSelection(false);
 
         this.loadTrades();
-
         this.addRenderableWidget(this.tradeList);
 
         if((merchantEntity.isCreative() && player.isCreative()) || isOwner){
@@ -321,7 +316,7 @@ public class MerchantTradeScreen extends ScreenBase<MerchantTradeContainer> {
         if(selection != null){
             boolean playerFreeSlot = player.getInventory().getFreeSlot() != -1;
             boolean withinLimit = selection.maxTrades == -1 || selection.currentTrades < selection.maxTrades;
-            this.tradeButton.active = playerFreeSlot && withinLimit && selection.enabled;
+            this.tradeButton.active = playerFreeSlot && withinLimit && selection.enabled && !selection.isVillagerTrade;
         }
     }
 
@@ -352,109 +347,114 @@ public class MerchantTradeScreen extends ScreenBase<MerchantTradeContainer> {
         guiGraphics.renderTooltip(this.font, this.getTooltipFromContainerItem(itemstack), itemstack.getTooltipImage(), itemstack, mouseX, mouseY);
     }
 
+    // ── TradeList ─────────────────────────────────────────────────────────────
 
-    int xOffset = 2;
-    int yOffset = 2;
     private class TradeList extends ObjectSelectionList<TradeList.TradeEntry> {
-        public int itemWidth;
-        public TradeList(Minecraft mc, int width, int height, int top, int bottom, int itemHeight, int itemWidth) {
+
+        final int itemWidth;
+
+        TradeList(Minecraft mc, int width, int height, int top, int bottom, int itemHeight, int itemWidth) {
             super(mc, width, height, top, bottom, itemHeight);
             this.itemWidth = itemWidth;
         }
 
-        @Override
-        protected int addEntry(TradeList.TradeEntry p_93487_) {
-            return super.addEntry(p_93487_);
-        }
+        @Override protected int addEntry(TradeList.TradeEntry entry) { return super.addEntry(entry); }
+        @Override protected void clearEntries() { super.clearEntries(); }
 
-        @Override
-        protected void clearEntries() {
-            super.clearEntries();
-        }
-
+        /** Scrollbar sits flush against the right edge of the list area. */
         @Override
         protected int getScrollbarPosition() {
-            return this.getRowLeft() + this.getRowWidth() + 5;
+            // leftPos + LIST_X + LIST_W - 6  →  right edge of list minus scrollbar width
+            return MerchantTradeScreen.this.leftPos + LIST_X + LIST_W - 14;
         }
 
         @Override
         public int getRowLeft() {
-            return super.getRowLeft() - 7;
+            return MerchantTradeScreen.this.leftPos + LIST_X + 2;
         }
 
         @Override
         public int getRowWidth() {
-            return LIST_W - 12;
+            // Full list width minus scrollbar (6px) minus small gap (4px)
+            return LIST_W - 18;
         }
+
         public void setSelected(@Nullable TradeList.TradeEntry entry) {
             super.setSelected(entry);
             if(entry == null) return;
             MerchantTradeScreen.this.onSelected(entry);
         }
 
+        // ── TradeEntry ────────────────────────────────────────────────────────
+
         public class TradeEntry extends ObjectSelectionList.Entry<TradeList.TradeEntry> {
+
             private final WorkersMerchantTrade trade;
-            public TradeEntry(WorkersMerchantTrade trade) {
+
+            TradeEntry(WorkersMerchantTrade trade) {
                 this.trade = trade;
             }
+
             @Override
             public void render(GuiGraphics guiGraphics, int index, int top, int left, int entryWidth, int entryHeight, int mouseX, int mouseY, boolean hovered, float partialTicks) {
-                int rowLeft = TradeList.this.getRowLeft();
-                int rowWidth = TradeList.this.itemWidth;
-                int x = rowLeft + 4;
-                int y = top + 7;
-                int iconX = 23;
-                int iconY = 0;
+                int rowLeft  = TradeList.this.getRowLeft();
+                int rowWidth = TradeList.this.getRowWidth();
                 boolean selected = (TradeList.this.getSelected() == this);
-                boolean out = trade.maxTrades != -1 && trade.currentTrades >= trade.maxTrades;
+                boolean out      = trade.maxTrades != -1 && trade.currentTrades >= trade.maxTrades;
                 boolean disabled = !trade.enabled;
-                int textureY = getButtonTextureY(hovered, selected, out || disabled);
+                int textureY     = getButtonTextureY(hovered, selected, out || disabled);
 
                 float alpha = disabled ? 0.45f : 1.0f;
-                guiGraphics.setColor(1.0F, 1.0F, 1.0F, alpha);
                 RenderSystem.enableBlend();
                 RenderSystem.enableDepthTest();
+                guiGraphics.setColor(1.0F, 1.0F, 1.0F, alpha);
                 guiGraphics.blitNineSliced(AbstractButton.WIDGETS_LOCATION, rowLeft, top, rowWidth, entryHeight, 20, 4, 200, 20, 0, textureY);
 
-                if(trade.isVillagerTrade) {
-                    guiGraphics.fill(rowLeft, top, rowLeft + rowWidth, top + entryHeight, 0x5500AA44);
+                // Vertically centre items in the compacted entry height (28px)
+                final int itemY = top + (entryHeight - 16) / 2;
+
+                if(!trade.isVillagerTrade) {
+                    final int item1X = rowLeft + 2;
+                    final int arrowX = rowLeft + rowWidth / 2 - 9;
+                    final int item2X = rowLeft + rowWidth - 18;
+
+                    guiGraphics.setColor(1.0F, 1.0F, 1.0F, alpha);
+
+                    guiGraphics.blit(ARROW_IMAGE, arrowX, itemY - 3, 0, 0, 21, 21, 21, 21);
+
+                    guiGraphics.renderFakeItem(trade.currencyItem, item1X, itemY);
+                    guiGraphics.renderItemDecorations(font, trade.currencyItem, item1X, itemY);
+
+                    guiGraphics.renderFakeItem(trade.tradeItem, item2X, itemY);
+                    guiGraphics.renderItemDecorations(font, trade.tradeItem, item2X, itemY);
+
+                    // Tooltips
+                    if (!trade.currencyItem.isEmpty() && mouseX >= item1X && mouseX < item1X + 16 && mouseY >= top && mouseY < top + entryHeight) {
+                        MerchantTradeScreen.this.hoveredTooltipStack = trade.currencyItem;
+                        MerchantTradeScreen.this.hoveredTooltipX = mouseX;
+                        MerchantTradeScreen.this.hoveredTooltipY = mouseY;
+                    } else if (!trade.tradeItem.isEmpty() && mouseX >= item2X && mouseX < item2X + 16 && mouseY >= top && mouseY < top + entryHeight) {
+                        MerchantTradeScreen.this.hoveredTooltipStack = trade.tradeItem;
+                        MerchantTradeScreen.this.hoveredTooltipX = mouseX;
+                        MerchantTradeScreen.this.hoveredTooltipY = mouseY;
+                    }
                 }
+                else {
+                    // Villager trade: emerald-green tint + single centred item
+                    guiGraphics.fill(rowLeft, top, rowLeft + rowWidth, top + entryHeight, 0x5500AA44);
 
-                guiGraphics.setColor(1.0F, 1.0F, 1.0F, alpha);
+                    final int itemX = rowLeft + rowWidth / 2 - 8;
+                    guiGraphics.renderFakeItem(trade.tradeItem, itemX, itemY);
+                    guiGraphics.renderItemDecorations(font, trade.tradeItem, itemX, itemY);
 
-                RenderSystem.setShaderTexture(0, ARROW_IMAGE);
-                guiGraphics.blit(ARROW_IMAGE,  x + iconX, y + iconY, 0, 0, 21, 21, 21, 21);
-
-                // Positionen der beiden Items (16x16 Icons)
-                final int item1X = x + xOffset;
-                final int item1Y = y + yOffset;
-                final int item2X = item1X + 46;
-                final int item2Y = item1Y;
-
-                // Render erster (currency) Item
-                guiGraphics.renderFakeItem(trade.currencyItem, item1X, item1Y);
-                guiGraphics.renderItemDecorations(font, trade.currencyItem, item1X, item1Y);
-
-                // Render zweiter (trade) Item
-                guiGraphics.renderFakeItem(trade.tradeItem, item2X, item2Y);
-                guiGraphics.renderItemDecorations(font, trade.tradeItem, item2X, item2Y);
+                    if (!trade.tradeItem.isEmpty() && mouseX >= itemX && mouseX < itemX + 16 && mouseY >= top && mouseY < top + entryHeight) {
+                        MerchantTradeScreen.this.hoveredTooltipStack = trade.tradeItem;
+                        MerchantTradeScreen.this.hoveredTooltipX = mouseX;
+                        MerchantTradeScreen.this.hoveredTooltipY = mouseY;
+                    }
+                }
 
                 guiGraphics.setColor(1.0F, 1.0F, 1.0F, 1.0F);
-
-
-                if (!trade.currencyItem.isEmpty()
-                        && mouseX >= item1X && mouseX < item1X + 16
-                        && mouseY >= item1Y && mouseY < item1Y + 16) {
-                    MerchantTradeScreen.this.hoveredTooltipStack = trade.currencyItem;
-                    MerchantTradeScreen.this.hoveredTooltipX = mouseX;
-                    MerchantTradeScreen.this.hoveredTooltipY = mouseY;
-                } else if (!trade.tradeItem.isEmpty()
-                        && mouseX >= item2X && mouseX < item2X + 16
-                        && mouseY >= item2Y && mouseY < item2Y + 16) {
-                    MerchantTradeScreen.this.hoveredTooltipStack = trade.tradeItem;
-                    MerchantTradeScreen.this.hoveredTooltipX = mouseX;
-                    MerchantTradeScreen.this.hoveredTooltipY = mouseY;
-                }
             }
 
             @Override
@@ -466,22 +466,34 @@ public class MerchantTradeScreen extends ScreenBase<MerchantTradeContainer> {
             }
 
             @Override
-            public Component getNarration() {
-                return Component.empty();
-            }
+            public Component getNarration() { return Component.empty(); }
+
             private int getButtonTextureY(boolean hovered, boolean selected, boolean out) {
-                final int BUTTON_Y_OUT = 46;
-                final int BUTTON_Y_NORMAL = 66;
-                final int BUTTON_Y_HOVER = 86;
+                final int BUTTON_Y_OUT     = 46;
+                final int BUTTON_Y_NORMAL  = 66;
+                final int BUTTON_Y_HOVER   = 86;
                 final int BUTTON_Y_PRESSED = 86;
 
-                if (out) return BUTTON_Y_OUT;
+                if (out)      return BUTTON_Y_OUT;
                 if (selected) return BUTTON_Y_PRESSED;
-                if (hovered) return BUTTON_Y_HOVER;
-
+                if (hovered)  return BUTTON_Y_HOVER;
                 return BUTTON_Y_NORMAL;
             }
         }
+    }
+
+    @Override
+    public boolean mouseScrolled(double mouseX, double mouseY, double delta) {
+        if (tradeList != null && tradeList.isMouseOver(mouseX, mouseY))
+            return tradeList.mouseScrolled(mouseX, mouseY, delta);
+        return super.mouseScrolled(mouseX, mouseY, delta);
+    }
+
+    @Override
+    public boolean mouseDragged(double mouseX, double mouseY, int button, double dragX, double dragY) {
+        if (tradeList != null)
+            tradeList.mouseDragged(mouseX, mouseY, button, dragX, dragY);
+        return super.mouseDragged(mouseX, mouseY, button, dragX, dragY);
     }
 
     @Override
@@ -489,5 +501,4 @@ public class MerchantTradeScreen extends ScreenBase<MerchantTradeContainer> {
         super.onClose();
         WorkersMain.SIMPLE_CHANNEL.sendToServer(new MessageUpdateMerchant(merchantEntity.getUUID(), isCreative, false, isDailyRefresh));
     }
-
 }

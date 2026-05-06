@@ -30,6 +30,7 @@ public class MarketArea extends AbstractWorkAreaEntity implements IPermissionAre
     public static final EntityDataAccessor<String> MARKET_NAME = SynchedEntityData.defineId(MarketArea.class, EntityDataSerializers.STRING);
     public static final EntityDataAccessor<Integer> TOTAL_SLOTS = SynchedEntityData.defineId(MarketArea.class, EntityDataSerializers.INT);
     public static final EntityDataAccessor<Integer> FREE_SLOTS = SynchedEntityData.defineId(MarketArea.class, EntityDataSerializers.INT);
+    public static final EntityDataAccessor<String> MERCHANT_NAME = SynchedEntityData.defineId(MarketArea.class, EntityDataSerializers.STRING);
     public Map<BlockPos, Container> containerMap = new HashMap<>();
 
     public MarketArea(EntityType<?> type, Level level) {
@@ -41,6 +42,7 @@ public class MarketArea extends AbstractWorkAreaEntity implements IPermissionAre
         super.defineSynchedData();
         this.entityData.define(IS_OPEN, true);
         this.entityData.define(MARKET_NAME, "Market");
+        this.entityData.define(MERCHANT_NAME, "None");
         this.entityData.define(TOTAL_SLOTS, 0);
         this.entityData.define(FREE_SLOTS, 0);
     }
@@ -50,6 +52,7 @@ public class MarketArea extends AbstractWorkAreaEntity implements IPermissionAre
         super.readAdditionalSaveData(tag);
         this.setOpen(tag.getBoolean("isOpen"));
         if (tag.contains("marketName")) this.setMarketName(tag.getString("marketName"));
+        if (tag.contains("merchantName")) this.setMerchantName(tag.getString("merchantName"));
 
         setBeingWorkedOn(false);
     }
@@ -59,6 +62,7 @@ public class MarketArea extends AbstractWorkAreaEntity implements IPermissionAre
         super.addAdditionalSaveData(tag);
         tag.putBoolean("isOpen", this.isOpen());
         tag.putString("marketName", this.getMarketName());
+        tag.putString("merchantName", this.getMerchantName());
     }
 
     @Override
@@ -87,7 +91,20 @@ public class MarketArea extends AbstractWorkAreaEntity implements IPermissionAre
             }
         });
         setTotalSlots(containerMap.values().stream().mapToInt(Container::getContainerSize).sum());
-        setFreeSlots(containerMap.values().stream().mapToInt(container -> container.countItem(ItemStack.EMPTY.getItem())).sum());
+        setFreeSlots(containerMap.values().stream().mapToInt(this::countEmptySpace).sum());
+    }
+
+    public int countEmptySpace(Container container){
+        int i = 0;
+
+        for(int j = 0; j < container.getContainerSize(); ++j) {
+            ItemStack itemstack = container.getItem(j);
+            if (itemstack.isEmpty()) {
+                i ++;
+            }
+        }
+
+        return i;
     }
 
     public Container getContainer(BlockPos pos) {
@@ -145,7 +162,8 @@ public class MarketArea extends AbstractWorkAreaEntity implements IPermissionAre
                     newStack.setCount(put);
                     container.setItem(i, newStack);
                     remaining -= put;
-                } else if (ItemStack.isSameItemSameTags(slot, stack) && slot.getCount() < slot.getMaxStackSize()) {
+                }
+                else if (ItemStack.isSameItemSameTags(slot, stack) && slot.getCount() < slot.getMaxStackSize()) {
                     int put = Math.min(remaining, slot.getMaxStackSize() - slot.getCount());
                     slot.grow(put);
                     remaining -= put;
@@ -188,9 +206,16 @@ public class MarketArea extends AbstractWorkAreaEntity implements IPermissionAre
 
     public String getMarketName() { return this.entityData.get(MARKET_NAME); }
     public void setMarketName(String name) { this.entityData.set(MARKET_NAME, name); }
-
+    public String getMerchantName() { return this.entityData.get(MERCHANT_NAME); }
+    public void setMerchantName(String name) { this.entityData.set(MERCHANT_NAME, name); }
     public int getTotalSlots() { return this.entityData.get(TOTAL_SLOTS); }
-    public void setTotalSlots(int x) { this.entityData.set(TOTAL_SLOTS, x); }
-    public int getFreeSlots() { return this.entityData.get(FREE_SLOTS); }
-    public void setFreeSlots(int x) { this.entityData.set(FREE_SLOTS, x); }
+    public void setTotalSlots(int x) {
+        this.entityData.set(TOTAL_SLOTS, x);
+    }
+    public int getFreeSlots() {
+        return this.entityData.get(FREE_SLOTS);
+    }
+    public void setFreeSlots(int x) {
+        this.entityData.set(FREE_SLOTS, x);
+    }
 }
