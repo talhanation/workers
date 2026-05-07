@@ -114,6 +114,7 @@ public class WorkersMain {
                 MessageDoTradeWithMerchant.class,
                 MessageOpenMerchantEditTradeScreen.class,
                 MessageOpenMerchantTradeScreen.class,
+                MessageOpenMerchantVillagerTradeScreen.class,
                 MessageToClientUpdateConfig.class,
                 MessageUpdateStorageArea.class,
                 MessageUpdateAnimalPenArea.class,

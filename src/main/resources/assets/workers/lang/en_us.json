@@ -89,6 +89,9 @@
   "gui.workers.button.edit": "Edit",
   "gui.workers.button.copy": "Copy",
 
+  "gui.workers.button.playerTrade": "Player Trade",
+  "gui.workers.button.villagerTrade": "Villager Trade",
+
   "gui.workers.text.creative": "Creative",
 
   "description.workers.title.farmer": "Farmer",

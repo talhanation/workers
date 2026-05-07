@@ -7,11 +7,13 @@ import javax.annotation.Nullable;
 import com.talhanation.workers.client.gui.CourierScreen;
 import com.talhanation.workers.client.gui.MerchantAddEditTradeScreen;
 import com.talhanation.workers.client.gui.MerchantTradeScreen;
+import com.talhanation.workers.client.gui.MerchantAddEditVillagerTradeScreen;
 import com.talhanation.workers.entities.CourierEntity;
 import com.talhanation.workers.entities.MerchantEntity;
 import com.talhanation.workers.inventory.CourierContainer;
 import com.talhanation.workers.inventory.MerchantAddEditTradeContainer;
 import com.talhanation.workers.inventory.MerchantTradeContainer;
+import com.talhanation.workers.inventory.MerchantAddEditVillagerTradeContainer;
 import com.talhanation.workers.world.WorkersMerchantTrade;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraftforge.common.extensions.IForgeMenuType;
@@ -40,6 +42,7 @@ public class ModMenuTypes {
 
     public static void registerMenus() {
         registerMenu(MERCHANT_ADD_EDIT_TRADE_CONTAINER_TYPE.get(), MerchantAddEditTradeScreen::new);
+        registerMenu(MERCHANT_VILLAGER_TRADE_CONTAINER_TYPE.get(), MerchantAddEditVillagerTradeScreen::new);
         registerMenu(MERCHANT_TRADE_CONTAINER_TYPE.get(), MerchantTradeScreen::new);
         registerMenu(COURIER_CONTAINER_TYPE.get(), CourierScreen::new);
     }
@@ -53,6 +56,17 @@ public class ModMenuTypes {
                 }
                 WorkersMerchantTrade trade = WorkersMerchantTrade.fromNbt(nbt);
                 return new MerchantAddEditTradeContainer(windowId, merchant, inv, trade);
+            }));
+
+    public static final RegistryObject<MenuType<MerchantAddEditVillagerTradeContainer>> MERCHANT_VILLAGER_TRADE_CONTAINER_TYPE =
+            MENU_TYPES.register("merchant_villager_trade_container", () -> IForgeMenuType.create((windowId, inv, data) -> {
+                MerchantEntity merchant = (MerchantEntity) getRecruitByUUID(inv.player, data.readUUID());
+                CompoundTag nbt = data.readNbt();
+                if (merchant == null || nbt == null) {
+                    return null;
+                }
+                WorkersMerchantTrade trade = WorkersMerchantTrade.fromNbt(nbt);
+                return new MerchantAddEditVillagerTradeContainer(windowId, merchant, inv, trade);
             }));
 
     public static final RegistryObject<MenuType<MerchantTradeContainer>> MERCHANT_TRADE_CONTAINER_TYPE =

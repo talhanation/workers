@@ -144,27 +144,13 @@ public class MerchantAddEditTradeScreen extends ScreenBase<MerchantAddEditTradeC
                 });
         addRenderableWidget(minusMaxTradesButton);
 
-        this.villagerTradeCheckBox = new RecruitsCheckBox(x + 170, y + 65, 100, 20, TEXT_VILLAGER_TRADE,
-                this.isVillagerTrade,
+        this.allowDamagedCurrencyCheckBox = new RecruitsCheckBox(x + 170, y + 15, 100, 20, TEXT_ALLOW_DAMAGED_ITEMS,
+                this.allowDamagedCurrency,
                 (bool) -> {
-                    this.isVillagerTrade = bool;
-                    this.tradeContainer.isVillagerTrade = bool;
-                    this.tradeContainer.setUpSlots();
-                    this.setWidgets();
+                    this.allowDamagedCurrency = bool;
                 }
         );
-        addRenderableWidget(villagerTradeCheckBox);
-
-        // allowDamagedCurrency not applicable for villager trades
-        if(!isVillagerTrade) {
-            this.allowDamagedCurrencyCheckBox = new RecruitsCheckBox(x + 170, y + 15, 100, 20, TEXT_ALLOW_DAMAGED_ITEMS,
-                    this.allowDamagedCurrency,
-                    (bool) -> {
-                        this.allowDamagedCurrency = bool;
-                    }
-            );
-            addRenderableWidget(allowDamagedCurrencyCheckBox);
-        }
+        addRenderableWidget(allowDamagedCurrencyCheckBox);
 
         this.enabledCheckBox = new RecruitsCheckBox(x + 170, y + 40, 100, 20, TEXT_ENABLED,
                 this.enabled,

@@ -1,6 +1,5 @@
 package com.talhanation.workers.entities;
 
-import com.talhanation.recruits.Main;
 import com.talhanation.recruits.entities.AbstractRecruitEntity;
 import com.talhanation.recruits.entities.ICanTradeEmbargo;
 import com.talhanation.recruits.pathfinding.AsyncGroundPathNavigation;
@@ -11,8 +10,10 @@ import com.talhanation.workers.entities.workarea.AbstractWorkAreaEntity;
 import com.talhanation.workers.entities.workarea.MarketArea;
 import com.talhanation.workers.inventory.MerchantAddEditTradeContainer;
 import com.talhanation.workers.inventory.MerchantTradeContainer;
+import com.talhanation.workers.inventory.MerchantAddEditVillagerTradeContainer;
 import com.talhanation.workers.network.MessageOpenMerchantEditTradeScreen;
 import com.talhanation.workers.network.MessageOpenMerchantTradeScreen;
+import com.talhanation.workers.network.MessageOpenMerchantVillagerTradeScreen;
 import com.talhanation.workers.world.VillagerInviteRegistry;
 import com.talhanation.workers.world.WorkersMerchantTrade;
 import net.minecraft.nbt.CompoundTag;
@@ -245,6 +246,20 @@ public class MerchantEntity extends AbstractWorkerEntity implements ICanTradeEmb
             }, buf -> { buf.writeUUID(this.getUUID()); buf.writeNbt(trade.toNbt()); });
         } else {
             WorkersMain.SIMPLE_CHANNEL.sendToServer(new MessageOpenMerchantEditTradeScreen(player, this.getUUID(), trade));
+        }
+    }
+
+    public void openVillagerTradeGUI(Player player, WorkersMerchantTrade trade) {
+        if (player instanceof ServerPlayer sp) {
+            this.setTrading(true);
+            NetworkHooks.openScreen(sp, new MenuProvider() {
+                public @NotNull Component getDisplayName() { return Component.literal("villager_trade_edit_screen"); }
+                public @NotNull AbstractContainerMenu createMenu(int i, @NotNull Inventory inv, @NotNull Player p) {
+                    return new MerchantAddEditVillagerTradeContainer(i, MerchantEntity.this, inv, trade);
+                }
+            }, buf -> { buf.writeUUID(this.getUUID()); buf.writeNbt(trade.toNbt()); });
+        } else {
+            WorkersMain.SIMPLE_CHANNEL.sendToServer(new MessageOpenMerchantVillagerTradeScreen(player, this.getUUID(), trade));
         }
     }
 

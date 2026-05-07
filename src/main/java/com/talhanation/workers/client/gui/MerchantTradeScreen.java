@@ -117,12 +117,17 @@ public class MerchantTradeScreen extends ScreenBase<MerchantTradeContainer> {
 
             addEditTradeButton = new ExtendedButton(leftPos + 186, topPos + 58, 60, 18, Component.empty(),
                     button -> {
-                        WorkersMerchantTrade trade = selection == null ? new WorkersMerchantTrade() : selection;
-                        merchantEntity.openAddEditTradeGUI(player, trade);
-                        tradeList.addEntry(this.tradeList.new TradeEntry(trade));
-                        this.selection = null;
-                        tradeList.setSelected(null);
-                        updateButtonState();
+                        if (selection == null) {
+                            // Add mode: let the player choose the trade type first
+                            Minecraft.getInstance().setScreen(new MerchantSelectTradeTypeScreen(merchantEntity, player));
+                        } else {
+                            // Edit mode: route to the appropriate editor based on the existing trade type
+                            if (selection.isVillagerTrade) {
+                                merchantEntity.openVillagerTradeGUI(player, selection);
+                            } else {
+                                merchantEntity.openAddEditTradeGUI(player, selection);
+                            }
+                        }
                     });
             addRenderableWidget(addEditTradeButton);
 
