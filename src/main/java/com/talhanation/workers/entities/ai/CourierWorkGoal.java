@@ -26,16 +26,26 @@ import java.util.*;
 
 public class CourierWorkGoal extends Goal {
 
-    private static final int ARRIVAL_DIST_SQ = 9;
-    private static final int SCAN_RADIUS = 16;
-    private static final int NAVIGATION_TIMEOUT = 2000;
-    private static final int REPATH_INTERVAL = 20;
-    private static final float WALK_SPEED = 0.85F;
+    private static final int ARRIVAL_DIST_SQ    = 9;
+    private static final int SCAN_RADIUS         = 16;
+    private static final int NAVIGATION_TIMEOUT  = 2000;
+    private static final int REPATH_INTERVAL     = 20;
+    private static final int TICKS_PER_TRANSFER  = 20;
+    private static final float WALK_SPEED        = 0.85F;
+
     private final CourierEntity courier;
     private State state;
     private int   actionIndex;
     private int   waitTicks;
     private int   navigationTicks;
+
+    // ── Active transfer state ─────────────────────────────────────────────────
+    private CourierAction               activeAction;
+    private CourierRoute.CourierWaypoint activeWp;
+    private List<Container>             activeTargets;
+    private int                         activeContainerIdx; // PICKUP: which source container
+    private int                         activeSlotIdx;      // PICKUP: slot in source / DEPOSIT: slot in workInv
+    private int                         activeTransferred;  // total items moved so far
 
     public CourierWorkGoal(CourierEntity courier){
         this.courier = courier;
@@ -57,9 +67,10 @@ public class CourierWorkGoal extends Goal {
 
     @Override
     public void start(){
-        actionIndex = 0;
-        navigationTicks = 0;
-        waitTicks = 0;
+        actionIndex        = 0;
+        navigationTicks    = 0;
+        waitTicks          = 0;
+        activeTransferred  = 0;
         courier.setFollowState(6); //Working
         state = State.NAVIGATE_TO_WAYPOINT;
     }
@@ -77,6 +88,8 @@ public class CourierWorkGoal extends Goal {
             case NAVIGATE_TO_WAYPOINT -> tickNavigate();
             case EXECUTE_ACTIONS      -> tickExecute();
             case WAIT_AT_WAYPOINT     -> tickWait();
+            case TRANSFER_STEP        -> tickTransferStep();
+            case WAIT_TRANSFER_STEP   -> tickWaitTransfer();
         }
     }
 
@@ -88,7 +101,6 @@ public class CourierWorkGoal extends Goal {
         double distSq = courier.distanceToSqr(target.getX() + 0.5, target.getY(), target.getZ() + 0.5);
         if (distSq <= ARRIVAL_DIST_SQ){
             courier.getNavigation().stop();
-
             actionIndex = 0;
             state = State.EXECUTE_ACTIONS;
             return;
@@ -129,37 +141,130 @@ public class CourierWorkGoal extends Goal {
                 waitTicks = action.getWaitSeconds() * 20;
                 state = State.WAIT_AT_WAYPOINT;
             }
-
-            case PICKUP ->{
-                executePickup(action, wp);
-                actionIndex++;
-            }
-
-            case DEPOSIT ->{
-                executeDeposit(action, wp);
-                actionIndex++;
-            }
-
-            case PICKUP_ANY ->{
-                executePickupAny(action, wp);
-                actionIndex++;
-            }
-
-            case DEPOSIT_ANY ->{
-                executeDepositAny(action, wp);
-                actionIndex++;
-            }
-
-            case PICKUP_ALL ->{
-                executePickupAll(action, wp);
-                actionIndex++;
-            }
-
-            case DEPOSIT_ALL -> {
-                executeDepositAll(action, wp);
-                actionIndex++;
-            }
+            case PICKUP, PICKUP_ANY, PICKUP_ALL,
+                    DEPOSIT, DEPOSIT_ANY, DEPOSIT_ALL -> initTransferAction(action, wp);
         }
+    }
+
+    private void initTransferAction(CourierAction action, CourierRoute.CourierWaypoint wp){
+        List<Container> targets = findContainers(action.getSourceType(), wp.getPosition());
+        if (targets.isEmpty()){
+            notifyOwner(courier.TEXT_NO_TARGET_FOUND(wp.displayName));
+            actionIndex++;
+            return;
+        }
+
+        activeAction       = action;
+        activeWp           = wp;
+        activeTargets      = targets;
+        activeTransferred  = 0;
+        activeContainerIdx = 0;
+        activeSlotIdx      = isDepositType(action.getActionType())
+                ? ((getWorkingInventory() == courier.getInventory()) ? 6 : 0)
+                : 0;
+
+        state = State.TRANSFER_STEP;
+    }
+
+
+    private void tickTransferStep(){
+        if (isDepositType(activeAction.getActionType()))
+            tickDepositStep();
+        else
+            tickPickupStep();
+    }
+
+    private void tickPickupStep(){
+        int limit = getTransferLimit();
+        if (activeTransferred >= limit){ finishTransfer(); return; }
+
+        while (activeContainerIdx < activeTargets.size()){
+            Container src = activeTargets.get(activeContainerIdx);
+
+            while (activeSlotIdx < src.getContainerSize()){
+                ItemStack slot  = src.getItem(activeSlotIdx);
+                int       sIdx  = activeSlotIdx++;
+
+                if (slot.isEmpty() || !matchesTemplate(slot)) continue;
+
+                int toTake = limit == Integer.MAX_VALUE
+                        ? slot.getCount()
+                        : Math.min(slot.getCount(), limit - activeTransferred);
+
+                int taken = doPickupOneSlot(src, sIdx, slot, toTake);
+
+                if (taken > 0){
+                    activeTransferred += taken;
+                    waitTicks = TICKS_PER_TRANSFER;
+                    state = State.WAIT_TRANSFER_STEP;
+                    return;
+                }
+                finishTransfer();
+                return;
+            }
+            activeContainerIdx++;
+            activeSlotIdx = 0;
+        }
+        finishTransfer();
+    }
+
+    private void tickDepositStep(){
+        Container workInv = getWorkingInventory();
+        int       limit   = getTransferLimit();
+
+        while (activeSlotIdx < workInv.getContainerSize()){
+            ItemStack slot = workInv.getItem(activeSlotIdx);
+            int       sIdx = activeSlotIdx++;
+
+            if (slot.isEmpty() || !matchesTemplate(slot)) continue;
+            if (activeTransferred >= limit){ finishTransfer(); return; }
+
+            int toMove   = limit == Integer.MAX_VALUE
+                    ? slot.getCount()
+                    : Math.min(slot.getCount(), limit - activeTransferred);
+            int deposited = 0;
+
+            for (Container dest : activeTargets){
+                int ins = insertIntoContainer(dest, slot, toMove - deposited);
+                deposited += ins;
+                slot.shrink(ins);
+                if (slot.isEmpty()) break;
+                if (ins > 0) playChestSound(dest);
+            }
+
+            workInv.setItem(sIdx, slot.isEmpty() ? ItemStack.EMPTY : slot);
+
+            if (deposited > 0){
+                activeTransferred += deposited;
+                waitTicks = TICKS_PER_TRANSFER;
+                state = State.WAIT_TRANSFER_STEP;
+                return;
+            }
+
+            CourierAction.ActionType type = activeAction.getActionType();
+            if ((type == CourierAction.ActionType.DEPOSIT || type == CourierAction.ActionType.DEPOSIT_ANY)
+                    && activeTransferred == 0){
+                notifyOwner(courier.TEXT_TARGET_FULL(
+                        activeWp.displayName, slot.getHoverName().getString()));
+            }
+            finishTransfer();
+            return;
+        }
+
+        CourierAction.ActionType type = activeAction.getActionType();
+        if ((type == CourierAction.ActionType.DEPOSIT || type == CourierAction.ActionType.DEPOSIT_ANY)
+                && activeTransferred == 0){
+            ItemStack tpl = activeAction.getItemStack();
+            if (tpl != null && !tpl.isEmpty())
+                notifyOwner(courier.TEXT_TARGET_FULL(activeWp.displayName, tpl.getHoverName().getString()));
+        }
+        finishTransfer();
+    }
+
+    /** 20-tick pause between individual stack transfers. */
+    private void tickWaitTransfer(){
+        if (--waitTicks <= 0)
+            state = State.TRANSFER_STEP;
     }
 
     private void tickWait(){
@@ -169,223 +274,71 @@ public class CourierWorkGoal extends Goal {
         }
     }
 
+    private void finishTransfer(){
+        actionIndex++;
+        state = State.EXECUTE_ACTIONS;
+    }
+
+
+    private int doPickupOneSlot(Container src, int slotIdx, ItemStack slot, int amount){
+        Container workInv = getWorkingInventory();
+        if (workInv != courier.getInventory()){
+            int inserted = insertIntoContainer(workInv, slot, amount);
+            if (inserted > 0){
+                slot.shrink(inserted);
+                src.setItem(slotIdx, slot.isEmpty() ? ItemStack.EMPTY : slot);
+                src.setChanged();
+                playChestSound(src);
+            }
+            return inserted;
+        }
+        ItemStack toAdd     = slot.copyWithCount(amount);
+        if (!courier.canAddItem(toAdd)) return 0;
+        ItemStack remainder = courier.addItem(toAdd);
+        int added = amount - remainder.getCount();
+        if (added > 0){
+            slot.shrink(added);
+            src.setItem(slotIdx, slot.isEmpty() ? ItemStack.EMPTY : slot);
+            src.setChanged();
+            playChestSound(src);
+        }
+        return added;
+    }
+
+    private boolean matchesTemplate(ItemStack stack){
+        CourierAction.ActionType type = activeAction.getActionType();
+        if (type == CourierAction.ActionType.PICKUP_ALL || type == CourierAction.ActionType.DEPOSIT_ALL)
+            return true;
+        ItemStack tpl = activeAction.getItemStack();
+        return tpl != null && !tpl.isEmpty() && ItemStack.isSameItem(stack, tpl);
+    }
+
+    private int getTransferLimit(){
+        CourierAction.ActionType type = activeAction.getActionType();
+        if (type == CourierAction.ActionType.PICKUP || type == CourierAction.ActionType.DEPOSIT){
+            ItemStack tpl = activeAction.getItemStack();
+            return (tpl != null) ? tpl.getCount() : Integer.MAX_VALUE;
+        }
+        return Integer.MAX_VALUE;
+    }
+
+    private static boolean isDepositType(CourierAction.ActionType type){
+        return type == CourierAction.ActionType.DEPOSIT
+                || type == CourierAction.ActionType.DEPOSIT_ANY
+                || type == CourierAction.ActionType.DEPOSIT_ALL;
+    }
+
     private Container getWorkingInventory(){
         if (courier.useVehicleInventory){
             Entity vehicle = courier.getVehicle();
-            if (vehicle instanceof AbstractChestedHorse horse){
+            if (vehicle instanceof AbstractChestedHorse horse)
                 return horse.inventory;
-            }
-            else if (vehicle instanceof InventoryCarrier carrier){
+            else if (vehicle instanceof InventoryCarrier carrier)
                 return carrier.getInventory();
-            }
-            else if (vehicle instanceof Container containerEntity){
+            else if (vehicle instanceof Container containerEntity)
                 return containerEntity;
-            }
         }
         return courier.getInventory();
-    }
-
-    private void executePickup(CourierAction action, CourierRoute.CourierWaypoint wp){
-        if (action.getItemStack() == null || action.getItemStack().isEmpty()) return;
-
-        ItemStack tpl = action.getItemStack();
-        List<Container> targets = findContainers(action.getSourceType(), wp.getPosition());
-
-        if (targets.isEmpty()){
-            notifyOwner(courier.TEXT_NO_TARGET_FOUND(wp.displayName));
-            return;
-        }
-
-        int total = 0, max = tpl.getCount();
-
-        for (Container c : targets){
-            if (total >= max) break;
-
-            total += transferToWorkingInv(c, tpl, max - total);
-        }
-    }
-
-    private void executeDeposit(CourierAction action, CourierRoute.CourierWaypoint wp){
-        if (action.getItemStack() == null || action.getItemStack().isEmpty()) return;
-
-        ItemStack tpl = action.getItemStack();
-        List<Container> targets = findContainers(action.getSourceType(), wp.getPosition());
-
-        if (targets.isEmpty()){
-            notifyOwner(courier.TEXT_NO_TARGET_FOUND(wp.displayName));
-            return;
-        }
-
-        int total = 0, max = tpl.getCount();
-
-        for (Container c : targets){
-            if (total >= max) break;
-            total += transferFromWorkingInv(c, tpl, max - total);
-        }
-
-        if (total == 0)
-            notifyOwner(courier.TEXT_TARGET_FULL(wp.displayName, tpl.getHoverName().getString()));
-    }
-
-    private void executePickupAny(CourierAction action, CourierRoute.CourierWaypoint wp){
-        if (action.getItemStack() == null || action.getItemStack().isEmpty()) return;
-
-        ItemStack tpl = action.getItemStack();
-        List<Container> targets = findContainers(action.getSourceType(), wp.getPosition());
-
-        if (targets.isEmpty()){
-            notifyOwner(courier.TEXT_NO_TARGET_FOUND(wp.displayName));
-            return;
-        }
-
-        int total = 0;
-        for (Container c : targets)
-            total += transferToWorkingInv(c, tpl, Integer.MAX_VALUE);
-    }
-
-    private void executeDepositAny(CourierAction action, CourierRoute.CourierWaypoint wp){
-        if (action.getItemStack() == null || action.getItemStack().isEmpty()) return;
-        ItemStack tpl = action.getItemStack();
-        List<Container> targets = findContainers(action.getSourceType(), wp.getPosition());
-
-        if (targets.isEmpty()){
-            notifyOwner(courier.TEXT_NO_TARGET_FOUND(wp.displayName));
-            return;
-        }
-
-        int total = 0;
-        for (Container c : targets)
-            total += transferFromWorkingInv(c, tpl, Integer.MAX_VALUE);
-
-        if (total == 0)
-            notifyOwner(courier.TEXT_TARGET_FULL(wp.displayName, tpl.getHoverName().getString()));
-    }
-
-    // ── Transfer logic — bulk / wildcard ─────────────────────────────────────
-
-    private void executePickupAll(CourierAction action, CourierRoute.CourierWaypoint wp){
-        List<Container> targets = findContainers(action.getSourceType(), wp.getPosition());
-        if (targets.isEmpty()){ notifyOwner(courier.TEXT_NO_TARGET_FOUND(wp.displayName)); return; }
-        for (Container src : targets){
-            for (int i = 0; i < src.getContainerSize(); i++){
-                ItemStack slot = src.getItem(i);
-                if (slot.isEmpty()) continue;
-                if (transferToWorkingInv(src, slot, Integer.MAX_VALUE) == 0) return; // full
-            }
-        }
-    }
-
-    private void executeDepositAll(CourierAction action, CourierRoute.CourierWaypoint wp){
-        List<Container> targets = findContainers(action.getSourceType(), wp.getPosition());
-
-        if (targets.isEmpty()){
-            notifyOwner(courier.TEXT_NO_TARGET_FOUND(wp.displayName));
-            return;
-        }
-
-        Container workInv = getWorkingInventory();
-
-        int startSlot = (workInv == courier.getInventory()) ? 6 : 0;
-        for (int i = startSlot; i < workInv.getContainerSize(); i++){
-            ItemStack slot = workInv.getItem(i);
-            if (slot.isEmpty()) continue;
-            int deposited = 0;
-            for (Container dest : targets){
-                int ins = insertIntoContainer(dest, slot, slot.getCount() - deposited);
-                deposited += ins;
-                slot.shrink(ins);
-                if (slot.isEmpty()) break;
-                playChestSound(dest);
-            }
-            workInv.setItem(i, slot.isEmpty() ? ItemStack.EMPTY : slot);
-        }
-    }
-
-    private int transferToWorkingInv(Container container, ItemStack template, int maxAmount){
-        Container workInv = getWorkingInventory();
-        if (workInv != courier.getInventory()){
-            // Vehicle inventory — direct container-to-container
-            return transferBetweenContainers(container, workInv, template, maxAmount);
-        }
-        // Courier's own inventory — use entity add methods so equipment / weight logic applies
-        return transferFromContainerToCourier(container, template, maxAmount);
-    }
-
-    private int transferFromWorkingInv(Container destination, ItemStack template, int maxAmount){
-        Container workInv = getWorkingInventory();
-        int startSlot = (workInv == courier.getInventory()) ? 6 : 0;
-        int transferred = 0;
-        for (int i = startSlot; i < workInv.getContainerSize(); i++){
-            ItemStack slot = workInv.getItem(i);
-
-            if (slot.isEmpty() || !ItemStack.isSameItem(slot, template))
-                continue;
-
-            int toMove = maxAmount == Integer.MAX_VALUE ? slot.getCount() : Math.min(slot.getCount(), maxAmount - transferred);
-            int inserted = insertIntoContainer(destination, slot, toMove);
-
-            if (inserted == 0)
-                break;
-
-            slot.shrink(inserted);
-            workInv.setItem(i, slot.isEmpty() ? ItemStack.EMPTY : slot);
-            transferred += inserted;
-
-            if (maxAmount != Integer.MAX_VALUE && transferred >= maxAmount)
-                break;
-
-            playChestSound(destination);
-        }
-        return transferred;
-    }
-
-    private int transferBetweenContainers(Container container, Container destination, ItemStack template, int maxAmount){
-        int transferred = 0;
-        for (int i = 0; i < container.getContainerSize(); i++){
-            ItemStack slot = container.getItem(i);
-            if (slot.isEmpty() || !ItemStack.isSameItem(slot, template)) continue;
-
-            int take = maxAmount == Integer.MAX_VALUE ? slot.getCount() : Math.min(slot.getCount(), maxAmount - transferred);
-            int inserted = insertIntoContainer(destination, slot, take);
-
-            if (inserted == 0) break;
-
-            slot.shrink(inserted);
-            container.setItem(i, slot.isEmpty() ? ItemStack.EMPTY : slot);
-            container.setChanged();
-            transferred += inserted;
-            playChestSound(container);
-
-            if (maxAmount != Integer.MAX_VALUE && transferred >= maxAmount)
-                break;
-        }
-        return transferred;
-    }
-
-    private int transferFromContainerToCourier(Container container, ItemStack template, int maxAmount){
-        int transferred = 0;
-        for (int i = 0; i < container.getContainerSize(); i++){
-            ItemStack slot = container.getItem(i);
-            if (slot.isEmpty() || !ItemStack.isSameItem(slot, template)) continue;
-
-            int take = maxAmount == Integer.MAX_VALUE ? slot.getCount() : Math.min(slot.getCount(), maxAmount - transferred);
-            ItemStack toAdd = slot.copyWithCount(take);
-
-            if (!courier.canAddItem(toAdd)) break;
-
-            ItemStack remainder = courier.addItem(toAdd);
-            int added = take - remainder.getCount();
-            if (added <= 0) break;
-
-            slot.shrink(added);
-            container.setItem(i, slot.isEmpty() ? ItemStack.EMPTY : slot);
-            container.setChanged();
-            transferred += added;
-            playChestSound(container);
-
-            if (maxAmount != Integer.MAX_VALUE && transferred >= maxAmount) break;
-        }
-        return transferred;
     }
 
     private List<Container> findContainers(CourierAction.SourceType type, BlockPos center){
@@ -403,13 +356,13 @@ public class CourierWorkGoal extends Goal {
                         MarketArea.class, scanBox, this::canAccessMarket);
 
                 Set<BlockPos> blockedPositions = new HashSet<>();
-                for (MarketArea bm : blockedMarkets) {
+                for (MarketArea bm : blockedMarkets){
                     bm.scanContainers();
                     blockedPositions.addAll(bm.containerMap.keySet());
                 }
 
                 Set<BlockPos> allowedMarketPositions = new java.util.HashSet<>();
-                for (MarketArea am : allowedMarkets) {
+                for (MarketArea am : allowedMarkets){
                     am.scanContainers();
                     allowedMarketPositions.addAll(am.containerMap.keySet());
                 }
@@ -430,7 +383,6 @@ public class CourierWorkGoal extends Goal {
             }
             case STORAGE -> {
                 List<StorageArea> areas = level.getEntitiesOfClass(StorageArea.class, scanBox, s -> s.canWorkHere(courier));
-
                 for (StorageArea a : areas){
                     a.scanStorageBlocks();
                     result.addAll(a.storageMap.values());
@@ -439,7 +391,6 @@ public class CourierWorkGoal extends Goal {
             case MARKET -> {
                 List<MarketArea> markets = level.getEntitiesOfClass(
                         MarketArea.class, scanBox, this::canAccessMarket);
-
                 for (MarketArea m : markets){
                     m.scanContainers();
                     result.addAll(m.containerMap.values());
@@ -454,9 +405,8 @@ public class CourierWorkGoal extends Goal {
         return result;
     }
 
-    private boolean canAccessMarket(MarketArea market) {
+    private boolean canAccessMarket(MarketArea market){
         if (!courier.isOwned()) return false;
-
         boolean sameOwner = courier.getOwnerUUID().equals(market.getPlayerUUID());
         boolean sameTeam  = market.getTeamAccess() && courier.getTeam() != null
                 && market.getTeamStringID() != null
@@ -469,18 +419,14 @@ public class CourierWorkGoal extends Goal {
         int inserted = 0;
         for (int j = 0; j < destination.getContainerSize() && inserted < amount; j++){
             ItemStack d = destination.getItem(j);
-
             if (d.isEmpty() || !ItemStack.isSameItemSameTags(d, stack)) continue;
-
             int canAdd = d.getMaxStackSize() - d.getCount();
             if (canAdd <= 0) continue;
-
             int add = Math.min(canAdd, amount - inserted);
             d.grow(add); destination.setItem(j, d); destination.setChanged(); inserted += add;
         }
         for (int j = 0; j < destination.getContainerSize() && inserted < amount; j++){
             if (!destination.getItem(j).isEmpty()) continue;
-
             int place = Math.min(stack.getMaxStackSize(), amount - inserted);
             destination.setItem(j, stack.copyWithCount(place)); destination.setChanged(); inserted += place;
         }
@@ -489,7 +435,7 @@ public class CourierWorkGoal extends Goal {
 
     private void advanceAndNavigate(){
         courier.advanceWaypoint();
-        actionIndex = 0;
+        actionIndex     = 0;
         navigationTicks = 0;
         state = State.NAVIGATE_TO_WAYPOINT;
     }
@@ -510,6 +456,8 @@ public class CourierWorkGoal extends Goal {
     public enum State{
         NAVIGATE_TO_WAYPOINT,
         EXECUTE_ACTIONS,
-        WAIT_AT_WAYPOINT
+        WAIT_AT_WAYPOINT,
+        TRANSFER_STEP,
+        WAIT_TRANSFER_STEP
     }
 }
