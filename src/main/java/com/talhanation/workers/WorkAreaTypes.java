@@ -8,7 +8,8 @@ public enum WorkAreaTypes {
     ANIMAL_PEN(4),
     MINING(5),
     LUMBER(6),
-    FISHING(7);
+    FISHING(7),
+    HOME(8);
     private final int index;
     WorkAreaTypes(int index){
         this.index = index;

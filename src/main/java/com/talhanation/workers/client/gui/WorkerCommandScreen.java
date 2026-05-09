@@ -38,6 +38,10 @@ public class WorkerCommandScreen implements ICommandCategory {
     private static final MutableComponent TOOLTIP_PLACE_ANIMAL_PEN = Component.translatable("gui.workers.command.tooltip.place_animal_pen");
     private static final MutableComponent TEXT_PLACE_MARKET_AREA = Component.translatable("gui.workers.command.text.place_market");
     private static final MutableComponent TOOLTIP_PLACE_MARKET_AREA = Component.translatable("gui.workers.command.tooltip.place_market");
+    private static final MutableComponent TEXT_PLACE_HOME_AREA = Component.translatable("gui.workers.command.text.place_home");
+    private static final MutableComponent TOOLTIP_PLACE_HOME_AREA = Component.translatable("gui.workers.command.tooltip.place_home");
+    private static final MutableComponent TEXT_PLACE_KITCHEN_AREA = Component.translatable("gui.workers.command.text.place_kitchen");
+    private static final MutableComponent TOOLTIP_PLACE_KITCHEN_AREA = Component.translatable("gui.workers.command.tooltip.place_kitchen");
     @Override
     public Component getToolTipName() {
         return Component.translatable("gui.workers.command.tooltip.workers");
@@ -140,6 +144,17 @@ public class WorkerCommandScreen implements ICommandCategory {
         addMarket.setTooltip(Tooltip.create(TOOLTIP_PLACE_MARKET_AREA));
         addMarket.active = canPlace(screen, WorkAreaTypes.MARKET);
         screen.addRenderableWidget(addMarket);
+
+        RecruitsCommandButton addhome = new RecruitsCommandButton(x + 130, y, TEXT_PLACE_HOME_AREA,
+                button -> {
+                    if(screen.rayBlockPos == null) return;
+                    BlockPos pos = screen.rayBlockPos;
+                    WorkersMain.SIMPLE_CHANNEL.sendToServer(new MessageAddWorkArea(pos, WorkAreaTypes.HOME));
+                });
+
+        addhome.setTooltip(Tooltip.create(TOOLTIP_PLACE_HOME_AREA));
+        addhome.active = canPlace(screen, WorkAreaTypes.HOME);
+        screen.addRenderableWidget(addhome);
     }
 
     private boolean canPlace(CommandScreen screen, WorkAreaTypes type){

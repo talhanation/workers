@@ -60,6 +60,12 @@ public class ModEntityTypes {
                     .fireImmune().noSummon()
                     .build(new ResourceLocation(WorkersMain.MOD_ID, "animalpenarea").toString()));
 
+    public static final RegistryObject<EntityType<HomeArea>> HOMEAREA = ENTITY_TYPES.register("homearea",
+            () -> EntityType.Builder.of(HomeArea::new, MobCategory.MISC)
+                    .sized(1.2F, 2.00F)
+                    .fireImmune().noSummon()
+                    .build(new ResourceLocation(WorkersMain.MOD_ID, "homearea").toString()));
+
 
     public static final RegistryObject<EntityType<AnimalFarmerEntity>> ANIMAL_FARMER = ENTITY_TYPES.register("animal_farmer",
                         () -> EntityType.Builder.of(AnimalFarmerEntity::new, MobCategory.CREATURE)

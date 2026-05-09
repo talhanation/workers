@@ -64,6 +64,13 @@ public class MessageAddWorkArea implements Message<MessageAddWorkArea> {
                 workArea.setDepthSize(9);
             }
 
+            case HOME -> {
+                workArea = new HomeArea(ModEntityTypes.HOMEAREA.get(), player.level());
+                workArea.setWidthSize(3);
+                workArea.setHeightSize(4);
+                workArea.setDepthSize(3);
+            }
+
             case STORAGE -> {
                 workArea = new StorageArea(ModEntityTypes.STORAGEAREA.get(), player.level());
                 workArea.setWidthSize(5);

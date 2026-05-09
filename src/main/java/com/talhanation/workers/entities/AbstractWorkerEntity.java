@@ -5,10 +5,13 @@ import com.talhanation.recruits.config.RecruitsClientConfig;
 import com.talhanation.recruits.entities.AbstractChunkLoaderEntity;
 import com.talhanation.workers.entities.ai.DepositItemsToStorage;
 import com.talhanation.workers.entities.ai.GetNeededItemsFromStorage;
+import com.talhanation.workers.entities.ai.WorkerGoHomeGoal;
 import com.talhanation.workers.entities.workarea.AbstractWorkAreaEntity;
+import com.talhanation.workers.entities.workarea.HomeArea;
 import com.talhanation.workers.world.NeededItem;
 import net.minecraft.core.BlockPos;
 import net.minecraft.nbt.CompoundTag;
+import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.sounds.SoundEvent;
 import net.minecraft.sounds.SoundEvents;
@@ -43,9 +46,9 @@ import java.util.function.Predicate;
 
 public abstract class AbstractWorkerEntity extends AbstractChunkLoaderEntity {
 
-    public static final Set<Block> UNBREAKABLES = ImmutableSet.of(
-            Blocks.BEDROCK,
-            Blocks.BARRIER);
+    public static final Set<Block> UNBREAKABLES = ImmutableSet.of(Blocks.BEDROCK, Blocks.BARRIER);
+    @Nullable public UUID homeAreaUUID = null;
+    private boolean moraleNightChecked = false;
 
     public AbstractWorkerEntity(EntityType<? extends AbstractWorkerEntity> entityType, Level world) {
         super(entityType, world);
@@ -59,6 +62,7 @@ public abstract class AbstractWorkerEntity extends AbstractChunkLoaderEntity {
         super.registerGoals();
         this.goalSelector.addGoal(0, new DepositItemsToStorage(this));
         this.goalSelector.addGoal(0, new GetNeededItemsFromStorage(this));
+        this.goalSelector.addGoal(1, new WorkerGoHomeGoal(this));
 
         this.goalSelector.removeGoal(new MoveTowardsTargetGoal(this, 0.9D, 32.0F));
     }
@@ -103,6 +107,7 @@ public abstract class AbstractWorkerEntity extends AbstractChunkLoaderEntity {
                 double distance = this.getHorizontalDistanceTo(getCurrentWorkArea().position());
                 if(distance >= 1000) this.getCurrentWorkArea().isBeingWorkedOn = false;
             }
+            this.tickMorale();
         }
     }
 
@@ -228,6 +233,7 @@ public abstract class AbstractWorkerEntity extends AbstractChunkLoaderEntity {
 
         nbt.putInt("farmedItems", farmedItems);
         if(lastStorage != null) nbt.putUUID("lastStorage", lastStorage);
+        if(homeAreaUUID != null) nbt.putUUID("homeAreaUUID", homeAreaUUID);
     }
 
     public void readAdditionalSaveData(@NotNull CompoundTag nbt) {
@@ -235,6 +241,7 @@ public abstract class AbstractWorkerEntity extends AbstractChunkLoaderEntity {
 
         this.farmedItems = nbt.getInt("farmedItems");
         if(nbt.contains("lastStorage")) this.lastStorage = nbt.getUUID("lastStorage");
+        if(nbt.contains("homeAreaUUID")) this.homeAreaUUID = nbt.getUUID("homeAreaUUID");
     }
 
     @OnlyIn(Dist.CLIENT)
@@ -263,7 +270,6 @@ public abstract class AbstractWorkerEntity extends AbstractChunkLoaderEntity {
 
     public void setEquipment() {
     }
-
     public boolean needsToSleep() {
         return !this.getCommandSenderWorld().isDay();
     }
@@ -441,6 +447,54 @@ public abstract class AbstractWorkerEntity extends AbstractChunkLoaderEntity {
     public void die(DamageSource dmg) {
         super.die(dmg);
         if(this.getCurrentWorkArea() != null) getCurrentWorkArea().setBeingWorkedOn(false);
+        // Release the home assignment so another worker can claim it
+        releaseHomeArea();
+    }
+
+    public void releaseHomeArea() {
+        if (homeAreaUUID == null) return;
+        if (this.getCommandSenderWorld() instanceof net.minecraft.server.level.ServerLevel serverLevel) {
+            serverLevel.getEntitiesOfClass(HomeArea.class, this.getBoundingBox().inflate(256))
+                    .stream()
+                    .filter(a -> homeAreaUUID.equals(a.getUUID()))
+                    .findFirst()
+                    .ifPresent(a -> a.clearResident());
+        }
+        homeAreaUUID = null;
+    }
+
+    private void tickMorale() {
+        if (this.getCommandSenderWorld().isClientSide()) return;
+
+        if (needsToSleep() && !moraleNightChecked) {
+            moraleNightChecked = true;
+            float morale = this.getMorale();
+
+            if (homeAreaUUID == null) {
+                // No home assigned → morale drops
+                morale = Math.max(0, morale - 10);
+
+                if (morale <= 50) {
+                    Player owner = this.getOwner();
+                    if (owner != null) {
+                        owner.sendSystemMessage(Component.translatable("chat.workers.text.noHome", this.getName().getString()));
+                    }
+                }
+            }
+            else {
+                // Has a home → morale recovers
+
+                if(morale < 60){
+                    morale = Math.min(100, morale + 5);
+                }
+            }
+
+            this.setMoral(morale);
+        }
+
+        if (!needsToSleep()) {
+            moraleNightChecked = false;
+        }
     }
 
     public static boolean isPosBroken(BlockPos pos, Level level, boolean allowWater) {

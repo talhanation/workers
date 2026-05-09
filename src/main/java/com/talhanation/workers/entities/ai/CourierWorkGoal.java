@@ -38,6 +38,9 @@ public class CourierWorkGoal extends Goal {
     private int   actionIndex;
     private int   waitTicks;
     private int   navigationTicks;
+    // When night falls mid-route, we flag this and finish the current cycle safely
+    // before releasing control to WorkerGoHomeGoal.
+    private boolean pendingGoHome = false;
 
     // ── Active transfer state ─────────────────────────────────────────────────
     private CourierAction               activeAction;
@@ -56,7 +59,18 @@ public class CourierWorkGoal extends Goal {
         return courier.isWorking() && courier.hasRoute() && !courier.needsToGetToChest();
     }
     @Override public boolean canContinueToUse(){
-        return canUse();
+        if (!courier.isWorking() || !courier.hasRoute() || courier.needsToGetToChest()) return false;
+        // Night fell → complete the current cycle back to waypoint 0 before stopping
+        if (courier.needsToSleep()) {
+            pendingGoHome = true;
+            return !isSafeToGoHome();
+        }
+        return true;
+    }
+
+    // Safe to stop = we are at waypoint 0 and not mid-return (full cycle completed)
+    private boolean isSafeToGoHome() {
+        return courier.currentWaypointIndex == 0 && !courier.returning;
     }
     @Override public boolean isInterruptable(){
         return true;
@@ -71,6 +85,7 @@ public class CourierWorkGoal extends Goal {
         navigationTicks    = 0;
         waitTicks          = 0;
         activeTransferred  = 0;
+        pendingGoHome      = false;
         courier.setFollowState(6); //Working
         state = State.NAVIGATE_TO_WAYPOINT;
     }
@@ -124,6 +139,12 @@ public class CourierWorkGoal extends Goal {
         if(courier.returning && courier.currentWaypointIndex == 0){
             courier.returning = false;
             courier.shouldCycle = courier.pendingShouldCycle;
+
+            // Safe stop point: full route cycle complete, night is pending → let GoHomeGoal take over
+            if (pendingGoHome) {
+                pendingGoHome = false;
+                return; // canContinueToUse will now return false → goal stops
+            }
         }
 
         if (wp == null || courier.returning){

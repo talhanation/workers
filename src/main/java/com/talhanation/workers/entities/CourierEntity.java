@@ -45,18 +45,8 @@ public class CourierEntity extends AbstractWorkerEntity implements IVillagerWork
     @Nullable public CourierRoute currentRoute = null;
     public int currentWaypointIndex = 0;
     public boolean returning = false;
-    /**
-     * When true the courier uses the vehicle's inventory (chest minecart, donkey, etc.)
-     * as its working storage instead of its own personal inventory.
-     */
     public boolean useVehicleInventory = false;
     public boolean shouldCycle = false;
-    /**
-     * True while the courier is navigating back to waypoint 0 before activating cycle mode.
-     * Set when Apply+Start fires with shouldCycle=true but the nearest waypoint is not 0.
-     * Cleared and shouldCycle is set to true the first time advanceWaypoint leaves index 0
-     * going forward.
-     */
     public boolean pendingShouldCycle = false;
 
     private final Predicate<ItemEntity> ALLOWED_ITEMS =
@@ -78,7 +68,6 @@ public class CourierEntity extends AbstractWorkerEntity implements IVillagerWork
         this.entityData.define(ROUTE_DATA, new CompoundTag());
     }
 
-    /** Rebuilds the synced ROUTE_DATA from the current server-side state and pushes it. */
     public void syncRouteData() {
         CompoundTag nbt = new CompoundTag();
         nbt.putBoolean("hasRoute", currentRoute != null);
@@ -92,7 +81,6 @@ public class CourierEntity extends AbstractWorkerEntity implements IVillagerWork
         this.entityData.set(ROUTE_DATA, nbt);
     }
 
-    /** Read-only access for the client GUI. */
     public CompoundTag getRouteData() {
         return this.entityData.get(ROUTE_DATA);
     }
@@ -106,11 +94,6 @@ public class CourierEntity extends AbstractWorkerEntity implements IVillagerWork
         syncRouteData();
     }
 
-    /**
-     * Like {@link #loadRoute}, but starts at the waypoint closest to the courier's
-     * current world position instead of always index 0.
-     * Called when the player presses Apply and starts the route immediately.
-     */
     public void loadRouteFromNearestWaypoint(CourierRoute route) {
         this.currentRoute         = route;
         this.returning            = true;
@@ -235,7 +218,6 @@ public class CourierEntity extends AbstractWorkerEntity implements IVillagerWork
         this.setRandomSpawnBonus();
         this.setPersistenceRequired();
         this.setFollowState(2);
-        this.setXpLevel(3);//TODO: REMOVE TEMPORARY FIX
         AbstractRecruitEntity.applySpawnValues(this);
     }
     @Override
@@ -280,8 +262,7 @@ public class CourierEntity extends AbstractWorkerEntity implements IVillagerWork
 
         int savedIndex = nbt.getInt("currentWaypointIndex");
         this.currentWaypointIndex = (currentRoute != null && !currentRoute.isEmpty())
-                ? Math.max(0, Math.min(savedIndex, currentRoute.size() - 1))
-                : 0;
+                ? Math.max(0, Math.min(savedIndex, currentRoute.size() - 1)) : 0;
 
         this.useVehicleInventory = nbt.getBoolean("useVehicleInventory");
         this.returning          = nbt.getBoolean("returning");
@@ -312,6 +293,16 @@ public class CourierEntity extends AbstractWorkerEntity implements IVillagerWork
     }
 
     @Override
+    public InteractionResult mobInteract(@NotNull Player player, @NotNull InteractionHand hand) {
+        if (this.getCommandSenderWorld().isClientSide()) return InteractionResult.SUCCESS;
+        if (!player.isCrouching()) {
+            openSpecialGUI((ServerPlayer) player);
+            return InteractionResult.SUCCESS;
+        }
+        return super.mobInteract(player, hand);
+    }
+
+    @Override
     public Screen getSpecialScreen(AbstractRecruitEntity abstractRecruitEntity, Player player) {
         return null;
     }
@@ -320,7 +311,9 @@ public class CourierEntity extends AbstractWorkerEntity implements IVillagerWork
     public void openSpecialGUI(ServerPlayer serverPlayer) {
         NetworkHooks.openScreen(serverPlayer, new MenuProvider() {
             @Override
-            public @NotNull Component getDisplayName() { return CourierEntity.this.getName(); }
+            public @NotNull Component getDisplayName(){
+                return CourierEntity.this.getName();
+            }
 
             @Override
             public @NotNull AbstractContainerMenu createMenu(int id, @NotNull Inventory inv, @NotNull Player p) {

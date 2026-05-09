@@ -38,6 +38,10 @@
   "gui.workers.command.tooltip.place_animal_pen": "Places a Animal Pen on the position you are pointing at.",
   "gui.workers.command.text.place_market": "Place Market",
   "gui.workers.command.tooltip.place_market": "Places a Market Area on the position you are pointing at.",
+  "gui.workers.command.text.place_home": "Place Home",
+  "gui.workers.command.tooltip.place_home": "Places a Home Area on the position you are pointing at.",
+  "gui.workers.command.text.place_kitchen": "Place Kitchen",
+  "gui.workers.command.tooltip.place_kitchen": "Places a Kitchen Area on the position you are pointing at.",
 
   "gui.workers.command.text.forward": "Forward",
   "gui.workers.command.text.back": "Back",
@@ -135,6 +139,7 @@
   "gui.workers.area.overlapping": "Areas cannot overlap!",
   "gui.workers.text.dailyRefresh": "Daily Restock",
 
+  "chat.workers.text.noHome": "%s: I need a home...",
   "chat.workers.courier.noTargetFound": "%s: Target: %s could not be found!",
   "chat.workers.courier.sourceEmpty": "%s: Could not take %s from %s, its empty!",
   "chat.workers.courier.targetFull": "%s: Could not take %s from %s, its Full!",
@@ -144,5 +149,10 @@
   "gui.workers.courier.actions": "Actions",
   "gui.workers.courier.map": "Map",
   "gui.workers.courier.apply": "Apply",
-  "gui.workers.courier.waypointName" : "Name"
+  "gui.workers.courier.waypointName" : "Name",
+
+  "gui.workers.text.resident": "Resident: ",
+  "gui.workers.text.free": "Free",
+  "gui.workers.text.evict": "Evict Resident"
+
 }

@@ -43,7 +43,7 @@ public class MerchantWorkGoal extends Goal {
     @Override
     public boolean canUse() {
         if (merchant.isCreative()) return false;
-        return merchant.shouldWork() && !merchant.needsToGetToChest() && this.isAreaNotRemoved();
+        return !merchant.needsToSleep() && merchant.shouldWork() && !merchant.needsToGetToChest() && this.isAreaNotRemoved();
     }
 
     private boolean isAreaNotRemoved() {
