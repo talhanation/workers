@@ -155,6 +155,17 @@ public class WorkerCommandScreen implements ICommandCategory {
         addhome.setTooltip(Tooltip.create(TOOLTIP_PLACE_HOME_AREA));
         addhome.active = canPlace(screen, WorkAreaTypes.HOME);
         screen.addRenderableWidget(addhome);
+
+        RecruitsCommandButton addKitchen = new RecruitsCommandButton(x + 170, y, TEXT_PLACE_KITCHEN_AREA,
+                button -> {
+                    if(screen.rayBlockPos == null) return;
+                    BlockPos pos = screen.rayBlockPos;
+                    WorkersMain.SIMPLE_CHANNEL.sendToServer(new MessageAddWorkArea(pos, WorkAreaTypes.KITCHEN));
+                });
+
+        addKitchen.setTooltip(Tooltip.create(TOOLTIP_PLACE_KITCHEN_AREA));
+        addKitchen.active = canPlace(screen, WorkAreaTypes.KITCHEN);
+        screen.addRenderableWidget(addKitchen);
     }
 
     private boolean canPlace(CommandScreen screen, WorkAreaTypes type){

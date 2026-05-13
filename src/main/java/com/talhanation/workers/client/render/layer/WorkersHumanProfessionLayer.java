@@ -24,7 +24,8 @@ public class WorkersHumanProfessionLayer extends RenderLayer<AbstractRecruitEnti
             new ResourceLocation(WorkersMain.MOD_ID,"textures/entity/human/human_lumberjack_cloth.png"),
             new ResourceLocation(WorkersMain.MOD_ID,"textures/entity/human/human_merchant_cloth.png"),
             new ResourceLocation(WorkersMain.MOD_ID,"textures/entity/human/human_courier_cloth.png"),
-            new ResourceLocation(WorkersMain.MOD_ID,"textures/entity/human/human_builder_cloth.png")
+            new ResourceLocation(WorkersMain.MOD_ID,"textures/entity/human/human_builder_cloth.png"),
+            new ResourceLocation(WorkersMain.MOD_ID,"textures/entity/human/human_cook_cloth.png")
     };
 
     public WorkersHumanProfessionLayer(LivingEntityRenderer<AbstractRecruitEntity, HumanoidModel<AbstractRecruitEntity>> renderer) {

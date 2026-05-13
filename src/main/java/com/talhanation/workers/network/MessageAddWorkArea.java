@@ -113,6 +113,14 @@ public class MessageAddWorkArea implements Message<MessageAddWorkArea> {
                 workArea.setTeamAccess(false);
             }
 
+            case KITCHEN -> {
+                workArea = new KitchenArea(ModEntityTypes.KITCHEN_AREA.get(), player.level());
+                workArea.setWidthSize(5);
+                workArea.setHeightSize(5);
+                workArea.setDepthSize(5);
+                workArea.setTeamAccess(false);
+            }
+
             default -> {
                 //IGNORE
                 return;

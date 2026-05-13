@@ -19,13 +19,6 @@ public class AttributeEvent {
         event.put(ModEntityTypes.FISHERMAN.get(), FishermanEntity.setAttributes().build());
         event.put(ModEntityTypes.ANIMAL_FARMER.get(), AnimalFarmerEntity.setAttributes().build());
         event.put(ModEntityTypes.COURIER.get(), AnimalFarmerEntity.setAttributes().build());
-        /*
-        event.put(ModEntityTypes.SHEPHERD.get(), ShepherdEntity.setAttributes().build());
-        event.put(ModEntityTypes.CATTLE_FARMER.get(), CattleFarmerEntity.setAttributes().build());
-        event.put(ModEntityTypes.CHICKEN_FARMER.get(), ChickenFarmerEntity.setAttributes().build());
-        event.put(ModEntityTypes.SWINEHERD.get(), SwineherdEntity.setAttributes().build());
-        event.put(ModEntityTypes.RABBIT_FARMER.get(), RabbitFarmerEntity.setAttributes().build());
-        event.put(ModEntityTypes.BEEKEEPER.get(), BeekeeperEntity.setAttributes().build());
-         */
+        event.put(ModEntityTypes.COOK.get(), CookEntity.setAttributes().build());
     }
 }

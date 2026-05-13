@@ -20,7 +20,6 @@ public class WorkersServerConfig {
     public static ForgeConfigSpec.IntValue CookCost;
     public static ForgeConfigSpec.BooleanValue VillagerBreedMixinEnabled;
     public static ForgeConfigSpec.IntValue VillagerBreedSaturationThreshold;
-    public static ForgeConfigSpec.BooleanValue BuilderActive;
     public static ForgeConfigSpec.IntValue AnimalPenMaxAnimals;
     public static ForgeConfigSpec.BooleanValue ShouldWorkAreaOnlyBeInFactionClaim;
     public static ForgeConfigSpec.BooleanValue ShouldOnlyPlacingBuildingsBePossible;
@@ -188,7 +187,7 @@ public class WorkersServerConfig {
                 .worldRestart()
                 .define("VillagerBreedMixinEnabled", true);
 
-        VillagerBreedNutritionThreshold = BUILDER.comment("""
+        VillagerBreedSaturationThreshold = BUILDER.comment("""
                         
                         The total saturation value required in a villager's inventory
                         to trigger breeding (only used when VillagerBreedMixinEnabled = true).

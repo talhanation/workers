@@ -28,7 +28,7 @@ public class ClientEvent {
         EntityRenderers.register(ModEntityTypes.FISHINGAREA.get(), WorkerAreaRenderer::new);
         EntityRenderers.register(ModEntityTypes.ANIMAL_PEN_AREA.get(), WorkerAreaRenderer::new);
         EntityRenderers.register(ModEntityTypes.HOMEAREA.get(), WorkerAreaRenderer::new);
-        //EntityRenderers.register(ModEntityTypes.KITCHEN.get(), WorkerAreaRenderer::new);
+        EntityRenderers.register(ModEntityTypes.KITCHEN_AREA.get(), WorkerAreaRenderer::new);
 
         EntityRenderers.register(ModEntityTypes.FISHING_BOBBER.get(), FishingBobberRenderer::new);
 
@@ -42,7 +42,7 @@ public class ClientEvent {
             EntityRenderers.register(ModEntityTypes.FISHERMAN.get(), WorkerVillagerRenderer::new);
             EntityRenderers.register(ModEntityTypes.ANIMAL_FARMER.get(), WorkerVillagerRenderer::new);
             EntityRenderers.register(ModEntityTypes.COURIER.get(), WorkerVillagerRenderer::new);
-            //EntityRenderers.register(ModEntityTypes.CHEF.get(), WorkerVillagerRenderer::new);
+            EntityRenderers.register(ModEntityTypes.COOK.get(), WorkerVillagerRenderer::new);
         }
         else{
             EntityRenderers.register(ModEntityTypes.FARMER.get(), WorkerHumanRenderer::new);
@@ -53,7 +53,7 @@ public class ClientEvent {
             EntityRenderers.register(ModEntityTypes.FISHERMAN.get(), WorkerHumanRenderer::new);
             EntityRenderers.register(ModEntityTypes.ANIMAL_FARMER.get(), WorkerHumanRenderer::new);
             EntityRenderers.register(ModEntityTypes.COURIER.get(), WorkerHumanRenderer::new);
-            //EntityRenderers.register(ModEntityTypes.CHEF.get(), WorkerHumanRenderer::new);
+            EntityRenderers.register(ModEntityTypes.COOK.get(), WorkerHumanRenderer::new);
         }
     }
 }
