@@ -66,6 +66,8 @@ public class MerchantEntity extends AbstractWorkerEntity implements ICanTradeEmb
 
     public boolean needsNewTrades;
     public MarketArea currentMarketArea;
+    /** Persistent assignment — this merchant always works this specific MarketArea. */
+    @Nullable public UUID marketAreaUUID = null;
 
     @Nullable public Villager activeTradingVillager;
     @Nullable public WorkersMerchantTrade activeVillagerTrade;
@@ -140,6 +142,7 @@ public class MerchantEntity extends AbstractWorkerEntity implements ICanTradeEmb
         nbt.putInt("TraderLevel", this.getTraderLevel());
         nbt.putBoolean("isCreative", this.isCreative());
         nbt.putBoolean("dailyRefresh", this.isDailyRefresh());
+        if (marketAreaUUID != null) nbt.putUUID("marketAreaUUID", marketAreaUUID);
     }
 
     @Override
@@ -150,6 +153,26 @@ public class MerchantEntity extends AbstractWorkerEntity implements ICanTradeEmb
         this.setTraderLevel(nbt.getInt("TraderLevel"));
         this.setCreative(nbt.getBoolean("isCreative"));
         this.setDailyRefresh(nbt.getBoolean("dailyRefresh"));
+        if (nbt.contains("marketAreaUUID")) this.marketAreaUUID = nbt.getUUID("marketAreaUUID");
+    }
+
+    @Override
+    public void die(DamageSource dmg) {
+        super.die(dmg);
+        releaseMarketArea();
+    }
+
+    public void releaseMarketArea() {
+        if (marketAreaUUID == null) return;
+        if (this.getCommandSenderWorld() instanceof net.minecraft.server.level.ServerLevel serverLevel) {
+            serverLevel.getEntitiesOfClass(com.talhanation.workers.entities.workarea.MarketArea.class,
+                            this.getBoundingBox().inflate(256))
+                    .stream()
+                    .filter(a -> marketAreaUUID.equals(a.getUUID()))
+                    .findFirst()
+                    .ifPresent(com.talhanation.workers.entities.workarea.MarketArea::clearAssignedMerchant);
+        }
+        marketAreaUUID = null;
     }
 
     public static AttributeSupplier.Builder setAttributes() {

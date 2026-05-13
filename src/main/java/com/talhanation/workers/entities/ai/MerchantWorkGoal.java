@@ -116,7 +116,8 @@ public class MerchantWorkGoal extends Goal {
                 merchant.currentMarketArea = found;
                 found.setBeingWorkedOn(true);
                 found.setTime(0);
-                found.setMerchantName(merchant.getName().getString());
+                found.assignMerchant(merchant.getUUID(), merchant.getName().getString());
+                merchant.marketAreaUUID = found.getUUID();
                 found.scanContainers();
 
                 merchant.setCurrentMarketName(found.getMarketName());
@@ -343,21 +344,38 @@ public class MerchantWorkGoal extends Goal {
 
     @Nullable
     private MarketArea findBestArea(ServerLevel level) {
-        List<MarketArea> areas = level.getEntitiesOfClass(MarketArea.class, merchant.getBoundingBox().inflate(64));
+        // 1. Reconnect to already-assigned market (survives restarts)
+        if (merchant.marketAreaUUID != null) {
+            MarketArea assigned = level.getEntitiesOfClass(MarketArea.class,
+                            merchant.getBoundingBox().inflate(256))
+                    .stream()
+                    .filter(a -> merchant.marketAreaUUID.equals(a.getUUID()))
+                    .findFirst()
+                    .orElse(null);
 
-        MarketArea best = null;
-        int bestScore = -1;
+            if (assigned != null && !assigned.isRemoved() && assigned.canWorkHere(merchant)) {
+                return assigned;
+            }
+            // Assigned area gone or no longer usable
+            merchant.marketAreaUUID = null;
+        }
+
+        // 2. Find the best free unassigned area
+        List<MarketArea> areas = level.getEntitiesOfClass(MarketArea.class,
+                merchant.getBoundingBox().inflate(64));
+
+        MarketArea best      = null;
+        int        bestScore = -1;
 
         for (MarketArea area : areas) {
             if (area == null) continue;
             if (!area.canWorkHere(merchant)) continue;
-            if (area.isBeingWorkedOn()) continue;
-            int score = 0;
-            score += area.getTime() * 10;
+            if (area.isAssigned()) continue;
 
+            int score = area.getTime() * 10;
             if (score > bestScore) {
                 bestScore = score;
-                best = area;
+                best      = area;
             }
         }
         return best;

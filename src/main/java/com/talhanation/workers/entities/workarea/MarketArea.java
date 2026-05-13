@@ -5,6 +5,9 @@ import com.talhanation.workers.entities.AbstractWorkerEntity;
 import com.talhanation.workers.entities.MerchantEntity;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.core.BlockPos;
+
+import javax.annotation.Nullable;
+import java.util.UUID;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.syncher.EntityDataAccessor;
 import net.minecraft.network.syncher.EntityDataSerializers;
@@ -33,6 +36,9 @@ public class MarketArea extends AbstractWorkAreaEntity implements IPermissionAre
     public static final EntityDataAccessor<String> MERCHANT_NAME = SynchedEntityData.defineId(MarketArea.class, EntityDataSerializers.STRING);
     public Map<BlockPos, Container> containerMap = new HashMap<>();
 
+    /** Persistent server-side UUID of the assigned merchant (one per market). */
+    @Nullable public UUID assignedMerchantUUID = null;
+
     public MarketArea(EntityType<?> type, Level level) {
         super(type, level);
     }
@@ -51,8 +57,9 @@ public class MarketArea extends AbstractWorkAreaEntity implements IPermissionAre
     public void readAdditionalSaveData(CompoundTag tag) {
         super.readAdditionalSaveData(tag);
         this.setOpen(tag.getBoolean("isOpen"));
-        if (tag.contains("marketName")) this.setMarketName(tag.getString("marketName"));
+        if (tag.contains("marketName"))   this.setMarketName(tag.getString("marketName"));
         if (tag.contains("merchantName")) this.setMerchantName(tag.getString("merchantName"));
+        if (tag.contains("assignedMerchantUUID")) this.assignedMerchantUUID = tag.getUUID("assignedMerchantUUID");
 
         setBeingWorkedOn(false);
     }
@@ -63,6 +70,7 @@ public class MarketArea extends AbstractWorkAreaEntity implements IPermissionAre
         tag.putBoolean("isOpen", this.isOpen());
         tag.putString("marketName", this.getMarketName());
         tag.putString("merchantName", this.getMerchantName());
+        if (assignedMerchantUUID != null) tag.putUUID("assignedMerchantUUID", assignedMerchantUUID);
     }
 
     @Override
@@ -106,18 +114,6 @@ public class MarketArea extends AbstractWorkAreaEntity implements IPermissionAre
 
         return i;
     }
-
-    public Container getContainer(BlockPos pos) {
-        BlockEntity entity = this.getCommandSenderWorld().getBlockEntity(pos);
-        BlockState blockState = this.getCommandSenderWorld().getBlockState(pos);
-        if (blockState.getBlock() instanceof ChestBlock chestBlock) {
-            return ChestBlock.getContainer(chestBlock, blockState, this.getCommandSenderWorld(), pos, false);
-        } else if (entity instanceof Container containerEntity) {
-            return containerEntity;
-        }
-        return null;
-    }
-
 
     public boolean shrinkItemFromContainers(ItemStack stack, int count, boolean allowDamaged) {
         if (containerMap.isEmpty()) scanContainers();
@@ -197,9 +193,30 @@ public class MarketArea extends AbstractWorkAreaEntity implements IPermissionAre
         if (!(worker instanceof MerchantEntity merchant)) return false;
         if (!super.canWorkHere(worker)) return false;
         if (!isOpen()) return false;
-
         if (isBeingWorkedOn()) return false;
+        // If a specific merchant is assigned, only they may work here
+        if (assignedMerchantUUID != null && !assignedMerchantUUID.equals(worker.getUUID())) return false;
         return true;
+    }
+
+    //////////////////////////////// MERCHANT ASSIGNMENT ////////////////////////
+
+    public boolean isAssigned() {
+        return assignedMerchantUUID != null;
+    }
+
+    public boolean isAssignedTo(UUID merchantUUID) {
+        return merchantUUID != null && merchantUUID.equals(assignedMerchantUUID);
+    }
+
+    public void assignMerchant(UUID merchantUUID, String merchantName) {
+        this.assignedMerchantUUID = merchantUUID;
+        this.setMerchantName(merchantName);
+    }
+
+    public void clearAssignedMerchant() {
+        this.assignedMerchantUUID = null;
+        this.setMerchantName("None");
     }
     public boolean isOpen() { return this.entityData.get(IS_OPEN); }
     public void setOpen(boolean open) { this.entityData.set(IS_OPEN, open); }

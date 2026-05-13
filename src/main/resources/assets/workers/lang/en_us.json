@@ -154,6 +154,7 @@
   "gui.workers.text.resident": "Resident: ",
   "gui.workers.text.free": "Free",
   "gui.workers.text.evict": "Evict Resident",
+  "gui.workers.text.evictMerchant": "Evict Merchant",
   "gui.workers.text.ok": "Ok",
   "gui.workers.text.quality": "Quality: ",
   "gui.workers.text.noWallsOrRoof": "No Walls or Roof",
