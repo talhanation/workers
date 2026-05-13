@@ -5,6 +5,7 @@ import com.talhanation.workers.client.events.ScreenEvents;
 import com.talhanation.workers.client.gui.WorkerCommandScreen;
 import com.talhanation.workers.config.WorkersServerConfig;
 import com.talhanation.workers.network.*;
+import com.talhanation.workers.network.MessageUpdateKitchenArea;
 import net.minecraft.world.item.CreativeModeTabs;
 import net.minecraftforge.event.BuildCreativeModeTabContentsEvent;
 import net.minecraftforge.event.RegisterCommandsEvent;
@@ -121,6 +122,7 @@ public class WorkersMain {
                 MessageRotateWorkArea.class,
                 MessageMoveMerchantTrade.class,
                 MessageUpdateMarketArea.class,
+                MessageUpdateKitchenArea.class,
                 MessageUpdateOwner.class,
                 MessageCourierSetRoute.class,
                 MessageOpenCourierScreen.class,
@@ -153,6 +155,7 @@ public class WorkersMain {
             event.accept(ModItems.FISHERMAN_SPAWN_EGG.get());
             event.accept(ModItems.ANIMAL_FARMER_SPAWN_EGG.get());
             event.accept(ModItems.COURIER_SPAWN_EGG.get());
+            event.accept(ModItems.COOK_SPAWN_EGG.get());
         }
     }
 }

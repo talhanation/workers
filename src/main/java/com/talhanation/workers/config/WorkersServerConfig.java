@@ -17,6 +17,9 @@ public class WorkersServerConfig {
     public static ForgeConfigSpec.IntValue BuilderCost;
     public static ForgeConfigSpec.IntValue MerchantCost;
     public static ForgeConfigSpec.IntValue CourierCost;
+    public static ForgeConfigSpec.IntValue CookCost;
+    public static ForgeConfigSpec.BooleanValue VillagerBreedMixinEnabled;
+    public static ForgeConfigSpec.IntValue VillagerBreedSaturationThreshold;
     public static ForgeConfigSpec.BooleanValue BuilderActive;
     public static ForgeConfigSpec.IntValue AnimalPenMaxAnimals;
     public static ForgeConfigSpec.BooleanValue ShouldWorkAreaOnlyBeInFactionClaim;
@@ -164,6 +167,40 @@ public class WorkersServerConfig {
                         \tdefault: 30""")
                 .worldRestart()
                 .defineInRange("CourierCost", 20, 0, 1453);
+
+        CookCost = BUILDER.comment("""
+                        
+                        The amount of currency required to hire a cook.
+                        \t(takes effect after restart)
+                        \tdefault: 25""")
+                .worldRestart()
+                .defineInRange("CookCost", 25, 0, 1453);
+
+        VillagerBreedMixinEnabled = BUILDER.comment("""
+                        
+                        Whether the villager breeding mixin is active.
+                        When enabled, villagers can breed using any food item
+                        based on its nutrition value instead of only vanilla
+                        bread/carrot/potato/beetroot.
+                        Disable this if you experience compatibility issues with other mods.
+                        \t(takes effect after restart)
+                        \tdefault: true""")
+                .worldRestart()
+                .define("VillagerBreedMixinEnabled", true);
+
+        VillagerBreedNutritionThreshold = BUILDER.comment("""
+                        
+                        The total saturation value required in a villager's inventory
+                        to trigger breeding (only used when VillagerBreedMixinEnabled = true).
+                        Saturation is calculated as: nutrition * saturationModifier * 2
+                        Examples at default threshold 15:
+                        - Bread (saturation 6.0): needs 3 bread  → 18 >= 15
+                        - Cooked Beef (saturation 12.8): needs 2 → 25 >= 15
+                        - Baked Potato (saturation 6.0): needs 3 → 18 >= 15
+                        \t(takes effect after restart)
+                        \tdefault: 15""")
+                .worldRestart()
+                .defineInRange("VillagerBreedSaturationThreshold", 15, 1, 100);
 
         ShouldWorkAreaOnlyBeInFactionClaim = BUILDER.comment("""
                         

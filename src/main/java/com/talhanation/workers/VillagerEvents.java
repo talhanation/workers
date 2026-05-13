@@ -1,6 +1,7 @@
 package com.talhanation.workers;
 
 import com.talhanation.workers.entities.ai.VillagerRespondToMerchantGoal;
+import com.talhanation.workers.entities.ai.VillagerRespondToCookGoal;
 import com.talhanation.workers.entities.ai.animals.WorkerTemptGoal;
 import com.talhanation.workers.entities.workarea.AbstractWorkAreaEntity;
 import com.talhanation.workers.entities.workarea.IPermissionArea;
@@ -45,6 +46,7 @@ public class VillagerEvents {
     public static final Component TITLE_FISHERMAN = Component.translatable("description.workers.title.fisherman");
     public static final Component TITLE_ANIMAL_FARMER = Component.translatable("description.workers.title.animalFarmer");
     public static final Component TITLE_COURIER = Component.translatable("description.workers.title.courier");
+    public static final Component TITLE_COOK    = Component.translatable("description.workers.title.cook");
     public static final Component DESCRIPTION_FARMER = Component.translatable("description.workers.farmer");
     public static final Component DESCRIPTION_MINER = Component.translatable("description.workers.miner");
     public static final Component DESCRIPTION_LUMBERJACK = Component.translatable("description.workers.lumberjack");
@@ -53,6 +55,7 @@ public class VillagerEvents {
     public static final Component DESCRIPTION_FISHERMAN = Component.translatable("description.workers.fisherman");
     public static final Component DESCRIPTION_ANIMAL_FARMER = Component.translatable("description.workers.animalFarmer");
     public static final Component DESCRIPTION_COURIER = Component.translatable("description.workers.courier");
+    public static final Component DESCRIPTION_COOK    = Component.translatable("description.workers.cook");
 
     @SubscribeEvent
     public void onPlayerJoinWorld(EntityJoinLevelEvent event) {
@@ -78,10 +81,11 @@ public class VillagerEvents {
 
         RecruitsHireTrade ANIMAL_FARMER = new RecruitsHireTrade(ModEntityTypes.ANIMAL_FARMER.getId(), WorkersServerConfig.BuilderCost.get(), TITLE_ANIMAL_FARMER, DESCRIPTION_ANIMAL_FARMER);
         RecruitsHireTrade COURIER = new RecruitsHireTrade(ModEntityTypes.COURIER.getId(), WorkersServerConfig.CourierCost.get(), TITLE_COURIER, DESCRIPTION_COURIER);
+        RecruitsHireTrade COOK    = new RecruitsHireTrade(ModEntityTypes.COOK.getId(), WorkersServerConfig.CookCost.get(), TITLE_COOK, DESCRIPTION_COOK);
 
 
         RecruitsHireTradesRegistry.addTrade("workers", 1, FARMER, LUMBERJACK);
-        RecruitsHireTradesRegistry.addTrade("workers", 2, COURIER);
+        RecruitsHireTradesRegistry.addTrade("workers", 2, COURIER, COOK);
         RecruitsHireTradesRegistry.addTrade("workers", 3, MERCHANT, BUILDER);
 
         RecruitsHireTradesRegistry.addTrade("workers2", 1, FARMER, MINER);
@@ -125,6 +129,7 @@ public class VillagerEvents {
         }
         else if(entity instanceof Villager villager) {
             villager.goalSelector.addGoal(4, new VillagerRespondToMerchantGoal(villager));
+            villager.goalSelector.addGoal(4, new VillagerRespondToCookGoal(villager));
         }
     }
 

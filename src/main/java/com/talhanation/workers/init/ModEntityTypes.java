@@ -48,6 +48,12 @@ public class ModEntityTypes {
                         .fireImmune().noSummon()
                         .build(new ResourceLocation(WorkersMain.MOD_ID, "marketarea").toString()));
 
+        public static final RegistryObject<EntityType<KitchenArea>> KITCHEN_AREA = ENTITY_TYPES.register("kitchenarea",
+                () -> EntityType.Builder.of(KitchenArea::new, MobCategory.MISC)
+                        .sized(1.2F, 2.00F)
+                        .fireImmune().noSummon()
+                        .build(new ResourceLocation(WorkersMain.MOD_ID, "kitchenarea").toString()));
+
         public static final RegistryObject<EntityType<FishingArea>> FISHINGAREA = ENTITY_TYPES.register("fishingarea",
                 () -> EntityType.Builder.of(FishingArea::new, MobCategory.MISC)
                         .sized(1.2F, 2.00F)
@@ -123,6 +129,14 @@ public class ModEntityTypes {
                         .setTrackingRange(32)
                         .setShouldReceiveVelocityUpdates(true)
                         .build(new ResourceLocation(WorkersMain.MOD_ID, "fisherman").toString()));
+
+       public static final RegistryObject<EntityType<CookEntity>> COOK = ENTITY_TYPES.register("cook",
+                () -> EntityType.Builder.of(CookEntity::new, MobCategory.CREATURE)
+                        .sized(0.6F, 1.95F)
+                        .canSpawnFarFromPlayer()
+                        .setTrackingRange(32)
+                        .setShouldReceiveVelocityUpdates(true)
+                        .build(new ResourceLocation(WorkersMain.MOD_ID, "cook").toString()));
 
        public static final RegistryObject<EntityType<FishingBobberEntity>> FISHING_BOBBER = ENTITY_TYPES.register("fishing_bobber",
                         () -> EntityType.Builder.<FishingBobberEntity>of(FishingBobberEntity::new, MobCategory.MISC)

@@ -1,0 +1,13 @@
+{
+  "required": true,
+  "minVersion": "0.8",
+  "package": "com.talhanation.workers.mixins",
+  "compatibilityLevel": "JAVA_17",
+  "mixins": [
+    "MixinVillager"
+  ],
+  "client": [],
+  "injectors": {
+    "defaultRequire": 1
+  }
+}

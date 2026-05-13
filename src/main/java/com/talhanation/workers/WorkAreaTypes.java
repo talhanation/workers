@@ -10,6 +10,7 @@ public enum WorkAreaTypes {
     LUMBER(6),
     FISHING(7),
     HOME(8);
+    KITCHEN(8);
     private final int index;
     WorkAreaTypes(int index){
         this.index = index;
