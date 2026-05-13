@@ -153,6 +153,12 @@
 
   "gui.workers.text.resident": "Resident: ",
   "gui.workers.text.free": "Free",
-  "gui.workers.text.evict": "Evict Resident"
-
+  "gui.workers.text.evict": "Evict Resident",
+  "gui.workers.text.ok": "Ok",
+  "gui.workers.text.quality": "Quality: ",
+  "gui.workers.text.noWallsOrRoof": "No Walls or Roof",
+  "gui.workers.text.noDoor": "No Door",
+  "gui.workers.text.noBed": "No Bed",
+  "gui.workers.text.noLight": "No Light Source",
+  "gui.workers.text.noChest": "No Chest"
 }

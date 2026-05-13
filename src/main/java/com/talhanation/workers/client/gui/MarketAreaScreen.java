@@ -14,7 +14,8 @@ public class MarketAreaScreen extends WorkAreaScreen {
 
     private static final MutableComponent TEXT_OPEN   = Component.translatable("gui.workers.checkbox.marketOpen");
     private static final MutableComponent TEXT_MERCHANT = Component.translatable("entity.workers.merchant");
-    private static final MutableComponent TEXT_SPACE = Component.translatable("gui.workers.text.space");
+    private static final MutableComponent TEXT_SPACE           = Component.translatable("gui.workers.text.space");
+    private static final MutableComponent TEXT_EVICT_MERCHANT  = Component.translatable("gui.workers.text.evictMerchant");
     public final MarketArea marketArea;
     private EditBox nameEditBox;
     private RecruitsCheckBox openCheckBox;

@@ -72,16 +72,6 @@ public class StorageArea extends AbstractWorkAreaEntity implements IPermissionAr
             }
         });
     }
-    public Container getContainer(BlockPos chestPos) {
-        BlockEntity entity = this.getCommandSenderWorld().getBlockEntity(chestPos);
-        BlockState blockState = this.getCommandSenderWorld().getBlockState(chestPos);
-        if (blockState.getBlock() instanceof ChestBlock chestBlock) {
-            return ChestBlock.getContainer(chestBlock, blockState, this.getCommandSenderWorld(), chestPos, false);
-        } else if (entity instanceof Container containerEntity) {
-            return containerEntity;
-        }
-        return null;
-    }
 
     public int getStorageMask(EnumSet<StorageType> types){
         int mask = 0;

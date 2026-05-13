@@ -4,6 +4,7 @@ import com.talhanation.workers.client.gui.HomeAreaScreen;
 import com.talhanation.workers.entities.AbstractWorkerEntity;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.core.BlockPos;
+import net.minecraft.core.Direction;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.syncher.EntityDataAccessor;
 import net.minecraft.network.syncher.EntityDataSerializers;
@@ -12,31 +13,35 @@ import net.minecraft.world.Container;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.Item;
-import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
 import net.minecraft.world.level.Level;
-import net.minecraft.world.level.block.ChestBlock;
-import net.minecraft.world.level.block.entity.BlockEntity;
+import net.minecraft.world.level.LightLayer;
+import net.minecraft.world.level.block.*;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.block.state.properties.BedPart;
 import net.minecraft.world.level.block.state.properties.BlockStateProperties;
 import net.minecraft.world.level.block.state.properties.IntegerProperty;
+import net.minecraft.world.phys.AABB;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
 
 import javax.annotation.Nullable;
 import java.util.*;
-import java.util.Comparator;
+import java.util.concurrent.atomic.AtomicBoolean;
 
-public class HomeArea extends AbstractWorkAreaEntity implements IPermissionArea{
+public class HomeArea extends AbstractWorkAreaEntity implements IPermissionArea {
 
-    public static final EntityDataAccessor<String> RESIDENT_NAME = SynchedEntityData.defineId(HomeArea.class, EntityDataSerializers.STRING);
+    public static final EntityDataAccessor<String>  RESIDENT_NAME = SynchedEntityData.defineId(HomeArea.class, EntityDataSerializers.STRING);
     public static final EntityDataAccessor<Boolean> IS_PLAYER_HOME = SynchedEntityData.defineId(HomeArea.class, EntityDataSerializers.BOOLEAN);
-    @Nullable public UUID residentUUID = null;
-    public long lastResidentSeenTick = 0L;
+    public static final EntityDataAccessor<Integer> ROOM_QUALITY = SynchedEntityData.defineId(HomeArea.class, EntityDataSerializers.INT);
 
-    // Capacity: exactly one worker per HomeArea
-    private static final long EVICTION_TIMEOUT_TICKS = 24000L * 3L; // 3 in-game days
+    @Nullable public UUID    residentUUID         = null;
+    public          long     lastResidentSeenTick = 0L;
+    @Nullable public BlockPos assignedBedPos      = null;
+
+    private static final long EVICTION_TIMEOUT_TICKS = 24000L * 3L;
+
+    private static final IntegerProperty MULTI_BLOCK_INDEX = IntegerProperty.create("multi_block_index", 0, 2);
 
     public Map<BlockPos, Container> foodContainerMap = new HashMap<>();
 
@@ -44,11 +49,14 @@ public class HomeArea extends AbstractWorkAreaEntity implements IPermissionArea{
         super(type, level);
     }
 
+    //////////////////////////////// LIFECYCLE //////////////////////////////////
+
     @Override
     protected void defineSynchedData() {
         super.defineSynchedData();
         this.entityData.define(RESIDENT_NAME, "");
         this.entityData.define(IS_PLAYER_HOME, false);
+        this.entityData.define(ROOM_QUALITY, 0);
     }
 
     @Override
@@ -60,6 +68,19 @@ public class HomeArea extends AbstractWorkAreaEntity implements IPermissionArea{
             long elapsed = this.getCommandSenderWorld().getGameTime() - lastResidentSeenTick;
             if (elapsed > EVICTION_TIMEOUT_TICKS) {
                 clearResident();
+                return;
+            }
+        }
+
+        if (assignedBedPos != null) {
+            BlockState state = this.getCommandSenderWorld().getBlockState(assignedBedPos);
+            if (state.isBed(this.getCommandSenderWorld(), assignedBedPos, null)) {
+                if (state.hasProperty(BlockStateProperties.OCCUPIED) && !state.getValue(BlockStateProperties.OCCUPIED)) {
+                    this.getCommandSenderWorld().setBlock(assignedBedPos, state.setValue(BlockStateProperties.OCCUPIED, true), 3);
+                }
+            }
+            else {
+                assignedBedPos = null;
             }
         }
     }
@@ -68,10 +89,19 @@ public class HomeArea extends AbstractWorkAreaEntity implements IPermissionArea{
     public void readAdditionalSaveData(CompoundTag tag) {
         super.readAdditionalSaveData(tag);
         if (tag.contains("residentUUID")) {
-            this.residentUUID = tag.getUUID("residentUUID");
+            this.residentUUID         = tag.getUUID("residentUUID");
             this.lastResidentSeenTick = tag.getLong("lastResidentSeen");
             this.setResidentName(tag.getString("residentName"));
             this.setPlayerHome(tag.getBoolean("isPlayerHome"));
+        }
+        if (tag.contains("assignedBedX")) {
+            this.assignedBedPos = new BlockPos(
+                    tag.getInt("assignedBedX"),
+                    tag.getInt("assignedBedY"),
+                    tag.getInt("assignedBedZ"));
+        }
+        if (tag.contains("roomQuality")) {
+            this.entityData.set(ROOM_QUALITY, tag.getInt("roomQuality"));
         }
     }
 
@@ -84,6 +114,12 @@ public class HomeArea extends AbstractWorkAreaEntity implements IPermissionArea{
             tag.putString("residentName", getResidentName());
             tag.putBoolean("isPlayerHome", isPlayerHome());
         }
+        if (assignedBedPos != null) {
+            tag.putInt("assignedBedX", assignedBedPos.getX());
+            tag.putInt("assignedBedY", assignedBedPos.getY());
+            tag.putInt("assignedBedZ", assignedBedPos.getZ());
+        }
+        tag.putInt("roomQuality", this.entityData.get(ROOM_QUALITY));
     }
 
     @Override
@@ -97,7 +133,7 @@ public class HomeArea extends AbstractWorkAreaEntity implements IPermissionArea{
         return new HomeAreaScreen(this, player);
     }
 
-    //////////////////////////////// RESIDENT ////////////////////////////////////
+    //////////////////////////////// RESIDENT ///////////////////////////////////
 
     public boolean isOccupied() {
         return residentUUID != null;
@@ -108,7 +144,7 @@ public class HomeArea extends AbstractWorkAreaEntity implements IPermissionArea{
     }
 
     public void setResident(UUID workerUUID, String workerName) {
-        this.residentUUID = workerUUID;
+        this.residentUUID         = workerUUID;
         this.lastResidentSeenTick = this.getCommandSenderWorld().getGameTime();
         this.setResidentName(workerName);
     }
@@ -118,94 +154,202 @@ public class HomeArea extends AbstractWorkAreaEntity implements IPermissionArea{
     }
 
     public void clearResident() {
-        this.residentUUID = null;
+        releaseBed();
+        this.residentUUID         = null;
         this.lastResidentSeenTick = 0L;
         this.setResidentName("");
     }
 
-    public String getResidentName() {
-        return this.entityData.get(RESIDENT_NAME);
-    }
+    public String  getResidentName()          { return this.entityData.get(RESIDENT_NAME); }
+    public void    setResidentName(String n)  { this.entityData.set(RESIDENT_NAME, n); }
+    public boolean isPlayerHome()             { return this.entityData.get(IS_PLAYER_HOME); }
+    public void    setPlayerHome(boolean b)   { this.entityData.set(IS_PLAYER_HOME, b); }
 
-    public void setResidentName(String name) {
-        this.entityData.set(RESIDENT_NAME, name);
-    }
+    //////////////////////////////// BED MANAGEMENT /////////////////////////////
 
-    public boolean isPlayerHome() {
-        return this.entityData.get(IS_PLAYER_HOME);
-    }
 
-    public void setPlayerHome(boolean b) {
-        this.entityData.set(IS_PLAYER_HOME, b);
-    }
-
-    //////////////////////////////// SCANNING ////////////////////////////////////
-
-    // Fantasy Furniture multi-block beds use this property; index 1 = the sleepable part
-    private static final IntegerProperty MULTI_BLOCK_INDEX = IntegerProperty.create("multi_block_index", 0, 2);
-
-    public Stack<BlockPos> getBedsStack(AbstractWorkerEntity worker) {
+    public void scanAndClaimBed(AbstractWorkerEntity worker) {
         if (area == null) this.area = getArea();
 
-        Stack<BlockPos> stack = new Stack<>();
+        if (assignedBedPos != null) {
+            BlockState state = this.getCommandSenderWorld().getBlockState(assignedBedPos);
+            if (state.isBed(this.getCommandSenderWorld(), assignedBedPos, worker)) {
+                ensureBedOccupied(assignedBedPos);
+                return;
+            }
+            assignedBedPos = null; // was destroyed
+        }
 
-        BlockPos.betweenClosedStream(area).forEach(pos -> {
+        for (BlockPos pos : BlockPos.betweenClosed(
+                BlockPos.containing(area.minX, area.minY, area.minZ),
+                BlockPos.containing(area.maxX - 1, area.maxY - 1, area.maxZ - 1))) {
+
             BlockState state = this.getCommandSenderWorld().getBlockState(pos);
+            if (!state.isBed(this.getCommandSenderWorld(), pos, worker)) continue;
 
-            if (!state.isBed(this.getCommandSenderWorld(), pos, worker)) return;
-            if (state.hasProperty(BlockStateProperties.OCCUPIED)
-                    && state.getValue(BlockStateProperties.OCCUPIED)) return;
-
-            // Fantasy Furniture multi-block beds
             try {
                 if (state.getValue(MULTI_BLOCK_INDEX) == 1) {
-                    stack.push(pos.immutable());
+                    assignedBedPos = pos.immutable();
+                    ensureBedOccupied(assignedBedPos);
                     return;
                 }
             } catch (IllegalArgumentException ignored) {}
 
-            // Vanilla beds — use the FOOT block so startSleeping() orients correctly
             if (state.hasProperty(BlockStateProperties.BED_PART)
                     && state.getValue(BlockStateProperties.BED_PART) == BedPart.HEAD) {
-                stack.push(pos.immutable());
+                assignedBedPos = pos.immutable();
+                ensureBedOccupied(assignedBedPos);
+                return;
             }
-        });
-
-        // Nearest bed first (pop returns last element, so sort descending)
-        stack.sort(Comparator.comparingDouble(pos -> worker.distanceToSqr(pos.getCenter())));
-        return stack;
+        }
     }
 
-    public void scanFoodContainers() {
+    private void ensureBedOccupied(BlockPos pos) {
+        BlockState state = this.getCommandSenderWorld().getBlockState(pos);
+        if (state.hasProperty(BlockStateProperties.OCCUPIED)
+                && !state.getValue(BlockStateProperties.OCCUPIED)) {
+            this.getCommandSenderWorld().setBlock(pos, state.setValue(BlockStateProperties.OCCUPIED, true), 3);
+        }
+    }
+
+    public void releaseBed() {
+        if (assignedBedPos == null) return;
+        BlockState state = this.getCommandSenderWorld().getBlockState(assignedBedPos);
+        if (state.isBed(this.getCommandSenderWorld(), assignedBedPos, null)
+                && state.hasProperty(BlockStateProperties.OCCUPIED)) {
+            this.getCommandSenderWorld().setBlock(
+                    assignedBedPos, state.setValue(BlockStateProperties.OCCUPIED, false), 3);
+        }
+        assignedBedPos = null;
+    }
+
+    //////////////////////////////// ROOM QUALITY SCAN //////////////////////////
+
+    /**
+     * Scans the area once when a worker arrives home.
+     * Result is stored in the ROOM_QUALITY bitmask and synced to the client
+     * for display in the HomeAreaScreen.
+     *
+     * bit 0 = enclosed walls/roof
+     * bit 1 = door present
+     * bit 2 = light source present
+     * bit 3 = bed present
+     * bit 4 = chest present
+     */
+    public BlockPos chestPos;
+    private int quality;
+
+    public void scanRoomQuality() {
         if (area == null) this.area = getArea();
-        foodContainerMap.clear();
 
-        BlockPos.betweenClosedStream(area).forEach(pos -> {
-            Container container = getContainer(pos);
-            if (container != null && !foodContainerMap.containsValue(container) && containerHasFood(container)) {
-                foodContainerMap.put(pos.immutable(), container);
+        // int[] wrapper so the value is mutable inside the lambda
+        int[] quality = {0};
+
+        if (checkEnclosed()) quality[0] |= 1;
+
+        BlockPos.betweenClosedStream(area.inflate(1)).forEach(pos -> {
+            BlockPos immutable = pos.immutable();
+            BlockState state   = level().getBlockState(immutable);
+            Block      block   = state.getBlock();
+
+            if (block instanceof DoorBlock) {
+                quality[0] |= 2;
+            }
+
+            Container container = getContainer(immutable);
+            if (container != null) {
+                chestPos     = immutable;
+                quality[0]  |= 8;
+            }
+
+            boolean isBed = block instanceof BedBlock || state.isBed(level(), immutable, null);
+            if (!isBed) {
+                try { isBed = state.getValue(MULTI_BLOCK_INDEX) == 1; }
+                catch (IllegalArgumentException ignored) {}
+            }
+            if (isBed) {
+                assignedBedPos = immutable;
+                ensureBedOccupied(assignedBedPos);
+                quality[0] |= 16;
+            }
+
+            if (level().getBrightness(LightLayer.BLOCK, immutable) > 0) {
+                quality[0] |= 4;
             }
         });
+
+        this.entityData.set(ROOM_QUALITY, quality[0]);
     }
 
-    private boolean containerHasFood(Container container) {
-        for (int i = 0; i < container.getContainerSize(); i++) {
-            ItemStack stack = container.getItem(i);
-            if (!stack.isEmpty() && stack.isEdible()) return true;
-        }
-        return false;
-    }
+    public boolean hasWalls()  { return (entityData.get(ROOM_QUALITY) & 1) != 0; }
+    public boolean hasDoor()   { return (entityData.get(ROOM_QUALITY) & 2) != 0; }
+    public boolean hasLight()  { return (entityData.get(ROOM_QUALITY) & 4) != 0; }
+    public boolean hasBed() { return (entityData.get(ROOM_QUALITY) & 16) != 0; }
+    public boolean hasChest() { return (entityData.get(ROOM_QUALITY) & 8) != 0; }
+    public int getQualityScore() { return Integer.bitCount(entityData.get(ROOM_QUALITY)); }
+    public boolean canMoveIn() { return hasWalls() && hasDoor() && hasLight() && hasBed() && hasChest(); }
 
-    private Container getContainer(BlockPos pos) {
-        BlockEntity entity = this.getCommandSenderWorld().getBlockEntity(pos);
-        BlockState blockState = this.getCommandSenderWorld().getBlockState(pos);
 
-        if (blockState.getBlock() instanceof ChestBlock chestBlock) {
-            return ChestBlock.getContainer(chestBlock, blockState, this.getCommandSenderWorld(), pos, false);
+    private boolean checkEnclosed() {
+        if (area == null) this.area = getArea();
+        Level level = getCommandSenderWorld();
+
+        // Search space — 2 blocks larger than the interior on every side
+        AABB searchAABB = area.inflate(4);
+        BlockPos searchMin = BlockPos.containing(searchAABB.minX, searchAABB.minY, searchAABB.minZ);
+        BlockPos searchMax = BlockPos.containing(searchAABB.maxX - 1, searchAABB.maxY - 1, searchAABB.maxZ - 1);
+
+        // Interior bounds (the actual room — blocks the BFS must not reach)
+        BlockPos intMin = BlockPos.containing(area.minX, area.minY, area.minZ);
+        BlockPos intMax = BlockPos.containing(area.maxX - 1, area.maxY - 1, area.maxZ - 1);
+
+        // BFS — seed from every air block on the search-box boundary
+        Set<BlockPos> visited = new HashSet<>();
+        Queue<BlockPos> queue   = new ArrayDeque<>();
+
+        for (int x = searchMin.getX(); x <= searchMax.getX(); x++) {
+            for (int y = searchMin.getY(); y <= searchMax.getY(); y++) {
+                for (int z = searchMin.getZ(); z <= searchMax.getZ(); z++) {
+                    boolean onBoundary =
+                            x == searchMin.getX() || x == searchMax.getX() ||
+                                    y == searchMin.getY() || y == searchMax.getY() ||
+                                    z == searchMin.getZ() || z == searchMax.getZ();
+                    if (!onBoundary) continue;
+
+                    BlockPos pos = new BlockPos(x, y, z);
+                    if (level.getBlockState(pos).isAir() && visited.add(pos)) {
+                        queue.add(pos);
+                    }
+                }
+            }
         }
-        else if (entity instanceof Container containerEntity) {
-            return containerEntity;
+
+        while (!queue.isEmpty()) {
+            BlockPos cur = queue.poll();
+
+            for (Direction dir : Direction.values()) {
+                BlockPos nb = cur.relative(dir);
+
+                // Stay inside the search box
+                if (nb.getX() < searchMin.getX() || nb.getX() > searchMax.getX() ||
+                        nb.getY() < searchMin.getY() || nb.getY() > searchMax.getY() ||
+                        nb.getZ() < searchMin.getZ() || nb.getZ() > searchMax.getZ()) continue;
+
+                if (!visited.add(nb)) continue;
+                if (!level.getBlockState(nb).isAir()) continue; // barrier — stop here
+
+                // Outside air has reached the interior → room has a gap
+                if (nb.getX() >= intMin.getX() && nb.getX() <= intMax.getX() &&
+                        nb.getY() >= intMin.getY() && nb.getY() <= intMax.getY() &&
+                        nb.getZ() >= intMin.getZ() && nb.getZ() <= intMax.getZ()) {
+                    return false;
+                }
+
+                queue.add(nb);
+            }
         }
-        return null;
+
+        // Outside air could not reach the interior — room is enclosed
+        return true;
     }
 }

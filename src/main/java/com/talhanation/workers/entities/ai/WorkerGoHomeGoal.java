@@ -9,14 +9,11 @@ import net.minecraft.world.entity.ai.goal.Goal;
 import net.minecraft.world.entity.ai.navigation.PathNavigation;
 import net.minecraft.world.food.FoodProperties;
 import net.minecraft.world.item.ItemStack;
-import net.minecraft.world.level.block.state.BlockState;
-import net.minecraft.world.level.block.state.properties.BlockStateProperties;
 
 import javax.annotation.Nullable;
 import java.util.EnumSet;
 import java.util.List;
 import java.util.Map;
-import java.util.Stack;
 import java.util.UUID;
 
 public class WorkerGoHomeGoal extends Goal {
@@ -25,10 +22,6 @@ public class WorkerGoHomeGoal extends Goal {
     public State state;
     public int cooldown;
     public int sleepTick;
-
-    // Bed navigation — mirrors how RestGoal works
-    private Stack<BlockPos> bedStack = new Stack<>();
-    @Nullable private BlockPos sleepPos;
 
     public WorkerGoHomeGoal(AbstractWorkerEntity worker) {
         this.worker = worker;
@@ -54,8 +47,6 @@ public class WorkerGoHomeGoal extends Goal {
     public void start() {
         super.start();
         worker.setFollowState(6);
-        bedStack.clear();
-        sleepPos = null;
         setState(State.SELECT_HOME_AREA);
     }
 
@@ -65,8 +56,6 @@ public class WorkerGoHomeGoal extends Goal {
         worker.stopSleeping();
         worker.clearSleepingPos();
         worker.getNavigation().stop();
-        bedStack.clear();
-        sleepPos = null;
         sleepTick = 0;
     }
 
@@ -76,7 +65,6 @@ public class WorkerGoHomeGoal extends Goal {
         if (worker.getCommandSenderWorld().isClientSide()) return;
         if (state == null) return;
 
-        // While sleeping, run every tick for smooth healing — no throttle
         if (state == State.SLEEP) {
             tickSleep();
             return;
@@ -87,10 +75,7 @@ public class WorkerGoHomeGoal extends Goal {
         switch (state) {
             case SELECT_HOME_AREA -> tickSelectHome();
             case MOVE_TO_HOME    -> tickMoveToHome();
-            case EAT_FOOD        -> tickEatFood();
-            case FIND_BED        -> tickFindBed();
             case GO_TO_BED       -> tickGoToBed();
-            case SLEEP_IN_PLACE  -> tickSleepInPlace();
         }
     }
 
@@ -106,9 +91,6 @@ public class WorkerGoHomeGoal extends Goal {
             claimHomeArea(found);
             setState(State.MOVE_TO_HOME);
         }
-        else {
-            setState(State.SLEEP_IN_PLACE);
-        }
     }
 
     private void tickMoveToHome() {
@@ -122,72 +104,27 @@ public class WorkerGoHomeGoal extends Goal {
 
         if (moveToPosition(home.getOnPos(), 20)) return;
 
-        setState(State.EAT_FOOD);
-    }
-
-    private void tickEatFood() {
-        HomeArea home = resolveCurrentHome((ServerLevel) worker.getCommandSenderWorld());
-
-        if (home == null) {
-            setState(State.SLEEP_IN_PLACE);
-            return;
-        }
-
-        if (worker.getHealth() < worker.getMaxHealth()) {
-            tryEatFromHomeArea(home);
-        }
-
-        home.updateResidentSeen();
-        setState(State.FIND_BED);
-    }
-
-    private void tickFindBed() {
-        HomeArea home = resolveCurrentHome((ServerLevel) worker.getCommandSenderWorld());
-
-        if (home == null) {
-            setState(State.SLEEP_IN_PLACE);
-            return;
-        }
-
-        bedStack = home.getBedsStack(worker);
-
-        if (bedStack.isEmpty()) {
-            setState(State.SLEEP_IN_PLACE);
-        }
-        else {
-            sleepPos = bedStack.pop();
+        if (home.assignedBedPos != null) {
             setState(State.GO_TO_BED);
         }
     }
 
     private void tickGoToBed() {
-        if (sleepPos == null) {
-            setState(State.FIND_BED);
+        HomeArea home = resolveCurrentHome((ServerLevel) worker.getCommandSenderWorld());
+
+        BlockPos bedPos = home.assignedBedPos;
+        if (!worker.getCommandSenderWorld().getBlockState(bedPos)
+                .isBed(worker.getCommandSenderWorld(), bedPos, worker)) {
+            home.assignedBedPos = null;
             return;
         }
 
-        BlockState bedState = worker.getCommandSenderWorld().getBlockState(sleepPos);
-
-        // Bed gone or was taken by another entity since we last checked → try next
-        if (!bedState.isBed(worker.getCommandSenderWorld(), sleepPos, worker)
-                || (bedState.hasProperty(BlockStateProperties.OCCUPIED)
-                && bedState.getValue(BlockStateProperties.OCCUPIED))) {
-            if (!bedStack.isEmpty()) {
-                sleepPos = bedStack.pop();
-            }
-            else {
-                setState(State.SLEEP_IN_PLACE);
-            }
-            return;
-        }
-
-        goToBed(sleepPos);
+        goToBed(bedPos);
     }
 
     private void tickSleep() {
         if (!worker.isSleeping()) {
-            // Woken up unexpectedly (e.g. explosion) → find another bed
-            setState(State.FIND_BED);
+            setState(State.GO_TO_BED);
             return;
         }
 
@@ -203,22 +140,8 @@ public class WorkerGoHomeGoal extends Goal {
         }
     }
 
-    private void tickSleepInPlace() {
-        worker.getNavigation().stop();
-
-        if (++sleepTick % 200 == 0 && worker.getHealth() < worker.getMaxHealth()) {
-            worker.heal(0.5F);
-        }
-    }
-
     //////////////////////////////// BED NAVIGATION /////////////////////////////
 
-    /**
-     * Mirrors RestGoal.goToBed():
-     * Navigate to the bed FOOT block and call startSleeping() once in range.
-     * startSleeping() sets Pose.SLEEPING and marks OCCUPIED=true on the bed
-     * block — preventing villagers from claiming it while the worker rests.
-     */
     private void goToBed(BlockPos bedPos) {
         PathNavigation nav = worker.getNavigation();
         nav.moveTo(bedPos.getX(), bedPos.getY(), bedPos.getZ(), 1.0D);
@@ -243,33 +166,36 @@ public class WorkerGoHomeGoal extends Goal {
 
     @Nullable
     private HomeArea findAssignedOrNearestFreeHomeArea(ServerLevel level) {
-        // 1. Reconnect to the assigned home first (persists across restarts)
         if (worker.homeAreaUUID != null) {
-            HomeArea assigned = findHomeAreaByUUID(level, worker.homeAreaUUID);
-            if (assigned != null && !assigned.isRemoved()) {
-                if (assigned.isResidentOf(worker.getUUID()) || !assigned.isOccupied()) {
-                    return assigned;
+            HomeArea homeArea = findHomeAreaByUUID(level, worker.homeAreaUUID);
+            if (homeArea != null && !homeArea.isRemoved()) {
+                if (homeArea.isResidentOf(worker.getUUID()) || !homeArea.isPlayerHome()) {
+                    return homeArea;
                 }
             }
             worker.homeAreaUUID = null;
         }
 
-        // 2. Find nearest free HomeArea this worker is allowed to use
         List<HomeArea> areas = level.getEntitiesOfClass(
                 HomeArea.class, worker.getBoundingBox().inflate(128));
 
-        HomeArea nearest = null;
-        double nearestDist = Double.MAX_VALUE;
+        HomeArea nearest     = null;
+        double   nearestDist = Double.MAX_VALUE;
 
-        for (HomeArea area : areas) {
-            if (area.isRemoved()) continue;
-            if (area.isOccupied()) continue;
-            if (!area.canWorkHere(worker)) continue;
+        for (HomeArea homeArea : areas) {
+            if (homeArea.isRemoved()) continue;
+            if (homeArea.isOccupied()) continue;
+            if (homeArea.isPlayerHome()) continue;
+            if (!homeArea.canWorkHere(worker)) continue;
 
-            double dist = worker.distanceToSqr(area.position());
+            homeArea.scanRoomQuality();
+
+            if (!homeArea.canMoveIn()) continue;
+
+            double dist = worker.distanceToSqr(homeArea.position());
             if (dist < nearestDist) {
                 nearestDist = dist;
-                nearest = area;
+                nearest     = homeArea;
             }
         }
         return nearest;
@@ -303,31 +229,6 @@ public class WorkerGoHomeGoal extends Goal {
         worker.homeAreaUUID = area.getUUID();
     }
 
-    //////////////////////////////// EATING /////////////////////////////////////
-
-    private void tryEatFromHomeArea(HomeArea homeArea) {
-        homeArea.scanFoodContainers();
-
-        Map<BlockPos, Container> containers = homeArea.foodContainerMap;
-
-        for (Container container : containers.values()) {
-            for (int i = 0; i < container.getContainerSize(); i++) {
-                ItemStack stack = container.getItem(i);
-
-                if (stack.isEmpty() || !stack.isEdible()) continue;
-
-                FoodProperties food = stack.getFoodProperties(worker);
-                if (food == null) continue;
-
-                worker.heal(food.getNutrition());
-                stack.shrink(1);
-                container.setItem(i, stack);
-                container.setChanged();
-                return;
-            }
-        }
-    }
-
     //////////////////////////////// MOVEMENT ///////////////////////////////////
 
     public boolean moveToPosition(BlockPos pos, int threshold) {
@@ -353,10 +254,7 @@ public class WorkerGoHomeGoal extends Goal {
     public enum State {
         SELECT_HOME_AREA,
         MOVE_TO_HOME,
-        EAT_FOOD,
-        FIND_BED,
         GO_TO_BED,
         SLEEP,
-        SLEEP_IN_PLACE
     }
 }
