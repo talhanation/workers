@@ -5,6 +5,7 @@ import com.talhanation.recruits.config.RecruitsClientConfig;
 import com.talhanation.recruits.entities.AbstractChunkLoaderEntity;
 import com.talhanation.workers.entities.ai.DepositItemsToStorage;
 import com.talhanation.workers.entities.ai.GetNeededItemsFromStorage;
+import com.talhanation.workers.entities.ai.WorkerFleeGoal;
 import com.talhanation.workers.entities.ai.WorkerGoHomeGoal;
 import com.talhanation.workers.entities.workarea.AbstractWorkAreaEntity;
 import com.talhanation.workers.entities.workarea.HomeArea;
@@ -50,6 +51,10 @@ public abstract class AbstractWorkerEntity extends AbstractChunkLoaderEntity {
     @Nullable public UUID homeAreaUUID = null;
     private boolean moraleNightChecked = false;
 
+    /** Set by WorkerClaimEvents when a siege is won — makes WorkerFleeGoal active. */
+    public boolean isFleeing = false;
+    @Nullable public BlockPos fleeTarget = null;
+
     public AbstractWorkerEntity(EntityType<? extends AbstractWorkerEntity> entityType, Level world) {
         super(entityType, world);
     }
@@ -60,6 +65,7 @@ public abstract class AbstractWorkerEntity extends AbstractChunkLoaderEntity {
     @Override
     protected void registerGoals() {
         super.registerGoals();
+        this.goalSelector.addGoal(0, new WorkerFleeGoal(this));
         this.goalSelector.addGoal(0, new DepositItemsToStorage(this));
         this.goalSelector.addGoal(0, new GetNeededItemsFromStorage(this));
         this.goalSelector.addGoal(1, new WorkerGoHomeGoal(this));
@@ -461,6 +467,17 @@ public abstract class AbstractWorkerEntity extends AbstractChunkLoaderEntity {
                     .ifPresent(a -> a.clearResident());
         }
         homeAreaUUID = null;
+    }
+
+    public void startFleeing(BlockPos target) {
+        this.isFleeing  = true;
+        this.fleeTarget = target;
+        this.setFollowState(6);
+    }
+
+    public void stopFleeing() {
+        this.isFleeing  = false;
+        this.fleeTarget = null;
     }
 
     private void tickMorale() {

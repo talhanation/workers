@@ -96,6 +96,7 @@ public class WorkersMain {
     private void setup(final FMLCommonSetupEvent event) {
         MinecraftForge.EVENT_BUS.register(new VillagerEvents());
         MinecraftForge.EVENT_BUS.register(new CommandEvents());
+        MinecraftForge.EVENT_BUS.register(new WorkerClaimEvents());
         MinecraftForge.EVENT_BUS.register(this);
         MinecraftForge.EVENT_BUS.register(new UpdateChecker());
 
