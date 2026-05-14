@@ -46,6 +46,7 @@ public abstract class WorkAreaScreen extends RecruitsScreenBase {
     public SelectedPlayerWidget selectedPlayerWidget;
     public RecruitsPlayerInfo playerInfo;
     public RecruitsCheckBox teamAccessCheckBox;
+    public Button selectedPlayerButton;
     public boolean teamAccess;
 
     protected WorkAreaScreen(Component title, AbstractWorkAreaEntity workArea, Player player) {
@@ -151,17 +152,40 @@ public abstract class WorkAreaScreen extends RecruitsScreenBase {
                 this.onAreaMoved();
             }
         ));
-        //OWNER STUFF
-        if(playerInfo != null){
-            this.selectedPlayerWidget = new SelectedPlayerWidget(font, x + 80, y - 50, 120, 20, Component.literal("x"), // Button label
+
+
+        this.selectedPlayerButton = new ExtendedButton(x + 80, y - 50 , 120, 20, SelectPlayerScreen.TITLE,
+            button -> {
+                minecraft.setScreen(new SelectPlayerScreen(this, player, SelectPlayerScreen.TITLE, SelectPlayerScreen.BUTTON_SELECT, SelectPlayerScreen.BUTTON_SELECT_TOOLTIP, false, PlayersList.FilterType.NONE,
+                    (playerInfo) -> {
+                        this.playerInfo = playerInfo;
+                        WorkersMain.SIMPLE_CHANNEL.sendToServer(new MessageUpdateOwner(this.workArea.getUUID(), playerInfo));
+                        this.workArea.setPlayerName(playerInfo.getName());
+                        this.workArea.setPlayerUUID(playerInfo.getUUID());
+                        minecraft.setScreen(this);
+                        this.onClose();
+                    }
+                ));
+            }
+        );
+        addRenderableWidget(this.selectedPlayerButton);
+
+        this.selectedPlayerWidget = new SelectedPlayerWidget(font, x + 80, y - 50, 120, 20, Component.literal("x"), // Button label
                 () -> {
                     playerInfo = null;
                     this.selectedPlayerWidget.setPlayer(null, null);
+                    this.selectedPlayerWidget.visible = false;
+                    this.selectedPlayerButton.visible = true;
                 }
-            );
+        );
 
-            this.selectedPlayerWidget.setPlayer(playerInfo.getUUID(), playerInfo.getName());
-            addRenderableWidget(this.selectedPlayerWidget);
+        this.selectedPlayerWidget.setPlayer(playerInfo.getUUID(), playerInfo.getName());
+        addRenderableWidget(this.selectedPlayerWidget);
+
+        //OWNER STUFF
+        if(playerInfo != null){
+            this.selectedPlayerWidget.visible = true;
+            this.selectedPlayerButton.visible = false;
 
             this.teamAccessCheckBox = new RecruitsCheckBox(x + 80, y - 30, 120, 20, TEXT_TEAM_ACCESS, teamAccess,
                 b ->{
@@ -173,20 +197,8 @@ public abstract class WorkAreaScreen extends RecruitsScreenBase {
             addRenderableWidget(this.teamAccessCheckBox);
         }
         else {
-            Button selectPlayerButton = addRenderableWidget(new ExtendedButton(x + 80, y - 50 , 120, 20, SelectPlayerScreen.TITLE,
-                button -> {
-                    minecraft.setScreen(new SelectPlayerScreen(this, player, SelectPlayerScreen.TITLE, SelectPlayerScreen.BUTTON_SELECT, SelectPlayerScreen.BUTTON_SELECT_TOOLTIP, false, PlayersList.FilterType.NONE,
-                            (playerInfo) -> {
-                                this.playerInfo = playerInfo;
-                                WorkersMain.SIMPLE_CHANNEL.sendToServer(new MessageUpdateOwner(this.workArea.getUUID(), playerInfo));
-                                this.workArea.setPlayerName(playerInfo.getName());
-                                this.workArea.setPlayerUUID(playerInfo.getUUID());
-                                minecraft.setScreen(this);
-                                this.onClose();
-                            }
-                    ));
-                }
-            ));
+            this.selectedPlayerWidget.visible = false;
+            this.selectedPlayerButton.visible = true;
         }
     }
 
