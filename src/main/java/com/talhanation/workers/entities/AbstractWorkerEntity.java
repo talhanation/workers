@@ -3,10 +3,7 @@ package com.talhanation.workers.entities;
 import com.google.common.collect.ImmutableSet;
 import com.talhanation.recruits.config.RecruitsClientConfig;
 import com.talhanation.recruits.entities.AbstractChunkLoaderEntity;
-import com.talhanation.workers.entities.ai.DepositItemsToStorage;
-import com.talhanation.workers.entities.ai.GetNeededItemsFromStorage;
-import com.talhanation.workers.entities.ai.WorkerFleeGoal;
-import com.talhanation.workers.entities.ai.WorkerGoHomeGoal;
+import com.talhanation.workers.entities.ai.*;
 import com.talhanation.workers.entities.workarea.AbstractWorkAreaEntity;
 import com.talhanation.workers.entities.workarea.HomeArea;
 import com.talhanation.workers.world.NeededItem;
@@ -65,9 +62,11 @@ public abstract class AbstractWorkerEntity extends AbstractChunkLoaderEntity {
     @Override
     protected void registerGoals() {
         super.registerGoals();
+
+        this.goalSelector.addGoal(0, new WorkerTakeCoverGoal(this));
         this.goalSelector.addGoal(0, new WorkerFleeGoal(this));
-        this.goalSelector.addGoal(0, new DepositItemsToStorage(this));
-        this.goalSelector.addGoal(0, new GetNeededItemsFromStorage(this));
+        this.goalSelector.addGoal(2, new DepositItemsToStorage(this));
+        this.goalSelector.addGoal(2, new GetNeededItemsFromStorage(this));
         this.goalSelector.addGoal(1, new WorkerGoHomeGoal(this));
 
         this.goalSelector.removeGoal(new MoveTowardsTargetGoal(this, 0.9D, 32.0F));
