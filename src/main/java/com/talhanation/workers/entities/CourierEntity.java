@@ -295,7 +295,7 @@ public class CourierEntity extends AbstractWorkerEntity implements IVillagerWork
     @Override
     public InteractionResult mobInteract(@NotNull Player player, @NotNull InteractionHand hand) {
         if (this.getCommandSenderWorld().isClientSide()) return InteractionResult.SUCCESS;
-        if (!player.isCrouching()) {
+        if (!player.isCrouching() && this.getIsOwned() && player.getUUID().equals(this.getOwnerUUID())) {
             openSpecialGUI((ServerPlayer) player);
             return InteractionResult.SUCCESS;
         }
