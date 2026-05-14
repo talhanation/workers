@@ -28,11 +28,11 @@ import java.util.Map;
 
 public class KitchenArea extends AbstractWorkAreaEntity implements IPermissionArea {
 
-    public static final EntityDataAccessor<Boolean> SELL_TO_VILLAGERS = SynchedEntityData.defineId(KitchenArea.class, EntityDataSerializers.BOOLEAN);
+    public static final EntityDataAccessor<Boolean> FEED_VILLAGERS = SynchedEntityData.defineId(KitchenArea.class, EntityDataSerializers.BOOLEAN);
     public static final EntityDataAccessor<Integer> FURNACE_COUNT     = SynchedEntityData.defineId(KitchenArea.class, EntityDataSerializers.INT);
     public static final EntityDataAccessor<Integer> CONTAINER_COUNT   = SynchedEntityData.defineId(KitchenArea.class, EntityDataSerializers.INT);
 
-    public Map<BlockPos, AbstractFurnaceBlockEntity> furnaceMap  = new HashMap<>();
+    public Map<BlockPos, AbstractFurnaceBlockEntity> furnaceMap   = new HashMap<>();
     public Map<BlockPos, Container>                  containerMap = new HashMap<>();
 
     public KitchenArea(EntityType<?> type, Level level) {
@@ -42,7 +42,7 @@ public class KitchenArea extends AbstractWorkAreaEntity implements IPermissionAr
     @Override
     protected void defineSynchedData() {
         super.defineSynchedData();
-        this.entityData.define(SELL_TO_VILLAGERS, true);
+        this.entityData.define(FEED_VILLAGERS, true);
         this.entityData.define(FURNACE_COUNT, 0);
         this.entityData.define(CONTAINER_COUNT, 0);
     }
@@ -50,14 +50,14 @@ public class KitchenArea extends AbstractWorkAreaEntity implements IPermissionAr
     @Override
     public void readAdditionalSaveData(CompoundTag tag) {
         super.readAdditionalSaveData(tag);
-        this.setSellToVillagers(tag.getBoolean("sellToVillagers"));
+        this.setFeedVillagers(tag.getBoolean("feedVillagers"));
         setBeingWorkedOn(false);
     }
 
     @Override
     public void addAdditionalSaveData(CompoundTag tag) {
         super.addAdditionalSaveData(tag);
-        tag.putBoolean("sellToVillagers", this.isSellToVillagers());
+        tag.putBoolean("sellToVillagers", this.getFeedVillagers());
     }
 
     @Override
@@ -74,15 +74,17 @@ public class KitchenArea extends AbstractWorkAreaEntity implements IPermissionAr
     // ── Scanning ──────────────────────────────────────────────────────────────
 
     public void scanArea() {
+        if (this.getCommandSenderWorld().isClientSide()) return;
         if (area == null) area = this.getArea();
+
         furnaceMap.clear();
         containerMap.clear();
 
         BlockPos.betweenClosedStream(area).forEach(pos -> {
             BlockEntity be = this.getCommandSenderWorld().getBlockEntity(pos);
-            BlockState bs  = this.getCommandSenderWorld().getBlockState(pos);
+            BlockState  bs = this.getCommandSenderWorld().getBlockState(pos);
 
-            if (be instanceof AbstractFurnaceBlockEntity furnace) {
+            if (be instanceof AbstractFurnaceBlockEntity furnace && !furnace.isRemoved()) {
                 furnaceMap.put(pos.immutable(), furnace);
             }
             else if (bs.getBlock() instanceof ChestBlock chestBlock) {
@@ -91,7 +93,7 @@ public class KitchenArea extends AbstractWorkAreaEntity implements IPermissionAr
                     containerMap.put(pos.immutable(), chest);
                 }
             }
-            else if (be instanceof Container container) {
+            else if (be instanceof Container container && !be.isRemoved()) {
                 if (!containerMap.containsValue(container)) {
                     containerMap.put(pos.immutable(), container);
                 }
@@ -127,14 +129,17 @@ public class KitchenArea extends AbstractWorkAreaEntity implements IPermissionAr
         if (containerMap.isEmpty()) scanArea();
         int toShrink = count;
         for (Container container : containerMap.values()) {
+            boolean changed = false;
             for (int i = 0; i < container.getContainerSize() && toShrink > 0; i++) {
                 ItemStack slot = container.getItem(i);
                 if (!slot.isEmpty() && ItemStack.isSameItemSameTags(slot, stack)) {
                     int take = Math.min(toShrink, slot.getCount());
                     slot.shrink(take);
                     toShrink -= take;
+                    changed   = true;
                 }
             }
+            if (changed) container.setChanged();
         }
         return toShrink <= 0;
     }
@@ -144,6 +149,7 @@ public class KitchenArea extends AbstractWorkAreaEntity implements IPermissionAr
         int remaining = count;
         for (Container container : containerMap.values()) {
             if (remaining <= 0) break;
+            boolean changed = false;
             for (int i = 0; i < container.getContainerSize() && remaining > 0; i++) {
                 ItemStack slot = container.getItem(i);
                 if (slot.isEmpty()) {
@@ -152,13 +158,16 @@ public class KitchenArea extends AbstractWorkAreaEntity implements IPermissionAr
                     newStack.setCount(put);
                     container.setItem(i, newStack);
                     remaining -= put;
+                    changed    = true;
                 }
                 else if (ItemStack.isSameItemSameTags(slot, stack) && slot.getCount() < slot.getMaxStackSize()) {
                     int put = Math.min(remaining, slot.getMaxStackSize() - slot.getCount());
                     slot.grow(put);
                     remaining -= put;
+                    changed    = true;
                 }
             }
+            if (changed) container.setChanged();
         }
         return remaining <= 0;
     }
@@ -178,7 +187,7 @@ public class KitchenArea extends AbstractWorkAreaEntity implements IPermissionAr
     // ── Furnace helpers ───────────────────────────────────────────────────────
 
     public int countFurnaceOutput(ItemStack stack) {
-        if (furnaceMap.isEmpty()) scanArea();
+        pruneRemovedFurnaces();
         int total = 0;
         for (AbstractFurnaceBlockEntity furnace : furnaceMap.values()) {
             ItemStack output = furnace.getItem(2);
@@ -187,6 +196,21 @@ public class KitchenArea extends AbstractWorkAreaEntity implements IPermissionAr
             }
         }
         return total;
+    }
+
+    /** Removes stale furnace entries whose BlockEntity has been removed from the world. */
+    public void pruneRemovedFurnaces() {
+        boolean dirty = furnaceMap.values().removeIf(AbstractFurnaceBlockEntity::isRemoved);
+        if (dirty) setFurnaceCount(furnaceMap.size());
+    }
+
+    /** Removes stale container entries whose BlockEntity has been removed from the world. */
+    public void pruneRemovedContainers() {
+        boolean dirty = containerMap.entrySet().removeIf(e -> {
+            if (e.getValue() instanceof BlockEntity be) return be.isRemoved();
+            return false;
+        });
+        if (dirty) setContainerCount(containerMap.size());
     }
 
     // ── canWorkHere ───────────────────────────────────────────────────────────
@@ -201,12 +225,12 @@ public class KitchenArea extends AbstractWorkAreaEntity implements IPermissionAr
 
     // ── Synced data ───────────────────────────────────────────────────────────
 
-    public boolean isSellToVillagers()   { return this.entityData.get(SELL_TO_VILLAGERS); }
-    public void setSellToVillagers(boolean b) { this.entityData.set(SELL_TO_VILLAGERS, b); }
+    public boolean getFeedVillagers()        { return this.entityData.get(FEED_VILLAGERS); }
+    public void setFeedVillagers(boolean b) { this.entityData.set(FEED_VILLAGERS, b); }
 
-    public int getFurnaceCount()         { return this.entityData.get(FURNACE_COUNT); }
-    public void setFurnaceCount(int x)   { this.entityData.set(FURNACE_COUNT, x); }
+    public int getFurnaceCount()              { return this.entityData.get(FURNACE_COUNT); }
+    public void setFurnaceCount(int x)        { this.entityData.set(FURNACE_COUNT, x); }
 
-    public int getContainerCount()       { return this.entityData.get(CONTAINER_COUNT); }
-    public void setContainerCount(int x) { this.entityData.set(CONTAINER_COUNT, x); }
+    public int getContainerCount()            { return this.entityData.get(CONTAINER_COUNT); }
+    public void setContainerCount(int x)      { this.entityData.set(CONTAINER_COUNT, x); }
 }

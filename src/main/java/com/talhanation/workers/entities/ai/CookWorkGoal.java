@@ -5,6 +5,7 @@ import com.talhanation.workers.entities.workarea.KitchenArea;
 import com.talhanation.workers.world.VillagerInviteRegistry;
 import net.minecraft.core.BlockPos;
 import net.minecraft.server.level.ServerLevel;
+import net.minecraft.world.SimpleContainer;
 import net.minecraft.world.entity.ai.goal.Goal;
 import net.minecraft.world.entity.npc.Villager;
 import net.minecraft.world.item.ItemStack;
@@ -130,7 +131,6 @@ public class CookWorkGoal extends Goal {
 
     private void tickWorking(ServerLevel level) {
         cook.getNavigation().stop();
-        cook.setFollowState(6);
 
         // ── Periodically check and unload furnaces ────────────────────────────
         if (++furnaceCheckCooldown >= FURNACE_CHECK_INTERVAL) {
@@ -145,7 +145,7 @@ public class CookWorkGoal extends Goal {
         }
 
         // ── Villager trading ──────────────────────────────────────────────────
-        if (cook.currentKitchenArea.isSellToVillagers()) {
+        if (cook.currentKitchenArea.getFeedVillagers()) {
             tickVillagerTrading(level);
         }
     }
@@ -155,16 +155,20 @@ public class CookWorkGoal extends Goal {
     private void tickFurnaces() {
         KitchenArea area = cook.currentKitchenArea;
         if (area == null) return;
+
+        area.pruneRemovedFurnaces();
         if (area.furnaceMap.isEmpty()) area.scanArea();
 
         for (AbstractFurnaceBlockEntity furnace : area.furnaceMap.values()) {
+            if (furnace.isRemoved()) continue;
+
             ItemStack output = furnace.getItem(2);
             if (output.isEmpty()) continue;
 
-            // Deposit output into kitchen containers
             boolean deposited = area.depositItemToContainers(output, output.getCount());
             if (deposited) {
                 furnace.setItem(2, ItemStack.EMPTY);
+                furnace.setChanged();
             }
         }
     }
@@ -172,31 +176,29 @@ public class CookWorkGoal extends Goal {
     private void tickLoadFurnaces(ServerLevel level) {
         KitchenArea area = cook.currentKitchenArea;
         if (area == null) return;
+
+        area.pruneRemovedFurnaces();
+        area.pruneRemovedContainers();
         if (area.furnaceMap.isEmpty() || area.containerMap.isEmpty()) area.scanArea();
 
         for (AbstractFurnaceBlockEntity furnace : area.furnaceMap.values()) {
+            if (furnace.isRemoved()) continue;
+
             ItemStack inputSlot = furnace.getItem(0);
             ItemStack fuelSlot  = furnace.getItem(1);
 
-            // Load fuel if missing
-            if (fuelSlot.isEmpty()) {
-                loadFuel(area, furnace);
-            }
-
-            // Load ingredient if input is empty
-            if (inputSlot.isEmpty()) {
-                loadIngredient(area, furnace, level);
-            }
+            if (fuelSlot.isEmpty()) loadFuel(area, furnace);
+            if (inputSlot.isEmpty()) loadIngredient(area, furnace, level);
         }
     }
 
     private void loadFuel(KitchenArea area, AbstractFurnaceBlockEntity furnace) {
         ItemStack[] fuelCandidates = {
-            new ItemStack(Items.COAL, 1),
-            new ItemStack(Items.CHARCOAL, 1),
-            new ItemStack(Items.COAL_BLOCK, 1),
-            new ItemStack(Items.OAK_LOG, 1),
-            new ItemStack(Items.OAK_PLANKS, 1)
+                new ItemStack(Items.COAL, 1),
+                new ItemStack(Items.CHARCOAL, 1),
+                new ItemStack(Items.COAL_BLOCK, 1),
+                new ItemStack(Items.OAK_LOG, 1),
+                new ItemStack(Items.OAK_PLANKS, 1)
         };
 
         for (ItemStack fuel : fuelCandidates) {
@@ -204,13 +206,13 @@ public class CookWorkGoal extends Goal {
             if (available > 0) {
                 area.shrinkItemFromContainers(fuel, 1);
                 furnace.setItem(1, fuel.copy());
+                furnace.setChanged();
                 return;
             }
         }
     }
 
     private void loadIngredient(KitchenArea area, AbstractFurnaceBlockEntity furnace, ServerLevel level) {
-        // Scan containers for any smeltable food item
         for (var entry : area.containerMap.entrySet()) {
             var container = entry.getValue();
             for (int i = 0; i < container.getContainerSize(); i++) {
@@ -218,11 +220,12 @@ public class CookWorkGoal extends Goal {
                 if (slot.isEmpty()) continue;
                 if (!isSmeltableFood(slot, level)) continue;
 
-                // Move 1 item into furnace input
                 ItemStack toLoad = slot.copy();
                 toLoad.setCount(1);
                 furnace.setItem(0, toLoad);
+                furnace.setChanged();
                 slot.shrink(1);
+                container.setChanged();
                 return;
             }
         }
@@ -230,7 +233,7 @@ public class CookWorkGoal extends Goal {
 
     private boolean isSmeltableFood(ItemStack stack, ServerLevel level) {
         Optional<SmeltingRecipe> recipe = level.getRecipeManager()
-                .getRecipeFor(RecipeType.SMELTING, new net.minecraft.world.SimpleContainer(stack), level);
+                .getRecipeFor(RecipeType.SMELTING, new SimpleContainer(stack), level);
 
         if (recipe.isEmpty()) return false;
 

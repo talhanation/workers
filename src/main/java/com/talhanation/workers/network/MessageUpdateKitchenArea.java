@@ -34,7 +34,7 @@ public class MessageUpdateKitchenArea implements Message<MessageUpdateKitchenAre
                         v -> v.getUUID().equals(this.uuid))
                 .stream().findAny()
                 .ifPresent(kitchen -> {
-                    kitchen.setSellToVillagers(sellToVillagers);
+                    kitchen.setFeedVillagers(sellToVillagers);
                     kitchen.scanArea();
                 });
     }

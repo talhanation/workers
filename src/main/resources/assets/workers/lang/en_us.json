@@ -6,12 +6,14 @@
   "entity.workers.farmer": "Farmer",
   "entity.workers.builder": "Builder",
   "entity.workers.animal_worker": "Animal Worker",
+  "entity.workers.cook": "Cook",
 
   "entity.workers.storage": "Storage",
   "entity.workers.mine": "Mine",
   "entity.workers.tree_field": "Tree Field",
   "entity.workers.building": "Building",
   "entity.workers.crop_field": "Crop Field",
+  "entity.workers.kitchen": "Kitchen",
 
   "item.workers.miner_spawn_egg": "Miner Spawn Egg",
   "item.workers.farmer_spawn_egg": "Farmer Spawn Egg",
@@ -21,6 +23,7 @@
   "item.workers.builder_spawn_egg": "Builder Spawn Egg",
   "item.workers.animal_farmer_spawn_egg": "Animal Farmer Spawn Egg",
   "item.workers.courier_spawn_egg": "Courier Spawn Egg",
+  "item.workers.cook_spawn_egg": "Cook Spawn Egg",
 
   "gui.workers.command.tooltip.workers": "Workers",
   "gui.workers.command.text.place_field": "Place Crops",
@@ -82,6 +85,9 @@
   "gui.workers.checkbox.tooltip.access": "If true faction members and workers, have access / can work in this area.",
   "gui.workers.checkbox.villagerTrade": "Villager Trade",
   "gui.workers.checkbox.tooltip.villagerTrade": "If true merchant will sell selected items to nearby villagers to generate income.",
+  "gui.workers.checkbox.feedVillagers": "Feed Villagers",
+  "gui.workers.checkbox.tooltip.feedVillagers": "If true the cook will feed nearby villagers to boost population.",
+
 
   "gui.workers.button.reset": "Reset",
   "gui.workers.button.add": "Add",
@@ -125,7 +131,6 @@
 
   "gui.workers.text.noMerchant": "No Merchant",
   "gui.workers.text.merchantPresent": "Merchant Present",
-
   "gui.workers.text.space": "Space",
 
   "chat.workers.text.merchantNoItemsLeftOwner": "%s: I have no more %s left, i will resupply if possible from a close deposit soon!",
@@ -161,5 +166,9 @@
   "gui.workers.text.noDoor": "No Door",
   "gui.workers.text.noBed": "No Bed",
   "gui.workers.text.noLight": "No Light Source",
-  "gui.workers.text.noChest": "No Chest"
+  "gui.workers.text.noChest": "No Chest",
+
+  "gui.workers.text.noCook": "No Cook",
+  "gui.workers.text.cookPresent": "Cook Present",
+  "gui.workers.text.furnaces": "Furnaces: "
 }

@@ -1,5 +1,6 @@
 package com.talhanation.workers;
 
+import com.talhanation.workers.entities.ai.VillagerPickupFoodGoal;
 import com.talhanation.workers.entities.ai.VillagerRespondToMerchantGoal;
 import com.talhanation.workers.entities.ai.VillagerRespondToCookGoal;
 import com.talhanation.workers.entities.ai.animals.WorkerTemptGoal;
@@ -130,6 +131,7 @@ public class VillagerEvents {
         else if(entity instanceof Villager villager) {
             villager.goalSelector.addGoal(4, new VillagerRespondToMerchantGoal(villager));
             villager.goalSelector.addGoal(4, new VillagerRespondToCookGoal(villager));
+            villager.goalSelector.addGoal(4, new VillagerPickupFoodGoal(villager));
         }
     }
 
