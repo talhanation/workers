@@ -94,11 +94,11 @@ public class VillagerEvents {
         RecruitsHireTradesRegistry.addTrade("workers2", 3, MERCHANT, BUILDER);
 
         RecruitsHireTradesRegistry.addTrade("workers3", 1, FARMER, ANIMAL_FARMER);
-        RecruitsHireTradesRegistry.addTrade("workers3", 2, COURIER);
+        RecruitsHireTradesRegistry.addTrade("workers3", 2, COURIER, COOK);
         RecruitsHireTradesRegistry.addTrade("workers3", 3, MERCHANT, BUILDER);
 
         RecruitsHireTradesRegistry.addTrade("workers4", 1, FARMER, FISHERMAN);
-        RecruitsHireTradesRegistry.addTrade("workers4", 2, COURIER);
+        RecruitsHireTradesRegistry.addTrade("workers4", 2, COURIER, COOK);
         RecruitsHireTradesRegistry.addTrade("workers4", 3, MERCHANT, BUILDER);
 
         RecruitsHireTradesRegistry.addTrade("workers5", 1, MINER, LUMBERJACK);
