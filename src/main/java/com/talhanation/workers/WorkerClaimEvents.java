@@ -6,6 +6,8 @@ import com.talhanation.recruits.world.RecruitsClaim;
 import com.talhanation.recruits.world.RecruitsPlayerInfo;
 import com.talhanation.workers.entities.AbstractWorkerEntity;
 import com.talhanation.workers.entities.workarea.AbstractWorkAreaEntity;
+import com.talhanation.workers.entities.workarea.HomeArea;
+import com.talhanation.workers.entities.workarea.MarketArea;
 import net.minecraft.core.BlockPos;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.level.ChunkPos;
@@ -44,8 +46,7 @@ public class WorkerClaimEvents {
         AABB claimBounds = getClaimBounds(claim, level);
         if (claimBounds == null) return;
 
-        List<AbstractWorkAreaEntity> areas =
-                level.getEntitiesOfClass(AbstractWorkAreaEntity.class, claimBounds);
+        List<AbstractWorkAreaEntity> areas = level.getEntitiesOfClass(AbstractWorkAreaEntity.class, claimBounds);
 
         for (AbstractWorkAreaEntity area : areas) {
             if (area.isRemoved()) continue;
@@ -54,6 +55,9 @@ public class WorkerClaimEvents {
 
             area.setPlayerUUID(newOwnerUUID);
             area.setPlayerName(newOwnerName);
+
+            if(area instanceof HomeArea homeArea) homeArea.clearResident();
+            if(area instanceof MarketArea marketArea) marketArea.clearAssignedMerchant();
         }
     }
 
