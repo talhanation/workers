@@ -128,9 +128,12 @@
   "description.workers.title.courier": "Courier",
   "description.workers.courier": "Transports items along a defined route. Picks up goods from a source location and delivers them to a target location, keeping your supply chains running smoothly.",
 
+  "description.workers.title.cook": "Cook",
+  "description.workers.cook": "Runs a Kitchen work area. Collects raw ingredients from chests, cooks them in furnaces. If required, serves food to nearby villagers to boost breeding. Needs at least one furnace and one chest. Fuel must be supplied by the player or a Courier.",
 
   "gui.workers.text.noMerchant": "No Merchant",
   "gui.workers.text.merchantPresent": "Merchant Present",
+  
   "gui.workers.text.space": "Space",
 
   "chat.workers.text.merchantNoItemsLeftOwner": "%s: I have no more %s left, i will resupply if possible from a close deposit soon!",
