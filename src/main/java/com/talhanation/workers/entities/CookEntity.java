@@ -98,7 +98,7 @@ public class CookEntity extends AbstractWorkerEntity {
 
     @Override
     public void initSpawn() {
-        this.setCustomName(Component.literal("Chef"));
+        this.setCustomName(Component.literal("Cook"));
         this.setCost(WorkersServerConfig.CookCost.get());
         this.setEquipment();
         this.setDropEquipment();
