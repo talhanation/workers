@@ -69,6 +69,7 @@
   "gui.workers.checkbox.animalFarmers":"Animal Farmers",
   "gui.workers.checkbox.fisherman":"Fisherman",
   "gui.workers.checkbox.couriers":"Couriers",
+  "gui.workers.checkbox.cooks":"Cooks",
   "gui.workers.checkbox.breed":"Breed",
   "gui.workers.checkbox.maxAnimals":"Max Animals:",
   "gui.workers.checkbox.slaughter":"Slaughter",

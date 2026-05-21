@@ -113,7 +113,8 @@ public class AnimalFarmerEntity extends AbstractWorkerEntity{
         ResourceLocation id = ForgeRegistries.ITEMS.getKey(itemStack.getItem());
         if(id == null) return false;
 
-        if(WorkersServerConfig.ANIMAL_FARMER_PICKUP.contains(id.toString())) return true;
+        if(WorkersServerConfig.AnimalFarmerPickup.get().contains(id.toString())) return true;
+
         if(itemStack.is(ItemTags.WOOL)) return true;
 
         return super.wantsToPickUp(itemStack);

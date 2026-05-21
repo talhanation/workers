@@ -119,7 +119,8 @@ public class LumberjackEntity extends AbstractWorkerEntity{
         ResourceLocation id = ForgeRegistries.ITEMS.getKey(itemStack.getItem());
         if(id == null) return false;
 
-        if(WorkersServerConfig.LUMBERMAN_PICKUP.contains(id.toString())) return true;
+        if(WorkersServerConfig.LumberjackPickup.get().contains(id.toString())) return true;
+
         if(itemStack.getItem() instanceof BlockItem blockItem && blockItem.getBlock() instanceof SaplingBlock) return true;
         if(itemStack.getItem() instanceof BlockItem blockItem && blockItem.getBlock().defaultBlockState().is(BlockTags.LOGS)) return true;
         if(itemStack.getItem() instanceof BlockItem blockItem && blockItem.getBlock().defaultBlockState().is(BlockTags.LEAVES)) return true;

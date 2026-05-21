@@ -124,7 +124,7 @@ public class MiningArea extends AbstractWorkAreaEntity {
     public boolean shouldIgnore(BlockState state){
         ResourceLocation id = ForgeRegistries.BLOCKS.getKey(state.getBlock());
         if(id == null) return false;
-        return WorkersServerConfig.MINER_IGNORE.contains(id.toString());
+        return WorkersServerConfig.MinerIgnore.get().contains(id.toString());
     }
 
     public void scanForOresOnWalls() {

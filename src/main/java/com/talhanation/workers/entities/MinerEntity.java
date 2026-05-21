@@ -123,7 +123,7 @@ public class MinerEntity extends AbstractWorkerEntity{
         ResourceLocation id = ForgeRegistries.ITEMS.getKey(itemStack.getItem());
         if(id == null) return false;
 
-        if(WorkersServerConfig.MINER_PICKUP.contains(id.toString())) return true;
+        if(WorkersServerConfig.MinerPickup.get().contains(id.toString())) return true;
 
         if(itemStack.getItem() instanceof BlockItem blockItem && blockItem.getBlock().defaultBlockState().is(BlockTags.BASE_STONE_OVERWORLD)) return true;
         if(itemStack.getItem() instanceof BlockItem blockItem && blockItem.getBlock().defaultBlockState().is(Tags.Blocks.STONE)) return true;
@@ -154,7 +154,7 @@ public class MinerEntity extends AbstractWorkerEntity{
     public boolean shouldIgnoreBlock(BlockState blockState) {
         ResourceLocation id = ForgeRegistries.BLOCKS.getKey(blockState.getBlock());
         if(id == null) return false;
-        return (WorkersServerConfig.MINER_IGNORE.contains(id.toString()) || !canBreakBlock(blockState));
+        return (WorkersServerConfig.MinerIgnore.get().contains(id.toString()) || !canBreakBlock(blockState));
     }
 
     public boolean canBreakBlock(BlockState state){

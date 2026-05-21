@@ -116,7 +116,7 @@ public class BuilderEntity extends AbstractWorkerEntity{
         ResourceLocation id = ForgeRegistries.ITEMS.getKey(itemStack.getItem());
         if(id == null) return false;
 
-        if(WorkersServerConfig.MINER_PICKUP.contains(id.toString())) return true;
+        if(WorkersServerConfig.MinerPickup.get().contains(id.toString())) return true;
 
         return super.wantsToPickUp(itemStack);
     }

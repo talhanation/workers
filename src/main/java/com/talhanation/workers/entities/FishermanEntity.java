@@ -107,7 +107,7 @@ public class FishermanEntity extends AbstractWorkerEntity{
         ResourceLocation id = ForgeRegistries.ITEMS.getKey(itemStack.getItem());
         if(id == null) return false;
 
-        if(WorkersServerConfig.FISHERMAN_PICKUP.contains(id.toString())) return true;
+        if(WorkersServerConfig.FishermanPickup.get().contains(id.toString())) return true;
 
 
         return super.wantsToPickUp(itemStack);

@@ -1,11 +1,14 @@
 package com.talhanation.workers.config;
 
 import com.talhanation.workers.config.BuildMode;
+import com.talhanation.workers.entities.FishermanEntity;
+import com.talhanation.workers.entities.LumberjackEntity;
 import net.minecraftforge.common.ForgeConfigSpec;
 import net.minecraftforge.fml.common.Mod;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.List;
 
 @Mod.EventBusSubscriber
 public class WorkersServerConfig {
@@ -24,6 +27,12 @@ public class WorkersServerConfig {
     public static ForgeConfigSpec.BooleanValue ShouldWorkAreaOnlyBeInFactionClaim;
     public static ForgeConfigSpec.BooleanValue ShouldOnlyPlacingBuildingsBePossible;
     public static ForgeConfigSpec.EnumValue<BuildMode> BuildModeConfig;
+    public static ForgeConfigSpec.ConfigValue<List<String>> MinerPickup;
+    public static ForgeConfigSpec.ConfigValue<List<String>> MinerIgnore;
+    public static ForgeConfigSpec.ConfigValue<List<String>> FarmerPickup;
+    public static ForgeConfigSpec.ConfigValue<List<String>> AnimalFarmerPickup;
+    public static ForgeConfigSpec.ConfigValue<List<String>> LumberjackPickup;
+    public static ForgeConfigSpec.ConfigValue<List<String>> FishermanPickup;
     public static ArrayList<String> FARMER_PICKUP = new ArrayList<>(
             Arrays.asList(
                     "minecraft:wheat",
@@ -39,22 +48,17 @@ public class WorkersServerConfig {
                     "minecraft:melon_seeds",
                     "minecraft:melon_slice",
                     "supplementaries:flax",
+                    "farmersdelight:straw",
                     "herbalbrews:green_tea_leaf"
-
             ));
-
-    public static ArrayList<String> LUMBERMAN_PICKUP = new ArrayList<>(
-            Arrays.asList(
-                    "minecraft:stick",
-                    "minecraft:bee_nest"
-            ));
-
     public static ArrayList<String> MINER_PICKUP = new ArrayList<>(
             Arrays.asList(
                     "minecraft:torch",
                     "minecraft:lantern",
                     "minecraft:redstone",
                     "minecraft:cobblestone",
+                    "minecraft:deepslate",
+                    "minecraft:cobbled_deepslate",
                     "minecraft:sandstone",
                     "minecraft:sand",
                     "minecraft:gravel",
@@ -67,7 +71,9 @@ public class WorkersServerConfig {
                     "minecraft:netherrack",
                     "minecraft:emerald",
                     "minecraft:lapis_lazuli",
-                    "minecraft:diamond"
+                    "minecraft:diamond",
+                    "psg:raw_potassium",
+                    "psg:sulphur"
             ));
 
     public static ArrayList<String> MINER_IGNORE = new ArrayList<>(
@@ -96,25 +102,38 @@ public class WorkersServerConfig {
                     "minecraft:leather",
                     "minecraft:milk_bucket",
                     "minecraft:chicken",
-                    "minecraft:lamb",
+                    "minecraft:mutton",
                     "minecraft:egg",
-                    "minecraft:lamb",
-                    "minecraft:lamb",
-                    "minecraft:lamb",
-                    "minecraft:lamb",
-                    "minecraft:lamb",
-                    "minecraft:lamb",
-                    "minecraft:lamb",
-                    "minecraft:lamb",
-                    "minecraft:lamb",
-                    "minecraft:lamb",
-                    "minecraft:lamb"
+                    "minecraft:prokchop",
+                    "minecraft:beef",
+                    "minecraft:rabbit",
+                    "naturalist:duck",
+                    "naturalist:venison",
+                    "naturalist:fur",
+                    "naturalist:bushmeat",
+                    "naturalist:antler",
+                    "naturalist:duck_egg",
+                    "farmersdelight:ham"
             ));
 
 
     public static ArrayList<String> FISHERMAN_PICKUP = new ArrayList<>(
             Arrays.asList(
+                    "minecraft:tropical_fish",
+                    "minecraft:pufferfish",
+                    "naturalist:catfish",
+                    "naturalist:bass"
+            ));
 
+    public static ArrayList<String> LUMBERJACK_PICKUP = new ArrayList<>(
+            Arrays.asList(
+                    "minecraft:stick",
+                    "minecraft:bee_nest",
+                    "dynamictrees:oak_seed",
+                    "dynamictrees:birch_seed",
+                    "dynamictrees:apple_oak_seed",
+                    "dynamictrees:spruce_seed",
+                    "dynamictrees:cocoa_seed"
             ));
 
     static {
@@ -234,6 +253,54 @@ public class WorkersServerConfig {
                         \t(takes effect after restart)""")
                 .worldRestart()
                 .defineEnum("BuildMode", BuildMode.FREE);
+
+        MinerPickup = BUILDER.comment("""
+                        
+                        Pickup configuration for miners
+                        \t(takes effect after restart)
+                        \tItems in this list will be picked up, for example: ["minecraft:sugar", "minecraft:sheep", ...]""")
+                .worldRestart()
+                .define("MinerPickup", MINER_PICKUP);
+
+        MinerIgnore = BUILDER.comment("""
+                        
+                        Blocks in this list will be skipped by the miner.
+                        \t(takes effect after restart)
+                        \tFor example: ["minecraft:torch", "minecraft:chest", ...]""")
+                .worldRestart()
+                .define("MinerIgnore", MINER_IGNORE);
+
+        AnimalFarmerPickup = BUILDER.comment("""
+                        
+                        Pickup configuration for animal-farmers
+                        \t(takes effect after restart)
+                        \tItems in this list will be picked up, for example: ["minecraft:sugar", "minecraft:stone", ...]""")
+                .worldRestart()
+                .define("AnimalFarmerPickup", ANIMAL_FARMER_PICKUP);
+
+        FarmerPickup = BUILDER.comment("""
+                        
+                        Pickup configuration for farmers
+                        \t(takes effect after restart)
+                        \tItems in this list will be picked up, for example: ["minecraft:sugar", "minecraft:stone", ...]""")
+                .worldRestart()
+                .define("FarmerPickup", FARMER_PICKUP);
+
+        LumberjackPickup = BUILDER.comment("""
+                        
+                        Pickup configuration for lumberjacks
+                        \t(takes effect after restart)
+                        \tItems in this list will be picked up, for example: ["minecraft:sugar", "minecraft:stone", ...]""")
+                .worldRestart()
+                .define("LumberjackPickup", LUMBERJACK_PICKUP);
+
+        FishermanPickup = BUILDER.comment("""
+                        
+                        Pickup configuration for fishermans
+                        \t(takes effect after restart)
+                        \tItems in this list will be picked up, for example: ["minecraft:sugar", "minecraft:stone", ...]""")
+                .worldRestart()
+                .define("FishermanPickup", FISHERMAN_PICKUP);
 
         SERVER = BUILDER.build();
     }

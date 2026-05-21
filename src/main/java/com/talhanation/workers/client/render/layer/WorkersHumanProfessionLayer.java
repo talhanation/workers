@@ -5,7 +5,6 @@ import com.mojang.blaze3d.vertex.VertexConsumer;
 import com.talhanation.recruits.entities.AbstractRecruitEntity;
 import com.talhanation.workers.WorkersMain;
 import com.talhanation.workers.entities.*;
-import com.talhanation.workers.entities.workarea.BuildArea;
 import net.minecraft.client.model.HumanoidModel;
 import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.RenderType;

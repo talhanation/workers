@@ -131,7 +131,7 @@ public class FarmerEntity extends AbstractWorkerEntity{
         ResourceLocation id = ForgeRegistries.ITEMS.getKey(itemStack.getItem());
         if(id == null) return false;
 
-        if(WorkersServerConfig.FARMER_PICKUP.contains(id.toString())) return true;
+        if(WorkersServerConfig.FarmerPickup.get().contains(id.toString())) return true;
         if(itemStack.getItem() instanceof BlockItem blockItem && blockItem.getBlock() instanceof CropBlock) return true;
 
         return super.wantsToPickUp(itemStack);
