@@ -24,9 +24,6 @@ public class StorageAreaScreen extends WorkAreaScreen {
     private static final MutableComponent TEXT_COURIERS = Component.translatable("gui.workers.checkbox.couriers");
     private static final Component TEXT_STORAGE_NAME = Component.translatable("entity.workers.storage");;
     public final StorageArea storageArea;
-    private boolean replant;
-    private boolean stripLogs;
-    private boolean shearLeaves;
     private RecruitsCheckBox minersCheckBox;
     private RecruitsCheckBox lumbersCheckBox;
     private RecruitsCheckBox buildersCheckBox;
@@ -74,13 +71,16 @@ public class StorageAreaScreen extends WorkAreaScreen {
     public void setButtons() {
         super.setButtons();
 
-        int checkBoxWidth = 100;
-        int checkBoxHeight = 20;
+        int cbW = 100;
+        int cbH = 20;
+        int gap = 1;
 
-        int checkBoxX = x - checkBoxWidth / 2;
-        int checkBoxY = y + checkBoxHeight / 2 + 40;
+        // Two columns: left starts at x - cbW - 5, right at x + 5
+        int leftX  = x - cbW - 5;
+        int rightX = x + 5;
+        int startY = y + cbH / 2 + 45;
 
-        nameEditBox = new EditBox(font, checkBoxX , checkBoxY - 20, checkBoxWidth, checkBoxHeight, Component.literal(""));
+        nameEditBox = new EditBox(font, leftX, startY - cbH - 4, cbW * 2 + 10, cbH, Component.literal(""));
         nameEditBox.setValue(savedName.getString());
         nameEditBox.setTextColor(-1);
         nameEditBox.setTextColorUneditable(-1);
@@ -89,133 +89,50 @@ public class StorageAreaScreen extends WorkAreaScreen {
         nameEditBox.setResponder(this::setName);
         this.addRenderableWidget(nameEditBox);
 
-        this.minersCheckBox = new RecruitsCheckBox(checkBoxX, 10 + checkBoxY, checkBoxWidth, checkBoxHeight, TEXT_MINERS,
-                this.miners,
-                (bool) -> {
-                    this.miners = bool;
-                    if(miners){
-                        types.add(StorageArea.StorageType.MINERS);
-                    }
-                    else{
-                        types.remove(StorageArea.StorageType.MINERS);
-                    }
-
-                    sendMessage();
-                }
-        );
+        // Left column: Miners, Lumbers, Builders, Farmers
+        this.minersCheckBox = new RecruitsCheckBox(leftX, startY, cbW, cbH, TEXT_MINERS,
+                this.miners, bool -> { this.miners = bool; toggleType(StorageArea.StorageType.MINERS, bool); });
         addRenderableWidget(minersCheckBox);
 
-        this.lumbersCheckBox = new RecruitsCheckBox(checkBoxX, 30 + checkBoxY, checkBoxWidth, checkBoxHeight, TEXT_LUMBERS,
-                this.lumbers,
-                (bool) -> {
-                    this.lumbers = bool;
-                    if(lumbers){
-                        types.add(StorageArea.StorageType.LUMBERS);
-                    }
-                    else{
-                        types.remove(StorageArea.StorageType.LUMBERS);
-                    }
-                    sendMessage();
-                }
-        );
+        this.lumbersCheckBox = new RecruitsCheckBox(leftX, startY + gap + cbH, cbW, cbH, TEXT_LUMBERS,
+                this.lumbers, bool -> { this.lumbers = bool; toggleType(StorageArea.StorageType.LUMBERS, bool); });
         addRenderableWidget(lumbersCheckBox);
 
-        this.buildersCheckBox = new RecruitsCheckBox(checkBoxX, 50 + checkBoxY, checkBoxWidth, checkBoxHeight, TEXT_BUILDERS,
-                this.builders,
-                (bool) -> {
-                    this.builders = bool;
-                    if(builders){
-                        types.add(StorageArea.StorageType.BUILDERS);
-                    }
-                    else{
-                        types.remove(StorageArea.StorageType.BUILDERS);
-                    }
-                    sendMessage();
-                }
-        );
+        this.buildersCheckBox = new RecruitsCheckBox(leftX, startY + (gap + cbH) * 2, cbW, cbH, TEXT_BUILDERS,
+                this.builders, bool -> { this.builders = bool; toggleType(StorageArea.StorageType.BUILDERS, bool); });
         addRenderableWidget(buildersCheckBox);
 
-        this.farmersCheckBox = new RecruitsCheckBox(checkBoxX, 70 + checkBoxY, checkBoxWidth, checkBoxHeight, TEXT_FARMERS,
-                this.farmers,
-                (bool) -> {
-                    this.farmers = bool;
-                    if(farmers){
-                        types.add(StorageArea.StorageType.FARMERS);
-                    }
-                    else{
-                        types.remove(StorageArea.StorageType.FARMERS);
-                    }
-                    sendMessage();
-                }
-        );
+        this.farmersCheckBox = new RecruitsCheckBox(leftX, startY + (gap + cbH) * 3, cbW, cbH, TEXT_FARMERS,
+                this.farmers, bool -> { this.farmers = bool; toggleType(StorageArea.StorageType.FARMERS, bool); });
         addRenderableWidget(farmersCheckBox);
 
-        this.merchantsCheckBox = new RecruitsCheckBox(checkBoxX, 90 + checkBoxY, checkBoxWidth, checkBoxHeight, TEXT_MERCHANTS,
-                this.merchants,
-                (bool) -> {
-                    this.merchants = bool;
-                    if(merchants){
-                        types.add(StorageArea.StorageType.MERCHANTS);
-                    }
-                    else{
-                        types.remove(StorageArea.StorageType.MERCHANTS);
-                    }
-                    sendMessage();
-                }
-        );
+        // Right column: Merchants, Fisherman, AnimalFarmer, Courier
+        this.merchantsCheckBox = new RecruitsCheckBox(rightX, startY, cbW, cbH, TEXT_MERCHANTS,
+                this.merchants, bool -> { this.merchants = bool; toggleType(StorageArea.StorageType.MERCHANTS, bool); });
         addRenderableWidget(merchantsCheckBox);
 
-        this.fishermanCheckBox = new RecruitsCheckBox(checkBoxX, 110 + checkBoxY, checkBoxWidth, checkBoxHeight, TEXT_FISHERMAN,
-                this.fisherman,
-                (bool) -> {
-                    this.fisherman = bool;
-                    if(fisherman){
-                        types.add(StorageArea.StorageType.FISHERMAN);
-                    }
-                    else{
-                        types.remove(StorageArea.StorageType.FISHERMAN);
-                    }
-                    sendMessage();
-                }
-        );
+        this.fishermanCheckBox = new RecruitsCheckBox(rightX, startY + gap + cbH, cbW, cbH, TEXT_FISHERMAN,
+                this.fisherman, bool -> { this.fisherman = bool; toggleType(StorageArea.StorageType.FISHERMAN, bool); });
         addRenderableWidget(fishermanCheckBox);
 
-        this.animalFarmerCheckBox = new RecruitsCheckBox(checkBoxX, 130 + checkBoxY, checkBoxWidth, checkBoxHeight, TEXT_ANIMAL_FARMERS,
-                this.animalFarmer,
-                (bool) -> {
-                    this.animalFarmer = bool;
-                    if(animalFarmer){
-                        types.add(StorageArea.StorageType.ANIMAL_FARMERS);
-                    }
-                    else{
-                        types.remove(StorageArea.StorageType.ANIMAL_FARMERS);
-                    }
-                    sendMessage();
-                }
-        );
+        this.animalFarmerCheckBox = new RecruitsCheckBox(rightX, startY + (gap + cbH) * 2, cbW, cbH, TEXT_ANIMAL_FARMERS,
+                this.animalFarmer, bool -> { this.animalFarmer = bool; toggleType(StorageArea.StorageType.ANIMAL_FARMERS, bool); });
         addRenderableWidget(animalFarmerCheckBox);
 
-        this.courierCheckBox = new RecruitsCheckBox(checkBoxX, 150 + checkBoxY, checkBoxWidth, checkBoxHeight, TEXT_COURIERS,
-                this.courier,
-                (bool) -> {
-                    this.courier = bool;
-                    if(courier){
-                        types.add(StorageArea.StorageType.COURIER);
-                    }
-                    else{
-                        types.remove(StorageArea.StorageType.COURIER);
-                    }
-                    sendMessage();
-                }
-        );
+        this.courierCheckBox = new RecruitsCheckBox(rightX, startY + (gap + cbH) * 3, cbW, cbH, TEXT_COURIERS,
+                this.courier, bool -> { this.courier = bool; toggleType(StorageArea.StorageType.COURIER, bool); });
         addRenderableWidget(courierCheckBox);
+    }
 
+    private void toggleType(StorageArea.StorageType type, boolean add) {
+        if (add) types.add(type);
+        else types.remove(type);
+        sendMessage();
     }
 
     private void setName(String s) {
         savedName = Component.literal(s);
     }
-
     public void sendMessage(){
         WorkersMain.SIMPLE_CHANNEL.sendToServer(new MessageUpdateStorageArea(storageArea.getUUID(), storageArea.getStorageMask(types), savedName.getString()));
     }
