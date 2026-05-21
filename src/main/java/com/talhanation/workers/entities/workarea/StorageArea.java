@@ -104,7 +104,8 @@ public class StorageArea extends AbstractWorkAreaEntity implements IPermissionAr
         MERCHANTS(4),
         FISHERMAN(5),
         ANIMAL_FARMERS(6),
-        COURIER(7);
+        COOK(7),
+        COURIER(8);
         private final int index;
         StorageType(int index){
             this.index = index;
@@ -150,7 +151,9 @@ public class StorageArea extends AbstractWorkAreaEntity implements IPermissionAr
             else if( worker instanceof CourierEntity){
                 return this.getStorageTypes().contains(StorageType.COURIER);
             }
-
+            else if( worker instanceof CookEntity){
+                return this.getStorageTypes().contains(StorageType.COOK);
+            }
         }
         return false;
     }

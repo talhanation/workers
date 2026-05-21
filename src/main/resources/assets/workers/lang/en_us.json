@@ -88,7 +88,8 @@
   "gui.workers.checkbox.tooltip.villagerTrade": "If true merchant will sell selected items to nearby villagers to generate income.",
   "gui.workers.checkbox.feedVillagers": "Feed Villagers",
   "gui.workers.checkbox.tooltip.feedVillagers": "If true the cook will feed nearby villagers to boost population.",
-
+  "gui.workers.checkbox.freeArea": "Free Area",
+  "gui.workers.checkbox.tooltip.freeArea": "If true the builder will free the area first.",
 
   "gui.workers.button.reset": "Reset",
   "gui.workers.button.add": "Add",

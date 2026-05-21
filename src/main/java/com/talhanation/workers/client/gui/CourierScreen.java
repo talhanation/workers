@@ -323,12 +323,12 @@ public class CourierScreen extends ScreenBase<CourierContainer> {
         ScrollDropDownMenu<CourierAction.ActionType> typeDD = new ScrollDropDownMenu<>(
                 action.getActionType(),
                 x, rowY, COL_TYPE, h,
-                List.of(CourierAction.ActionType.PICKUP,
-                        CourierAction.ActionType.PICKUP_ANY,
-                        CourierAction.ActionType.PICKUP_ALL,
-                        CourierAction.ActionType.DEPOSIT,
-                        CourierAction.ActionType.DEPOSIT_ANY,
-                        CourierAction.ActionType.DEPOSIT_ALL,
+                List.of(CourierAction.ActionType.TAKE,
+                        CourierAction.ActionType.TAKE_ANY,
+                        CourierAction.ActionType.TAKE_ALL,
+                        CourierAction.ActionType.PUT,
+                        CourierAction.ActionType.PUT_ANY,
+                        CourierAction.ActionType.PUT_ALL,
                         CourierAction.ActionType.WAIT),
                 CourierAction.ActionType::displayLabel,
                 t -> {
@@ -374,12 +374,15 @@ public class CourierScreen extends ScreenBase<CourierContainer> {
                     x, rowY, COL_SRC, h,
                     List.of(CourierAction.SourceType.CHEST,
                             CourierAction.SourceType.STORAGE,
-                            CourierAction.SourceType.MARKET),
+                            CourierAction.SourceType.MARKET,
+                            CourierAction.SourceType.KITCHEN
+                            ),
                             //CourierAction.SourceType.WORKER),
                     s -> switch (s) {
                         case CHEST   -> "Chest";
                         case STORAGE -> "Storage";
                         case MARKET  -> "Market";
+                        case KITCHEN  -> "KITCHEN";
                         //case WORKER  -> "Worker";
                     },
                     s -> { action.setSourceType(s); buildWidgets(); });

@@ -1,7 +1,7 @@
 package com.talhanation.workers.entities.ai;
 
-import com.talhanation.workers.entities.AbstractWorkerEntity;
 import com.talhanation.workers.entities.CourierEntity;
+import com.talhanation.workers.entities.workarea.KitchenArea;
 import com.talhanation.workers.entities.workarea.StorageArea;
 import com.talhanation.workers.entities.workarea.MarketArea;
 import com.talhanation.workers.world.CourierAction;
@@ -162,8 +162,8 @@ public class CourierWorkGoal extends Goal {
                 waitTicks = action.getWaitSeconds() * 20;
                 state = State.WAIT_AT_WAYPOINT;
             }
-            case PICKUP, PICKUP_ANY, PICKUP_ALL,
-                    DEPOSIT, DEPOSIT_ANY, DEPOSIT_ALL -> initTransferAction(action, wp);
+            case TAKE, TAKE_ANY, TAKE_ALL,
+                    PUT, PUT_ANY, PUT_ALL, FILL -> initTransferAction(action, wp);
         }
     }
 
@@ -263,8 +263,7 @@ public class CourierWorkGoal extends Goal {
             }
 
             CourierAction.ActionType type = activeAction.getActionType();
-            if ((type == CourierAction.ActionType.DEPOSIT || type == CourierAction.ActionType.DEPOSIT_ANY)
-                    && activeTransferred == 0){
+            if ((type == CourierAction.ActionType.PUT || type == CourierAction.ActionType.PUT_ANY) && activeTransferred == 0){
                 notifyOwner(courier.TEXT_TARGET_FULL(
                         activeWp.displayName, slot.getHoverName().getString()));
             }
@@ -273,7 +272,7 @@ public class CourierWorkGoal extends Goal {
         }
 
         CourierAction.ActionType type = activeAction.getActionType();
-        if ((type == CourierAction.ActionType.DEPOSIT || type == CourierAction.ActionType.DEPOSIT_ANY)
+        if ((type == CourierAction.ActionType.PUT || type == CourierAction.ActionType.PUT_ANY)
                 && activeTransferred == 0){
             ItemStack tpl = activeAction.getItemStack();
             if (tpl != null && !tpl.isEmpty())
@@ -328,7 +327,7 @@ public class CourierWorkGoal extends Goal {
 
     private boolean matchesTemplate(ItemStack stack){
         CourierAction.ActionType type = activeAction.getActionType();
-        if (type == CourierAction.ActionType.PICKUP_ALL || type == CourierAction.ActionType.DEPOSIT_ALL)
+        if (type == CourierAction.ActionType.TAKE_ALL || type == CourierAction.ActionType.PUT_ALL)
             return true;
         ItemStack tpl = activeAction.getItemStack();
         return tpl != null && !tpl.isEmpty() && ItemStack.isSameItem(stack, tpl);
@@ -336,7 +335,7 @@ public class CourierWorkGoal extends Goal {
 
     private int getTransferLimit(){
         CourierAction.ActionType type = activeAction.getActionType();
-        if (type == CourierAction.ActionType.PICKUP || type == CourierAction.ActionType.DEPOSIT){
+        if (type == CourierAction.ActionType.TAKE || type == CourierAction.ActionType.PUT){
             ItemStack tpl = activeAction.getItemStack();
             return (tpl != null) ? tpl.getCount() : Integer.MAX_VALUE;
         }
@@ -344,9 +343,10 @@ public class CourierWorkGoal extends Goal {
     }
 
     private static boolean isDepositType(CourierAction.ActionType type){
-        return type == CourierAction.ActionType.DEPOSIT
-                || type == CourierAction.ActionType.DEPOSIT_ANY
-                || type == CourierAction.ActionType.DEPOSIT_ALL;
+        return type == CourierAction.ActionType.PUT
+                || type == CourierAction.ActionType.PUT_ANY
+                || type == CourierAction.ActionType.PUT_ALL
+                || type == CourierAction.ActionType.FILL;
     }
 
     private Container getWorkingInventory(){
@@ -417,13 +417,27 @@ public class CourierWorkGoal extends Goal {
                     result.addAll(m.containerMap.values());
                 }
             }
-            /*
-            case WORKER -> level.getEntitiesOfClass(AbstractWorkerEntity.class, scanBox,
-                    w -> w != courier && w.getOwnerUUID() != null && w.getOwnerUUID().equals(courier.getOwnerUUID()))
-                    .forEach(w -> result.add(w.getInventory()));
-            */
+
+            case KITCHEN -> {
+                List<KitchenArea> kitchens = level.getEntitiesOfClass(
+                        KitchenArea.class, scanBox, this::canAccessKitchen);
+                for (KitchenArea k : kitchens){
+                    k.scanArea();
+                    result.addAll(k.containerMap.values());
+                }
+            }
+
         }
         return result;
+    }
+    private boolean canAccessKitchen(KitchenArea kitchen){
+        if (!courier.isOwned()) return false;
+        boolean sameOwner = courier.getOwnerUUID().equals(kitchen.getPlayerUUID());
+        boolean sameTeam  = kitchen.getTeamAccess() && courier.getTeam() != null
+                && kitchen.getTeamStringID() != null
+                && !kitchen.getTeamStringID().isEmpty()
+                && kitchen.getTeamStringID().equals(courier.getTeam().getName());
+        return sameOwner || sameTeam;
     }
 
     private boolean canAccessMarket(MarketArea market){

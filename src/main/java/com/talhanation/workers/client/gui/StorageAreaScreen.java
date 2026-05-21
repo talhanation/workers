@@ -22,6 +22,7 @@ public class StorageAreaScreen extends WorkAreaScreen {
     private static final MutableComponent TEXT_MERCHANTS = Component.translatable("gui.workers.checkbox.merchants");
     private static final MutableComponent TEXT_FISHERMAN = Component.translatable("gui.workers.checkbox.fisherman");
     private static final MutableComponent TEXT_COURIERS = Component.translatable("gui.workers.checkbox.couriers");
+    private static final MutableComponent TEXT_COOKS = Component.translatable("gui.workers.checkbox.cooks");
     private static final Component TEXT_STORAGE_NAME = Component.translatable("entity.workers.storage");;
     public final StorageArea storageArea;
     private RecruitsCheckBox minersCheckBox;
@@ -32,6 +33,7 @@ public class StorageAreaScreen extends WorkAreaScreen {
     private RecruitsCheckBox fishermanCheckBox;
     private RecruitsCheckBox animalFarmerCheckBox;
     private RecruitsCheckBox courierCheckBox;
+    private RecruitsCheckBox cookCheckBox;
     private boolean miners;
     private boolean lumbers;
     private boolean builders;
@@ -40,6 +42,7 @@ public class StorageAreaScreen extends WorkAreaScreen {
     private boolean fisherman;
     private boolean animalFarmer;
     private boolean courier;
+    private boolean cook;
     private EnumSet<StorageArea.StorageType> types;
     public EditBox nameEditBox;
     public Component savedName;
@@ -55,6 +58,7 @@ public class StorageAreaScreen extends WorkAreaScreen {
         this.fisherman = types.contains(StorageArea.StorageType.FISHERMAN);
         this.animalFarmer = types.contains(StorageArea.StorageType.ANIMAL_FARMERS);
         this.courier = types.contains(StorageArea.StorageType.COURIER);
+        this.cook = types.contains(StorageArea.StorageType.COOK);
     }
 
     @Override
@@ -122,6 +126,10 @@ public class StorageAreaScreen extends WorkAreaScreen {
         this.courierCheckBox = new RecruitsCheckBox(rightX, startY + (gap + cbH) * 3, cbW, cbH, TEXT_COURIERS,
                 this.courier, bool -> { this.courier = bool; toggleType(StorageArea.StorageType.COURIER, bool); });
         addRenderableWidget(courierCheckBox);
+
+        this.cookCheckBox = new RecruitsCheckBox(rightX, startY + (gap + cbH) * 3, cbW, cbH, TEXT_COOKS,
+                this.cook, bool -> { this.cook = bool; toggleType(StorageArea.StorageType.COOK, bool); });
+        addRenderableWidget(cookCheckBox);
     }
 
     private void toggleType(StorageArea.StorageType type, boolean add) {

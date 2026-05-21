@@ -9,43 +9,41 @@ public class CourierAction {
 
     public enum ActionType {
         // Specific item (carries an ItemStack template)
-        PICKUP,         // take up to N of a specific item from target
-        DEPOSIT,        // put up to N of a specific item into target
-        PICKUP_ANY,     // take ALL of a specific item type (no count cap)
-        DEPOSIT_ANY,    // put ALL of a specific item type from courier into target
-        // Bulk / wildcard
-        PICKUP_ALL,     // take everything from target until courier inventory full
-        DEPOSIT_ALL,    // empty entire courier inventory into target
+        TAKE,         // take up to N of a specific item from target
+        PUT,        // put up to N of a specific item into target
+        TAKE_ANY,     // take ALL of a specific item type (no count cap)
+        PUT_ANY,    // put ALL of a specific item type from courier into target
+
+        TAKE_ALL,     // take everything from target until courier inventory full
+        PUT_ALL,    // empty entire courier inventory into target
+        FILL,    // fill entire target to defined amount
         // Timing
         WAIT;
 
         /** True if this action type needs an ItemStack filter in the GUI. */
         public boolean hasItemSlot() {
-            return this == PICKUP
-                    || this == DEPOSIT
-                    || this == PICKUP_ANY
-                    || this == DEPOSIT_ANY;
+            return this == TAKE
+                    || this == PUT
+                    || this == TAKE_ANY
+                    || this == FILL
+                    || this == PUT_ANY;
         }
 
         public boolean hasTime() {
             return this == WAIT;
         }
 
-        /** True if the count field (stack size) is meaningful for this type. */
-        public boolean hasCount() {
-            return this == PICKUP || this == DEPOSIT;
-        }
-
         /** Label shown in the GUI dropdown. */
         public String displayLabel() {
             return switch (this) {
-                case PICKUP      -> "Pickup";
-                case DEPOSIT     -> "Deposit";
-                case PICKUP_ANY  -> "Pickup Any";
-                case DEPOSIT_ANY -> "Deposit Any";
-                case PICKUP_ALL  -> "Pickup All";
-                case DEPOSIT_ALL -> "Deposit All";
-                case WAIT        -> "Wait";
+                case TAKE        -> "Take";
+                case PUT         -> "Put";
+                case FILL     -> "Fill";
+                case TAKE_ANY -> "Take Any";
+                case PUT_ANY  -> "Put Any";
+                case TAKE_ALL -> "Take All";
+                case PUT_ALL  -> "Put All";
+                case WAIT     -> "Wait";
             };
         }
 
@@ -57,7 +55,8 @@ public class CourierAction {
     public enum SourceType {
         CHEST,
         STORAGE,
-        MARKET;
+        MARKET,
+        KITCHEN;
         //WORKER;
 
         public static SourceType fromString(String s) {
@@ -72,29 +71,34 @@ public class CourierAction {
 
     // Factories
 
-    public static CourierAction pickup(SourceType src, ItemStack item) {
-        CourierAction a = new CourierAction(); a.actionType = ActionType.PICKUP;
+    public static CourierAction take(SourceType src, ItemStack item) {
+        CourierAction a = new CourierAction(); a.actionType = ActionType.TAKE;
         a.sourceType = src; a.itemStack = item.copy(); return a;
     }
-    public static CourierAction deposit(SourceType src, ItemStack item) {
-        CourierAction a = new CourierAction(); a.actionType = ActionType.DEPOSIT;
+    public static CourierAction put(SourceType src, ItemStack item) {
+        CourierAction a = new CourierAction(); a.actionType = ActionType.PUT;
         a.sourceType = src; a.itemStack = item.copy(); return a;
     }
-    public static CourierAction pickupAny(SourceType src, ItemStack item) {
-        CourierAction a = new CourierAction(); a.actionType = ActionType.PICKUP_ANY;
+    public static CourierAction takeAny(SourceType src, ItemStack item) {
+        CourierAction a = new CourierAction(); a.actionType = ActionType.TAKE_ANY;
         a.sourceType = src; a.itemStack = item.copy(); return a;
     }
-    public static CourierAction depositAny(SourceType src, ItemStack item) {
-        CourierAction a = new CourierAction(); a.actionType = ActionType.DEPOSIT_ANY;
+    public static CourierAction putAny(SourceType src, ItemStack item) {
+        CourierAction a = new CourierAction(); a.actionType = ActionType.PUT_ANY;
         a.sourceType = src; a.itemStack = item.copy(); return a;
     }
-    public static CourierAction pickupAll(SourceType src) {
-        CourierAction a = new CourierAction(); a.actionType = ActionType.PICKUP_ALL;
+    public static CourierAction takeAll(SourceType src) {
+        CourierAction a = new CourierAction(); a.actionType = ActionType.TAKE_ALL;
         a.sourceType = src; return a;
     }
-    public static CourierAction depositAll(SourceType src) {
-        CourierAction a = new CourierAction(); a.actionType = ActionType.DEPOSIT_ALL;
+
+    public static CourierAction putAll(SourceType src) {
+        CourierAction a = new CourierAction(); a.actionType = ActionType.PUT_ALL;
         a.sourceType = src; return a;
+    }
+    public static CourierAction fill(SourceType src, ItemStack item) {
+        CourierAction a = new CourierAction(); a.actionType = ActionType.FILL;
+        a.sourceType = src; a.itemStack = item.copy(); return a;
     }
     public static CourierAction wait(int seconds) {
         CourierAction a = new CourierAction(); a.actionType = ActionType.WAIT;
@@ -131,12 +135,13 @@ public class CourierAction {
         SourceType source = SourceType.fromString(nbt.getString("SourceType"));
         ItemStack  item   = nbt.contains("Item") ? ItemStack.of(nbt.getCompound("Item")) : ItemStack.EMPTY;
         return switch (type) {
-            case PICKUP      -> pickup(source, item);
-            case DEPOSIT     -> deposit(source, item);
-            case PICKUP_ANY  -> pickupAny(source, item);
-            case DEPOSIT_ANY -> depositAny(source, item);
-            case PICKUP_ALL  -> pickupAll(source);
-            case DEPOSIT_ALL -> depositAll(source);
+            case TAKE -> take(source, item);
+            case PUT -> put(source, item);
+            case TAKE_ANY -> takeAny(source, item);
+            case PUT_ANY -> putAny(source, item);
+            case TAKE_ALL -> takeAll(source);
+            case PUT_ALL -> putAll(source);
+            case FILL -> fill(source, item);
             default          -> null;
         };
     }
