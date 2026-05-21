@@ -144,6 +144,13 @@ public class MessageAddWorkArea implements Message<MessageAddWorkArea> {
     }
 
     public boolean canPlace(ServerPlayer player, BlockPos blockPos, WorkAreaTypes type) {
+        if (blockPos == null) return false;
+
+        if (!player.level().isEmptyBlock(blockPos.above())) {
+            player.sendSystemMessage(Component.translatable("gui.workers.area.no_air_above"));
+            return false;
+        }
+
         if (WorkersServerConfig.ShouldOnlyPlacingBuildingsBePossible.get() && type != WorkAreaTypes.BUILDING) {
             return false;
         }
