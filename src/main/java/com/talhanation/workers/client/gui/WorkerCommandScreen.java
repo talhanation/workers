@@ -8,6 +8,7 @@ import com.talhanation.workers.WorkAreaTypes;
 import com.talhanation.workers.WorkersMain;
 import com.talhanation.workers.client.WorkersClientManager;
 import com.talhanation.workers.network.MessageAddWorkArea;
+import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.components.Tooltip;
 import net.minecraft.core.BlockPos;
 import net.minecraft.network.chat.Component;
@@ -54,122 +55,60 @@ public class WorkerCommandScreen implements ICommandCategory {
 
     @Override
     public void createButtons(CommandScreen screen, int x, int y, List<RecruitsGroup> groups, Player player) {
-        boolean isOneGroupActive = groups.stream().anyMatch(g -> !g.isDisabled());
 
-        RecruitsCommandButton addLumberArea = new RecruitsCommandButton(x + 100, y, TEXT_PLACE_LUMBER,
-                button -> {
-                    if(screen.rayBlockPos == null) return;
-                    BlockPos pos = screen.rayBlockPos;
-                    WorkersMain.SIMPLE_CHANNEL.sendToServer(new MessageAddWorkArea(pos, WorkAreaTypes.LUMBER));
-                });
+        x = x + 45;
+        y = y + 10;
+        final int colLeft   = x - 95;
+        final int colRight  = x + 5;
+        final int colCenter = x - 45; // centered across both columns
 
-        addLumberArea.setTooltip(Tooltip.create(TOOLTIP_PLACE_LUMBER));
-        addLumberArea.active = canPlace(screen, WorkAreaTypes.LUMBER);
-        screen.addRenderableWidget(addLumberArea);
+        final int rH = 22;
+        final int r3 = y - 30;
+        final int r2 = r3 - rH;
+        final int r1 = r2 - rH;
+        final int r4 = y + 10;
+        final int r5 = r4 + rH;
+        final int r6 = r5 + rH; // Building row
 
-        RecruitsCommandButton addMine = new RecruitsCommandButton(x - 100, y, TEXT_PLACE_MINE,
-                button -> {
-                    if(screen.rayBlockPos == null) return;
-                    BlockPos pos = screen.rayBlockPos;
-                    WorkersMain.SIMPLE_CHANNEL.sendToServer(new MessageAddWorkArea(pos, WorkAreaTypes.MINING));
-                });
+        // ── Left column (5 buttons) ───────────────────────────────────────────
+        addButton(screen, colLeft, r1, TEXT_PLACE_FIELD,      TOOLTIP_PLACE_FIELD,      WorkAreaTypes.CROPAREA);
+        addButton(screen, colLeft, r2, TEXT_PLACE_LUMBER,     TOOLTIP_PLACE_LUMBER,     WorkAreaTypes.LUMBER);
+        addButton(screen, colLeft, r3, TEXT_PLACE_MINE,       TOOLTIP_PLACE_MINE,       WorkAreaTypes.MINING);
+        addButton(screen, colLeft, r4, TEXT_PLACE_FISHING,    TOOLTIP_PLACE_FISHING,    WorkAreaTypes.FISHING);
+        addButton(screen, colLeft, r5, TEXT_PLACE_ANIMAL_PEN, TOOLTIP_PLACE_ANIMAL_PEN, WorkAreaTypes.ANIMAL_PEN);
 
-        addMine.setTooltip(Tooltip.create(TOOLTIP_PLACE_MINE));
-        addMine.active = canPlace(screen, WorkAreaTypes.MINING);
-        screen.addRenderableWidget(addMine);
+        // ── Right column (4 buttons) ──────────────────────────────────────────
+        addButton(screen, colRight, r1, TEXT_PLACE_STORAGE,      TOOLTIP_PLACE_STORAGE,      WorkAreaTypes.STORAGE);
+        addButton(screen, colRight, r2, TEXT_PLACE_MARKET_AREA,  TOOLTIP_PLACE_MARKET_AREA,  WorkAreaTypes.MARKET);
+        addButton(screen, colRight, r3, TEXT_PLACE_KITCHEN_AREA, TOOLTIP_PLACE_KITCHEN_AREA, WorkAreaTypes.KITCHEN);
+        addButton(screen, colRight, r4, TEXT_PLACE_HOME_AREA,    TOOLTIP_PLACE_HOME_AREA,    WorkAreaTypes.HOME);
 
-        y -= 50;
-        RecruitsCommandButton addCropFieldButton = new RecruitsCommandButton(x, y, TEXT_PLACE_FIELD,
-                button -> {
-                    if(screen.rayBlockPos == null) return;
-                    BlockPos pos = screen.rayBlockPos;
-                    WorkersMain.SIMPLE_CHANNEL.sendToServer(new MessageAddWorkArea(pos, WorkAreaTypes.CROPAREA));
-                });
-
-        addCropFieldButton.setTooltip(Tooltip.create(TOOLTIP_PLACE_FIELD));
-        addCropFieldButton.active = canPlace(screen, WorkAreaTypes.CROPAREA);
-        screen.addRenderableWidget(addCropFieldButton);
-
-        RecruitsCommandButton addFishingAreaButton = new RecruitsCommandButton(x - 100, y, TEXT_PLACE_FISHING,
-                button -> {
-                    if(screen.rayBlockPos == null) return;
-                    BlockPos pos = screen.rayBlockPos;
-                    WorkersMain.SIMPLE_CHANNEL.sendToServer(new MessageAddWorkArea(pos, WorkAreaTypes.FISHING));
-                });
-
-        addFishingAreaButton.setTooltip(Tooltip.create(TOOLTIP_PLACE_FISHING));
-        addFishingAreaButton.active = canPlace(screen, WorkAreaTypes.FISHING);
-        screen.addRenderableWidget(addFishingAreaButton);
-
-        RecruitsCommandButton addAnimalPen = new RecruitsCommandButton(x + 100, y, TEXT_PLACE_ANIMAL_PEN,
-                button -> {
-                    if(screen.rayBlockPos == null) return;
-                    BlockPos pos = screen.rayBlockPos;
-                    WorkersMain.SIMPLE_CHANNEL.sendToServer(new MessageAddWorkArea(pos, WorkAreaTypes.ANIMAL_PEN));
-                });
-
-        addAnimalPen.setTooltip(Tooltip.create(TOOLTIP_PLACE_ANIMAL_PEN));
-        addAnimalPen.active = canPlace(screen, WorkAreaTypes.ANIMAL_PEN);
-        screen.addRenderableWidget(addAnimalPen);
-
-        y += 100;
-        RecruitsCommandButton addStorageArea = new RecruitsCommandButton(x - 100, y, TEXT_PLACE_STORAGE,
-            button -> {
-                if(screen.rayBlockPos == null) return;
-                BlockPos pos = screen.rayBlockPos;
-                WorkersMain.SIMPLE_CHANNEL.sendToServer(new MessageAddWorkArea(pos, WorkAreaTypes.STORAGE));
-            });
-
-        addStorageArea.setTooltip(Tooltip.create(TOOLTIP_PLACE_STORAGE));
-        addStorageArea.active = canPlace(screen, WorkAreaTypes.STORAGE);
-        screen.addRenderableWidget(addStorageArea);
-
-        RecruitsCommandButton addBuilding = new RecruitsCommandButton(x, y, TEXT_PLACE_BUILDING,
-                button -> {
-                    if(screen.rayBlockPos == null) return;
-                    BlockPos pos = screen.rayBlockPos;
-                    WorkersMain.SIMPLE_CHANNEL.sendToServer(new MessageAddWorkArea(pos, WorkAreaTypes.BUILDING));
-                });
-
-        addBuilding.active = canPlace(screen, WorkAreaTypes.BUILDING);
-        screen.addRenderableWidget(addBuilding);
-
-        RecruitsCommandButton addMarket = new RecruitsCommandButton(x + 100, y, TEXT_PLACE_MARKET_AREA,
-                button -> {
-                    if(screen.rayBlockPos == null) return;
-                    BlockPos pos = screen.rayBlockPos;
-                    WorkersMain.SIMPLE_CHANNEL.sendToServer(new MessageAddWorkArea(pos, WorkAreaTypes.MARKET));
-                });
-
-        addMarket.setTooltip(Tooltip.create(TOOLTIP_PLACE_MARKET_AREA));
-        addMarket.active = canPlace(screen, WorkAreaTypes.MARKET);
-        screen.addRenderableWidget(addMarket);
-
-        RecruitsCommandButton addhome = new RecruitsCommandButton(x + 130, y, TEXT_PLACE_HOME_AREA,
-                button -> {
-                    if(screen.rayBlockPos == null) return;
-                    BlockPos pos = screen.rayBlockPos;
-                    WorkersMain.SIMPLE_CHANNEL.sendToServer(new MessageAddWorkArea(pos, WorkAreaTypes.HOME));
-                });
-
-        addhome.setTooltip(Tooltip.create(TOOLTIP_PLACE_HOME_AREA));
-        addhome.active = canPlace(screen, WorkAreaTypes.HOME);
-        screen.addRenderableWidget(addhome);
-
-        RecruitsCommandButton addKitchen = new RecruitsCommandButton(x + 170, y, TEXT_PLACE_KITCHEN_AREA,
-                button -> {
-                    if(screen.rayBlockPos == null) return;
-                    BlockPos pos = screen.rayBlockPos;
-                    WorkersMain.SIMPLE_CHANNEL.sendToServer(new MessageAddWorkArea(pos, WorkAreaTypes.KITCHEN));
-                });
-
-        addKitchen.setTooltip(Tooltip.create(TOOLTIP_PLACE_KITCHEN_AREA));
-        addKitchen.active = canPlace(screen, WorkAreaTypes.KITCHEN);
-        screen.addRenderableWidget(addKitchen);
+        // ── Building centered below both columns ──────────────────────────────
+        addButton(screen, colCenter, r6, TEXT_PLACE_BUILDING, null, WorkAreaTypes.BUILDING);
     }
 
-    private boolean canPlace(CommandScreen screen, WorkAreaTypes type){
-        return screen.rayBlockPos != null && WorkersClientManager.isInFactionClaim(screen.rayBlockPos, type);
+    private void addButton(CommandScreen screen, int bx, int by,
+                           MutableComponent label, MutableComponent tooltip,
+                           WorkAreaTypes type) {
+        RecruitsCommandButton btn = new RecruitsCommandButton(bx, by, label, button -> {
+            if (screen.rayBlockPos == null) return;
+            WorkersMain.SIMPLE_CHANNEL.sendToServer(new MessageAddWorkArea(screen.rayBlockPos, type));
+        });
+
+        if (tooltip != null) btn.setTooltip(Tooltip.create(tooltip));
+        btn.active = canPlace(screen, type);
+        screen.addRenderableWidget(btn);
+    }
+
+    private boolean canPlace(CommandScreen screen, WorkAreaTypes type) {
+        if (screen.rayBlockPos == null) return false;
+        if (!hasAirAbove(screen.rayBlockPos)) return false;
+        return WorkersClientManager.isInFactionClaim(screen.rayBlockPos, type);
+    }
+
+    private boolean hasAirAbove(BlockPos pos) {
+        var level = Minecraft.getInstance().level;
+        return level != null && level.isEmptyBlock(pos.above());
     }
 
     private boolean isDepositPosition(BlockPos rayBlockPos, Player player) {
