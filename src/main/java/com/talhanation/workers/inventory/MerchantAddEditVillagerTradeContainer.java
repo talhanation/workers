@@ -9,6 +9,7 @@ import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.inventory.Slot;
 import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.Items;
 import org.jetbrains.annotations.NotNull;
 
 public class MerchantAddEditVillagerTradeContainer extends ContainerBase {
@@ -53,6 +54,7 @@ public class MerchantAddEditVillagerTradeContainer extends ContainerBase {
         this.addSlot(new Slot(slotContainer, 0, x, y) {
             @Override
             public boolean mayPlace(@NotNull ItemStack itemStack) {
+                if (itemStack.is(Items.EMERALD)) return false;
                 slotContainer.setItem(this.getSlotIndex(), itemStack.copy());
                 return false;
             }

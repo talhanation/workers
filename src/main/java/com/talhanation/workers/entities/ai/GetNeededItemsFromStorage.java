@@ -5,6 +5,7 @@ import com.talhanation.workers.entities.workarea.StorageArea;
 import com.talhanation.workers.world.NeededItem;
 import net.minecraft.core.BlockPos;
 import net.minecraft.network.chat.Component;
+import net.minecraft.world.Container;
 import net.minecraft.world.SimpleContainer;
 import net.minecraft.world.item.ItemStack;
 
@@ -66,13 +67,23 @@ public class GetNeededItemsFromStorage extends AbstractChestGoal {
                 storageArea.scanStorageBlocks();
                 blockPosStack = new Stack<>();
 
-                for(BlockPos pos : storageArea.storageMap.keySet()){
-                    this.blockPosStack.push(pos);
+                if(storageArea.storageMap.isEmpty()){
+                    if(storageArea != null) this.visited.add(storageArea.getUUID());
+                    setState(State.ERROR_STORAGE_NO_CONTAINERS);
+                    return;
+                }
+
+                // Pre-scan: only target chests that actually contain a needed item,
+                // so the worker walks straight to the right chest instead of opening every chest in the storage area.
+                for(Map.Entry<BlockPos, Container> entry : storageArea.storageMap.entrySet()){
+                    if(containerHasNeededItem(entry.getValue())){
+                        this.blockPosStack.push(entry.getKey());
+                    }
                 }
 
                 if(blockPosStack.isEmpty()) {
                     if(storageArea != null) this.visited.add(storageArea.getUUID());
-                    setState(State.ERROR_STORAGE_NO_CONTAINERS);
+                    setState(State.ERROR_ITEM_NOT_IN_STORAGE);
                     return;
                 }
 
@@ -280,6 +291,20 @@ public class GetNeededItemsFromStorage extends AbstractChestGoal {
         }
 
         return true;
+    }
+
+    private boolean containerHasNeededItem(Container container) {
+        if (container == null) return false;
+        List<NeededItem> neededItems = worker.neededItems;
+        if (neededItems.isEmpty()) return false;
+        for (int i = 0; i < container.getContainerSize(); i++) {
+            ItemStack stack = container.getItem(i);
+            if (stack.isEmpty()) continue;
+            for (NeededItem needed : neededItems) {
+                if (needed.matches(stack)) return true;
+            }
+        }
+        return false;
     }
 
     public void setState(State state) {

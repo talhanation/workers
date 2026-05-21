@@ -49,6 +49,7 @@ public class CourierWorkGoal extends Goal {
     private int                         activeContainerIdx; // PICKUP: which source container
     private int                         activeSlotIdx;      // PICKUP: slot in source / DEPOSIT: slot in workInv
     private int                         activeTransferred;  // total items moved so far
+    private int                         activeFillLimit;    // FILL: pre-computed missing amount (target.count - alreadyInTargets)
 
     public CourierWorkGoal(CourierEntity courier){
         this.courier = courier;
@@ -183,6 +184,28 @@ public class CourierWorkGoal extends Goal {
         activeSlotIdx      = isDepositType(action.getActionType())
                 ? ((getWorkingInventory() == courier.getInventory()) ? 6 : 0)
                 : 0;
+
+        // FILL: pre-compute how many more of the item we need to put in (target wanted count − already present).
+        // If targets already meet/exceed the desired amount, skip the action entirely.
+        if (action.getActionType() == CourierAction.ActionType.FILL){
+            ItemStack tpl = action.getItemStack();
+            if (tpl == null || tpl.isEmpty()){
+                actionIndex++;
+                return;
+            }
+            int alreadyInTargets = 0;
+            for (Container dest : targets){
+                for (int j = 0; j < dest.getContainerSize(); j++){
+                    ItemStack s = dest.getItem(j);
+                    if (!s.isEmpty() && ItemStack.isSameItem(s, tpl)) alreadyInTargets += s.getCount();
+                }
+            }
+            activeFillLimit = Math.max(0, tpl.getCount() - alreadyInTargets);
+            if (activeFillLimit == 0){
+                actionIndex++;
+                return;
+            }
+        }
 
         state = State.TRANSFER_STEP;
     }
@@ -338,6 +361,9 @@ public class CourierWorkGoal extends Goal {
         if (type == CourierAction.ActionType.TAKE || type == CourierAction.ActionType.PUT){
             ItemStack tpl = activeAction.getItemStack();
             return (tpl != null) ? tpl.getCount() : Integer.MAX_VALUE;
+        }
+        if (type == CourierAction.ActionType.FILL){
+            return activeFillLimit;
         }
         return Integer.MAX_VALUE;
     }

@@ -46,6 +46,7 @@ public class BuilderWorkGoal extends Goal {
     public boolean errorMessageDone;
     public BlockPos blockPos;
     public Stack<BlockPos> stackToBreak;
+    public Stack<BlockPos> stackToFree;
     public Stack<BlockPos> stackToPlace;
     public int minBuildHeight;
 
@@ -92,6 +93,12 @@ public class BuilderWorkGoal extends Goal {
 
                 setState(State.PREPARE_PLACE_BLOCKS);
             }
+
+            if(state == State.FREE_AREA){
+                if(this.mineBlocks(this.stackToFree)) return;
+
+                setState(State.PREPARE_BREAK_BLOCKS);
+            }
         }
 
         if(builderEntity.tickCount % 5 != 0) return;
@@ -117,7 +124,38 @@ public class BuilderWorkGoal extends Goal {
                 this.blockPos = null;
                 if(this.moveToPosition(builderEntity.currentBuildArea.getOnPos(), 70)) return;
 
-                setState(State.PREPARE_BREAK_BLOCKS);
+                if(builderEntity.currentBuildArea.getFreeArea()){
+                    setState(State.PREPARE_FREE_AREA);
+                }
+                else{
+                    setState(State.PREPARE_BREAK_BLOCKS);
+                }
+            }
+
+            case PREPARE_FREE_AREA -> {
+                this.builderEntity.currentBuildArea.scanFreeArea();
+
+                this.stackToFree = this.builderEntity.currentBuildArea.stackToFree;
+
+                if(stackToFree.isEmpty()){
+                    setState(State.PREPARE_BREAK_BLOCKS);
+                    return;
+                }
+
+                boolean hasDigger = builderEntity.getInventory().hasAnyMatching(
+                        itemStack -> itemStack.getItem() instanceof DiggerItem);
+                if (!hasDigger) {
+                    builderEntity.addNeededItem(new NeededItem(
+                            stack -> stack.getItem() instanceof PickaxeItem, 1, true));
+                    this.blockPos = null;
+                    return;
+                }
+                if (!stackToFree.isEmpty()) {
+                    BlockState firstState = builderEntity.getCommandSenderWorld()
+                            .getBlockState(stackToFree.peek());
+                    builderEntity.changeTool(firstState);
+                }
+                setState(State.FREE_AREA);
             }
 
             case PREPARE_BREAK_BLOCKS -> {
@@ -613,6 +651,8 @@ public class BuilderWorkGoal extends Goal {
     public enum State{
         SELECT_WORK_AREA,
         MOVE_TO_WORK_AREA,
+        PREPARE_FREE_AREA,
+        FREE_AREA,
         PREPARE_BREAK_BLOCKS,
         BREAK_BLOCKS,
         PREPARE_PLACE_BLOCKS,

@@ -42,7 +42,9 @@ import java.util.*;
 
 public class BuildArea extends AbstractWorkAreaEntity {
     public static final EntityDataAccessor<CompoundTag> STRUCTURE = SynchedEntityData.defineId(BuildArea.class, EntityDataSerializers.COMPOUND_TAG);
+    public static final EntityDataAccessor<Boolean> FREE_AREA = SynchedEntityData.defineId(BuildArea.class, EntityDataSerializers.BOOLEAN);
     public Stack<BlockPos> stackToBreak = new Stack<>();
+    public Stack<BlockPos> stackToFree = new Stack<>();
     public Stack<BuildBlock> stackToPlace = new Stack<>();
     public Stack<BuildBlock> stackToPlaceMultiBlock = new Stack<>();
     public BuildArea(EntityType<?> type, Level level) {
@@ -52,16 +54,19 @@ public class BuildArea extends AbstractWorkAreaEntity {
     protected void defineSynchedData() {
         super.defineSynchedData();
         this.entityData.define(STRUCTURE, new CompoundTag());
+        this.entityData.define(FREE_AREA, false);
     }
     @Override
     public void readAdditionalSaveData(CompoundTag tag) {
         super.readAdditionalSaveData(tag);
         this.setStructureNBT(tag.getCompound("structureNBT"));
+        this.setFreeArea(tag.getBoolean("freeArea"));
     }
     @Override
     public void addAdditionalSaveData(CompoundTag tag) {
         super.addAdditionalSaveData(tag);
         tag.put("structureNBT", this.getStructureNBT());
+        tag.putBoolean("freeArea", this.getFreeArea());
     }
 
     @Override
@@ -244,6 +249,26 @@ public class BuildArea extends AbstractWorkAreaEntity {
                 stackToBreak.push(pos.immutable());
             }
         });
+    }
+
+    public void scanFreeArea() {
+        stackToFree.clear();
+        Level level = this.getCommandSenderWorld();
+
+        BlockPos.betweenClosedStream(getArea()).forEach(pos -> {
+            BlockState levelState = level.getBlockState(pos);
+            if (!levelState.isAir()) {
+                stackToFree.push(pos.immutable());
+            }
+        });
+    }
+
+    public boolean getFreeArea() {
+        return this.entityData.get(FREE_AREA);
+    }
+
+    public void setFreeArea(boolean freeArea) {
+        this.entityData.set(FREE_AREA, freeArea);
     }
 
     public static boolean canDirectlyReplace(BlockState levelState, BlockState buildingState) {

@@ -329,6 +329,7 @@ public class CourierScreen extends ScreenBase<CourierContainer> {
                         CourierAction.ActionType.PUT,
                         CourierAction.ActionType.PUT_ANY,
                         CourierAction.ActionType.PUT_ALL,
+                        CourierAction.ActionType.FILL,
                         CourierAction.ActionType.WAIT),
                 CourierAction.ActionType::displayLabel,
                 t -> {
