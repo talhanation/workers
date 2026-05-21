@@ -78,8 +78,14 @@ public class CookWorkGoal extends Goal {
             cook.currentKitchenArea = null;
         }
         cook.clearVillagerTrade();
-        cook.setFollowState(0);
         cook.getNavigation().stop();
+
+        // Only reset to wander if we are still in the working state.
+        // If the owner changed the follow state (e.g. follow = 2),
+        // do NOT override that command back to wander.
+        if (cook.getFollowState() == 6) {
+            cook.setFollowState(0);
+        }
     }
 
     @Override
@@ -355,8 +361,9 @@ public class CookWorkGoal extends Goal {
             cook.getNavigation().stop();
             return false;
         }
+        // Note: setFollowState is NOT called here — start() already set it to 6.
+        // Calling it here would override owner commands on every tick.
         cook.getNavigation().moveTo(pos.getX(), pos.getY(), pos.getZ(), 0.8F);
-        cook.setFollowState(6);
         cook.getLookControl().setLookAt(pos.getCenter());
         return true;
     }
