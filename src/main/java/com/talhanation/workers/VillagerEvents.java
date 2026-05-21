@@ -28,9 +28,13 @@ import net.minecraft.world.item.Items;
 import net.minecraft.world.item.crafting.Ingredient;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.phys.AABB;
+import net.minecraftforge.api.distmarker.Dist;
+import net.minecraftforge.api.distmarker.OnlyIn;
+import net.minecraftforge.client.event.ClientPlayerNetworkEvent;
 import net.minecraftforge.event.entity.EntityJoinLevelEvent;
+import net.minecraftforge.event.entity.player.PlayerEvent;
 import net.minecraftforge.event.entity.player.PlayerInteractEvent;
-import net.minecraftforge.event.server.ServerStartingEvent;
+import net.minecraftforge.event.server.ServerStartedEvent;
 import net.minecraftforge.event.server.ServerStoppingEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.network.PacketDistributor;
@@ -71,7 +75,17 @@ public class VillagerEvents {
         }
     }
     @SubscribeEvent
-    public void onServerStarting(ServerStartingEvent event) {
+    public void onServerStart(ServerStartedEvent event) {
+        registerWorkerTrades();
+    }
+
+    @SubscribeEvent
+    @OnlyIn(Dist.CLIENT)
+    public void onPlayerLogin(ClientPlayerNetworkEvent.LoggingIn event) {
+        registerWorkerTrades();
+    }
+
+    public static void registerWorkerTrades(){
         RecruitsHireTrade FARMER = new RecruitsHireTrade(ModEntityTypes.FARMER.getId(), WorkersServerConfig.FarmerCost.get(), TITLE_FARMER, DESCRIPTION_FARMER);
         RecruitsHireTrade LUMBERJACK = new RecruitsHireTrade(ModEntityTypes.LUMBERJACK.getId(), WorkersServerConfig.LumberjackCost.get(), TITLE_LUMBERJACK, DESCRIPTION_LUMBERJACK);
         RecruitsHireTrade MINER = new RecruitsHireTrade(ModEntityTypes.MINER.getId(), WorkersServerConfig.MinerCost.get(), TITLE_MINER, DESCRIPTION_MINER);
@@ -104,7 +118,6 @@ public class VillagerEvents {
         RecruitsHireTradesRegistry.addTrade("workers5", 1, MINER, LUMBERJACK);
         RecruitsHireTradesRegistry.addTrade("workers5", 2, BUILDER, COURIER);
         RecruitsHireTradesRegistry.addTrade("workers5", 3, MERCHANT);
-
     }
 
     @SubscribeEvent
