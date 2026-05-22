@@ -1,8 +1,5 @@
 package com.talhanation.workers.config;
 
-import com.talhanation.workers.config.BuildMode;
-import com.talhanation.workers.entities.FishermanEntity;
-import com.talhanation.workers.entities.LumberjackEntity;
 import net.minecraftforge.common.ForgeConfigSpec;
 import net.minecraftforge.fml.common.Mod;
 
@@ -33,6 +30,7 @@ public class WorkersServerConfig {
     public static ForgeConfigSpec.ConfigValue<List<String>> AnimalFarmerPickup;
     public static ForgeConfigSpec.ConfigValue<List<String>> LumberjackPickup;
     public static ForgeConfigSpec.ConfigValue<List<String>> FishermanPickup;
+    public static ForgeConfigSpec.BooleanValue WorkersReplaceAllay;
     public static ArrayList<String> FARMER_PICKUP = new ArrayList<>(
             Arrays.asList(
                     "minecraft:wheat",
@@ -253,6 +251,14 @@ public class WorkersServerConfig {
                         \t(takes effect after restart)""")
                 .worldRestart()
                 .defineEnum("BuildMode", BuildMode.FREE);
+
+        WorkersReplaceAllay = BUILDER.comment("""
+                        
+                        Should workers replace allay spawns. (In Pillager outposts and mansion)
+                        \t(takes effect after restart)
+                        \tdefault: true""")
+                .worldRestart()
+                .define("WorkersReplaceAllay", true);
 
         MinerPickup = BUILDER.comment("""
                         

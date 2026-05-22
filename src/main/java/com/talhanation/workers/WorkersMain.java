@@ -58,6 +58,7 @@ public class WorkersMain {
         // ModSounds.SOUNDS.register(modEventBus);
         ModItems.ITEMS.register(modEventBus);
         ModEntityTypes.ENTITY_TYPES.register(modEventBus);
+        ModEntityTypes.WORKER_TYPES.register(modEventBus);
 
         FMLJavaModLoadingContext.get().getModEventBus().addListener(this::addCreativeTabs);
 

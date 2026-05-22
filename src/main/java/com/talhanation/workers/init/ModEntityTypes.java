@@ -13,9 +13,10 @@ import net.minecraftforge.registries.RegistryObject;
 
 public class ModEntityTypes {
 
+        public static final DeferredRegister<EntityType<?>> WORKER_TYPES = DeferredRegister
+                        .create(ForgeRegistries.ENTITY_TYPES, WorkersMain.MOD_ID);
         public static final DeferredRegister<EntityType<?>> ENTITY_TYPES = DeferredRegister
                         .create(ForgeRegistries.ENTITY_TYPES, WorkersMain.MOD_ID);
-
         public static final RegistryObject<EntityType<CropArea>> CROPAREA = ENTITY_TYPES.register("croparea",
                 () -> EntityType.Builder.of(CropArea::new, MobCategory.MISC)
                         .sized(1.2F, 2.00F)
@@ -73,7 +74,7 @@ public class ModEntityTypes {
                     .build(new ResourceLocation(WorkersMain.MOD_ID, "homearea").toString()));
 
 
-    public static final RegistryObject<EntityType<AnimalFarmerEntity>> ANIMAL_FARMER = ENTITY_TYPES.register("animal_farmer",
+    public static final RegistryObject<EntityType<AnimalFarmerEntity>> ANIMAL_FARMER = WORKER_TYPES.register("animal_farmer",
                         () -> EntityType.Builder.of(AnimalFarmerEntity::new, MobCategory.CREATURE)
                                         .sized(0.6F, 1.95F)
                                         .canSpawnFarFromPlayer()
@@ -81,7 +82,7 @@ public class ModEntityTypes {
                                         .setShouldReceiveVelocityUpdates(true)
                                         .build(new ResourceLocation(WorkersMain.MOD_ID, "animal_farmer").toString()));
 
-        public static final RegistryObject<EntityType<LumberjackEntity>> LUMBERJACK = ENTITY_TYPES.register("lumberjack",
+        public static final RegistryObject<EntityType<LumberjackEntity>> LUMBERJACK = WORKER_TYPES.register("lumberjack",
                 () -> EntityType.Builder.of(LumberjackEntity::new, MobCategory.CREATURE)
                         .sized(0.6F, 1.95F)
                         .canSpawnFarFromPlayer()
@@ -89,7 +90,7 @@ public class ModEntityTypes {
                         .setShouldReceiveVelocityUpdates(true)
                         .build(new ResourceLocation(WorkersMain.MOD_ID, "lumberjack").toString()));
 
-        public static final RegistryObject<EntityType<FarmerEntity>> FARMER = ENTITY_TYPES.register("farmer",
+        public static final RegistryObject<EntityType<FarmerEntity>> FARMER = WORKER_TYPES.register("farmer",
                 () -> EntityType.Builder.of(FarmerEntity::new, MobCategory.CREATURE)
                         .sized(0.6F, 1.95F)
                         .canSpawnFarFromPlayer()
@@ -97,7 +98,7 @@ public class ModEntityTypes {
                         .setShouldReceiveVelocityUpdates(true)
                         .build(new ResourceLocation(WorkersMain.MOD_ID, "farmer").toString()));
 
-        public static final RegistryObject<EntityType<MinerEntity>> MINER = ENTITY_TYPES.register("miner",
+        public static final RegistryObject<EntityType<MinerEntity>> MINER = WORKER_TYPES.register("miner",
                 () -> EntityType.Builder.of(MinerEntity::new, MobCategory.CREATURE)
                         .sized(0.6F, 1.95F)
                         .canSpawnFarFromPlayer()
@@ -105,7 +106,7 @@ public class ModEntityTypes {
                         .setShouldReceiveVelocityUpdates(true)
                         .build(new ResourceLocation(WorkersMain.MOD_ID, "miner").toString()));
 
-        public static final RegistryObject<EntityType<BuilderEntity>> BUILDER = ENTITY_TYPES.register("builder",
+        public static final RegistryObject<EntityType<BuilderEntity>> BUILDER = WORKER_TYPES.register("builder",
                 () -> EntityType.Builder.of(BuilderEntity::new, MobCategory.CREATURE)
                         .sized(0.6F, 1.95F)
                         .canSpawnFarFromPlayer()
@@ -113,7 +114,7 @@ public class ModEntityTypes {
                         .setShouldReceiveVelocityUpdates(true)
                         .build(new ResourceLocation(WorkersMain.MOD_ID, "builder").toString()));
 
-       public static final RegistryObject<EntityType<MerchantEntity>> MERCHANT = ENTITY_TYPES.register("merchant",
+       public static final RegistryObject<EntityType<MerchantEntity>> MERCHANT = WORKER_TYPES.register("merchant",
                 () -> EntityType.Builder.of(MerchantEntity::new, MobCategory.CREATURE)
                         .sized(0.6F, 1.95F)
                         .canSpawnFarFromPlayer()
@@ -122,7 +123,7 @@ public class ModEntityTypes {
                         .build(new ResourceLocation(WorkersMain.MOD_ID, "merchant").toString()));
 
 
-       public static final RegistryObject<EntityType<FishermanEntity>> FISHERMAN = ENTITY_TYPES.register("fisherman",
+       public static final RegistryObject<EntityType<FishermanEntity>> FISHERMAN = WORKER_TYPES.register("fisherman",
                 () -> EntityType.Builder.of(FishermanEntity::new, MobCategory.CREATURE)
                         .sized(0.6F, 1.95F)
                         .canSpawnFarFromPlayer()
@@ -130,7 +131,7 @@ public class ModEntityTypes {
                         .setShouldReceiveVelocityUpdates(true)
                         .build(new ResourceLocation(WorkersMain.MOD_ID, "fisherman").toString()));
 
-       public static final RegistryObject<EntityType<CookEntity>> COOK = ENTITY_TYPES.register("cook",
+       public static final RegistryObject<EntityType<CookEntity>> COOK = WORKER_TYPES.register("cook",
                 () -> EntityType.Builder.of(CookEntity::new, MobCategory.CREATURE)
                         .sized(0.6F, 1.95F)
                         .canSpawnFarFromPlayer()
@@ -145,7 +146,7 @@ public class ModEntityTypes {
                                 .updateInterval(5)
                                 .build(new ResourceLocation(WorkersMain.MOD_ID, "fishing_bobber").toString()));
 
-        public static final RegistryObject<EntityType<CourierEntity>> COURIER = ENTITY_TYPES.register("courier",
+        public static final RegistryObject<EntityType<CourierEntity>> COURIER = WORKER_TYPES.register("courier",
                 () -> EntityType.Builder.of(CourierEntity::new, MobCategory.MISC)
                         .sized(0.6F, 1.95F)
                         .canSpawnFarFromPlayer()

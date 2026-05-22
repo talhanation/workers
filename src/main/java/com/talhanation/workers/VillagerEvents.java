@@ -1,12 +1,11 @@
 package com.talhanation.workers;
 
+import com.talhanation.workers.entities.AbstractWorkerEntity;
 import com.talhanation.workers.entities.ai.VillagerPickupFoodGoal;
-import com.talhanation.workers.entities.ai.VillagerRespondToMerchantGoal;
-import com.talhanation.workers.entities.ai.VillagerRespondToCookGoal;
+import com.talhanation.workers.entities.ai.VillagerRespondToInvitationGoal;
 import com.talhanation.workers.entities.ai.animals.WorkerTemptGoal;
 import com.talhanation.workers.entities.workarea.AbstractWorkAreaEntity;
 import com.talhanation.workers.entities.workarea.IPermissionArea;
-import com.talhanation.workers.entities.workarea.MarketArea;
 import com.talhanation.workers.init.ModEntityTypes;
 import com.talhanation.recruits.world.RecruitsHireTradesRegistry;
 import com.talhanation.workers.network.MessageToClientUpdateConfig;
@@ -15,13 +14,16 @@ import com.talhanation.workers.config.WorkersServerConfig;
 import com.talhanation.workers.world.VillagerInviteRegistry;
 import net.minecraft.core.BlockPos;
 import net.minecraft.network.chat.Component;
+import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.Container;
 import net.minecraft.world.entity.Entity;
+import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.animal.Chicken;
 import net.minecraft.world.entity.animal.Cow;
 import net.minecraft.world.entity.animal.Pig;
 import net.minecraft.world.entity.animal.Sheep;
+import net.minecraft.world.entity.animal.allay.Allay;
 import net.minecraft.world.entity.npc.Villager;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.Items;
@@ -32,12 +34,12 @@ import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
 import net.minecraftforge.client.event.ClientPlayerNetworkEvent;
 import net.minecraftforge.event.entity.EntityJoinLevelEvent;
-import net.minecraftforge.event.entity.player.PlayerEvent;
 import net.minecraftforge.event.entity.player.PlayerInteractEvent;
 import net.minecraftforge.event.server.ServerStartedEvent;
 import net.minecraftforge.event.server.ServerStoppingEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.network.PacketDistributor;
+import net.minecraftforge.registries.RegistryObject;
 
 import java.util.List;
 import java.util.UUID;
@@ -127,6 +129,8 @@ public class VillagerEvents {
 
     @SubscribeEvent
     public void onAnimalJoinWorld(EntityJoinLevelEvent event) {
+        if(event.getLevel().isClientSide()) return;
+
         Entity entity = event.getEntity();
 
         if (entity instanceof Chicken chicken) {
@@ -142,9 +146,32 @@ public class VillagerEvents {
             pig.goalSelector.addGoal(3, new WorkerTemptGoal(pig,1.0, Pig.FOOD_ITEMS));
         }
         else if(entity instanceof Villager villager) {
-            villager.goalSelector.addGoal(4, new VillagerRespondToMerchantGoal(villager));
-            villager.goalSelector.addGoal(4, new VillagerRespondToCookGoal(villager));
+            villager.goalSelector.addGoal(4, new VillagerRespondToInvitationGoal(villager));
             villager.goalSelector.addGoal(4, new VillagerPickupFoodGoal(villager));
+        }
+        else if(entity instanceof Allay allay){
+            if (WorkersServerConfig.WorkersReplaceAllay.get()){
+                createWorkerFromAllay(allay);
+            }
+
+        }
+    }
+
+    private void createWorkerFromAllay(Allay allay) {
+        List<RegistryObject<EntityType<?>>> types = ModEntityTypes.WORKER_TYPES.getEntries().stream().toList();
+
+        int rnd = allay.getRandom().nextInt(types.size() -1);
+        var type = types.get(rnd).get().create(allay.getCommandSenderWorld());
+
+        if(type instanceof AbstractWorkerEntity worker){
+            worker.copyPosition(allay);
+
+            worker.initSpawn();
+
+            allay.remove(Entity.RemovalReason.DISCARDED);
+            worker.getInventory().setItem(8, Items.BREAD.getDefaultInstance());
+            allay.remove(Entity.RemovalReason.DISCARDED);
+            allay.getCommandSenderWorld().addFreshEntity(worker);
         }
     }
 
