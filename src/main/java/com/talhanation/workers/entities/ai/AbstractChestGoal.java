@@ -144,4 +144,11 @@ public abstract class AbstractChestGoal extends Goal {
         return true;
     }
 
+    @Override
+    public void stop() {
+        if (this.chestPos != null && this.container != null) {
+            this.interactChest(this.container, false);
+        }
+    }
+
 }
