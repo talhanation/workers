@@ -325,15 +325,6 @@ public class BuildAreaScreen extends WorkAreaScreen {
 
                 addRenderableWidget(requiredItemsDropDownMenu);
 
-                this.freeAreaCheckBox = new RecruitsCheckBox(x + 101, y + 90, 110, 20, TEXT_FREE_AREA,
-                        this.freeArea,
-                        (bool) -> {
-                            this.freeArea = bool;
-                            WorkersMain.SIMPLE_CHANNEL.sendToServer(new MessageUpdateBuildArea(this.buildArea.getUUID(), areaWidthSize, areaHeightSize, areaDepthSize, structureNBT, false, false, freeArea));
-                        }
-                );
-                addRenderableWidget(freeAreaCheckBox);
-
                 structurePreview = new StructurePreviewWidget(x - previewWidth / 2, y - previewHeight / 2 + 130, previewWidth, previewHeight, buildArea.getWidthSize(), buildArea.getDepthSize());
                 addRenderableWidget(structurePreview);
                 if (structure != null) structurePreview.setStructure(this.structure, this.structureNBT);
@@ -352,6 +343,16 @@ public class BuildAreaScreen extends WorkAreaScreen {
         addRenderableWidget(new BlackShowingTextField(blackBoxPosX + blackboxWidth, blackBoxPosY + 21, blackboxWidth2, blackboxHeight, Component.literal("" + areaWidthSize)));
         addRenderableWidget(new BlackShowingTextField(blackBoxPosX + blackboxWidth, blackBoxPosY + 41, blackboxWidth2, blackboxHeight, Component.literal("" + areaHeightSize)));
         addRenderableWidget(new BlackShowingTextField(blackBoxPosX + blackboxWidth, blackBoxPosY + 61, blackboxWidth2, blackboxHeight, Component.literal("" + areaDepthSize)));
+
+        // Free Area checkbox — directly under the xyz showing boxes
+        this.freeAreaCheckBox = new RecruitsCheckBox(blackBoxPosX, blackBoxPosY + 81, 100, 20, TEXT_FREE_AREA,
+                this.freeArea,
+                (bool) -> {
+                    this.freeArea = bool;
+                    WorkersMain.SIMPLE_CHANNEL.sendToServer(new MessageUpdateBuildArea(this.buildArea.getUUID(), areaWidthSize, areaHeightSize, areaDepthSize, structureNBT, false, false, freeArea));
+                }
+        );
+        addRenderableWidget(freeAreaCheckBox);
     }
 
     private void setStructure(List<ScannedBlock> structure, CompoundTag structureNBT) {

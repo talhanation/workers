@@ -84,7 +84,7 @@ public class BuilderWorkGoal extends Goal {
             return;
         }
 
-        if(builderEntity.tickCount % 20 == 0){
+        if(builderEntity.tickCount % 10 == 0){
             if(blockPos != null && moveToPosition(blockPos, 40)) return;
 
 
@@ -95,8 +95,9 @@ public class BuilderWorkGoal extends Goal {
             }
 
             if(state == State.FREE_AREA){
-                if(this.mineBlocks(this.stackToFree)) return;
+                if(this.mineFreeBlocks(this.stackToFree)) return;
 
+                this.builderEntity.currentBuildArea.setFreeAreaDone(true);
                 setState(State.PREPARE_BREAK_BLOCKS);
             }
         }
@@ -124,7 +125,7 @@ public class BuilderWorkGoal extends Goal {
                 this.blockPos = null;
                 if(this.moveToPosition(builderEntity.currentBuildArea.getOnPos(), 70)) return;
 
-                if(builderEntity.currentBuildArea.getFreeArea()){
+                if(builderEntity.currentBuildArea.getFreeArea() && !builderEntity.currentBuildArea.getFreeAreaDone()){
                     setState(State.PREPARE_FREE_AREA);
                 }
                 else{
@@ -311,6 +312,32 @@ public class BuilderWorkGoal extends Goal {
     }
 
     int blockBreakTime;
+    public boolean mineFreeBlocks(Stack<BlockPos> positions){
+        if(positions == null) return false;
+
+        if(blockPos == null){
+            if(positions.isEmpty()) return false;
+            blockPos = positions.pop();
+            return true;
+        }
+
+        BlockState state = builderEntity.getCommandSenderWorld().getBlockState(blockPos);
+        if(state.isAir() || builderEntity.shouldIgnoreBlock(state)){
+            if(positions.isEmpty()){
+                this.blockPos = null;
+                return false;
+            }
+            blockPos = positions.pop();
+            blockBreakTime = 0;
+            return true;
+        }
+
+        this.builderEntity.changeTool(state);
+        this.builderEntity.mineBlock(blockPos);
+        this.builderEntity.swing(InteractionHand.MAIN_HAND);
+        return true;
+    }
+
     public boolean mineBlocks(Stack<BlockPos> positions){
         if(positions != null){
             if(blockPos == null){

@@ -43,6 +43,8 @@ import java.util.*;
 public class BuildArea extends AbstractWorkAreaEntity {
     public static final EntityDataAccessor<CompoundTag> STRUCTURE = SynchedEntityData.defineId(BuildArea.class, EntityDataSerializers.COMPOUND_TAG);
     public static final EntityDataAccessor<Boolean> FREE_AREA = SynchedEntityData.defineId(BuildArea.class, EntityDataSerializers.BOOLEAN);
+    /** Server-side flag: true once the FREE_AREA step has been completed for the current build. */
+    public boolean freeAreaDone;
     public Stack<BlockPos> stackToBreak = new Stack<>();
     public Stack<BlockPos> stackToFree = new Stack<>();
     public Stack<BuildBlock> stackToPlace = new Stack<>();
@@ -61,12 +63,22 @@ public class BuildArea extends AbstractWorkAreaEntity {
         super.readAdditionalSaveData(tag);
         this.setStructureNBT(tag.getCompound("structureNBT"));
         this.setFreeArea(tag.getBoolean("freeArea"));
+        this.freeAreaDone = tag.getBoolean("freeAreaDone");
     }
     @Override
     public void addAdditionalSaveData(CompoundTag tag) {
         super.addAdditionalSaveData(tag);
         tag.put("structureNBT", this.getStructureNBT());
         tag.putBoolean("freeArea", this.getFreeArea());
+        tag.putBoolean("freeAreaDone", this.freeAreaDone);
+    }
+
+    public boolean getFreeAreaDone() {
+        return this.freeAreaDone;
+    }
+
+    public void setFreeAreaDone(boolean done) {
+        this.freeAreaDone = done;
     }
 
     @Override
@@ -97,6 +109,7 @@ public class BuildArea extends AbstractWorkAreaEntity {
     public void setStartBuild(boolean isCreative) {
         stackToPlace.clear();
         stackToPlaceMultiBlock.clear();
+        this.freeAreaDone = false;
 
         CompoundTag tag = getStructureNBT();
         if (tag == null || !tag.contains("blocks", Tag.TAG_LIST)) return;
@@ -255,12 +268,17 @@ public class BuildArea extends AbstractWorkAreaEntity {
         stackToFree.clear();
         Level level = this.getCommandSenderWorld();
 
+        java.util.List<BlockPos> found = new java.util.ArrayList<>();
         BlockPos.betweenClosedStream(getArea()).forEach(pos -> {
             BlockState levelState = level.getBlockState(pos);
             if (!levelState.isAir()) {
-                stackToFree.push(pos.immutable());
+                found.add(pos.immutable());
             }
         });
+
+        // Sort ascending by Y, then push — stack pops highest Y first → top-down mining.
+        found.sort(java.util.Comparator.comparingInt(BlockPos::getY));
+        for (BlockPos p : found) stackToFree.push(p);
     }
 
     public boolean getFreeArea() {

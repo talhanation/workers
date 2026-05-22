@@ -15,6 +15,8 @@ import net.minecraft.world.item.BlockItem;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
 import net.minecraft.world.item.PickaxeItem;
+import net.minecraft.world.item.ShovelItem;
+import net.minecraft.tags.BlockTags;
 import net.minecraft.world.level.ClipContext;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Blocks;
@@ -137,9 +139,11 @@ public class MinerWorkGoal extends Goal {
                     return;
                 }
 
-                boolean hasShovel = minerEntity.getInventory().hasAnyMatching(itemStack -> itemStack.getItem() instanceof PickaxeItem);
-                if(!hasShovel){
-                    minerEntity.addNeededItem(new NeededItem(stack -> stack.getItem() instanceof PickaxeItem, 1, true));
+                boolean areaHasShovelBlocks = stackToBreak.stream().anyMatch(pos ->
+                        minerEntity.getCommandSenderWorld().getBlockState(pos).is(BlockTags.MINEABLE_WITH_SHOVEL));
+                boolean hasShovel = minerEntity.getInventory().hasAnyMatching(itemStack -> itemStack.getItem() instanceof ShovelItem);
+                if(areaHasShovelBlocks && !hasShovel){
+                    minerEntity.addNeededItem(new NeededItem(stack -> stack.getItem() instanceof ShovelItem, 1, true));
                     this.blockPos = null;
                     return;
                 }
