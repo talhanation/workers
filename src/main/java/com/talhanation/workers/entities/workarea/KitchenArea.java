@@ -31,6 +31,9 @@ public class KitchenArea extends AbstractWorkAreaEntity implements IPermissionAr
     public static final EntityDataAccessor<Boolean> FEED_VILLAGERS = SynchedEntityData.defineId(KitchenArea.class, EntityDataSerializers.BOOLEAN);
     public static final EntityDataAccessor<Integer> FURNACE_COUNT     = SynchedEntityData.defineId(KitchenArea.class, EntityDataSerializers.INT);
     public static final EntityDataAccessor<Integer> CONTAINER_COUNT   = SynchedEntityData.defineId(KitchenArea.class, EntityDataSerializers.INT);
+    public static final EntityDataAccessor<String>  COOK_NAME         = SynchedEntityData.defineId(KitchenArea.class, EntityDataSerializers.STRING);
+    public static final EntityDataAccessor<Integer> TOTAL_SLOTS       = SynchedEntityData.defineId(KitchenArea.class, EntityDataSerializers.INT);
+    public static final EntityDataAccessor<Integer> FREE_SLOTS        = SynchedEntityData.defineId(KitchenArea.class, EntityDataSerializers.INT);
 
     public Map<BlockPos, AbstractFurnaceBlockEntity> furnaceMap   = new HashMap<>();
     public Map<BlockPos, Container>                  containerMap = new HashMap<>();
@@ -45,19 +48,28 @@ public class KitchenArea extends AbstractWorkAreaEntity implements IPermissionAr
         this.entityData.define(FEED_VILLAGERS, true);
         this.entityData.define(FURNACE_COUNT, 0);
         this.entityData.define(CONTAINER_COUNT, 0);
+        this.entityData.define(COOK_NAME, "None");
+        this.entityData.define(TOTAL_SLOTS, 0);
+        this.entityData.define(FREE_SLOTS, 0);
     }
 
     @Override
     public void readAdditionalSaveData(CompoundTag tag) {
         super.readAdditionalSaveData(tag);
-        this.setFeedVillagers(tag.getBoolean("feedVillagers"));
+        // Read new key first, fall back to the old (buggy) key so existing saves keep their setting.
+        if (tag.contains("feedVillagers")) {
+            this.setFeedVillagers(tag.getBoolean("feedVillagers"));
+        } else if (tag.contains("sellToVillagers")) {
+            this.setFeedVillagers(tag.getBoolean("sellToVillagers"));
+        }
         setBeingWorkedOn(false);
+        this.setCookName("None");
     }
 
     @Override
     public void addAdditionalSaveData(CompoundTag tag) {
         super.addAdditionalSaveData(tag);
-        tag.putBoolean("sellToVillagers", this.getFeedVillagers());
+        tag.putBoolean("feedVillagers", this.getFeedVillagers());
     }
 
     @Override
@@ -102,6 +114,16 @@ public class KitchenArea extends AbstractWorkAreaEntity implements IPermissionAr
 
         this.setFurnaceCount(furnaceMap.size());
         this.setContainerCount(containerMap.size());
+        this.setTotalSlots(containerMap.values().stream().mapToInt(Container::getContainerSize).sum());
+        this.setFreeSlots(containerMap.values().stream().mapToInt(this::countEmptySpace).sum());
+    }
+
+    public int countEmptySpace(Container container) {
+        int empty = 0;
+        for (int j = 0; j < container.getContainerSize(); ++j) {
+            if (container.getItem(j).isEmpty()) empty++;
+        }
+        return empty;
     }
 
     public boolean hasMinimumSetup() {
@@ -233,4 +255,13 @@ public class KitchenArea extends AbstractWorkAreaEntity implements IPermissionAr
 
     public int getContainerCount()            { return this.entityData.get(CONTAINER_COUNT); }
     public void setContainerCount(int x)      { this.entityData.set(CONTAINER_COUNT, x); }
+
+    public String getCookName()               { return this.entityData.get(COOK_NAME); }
+    public void setCookName(String name)      { this.entityData.set(COOK_NAME, name); }
+
+    public int getTotalSlots()                { return this.entityData.get(TOTAL_SLOTS); }
+    public void setTotalSlots(int x)          { this.entityData.set(TOTAL_SLOTS, x); }
+
+    public int getFreeSlots()                 { return this.entityData.get(FREE_SLOTS); }
+    public void setFreeSlots(int x)           { this.entityData.set(FREE_SLOTS, x); }
 }

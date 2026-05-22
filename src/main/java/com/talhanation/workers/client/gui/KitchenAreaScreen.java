@@ -23,6 +23,9 @@ public class KitchenAreaScreen extends WorkAreaScreen {
     public final KitchenArea kitchenArea;
     private RecruitsCheckBox feedVillagersCheckBox;
     private boolean feedVillagers;
+    private String cookName;
+    private int freeSlots;
+    private int totalSlots;
 
     public KitchenAreaScreen(KitchenArea kitchenArea, Player player) {
         super(Component.translatable("entity.workers.kitchen"), kitchenArea, player);
@@ -33,6 +36,9 @@ public class KitchenAreaScreen extends WorkAreaScreen {
     @Override
     protected void init() {
         super.init();
+        this.cookName   = kitchenArea.getCookName();
+        this.freeSlots  = kitchenArea.getFreeSlots();
+        this.totalSlots = kitchenArea.getTotalSlots();
         setButtons();
     }
 
@@ -45,26 +51,20 @@ public class KitchenAreaScreen extends WorkAreaScreen {
         int bx = x - w / 2;
         int by = y + h / 2 + 42;
 
-        String chefName = kitchenArea.isBeingWorkedOn()
-                ? TEXT_CHEF_PRESENT.getString()
-                : TEXT_NO_CHEF.getString();
-
-        addRenderableWidget(new BlackShowingTextField(bx, by + 10, w, h,
+        addRenderableWidget(new BlackShowingTextField(bx, by + 10, w / 2, h,
                 Component.literal(TEXT_CHEF.getString() + ":")));
-
         addRenderableWidget(new BlackShowingTextField(bx + w / 2, by + 10, w / 2, h,
-                Component.literal(chefName)));
+                Component.literal("" + this.cookName)));
 
-        addRenderableWidget(new BlackShowingTextField(bx, by + 30, w, h,
+        addRenderableWidget(new BlackShowingTextField(bx, by + 30, w / 2, h,
                 Component.literal(TEXT_FURNACES.getString() + ":")));
-
         addRenderableWidget(new BlackShowingTextField(bx + w / 2, by + 30, w / 2, h,
                 Component.literal("" + kitchenArea.getFurnaceCount())));
 
-        addRenderableWidget(new BlackShowingTextField(bx, by + 50, w, h,
+        addRenderableWidget(new BlackShowingTextField(bx, by + 50, w / 2, h,
                 Component.literal(TEXT_CONTAINERS.getString() + ":")));
         addRenderableWidget(new BlackShowingTextField(bx + w / 2, by + 50, w / 2, h,
-                Component.literal("" + kitchenArea.getContainerCount())));
+                Component.literal("" + this.freeSlots + " / " + this.totalSlots)));
 
         feedVillagersCheckBox = new RecruitsCheckBox(bx, by + 75, w, h,
                 TEXT_FEED_VILLAGERS,

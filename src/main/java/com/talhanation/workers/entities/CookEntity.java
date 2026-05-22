@@ -4,6 +4,7 @@ import com.talhanation.recruits.entities.AbstractRecruitEntity;
 import com.talhanation.recruits.pathfinding.AsyncGroundPathNavigation;
 import com.talhanation.workers.config.WorkersServerConfig;
 import com.talhanation.workers.entities.ai.CookWorkGoal;
+import com.talhanation.workers.entities.ai.ICanInviteVillager;
 import com.talhanation.workers.entities.workarea.AbstractWorkAreaEntity;
 import com.talhanation.workers.entities.workarea.KitchenArea;
 import com.talhanation.workers.world.VillagerInviteRegistry;
@@ -29,7 +30,7 @@ import javax.annotation.Nullable;
 import java.util.List;
 import java.util.function.Predicate;
 
-public class CookEntity extends AbstractWorkerEntity {
+public class CookEntity extends AbstractWorkerEntity implements ICanInviteVillager {
 
     private final Predicate<ItemEntity> ALLOWED_ITEMS = (item) ->
             (!item.hasPickUpDelay() && item.isAlive() && getInventory().canAddItem(item.getItem()) && this.wantsToPickUp(item.getItem()));
@@ -118,5 +119,20 @@ public class CookEntity extends AbstractWorkerEntity {
         }
         this.activeTradingVillager = null;
         this.villagerTradeTimeout  = 0;
+    }
+
+    @Override
+    public AbstractWorkerEntity getWorker() {
+        return this;
+    }
+
+    @Override
+    public void setActiveTradingVillager(Villager villager) {
+        this.activeTradingVillager = villager;
+    }
+
+    @Override
+    public Villager getActiveTradingVillager() {
+        return this.activeTradingVillager;
     }
 }

@@ -1,5 +1,6 @@
 package com.talhanation.workers.entities.ai;
 
+import com.talhanation.workers.entities.AbstractWorkerEntity;
 import com.talhanation.workers.entities.MerchantEntity;
 import com.talhanation.workers.world.VillagerInviteRegistry;
 import net.minecraft.server.level.ServerLevel;
@@ -11,12 +12,12 @@ import javax.annotation.Nullable;
 import java.util.EnumSet;
 import java.util.UUID;
 
-public class VillagerRespondToMerchantGoal extends Goal {
+public class VillagerRespondToInvitationGoal extends Goal {
 
     private final Villager villager;
-    @Nullable private MerchantEntity invitingMerchant;
+    @Nullable private ICanInviteVillager invitingWorker;
 
-    public VillagerRespondToMerchantGoal(Villager villager) {
+    public VillagerRespondToInvitationGoal(Villager villager) {
         this.villager = villager;
         setFlags(EnumSet.of(Flag.MOVE));
     }
@@ -25,20 +26,20 @@ public class VillagerRespondToMerchantGoal extends Goal {
     public boolean canUse() {
         if(villager.level().isClientSide()) return false;
         if(villager.isSleeping() || villager.isTrading()) return false;
-        invitingMerchant = findInvitingMerchant();
-        return invitingMerchant != null;
+        invitingWorker = findInvitingWorker();
+        return invitingWorker != null;
     }
 
     @Override
     public boolean canContinueToUse() {
-        return invitingMerchant != null
-                && !invitingMerchant.isRemoved()
-                && villager.equals(invitingMerchant.activeTradingVillager);
+        return invitingWorker != null
+                && !invitingWorker.getWorker().isRemoved()
+                && villager.equals(invitingWorker.getActiveTradingVillager());
     }
 
     @Override
     public void stop() {
-        invitingMerchant = null;
+        invitingWorker = null;
         villager.getNavigation().stop();
     }
 
@@ -49,25 +50,25 @@ public class VillagerRespondToMerchantGoal extends Goal {
 
     @Override
     public void tick() {
-        if(invitingMerchant == null) return;
+        if(invitingWorker == null) return;
 
-        if(villager.distanceTo(invitingMerchant) > 2.5) {
-            villager.getNavigation().moveTo(invitingMerchant, 0.6);
+        if(villager.distanceTo(invitingWorker.getWorker()) > 2.5) {
+            villager.getNavigation().moveTo(invitingWorker.getWorker(), 0.6);
         }
         else {
             villager.getNavigation().stop();
-            villager.getLookControl().setLookAt(invitingMerchant, 30, 30);
+            villager.getLookControl().setLookAt(invitingWorker.getWorker(), 30, 30);
         }
     }
 
     @Nullable
-    private MerchantEntity findInvitingMerchant() {
-        UUID merchantUUID = VillagerInviteRegistry.getInvitedBy(villager.getUUID());
-        if(merchantUUID == null) return null;
+    private ICanInviteVillager findInvitingWorker() {
+        UUID workerUUID = VillagerInviteRegistry.getInvitedBy(villager.getUUID());
+        if(workerUUID == null) return null;
 
-        Entity entity = ((ServerLevel) villager.level()).getEntity(merchantUUID);
-        if(entity instanceof MerchantEntity merchant && !merchant.isRemoved()) {
-            return merchant;
+        Entity entity = ((ServerLevel) villager.level()).getEntity(workerUUID);
+        if(entity instanceof ICanInviteVillager inviter && !inviter.getWorker().isRemoved()) {
+            return inviter;
         }
 
         VillagerInviteRegistry.release(villager.getUUID());

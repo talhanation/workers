@@ -5,6 +5,7 @@ import com.talhanation.recruits.entities.ICanTradeEmbargo;
 import com.talhanation.recruits.pathfinding.AsyncGroundPathNavigation;
 import com.talhanation.workers.WorkersMain;
 import com.talhanation.workers.config.WorkersServerConfig;
+import com.talhanation.workers.entities.ai.ICanInviteVillager;
 import com.talhanation.workers.entities.ai.MerchantWorkGoal;
 import com.talhanation.workers.entities.workarea.AbstractWorkAreaEntity;
 import com.talhanation.workers.entities.workarea.MarketArea;
@@ -50,7 +51,7 @@ import java.util.List;
 import java.util.UUID;
 import java.util.function.Predicate;
 
-public class MerchantEntity extends AbstractWorkerEntity implements ICanTradeEmbargo {
+public class MerchantEntity extends AbstractWorkerEntity implements ICanTradeEmbargo, ICanInviteVillager {
     private static final EntityDataAccessor<CompoundTag> TRADES = SynchedEntityData.defineId(MerchantEntity.class, EntityDataSerializers.COMPOUND_TAG);
     private static final EntityDataAccessor<Integer> TRADER_PROGRESS = SynchedEntityData.defineId(MerchantEntity.class, EntityDataSerializers.INT);
     private static final EntityDataAccessor<Integer> TRADER_LEVEL = SynchedEntityData.defineId(MerchantEntity.class, EntityDataSerializers.INT);
@@ -658,6 +659,21 @@ public class MerchantEntity extends AbstractWorkerEntity implements ICanTradeEmb
             return super.hurt(dmg, amt);
         }
         else return false;
+    }
+
+    @Override
+    public AbstractWorkerEntity getWorker() {
+        return this;
+    }
+
+    @Override
+    public void setActiveTradingVillager(Villager villager) {
+        this.activeTradingVillager = villager;
+    }
+
+    @Override
+    public Villager getActiveTradingVillager() {
+        return this.activeTradingVillager;
     }
 
     public Component TEXT_NO_ITEM_LEFT(String s){
