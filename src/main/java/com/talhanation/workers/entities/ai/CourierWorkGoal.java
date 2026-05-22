@@ -502,8 +502,7 @@ public class CourierWorkGoal extends Goal {
     }
 
     private void notifyOwner(Component msg){
-        Player owner = courier.getOwner();
-        if (owner != null) owner.sendSystemMessage(msg);
+        courier.notifyOwner(msg);
     }
 
     private void playChestSound(Container container){

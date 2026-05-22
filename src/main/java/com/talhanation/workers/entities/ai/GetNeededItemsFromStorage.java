@@ -182,9 +182,7 @@ public class GetNeededItemsFromStorage extends AbstractChestGoal {
 
             case ERROR_NO_STORAGE_FOUND -> {
                 if(!errorMessageDone) {
-                    if (worker.getOwner() != null){
-                        worker.getOwner().sendSystemMessage(Component.literal(worker.getName().getString() + ": No available storage found nearby... I need "  + worker.neededItems));
-                    }
+                    worker.notifyOwner(Component.literal(worker.getName().getString() + ": No available storage found nearby... I need "  + worker.neededItems));
 
                     worker.neededItems.removeIf(neededItem -> neededItem.required);
                     errorMessageDone = true;
@@ -203,8 +201,8 @@ public class GetNeededItemsFromStorage extends AbstractChestGoal {
 
             case ERROR_ITEM_NOT_IN_STORAGE -> {
                 if(!errorMessageDone){
-                    if(worker.getOwner() != null && storageArea != null)
-                        worker.getOwner().sendSystemMessage(Component.literal(worker.getName().getString() + ": Storage [" + storageArea.getName().getString() + "] has no: " + worker.neededItems));
+                    if(storageArea != null)
+                        worker.notifyOwner(Component.literal(worker.getName().getString() + ": Storage [" + storageArea.getName().getString() + "] has no: " + worker.neededItems));
                     errorMessageDone = true;
                 }
                 itemNotInStorage = true;
@@ -218,7 +216,7 @@ public class GetNeededItemsFromStorage extends AbstractChestGoal {
 
             case ERROR_STORAGE_NO_CONTAINERS -> {
                 if(!errorMessageDone){
-                    if(worker.getOwner() != null && storageArea != null) worker.getOwner().sendSystemMessage(Component.literal(worker.getName().getString() + ": Storage [" + storageArea.getName().getString() + "] has no containers!"));
+                    if(storageArea != null) worker.notifyOwner(Component.literal(worker.getName().getString() + ": Storage [" + storageArea.getName().getString() + "] has no containers!"));
                     errorMessageDone = true;
                 }
 
@@ -228,7 +226,7 @@ public class GetNeededItemsFromStorage extends AbstractChestGoal {
             case ERROR_OWN_INVENTORY_FULL -> {
                 if(!errorMessageDone){
                     errorMessageDone = true;
-                    if(worker.getOwner() != null) worker.getOwner().sendSystemMessage(Component.literal(worker.getName().getString() + ": My Inventory is full!"));
+                    worker.notifyOwner(Component.literal(worker.getName().getString() + ": My Inventory is full!"));
 
                     worker.forcedDeposit = true;
                 }

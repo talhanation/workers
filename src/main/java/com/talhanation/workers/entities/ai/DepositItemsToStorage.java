@@ -172,7 +172,7 @@ public class DepositItemsToStorage extends AbstractChestGoal {
 
             case ERROR_NO_STORAGE_FOUND -> {
                 if(!errorMessageDone){
-                    if(worker.getOwner() != null) worker.getOwner().sendSystemMessage(Component.literal("No available Storage found nearby."));
+                    worker.notifyOwner(Component.literal("No available Storage found nearby."));
                     errorMessageDone = true;
                 }
 
@@ -184,7 +184,7 @@ public class DepositItemsToStorage extends AbstractChestGoal {
 
             case ERROR_STORAGE_FULL -> {
                 if(!errorMessageDone){
-                    if(worker.getOwner() != null && storageArea != null) worker.getOwner().sendSystemMessage(Component.literal("" + storageArea.getName().getString() + " is full!"));
+                    if(storageArea != null) worker.notifyOwner(Component.literal("" + storageArea.getName().getString() + " is full!"));
                     errorMessageDone = true;
                 }
                 if(storageArea != null) this.visited.add(storageArea.getUUID());
@@ -193,7 +193,7 @@ public class DepositItemsToStorage extends AbstractChestGoal {
 
             case ERROR_STORAGE_NO_CONTAINERS -> {
                 if(!errorMessageDone){
-                    if(worker.getOwner() != null && storageArea != null) worker.getOwner().sendSystemMessage(Component.literal("" + storageArea.getName().getString() + " has no containers!"));
+                    if(storageArea != null) worker.notifyOwner(Component.literal("" + storageArea.getName().getString() + " has no containers!"));
                     errorMessageDone = true;
                 }
 

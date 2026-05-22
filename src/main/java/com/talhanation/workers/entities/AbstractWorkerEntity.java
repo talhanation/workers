@@ -406,6 +406,38 @@ public abstract class AbstractWorkerEntity extends AbstractChunkLoaderEntity {
         return neededItems.stream().anyMatch(neededItem -> neededItem.required);
     }
 
+    private long lastNotifyDay = Long.MIN_VALUE;
+    private boolean notifyGateOpen = true;
+
+    public void resetNotifyGate() {
+        this.notifyGateOpen = true;
+    }
+
+    public boolean canNotifyOwner() {
+        long day = this.getCommandSenderWorld().getDayTime() / 24000L;
+        if (day != lastNotifyDay) return true; // a new day always re-opens the gate
+        return notifyGateOpen;
+    }
+
+    public void notifyOwner(Component message) {
+        if (!canNotifyOwner()) return;
+        Player owner = this.getOwner();
+        if (owner != null) {
+            owner.sendSystemMessage(message);
+            this.lastNotifyDay = this.getCommandSenderWorld().getDayTime() / 24000L;
+            this.notifyGateOpen = false;
+        }
+    }
+
+    @Override
+    public @NotNull InteractionResult mobInteract(@NotNull Player player, @NotNull InteractionHand hand) {
+        // The owner is interacting → let the worker speak up again about anything it needs.
+        if (!this.getCommandSenderWorld().isClientSide() && player.getUUID().equals(this.getOwnerUUID())) {
+            this.resetNotifyGate();
+        }
+        return super.mobInteract(player, hand);
+    }
+
     public void addNeededItem(NeededItem neededItem) {
         if(neededItems.contains(neededItem)) return;
 
