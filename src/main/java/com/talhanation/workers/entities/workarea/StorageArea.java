@@ -21,7 +21,7 @@ import net.minecraftforge.api.distmarker.OnlyIn;
 
 import java.util.*;
 
-public class StorageArea extends AbstractWorkAreaEntity implements IPermissionArea {
+public class StorageArea extends AbstractWorkAreaEntity implements IPermissionArea, Container {
 
     public static final EntityDataAccessor<Integer> STORAGE_TYPES = SynchedEntityData.defineId(StorageArea.class, EntityDataSerializers.INT);
     public Map<BlockPos, Container> storageMap = new HashMap<>();
@@ -95,7 +95,52 @@ public class StorageArea extends AbstractWorkAreaEntity implements IPermissionAr
         }
         return set;
     }
+    //TODO: REMOVE ONCE RECRUITS HAS UPDATED OTHERWISE UPKEEP ON STORAGE DOES NOT WORK
+    @Override
+    public int getContainerSize() {
+        return 0;
+    }
 
+    @Override
+    public boolean isEmpty() {
+        return false;
+    }
+
+    @Override
+    public ItemStack getItem(int p_18941_) {
+        return null;
+    }
+
+    @Override
+    public ItemStack removeItem(int p_18942_, int p_18943_) {
+        return null;
+    }
+
+    @Override
+    public ItemStack removeItemNoUpdate(int p_18951_) {
+        return null;
+    }
+
+    @Override
+    public void setItem(int p_18944_, ItemStack p_18945_) {
+
+    }
+
+    @Override
+    public void setChanged() {
+
+    }
+
+    @Override
+    public boolean stillValid(Player p_18946_) {
+        return false;
+    }
+
+    @Override
+    public void clearContent() {
+
+    }
+    //TODO ABOVE IS DESCRIPTION
     public enum StorageType {
         MINERS(0),
         LUMBERS(1),

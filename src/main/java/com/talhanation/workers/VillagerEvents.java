@@ -1,6 +1,7 @@
 package com.talhanation.workers;
 
 import com.talhanation.workers.entities.AbstractWorkerEntity;
+import com.talhanation.workers.entities.ai.RecruitStorageUpkeepGoal;
 import com.talhanation.workers.entities.ai.VillagerPickupFoodGoal;
 import com.talhanation.workers.entities.ai.VillagerRespondToInvitationGoal;
 import com.talhanation.workers.entities.ai.animals.WorkerTemptGoal;
@@ -8,6 +9,8 @@ import com.talhanation.workers.entities.workarea.AbstractWorkAreaEntity;
 import com.talhanation.workers.entities.workarea.IPermissionArea;
 import com.talhanation.workers.init.ModEntityTypes;
 import com.talhanation.recruits.world.RecruitsHireTradesRegistry;
+import com.talhanation.recruits.entities.AbstractRecruitEntity;
+import com.talhanation.recruits.entities.ai.RecruitUpkeepEntityGoal;
 import com.talhanation.workers.network.MessageToClientUpdateConfig;
 import com.talhanation.recruits.world.RecruitsHireTrade;
 import com.talhanation.workers.config.WorkersServerConfig;
@@ -133,6 +136,16 @@ public class VillagerEvents {
 
         Entity entity = event.getEntity();
 
+        // Recruits (and workers, which extend AbstractRecruitEntity) can use a Workers StorageArea
+        // as their upkeep source. We REPLACE the stock entity-upkeep goal with our subclass: it
+        // defers to super for normal targets, but for a StorageArea it walks chest-to-chest.
+        // Replacing (rather than adding a second goal) stops the stock goal from grabbing the
+        // storage — which, being a Container, it would otherwise do and abort with "no food".
+        if (entity instanceof AbstractRecruitEntity recruit) {
+            recruit.goalSelector.removeAllGoals(g -> g instanceof RecruitUpkeepEntityGoal);
+            recruit.goalSelector.addGoal(6, new RecruitStorageUpkeepGoal(recruit));
+        }
+
         if (entity instanceof Chicken chicken) {
             chicken.goalSelector.addGoal(3, new WorkerTemptGoal(chicken,1.0, Chicken.FOOD_ITEMS));
         }
@@ -215,4 +228,3 @@ public class VillagerEvents {
         return !isOwner && !isTeamMate && !isAdmin;
     }
 }
-
