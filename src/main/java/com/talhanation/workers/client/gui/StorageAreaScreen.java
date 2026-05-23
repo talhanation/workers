@@ -127,7 +127,7 @@ public class StorageAreaScreen extends WorkAreaScreen {
                 this.courier, bool -> { this.courier = bool; toggleType(StorageArea.StorageType.COURIER, bool); });
         addRenderableWidget(courierCheckBox);
 
-        this.cookCheckBox = new RecruitsCheckBox(rightX, startY + (gap + cbH) * 3, cbW, cbH, TEXT_COOKS,
+        this.cookCheckBox = new RecruitsCheckBox(rightX, startY + (gap + cbH) * 4, cbW, cbH, TEXT_COOKS,
                 this.cook, bool -> { this.cook = bool; toggleType(StorageArea.StorageType.COOK, bool); });
         addRenderableWidget(cookCheckBox);
     }
