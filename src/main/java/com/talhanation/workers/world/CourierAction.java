@@ -16,7 +16,8 @@ public class CourierAction {
 
         TAKE_ALL,     // take everything from target until courier inventory full
         PUT_ALL,    // empty entire courier inventory into target
-        FILL,    // fill entire target to defined amount
+        PUT_FILL,   // fill the TARGET up to a defined amount (checked against the target)
+        TAKE_FILL,  // fill the courier's OWN inventory up to a defined amount (checked against own inv)
         // Timing
         WAIT;
 
@@ -25,7 +26,8 @@ public class CourierAction {
             return this == TAKE
                     || this == PUT
                     || this == TAKE_ANY
-                    || this == FILL
+                    || this == PUT_FILL
+                    || this == TAKE_FILL
                     || this == PUT_ANY;
         }
 
@@ -38,7 +40,8 @@ public class CourierAction {
             return switch (this) {
                 case TAKE        -> "Take";
                 case PUT         -> "Put";
-                case FILL     -> "Fill";
+                case PUT_FILL    -> "Put Fill";
+                case TAKE_FILL   -> "Take Fill";
                 case TAKE_ANY -> "Take Any";
                 case PUT_ANY  -> "Put Any";
                 case TAKE_ALL -> "Take All";
@@ -96,8 +99,12 @@ public class CourierAction {
         CourierAction a = new CourierAction(); a.actionType = ActionType.PUT_ALL;
         a.sourceType = src; return a;
     }
-    public static CourierAction fill(SourceType src, ItemStack item) {
-        CourierAction a = new CourierAction(); a.actionType = ActionType.FILL;
+    public static CourierAction putFill(SourceType src, ItemStack item) {
+        CourierAction a = new CourierAction(); a.actionType = ActionType.PUT_FILL;
+        a.sourceType = src; a.itemStack = item.copy(); return a;
+    }
+    public static CourierAction takeFill(SourceType src, ItemStack item) {
+        CourierAction a = new CourierAction(); a.actionType = ActionType.TAKE_FILL;
         a.sourceType = src; a.itemStack = item.copy(); return a;
     }
     public static CourierAction wait(int seconds) {
@@ -130,7 +137,9 @@ public class CourierAction {
     @Nullable
     public static CourierAction fromNBT(CompoundTag nbt) {
         if (nbt == null || nbt.isEmpty()) return null;
-        ActionType type   = ActionType.fromString(nbt.getString("ActionType"));
+        String raw = nbt.getString("ActionType");
+        // Backward compatibility: the old single "FILL" action behaved like PUT_FILL.
+        ActionType type = "FILL".equals(raw) ? ActionType.PUT_FILL : ActionType.fromString(raw);
         if (type == ActionType.WAIT) return wait(nbt.getInt("WaitSeconds"));
         SourceType source = SourceType.fromString(nbt.getString("SourceType"));
         ItemStack  item   = nbt.contains("Item") ? ItemStack.of(nbt.getCompound("Item")) : ItemStack.EMPTY;
@@ -141,7 +150,8 @@ public class CourierAction {
             case PUT_ANY -> putAny(source, item);
             case TAKE_ALL -> takeAll(source);
             case PUT_ALL -> putAll(source);
-            case FILL -> fill(source, item);
+            case PUT_FILL -> putFill(source, item);
+            case TAKE_FILL -> takeFill(source, item);
             default          -> null;
         };
     }

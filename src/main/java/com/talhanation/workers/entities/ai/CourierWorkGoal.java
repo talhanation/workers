@@ -49,7 +49,7 @@ public class CourierWorkGoal extends Goal {
     private int                         activeContainerIdx; // PICKUP: which source container
     private int                         activeSlotIdx;      // PICKUP: slot in source / DEPOSIT: slot in workInv
     private int                         activeTransferred;  // total items moved so far
-    private int                         activeFillLimit;    // FILL: pre-computed missing amount (target.count - alreadyInTargets)
+    private int                         activeFillLimit;    // PUT_FILL/TAKE_FILL: pre-computed missing amount (desired count − already present)
 
     public CourierWorkGoal(CourierEntity courier){
         this.courier = courier;
@@ -163,8 +163,8 @@ public class CourierWorkGoal extends Goal {
                 waitTicks = action.getWaitSeconds() * 20;
                 state = State.WAIT_AT_WAYPOINT;
             }
-            case TAKE, TAKE_ANY, TAKE_ALL,
-                    PUT, PUT_ANY, PUT_ALL, FILL -> initTransferAction(action, wp);
+            case TAKE, TAKE_ANY, TAKE_ALL, TAKE_FILL,
+                    PUT, PUT_ANY, PUT_ALL, PUT_FILL -> initTransferAction(action, wp);
         }
     }
 
@@ -185,22 +185,34 @@ public class CourierWorkGoal extends Goal {
                 ? ((getWorkingInventory() == courier.getInventory()) ? 6 : 0)
                 : 0;
 
-        // FILL: pre-compute how many more of the item we need to put in (target wanted count − already present).
-        // If targets already meet/exceed the desired amount, skip the action entirely.
-        if (action.getActionType() == CourierAction.ActionType.FILL){
+        // PUT_FILL / TAKE_FILL: pre-compute how many more of the item are still needed.
+        //   PUT_FILL  → measured against the TARGET containers (how many to put in).
+        //   TAKE_FILL → measured against the courier's OWN inventory (how many to take out).
+        // If the goal is already met, skip the action entirely.
+        CourierAction.ActionType atype = action.getActionType();
+        if (atype == CourierAction.ActionType.PUT_FILL || atype == CourierAction.ActionType.TAKE_FILL){
             ItemStack tpl = action.getItemStack();
             if (tpl == null || tpl.isEmpty()){
                 actionIndex++;
                 return;
             }
-            int alreadyInTargets = 0;
-            for (Container dest : targets){
-                for (int j = 0; j < dest.getContainerSize(); j++){
-                    ItemStack s = dest.getItem(j);
-                    if (!s.isEmpty() && ItemStack.isSameItem(s, tpl)) alreadyInTargets += s.getCount();
+            int already = 0;
+            if (atype == CourierAction.ActionType.PUT_FILL){
+                for (Container dest : targets){
+                    for (int j = 0; j < dest.getContainerSize(); j++){
+                        ItemStack s = dest.getItem(j);
+                        if (!s.isEmpty() && ItemStack.isSameItem(s, tpl)) already += s.getCount();
+                    }
                 }
             }
-            activeFillLimit = Math.max(0, tpl.getCount() - alreadyInTargets);
+            else { // TAKE_FILL → count what the courier already carries
+                Container inv = getWorkingInventory();
+                for (int j = 0; j < inv.getContainerSize(); j++){
+                    ItemStack s = inv.getItem(j);
+                    if (!s.isEmpty() && ItemStack.isSameItem(s, tpl)) already += s.getCount();
+                }
+            }
+            activeFillLimit = Math.max(0, tpl.getCount() - already);
             if (activeFillLimit == 0){
                 actionIndex++;
                 return;
@@ -362,7 +374,7 @@ public class CourierWorkGoal extends Goal {
             ItemStack tpl = activeAction.getItemStack();
             return (tpl != null) ? tpl.getCount() : Integer.MAX_VALUE;
         }
-        if (type == CourierAction.ActionType.FILL){
+        if (type == CourierAction.ActionType.PUT_FILL || type == CourierAction.ActionType.TAKE_FILL){
             return activeFillLimit;
         }
         return Integer.MAX_VALUE;
@@ -372,7 +384,7 @@ public class CourierWorkGoal extends Goal {
         return type == CourierAction.ActionType.PUT
                 || type == CourierAction.ActionType.PUT_ANY
                 || type == CourierAction.ActionType.PUT_ALL
-                || type == CourierAction.ActionType.FILL;
+                || type == CourierAction.ActionType.PUT_FILL;
     }
 
     private Container getWorkingInventory(){

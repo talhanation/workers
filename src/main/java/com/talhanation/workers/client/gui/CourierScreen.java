@@ -94,6 +94,22 @@ public class CourierScreen extends ScreenBase<CourierContainer> {
     private static final MutableComponent TOOLTIP_VEHICLE_INV = Component.translatable("gui.workers.checkbox.tooltip.useVehicleInventory");
     private static final MutableComponent TEXT_CYCLE = Component.translatable("gui.workers.checkbox.cycle");
     private static final MutableComponent TOOLTIP_CYCLE = Component.translatable("gui.workers.checkbox.tooltip.cycle");
+
+    private static final MutableComponent TOOLTIP_TAKE = Component.translatable("gui.workers.tooltip.courier.take");
+    private static final MutableComponent TOOLTIP_PUT = Component.translatable("gui.workers.tooltip.courier.put");
+    private static final MutableComponent TOOLTIP_TAKE_ANY = Component.translatable("gui.workers.tooltip.courier.take_any");
+    private static final MutableComponent TOOLTIP_PUT_ANY = Component.translatable("gui.workers.tooltip.courier.put_any");
+    private static final MutableComponent TOOLTIP_TAKE_ALL = Component.translatable("gui.workers.tooltip.courier.take_all");
+    private static final MutableComponent TOOLTIP_PUT_ALL = Component.translatable("gui.workers.tooltip.courier.put_all");
+    private static final MutableComponent TOOLTIP_TAKE_FILL = Component.translatable("gui.workers.tooltip.courier.take_fill");
+    private static final MutableComponent TOOLTIP_PUT_FILL = Component.translatable("gui.workers.tooltip.courier.put_fill");
+    private static final MutableComponent TOOLTIP_WAIT = Component.translatable("gui.workers.tooltip.courier.wait");
+
+    private static final MutableComponent TOOLTIP_CHEST = Component.translatable("gui.workers.tooltip.courier.chest");
+    private static final MutableComponent TOOLTIP_STORAGE = Component.translatable("gui.workers.tooltip.courier.storage");
+    private static final MutableComponent TOOLTIP_MARKET = Component.translatable("gui.workers.tooltip.courier.market");
+    private static final MutableComponent TOOLTIP_KITCHEN = Component.translatable("gui.workers.tooltip.courier.kitchen");
+
     // ── Screen state ──────────────────────────────────────────────────────────
 
     private final CourierEntity courierEntity;
@@ -115,8 +131,8 @@ public class CourierScreen extends ScreenBase<CourierContainer> {
     @Nullable private ScrollDropDownMenu<RecruitsRoute>                  routeDropDown;
     @Nullable private WaypointList                                        waypointList;
     private final List<AbstractWidget>                                    actionWidgets = new ArrayList<>();
-    private final List<ScrollDropDownMenu<CourierAction.ActionType>> actionTypeDropDowns = new ArrayList<>();
-    private final List<ScrollDropDownMenu<CourierAction.SourceType>> sourceTypeDropDowns = new ArrayList<>();
+    private final List<CourierDropDownMenu<CourierAction.ActionType>> actionTypeDropDowns = new ArrayList<>();
+    private final List<CourierDropDownMenu<CourierAction.SourceType>> sourceTypeDropDowns = new ArrayList<>();
     /** [screenX, screenY, actionIndex] for each visible item slot. */
     private final List<int[]> itemSlotPos = new ArrayList<>();
 
@@ -205,11 +221,11 @@ public class CourierScreen extends ScreenBase<CourierContainer> {
         ExtendedButton mapBtn = new ExtendedButton(
                 x + MAP_X, y + MAP_Y, MAP_W, MAP_H,
                 TEXT_MAP, b -> {
-                    WorldMapScreen mapScreen = new WorldMapScreen();
-                    if(selectedRoute != null){
-                        mapScreen.selectedRoute = this.selectedRoute;
-                    }
-                    Minecraft.getInstance().setScreen(mapScreen);
+            WorldMapScreen mapScreen = new WorldMapScreen();
+            if(selectedRoute != null){
+                mapScreen.selectedRoute = this.selectedRoute;
+            }
+            Minecraft.getInstance().setScreen(mapScreen);
         });
         mapBtn.active = selectedRoute != null;
         addRenderableWidget(mapBtn);
@@ -225,27 +241,27 @@ public class CourierScreen extends ScreenBase<CourierContainer> {
         addRenderableWidget(applyBtn);
 
         RecruitsCheckBox shouldCycleCheckbox = new RecruitsCheckBox(
-            x + IMG_W + 2,
-            applyBtn.getY() - 1 - 41,
-            20, 20,
+                x + IMG_W + 2,
+                applyBtn.getY() - 1 - 41,
+                20, 20,
                 TEXT_CYCLE, shouldCycle, false,
-            val -> {
-                shouldCycle = val;
-                applyChanges(false);
-            }
+                val -> {
+                    shouldCycle = val;
+                    applyChanges(false);
+                }
         );
         shouldCycleCheckbox.setTooltip(Tooltip.create(TOOLTIP_CYCLE));
         addRenderableWidget(shouldCycleCheckbox);
 
         RecruitsCheckBox vehicleCheckbox = new RecruitsCheckBox(
-            x + IMG_W + 2,
-            applyBtn.getY() - 1 - 20,
-            20, 20,
-            TEXT_VEHICLE_INV, useVehicleInventory, false,
-            val -> {
-                useVehicleInventory = val;
-                applyChanges(false);
-            }
+                x + IMG_W + 2,
+                applyBtn.getY() - 1 - 20,
+                20, 20,
+                TEXT_VEHICLE_INV, useVehicleInventory, false,
+                val -> {
+                    useVehicleInventory = val;
+                    applyChanges(false);
+                }
         );
         vehicleCheckbox.setTooltip(Tooltip.create(TOOLTIP_VEHICLE_INV));
         addRenderableWidget(vehicleCheckbox);
@@ -320,16 +336,17 @@ public class CourierScreen extends ScreenBase<CourierContainer> {
 
         // ── ActionType dropdown ───────────────────────────────────────────────
 
-        ScrollDropDownMenu<CourierAction.ActionType> typeDD = new ScrollDropDownMenu<>(
+        CourierDropDownMenu<CourierAction.ActionType> typeDD = new CourierDropDownMenu<>(
                 action.getActionType(),
                 x, rowY, COL_TYPE, h,
                 List.of(CourierAction.ActionType.TAKE,
                         CourierAction.ActionType.TAKE_ANY,
                         CourierAction.ActionType.TAKE_ALL,
+                        CourierAction.ActionType.TAKE_FILL,
                         CourierAction.ActionType.PUT,
                         CourierAction.ActionType.PUT_ANY,
                         CourierAction.ActionType.PUT_ALL,
-                        CourierAction.ActionType.FILL,
+                        CourierAction.ActionType.PUT_FILL,
                         CourierAction.ActionType.WAIT),
                 CourierAction.ActionType::displayLabel,
                 t -> {
@@ -345,7 +362,8 @@ public class CourierScreen extends ScreenBase<CourierContainer> {
                         else if (action.getItemStack() == null) action.setItemStack(ItemStack.EMPTY);
                     }
                     buildWidgets();
-                });
+                },
+                CourierScreen::actionTooltip);
         addRenderableWidget(typeDD);
         actionWidgets.add(typeDD);
         actionTypeDropDowns.add(typeDD);
@@ -359,8 +377,8 @@ public class CourierScreen extends ScreenBase<CourierContainer> {
                 removeX, rowY, h, h,
                 Component.literal("\u2715"),   // ✕
                 b -> { wp.actions.remove(finalIdx);
-                       actionScrollOffset = Math.max(0, actionScrollOffset - 1);
-                       buildWidgets(); });
+                    actionScrollOffset = Math.max(0, actionScrollOffset - 1);
+                    buildWidgets(); });
         addRenderableWidget(removeBtn);
         actionWidgets.add(removeBtn);
 
@@ -368,7 +386,7 @@ public class CourierScreen extends ScreenBase<CourierContainer> {
 
             // ── SourceType dropdown ───────────────────────────────────────────
 
-            ScrollDropDownMenu<CourierAction.SourceType> srcDD = new ScrollDropDownMenu<>(
+            CourierDropDownMenu<CourierAction.SourceType> srcDD = new CourierDropDownMenu<>(
                     action.getSourceType() != null
                             ? action.getSourceType()
                             : CourierAction.SourceType.CHEST,
@@ -377,8 +395,8 @@ public class CourierScreen extends ScreenBase<CourierContainer> {
                             CourierAction.SourceType.STORAGE,
                             CourierAction.SourceType.MARKET,
                             CourierAction.SourceType.KITCHEN
-                            ),
-                            //CourierAction.SourceType.WORKER),
+                    ),
+                    //CourierAction.SourceType.WORKER),
                     s -> switch (s) {
                         case CHEST   -> "Chest";
                         case STORAGE -> "Storage";
@@ -386,7 +404,8 @@ public class CourierScreen extends ScreenBase<CourierContainer> {
                         case KITCHEN  -> "KITCHEN";
                         //case WORKER  -> "Worker";
                     },
-                    s -> { action.setSourceType(s); buildWidgets(); });
+                    s -> { action.setSourceType(s); buildWidgets(); },
+                    CourierScreen::sourceTooltip);
             addRenderableWidget(srcDD);
             actionWidgets.add(srcDD);
             sourceTypeDropDowns.add(srcDD);
@@ -401,21 +420,21 @@ public class CourierScreen extends ScreenBase<CourierContainer> {
             // ── Wait seconds +/− ──────────────────────────────────────────────
 
             ExtendedButton minus = new ExtendedButton(x, rowY, h, h, Component.literal("-"),
-                b -> {
-                    int amt = hasShiftDown() ? 5 : 1;
-                    action.setWaitSeconds(Math.max(1, action.getWaitSeconds() - amt));
-                    buildWidgets();
-                }
+                    b -> {
+                        int amt = hasShiftDown() ? 5 : 1;
+                        action.setWaitSeconds(Math.max(1, action.getWaitSeconds() - amt));
+                        buildWidgets();
+                    }
             );
             addRenderableWidget(minus);
             actionWidgets.add(minus);
             x += 52;
 
             ExtendedButton plus = new ExtendedButton(x, rowY, h, h, Component.literal("+"),
-                b -> {
-                    int amt = hasShiftDown() ? 5 : 1;
-                    action.setWaitSeconds(Math.max(1, action.getWaitSeconds() + amt)); buildWidgets();
-                }
+                    b -> {
+                        int amt = hasShiftDown() ? 5 : 1;
+                        action.setWaitSeconds(Math.max(1, action.getWaitSeconds() + amt)); buildWidgets();
+                    }
             );
             addRenderableWidget(plus);
             actionWidgets.add(plus);
@@ -449,7 +468,32 @@ public class CourierScreen extends ScreenBase<CourierContainer> {
 
     // ── Rendering ─────────────────────────────────────────────────────────────
 
-    @Override
+    private static List<Component> actionTooltip(CourierAction.ActionType type) {
+        String s = switch (type) {
+            case TAKE      -> TOOLTIP_TAKE.getString();
+            case PUT       -> TOOLTIP_PUT.getString();
+            case TAKE_ANY  -> TOOLTIP_TAKE_ANY.getString();
+            case PUT_ANY   -> TOOLTIP_PUT_ANY.getString();
+            case TAKE_ALL  -> TOOLTIP_TAKE_ALL.getString();
+            case PUT_ALL   -> TOOLTIP_PUT_ALL.getString();
+            case PUT_FILL  -> TOOLTIP_PUT_FILL.getString();
+            case TAKE_FILL -> TOOLTIP_TAKE_FILL.getString();
+            case WAIT      -> TOOLTIP_WAIT.getString();
+        };
+        return List.of(Component.literal(s));
+    }
+
+    /** Tooltip text shown for each target type (closed display or open option). */
+    private static List<Component> sourceTooltip(CourierAction.SourceType type) {
+        String s = switch (type) {
+            case CHEST   -> TOOLTIP_CHEST.getString();
+            case STORAGE -> TOOLTIP_STORAGE.getString();
+            case MARKET  -> TOOLTIP_MARKET.getString();
+            case KITCHEN -> TOOLTIP_KITCHEN.getString();
+        };
+        return List.of(Component.literal(s));
+    }
+
     public void render(GuiGraphics g, int mouseX, int mouseY, float partialTicks) {
         hoveredTooltipStack    = ItemStack.EMPTY;
         hoveredWaypointTooltip = null;
@@ -462,6 +506,26 @@ public class CourierScreen extends ScreenBase<CourierContainer> {
             g.renderTooltip(font, hoveredTooltipStack, hoveredTooltipX, hoveredTooltipY);
         if (hoveredWaypointTooltip != null)
             g.renderTooltip(font, hoveredWaypointTooltip, mouseX, mouseY);
+
+        // Dropdown tooltips — rendered last and at a high z so they sit above an open dropdown
+        // (whose options are drawn at z+500). Works for both the closed display and open options.
+        List<Component> ddTooltip = null;
+        for (CourierDropDownMenu<CourierAction.ActionType> dd : actionTypeDropDowns) {
+            ddTooltip = dd.getHoverTooltip(mouseX, mouseY);
+            if (ddTooltip != null) break;
+        }
+        if (ddTooltip == null) {
+            for (CourierDropDownMenu<CourierAction.SourceType> dd : sourceTypeDropDowns) {
+                ddTooltip = dd.getHoverTooltip(mouseX, mouseY);
+                if (ddTooltip != null) break;
+            }
+        }
+        if (ddTooltip != null) {
+            g.pose().pushPose();
+            g.pose().translate(0, 0, 600);
+            g.renderComponentTooltip(font, ddTooltip, mouseX, mouseY);
+            g.pose().popPose();
+        }
     }
 
     /** Draws all visible rows of the action list including the add-entry. */
@@ -576,7 +640,7 @@ public class CourierScreen extends ScreenBase<CourierContainer> {
 
     private int actionScrollbarMaxScroll() {
         if (workingRoute == null || selectedWaypointIndex < 0 || selectedWaypointIndex >= workingRoute.size()) return 0;
-        
+
         return Math.max(0, totalListItems(workingRoute.getWaypoints().get(selectedWaypointIndex)) - ACT_MAX_VIS);
     }
 
@@ -616,7 +680,7 @@ public class CourierScreen extends ScreenBase<CourierContainer> {
         // dropdowns and swallow the event so no other widget is accidentally activated.
         boolean clickedOnActionDD =
                 actionTypeDropDowns.stream().anyMatch(dd -> dd.isMouseOver(mx, my)) ||
-                sourceTypeDropDowns.stream().anyMatch(dd -> dd.isMouseOver(mx, my));
+                        sourceTypeDropDowns.stream().anyMatch(dd -> dd.isMouseOver(mx, my));
 
         // Always forward to dropdowns (they close themselves if clicked outside).
         new ArrayList<>(actionTypeDropDowns).forEach(dd -> dd.onMouseClick(mx, my));

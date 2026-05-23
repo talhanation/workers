@@ -81,7 +81,7 @@
   "gui.workers.checkbox.useVehicleInventory": "Use Vehicle Inventory",
   "gui.workers.checkbox.tooltip.useVehicleInventory": "If true the items will be filled in the vehicles inventory",
   "gui.workers.checkbox.cycle": "Cycle",
-  "gui.workers.checkbox.tooltip.cycle": "If true navigation will start at 1 waypoint otherwise the path will be followed backwards",
+  "gui.workers.checkbox.tooltip.cycle": "If true navigation will directly restart at 1 waypoint otherwise the path will be followed backwards",
   "gui.workers.checkbox.access": "Faction Access",
   "gui.workers.checkbox.tooltip.access": "If true faction members and workers, have access / can work in this area.",
   "gui.workers.checkbox.villagerTrade": "Villager Trade",
@@ -175,5 +175,22 @@
 
   "gui.workers.text.noCook": "No Cook",
   "gui.workers.text.cookPresent": "Cook Present",
-  "gui.workers.text.furnaces": "Furnaces: "
+  "gui.workers.text.furnaces": "Furnaces: ",
+
+  "gui.workers.tooltip.courier.take": "The courier takes up to the defined amount of the selected item from the target.",
+  "gui.workers.tooltip.courier.put": "The courier puts up to the defined amount of the selected item into the target.",
+  "gui.workers.tooltip.courier.take_any": "The courier takes any of the selected item type from the target.",
+  "gui.workers.tooltip.courier.put_any": "The courier puts any of the selected item it carries into the target.",
+  "gui.workers.tooltip.courier.take_all": "The courier takes everything from the target until its inventory is full.",
+  "gui.workers.tooltip.courier.put_all": "The courier empties its entire inventory into the target.",
+  "gui.workers.tooltip.courier.put_fill": "The courier will fill up the selected target with the defined item and its amount.",
+  "gui.workers.tooltip.courier.take_fill": "The courier will fill up its own inventory with the defined item and its amount.",
+  "gui.workers.tooltip.courier.wait": "The courier waits at this waypoint for the defined number of seconds.",
+
+  "gui.workers.tooltip.courier.chest": "The nearest Chests will be targeted, if accessible.",
+  "gui.workers.tooltip.courier.storage": "The nearest Storage will be targeted, if accessible.",
+  "gui.workers.tooltip.courier.market": "The nearest Market to this waypoint will be targeted, if accessible.",
+  "gui.workers.tooltip.courier.kitchen": "The nearest Kitchen to this waypoint will be targeted, if accessible."
+
+
 }
