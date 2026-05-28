@@ -6,6 +6,7 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.Container;
 import net.minecraft.world.SimpleContainer;
+import net.minecraft.world.item.ArmorItem;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
 
@@ -210,12 +211,13 @@ public class DepositItemsToStorage extends AbstractChestGoal {
             return false;
         }
 
-        for (int i = 0; i < inventory.getContainerSize(); i++) {
+        for (int i = 6; i < inventory.getContainerSize(); i++) {
             ItemStack stack = inventory.getItem(i);
 
             boolean isAir = stack.is(Items.AIR) || stack.isEmpty();
+            boolean isArmor = stack.getItem() instanceof ArmorItem;
             boolean wantToKeep = worker.wantsToKeep(stack);
-            if (isAir || wantToKeep) {
+            if (isAir || isArmor || wantToKeep) {
                 continue;
             }
 
