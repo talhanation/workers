@@ -17,6 +17,7 @@ import com.talhanation.workers.WorkersMain;
 import com.talhanation.workers.compat.DynamicTrees;
 import net.minecraft.world.item.AxeItem;
 import net.minecraft.world.item.BlockItem;
+import net.minecraft.world.item.BoneMealItem;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.ShearsItem;
 import net.minecraft.world.level.block.Block;
@@ -36,6 +37,7 @@ public class LumberjackWorkGoal extends Goal {
     public BlockPos blockPos;
     public Stack<Tree> stackOfTrees;
     public Stack<BlockPos> stackToPlant;
+    public Stack<BlockPos> stackToBoneMeal;
     public Tree currentTree;
     public List<NeededItem> neededItems = new ArrayList<>();
 
@@ -104,6 +106,35 @@ public class LumberjackWorkGoal extends Goal {
             case MOVE_TO_WORK_AREA ->{
                 this.blockPos = null;
                 if(this.moveToPosition(lumberjack.currentLumberArea.getOnPos(), 100)) return;
+
+                setState(State.PREPARE_BONE_MEAL);
+            }
+
+            case PREPARE_BONE_MEAL -> {
+                this.lumberjack.currentLumberArea.scanBoneMealArea();
+
+                this.stackToBoneMeal = lumberjack.currentLumberArea.stackToBoneMeal;
+
+                if(stackToBoneMeal.isEmpty()){
+                    setState(State.SCAN_TREES);
+                    return;
+                }
+
+                lumberjack.switchMainHandItem(itemStack -> itemStack.getItem() instanceof BoneMealItem);
+
+                boolean hasBoneMeal = lumberjack.getMainHandItem().getItem() instanceof BoneMealItem;
+                if(!hasBoneMeal){
+                    this.neededItems.add(new NeededItem(stack -> stack.getItem() instanceof BoneMealItem, stackToBoneMeal.size(), false));
+                    this.blockPos = null;
+                    setState(State.SCAN_TREES);
+                    return;
+                }
+
+                setState(State.BONE_MEAL);
+            }
+
+            case BONE_MEAL -> {
+                if(this.useBoneMeal(stackToBoneMeal)) return;
 
                 setState(State.SCAN_TREES);
             }
@@ -352,6 +383,53 @@ public class LumberjackWorkGoal extends Goal {
         return false;
     }
 
+    public boolean useBoneMeal(Stack<BlockPos> positions){
+        if(positions != null){
+            ItemStack boneMealFromInv = lumberjack.getMatchingItem(itemStack -> itemStack.getItem() instanceof BoneMealItem);
+            if(boneMealFromInv == null){
+                setState(State.PREPARE_BONE_MEAL);
+                return false;
+            }
+
+            if(blockPos == null){
+                if(!positions.isEmpty()) blockPos = positions.pop();
+                return blockPos != null;
+            }
+
+            if(this.moveToPosition(blockPos, 60)) return true;
+
+            if(!isBoneMealTarget(blockPos)){
+                if(!positions.isEmpty()){
+                    blockPos = positions.pop();
+                }
+                else{
+                    this.blockPos = null;
+                    return false;
+                }
+            }
+            else{
+                lumberjack.switchMainHandItem(itemStack -> itemStack.getItem() instanceof BoneMealItem);
+
+                BoneMealItem.growCrop(boneMealFromInv, lumberjack.getCommandSenderWorld(), blockPos);
+                lumberjack.getCommandSenderWorld().levelEvent(1505, blockPos, 0);
+                this.lumberjack.swing(InteractionHand.MAIN_HAND);
+            }
+            return true;
+        }
+        this.blockPos = null;
+        return false;
+    }
+
+    private boolean isBoneMealTarget(BlockPos pos){
+        BlockState state = lumberjack.getCommandSenderWorld().getBlockState(pos);
+
+        if(state.getBlock() instanceof SaplingBlock) return true;
+
+        return WorkersMain.isDynamicTreesInstalled
+                && DynamicTrees.isDynamicTreesRootySoil(state.getBlock())
+                && !DynamicTrees.hasMaxFertility(state);
+    }
+
     public boolean plantSaplings(Stack<BlockPos> positions){
         if(positions != null){
             ItemStack saplingFromInv;
@@ -492,6 +570,8 @@ public class LumberjackWorkGoal extends Goal {
     public enum State{
         SELECT_WORK_AREA,
         MOVE_TO_WORK_AREA,
+        PREPARE_BONE_MEAL,
+        BONE_MEAL,
         SCAN_TREES,
         SELECT_TREE,
         MOVE_TO_TREE,

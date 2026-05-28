@@ -21,6 +21,7 @@ import java.util.UUID;
 public class DynamicTrees {
 
     private static final int MIN_RADIUS_FOR_GROWN = 8;
+    private static final int MAX_FERTILITY = 15;
     private static final int MIN_GROWN_RADIUS_COUNT = 2;
     private static final int MAX_HEIGHT_FALLBACK = 12;
 
@@ -83,6 +84,30 @@ public class DynamicTrees {
             }
         }
         return 0;
+    }
+
+    public static boolean isDynamicTreesRootySoil(Block block) {
+        String id = block.getDescriptionId();
+        if (id.contains("dynamictrees")) {
+            return id.contains("rooty");
+        }
+        return false;
+    }
+
+    public static int getSoilFertility(BlockState state) {
+        for (Property<?> property : state.getProperties()) {
+            if (property.getName().equals("fertility")) {
+                Object value = state.getValue(property);
+                if (value instanceof Integer fertility) {
+                    return fertility;
+                }
+            }
+        }
+        return 0;
+    }
+
+    public static boolean hasMaxFertility(BlockState state) {
+        return getSoilFertility(state) >= MAX_FERTILITY;
     }
 
     public static boolean isGrownDynamicTree(List<BlockPos> branchPositions, Level level) {

@@ -21,6 +21,7 @@ import net.minecraft.world.item.*;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.Blocks;
+import net.minecraft.world.level.block.SaplingBlock;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.block.state.properties.BlockStateProperties;
 import net.minecraftforge.api.distmarker.Dist;
@@ -36,6 +37,7 @@ public class LumberArea extends AbstractWorkAreaEntity {
     public static final EntityDataAccessor<Boolean> SHEAR_LEAVES = SynchedEntityData.defineId(LumberArea.class, EntityDataSerializers.BOOLEAN);
     public static final EntityDataAccessor<Boolean> STRIP_LOGS = SynchedEntityData.defineId(LumberArea.class, EntityDataSerializers.BOOLEAN);
     public Stack<BlockPos> stackToPlant = new Stack<>();
+    public Stack<BlockPos> stackToBoneMeal = new Stack<>();
     public Stack<Tree> stackOfTrees = new Stack<>();
 
 
@@ -104,6 +106,26 @@ public class LumberArea extends AbstractWorkAreaEntity {
         return true;
     }
 
+
+    public void scanBoneMealArea() {
+        if (area == null) this.area = getArea();
+
+        this.stackToBoneMeal.clear();
+        Level level = this.getCommandSenderWorld();
+
+        BlockPos.betweenClosedStream(area).forEach(pos -> {
+            BlockState state = level.getBlockState(pos);
+
+            if (isSapling(state)) {
+                this.stackToBoneMeal.push(pos.immutable());
+            }
+            else if (WorkersMain.isDynamicTreesInstalled
+                    && DynamicTrees.isDynamicTreesRootySoil(state.getBlock())
+                    && !DynamicTrees.hasMaxFertility(state)) {
+                this.stackToBoneMeal.push(pos.immutable());
+            }
+        });
+    }
 
     public void scanForTrees() {
         Set<BlockPos> visited = new HashSet<>();
@@ -370,6 +392,10 @@ public class LumberArea extends AbstractWorkAreaEntity {
 
     private boolean isLeaf(BlockState state) {
         return state.is(BlockTags.LEAVES);
+    }
+
+    private boolean isSapling(BlockState state) {
+        return state.getBlock() instanceof SaplingBlock;
     }
 
     public void setSaplingStack(ItemStack seedStack) {

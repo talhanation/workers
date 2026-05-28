@@ -30,6 +30,7 @@ public class FarmerWorkGoal extends Goal {
     public Stack<BlockPos> stackToPlant;
     public Stack<BlockPos> stackToBreak;
     public Stack<BlockPos> stackToPlow;
+    public Stack<BlockPos> stackToBoneMeal;
     public List<NeededItem> neededItems = new ArrayList<>();
     public FarmerWorkGoal(FarmerEntity farmer) {
         this.farmer = farmer;
@@ -99,6 +100,33 @@ public class FarmerWorkGoal extends Goal {
             case MOVE_TO_WORK_AREA ->{
                 this.blockPos = null;
                 if(this.moveToPosition(this.farmer.currentCropArea.getOnPos(), 20)) return;
+                setState(State.PREPARE_BONE_MEAL);
+            }
+            case PREPARE_BONE_MEAL -> {
+                this.farmer.currentCropArea.scanBoneMealArea();
+
+                this.stackToBoneMeal = this.farmer.currentCropArea.stackToBoneMeal;
+
+                if(stackToBoneMeal.isEmpty()){
+                    setState(State.PREPARE_BREAK_BLOCKS);
+                    return;
+                }
+
+                farmer.switchMainHandItem(itemStack -> itemStack.getItem() instanceof BoneMealItem);
+
+                boolean hasBoneMeal = farmer.getMainHandItem().getItem() instanceof BoneMealItem;
+                if(!hasBoneMeal){
+                    this.neededItems.add(new NeededItem(stack -> stack.getItem() instanceof BoneMealItem, stackToBoneMeal.size(), false));
+                    this.blockPos = null;
+                    setState(State.PREPARE_BREAK_BLOCKS);
+                    return;
+                }
+
+                setState(State.BONE_MEAL);
+            }
+            case BONE_MEAL -> {
+                if(this.useBoneMeal(stackToBoneMeal)) return;
+
                 setState(State.PREPARE_BREAK_BLOCKS);
             }
             case PREPARE_BREAK_BLOCKS -> {
@@ -292,6 +320,42 @@ public class FarmerWorkGoal extends Goal {
         return false;
     }
 
+    public boolean useBoneMeal(Stack<BlockPos> positions){
+        if(positions != null){
+            ItemStack boneMealFromInv = farmer.getMatchingItem(itemStack -> itemStack.getItem() instanceof BoneMealItem);
+            if(boneMealFromInv == null){
+                setState(State.PREPARE_BONE_MEAL);
+                return false;
+            }
+
+            if(blockPos == null){
+                if(!positions.isEmpty()) blockPos = positions.pop();
+                return blockPos != null;
+            }
+
+            BlockState state = farmer.getCommandSenderWorld().getBlockState(blockPos);
+            if(!this.farmer.currentCropArea.isBoneMealable(state, farmer.getCommandSenderWorld(), blockPos)){
+                if(!positions.isEmpty()){
+                    blockPos = positions.pop();
+                }
+                else{
+                    this.blockPos = null;
+                    return false;
+                }
+            }
+            else{
+                farmer.switchMainHandItem(itemStack -> itemStack.getItem() instanceof BoneMealItem);
+
+                BoneMealItem.growCrop(boneMealFromInv, farmer.getCommandSenderWorld(), blockPos);
+                farmer.getCommandSenderWorld().levelEvent(1505, blockPos, 0);
+                this.farmer.swing(InteractionHand.MAIN_HAND);
+            }
+            return true;
+        }
+        this.blockPos = null;
+        return false;
+    }
+
     public boolean plowBlocks(Stack<BlockPos> positions){
         if(positions != null){
             boolean hasTool = farmer.getMainHandItem().getItem() instanceof HoeItem;
@@ -410,6 +474,8 @@ public class FarmerWorkGoal extends Goal {
     public enum State{
         SELECT_WORK_AREA,
         MOVE_TO_WORK_AREA,
+        PREPARE_BONE_MEAL,
+        BONE_MEAL,
         PREPARE_BREAK_BLOCKS,
         BREAK_BLOCKS,
         PREPARE_WATER_SPOT,

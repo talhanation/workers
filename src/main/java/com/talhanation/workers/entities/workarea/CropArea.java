@@ -29,6 +29,7 @@ public class CropArea extends AbstractWorkAreaEntity {
     public Stack<BlockPos> stackToPlant = new Stack<>();
     public Stack<BlockPos> stackToBreak = new Stack<>();
     public Stack<BlockPos> stackToPlow = new Stack<>();
+    public Stack<BlockPos> stackToBoneMeal = new Stack<>();
     public FieldType fieldType;
 
     public CropArea(EntityType<?> type, Level level) {
@@ -66,6 +67,31 @@ public class CropArea extends AbstractWorkAreaEntity {
     @OnlyIn(Dist.CLIENT)
     public Screen getScreen(Player player) {
         return new CropAreaScreen(this, player);
+    }
+    public void scanBoneMealArea(){
+        if(area == null) area = this.getArea();
+
+        stackToBoneMeal.clear();
+        Level level = this.getCommandSenderWorld();
+
+        BlockPos.betweenClosedStream(area).forEach(pos -> {
+            BlockState state = level.getBlockState(pos);
+
+            if(fieldType == FieldType.STEM){
+                if(isBoneMealable(state, level, pos)){
+                    this.stackToBoneMeal.push(pos.immutable());
+                }
+            }
+            else{
+                BlockPos below = pos.below();
+                BlockState stateBelow = level.getBlockState(below);
+                if(isFarmland(stateBelow) || isTillAble(stateBelow)){
+                    if(isBoneMealable(state, level, pos)){
+                        this.stackToBoneMeal.push(pos.immutable());
+                    }
+                }
+            }
+        });
     }
     public void scanBreakArea(){
         if(area == null) area = this.getArea();
@@ -209,11 +235,15 @@ public class CropArea extends AbstractWorkAreaEntity {
     }
 
     public boolean isStem(BlockState state){
-          return state.getBlock() instanceof StemBlock || state.getBlock() instanceof StemGrownBlock || state.getBlock() instanceof AttachedStemBlock;
+        return state.getBlock() instanceof StemBlock || state.getBlock() instanceof StemGrownBlock || state.getBlock() instanceof AttachedStemBlock;
     }
 
     public boolean isCropDone(BlockState state){
         return state.getBlock() instanceof CropBlock cropBlock && cropBlock.getAge(state) == cropBlock.getMaxAge();
+    }
+
+    public boolean isBoneMealable(BlockState state, Level level, BlockPos pos){
+        return state.getBlock() instanceof BonemealableBlock bonemealable && bonemealable.isValidBonemealTarget(level, pos, state, level.isClientSide());
     }
 
     public boolean isAir(BlockState state){
