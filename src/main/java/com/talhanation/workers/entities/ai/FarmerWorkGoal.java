@@ -1,5 +1,7 @@
 package com.talhanation.workers.entities.ai;
 
+import com.talhanation.workers.WorkersMain;
+import com.talhanation.workers.compat.FarmersDelight;
 import com.talhanation.workers.entities.AbstractWorkerEntity;
 import com.talhanation.workers.entities.FarmerEntity;
 import com.talhanation.workers.entities.workarea.CropArea;
@@ -139,7 +141,16 @@ public class FarmerWorkGoal extends Goal {
                     return;
                 }
 
-                farmer.switchMainHandItem(itemStack -> itemStack.getItem().getDefaultInstance().isEmpty());
+                if(WorkersMain.isFarmersDelightInstalled){
+                    farmer.switchMainHandItem(itemStack -> FarmersDelight.isKnife(itemStack));
+
+                    if(!FarmersDelight.isKnife(farmer.getMainHandItem())){
+                        this.neededItems.add(new NeededItem(FarmersDelight::isKnife, 1, false));
+                    }
+                }
+                else{
+                    farmer.switchMainHandItem(itemStack -> itemStack.getItem().getDefaultInstance().isEmpty());
+                }
 
                 setState(State.BREAK_BLOCKS);
             }
@@ -149,6 +160,11 @@ public class FarmerWorkGoal extends Goal {
                 setState(State.PREPARE_WATER_SPOT);
             }
             case PREPARE_WATER_SPOT -> {
+                if(this.farmer.currentCropArea.fieldType == CropArea.FieldType.RICE){
+                    setState(State.PREPARE_PLOWING);
+                    return;
+                }
+
                 BlockState centerPosState = farmer.getCommandSenderWorld().getBlockState(this.farmer.currentCropArea.getWaterPosCenter());
                 if(centerPosState.isAir()){
 
@@ -289,7 +305,10 @@ public class FarmerWorkGoal extends Goal {
             }
 
             BlockState state = farmer.getCommandSenderWorld().getBlockState(blockPos);
-            if(state.getBlock() instanceof CropBlock || state.getBlock() instanceof StemBlock){
+
+            if(state.getBlock() instanceof CropBlock || state.getBlock() instanceof StemBlock
+               || this.farmer.currentCropArea.isRiceCrop(state) || this.farmer.currentCropArea.isRicePanicles(state)
+            ){
                 if(!positions.isEmpty()){
                     blockPos = positions.pop();
                 }

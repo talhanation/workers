@@ -45,6 +45,7 @@ public class WorkersMain {
     public static SimpleChannel SIMPLE_CHANNEL;
 
     public static boolean isDynamicTreesInstalled;
+    public static boolean isFarmersDelightInstalled;
 
     public WorkersMain() {
         ModLoadingContext.get().registerConfig(ModConfig.Type.SERVER, WorkersServerConfig.SERVER);
@@ -74,6 +75,7 @@ public class WorkersMain {
         ModList modList = ModList.get();
 
         isDynamicTreesInstalled = modList.isLoaded("dynamictrees");
+        isFarmersDelightInstalled = modList.isLoaded("farmersdelight");
     }
 
     @SubscribeEvent

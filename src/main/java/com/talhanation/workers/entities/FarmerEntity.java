@@ -3,12 +3,17 @@ package com.talhanation.workers.entities;
 import com.google.common.collect.ImmutableSet;
 import com.talhanation.recruits.entities.AbstractRecruitEntity;
 import com.talhanation.recruits.pathfinding.AsyncGroundPathNavigation;
+import com.talhanation.workers.WorkersMain;
+import com.talhanation.workers.compat.FarmersDelight;
 import com.talhanation.workers.config.WorkersServerConfig;
 import com.talhanation.workers.entities.ai.FarmerWorkGoal;
 import com.talhanation.workers.entities.workarea.AbstractWorkAreaEntity;
 import com.talhanation.workers.entities.workarea.CropArea;
+import net.minecraft.core.BlockPos;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.chat.Component;
+import net.minecraft.server.level.ServerLevel;
+import net.minecraft.world.Containers;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.util.RandomSource;
 import net.minecraft.world.DifficultyInstance;
@@ -22,6 +27,8 @@ import net.minecraft.world.level.ServerLevelAccessor;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.CropBlock;
+import net.minecraft.world.level.block.entity.BlockEntity;
+import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.material.Fluid;
 import net.minecraft.world.level.material.Fluids;
 import net.minecraft.world.level.material.WaterFluid;
@@ -133,8 +140,31 @@ public class FarmerEntity extends AbstractWorkerEntity{
 
         if(WorkersServerConfig.FarmerPickup.get().contains(id.toString())) return true;
         if(itemStack.getItem() instanceof BlockItem blockItem && blockItem.getBlock() instanceof CropBlock) return true;
+        if(FarmersDelight.isRicePlantItem(itemStack) || FarmersDelight.isRiceItem(itemStack)) return true;
 
         return super.wantsToPickUp(itemStack);
+    }
+
+    @Override
+    protected void finalizeBlockBreak(BlockPos pos) {
+        if (WorkersMain.isFarmersDelightInstalled && FarmersDelight.isKnife(this.getMainHandItem())) {
+            Level level = this.getCommandSenderWorld();
+            if (level.isClientSide()) return;
+
+            BlockState state = level.getBlockState(pos);
+            BlockEntity blockEntity = state.hasBlockEntity() ? level.getBlockEntity(pos) : null;
+
+            List<ItemStack> drops = Block.getDrops(state, (ServerLevel) level, pos, blockEntity, this, this.getMainHandItem());
+            for (ItemStack drop : drops) {
+                Containers.dropItemStack(level, pos.getX(), pos.getY(), pos.getZ(), drop);
+            }
+
+            level.levelEvent(2001, pos, Block.getId(state));
+            level.setBlock(pos, level.getFluidState(pos).createLegacyBlock(), 3);
+            this.damageMainHandItem();
+            return;
+        }
+        super.finalizeBlockBreak(pos);
     }
 
     public AbstractWorkAreaEntity getCurrentWorkArea(){

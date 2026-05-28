@@ -1,6 +1,8 @@
 package com.talhanation.workers.entities.workarea;
 
+import com.talhanation.workers.WorkersMain;
 import com.talhanation.workers.client.gui.CropAreaScreen;
+import com.talhanation.workers.compat.FarmersDelight;
 import com.talhanation.workers.entities.FarmerEntity;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.core.BlockPos;
@@ -77,7 +79,12 @@ public class CropArea extends AbstractWorkAreaEntity {
         BlockPos.betweenClosedStream(area).forEach(pos -> {
             BlockState state = level.getBlockState(pos);
 
-            if(fieldType == FieldType.STEM){
+            if(fieldType == FieldType.RICE){
+                if(WorkersMain.isFarmersDelightInstalled && (isRiceCrop(state) || isRicePanicles(state)) && isBoneMealable(state, level, pos)){
+                    this.stackToBoneMeal.push(pos.immutable());
+                }
+            }
+            else if(fieldType == FieldType.STEM){
                 if(isBoneMealable(state, level, pos)){
                     this.stackToBoneMeal.push(pos.immutable());
                 }
@@ -112,7 +119,12 @@ public class CropArea extends AbstractWorkAreaEntity {
 
             BlockPos below = pos.below();
             BlockState stateBelow = level.getBlockState(below);
-            if(fieldType == FieldType.STEM){
+            if(fieldType == FieldType.RICE){
+                if(WorkersMain.isFarmersDelightInstalled && FarmersDelight.isRiceMature(state)){
+                    this.stackToBreak.push(pos.immutable());
+                }
+            }
+            else if(fieldType == FieldType.STEM){
                 if (state.getBlock() instanceof MelonBlock || state.getBlock() instanceof PumpkinBlock  || (isBush(state) && !isStem(state))) {
                     stackToBreak.push(pos.immutable());
                 }
@@ -129,6 +141,7 @@ public class CropArea extends AbstractWorkAreaEntity {
     public void scanPlowArea(){
         if(area == null) area = this.getArea();
         stackToPlow.clear();
+        if(fieldType == FieldType.RICE) return;
         Level level = this.getCommandSenderWorld();
         BlockPos origin = this.getOnPos();
 
@@ -159,7 +172,14 @@ public class CropArea extends AbstractWorkAreaEntity {
         BlockPos origin = this.getOnPos();
 
         BlockPos.betweenClosedStream(area).forEach(pos -> {
-            if (fieldType == FieldType.STEM) {
+            if (fieldType == FieldType.RICE) {
+                BlockState state = level.getBlockState(pos);
+                BlockState below = level.getBlockState(pos.below());
+                if (isWaterSource(state) && FarmersDelight.canHostRice(below)) {
+                    stackToPlant.push(pos.immutable());
+                }
+            }
+            else if (fieldType == FieldType.STEM) {
                 int col = getColumnIndex(origin, pos, getFacing());
                 BlockState state = level.getBlockState(pos);
                 BlockState below = level.getBlockState(pos.below());
@@ -208,6 +228,10 @@ public class CropArea extends AbstractWorkAreaEntity {
     }
 
     public boolean isWorkerPerfectCandidate(FarmerEntity farmer) {
+        if (fieldType == FieldType.RICE) {
+            return farmer.getMatchingItem(stack -> stack.is(this.getSeedStack().getItem())) != ItemStack.EMPTY;
+        }
+
         if (farmer.getMatchingItem(stack -> stack.getItem() instanceof HoeItem) == ItemStack.EMPTY) {
             return false;
         }
@@ -246,6 +270,18 @@ public class CropArea extends AbstractWorkAreaEntity {
         return state.getBlock() instanceof BonemealableBlock bonemealable && bonemealable.isValidBonemealTarget(level, pos, state, level.isClientSide());
     }
 
+    public boolean isWaterSource(BlockState state){
+        return state.is(Blocks.WATER) && state.getFluidState().isSource();
+    }
+
+    public boolean isRiceCrop(BlockState state){
+        return WorkersMain.isFarmersDelightInstalled && FarmersDelight.isRiceCrop(state);
+    }
+
+    public boolean isRicePanicles(BlockState state){
+        return WorkersMain.isFarmersDelightInstalled && FarmersDelight.isRicePanicles(state);
+    }
+
     public boolean isAir(BlockState state){
         return state.isAir();
     }
@@ -259,6 +295,11 @@ public class CropArea extends AbstractWorkAreaEntity {
     }
 
     public void updateType() {
+        if(WorkersMain.isFarmersDelightInstalled && FarmersDelight.isRiceItem(this.getSeedStack())){
+            this.fieldType = FieldType.RICE;
+            return;
+        }
+
         if(this.getSeedStack().getItem() instanceof BlockItem blockItem){
             if(blockItem.getBlock() instanceof StemBlock){
                 this.fieldType = FieldType.STEM;
@@ -276,7 +317,8 @@ public class CropArea extends AbstractWorkAreaEntity {
     public enum FieldType {
         CROP(0),
         BUSH(1),
-        STEM(2);
+        STEM(2),
+        RICE(3);
 
         private final int index;
         FieldType(int index){

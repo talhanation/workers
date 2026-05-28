@@ -2,6 +2,7 @@ package com.talhanation.workers.client.gui;
 
 import com.talhanation.workers.WorkersMain;
 import com.talhanation.workers.client.gui.widgets.ItemScrollDropDownMenu;
+import com.talhanation.workers.compat.FarmersDelight;
 import com.talhanation.workers.entities.workarea.CropArea;
 import com.talhanation.workers.network.MessageUpdateCropArea;
 import net.minecraft.client.gui.GuiGraphics;
@@ -62,7 +63,15 @@ public class CropAreaScreen extends WorkAreaScreen {
         List<Item> items = new ArrayList<>();
         List<ItemStack> stacks = new ArrayList<>();
         for (ItemStack itemStack : player.getInventory().items) {
-            if (itemStack.getItem() instanceof BlockItem blockItem && !items.contains(itemStack.getItem())) {
+            if (itemStack.isEmpty() || items.contains(itemStack.getItem())) continue;
+
+            if (WorkersMain.isFarmersDelightInstalled && FarmersDelight.isRiceItem(itemStack)) {
+                stacks.add(itemStack.copy());
+                items.add(itemStack.getItem());
+                continue;
+            }
+
+            if (itemStack.getItem() instanceof BlockItem blockItem) {
 
                 if(blockItem.getBlock() instanceof SaplingBlock) continue;
 
