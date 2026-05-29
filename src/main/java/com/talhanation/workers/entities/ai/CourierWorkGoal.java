@@ -7,9 +7,11 @@ import com.talhanation.workers.entities.workarea.MarketArea;
 import com.talhanation.workers.world.CourierAction;
 import com.talhanation.workers.world.CourierRoute;
 import net.minecraft.core.BlockPos;
+import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.sounds.SoundEvents;
+import net.minecraft.world.CompoundContainer;
 import net.minecraft.world.Container;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.ai.goal.Goal;
@@ -17,9 +19,12 @@ import net.minecraft.world.entity.animal.horse.AbstractChestedHorse;
 import net.minecraft.world.entity.npc.InventoryCarrier;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.level.Level;
+import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.ChestBlock;
 import net.minecraft.world.level.block.entity.ChestBlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.level.gameevent.GameEvent;
 import net.minecraft.world.phys.AABB;
 
 import java.util.*;
@@ -50,6 +55,7 @@ public class CourierWorkGoal extends Goal {
     private int                         activeSlotIdx;      // PICKUP: slot in source / DEPOSIT: slot in workInv
     private int                         activeTransferred;  // total items moved so far
     private int                         activeFillLimit;    // PUT_FILL/TAKE_FILL: pre-computed missing amount (desired count − already present)
+    private final Set<Container>        openedContainers = new HashSet<>();
 
     public CourierWorkGoal(CourierEntity courier){
         this.courier = courier;
@@ -93,6 +99,7 @@ public class CourierWorkGoal extends Goal {
 
     @Override
     public void stop(){
+        closeOpenedChests();
         courier.getNavigation().stop();
     }
 
@@ -282,10 +289,10 @@ public class CourierWorkGoal extends Goal {
 
             for (Container dest : activeTargets){
                 int ins = insertIntoContainer(dest, slot, toMove - deposited);
+                if (ins > 0) openChestFor(dest);
                 deposited += ins;
                 slot.shrink(ins);
                 if (slot.isEmpty()) break;
-                if (ins > 0) playChestSound(dest);
             }
 
             workInv.setItem(sIdx, slot.isEmpty() ? ItemStack.EMPTY : slot);
@@ -330,6 +337,7 @@ public class CourierWorkGoal extends Goal {
     }
 
     private void finishTransfer(){
+        closeOpenedChests();
         actionIndex++;
         state = State.EXECUTE_ACTIONS;
     }
@@ -343,7 +351,7 @@ public class CourierWorkGoal extends Goal {
                 slot.shrink(inserted);
                 src.setItem(slotIdx, slot.isEmpty() ? ItemStack.EMPTY : slot);
                 src.setChanged();
-                playChestSound(src);
+                openChestFor(src);
             }
             return inserted;
         }
@@ -355,7 +363,7 @@ public class CourierWorkGoal extends Goal {
             slot.shrink(added);
             src.setItem(slotIdx, slot.isEmpty() ? ItemStack.EMPTY : slot);
             src.setChanged();
-            playChestSound(src);
+            openChestFor(src);
         }
         return added;
     }
@@ -517,12 +525,62 @@ public class CourierWorkGoal extends Goal {
         courier.notifyOwner(msg);
     }
 
-    private void playChestSound(Container container){
-        if (container instanceof ChestBlockEntity chestBlockEntity){
-            courier.getCommandSenderWorld().playSound(null, chestBlockEntity.getBlockPos(),
-                    SoundEvents.CHEST_OPEN, courier.getSoundSource(),
-                    0.4F, 0.9F + courier.getRandom().nextFloat() * 0.2F);
+    /**
+     * Opens the destination/source chest visually + audibly the first time we
+     * interact with it during the current action. Mirrors the pattern used by
+     * {@code AbstractChestGoal.interactChest}; handles both single chests and
+     * double chests (CompoundContainer).
+     */
+    private void openChestFor(Container container){
+        if (container == null || openedContainers.contains(container)) return;
+        ChestBlockEntity chest = resolveChest(container);
+        if (chest == null) return;
+        setChestOpenState(chest, true);
+        openedContainers.add(container);
+    }
+
+    /** Closes every chest the courier opened during the current action. */
+    private void closeOpenedChests(){
+        if (openedContainers.isEmpty()) return;
+        for (Container c : openedContainers){
+            ChestBlockEntity chest = resolveChest(c);
+            if (chest != null) setChestOpenState(chest, false);
         }
+        openedContainers.clear();
+    }
+
+    private void setChestOpenState(ChestBlockEntity chest, boolean open){
+        BlockPos pos = chest.getBlockPos();
+        Level level = courier.getCommandSenderWorld();
+        BlockState state = level.getBlockState(pos);
+        Block block = state.getBlock();
+        if (!(block instanceof ChestBlock)) return;
+
+        CompoundTag tag = chest.getPersistentData();
+        boolean isOpened = tag.getBoolean("isOpened");
+
+        if (open && !isOpened){
+            level.blockEvent(pos, block, 1, 1);
+            level.playSound(null, pos, SoundEvents.CHEST_OPEN, courier.getSoundSource(),
+                    0.7F, 0.8F + 0.4F * courier.getRandom().nextFloat());
+            tag.putBoolean("isOpened", true);
+        }
+        else if (!open && isOpened){
+            level.blockEvent(pos, block, 1, 0);
+            level.playSound(null, pos, SoundEvents.CHEST_CLOSE, courier.getSoundSource(),
+                    0.7F, 0.8F + 0.4F * courier.getRandom().nextFloat());
+            tag.putBoolean("isOpened", false);
+        }
+        level.gameEvent(courier, open ? GameEvent.BLOCK_OPEN : GameEvent.BLOCK_CLOSE, pos);
+    }
+
+    private ChestBlockEntity resolveChest(Container container){
+        if (container instanceof ChestBlockEntity cbe) return cbe;
+        if (container instanceof CompoundContainer cc){
+            if (cc.container1 instanceof ChestBlockEntity cbe) return cbe;
+            if (cc.container2 instanceof ChestBlockEntity cbe) return cbe;
+        }
+        return null;
     }
 
     public enum State{
