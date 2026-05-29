@@ -66,7 +66,7 @@ public class StorageArea extends AbstractWorkAreaEntity implements IPermissionAr
             if(stateAbove.isAir()){
                 Container container = getContainer(pos);
 
-                if(container != null && !storageMap.containsValue(container)){
+                if(container != null && !isAlreadyMapped(storageMap, container)){
                     storageMap.put(pos.immutable(), container);
                 }
             }

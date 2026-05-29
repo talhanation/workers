@@ -92,7 +92,7 @@ public class MarketArea extends AbstractWorkAreaEntity implements IPermissionAre
             BlockState stateAbove = this.getCommandSenderWorld().getBlockState(pos.above());
             if (stateAbove.isAir()) {
                 Container container = getContainer(pos);
-                if (container != null && !containerMap.containsValue(container)) {
+                if (container != null && !isAlreadyMapped(containerMap, container)) {
                     containerMap.put(pos.immutable(), container);
 
                 }

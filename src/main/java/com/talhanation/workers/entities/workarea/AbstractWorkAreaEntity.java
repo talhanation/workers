@@ -11,6 +11,7 @@ import net.minecraft.network.syncher.EntityDataAccessor;
 import net.minecraft.network.syncher.EntityDataSerializers;
 import net.minecraft.network.syncher.SynchedEntityData;
 import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.world.CompoundContainer;
 import net.minecraft.world.Container;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResult;
@@ -244,6 +245,22 @@ public abstract class AbstractWorkAreaEntity extends Entity {
             if (other == currentArea) continue;
             if (other instanceof BuildArea) continue;  // BuildAreas are excluded
             if (other.getArea().intersects(targetBox)) return true;
+        }
+        return false;
+    }
+
+    public static boolean isSameContainer(Container a, Container b) {
+        if (a == b) return true;
+        if (a instanceof CompoundContainer ccA && b instanceof CompoundContainer ccB) {
+            return (ccA.container1 == ccB.container1 && ccA.container2 == ccB.container2)
+                    || (ccA.container1 == ccB.container2 && ccA.container2 == ccB.container1);
+        }
+        return false;
+    }
+
+    public static boolean isAlreadyMapped(java.util.Map<?, Container> map, Container container) {
+        for (Container c : map.values()) {
+            if (isSameContainer(c, container)) return true;
         }
         return false;
     }

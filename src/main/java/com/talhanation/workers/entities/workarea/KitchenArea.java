@@ -101,12 +101,12 @@ public class KitchenArea extends AbstractWorkAreaEntity implements IPermissionAr
             }
             else if (bs.getBlock() instanceof ChestBlock chestBlock) {
                 Container chest = ChestBlock.getContainer(chestBlock, bs, this.getCommandSenderWorld(), pos, false);
-                if (chest != null && !containerMap.containsValue(chest)) {
+                if (chest != null && !isAlreadyMapped(containerMap, chest)) {
                     containerMap.put(pos.immutable(), chest);
                 }
             }
             else if (be instanceof Container container && !be.isRemoved()) {
-                if (!containerMap.containsValue(container)) {
+                if (!isAlreadyMapped(containerMap, container)) {
                     containerMap.put(pos.immutable(), container);
                 }
             }
