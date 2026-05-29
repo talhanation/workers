@@ -7,6 +7,7 @@ import com.talhanation.recruits.world.RecruitsGroup;
 import com.talhanation.workers.WorkAreaTypes;
 import com.talhanation.workers.WorkersMain;
 import com.talhanation.workers.client.WorkersClientManager;
+import com.talhanation.workers.entities.workarea.BuildArea;
 import com.talhanation.workers.network.MessageAddWorkArea;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.components.Tooltip;
@@ -99,17 +100,17 @@ public class WorkerCommandScreen implements ICommandCategory {
 
 
         btn.active = canPlace(screen, type);
-        if (tooltip != null){
-            if(btn.active){
-                btn.setTooltip(Tooltip.create(tooltip));
-            }
-            else if(WorkersClientManager.configValueOnlyBuildings){
-                btn.setTooltip(Tooltip.create(TOOLTIP_DISABLED_BY_SERVER));
-            }
-            else if(!WorkersClientManager.isInFactionClaim(screen.rayBlockPos, type)){
-                btn.setTooltip(Tooltip.create(TOOLTIP_NOT_IN_CLAIM));
-            }
+
+        if(btn.active){
+            if (tooltip != null) btn.setTooltip(Tooltip.create(tooltip));
         }
+        else if(type != WorkAreaTypes.BUILDING && WorkersClientManager.configValueOnlyBuildings){
+            btn.setTooltip(Tooltip.create(TOOLTIP_DISABLED_BY_SERVER));
+        }
+        else if(WorkersClientManager.configValueWorkAreaOnlyInFactionClaim){
+            btn.setTooltip(Tooltip.create(TOOLTIP_NOT_IN_CLAIM));
+        }
+
         screen.addRenderableWidget(btn);
     }
 
