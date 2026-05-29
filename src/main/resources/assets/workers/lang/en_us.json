@@ -46,6 +46,9 @@
   "gui.workers.command.text.place_kitchen": "Place Kitchen",
   "gui.workers.command.tooltip.place_kitchen": "Places a Kitchen Area on the position you are pointing at.",
 
+  "gui.workers.command.tooltip.disabled_by_server": "Disabled by Server.",
+  "gui.workers.command.tooltip.not_in_claim": "Must be in claimed area.",
+
   "gui.workers.command.text.forward": "Forward",
   "gui.workers.command.text.back": "Back",
   "gui.workers.command.text.left": "Left",

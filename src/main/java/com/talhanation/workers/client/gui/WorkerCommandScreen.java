@@ -43,6 +43,8 @@ public class WorkerCommandScreen implements ICommandCategory {
     private static final MutableComponent TOOLTIP_PLACE_HOME_AREA = Component.translatable("gui.workers.command.tooltip.place_home");
     private static final MutableComponent TEXT_PLACE_KITCHEN_AREA = Component.translatable("gui.workers.command.text.place_kitchen");
     private static final MutableComponent TOOLTIP_PLACE_KITCHEN_AREA = Component.translatable("gui.workers.command.tooltip.place_kitchen");
+    private static final MutableComponent TOOLTIP_DISABLED_BY_SERVER = Component.translatable("gui.workers.command.tooltip.disabled_by_server");
+    private static final MutableComponent TOOLTIP_NOT_IN_CLAIM = Component.translatable("gui.workers.command.tooltip.not_in_claim");
     @Override
     public Component getToolTipName() {
         return Component.translatable("gui.workers.command.tooltip.workers");
@@ -95,8 +97,19 @@ public class WorkerCommandScreen implements ICommandCategory {
             WorkersMain.SIMPLE_CHANNEL.sendToServer(new MessageAddWorkArea(screen.rayBlockPos, type));
         });
 
-        if (tooltip != null) btn.setTooltip(Tooltip.create(tooltip));
+
         btn.active = canPlace(screen, type);
+        if (tooltip != null){
+            if(btn.active){
+                btn.setTooltip(Tooltip.create(tooltip));
+            }
+            else if(WorkersClientManager.configValueOnlyBuildings){
+                btn.setTooltip(Tooltip.create(TOOLTIP_DISABLED_BY_SERVER));
+            }
+            else if(!WorkersClientManager.isInFactionClaim(screen.rayBlockPos, type)){
+                btn.setTooltip(Tooltip.create(TOOLTIP_NOT_IN_CLAIM));
+            }
+        }
         screen.addRenderableWidget(btn);
     }
 
