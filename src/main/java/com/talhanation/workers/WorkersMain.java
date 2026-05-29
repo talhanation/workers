@@ -65,7 +65,6 @@ public class WorkersMain {
 
         DistExecutor.unsafeRunWhenOn(Dist.CLIENT, () -> () -> {
             FMLJavaModLoadingContext.get().getModEventBus().addListener(WorkersMain.this::clientSetup);
-            FMLJavaModLoadingContext.get().getModEventBus().addListener(ModShortcuts::registerBindings);
         });
 
         MinecraftForge.EVENT_BUS.register(this);
