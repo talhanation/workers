@@ -75,6 +75,7 @@ public class VillagerEvents {
                 WorkersMain.SIMPLE_CHANNEL.send(PacketDistributor.PLAYER.with(() -> player),
                         new MessageToClientUpdateConfig(
                                 WorkersServerConfig.ShouldWorkAreaOnlyBeInFactionClaim.get(),
+                                WorkersServerConfig.ShouldOnlyPlacingBuildingsBePossible.get(),
                                 WorkersServerConfig.BuildModeConfig.get()
                         ));
         }
