@@ -401,7 +401,7 @@ public class CourierScreen extends ScreenBase<CourierContainer> {
                         case CHEST   -> "Chest";
                         case STORAGE -> "Storage";
                         case MARKET  -> "Market";
-                        case KITCHEN  -> "KITCHEN";
+                        case KITCHEN  -> "Kitchen";
                         //case WORKER  -> "Worker";
                     },
                     s -> { action.setSourceType(s); buildWidgets(); },
