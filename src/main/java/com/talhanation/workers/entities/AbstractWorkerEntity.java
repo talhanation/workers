@@ -96,8 +96,8 @@ public abstract class AbstractWorkerEntity extends AbstractChunkLoaderEntity {
         this.getCommandSenderWorld().getProfiler().push("looting");
         if (this.canPickUpLoot() && this.isAlive() && !this.dead) {
             List<ItemEntity> nearbyItems = this.getCommandSenderWorld().getEntitiesOfClass(
-                ItemEntity.class,
-                this.getBoundingBox().inflate(5.5D, 5.5D, 5.5D)
+                    ItemEntity.class,
+                    this.getBoundingBox().inflate(5.5D, 5.5D, 5.5D)
             );
 
             for (ItemEntity itementity : nearbyItems) {
@@ -439,8 +439,15 @@ public abstract class AbstractWorkerEntity extends AbstractChunkLoaderEntity {
     }
 
     public void addNeededItem(NeededItem neededItem) {
-        if(neededItems.contains(neededItem)) return;
-
+        // Same item + same source -> merge by taking the higher count instead of
+        // appending a duplicate. Different sources stay separate so e.g. two
+        // crop fields each asking for 8 bone meal accumulate to 16.
+        for (NeededItem existing : neededItems) {
+            if (existing.isSameRequest(neededItem)) {
+                existing.count = Math.max(existing.count, neededItem.count);
+                return;
+            }
+        }
         neededItems.add(neededItem);
     }
     //@Override

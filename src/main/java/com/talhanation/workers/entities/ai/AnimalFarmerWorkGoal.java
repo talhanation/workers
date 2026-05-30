@@ -132,7 +132,7 @@ public class AnimalFarmerWorkGoal extends Goal {
 
                 boolean hasBreedItem = mainHandItem.is(breedItem);
                 if(!hasBreedItem){
-                    this.neededItems.add(new NeededItem(stack -> stack.is(breedItem), amountToBreed, true));
+                    this.neededItems.add(new NeededItem(stack -> stack.is(breedItem), amountToBreed, true, this.animalFarmerEntity.currentAnimalPen.getUUID()));
                     this.animal = null;
                     setState(State.PREPARE_SPECIAL_TASK);
                     return;
@@ -286,7 +286,7 @@ public class AnimalFarmerWorkGoal extends Goal {
         if(!hasSpecialItem){
             boolean chicken = animalType == AnimalPenArea.AnimalTypes.CHICKEN;
 
-            this.neededItems.add(new NeededItem(stack -> stack.is(specialItem),  chicken ? 32 : 1, !chicken));
+            this.neededItems.add(new NeededItem(stack -> stack.is(specialItem),  chicken ? 32 : 1, !chicken, this.animalFarmerEntity.currentAnimalPen.getUUID()));
             this.animal = null;
             setState(State.DONE);
             return true;

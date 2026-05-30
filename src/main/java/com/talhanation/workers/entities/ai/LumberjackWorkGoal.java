@@ -124,7 +124,7 @@ public class LumberjackWorkGoal extends Goal {
 
                 boolean hasBoneMeal = lumberjack.getMainHandItem().getItem() instanceof BoneMealItem;
                 if(!hasBoneMeal){
-                    this.neededItems.add(new NeededItem(stack -> stack.getItem() instanceof BoneMealItem, stackToBoneMeal.size(), false));
+                    this.neededItems.add(new NeededItem(stack -> stack.getItem() instanceof BoneMealItem, stackToBoneMeal.size(), false, this.lumberjack.currentLumberArea.getUUID()));
                     this.blockPos = null;
                     setState(State.SCAN_TREES);
                     return;
@@ -181,7 +181,7 @@ public class LumberjackWorkGoal extends Goal {
 
                 boolean hasShears = lumberjack.getMainHandItem().getItem() instanceof ShearsItem;
                 if(!hasShears){
-                    this.neededItems.add(new NeededItem(stack -> stack.getItem() instanceof ShearsItem, 1, true));
+                    this.neededItems.add(new NeededItem(stack -> stack.getItem() instanceof ShearsItem, 1, true, this.lumberjack.currentLumberArea.getUUID()));
                     this.blockPos = null;
                     return;
                 }
@@ -205,7 +205,7 @@ public class LumberjackWorkGoal extends Goal {
 
                 boolean hasAxe = lumberjack.getMainHandItem().getItem() instanceof AxeItem;
                 if(!hasAxe){
-                    this.neededItems.add(new NeededItem(stack -> stack.getItem() instanceof AxeItem, 1, true));
+                    this.neededItems.add(new NeededItem(stack -> stack.getItem() instanceof AxeItem, 1, true, this.lumberjack.currentLumberArea.getUUID()));
                     this.blockPos = null;
                     return;
                 }
@@ -224,7 +224,7 @@ public class LumberjackWorkGoal extends Goal {
 
                 boolean hasAxe = lumberjack.getMainHandItem().getItem() instanceof AxeItem;
                 if(!hasAxe){
-                    this.neededItems.add(new NeededItem(stack -> stack.getItem() instanceof AxeItem, 1, true));
+                    this.neededItems.add(new NeededItem(stack -> stack.getItem() instanceof AxeItem, 1, true, this.lumberjack.currentLumberArea.getUUID()));
                     this.blockPos = null;
                     return;
                 }
@@ -443,7 +443,7 @@ public class LumberjackWorkGoal extends Goal {
                     this.neededItems.add(new NeededItem(itemStack ->
                             (itemStack.getItem() instanceof BlockItem blockItem && blockItem.getBlock() instanceof SaplingBlock)
                                     || (WorkersMain.isDynamicTreesInstalled && DynamicTrees.isDynamicTreesSeed(itemStack)),
-                            8, true));
+                            8, true, this.lumberjack.currentLumberArea.getUUID()));
                     this.blockPos = null;
                     return false;
                 }
@@ -456,7 +456,7 @@ public class LumberjackWorkGoal extends Goal {
                     this.neededItems.add(new NeededItem(itemStack ->
                             (itemStack.getItem() instanceof BlockItem blockItem && blockItem.getBlock() instanceof SaplingBlock)
                                     || (WorkersMain.isDynamicTreesInstalled && DynamicTrees.isDynamicTreesSeed(itemStack)),
-                            8, true));
+                            8, true, this.lumberjack.currentLumberArea.getUUID()));
                     this.blockPos = null;
                     return false;
                 }

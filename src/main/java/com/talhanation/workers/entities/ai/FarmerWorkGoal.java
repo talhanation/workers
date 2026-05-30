@@ -132,7 +132,7 @@ public class FarmerWorkGoal extends Goal {
 
                 boolean hasBoneMeal = farmer.getMainHandItem().getItem() instanceof BoneMealItem;
                 if(!hasBoneMeal){
-                    this.neededItems.add(new NeededItem(stack -> stack.getItem() instanceof BoneMealItem, stackToBoneMeal.size(), false));
+                    this.neededItems.add(new NeededItem(stack -> stack.getItem() instanceof BoneMealItem, stackToBoneMeal.size(), false, this.farmer.currentCropArea.getUUID()));
                     this.blockPos = null;
                     setState(State.PREPARE_PICK_BUSHES);
                     return;
@@ -176,7 +176,7 @@ public class FarmerWorkGoal extends Goal {
                     farmer.switchMainHandItem(itemStack -> FarmersDelight.isKnife(itemStack));
 
                     if(!FarmersDelight.isKnife(farmer.getMainHandItem())){
-                        this.neededItems.add(new NeededItem(FarmersDelight::isKnife, 1, false));
+                        this.neededItems.add(new NeededItem(FarmersDelight::isKnife, 1, false, this.farmer.currentCropArea.getUUID()));
                     }
                 }
                 else{
@@ -227,7 +227,7 @@ public class FarmerWorkGoal extends Goal {
 
                 boolean hasHoe = farmer.getMainHandItem().getItem() instanceof HoeItem;
                 if(!hasHoe){
-                    this.neededItems.add(new NeededItem(stack -> stack.getItem() instanceof HoeItem, 1, true));
+                    this.neededItems.add(new NeededItem(stack -> stack.getItem() instanceof HoeItem, 1, true, this.farmer.currentCropArea.getUUID()));
                     this.blockPos = null;
                     setState(State.PREPARE_PLANT_SEEDS);
                     return;
@@ -258,7 +258,7 @@ public class FarmerWorkGoal extends Goal {
                 ItemStack seedFromInv = farmer.getMatchingItem(itemStack -> itemStack.is(this.farmer.currentCropArea.getSeedStack().getItem()));
                 if(seedFromInv == null){
                     ItemStack seedStack = this.farmer.currentCropArea.getSeedStack();
-                    this.neededItems.add(new NeededItem(itemStack -> ItemStack.isSameItemSameTags(itemStack, seedStack),  stackToPlant.size(), true));
+                    this.neededItems.add(new NeededItem(itemStack -> ItemStack.isSameItemSameTags(itemStack, seedStack),  stackToPlant.size(), true, this.farmer.currentCropArea.getUUID()));
                     setState(State.DONE);
                     this.blockPos = null;
                     return;
@@ -491,6 +491,12 @@ public class FarmerWorkGoal extends Goal {
         state.use(level, fake, InteractionHand.MAIN_HAND, hitResult);
     }
 
+    /**
+     * Plants a BUSH-type seed by simulating a right-click of the seed item on
+     * the soil block (the block under {@code targetPos}). This routes through
+     * the item's own placement logic (canSurvive checks, FD's rope-detection
+     * for tomatoes, etc.) instead of blindly setBlock'ing the default state.
+     */
     private boolean plantViaUseOn(BlockPos targetPos, ItemStack seed){
         Level level = farmer.getCommandSenderWorld();
         if (!(level instanceof ServerLevel serverLevel)) return false;
