@@ -140,7 +140,7 @@ public class FarmerEntity extends AbstractWorkerEntity{
 
         if(WorkersServerConfig.FarmerPickup.get().contains(id.toString())) return true;
         if(itemStack.getItem() instanceof BlockItem blockItem && blockItem.getBlock() instanceof CropBlock) return true;
-        if(FarmersDelight.isRicePlantItem(itemStack) || FarmersDelight.isRiceItem(itemStack)) return true;
+        if(FarmersDelight.isRicePlantItem(itemStack) || FarmersDelight.isRiceSeedItem(itemStack)) return true;
 
         return super.wantsToPickUp(itemStack);
     }

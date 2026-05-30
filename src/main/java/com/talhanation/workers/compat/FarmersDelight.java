@@ -1,16 +1,27 @@
 package com.talhanation.workers.compat;
 
 import com.mojang.authlib.GameProfile;
+import net.minecraft.core.BlockPos;
+import net.minecraft.core.Direction;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.resources.ResourceLocation;
+import net.minecraft.server.level.ServerLevel;
 import net.minecraft.tags.ItemTags;
 import net.minecraft.tags.TagKey;
+import net.minecraft.world.InteractionHand;
+import net.minecraft.world.InteractionResult;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.context.UseOnContext;
+import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.FarmBlock;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.block.state.properties.IntegerProperty;
 import net.minecraft.world.level.block.state.properties.Property;
+import net.minecraft.world.phys.BlockHitResult;
+import net.minecraft.world.phys.Vec3;
+import net.minecraftforge.common.util.FakePlayer;
+import net.minecraftforge.common.util.FakePlayerFactory;
 
 import java.util.UUID;
 
@@ -34,15 +45,16 @@ public class FarmersDelight {
         return id != null && id.getPath().contains("knife");
     }
 
-    public static boolean isRicePlantItem(ItemStack stack) {
-        if (stack == null || stack.isEmpty()) return false;
-        ResourceLocation id = BuiltInRegistries.ITEM.getKey(stack.getItem());
-        return id != null && id.getNamespace().equals(MOD_ID) && id.getPath().equals("rice_panicle");
-    }
-    public static boolean isRiceItem(ItemStack stack) {
+    public static boolean isRiceSeedItem(ItemStack stack) {
         if (stack == null || stack.isEmpty()) return false;
         ResourceLocation id = BuiltInRegistries.ITEM.getKey(stack.getItem());
         return id != null && id.getNamespace().equals(MOD_ID) && id.getPath().equals("rice");
+    }
+
+    public static boolean isRicePlantItem(ItemStack stack) {
+        if (stack == null || stack.isEmpty()) return false;
+        ResourceLocation id = BuiltInRegistries.ITEM.getKey(stack.getItem());
+        return id != null && id.getNamespace().equals(MOD_ID) && id.getPath().equals("panicle");
     }
 
     // The lower, persistent rice block (stays planted and regrows panicles)
@@ -54,7 +66,7 @@ public class FarmersDelight {
     // The upper, harvestable panicles block
     public static boolean isRicePanicles(BlockState state) {
         ResourceLocation id = BuiltInRegistries.BLOCK.getKey(state.getBlock());
-        return id != null && id.getNamespace().equals(MOD_ID) && id.getPath().contains("panicl");
+        return id != null && id.getNamespace().equals(MOD_ID) && id.getPath().contains("panicle");
     }
 
     public static boolean isAnyRice(BlockState state) {
@@ -66,6 +78,16 @@ public class FarmersDelight {
         if (!isRicePanicles(state)) return false;
         int max = getMaxAge(state);
         if (max <= 0) return true; // kein age-Property -> Existenz des Panicles-Blocks = erntereif
+        return getAge(state) >= max;
+    }
+
+    public static boolean isPickableTomato(BlockState state) {
+        ResourceLocation id = BuiltInRegistries.BLOCK.getKey(state.getBlock());
+        if (id == null) return false;
+        if (!id.getNamespace().equals(MOD_ID)) return false;
+        if (!id.getPath().contains("tomato")) return false;
+        int max = getMaxAge(state);
+        if (max <= 0) return false;
         return getAge(state) >= max;
     }
 
@@ -93,5 +115,21 @@ public class FarmersDelight {
             }
         }
         return 0;
+    }
+
+    public static boolean plantRice(ServerLevel level, BlockPos waterPos, ItemStack rice) {
+        FakePlayer fakePlayer = FakePlayerFactory.get(level, FARMER_FAKE_PROFILE);
+        fakePlayer.setPos(waterPos.getX() + 0.5, waterPos.getY() + 1, waterPos.getZ() + 0.5);
+
+        ItemStack single = rice.copy();
+        single.setCount(1);
+        fakePlayer.setItemInHand(InteractionHand.MAIN_HAND, single);
+
+        Vec3 hitVec = new Vec3(waterPos.getX() + 0.5, waterPos.getY() + 1.0, waterPos.getZ() + 0.5);
+        BlockHitResult hitResult = new BlockHitResult(hitVec, Direction.UP, waterPos, false);
+        UseOnContext context = new UseOnContext(level, fakePlayer, InteractionHand.MAIN_HAND, single, hitResult);
+
+        InteractionResult result = single.useOn(context);
+        return result.consumesAction();
     }
 }

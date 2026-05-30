@@ -1,5 +1,6 @@
 package com.talhanation.workers.entities.ai;
 
+import com.mojang.authlib.GameProfile;
 import com.talhanation.workers.WorkersMain;
 import com.talhanation.workers.compat.FarmersDelight;
 import com.talhanation.workers.entities.AbstractWorkerEntity;
@@ -7,17 +8,25 @@ import com.talhanation.workers.entities.FarmerEntity;
 import com.talhanation.workers.entities.workarea.CropArea;
 import com.talhanation.workers.world.NeededItem;
 import net.minecraft.core.BlockPos;
+import net.minecraft.core.Direction;
 import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.sounds.SoundSource;
 import net.minecraft.world.InteractionHand;
+import net.minecraft.world.InteractionResult;
 import net.minecraft.world.entity.ai.goal.Goal;
 import net.minecraft.world.item.*;
+import net.minecraft.world.item.context.UseOnContext;
+import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.*;
 import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.phys.BlockHitResult;
+import net.minecraft.world.phys.Vec3;
 import net.minecraftforge.common.IPlantable;
 import net.minecraftforge.common.PlantType;
+import net.minecraftforge.common.util.FakePlayer;
+import net.minecraftforge.common.util.FakePlayerFactory;
 
 import javax.annotation.Nullable;
 import java.util.*;
@@ -33,6 +42,11 @@ public class FarmerWorkGoal extends Goal {
     public Stack<BlockPos> stackToBreak;
     public Stack<BlockPos> stackToPlow;
     public Stack<BlockPos> stackToBoneMeal;
+    public Stack<BlockPos> stackToPick;
+
+    private static final GameProfile FARMER_PICK_PROFILE = new GameProfile(
+            java.util.UUID.fromString("c2e5a7d3-9f1b-4e6a-8c0d-2f3e4a5b6c70"), "WorkerFarmerPick"
+    );
     public List<NeededItem> neededItems = new ArrayList<>();
     public FarmerWorkGoal(FarmerEntity farmer) {
         this.farmer = farmer;
@@ -110,7 +124,7 @@ public class FarmerWorkGoal extends Goal {
                 this.stackToBoneMeal = this.farmer.currentCropArea.stackToBoneMeal;
 
                 if(stackToBoneMeal.isEmpty()){
-                    setState(State.PREPARE_BREAK_BLOCKS);
+                    setState(State.PREPARE_PICK_BUSHES);
                     return;
                 }
 
@@ -120,7 +134,7 @@ public class FarmerWorkGoal extends Goal {
                 if(!hasBoneMeal){
                     this.neededItems.add(new NeededItem(stack -> stack.getItem() instanceof BoneMealItem, stackToBoneMeal.size(), false));
                     this.blockPos = null;
-                    setState(State.PREPARE_BREAK_BLOCKS);
+                    setState(State.PREPARE_PICK_BUSHES);
                     return;
                 }
 
@@ -128,6 +142,23 @@ public class FarmerWorkGoal extends Goal {
             }
             case BONE_MEAL -> {
                 if(this.useBoneMeal(stackToBoneMeal)) return;
+
+                setState(State.PREPARE_PICK_BUSHES);
+            }
+            case PREPARE_PICK_BUSHES -> {
+                this.farmer.currentCropArea.scanPickArea();
+
+                this.stackToPick = this.farmer.currentCropArea.stackToPick;
+
+                if(stackToPick.isEmpty()){
+                    setState(State.PREPARE_BREAK_BLOCKS);
+                    return;
+                }
+
+                setState(State.PICK_BUSHES);
+            }
+            case PICK_BUSHES -> {
+                if(this.pickBushes(stackToPick)) return;
 
                 setState(State.PREPARE_BREAK_BLOCKS);
             }
@@ -306,9 +337,54 @@ public class FarmerWorkGoal extends Goal {
 
             BlockState state = farmer.getCommandSenderWorld().getBlockState(blockPos);
 
-            if(state.getBlock() instanceof CropBlock || state.getBlock() instanceof StemBlock
-               || this.farmer.currentCropArea.isRiceCrop(state) || this.farmer.currentCropArea.isRicePanicles(state)
-            ){
+            if(this.farmer.currentCropArea.fieldType == CropArea.FieldType.RICE){
+                if(this.farmer.currentCropArea.isRiceCrop(state) || this.farmer.currentCropArea.isRicePanicles(state)){
+                    if(!positions.isEmpty()){
+                        blockPos = positions.pop();
+                    }
+                    else{
+                        this.blockPos = null;
+                        return false;
+                    }
+                }
+                else if(FarmersDelight.plantRice((ServerLevel) farmer.getCommandSenderWorld(), blockPos, seedFromInv)){
+                    farmer.getCommandSenderWorld().playSound(null, blockPos.getX(), blockPos.getY(), blockPos.getZ(), SoundEvents.CROP_PLANTED, SoundSource.BLOCKS, 1.0F, 1.0F);
+                    seedFromInv.shrink(1);
+                    this.farmer.swing(InteractionHand.MAIN_HAND);
+                }
+                return true;
+            }
+
+            if(this.farmer.currentCropArea.fieldType == CropArea.FieldType.BUSH){
+                boolean alreadyPlanted = seedFromInv.getItem() instanceof BlockItem bi && state.is(bi.getBlock());
+                if(alreadyPlanted){
+                    if(!positions.isEmpty()){
+                        blockPos = positions.pop();
+                    }
+                    else{
+                        this.blockPos = null;
+                        return false;
+                    }
+                }
+                else if(plantViaUseOn(blockPos, seedFromInv)){
+                    farmer.getCommandSenderWorld().playSound(null, blockPos.getX(), blockPos.getY(), blockPos.getZ(), SoundEvents.CROP_PLANTED, SoundSource.BLOCKS, 1.0F, 1.0F);
+                    seedFromInv.shrink(1);
+                    this.farmer.swing(InteractionHand.MAIN_HAND);
+                }
+                else{
+                    // Placement failed (e.g. tomato without a rope above) - skip this position
+                    if(!positions.isEmpty()){
+                        blockPos = positions.pop();
+                    }
+                    else{
+                        this.blockPos = null;
+                        return false;
+                    }
+                }
+                return true;
+            }
+
+            if(state.getBlock() instanceof CropBlock || state.getBlock() instanceof StemBlock){
                 if(!positions.isEmpty()){
                     blockPos = positions.pop();
                 }
@@ -373,6 +449,67 @@ public class FarmerWorkGoal extends Goal {
         }
         this.blockPos = null;
         return false;
+    }
+
+    public boolean pickBushes(Stack<BlockPos> positions){
+        if(positions != null){
+            if(blockPos == null){
+                if(!positions.isEmpty()) blockPos = positions.pop();
+                return blockPos != null;
+            }
+
+            BlockState state = farmer.getCommandSenderWorld().getBlockState(blockPos);
+            if(!this.farmer.currentCropArea.isPickable(state)){
+                if(!positions.isEmpty()){
+                    blockPos = positions.pop();
+                }
+                else{
+                    this.blockPos = null;
+                    return false;
+                }
+            }
+            else{
+                pickAt(blockPos, state);
+                this.farmer.swing(InteractionHand.MAIN_HAND);
+            }
+            return true;
+        }
+        this.blockPos = null;
+        return false;
+    }
+
+    private void pickAt(BlockPos pos, BlockState state){
+        Level level = farmer.getCommandSenderWorld();
+        if (!(level instanceof ServerLevel serverLevel)) return;
+
+        FakePlayer fake = FakePlayerFactory.get(serverLevel, FARMER_PICK_PROFILE);
+        fake.setPos(pos.getX() + 0.5, pos.getY(), pos.getZ() + 0.5);
+        fake.setItemInHand(InteractionHand.MAIN_HAND, ItemStack.EMPTY);
+
+        Vec3 hitVec = new Vec3(pos.getX() + 0.5, pos.getY() + 0.5, pos.getZ() + 0.5);
+        BlockHitResult hitResult = new BlockHitResult(hitVec, Direction.UP, pos, false);
+        state.use(level, fake, InteractionHand.MAIN_HAND, hitResult);
+    }
+
+    private boolean plantViaUseOn(BlockPos targetPos, ItemStack seed){
+        Level level = farmer.getCommandSenderWorld();
+        if (!(level instanceof ServerLevel serverLevel)) return false;
+
+        BlockPos soilPos = targetPos.below();
+
+        FakePlayer fake = FakePlayerFactory.get(serverLevel, FARMER_PICK_PROFILE);
+        fake.setPos(targetPos.getX() + 0.5, targetPos.getY(), targetPos.getZ() + 0.5);
+
+        ItemStack single = seed.copy();
+        single.setCount(1);
+        fake.setItemInHand(InteractionHand.MAIN_HAND, single);
+
+        Vec3 hitVec = new Vec3(soilPos.getX() + 0.5, soilPos.getY() + 1.0, soilPos.getZ() + 0.5);
+        BlockHitResult hitResult = new BlockHitResult(hitVec, Direction.UP, soilPos, false);
+        UseOnContext context = new UseOnContext(level, fake, InteractionHand.MAIN_HAND, single, hitResult);
+
+        InteractionResult result = single.useOn(context);
+        return result.consumesAction();
     }
 
     public boolean plowBlocks(Stack<BlockPos> positions){
@@ -495,6 +632,8 @@ public class FarmerWorkGoal extends Goal {
         MOVE_TO_WORK_AREA,
         PREPARE_BONE_MEAL,
         BONE_MEAL,
+        PREPARE_PICK_BUSHES,
+        PICK_BUSHES,
         PREPARE_BREAK_BLOCKS,
         BREAK_BLOCKS,
         PREPARE_WATER_SPOT,

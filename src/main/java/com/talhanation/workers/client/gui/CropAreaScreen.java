@@ -65,7 +65,7 @@ public class CropAreaScreen extends WorkAreaScreen {
         for (ItemStack itemStack : player.getInventory().items) {
             if (itemStack.isEmpty() || items.contains(itemStack.getItem())) continue;
 
-            if (WorkersMain.isFarmersDelightInstalled && FarmersDelight.isRiceItem(itemStack)) {
+            if (WorkersMain.isFarmersDelightInstalled && FarmersDelight.isRiceSeedItem(itemStack)) {
                 stacks.add(itemStack.copy());
                 items.add(itemStack.getItem());
                 continue;

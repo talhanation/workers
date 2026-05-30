@@ -32,6 +32,7 @@ public class CropArea extends AbstractWorkAreaEntity {
     public Stack<BlockPos> stackToBreak = new Stack<>();
     public Stack<BlockPos> stackToPlow = new Stack<>();
     public Stack<BlockPos> stackToBoneMeal = new Stack<>();
+    public Stack<BlockPos> stackToPick = new Stack<>();
     public FieldType fieldType;
 
     public CropArea(EntityType<?> type, Level level) {
@@ -131,7 +132,11 @@ public class CropArea extends AbstractWorkAreaEntity {
             }
             else{
                 if(isFarmland(stateBelow) || isTillAble(stateBelow)){
-                    if(isCropDone(state) || (isBush(state) && !isCrop(state))){
+                    if(isCropDone(state)){
+                        this.stackToBreak.push(pos.immutable());
+                    }
+                    else if(fieldType != FieldType.BUSH && isBush(state) && !isCrop(state)){
+                        // Stray bush in a non-bush field -> cleanup
                         this.stackToBreak.push(pos.immutable());
                     }
                 }
@@ -270,6 +275,32 @@ public class CropArea extends AbstractWorkAreaEntity {
         return state.getBlock() instanceof BonemealableBlock bonemealable && bonemealable.isValidBonemealTarget(level, pos, state, level.isClientSide());
     }
 
+    public void scanPickArea(){
+        if(area == null) area = this.getArea();
+
+        stackToPick.clear();
+        if(fieldType != FieldType.BUSH) return;
+
+        Level level = this.getCommandSenderWorld();
+
+        BlockPos.betweenClosedStream(area).forEach(pos -> {
+            BlockState state = level.getBlockState(pos);
+            if(isPickable(state)){
+                this.stackToPick.push(pos.immutable());
+            }
+        });
+    }
+
+    public boolean isPickable(BlockState state){
+        if(state.getBlock() instanceof SweetBerryBushBlock && state.getValue(SweetBerryBushBlock.AGE) >= 2){
+            return true;
+        }
+        if(WorkersMain.isFarmersDelightInstalled && FarmersDelight.isPickableTomato(state)){
+            return true;
+        }
+        return false;
+    }
+
     public boolean isWaterSource(BlockState state){
         return state.is(Blocks.WATER) && state.getFluidState().isSource();
     }
@@ -295,7 +326,7 @@ public class CropArea extends AbstractWorkAreaEntity {
     }
 
     public void updateType() {
-        if(WorkersMain.isFarmersDelightInstalled && FarmersDelight.isRiceItem(this.getSeedStack())){
+        if(WorkersMain.isFarmersDelightInstalled && FarmersDelight.isRiceSeedItem(this.getSeedStack())){
             this.fieldType = FieldType.RICE;
             return;
         }
@@ -305,7 +336,12 @@ public class CropArea extends AbstractWorkAreaEntity {
                 this.fieldType = FieldType.STEM;
                 return;
             }
-            else if(blockItem.getBlock() instanceof SweetBerryBushBlock){
+            else if(blockItem.getBlock() instanceof CropBlock){
+                this.fieldType = FieldType.CROP;
+                return;
+            }
+            else if(blockItem.getBlock() instanceof BushBlock){
+                // Non-Crop BushBlock subclasses: sweet berry bush, FD tomato vine, ...
                 this.fieldType = FieldType.BUSH;
                 return;
             }
