@@ -4,6 +4,7 @@
     "1.20.1-recommended": "2.0.0"
   },
   "1.20.1": {
-    "2.0.0": "Initial Release of V2"
+    "2.0.1": "fixed courier, improved compat with farmers delight",
+    "2.0.0": "Initial Release of Villager Workers 2"
   }
 }
