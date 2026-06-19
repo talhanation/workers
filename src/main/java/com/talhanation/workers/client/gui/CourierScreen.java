@@ -4,6 +4,7 @@ import com.mojang.blaze3d.systems.RenderSystem;
 import com.talhanation.recruits.client.gui.worldmap.WorldMapScreen;
 import com.talhanation.recruits.client.gui.widgets.ScrollDropDownMenu;
 import com.talhanation.recruits.client.gui.widgets.RecruitsCheckBox;
+import com.talhanation.recruits.client.gui.worldmap.storage.WorldMapStorageId;
 import com.talhanation.recruits.world.RecruitsRoute;
 import com.talhanation.workers.WorkersMain;
 import com.talhanation.workers.entities.CourierEntity;
@@ -28,6 +29,7 @@ import net.minecraft.world.item.ItemStack;
 import net.minecraftforge.client.gui.widget.ExtendedButton;
 
 import javax.annotation.Nullable;
+import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
@@ -159,11 +161,13 @@ public class CourierScreen extends ScreenBase<CourierContainer> {
         loadWorkingDataFromEntity();
         buildWidgets();
     }
-
+    public static File getRoutesDirectory() {
+        return new File(Minecraft.getInstance().gameDirectory, "recruits/routes/" + WorldMapStorageId.detectCurrent());
+    }
     private void loadAvailableRoutes() {
         availableRoutes.clear();
         try {
-            availableRoutes.addAll(RecruitsRoute.loadAllRoutes(RecruitsRoute.getRoutesDirectory()));
+            availableRoutes.addAll(RecruitsRoute.loadAllRoutes(getRoutesDirectory()));
             availableRoutes.sort((a, b) -> a.getName().compareToIgnoreCase(b.getName()));
         } catch (IOException e) {
             WorkersMain.LOGGER.warn("Could not load courier routes: {}", e.getMessage());
