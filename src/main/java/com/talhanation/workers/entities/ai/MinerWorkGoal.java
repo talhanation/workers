@@ -111,7 +111,7 @@ public class MinerWorkGoal extends Goal {
 
             case MOVE_TO_WORK_AREA ->{
                 this.blockPos = null;
-                if(this.moveToPosition(minerEntity.currentMiningArea.getOnPos(), 70)) return;
+                if(this.moveToPosition(minerEntity.currentMiningArea.getOnPos(), 10)) return;
 
                 setState(State.PREPARE_CLOSE_FLOOR);
             }
@@ -276,7 +276,7 @@ public class MinerWorkGoal extends Goal {
     }
 
     public void setState(State state) {
-        //if(minerEntity.getOwner() != null) minerEntity.getOwner().sendSystemMessage(Component.literal(state.toString()));
+        if(minerEntity.getOwner() != null) minerEntity.getOwner().sendSystemMessage(Component.literal(state.toString()));
         this.state = state;
     }
 

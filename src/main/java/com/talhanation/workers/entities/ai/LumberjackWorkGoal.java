@@ -105,7 +105,7 @@ public class LumberjackWorkGoal extends Goal {
 
             case MOVE_TO_WORK_AREA ->{
                 this.blockPos = null;
-                if(this.moveToPosition(lumberjack.currentLumberArea.getOnPos(), 100)) return;
+                if(this.moveToPosition(lumberjack.currentLumberArea.getOnPos(), 10)) return;
 
                 setState(State.PREPARE_BONE_MEAL);
             }

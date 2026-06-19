@@ -123,7 +123,7 @@ public class BuilderWorkGoal extends Goal {
 
             case MOVE_TO_WORK_AREA ->{
                 this.blockPos = null;
-                if(this.moveToPosition(builderEntity.currentBuildArea.getOnPos(), 70)) return;
+                if(this.moveToPosition(builderEntity.currentBuildArea.getOnPos(), 20)) return;
 
                 if(builderEntity.currentBuildArea.getFreeArea() && !builderEntity.currentBuildArea.getFreeAreaDone()){
                     setState(State.PREPARE_FREE_AREA);

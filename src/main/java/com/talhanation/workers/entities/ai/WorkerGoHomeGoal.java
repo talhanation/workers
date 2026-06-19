@@ -102,7 +102,7 @@ public class WorkerGoHomeGoal extends Goal {
             return;
         }
 
-        if (moveToPosition(home.getOnPos(), 20)) return;
+        if (moveToPosition(home.getOnPos(), 5)) return;
 
         if (home.assignedBedPos != null) {
             setState(State.GO_TO_BED);
