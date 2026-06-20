@@ -10,9 +10,11 @@ import com.talhanation.workers.entities.workarea.HomeArea;
 import com.talhanation.workers.entities.workarea.MarketArea;
 import net.minecraft.core.BlockPos;
 import net.minecraft.server.level.ServerLevel;
+import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.ChunkPos;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.phys.AABB;
+import net.minecraft.world.scores.PlayerTeam;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 
 import javax.annotation.Nullable;
@@ -67,6 +69,8 @@ public class WorkerClaimEvents {
 
         BlockPos claimCenter = getClaimCenter(claim);
 
+        UUID newOwnerUUID = getOwnerUUID(claim);
+
         List<AbstractWorkerEntity> workers =
                 level.getEntitiesOfClass(AbstractWorkerEntity.class, claimBounds);
 
@@ -78,11 +82,17 @@ public class WorkerClaimEvents {
             float morale = worker.getMorale();
 
             if (morale <= 30f) {
-
                 worker.disband(worker.getOwner(), false, false);
+
+                if(newOwnerUUID == null) return;
+
+                Player newOwner = level.getPlayerByUUID(newOwnerUUID);
+                if(newOwner == null) return;
+
+                worker.hire(newOwner, null, true);
             }
             else {
-                // Higher morale — worker flees to safety outside the claim
+
                 BlockPos fleePos = computeFleePos(claimCenter, level, random);
                 worker.startFleeing(fleePos);
             }
