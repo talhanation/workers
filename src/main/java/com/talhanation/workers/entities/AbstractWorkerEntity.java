@@ -4,6 +4,7 @@ import com.google.common.collect.ImmutableSet;
 import com.talhanation.recruits.config.RecruitsClientConfig;
 import com.talhanation.recruits.entities.AbstractChunkLoaderEntity;
 import com.talhanation.workers.entities.ai.*;
+import com.talhanation.workers.entities.ai.navigation.WorkerPathNavigation;
 import com.talhanation.workers.entities.workarea.AbstractWorkAreaEntity;
 import com.talhanation.workers.entities.workarea.HomeArea;
 import com.talhanation.workers.world.NeededItem;
@@ -18,6 +19,7 @@ import net.minecraft.world.*;
 import net.minecraft.world.damagesource.DamageSource;
 import net.minecraft.world.entity.*;
 import net.minecraft.world.entity.ai.goal.MoveTowardsTargetGoal;
+import net.minecraft.world.entity.ai.navigation.PathNavigation;
 import net.minecraft.world.entity.item.ItemEntity;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.Item;
@@ -75,15 +77,13 @@ public abstract class AbstractWorkerEntity extends AbstractChunkLoaderEntity {
     public abstract AbstractWorkAreaEntity getCurrentWorkArea();
 
     /////////////////////////////////// TICK/////////////////////////////////////////
-    /*
+    @Override
     protected @NotNull PathNavigation createNavigation(@NotNull Level level) {
-        return new DebugSyncWorkerPathNavigation(this, level);//TODO ONLY TO TEST NODE EVALUATOR
+        // Workers use the recruits async pathfinder via this worker-side
+        // navigation (exact arrival + underground-capable, which is what fixes
+        // miners being dumb about buried targets).
+        return new WorkerPathNavigation(this, level);
     }
-
-    public @NotNull PathNavigation getNavigation() {
-        return this.navigation;//TODO REMOVE)
-    }
-    */
 
     public boolean isWorking(){
         return this.getFollowState() == 6;
