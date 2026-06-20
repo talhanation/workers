@@ -155,23 +155,25 @@ public class MessageAddWorkArea implements Message<MessageAddWorkArea> {
             return false;
         }
 
-        if (WorkersServerConfig.ShouldWorkAreaOnlyBeInFactionClaim.get()) {
-            if (player.getTeam() == null) return false;
+        return isWithinClaimIfRequired(player, blockPos);
+    }
 
-            RecruitsFaction ownFaction = FactionEvents.recruitsFactionManager.getFactionByStringID(player.getTeam().getName());
-            if (ownFaction == null) return false;
-            if (blockPos == null) return false;
+    public static boolean isWithinClaimIfRequired(ServerPlayer player, BlockPos blockPos) {
+        if (!WorkersServerConfig.ShouldWorkAreaOnlyBeInFactionClaim.get()) return true;
 
-            int chunkX = blockPos.getX() >> 4;
-            int chunkZ = blockPos.getZ() >> 4;
-            ChunkPos chunkPos = new ChunkPos(chunkX, chunkZ);
-            RecruitsClaim claim = ClaimEvents.recruitsClaimManager.getClaim(chunkPos);
-            if (claim == null) return false;
+        if (blockPos == null) return false;
+        if (player.getTeam() == null) return false;
 
-            return claim.containsChunk(chunkPos) && claim.getOwnerFaction().getStringID().equals(ownFaction.getStringID());
-        }
+        RecruitsFaction ownFaction = FactionEvents.recruitsFactionManager.getFactionByStringID(player.getTeam().getName());
+        if (ownFaction == null) return false;
 
-        return true;
+        int chunkX = blockPos.getX() >> 4;
+        int chunkZ = blockPos.getZ() >> 4;
+        ChunkPos chunkPos = new ChunkPos(chunkX, chunkZ);
+        RecruitsClaim claim = ClaimEvents.recruitsClaimManager.getClaim(chunkPos);
+        if (claim == null) return false;
+
+        return claim.containsChunk(chunkPos) && claim.getOwnerFaction().getStringID().equals(ownFaction.getStringID());
     }
 
     public MessageAddWorkArea fromBytes(FriendlyByteBuf buf) {

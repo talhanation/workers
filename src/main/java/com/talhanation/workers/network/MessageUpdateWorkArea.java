@@ -67,6 +67,9 @@ public class MessageUpdateWorkArea implements Message<MessageUpdateWorkArea> {
         workArea.setTeamAccess(teamAccess);
 
         Vec3 oldPos = workArea.position();
+        if (!MessageAddWorkArea.isWithinClaimIfRequired(player, BlockPos.containing(this.x, this.y, this.z))) {
+            return;
+        }
         workArea.moveTo(this.x, this.y, this.z);
         workArea.createArea();
         AABB newArea = workArea.getArea();
