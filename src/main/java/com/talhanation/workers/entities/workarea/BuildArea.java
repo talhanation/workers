@@ -211,6 +211,8 @@ public class BuildArea extends AbstractWorkAreaEntity {
                 }
 
                 if (this.getPlayerUUID() != null) wa.setPlayerUUID(this.getPlayerUUID());
+                String ownerName = this.getPlayerName();
+                if (ownerName != null && !ownerName.isEmpty()) wa.setPlayerName(ownerName);
                 String team = this.getTeamStringID();
                 if (team != null && !team.isEmpty()) wa.setTeamStringID(team);
 
