@@ -112,10 +112,18 @@ public class WorkerGoHomeGoal extends Goal {
     private void tickGoToBed() {
         HomeArea home = resolveCurrentHome((ServerLevel) worker.getCommandSenderWorld());
 
+        if (home == null) {
+            worker.homeAreaUUID = null;
+            setState(State.SELECT_HOME_AREA);
+            return;
+        }
+
         BlockPos bedPos = home.assignedBedPos;
-        if (!worker.getCommandSenderWorld().getBlockState(bedPos)
+        if (bedPos == null
+                || !worker.getCommandSenderWorld().getBlockState(bedPos)
                 .isBed(worker.getCommandSenderWorld(), bedPos, worker)) {
             home.assignedBedPos = null;
+            setState(State.MOVE_TO_HOME);
             return;
         }
 
@@ -128,11 +136,32 @@ public class WorkerGoHomeGoal extends Goal {
             return;
         }
 
+        HomeArea home = resolveCurrentHome((ServerLevel) worker.getCommandSenderWorld());
+
+        boolean bedGone = home == null
+                || home.assignedBedPos == null
+                || !home.isResidentOf(worker.getUUID())
+                || !worker.getCommandSenderWorld().getBlockState(home.assignedBedPos)
+                        .isBed(worker.getCommandSenderWorld(), home.assignedBedPos, worker);
+
+        if (bedGone) {
+            worker.stopSleeping();
+            worker.clearSleepingPos();
+            if (home == null || !home.isResidentOf(worker.getUUID())) {
+                worker.homeAreaUUID = null;
+                setState(State.SELECT_HOME_AREA);
+            }
+            else {
+                home.assignedBedPos = null;
+                setState(State.MOVE_TO_HOME);
+            }
+            return;
+        }
+
         worker.getNavigation().stop();
 
         if (++sleepTick % 200 == 0) {
-            HomeArea home = resolveCurrentHome((ServerLevel) worker.getCommandSenderWorld());
-            if (home != null) home.updateResidentSeen();
+            home.updateResidentSeen();
 
             if (worker.getHealth() < worker.getMaxHealth()) {
                 worker.heal(1.0F);

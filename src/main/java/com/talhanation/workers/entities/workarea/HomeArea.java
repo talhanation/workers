@@ -80,6 +80,7 @@ public class HomeArea extends AbstractWorkAreaEntity implements IPermissionArea 
                 }
             }
             else {
+                wakeResidentIfSleeping();
                 assignedBedPos = null;
             }
         }
@@ -154,10 +155,24 @@ public class HomeArea extends AbstractWorkAreaEntity implements IPermissionArea 
     }
 
     public void clearResident() {
+        wakeResidentIfSleeping();
         releaseBed();
         this.residentUUID         = null;
         this.lastResidentSeenTick = 0L;
         this.setResidentName("");
+    }
+
+    private void wakeResidentIfSleeping() {
+        if (residentUUID == null) return;
+        if (this.getCommandSenderWorld().isClientSide()) return;
+
+        for (AbstractWorkerEntity worker : this.getCommandSenderWorld().getEntitiesOfClass(
+                AbstractWorkerEntity.class, this.getBoundingBox().inflate(8))) {
+            if (residentUUID.equals(worker.getUUID()) && worker.isSleeping()) {
+                worker.stopSleeping();
+                worker.clearSleepingPos();
+            }
+        }
     }
 
     public String  getResidentName()          { return this.entityData.get(RESIDENT_NAME); }
