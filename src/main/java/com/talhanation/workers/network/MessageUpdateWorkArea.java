@@ -53,11 +53,11 @@ public class MessageUpdateWorkArea implements Message<MessageUpdateWorkArea> {
                         .equals(this.uuid))
                 .stream()
                 .findAny()
-                .ifPresent(this::updateWorkArea);
+                .ifPresent(workArea -> updateWorkArea(workArea, player));
 
     }
 
-    public void updateWorkArea(AbstractWorkAreaEntity workArea){
+    public void updateWorkArea(AbstractWorkAreaEntity workArea, ServerPlayer player){
         if (destroy) {
             workArea.remove(Entity.RemovalReason.DISCARDED);
             return;
