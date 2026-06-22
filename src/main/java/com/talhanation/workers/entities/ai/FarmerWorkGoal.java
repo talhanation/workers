@@ -69,7 +69,7 @@ public class FarmerWorkGoal extends Goal {
     @Override
     public void start() {
         super.start();
-        farmer.setFollowState(6); //Working
+        if(farmer.getFollowState() == 0) farmer.setFollowState(6); //Working
         setState(State.SELECT_WORK_AREA);
     }
     boolean workDone;
@@ -283,7 +283,7 @@ public class FarmerWorkGoal extends Goal {
                     this.farmer.currentCropArea.setBeingWorkedOn(false);
                     blockPos = null;
                     this.farmer.currentCropArea = null;
-                    this.farmer.setFollowState(0);//Wander
+                    if(this.farmer.getFollowState() == 6) this.farmer.setFollowState(0);//Wander
 
                     if(!this.neededItems.isEmpty()){
                         for(NeededItem neededItem : neededItems){

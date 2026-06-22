@@ -64,7 +64,7 @@ public class BuilderWorkGoal extends Goal {
     public void start() {
         super.start();
         if(this.builderEntity.getCommandSenderWorld().isClientSide()) return;
-        builderEntity.setFollowState(6); //Working
+        if(builderEntity.getFollowState() == 0) builderEntity.setFollowState(6); //Working
 
         setState(State.SELECT_WORK_AREA);
     }
@@ -280,7 +280,7 @@ public class BuilderWorkGoal extends Goal {
                     spawnScannedEntities(builderEntity.currentBuildArea);
 
                     builderEntity.currentBuildArea.setBeingWorkedOn(false);
-                    this.builderEntity.setFollowState(0);//Wander
+                    if(this.builderEntity.getFollowState() == 6) this.builderEntity.setFollowState(0);//Wander
                     //ONLY FOR BUILDING AREA WILL REMOVE IT
                     this.builderEntity.currentBuildArea.setDone(true);
 
@@ -472,6 +472,10 @@ public class BuilderWorkGoal extends Goal {
                 // Transfer owner and team from the BuildArea
                 if (buildArea.getPlayerUUID() != null) {
                     wa.setPlayerUUID(buildArea.getPlayerUUID());
+                }
+                String ownerName = buildArea.getPlayerName();
+                if (ownerName != null && !ownerName.isEmpty()) {
+                    wa.setPlayerName(ownerName);
                 }
                 String team = buildArea.getTeamStringID();
                 if (team != null && !team.isEmpty()) {
@@ -667,7 +671,8 @@ public class BuilderWorkGoal extends Goal {
             }
             else{
 
-                builderEntity.setFollowState(6); //Working
+                // start() already claimed the working state; calling it here every
+                // tick would override owner commands and pull the worker back to work.
                 builderEntity.getNavigation().moveTo(pos.getX(), pos.getY(), pos.getZ(), 0.8F);
                 builderEntity.getLookControl().setLookAt(pos.getCenter());
             }

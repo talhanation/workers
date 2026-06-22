@@ -54,7 +54,7 @@ public class FishermanWorkGoal extends Goal {
     @Override
     public void start() {
         super.start();
-        fisherman.setFollowState(6); //Working
+        if(fisherman.getFollowState() == 0) fisherman.setFollowState(6); //Working
         setState(State.SELECT_WORK_AREA);
     }
 
@@ -186,7 +186,7 @@ public class FishermanWorkGoal extends Goal {
 
             case DONE -> {
                 this.fisherman.currentFishingArea.setBeingWorkedOn(false);
-                this.fisherman.setFollowState(0);//Wander
+                if(this.fisherman.getFollowState() == 6) this.fisherman.setFollowState(0);//Wander
                 blockPos = null;
                 this.fisherman.currentFishingArea = null;
             }
@@ -238,7 +238,8 @@ public class FishermanWorkGoal extends Goal {
             }
             else{
                 fisherman.getNavigation().moveTo(pos.getX(), pos.getY(), pos.getZ(), 0.8F);
-                fisherman.setFollowState(6); //Working
+                // start() already claimed the working state; calling it here every
+                // tick would override owner commands and pull the worker back to work.
                 fisherman.getLookControl().setLookAt(pos.getCenter());
             }
             return true;

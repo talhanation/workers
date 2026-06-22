@@ -52,7 +52,7 @@ public class MinerWorkGoal extends Goal {
     public void start() {
         super.start();
         if(this.minerEntity.getCommandSenderWorld().isClientSide()) return;
-        minerEntity.setFollowState(6); //Working
+        if(minerEntity.getFollowState() == 0) minerEntity.setFollowState(6); //Working
 
         setState(State.SELECT_WORK_AREA);
     }
@@ -174,7 +174,7 @@ public class MinerWorkGoal extends Goal {
             }
 
             case PREPARE_CLOSE_FLOOR -> {
-                if(!this.minerEntity.currentMiningArea.getCloseFloor()){
+                if(!this.minerEntity.currentMiningArea.getCloseFloor() && !this.minerEntity.currentMiningArea.getCloseFluids()){
                     setState(State.PREPARE_MINING);
                     return;
                 }
@@ -194,7 +194,7 @@ public class MinerWorkGoal extends Goal {
             }
 
             case CLOSE_FLOOR -> {
-                if(!this.minerEntity.currentMiningArea.getCloseFloor()){
+                if(!this.minerEntity.currentMiningArea.getCloseFloor() && !this.minerEntity.currentMiningArea.getCloseFluids()){
                     setState(State.PREPARE_MINING);
                     return;
                 }
@@ -220,7 +220,7 @@ public class MinerWorkGoal extends Goal {
 
             case DONE -> {
                 this.minerEntity.currentMiningArea.setDone(true);
-                this.minerEntity.setFollowState(0);//Wander
+                if(this.minerEntity.getFollowState() == 6) this.minerEntity.setFollowState(0);//Wander
                 blockPos = null;
                 minerEntity.currentMiningArea = null;
                 this.start();
@@ -465,7 +465,8 @@ public class MinerWorkGoal extends Goal {
             }
             else{
 
-                minerEntity.setFollowState(6); //Working
+                // start() already claimed the working state; calling it here every
+                // tick would override owner commands and pull the worker back to work.
                 minerEntity.getNavigation().moveTo(pos.getX(), pos.getY(), pos.getZ(), 0.8F);
                 minerEntity.getLookControl().setLookAt(pos.getCenter());
             }

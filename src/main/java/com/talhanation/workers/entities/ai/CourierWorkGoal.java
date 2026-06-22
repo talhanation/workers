@@ -93,7 +93,8 @@ public class CourierWorkGoal extends Goal {
         waitTicks          = 0;
         activeTransferred  = 0;
         pendingGoHome      = false;
-        courier.setFollowState(6); //Working
+        // The working state (6) is set by the route-start command, not here, so an
+        // owner command issued mid-route is never overridden back to working.
         state = State.NAVIGATE_TO_WAYPOINT;
     }
 
@@ -138,7 +139,8 @@ public class CourierWorkGoal extends Goal {
             return;
         }
 
-        courier.setFollowState(6);
+        // start() already claimed the working state; calling it here every
+        // tick would override owner commands and pull the courier back to work.
         courier.getLookControl().setLookAt(target.getX() + 0.5, courier.getY() + 0.5, target.getZ() + 0.5);
     }
 

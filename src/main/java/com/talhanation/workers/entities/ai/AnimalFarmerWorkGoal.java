@@ -57,7 +57,7 @@ public class AnimalFarmerWorkGoal extends Goal {
         super.start();
         if(this.animalFarmerEntity.getCommandSenderWorld().isClientSide()) return;
         animalFarmerEntity.setAggroState(3);
-        animalFarmerEntity.setFollowState(6); //Working
+        if(animalFarmerEntity.getFollowState() == 0) animalFarmerEntity.setFollowState(6); //Working
         setState(State.SELECT_WORK_AREA);
     }
 
@@ -220,7 +220,7 @@ public class AnimalFarmerWorkGoal extends Goal {
                 animalFarmerEntity.currentAnimalPen = null;
                 animalFarmerEntity.switchMainHandItem(ItemStack::isEmpty);
 
-                this.animalFarmerEntity.setFollowState(0);//Wander
+                if(this.animalFarmerEntity.getFollowState() == 6) this.animalFarmerEntity.setFollowState(0);//Wander
                 setState(State.SELECT_WORK_AREA);
 
                 if(!this.neededItems.isEmpty()){
@@ -464,7 +464,8 @@ public class AnimalFarmerWorkGoal extends Goal {
             }
             else{
                 animalFarmerEntity.getNavigation().moveTo(pos.x(), pos.y(), pos.z(), 0.8F);
-                animalFarmerEntity.setFollowState(6); //Working
+                // start() already claimed the working state; calling it here every
+                // tick would override owner commands and pull the worker back to work.
                 animalFarmerEntity.getLookControl().setLookAt(pos);
             }
             return true;

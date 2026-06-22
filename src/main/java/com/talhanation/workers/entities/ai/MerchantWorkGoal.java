@@ -71,7 +71,7 @@ public class MerchantWorkGoal extends Goal {
 
     @Override
     public void start() {
-        merchant.setFollowState(6); //Working
+        if(merchant.getFollowState() == 0) merchant.setFollowState(6); //Working
         setState(State.SELECT_WORK_AREA);
     }
 
@@ -79,7 +79,7 @@ public class MerchantWorkGoal extends Goal {
     public void stop() {
         if (merchant.currentMarketArea != null) {
             merchant.currentMarketArea.setBeingWorkedOn(false);
-            this.merchant.setFollowState(0);//Wander
+            if (this.merchant.getFollowState() == 6) this.merchant.setFollowState(0);//Wander
             merchant.currentMarketArea.setMerchantName("None");
 
             merchant.currentMarketArea = null;
@@ -138,7 +138,8 @@ public class MerchantWorkGoal extends Goal {
                 }
 
                 merchant.getNavigation().stop();
-                merchant.setFollowState(6);
+                // start() already claimed the working state; calling it here every
+                // tick would override owner commands and pull the merchant back to work.
 
                 Player nearby = merchant.getCommandSenderWorld().getNearestPlayer(merchant, 8);
                 if (nearby != null) {
@@ -337,7 +338,8 @@ public class MerchantWorkGoal extends Goal {
             return false;
         }
         merchant.getNavigation().moveTo(pos.getX(), pos.getY(), pos.getZ(), 0.8F);
-        merchant.setFollowState(6);
+        // start() already claimed the working state; calling it here every
+        // tick would override owner commands and pull the merchant back to work.
         merchant.getLookControl().setLookAt(pos.getCenter());
         return true;
     }

@@ -63,7 +63,9 @@ public class LumberjackWorkGoal extends Goal {
     public void start() {
         super.start();
         if(this.lumberjack.getCommandSenderWorld().isClientSide()) return;
-        lumberjack.setFollowState(6); //Working
+        // Only claim the working state when idle. If the owner issued a command
+        // (follow/hold/...), the state is no longer 0 and must not be overridden.
+        if(lumberjack.getFollowState() == 0) lumberjack.setFollowState(6); //Working
         setState(State.SELECT_WORK_AREA);
     }
 
@@ -181,7 +183,10 @@ public class LumberjackWorkGoal extends Goal {
 
                 boolean hasShears = lumberjack.getMainHandItem().getItem() instanceof ShearsItem;
                 if(!hasShears){
-                    this.neededItems.add(new NeededItem(stack -> stack.getItem() instanceof ShearsItem, 1, true, this.lumberjack.currentLumberArea.getUUID()));
+                    // Register on the worker directly (not just locally) so needsToGetItems()
+                    // turns true and GetNeededItemsFromStorage fetches the tool now instead
+                    // of the goal getting stuck in this prepare state.
+                    this.lumberjack.addNeededItem(new NeededItem(stack -> stack.getItem() instanceof ShearsItem, 1, true, this.lumberjack.currentLumberArea.getUUID()));
                     this.blockPos = null;
                     return;
                 }
@@ -205,7 +210,8 @@ public class LumberjackWorkGoal extends Goal {
 
                 boolean hasAxe = lumberjack.getMainHandItem().getItem() instanceof AxeItem;
                 if(!hasAxe){
-                    this.neededItems.add(new NeededItem(stack -> stack.getItem() instanceof AxeItem, 1, true, this.lumberjack.currentLumberArea.getUUID()));
+                    // Register on the worker directly so the axe is fetched from storage now.
+                    this.lumberjack.addNeededItem(new NeededItem(stack -> stack.getItem() instanceof AxeItem, 1, true, this.lumberjack.currentLumberArea.getUUID()));
                     this.blockPos = null;
                     return;
                 }
@@ -224,7 +230,8 @@ public class LumberjackWorkGoal extends Goal {
 
                 boolean hasAxe = lumberjack.getMainHandItem().getItem() instanceof AxeItem;
                 if(!hasAxe){
-                    this.neededItems.add(new NeededItem(stack -> stack.getItem() instanceof AxeItem, 1, true, this.lumberjack.currentLumberArea.getUUID()));
+                    // Register on the worker directly so the axe is fetched from storage now.
+                    this.lumberjack.addNeededItem(new NeededItem(stack -> stack.getItem() instanceof AxeItem, 1, true, this.lumberjack.currentLumberArea.getUUID()));
                     this.blockPos = null;
                     return;
                 }
@@ -263,7 +270,9 @@ public class LumberjackWorkGoal extends Goal {
                 if(!workDone){
                     workDone = true;
                     lumberjack.currentLumberArea.setBeingWorkedOn(false);
-                    lumberjack.setFollowState(0); //Wandering
+                    // Only fall back to wander if we are still in the working state.
+                    // If the owner changed the follow state mid-cycle, keep their command.
+                    if(lumberjack.getFollowState() == 6) lumberjack.setFollowState(0); //Wandering
                     blockPos = null;
                     lumberjack.currentLumberArea = null;
 
@@ -432,34 +441,28 @@ public class LumberjackWorkGoal extends Goal {
 
     public boolean plantSaplings(Stack<BlockPos> positions){
         if(positions != null){
-            ItemStack saplingFromInv;
+            ItemStack selected = lumberjack.currentLumberArea.getSaplingStack();
 
-            if(lumberjack.currentLumberArea.getSaplingStack().isEmpty()){
-                saplingFromInv = lumberjack.getMatchingItem(itemStack ->
-                        (itemStack.getItem() instanceof BlockItem blockItem && blockItem.getBlock() instanceof SaplingBlock)
-                                || (WorkersMain.isDynamicTreesInstalled && DynamicTrees.isDynamicTreesSeed(itemStack))
-                );
-                if(saplingFromInv == null){
-                    this.neededItems.add(new NeededItem(itemStack ->
-                            (itemStack.getItem() instanceof BlockItem blockItem && blockItem.getBlock() instanceof SaplingBlock)
-                                    || (WorkersMain.isDynamicTreesInstalled && DynamicTrees.isDynamicTreesSeed(itemStack)),
-                            8, true, this.lumberjack.currentLumberArea.getUUID()));
-                    this.blockPos = null;
-                    return false;
-                }
-
+            // No sapling selected -> nothing to replant. The "any sapling" fallback
+            // was removed so the lumberjack only ever plants the chosen sapling.
+            if(selected.isEmpty()){
+                this.blockPos = null;
+                return false;
             }
-            else{
-                saplingFromInv = lumberjack.getMatchingItem(itemStack -> itemStack.is(lumberjack.currentLumberArea.getSaplingStack().getItem())
-                        || (WorkersMain.isDynamicTreesInstalled && DynamicTrees.isDynamicTreesSeed(itemStack)));
-                if(saplingFromInv == null){
-                    this.neededItems.add(new NeededItem(itemStack ->
-                            (itemStack.getItem() instanceof BlockItem blockItem && blockItem.getBlock() instanceof SaplingBlock)
-                                    || (WorkersMain.isDynamicTreesInstalled && DynamicTrees.isDynamicTreesSeed(itemStack)),
-                            8, true, this.lumberjack.currentLumberArea.getUUID()));
-                    this.blockPos = null;
-                    return false;
-                }
+
+            // Match the chosen sapling (DynamicTrees seeds are matched by the same item).
+            java.util.function.Predicate<ItemStack> saplingPredicate = itemStack ->
+                    itemStack.is(selected.getItem())
+                            || (WorkersMain.isDynamicTreesInstalled && DynamicTrees.isDynamicTreesSeed(itemStack) && itemStack.is(selected.getItem()));
+
+            // Switch the sapling into the main hand, mirroring axe/bone meal handling.
+            lumberjack.switchMainHandItem(saplingPredicate);
+
+            ItemStack saplingFromInv = lumberjack.getMatchingItem(saplingPredicate);
+            if(saplingFromInv == null){
+                this.neededItems.add(new NeededItem(saplingPredicate, 8, true, this.lumberjack.currentLumberArea.getUUID()));
+                this.blockPos = null;
+                return false;
             }
 
             if(blockPos == null){
