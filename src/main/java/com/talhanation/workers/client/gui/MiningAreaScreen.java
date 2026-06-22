@@ -94,6 +94,13 @@ public class MiningAreaScreen extends WorkAreaScreen {
                         areaYSize = areaXSize;
                     }
 
+                    // In SPIRAL mode the shaft is a square odd-width footprint (5..15);
+                    // depth (z) follows width, height (y) stays freely adjustable.
+                    if(isSpiralMode(mode)){
+                        areaXSize = Mth.clamp(areaXSize | 1, 5, 15);
+                        areaZSize = areaXSize;
+                    }
+
                     this.sendMessage();
                     this.setButtons();
                 }
@@ -110,6 +117,13 @@ public class MiningAreaScreen extends WorkAreaScreen {
                     if(isStairsMode(mode)){
                         areaXSize = Mth.clamp(areaXSize, 2, 8);
                         areaYSize = areaXSize;
+                    }
+
+                    // In SPIRAL mode the shaft is a square odd-width footprint (5..15);
+                    // depth (z) follows width, height (y) stays freely adjustable.
+                    if(isSpiralMode(mode)){
+                        areaXSize = Mth.clamp(areaXSize | 1, 5, 15);
+                        areaZSize = areaXSize;
                     }
 
                     this.miningArea.setWidthSize(areaXSize);
@@ -197,7 +211,7 @@ public class MiningAreaScreen extends WorkAreaScreen {
         this.modeDropDown = new DropDownMenu<>(
                 this.mode,
                 x - boxWidth/2, y - previewHeight / 2 + 105, boxWidth, boxHeight,
-                List.of(MiningMode.CUSTOM, MiningMode.STAIRS_DOWN, MiningMode.STAIRS_UP),
+                List.of(MiningMode.CUSTOM, MiningMode.STAIRS_DOWN, MiningMode.STAIRS_UP, MiningMode.SPIRAL_STAIRCASE_DOWN, MiningMode.SPIRAL_STAIRCASE_UP),
                 m -> Component.translatable(m.getTranslationKey()).getString(),
                 m -> {
                     this.mode = m;
@@ -210,6 +224,15 @@ public class MiningAreaScreen extends WorkAreaScreen {
                         this.mineWallOres = false;
                     }
 
+                    // SPIRAL: square odd-width shaft (5..15), depth follows width, height free.
+                    if(isSpiralMode(m)){
+                        areaXSize = Mth.clamp(areaXSize | 1, 5, 15);
+                        areaZSize = areaXSize;
+                        this.closeFloor = false;
+                        this.closeFluids = true;
+                        this.mineWallOres = false;
+                    }
+
                     this.sendMessage();
                     this.setButtons();
                 }
@@ -217,10 +240,12 @@ public class MiningAreaScreen extends WorkAreaScreen {
         addRenderableWidget(modeDropDown);
 
         boolean stairs = isStairsMode(mode);
+        boolean spiral = isSpiralMode(mode);
+        // STAIRS: only x adjustable (y coupled, z fixed). SPIRAL: x and y adjustable (z coupled).
         ySizePlusButton.active = !stairs;
         ySizeMinusButton.active = !stairs;
-        zSizePlusButton.active = !stairs;
-        zSizeMinusButton.active = !stairs;
+        zSizePlusButton.active = !stairs && !spiral;
+        zSizeMinusButton.active = !stairs && !spiral;
     }
     public void sendMessage(){
         if(miningArea == null) return;
@@ -254,5 +279,9 @@ public class MiningAreaScreen extends WorkAreaScreen {
 
     private static boolean isStairsMode(MiningMode mode) {
         return mode == MiningMode.STAIRS_DOWN || mode == MiningMode.STAIRS_UP;
+    }
+
+    private static boolean isSpiralMode(MiningMode mode) {
+        return mode == MiningMode.SPIRAL_STAIRCASE_DOWN || mode == MiningMode.SPIRAL_STAIRCASE_UP;
     }
 }
