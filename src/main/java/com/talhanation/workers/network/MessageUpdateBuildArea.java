@@ -23,6 +23,8 @@ public class MessageUpdateBuildArea implements Message<MessageUpdateBuildArea> {
     public boolean build;
     public boolean isCreative;
     public boolean freeArea;
+    /** Whether the alwaysShowProjection value below should be applied. Size/build
+     *  updates leave this false so they never overwrite the projection setting. */
     public boolean updateAlwaysShowProjection;
     public boolean alwaysShowProjection;
     public MessageUpdateBuildArea() {}

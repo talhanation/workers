@@ -1,9 +1,11 @@
 package com.talhanation.workers.client.gui;
 
 import com.talhanation.recruits.client.gui.widgets.BlackShowingTextField;
+import com.talhanation.recruits.client.gui.widgets.DropDownMenu;
 import com.talhanation.recruits.client.gui.widgets.RecruitsCheckBox;
 import com.talhanation.workers.WorkersMain;
 import com.talhanation.workers.entities.workarea.MiningArea;
+import com.talhanation.workers.entities.workarea.MiningArea.MiningMode;
 import com.talhanation.workers.network.MessageUpdateMiningArea;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.components.Button;
@@ -13,10 +15,13 @@ import net.minecraft.util.Mth;
 import net.minecraft.world.entity.player.Player;
 import net.minecraftforge.client.gui.widget.ExtendedButton;
 
+import java.util.List;
 import java.util.UUID;
 
 public class MiningAreaScreen extends WorkAreaScreen {
     private static final MutableComponent TEXT_CLOSE_FLOOR = Component.translatable("gui.workers.checkbox.closeFloor");
+    private static final MutableComponent TEXT_CLOSE_FLUIDS = Component.translatable("gui.workers.checkbox.closeFluids");
+    private static final MutableComponent TEXT_MINE_WALL_ORES = Component.translatable("gui.workers.checkbox.mineWallOres");
     public final MiningArea miningArea;
     public Button xSizePlusButton;
     public Button xSizeMinusButton;
@@ -30,6 +35,12 @@ public class MiningAreaScreen extends WorkAreaScreen {
     public int areaYOffset;
     private RecruitsCheckBox closeFloorCheckBox;
     private boolean closeFloor;
+    private RecruitsCheckBox closeFluidsCheckBox;
+    private boolean closeFluids;
+    private RecruitsCheckBox mineWallOresCheckBox;
+    private boolean mineWallOres;
+    private DropDownMenu<MiningMode> modeDropDown;
+    private MiningMode mode;
     public MiningAreaScreen(MiningArea miningArea, Player player) {
         super(miningArea.getCustomName(), miningArea, player);
         this.miningArea = miningArea;
@@ -43,6 +54,9 @@ public class MiningAreaScreen extends WorkAreaScreen {
         this.areaZSize = miningArea.getDepthSize();
         this.areaYOffset = miningArea.getHeightOffset();
         this.closeFloor = miningArea.getCloseFloor();
+        this.closeFluids = miningArea.getCloseFluids();
+        this.mineWallOres = miningArea.getMineWallOres();
+        this.mode = miningArea.getMode();
 
         this.setButtons();
     }
@@ -69,9 +83,16 @@ public class MiningAreaScreen extends WorkAreaScreen {
 
         xSizePlusButton = addRenderableWidget(new ExtendedButton(x - boxWidth/2 + sizeButtonX, y - previewHeight / 2 + sizeButtonY, 20, 20, Component.literal("+"),
                 btn -> {
-                    if(hasShiftDown()) areaXSize += 5;
-                    else areaXSize++;
+                    int step = hasShiftDown() ? 5 : 1;
+                    areaXSize += step;
                     areaXSize = Mth.clamp(areaXSize, 1, 16);
+
+                    // In STAIRS mode width (z) is fixed; height (y) grows together with x.
+                    // x is bound to the same 2..8 range so the stepped profile stays square.
+                    if(isStairsMode(mode)){
+                        areaXSize = Mth.clamp(areaXSize, 2, 8);
+                        areaYSize = areaXSize;
+                    }
 
                     this.sendMessage();
                     this.setButtons();
@@ -80,9 +101,16 @@ public class MiningAreaScreen extends WorkAreaScreen {
 
         xSizeMinusButton = addRenderableWidget(new ExtendedButton(x - boxWidth/2 + sizeButtonX + 20, y - previewHeight / 2 + sizeButtonY, 20, 20, Component.literal("-"),
                 btn -> {
-                    if(hasShiftDown()) areaXSize -= 5;
-                    else areaXSize--;
+                    int step = hasShiftDown() ? 5 : 1;
+                    areaXSize -= step;
                     areaXSize = Mth.clamp(areaXSize, 1, 16);
+
+                    // In STAIRS mode width (z) is fixed; height (y) shrinks together with x.
+                    // x is bound to the same 2..8 range so the stepped profile stays square.
+                    if(isStairsMode(mode)){
+                        areaXSize = Mth.clamp(areaXSize, 2, 8);
+                        areaYSize = areaXSize;
+                    }
 
                     this.miningArea.setWidthSize(areaXSize);
                     this.sendMessage();
@@ -138,7 +166,8 @@ public class MiningAreaScreen extends WorkAreaScreen {
                 }
         ));
 
-        this.closeFloorCheckBox = new RecruitsCheckBox(x - boxWidth/2, y - previewHeight / 2 + 155 + boxHeight*2, boxWidth, boxHeight, TEXT_CLOSE_FLOOR,
+        int checkBoxY = y - previewHeight / 2 + 155 + boxHeight*2;
+        this.closeFloorCheckBox = new RecruitsCheckBox(x - boxWidth/2, checkBoxY, boxWidth, boxHeight, TEXT_CLOSE_FLOOR,
                 this.closeFloor,
                 (bool) -> {
                     this.closeFloor = bool;
@@ -146,12 +175,58 @@ public class MiningAreaScreen extends WorkAreaScreen {
                 }
         );
         addRenderableWidget(closeFloorCheckBox);
+
+        this.closeFluidsCheckBox = new RecruitsCheckBox(x - boxWidth/2, checkBoxY + boxHeight, boxWidth, boxHeight, TEXT_CLOSE_FLUIDS,
+                this.closeFluids,
+                (bool) -> {
+                    this.closeFluids = bool;
+                    this.sendMessage();
+                }
+        );
+        addRenderableWidget(closeFluidsCheckBox);
+
+        this.mineWallOresCheckBox = new RecruitsCheckBox(x - boxWidth/2, checkBoxY + boxHeight*2, boxWidth, boxHeight, TEXT_MINE_WALL_ORES,
+                this.mineWallOres,
+                (bool) -> {
+                    this.mineWallOres = bool;
+                    this.sendMessage();
+                }
+        );
+        addRenderableWidget(mineWallOresCheckBox);
+
+        this.modeDropDown = new DropDownMenu<>(
+                this.mode,
+                x - boxWidth/2, y - previewHeight / 2 + 105, boxWidth, boxHeight,
+                List.of(MiningMode.CUSTOM, MiningMode.STAIRS_DOWN, MiningMode.STAIRS_UP),
+                m -> Component.translatable(m.getTranslationKey()).getString(),
+                m -> {
+                    this.mode = m;
+
+                    if(isStairsMode(m)){
+                        areaXSize = Mth.clamp(areaXSize, 2, areaXSize);
+                        areaYSize = areaXSize;
+                        this.closeFloor = false;
+                        this.closeFluids = true;
+                        this.mineWallOres = false;
+                    }
+
+                    this.sendMessage();
+                    this.setButtons();
+                }
+        );
+        addRenderableWidget(modeDropDown);
+
+        boolean stairs = isStairsMode(mode);
+        ySizePlusButton.active = !stairs;
+        ySizeMinusButton.active = !stairs;
+        zSizePlusButton.active = !stairs;
+        zSizeMinusButton.active = !stairs;
     }
     public void sendMessage(){
         if(miningArea == null) return;
 
         this.miningArea.setWidthSize(areaXSize);
-        WorkersMain.SIMPLE_CHANNEL.sendToServer(new MessageUpdateMiningArea(this.miningArea.getUUID(), areaXSize, areaYSize, areaZSize, areaYOffset, closeFloor));
+        WorkersMain.SIMPLE_CHANNEL.sendToServer(new MessageUpdateMiningArea(this.miningArea.getUUID(), areaXSize, areaYSize, areaZSize, areaYOffset, closeFloor, closeFluids, mineWallOres, mode.getIndex()));
     }
     @Override
     public void mouseMoved(double x, double y) {
@@ -175,5 +250,9 @@ public class MiningAreaScreen extends WorkAreaScreen {
     @Override
     public void onAreaMoved() {
 
+    }
+
+    private static boolean isStairsMode(MiningMode mode) {
+        return mode == MiningMode.STAIRS_DOWN || mode == MiningMode.STAIRS_UP;
     }
 }

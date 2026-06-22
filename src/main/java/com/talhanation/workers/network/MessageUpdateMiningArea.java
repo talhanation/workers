@@ -17,15 +17,21 @@ public class MessageUpdateMiningArea implements Message<MessageUpdateMiningArea>
     public int zSize;
     public int yOffset;
     public boolean closeFloor;
+    public boolean closeFluids;
+    public boolean mineWallOres;
+    public int mode;
     public MessageUpdateMiningArea() {}
 
-    public MessageUpdateMiningArea(UUID uuid, int xSize, int ySize, int zSize, int yOffset, boolean closeFloor) {
+    public MessageUpdateMiningArea(UUID uuid, int xSize, int ySize, int zSize, int yOffset, boolean closeFloor, boolean closeFluids, boolean mineWallOres, int mode) {
         this.uuid = uuid;
         this.xSize = xSize;
         this.ySize = ySize;
         this.zSize = zSize;
         this.yOffset = yOffset;
         this.closeFloor = closeFloor;
+        this.closeFluids = closeFluids;
+        this.mineWallOres = mineWallOres;
+        this.mode = mode;
     }
 
     @Override
@@ -52,6 +58,9 @@ public class MessageUpdateMiningArea implements Message<MessageUpdateMiningArea>
         miningArea.setDepthSize(this.zSize);
         miningArea.setHeightOffset(this.yOffset);
         miningArea.setCloseFloor(this.closeFloor);
+        miningArea.setCloseFluids(this.closeFluids);
+        miningArea.setMineWallOres(this.mineWallOres);
+        miningArea.setMode(this.mode);
     }
 
     public MessageUpdateMiningArea fromBytes(FriendlyByteBuf buf) {
@@ -61,6 +70,9 @@ public class MessageUpdateMiningArea implements Message<MessageUpdateMiningArea>
         this.zSize = buf.readInt();
         this.yOffset = buf.readInt();
         this.closeFloor = buf.readBoolean();
+        this.closeFluids = buf.readBoolean();
+        this.mineWallOres = buf.readBoolean();
+        this.mode = buf.readInt();
         return this;
     }
 
@@ -71,5 +83,8 @@ public class MessageUpdateMiningArea implements Message<MessageUpdateMiningArea>
         buf.writeInt(zSize);
         buf.writeInt(yOffset);
         buf.writeBoolean(closeFloor);
+        buf.writeBoolean(closeFluids);
+        buf.writeBoolean(mineWallOres);
+        buf.writeInt(mode);
     }
 }

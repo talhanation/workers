@@ -25,7 +25,7 @@ public class LumberAreaScreen extends WorkAreaScreen {
     private static final MutableComponent TEXT_SHEAR_LEAVES = Component.translatable("gui.workers.checkbox.shearLeaves");
     private static final MutableComponent TEXT_STRIP_LOGS = Component.translatable("gui.workers.checkbox.stripLogs");
     private static final MutableComponent TEXT_REPLANT = Component.translatable("gui.workers.checkbox.replant");
-    private static final MutableComponent TEXT_ANY_SAPLING = Component.translatable("gui.workers.command.text.anySapling");
+    private static final MutableComponent TEXT_SELECT_SAPLING = Component.translatable("gui.workers.command.text.selectSapling");
     public final LumberArea lumberArea;
     private ItemScrollDropDownMenu seedItemSelectionDropDownMenu;
     private ItemStack currentSapling;
@@ -67,7 +67,11 @@ public class LumberAreaScreen extends WorkAreaScreen {
         int checkBoxY = y + checkBoxHeight / 2 - checkBoxHeight;
 
         seedItemSelectionDropDownMenu = new ItemScrollDropDownMenu(currentSapling,x - dropDownWidth / 2, 120 + y + dropDownHeight / 2 - dropDownHeight, dropDownWidth, dropDownHeight, possibleSeeds, this::setCurrentSapling);
-        seedItemSelectionDropDownMenu.insertOption(0, ItemStack.EMPTY, TEXT_ANY_SAPLING.getString());
+        // No "any sapling" entry anymore — an unset selection shows a placeholder
+        // instead, so the worker only ever plants the explicitly chosen sapling.
+        if (currentSapling.isEmpty()) {
+            currentSapling.setHoverName(TEXT_SELECT_SAPLING);
+        }
         seedItemSelectionDropDownMenu.setBgFillSelected(FastColor.ARGB32.color(255, 139, 139, 139));
 
         addRenderableWidget(seedItemSelectionDropDownMenu);

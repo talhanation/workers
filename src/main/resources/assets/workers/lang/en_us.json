@@ -81,6 +81,8 @@
   "gui.workers.checkbox.throwEggs":"Throw Eggs",
   "gui.workers.checkbox.marketOpen": "Open",
   "gui.workers.checkbox.closeFloor": "Close Floor",
+  "gui.workers.checkbox.closeFluids": "Close Fluids",
+  "gui.workers.checkbox.mineWallOres": "Mine Wall Ores",
   "gui.workers.checkbox.useVehicleInventory": "Use Vehicle Inventory",
   "gui.workers.checkbox.tooltip.useVehicleInventory": "If true the items will be filled in the vehicles inventory",
   "gui.workers.checkbox.cycle": "Cycle",
@@ -93,6 +95,9 @@
   "gui.workers.checkbox.tooltip.feedVillagers": "If true the cook will feed nearby villagers to boost population.",
   "gui.workers.checkbox.freeArea": "Free Area",
   "gui.workers.checkbox.tooltip.freeArea": "If true the builder will free the area first.",
+  "gui.workers.mining.mode.custom" : "Custom",
+  "gui.workers.mining.mode.stairs_down" : "Stairs Down",
+  "gui.workers.mining.mode.stairs_up" : "Stairs Up",
 
   "gui.workers.button.reset": "Reset",
   "gui.workers.button.add": "Add",
