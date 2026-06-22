@@ -43,6 +43,7 @@ import java.util.*;
 public class BuildArea extends AbstractWorkAreaEntity {
     public static final EntityDataAccessor<CompoundTag> STRUCTURE = SynchedEntityData.defineId(BuildArea.class, EntityDataSerializers.COMPOUND_TAG);
     public static final EntityDataAccessor<Boolean> FREE_AREA = SynchedEntityData.defineId(BuildArea.class, EntityDataSerializers.BOOLEAN);
+    public static final EntityDataAccessor<Boolean> ALWAYS_SHOW_PROJECTION = SynchedEntityData.defineId(BuildArea.class, EntityDataSerializers.BOOLEAN);
     /** Server-side flag: true once the FREE_AREA step has been completed for the current build. */
     public boolean freeAreaDone;
     public Stack<BlockPos> stackToBreak = new Stack<>();
@@ -57,6 +58,7 @@ public class BuildArea extends AbstractWorkAreaEntity {
         super.defineSynchedData();
         this.entityData.define(STRUCTURE, new CompoundTag());
         this.entityData.define(FREE_AREA, false);
+        this.entityData.define(ALWAYS_SHOW_PROJECTION, false);
     }
     @Override
     public void readAdditionalSaveData(CompoundTag tag) {
@@ -64,6 +66,7 @@ public class BuildArea extends AbstractWorkAreaEntity {
         this.setStructureNBT(tag.getCompound("structureNBT"));
         this.setFreeArea(tag.getBoolean("freeArea"));
         this.freeAreaDone = tag.getBoolean("freeAreaDone");
+        this.setAlwaysShowProjection(tag.getBoolean("alwaysShowProjection"));
     }
     @Override
     public void addAdditionalSaveData(CompoundTag tag) {
@@ -71,6 +74,7 @@ public class BuildArea extends AbstractWorkAreaEntity {
         tag.put("structureNBT", this.getStructureNBT());
         tag.putBoolean("freeArea", this.getFreeArea());
         tag.putBoolean("freeAreaDone", this.freeAreaDone);
+        tag.putBoolean("alwaysShowProjection", this.getAlwaysShowProjection());
     }
 
     public boolean getFreeAreaDone() {
@@ -289,6 +293,14 @@ public class BuildArea extends AbstractWorkAreaEntity {
 
     public void setFreeArea(boolean freeArea) {
         this.entityData.set(FREE_AREA, freeArea);
+    }
+
+    public boolean getAlwaysShowProjection() {
+        return this.entityData.get(ALWAYS_SHOW_PROJECTION);
+    }
+
+    public void setAlwaysShowProjection(boolean alwaysShowProjection) {
+        this.entityData.set(ALWAYS_SHOW_PROJECTION, alwaysShowProjection);
     }
 
     public static boolean canDirectlyReplace(BlockState levelState, BlockState buildingState) {

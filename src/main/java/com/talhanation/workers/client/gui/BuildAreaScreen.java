@@ -37,6 +37,7 @@ import java.util.UUID;
 public class BuildAreaScreen extends WorkAreaScreen {
 
     private static final net.minecraft.network.chat.MutableComponent TEXT_FREE_AREA = Component.translatable("gui.workers.checkbox.freeArea");
+    private static final net.minecraft.network.chat.MutableComponent TEXT_ALWAYS_SHOW_PROJECTION = Component.translatable("gui.workers.checkbox.alwaysShowProjection");
 
     public final BuildArea buildArea;
     public Button scanButton;
@@ -58,11 +59,13 @@ public class BuildAreaScreen extends WorkAreaScreen {
     public Button zSizePlusButton;
     public Button zSizeMinusButton;
     public RecruitsCheckBox freeAreaCheckBox;
+    public RecruitsCheckBox alwaysShowProjectionCheckBox;
     public String savedName;
     public int areaWidthSize;
     public int areaHeightSize;
     public int areaDepthSize;
     public boolean freeArea;
+    public boolean alwaysShowProjection;
     public List<ItemStack> requiredItems = new ArrayList<>();
     private boolean presetLoading = false;
     public DisplayTextItemScrollDropDownMenu requiredItemsDropDownMenu;
@@ -87,6 +90,7 @@ public class BuildAreaScreen extends WorkAreaScreen {
         this.areaHeightSize = buildArea.getHeightSize();
         this.areaDepthSize = buildArea.getDepthSize();
         this.freeArea = buildArea.getFreeArea();
+        this.alwaysShowProjection = buildArea.getAlwaysShowProjection();
 
         if(WorkersClientManager.buildMode != BuildMode.FREE){
             WorkersMain.SIMPLE_CHANNEL.sendToServer(new MessageRequestPresetList());
@@ -353,6 +357,17 @@ public class BuildAreaScreen extends WorkAreaScreen {
                 }
         );
         addRenderableWidget(freeAreaCheckBox);
+
+        // Always-show-projection checkbox — keeps the structure preview visible
+        // even when the player is not aiming the crosshair at the build area.
+        this.alwaysShowProjectionCheckBox = new RecruitsCheckBox(blackBoxPosX, blackBoxPosY + 101, 100, 20, TEXT_ALWAYS_SHOW_PROJECTION,
+                this.alwaysShowProjection,
+                (bool) -> {
+                    this.alwaysShowProjection = bool;
+                    WorkersMain.SIMPLE_CHANNEL.sendToServer(new MessageUpdateBuildArea(this.buildArea.getUUID(), areaWidthSize, areaHeightSize, areaDepthSize, structureNBT, false, false, freeArea, alwaysShowProjection));
+                }
+        );
+        addRenderableWidget(alwaysShowProjectionCheckBox);
     }
 
     private void setStructure(List<ScannedBlock> structure, CompoundTag structureNBT) {

@@ -84,11 +84,17 @@ public class WorkerAreaRenderer extends EntityRenderer<AbstractWorkAreaEntity> {
 
         if(!abstractWorkAreaEntity.canPlayerSee(player)) return;
 
-        if(!abstractWorkAreaEntity.showBox && (looking == null || !looking.equals(abstractWorkAreaEntity))) return;
+        boolean lookingAtThis = looking != null && looking.equals(abstractWorkAreaEntity);
 
         if(abstractWorkAreaEntity instanceof BuildArea buildArea){
-            renderStructurePreview(poseStack, buildArea);
+            // The structure projection stays visible without crosshair focus when the
+            // build area has the "always show projection" setting enabled.
+            if(buildArea.showBox || lookingAtThis || buildArea.getAlwaysShowProjection()){
+                renderStructurePreview(poseStack, buildArea);
+            }
         }
+
+        if(!abstractWorkAreaEntity.showBox && !lookingAtThis) return;
 
         double x = Mth.lerp(partialTicks, abstractWorkAreaEntity.xOld, abstractWorkAreaEntity.getX());
         double y = Mth.lerp(partialTicks, abstractWorkAreaEntity.yOld, abstractWorkAreaEntity.getY());

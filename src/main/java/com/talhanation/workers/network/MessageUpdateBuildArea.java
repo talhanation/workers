@@ -23,6 +23,8 @@ public class MessageUpdateBuildArea implements Message<MessageUpdateBuildArea> {
     public boolean build;
     public boolean isCreative;
     public boolean freeArea;
+    public boolean updateAlwaysShowProjection;
+    public boolean alwaysShowProjection;
     public MessageUpdateBuildArea() {}
     public MessageUpdateBuildArea(UUID uuid, int xSize, int ySize, int zSize, CompoundTag structureNBT, boolean build, boolean isCreative, boolean freeArea) {
         this.uuid = uuid;
@@ -33,6 +35,13 @@ public class MessageUpdateBuildArea implements Message<MessageUpdateBuildArea> {
         this.build = build;
         this.isCreative = isCreative;
         this.freeArea = freeArea;
+        this.updateAlwaysShowProjection = false;
+        this.alwaysShowProjection = false;
+    }
+    public MessageUpdateBuildArea(UUID uuid, int xSize, int ySize, int zSize, CompoundTag structureNBT, boolean build, boolean isCreative, boolean freeArea, boolean alwaysShowProjection) {
+        this(uuid, xSize, ySize, zSize, structureNBT, build, isCreative, freeArea);
+        this.updateAlwaysShowProjection = true;
+        this.alwaysShowProjection = alwaysShowProjection;
     }
 
     @Override
@@ -60,6 +69,9 @@ public class MessageUpdateBuildArea implements Message<MessageUpdateBuildArea> {
         buildArea.setDepthSize(this.zSize);
         buildArea.setStructureNBT(this.structureNBT);
         buildArea.setFreeArea(this.freeArea);
+        if(this.updateAlwaysShowProjection){
+            buildArea.setAlwaysShowProjection(this.alwaysShowProjection);
+        }
         if(build){
             buildArea.setStartBuild(this.isCreative);
         }
@@ -83,6 +95,8 @@ public class MessageUpdateBuildArea implements Message<MessageUpdateBuildArea> {
         this.build = buf.readBoolean();
         this.isCreative = buf.readBoolean();
         this.freeArea = buf.readBoolean();
+        this.updateAlwaysShowProjection = buf.readBoolean();
+        this.alwaysShowProjection = buf.readBoolean();
         return this;
     }
 
@@ -106,5 +120,7 @@ public class MessageUpdateBuildArea implements Message<MessageUpdateBuildArea> {
         buf.writeBoolean(build);
         buf.writeBoolean(isCreative);
         buf.writeBoolean(freeArea);
+        buf.writeBoolean(updateAlwaysShowProjection);
+        buf.writeBoolean(alwaysShowProjection);
     }
 }
