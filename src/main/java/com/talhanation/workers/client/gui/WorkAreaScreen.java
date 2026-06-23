@@ -73,100 +73,100 @@ public abstract class WorkAreaScreen extends RecruitsScreenBase {
 
         // Move Forward
         moveForward = addRenderableWidget(new ExtendedButton(x - buttonWidth / 2, y + buttonHeight / 2 - buttonHeight*2, buttonWidth, buttonHeight, TEXT_FORWARD,
-            btn -> {
-                this.workArea.showBox = true;
-                int x = 1;
-                if(hasShiftDown()){
-                    x = 5;
+                btn -> {
+                    this.workArea.showBox = true;
+                    int x = 1;
+                    if(hasShiftDown()){
+                        x = 5;
+                    }
+                    Vec3 newPos = workArea.position().relative(player.getDirection(), x);
+                    WorkersMain.SIMPLE_CHANNEL.sendToServer(new MessageUpdateWorkArea(this.workArea.getUUID(), this.workArea.getCustomName().getString(), newPos, false, teamAccess));
+                    this.onAreaMoved();
                 }
-                Vec3 newPos = workArea.position().relative(player.getDirection(), x);
-                WorkersMain.SIMPLE_CHANNEL.sendToServer(new MessageUpdateWorkArea(this.workArea.getUUID(), this.workArea.getCustomName().getString(), newPos, false, teamAccess));
-                this.onAreaMoved();
-            }
         ));
 
         // Move Backward
         moveBackward = addRenderableWidget(new ExtendedButton(x - buttonWidth / 2, y - buttonHeight / 2 + buttonHeight, buttonWidth, buttonHeight, TEXT_BACKWARD,
-                    btn -> {
-                        this.workArea.showBox = true;
-                        int x = 1;
-                        if(hasShiftDown()){
-                            x = 5;
-                        }
-                        Vec3 newPos = workArea.position().relative(player.getDirection().getOpposite(), x);
-                        WorkersMain.SIMPLE_CHANNEL.sendToServer(new MessageUpdateWorkArea(this.workArea.getUUID(), this.workArea.getCustomName().getString(), newPos, false, teamAccess));
-                        this.onAreaMoved();
+                btn -> {
+                    this.workArea.showBox = true;
+                    int x = 1;
+                    if(hasShiftDown()){
+                        x = 5;
                     }
+                    Vec3 newPos = workArea.position().relative(player.getDirection().getOpposite(), x);
+                    WorkersMain.SIMPLE_CHANNEL.sendToServer(new MessageUpdateWorkArea(this.workArea.getUUID(), this.workArea.getCustomName().getString(), newPos, false, teamAccess));
+                    this.onAreaMoved();
+                }
         ));
 
         // Move Left
         moveLeft = addRenderableWidget(new ExtendedButton(x - buttonWidth / 2 - buttonWidth, y - buttonHeight / 2, buttonWidth, buttonHeight, TEXT_LEFT,
-            btn -> {
-                this.workArea.showBox = true;
-                int x = 1;
-                if(hasShiftDown()){
-                    x = 5;
+                btn -> {
+                    this.workArea.showBox = true;
+                    int x = 1;
+                    if(hasShiftDown()){
+                        x = 5;
+                    }
+                    Vec3 newPos = workArea.position().relative(player.getDirection().getCounterClockWise(), x);
+                    WorkersMain.SIMPLE_CHANNEL.sendToServer(new MessageUpdateWorkArea(this.workArea.getUUID(), this.workArea.getCustomName().getString(), newPos, false, teamAccess));
+                    this.onAreaMoved();
                 }
-                Vec3 newPos = workArea.position().relative(player.getDirection().getCounterClockWise(), x);
-                WorkersMain.SIMPLE_CHANNEL.sendToServer(new MessageUpdateWorkArea(this.workArea.getUUID(), this.workArea.getCustomName().getString(), newPos, false, teamAccess));
-                this.onAreaMoved();
-            }
         ));
 
         // Move Right
         moveRight = addRenderableWidget(new ExtendedButton(x - buttonWidth / 2 + buttonWidth, y - buttonHeight / 2, buttonWidth, buttonHeight,  TEXT_RIGHT,
-            btn -> {
-                this.workArea.showBox = true;
-                int x = 1;
-                if(hasShiftDown()){
-                    x = 5;
+                btn -> {
+                    this.workArea.showBox = true;
+                    int x = 1;
+                    if(hasShiftDown()){
+                        x = 5;
+                    }
+                    Vec3 newPos = workArea.position().relative(player.getDirection().getClockWise(), x);
+                    WorkersMain.SIMPLE_CHANNEL.sendToServer(new MessageUpdateWorkArea(this.workArea.getUUID(), this.workArea.getCustomName().getString(), newPos, false, teamAccess));
+                    this.onAreaMoved();
                 }
-                Vec3 newPos = workArea.position().relative(player.getDirection().getClockWise(), x);
-                WorkersMain.SIMPLE_CHANNEL.sendToServer(new MessageUpdateWorkArea(this.workArea.getUUID(), this.workArea.getCustomName().getString(), newPos, false, teamAccess));
-                this.onAreaMoved();
-            }
         ));
 
         // Destroy
         destroy = addRenderableWidget(new ExtendedButton(x - buttonWidth / 2, y - buttonHeight / 2, buttonWidth, buttonHeight, TEXT_DESTROY,
-            btn -> {
-                WorkersMain.SIMPLE_CHANNEL.sendToServer(new MessageUpdateWorkArea(this.workArea.getUUID(), this.workArea.getCustomName().getString(), workArea.position(), true, teamAccess));
-                this.onClose();
-            }
+                btn -> {
+                    WorkersMain.SIMPLE_CHANNEL.sendToServer(new MessageUpdateWorkArea(this.workArea.getUUID(), this.workArea.getCustomName().getString(), workArea.position(), true, teamAccess));
+                    this.onClose();
+                }
         ));
 
-        rotateLeft = addRenderableWidget(new ExtendedButton(x - buttonWidth / 2 - buttonWidth, y - buttonHeight / 2 + buttonHeight, buttonWidth, buttonHeight, Component.literal("\u21BB"),
-            btn -> {
-                this.workArea.showBox = true;
-                WorkersMain.SIMPLE_CHANNEL.sendToServer(new MessageRotateWorkArea(this.workArea.getUUID(), false));
-                this.workArea.setFacing(this.workArea.getFacing().getCounterClockWise());
-                this.onAreaMoved();
-            }
+        rotateLeft = addRenderableWidget(new ScaledLabelButton(x - buttonWidth / 2 - buttonWidth, y - buttonHeight / 2 + buttonHeight, buttonWidth, buttonHeight, Component.literal("\u21BB"), 2.0F,
+                btn -> {
+                    this.workArea.showBox = true;
+                    WorkersMain.SIMPLE_CHANNEL.sendToServer(new MessageRotateWorkArea(this.workArea.getUUID(), false));
+                    this.workArea.setFacing(this.workArea.getFacing().getCounterClockWise());
+                    this.onAreaMoved();
+                }
         ));
 
-        rotateRight = addRenderableWidget(new ExtendedButton(x - buttonWidth / 2 + buttonWidth, y - buttonHeight / 2 + buttonHeight, buttonWidth, buttonHeight, Component.literal("\u21BA"),
-            btn -> {
-                this.workArea.showBox = true;
-                WorkersMain.SIMPLE_CHANNEL.sendToServer(new MessageRotateWorkArea(this.workArea.getUUID(), true));
-                this.workArea.setFacing(this.workArea.getFacing().getClockWise());
-                this.onAreaMoved();
-            }
+        rotateRight = addRenderableWidget(new ScaledLabelButton(x - buttonWidth / 2 + buttonWidth, y - buttonHeight / 2 + buttonHeight, buttonWidth, buttonHeight, Component.literal("\u21BA"), 2.0F,
+                btn -> {
+                    this.workArea.showBox = true;
+                    WorkersMain.SIMPLE_CHANNEL.sendToServer(new MessageRotateWorkArea(this.workArea.getUUID(), true));
+                    this.workArea.setFacing(this.workArea.getFacing().getClockWise());
+                    this.onAreaMoved();
+                }
         ));
 
 
         this.selectedPlayerButton = new ExtendedButton(x + 80, y - 50 , 120, 20, SelectPlayerScreen.TITLE,
-            button -> {
-                minecraft.setScreen(new SelectPlayerScreen(this, player, SelectPlayerScreen.TITLE, SelectPlayerScreen.BUTTON_SELECT, SelectPlayerScreen.BUTTON_SELECT_TOOLTIP, false, PlayersList.FilterType.NONE,
-                    (playerInfo) -> {
-                        this.playerInfo = playerInfo;
-                        WorkersMain.SIMPLE_CHANNEL.sendToServer(new MessageUpdateOwner(this.workArea.getUUID(), playerInfo));
-                        this.workArea.setPlayerName(playerInfo.getName());
-                        this.workArea.setPlayerUUID(playerInfo.getUUID());
-                        minecraft.setScreen(this);
-                        this.onClose();
-                    }
-                ));
-            }
+                button -> {
+                    minecraft.setScreen(new SelectPlayerScreen(this, player, SelectPlayerScreen.TITLE, SelectPlayerScreen.BUTTON_SELECT, SelectPlayerScreen.BUTTON_SELECT_TOOLTIP, false, PlayersList.FilterType.NONE,
+                            (playerInfo) -> {
+                                this.playerInfo = playerInfo;
+                                WorkersMain.SIMPLE_CHANNEL.sendToServer(new MessageUpdateOwner(this.workArea.getUUID(), playerInfo));
+                                this.workArea.setPlayerName(playerInfo.getName());
+                                this.workArea.setPlayerUUID(playerInfo.getUUID());
+                                minecraft.setScreen(this);
+                                this.onClose();
+                            }
+                    ));
+                }
         );
         addRenderableWidget(this.selectedPlayerButton);
 
@@ -188,10 +188,10 @@ public abstract class WorkAreaScreen extends RecruitsScreenBase {
             this.selectedPlayerButton.visible = false;
 
             this.teamAccessCheckBox = new RecruitsCheckBox(x + 80, y - 30, 120, 20, TEXT_TEAM_ACCESS, teamAccess,
-                b ->{
-                    teamAccess = b;
-                    WorkersMain.SIMPLE_CHANNEL.sendToServer(new MessageUpdateWorkArea(this.workArea.getUUID(), this.workArea.getCustomName().getString(), workArea.position(), false, teamAccess));
-                }
+                    b ->{
+                        teamAccess = b;
+                        WorkersMain.SIMPLE_CHANNEL.sendToServer(new MessageUpdateWorkArea(this.workArea.getUUID(), this.workArea.getCustomName().getString(), workArea.position(), false, teamAccess));
+                    }
             );
             this.teamAccessCheckBox.setTooltip(Tooltip.create(TOOLTIP_TEAM_ACCESS));
             addRenderableWidget(this.teamAccessCheckBox);
@@ -208,5 +208,39 @@ public abstract class WorkAreaScreen extends RecruitsScreenBase {
         super.onClose();
 
         this.workArea.showBox = false;
+    }
+
+    /**
+     * A button that draws its (single-glyph) label at an enlarged scale, used for the
+     * rotate arrows so they are clearly visible. Click/hover behaviour is unchanged.
+     */
+    private static class ScaledLabelButton extends ExtendedButton {
+        private final float labelScale;
+        private final String label;
+
+        public ScaledLabelButton(int x, int y, int width, int height, Component label, float labelScale, OnPress onPress) {
+            // Keep the super label empty so it doesn't draw the small default glyph;
+            // we render our own enlarged version below.
+            super(x, y, width, height, Component.empty(), onPress);
+            this.label = label.getString();
+            this.labelScale = labelScale;
+        }
+
+        @Override
+        public void renderWidget(net.minecraft.client.gui.GuiGraphics guiGraphics, int mouseX, int mouseY, float partialTicks) {
+            super.renderWidget(guiGraphics, mouseX, mouseY, partialTicks);
+
+            net.minecraft.client.Minecraft mc = net.minecraft.client.Minecraft.getInstance();
+            float textWidth = mc.font.width(label) * labelScale;
+            float textHeight = mc.font.lineHeight * labelScale;
+            float drawX = this.getX() + (this.width - textWidth) / 2f;
+            float drawY = this.getY() + (this.height - textHeight) / 2f;
+
+            guiGraphics.pose().pushPose();
+            guiGraphics.pose().translate(drawX, drawY, 0f);
+            guiGraphics.pose().scale(labelScale, labelScale, 1f);
+            guiGraphics.drawString(mc.font, label, 0, 0, 0xFFFFFFFF, false);
+            guiGraphics.pose().popPose();
+        }
     }
 }

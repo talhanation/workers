@@ -26,6 +26,7 @@ import net.minecraft.world.phys.Vec3;
 
 import javax.annotation.Nullable;
 import java.util.*;
+import java.util.stream.Collectors;
 
 public class MinerWorkGoal extends Goal {
 
@@ -37,6 +38,11 @@ public class MinerWorkGoal extends Goal {
     public Stack<BlockPos> stackToBreak;
     public Stack<BlockPos> stackToPlace;
     private boolean needToSeeBlock;
+    // Loop guard: detect CHECK cycles that make no mining progress (e.g. unreachable
+    // blocks the scan keeps re-finding) and finish instead of switching states forever.
+    private int lastBreakCount = -1;
+    private int noProgressChecks = 0;
+    private static final int MAX_NO_PROGRESS_CHECKS = 3;
 
     public MinerWorkGoal(MinerEntity minerEntity) {
         this.minerEntity = minerEntity;
@@ -54,6 +60,8 @@ public class MinerWorkGoal extends Goal {
         if(this.minerEntity.getCommandSenderWorld().isClientSide()) return;
         if(minerEntity.getFollowState() == 0) minerEntity.setFollowState(6); //Working
 
+        this.lastBreakCount = -1;
+        this.noProgressChecks = 0;
         setState(State.SELECT_WORK_AREA);
     }
     boolean workDone;
@@ -111,7 +119,7 @@ public class MinerWorkGoal extends Goal {
 
             case MOVE_TO_WORK_AREA ->{
                 this.blockPos = null;
-                if(this.moveToPosition(minerEntity.currentMiningArea.getOnPos(), 3)) return;
+                if(this.moveToPosition(minerEntity.currentMiningArea.getOnPos(), 1)) return;
 
                 setState(State.PREPARE_CLOSE_FLOOR);
             }
@@ -215,7 +223,24 @@ public class MinerWorkGoal extends Goal {
                     setState(State.DONE);
                 }
                 else{
-                    setState(State.PREPARE_CLOSE_FLOOR);
+                    // Progress check: if the remaining count didn't shrink since the
+                    // last CHECK, the leftover blocks are likely unreachable. Give up
+                    // after a few stalls instead of cycling states forever.
+                    int count = stackToBreak.size();
+                    if(lastBreakCount >= 0 && count >= lastBreakCount){
+                        noProgressChecks++;
+                    }
+                    else{
+                        noProgressChecks = 0;
+                    }
+                    lastBreakCount = count;
+
+                    if(noProgressChecks >= MAX_NO_PROGRESS_CHECKS){
+                        setState(State.DONE);
+                    }
+                    else{
+                        setState(State.PREPARE_CLOSE_FLOOR);
+                    }
                 }
             }
 
@@ -277,7 +302,7 @@ public class MinerWorkGoal extends Goal {
     }
 
     public void setState(State state) {
-        if(minerEntity.getOwner() != null) minerEntity.getOwner().sendSystemMessage(Component.literal(state.toString()));
+        //if(minerEntity.getOwner() != null) minerEntity.getOwner().sendSystemMessage(Component.literal(state.toString()));
         this.state = state;
     }
 
@@ -322,19 +347,36 @@ public class MinerWorkGoal extends Goal {
         BlockPos newPosition = null;
 
         if(blockPos == null){
-            if(this.needToSeeBlock){
-                positions.removeIf(pos ->
-                        !canSeeBlock(minerEntity.getCommandSenderWorld(), minerEntity.position().add(0, 1, 0), pos)
-                );
-
-            }
-
             if(positions.isEmpty()){
                 setState(State.MOVE_TO_WORK_AREA);
                 return null;
             }
 
-            newPosition = positions.pop();
+            if(this.needToSeeBlock){
+                // Prefer a block in line of sight, but DON'T discard the rest: if none
+                // is visible (digging through stone / around a corner), walk to the
+                // nearest target instead of looping back to the work area.
+                BlockPos visible = null;
+                for(int idx = positions.size() - 1; idx >= 0; idx--){
+                    BlockPos candidate = positions.get(idx);
+                    if(canSeeBlock(minerEntity.getCommandSenderWorld(), minerEntity.position().add(0, 1, 0), candidate)){
+                        visible = candidate;
+                        break;
+                    }
+                }
+
+                if(visible != null){
+                    positions.remove(visible);
+                    return visible;
+                }
+
+                newPosition = positions.stream()
+                        .min(Comparator.comparingDouble(pos -> this.minerEntity.distanceToSqr(pos.getX(), pos.getY(), pos.getZ())))
+                        .orElse(null);
+            }
+            else {
+                newPosition = positions.pop();
+            }
         }
         else if(positions.contains(blockPos.above())){
             newPosition = blockPos.above();

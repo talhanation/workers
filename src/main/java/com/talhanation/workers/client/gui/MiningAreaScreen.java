@@ -83,10 +83,10 @@ public class MiningAreaScreen extends WorkAreaScreen {
         int boxHeight = 20;
 
         int sizeButtonX = 120;
-        int sizeButtonY = 130;
-        addRenderableWidget(new BlackShowingTextField(x - boxWidth/2, y - previewHeight / 2 + 130, boxWidth, boxHeight, Component.literal("x: " + areaXSize)));
-        addRenderableWidget(new BlackShowingTextField(x - boxWidth/2, y - previewHeight / 2 + 130 + boxHeight, boxWidth, boxHeight, Component.literal( "y: " + areaYSize)));
-        addRenderableWidget(new BlackShowingTextField(x - boxWidth/2, y - previewHeight / 2 + 130 + boxHeight*2, boxWidth, boxHeight, Component.literal( "z: " + areaZSize)));
+        int sizeButtonY = 110;
+        addRenderableWidget(new BlackShowingTextField(x - boxWidth/2, y - previewHeight / 2 + 110, boxWidth, boxHeight, Component.literal("x: " + areaXSize)));
+        addRenderableWidget(new BlackShowingTextField(x - boxWidth/2, y - previewHeight / 2 + 110 + boxHeight, boxWidth, boxHeight, Component.literal( "y: " + areaYSize)));
+        addRenderableWidget(new BlackShowingTextField(x - boxWidth/2, y - previewHeight / 2 + 110 + boxHeight*2, boxWidth, boxHeight, Component.literal( "z: " + areaZSize)));
 
 
         xSizePlusButton = addRenderableWidget(new ExtendedButton(x - boxWidth/2 + sizeButtonX, y - previewHeight / 2 + sizeButtonY, 20, 20, Component.literal("+"),
@@ -174,7 +174,7 @@ public class MiningAreaScreen extends WorkAreaScreen {
                 }
         ));
 
-        int checkBoxY = y - previewHeight / 2 + 155 + boxHeight*2;
+        int checkBoxY = y - previewHeight / 2 + 135 + boxHeight*2;
         this.closeFloorCheckBox = new RecruitsCheckBox(x - boxWidth/2, checkBoxY, boxWidth, boxHeight, TEXT_CLOSE_FLOOR,
                 this.closeFloor,
                 (bool) -> {
@@ -197,8 +197,8 @@ public class MiningAreaScreen extends WorkAreaScreen {
                 new ItemStack(Blocks.SANDSTONE),
                 new ItemStack(Blocks.NETHERRACK)
         );
-        int fillDropWidth = boxWidth / 2;
-        this.fillItemDropDown = new ItemScrollDropDownMenu(this.fillItem, x - boxWidth/2 + boxWidth + 4, checkBoxY, fillDropWidth, boxHeight, fillOptions,
+
+        this.fillItemDropDown = new ItemScrollDropDownMenu(this.fillItem, x - boxWidth/2 + boxWidth + 4, checkBoxY, boxWidth, boxHeight, fillOptions,
                 (stack) -> {
                     this.fillItem = stack;
                     this.sendMessage();
@@ -227,7 +227,7 @@ public class MiningAreaScreen extends WorkAreaScreen {
 
         this.modeDropDown = new ScrollDropDownMenu<>(
                 this.mode,
-                x - boxWidth/2, y - previewHeight / 2 + 90, boxWidth, boxHeight,
+                x - boxWidth/2, y - previewHeight / 2 + 85, boxWidth, boxHeight,
                 List.of(MiningMode.values()),
                 m -> Component.translatable(m.getTranslationKey()).getString(),
                 m -> {

@@ -63,7 +63,7 @@ public class WorkersServerConfig {
                     "minecraft:flint",
                     "minecraft:coal",
                     "minecraft:calcite",
-                    "minecraft:clay",
+                    "minecraft:clay_ball",
                     "minecraft:dripstone_block",
                     "minecraft:pointed_dripstone",
                     "minecraft:netherrack",
