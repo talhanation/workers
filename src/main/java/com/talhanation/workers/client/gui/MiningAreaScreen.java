@@ -3,7 +3,9 @@ package com.talhanation.workers.client.gui;
 import com.talhanation.recruits.client.gui.widgets.BlackShowingTextField;
 import com.talhanation.recruits.client.gui.widgets.DropDownMenu;
 import com.talhanation.recruits.client.gui.widgets.RecruitsCheckBox;
+import com.talhanation.recruits.client.gui.widgets.ScrollDropDownMenu;
 import com.talhanation.workers.WorkersMain;
+import com.talhanation.workers.client.gui.widgets.ItemScrollDropDownMenu;
 import com.talhanation.workers.entities.workarea.MiningArea;
 import com.talhanation.workers.entities.workarea.MiningArea.MiningMode;
 import com.talhanation.workers.network.MessageUpdateMiningArea;
@@ -11,8 +13,11 @@ import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.components.Button;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.MutableComponent;
+import net.minecraft.util.FastColor;
 import net.minecraft.util.Mth;
 import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.level.block.Blocks;
 import net.minecraftforge.client.gui.widget.ExtendedButton;
 
 import java.util.List;
@@ -39,7 +44,9 @@ public class MiningAreaScreen extends WorkAreaScreen {
     private boolean closeFluids;
     private RecruitsCheckBox mineWallOresCheckBox;
     private boolean mineWallOres;
-    private DropDownMenu<MiningMode> modeDropDown;
+    private ItemScrollDropDownMenu fillItemDropDown;
+    private ItemStack fillItem = new ItemStack(Blocks.COBBLESTONE);
+    private ScrollDropDownMenu<MiningMode> modeDropDown;
     private MiningMode mode;
     public MiningAreaScreen(MiningArea miningArea, Player player) {
         super(miningArea.getCustomName(), miningArea, player);
@@ -56,6 +63,7 @@ public class MiningAreaScreen extends WorkAreaScreen {
         this.closeFloor = miningArea.getCloseFloor();
         this.closeFluids = miningArea.getCloseFluids();
         this.mineWallOres = miningArea.getMineWallOres();
+        this.fillItem = miningArea.getFillItem();
         this.mode = miningArea.getMode();
 
         this.setButtons();
@@ -90,15 +98,8 @@ public class MiningAreaScreen extends WorkAreaScreen {
                     // In STAIRS mode width (z) is fixed; height (y) grows together with x.
                     // x is bound to the same 2..8 range so the stepped profile stays square.
                     if(isStairsMode(mode)){
-                        areaXSize = Mth.clamp(areaXSize, 2, 8);
+                        areaXSize = Mth.clamp(areaXSize, 2, 16);
                         areaYSize = areaXSize;
-                    }
-
-                    // In SPIRAL mode the shaft is a square odd-width footprint (5..15);
-                    // depth (z) follows width, height (y) stays freely adjustable.
-                    if(isSpiralMode(mode)){
-                        areaXSize = Mth.clamp(areaXSize | 1, 5, 15);
-                        areaZSize = areaXSize;
                     }
 
                     this.sendMessage();
@@ -115,15 +116,8 @@ public class MiningAreaScreen extends WorkAreaScreen {
                     // In STAIRS mode width (z) is fixed; height (y) shrinks together with x.
                     // x is bound to the same 2..8 range so the stepped profile stays square.
                     if(isStairsMode(mode)){
-                        areaXSize = Mth.clamp(areaXSize, 2, 8);
+                        areaXSize = Mth.clamp(areaXSize, 2, 16);
                         areaYSize = areaXSize;
-                    }
-
-                    // In SPIRAL mode the shaft is a square odd-width footprint (5..15);
-                    // depth (z) follows width, height (y) stays freely adjustable.
-                    if(isSpiralMode(mode)){
-                        areaXSize = Mth.clamp(areaXSize | 1, 5, 15);
-                        areaZSize = areaXSize;
                     }
 
                     this.miningArea.setWidthSize(areaXSize);
@@ -185,10 +179,33 @@ public class MiningAreaScreen extends WorkAreaScreen {
                 this.closeFloor,
                 (bool) -> {
                     this.closeFloor = bool;
+                    // Show the fill-item picker only while close floor is active.
+                    if(this.fillItemDropDown != null) this.fillItemDropDown.visible = bool;
                     this.sendMessage();
                 }
         );
         addRenderableWidget(closeFloorCheckBox);
+
+        // Fill-item picker shown next to the close-floor checkbox. Default cobblestone,
+        // plus other common, cheap blocks. Only visible while close floor is on.
+        List<ItemStack> fillOptions = List.of(
+                new ItemStack(Blocks.COBBLESTONE),
+                new ItemStack(Blocks.DIRT),
+                new ItemStack(Blocks.DEEPSLATE),
+                new ItemStack(Blocks.COBBLED_DEEPSLATE),
+                new ItemStack(Blocks.STONE),
+                new ItemStack(Blocks.SANDSTONE),
+                new ItemStack(Blocks.NETHERRACK)
+        );
+        int fillDropWidth = boxWidth / 2;
+        this.fillItemDropDown = new ItemScrollDropDownMenu(this.fillItem, x - boxWidth/2 + boxWidth + 4, checkBoxY, fillDropWidth, boxHeight, fillOptions,
+                (stack) -> {
+                    this.fillItem = stack;
+                    this.sendMessage();
+                }
+        );
+        this.fillItemDropDown.visible = this.closeFloor;
+        addRenderableWidget(fillItemDropDown);
 
         this.closeFluidsCheckBox = new RecruitsCheckBox(x - boxWidth/2, checkBoxY + boxHeight, boxWidth, boxHeight, TEXT_CLOSE_FLUIDS,
                 this.closeFluids,
@@ -208,26 +225,18 @@ public class MiningAreaScreen extends WorkAreaScreen {
         );
         addRenderableWidget(mineWallOresCheckBox);
 
-        this.modeDropDown = new DropDownMenu<>(
+        this.modeDropDown = new ScrollDropDownMenu<>(
                 this.mode,
-                x - boxWidth/2, y - previewHeight / 2 + 105, boxWidth, boxHeight,
-                List.of(MiningMode.CUSTOM, MiningMode.STAIRS_DOWN, MiningMode.STAIRS_UP, MiningMode.SPIRAL_STAIRCASE_DOWN, MiningMode.SPIRAL_STAIRCASE_UP),
+                x - boxWidth/2, y - previewHeight / 2 + 90, boxWidth, boxHeight,
+                List.of(MiningMode.values()),
                 m -> Component.translatable(m.getTranslationKey()).getString(),
                 m -> {
                     this.mode = m;
 
                     if(isStairsMode(m)){
-                        areaXSize = Mth.clamp(areaXSize, 2, areaXSize);
-                        areaYSize = areaXSize;
-                        this.closeFloor = false;
-                        this.closeFluids = true;
-                        this.mineWallOres = false;
-                    }
-
-                    // SPIRAL: square odd-width shaft (5..15), depth follows width, height free.
-                    if(isSpiralMode(m)){
-                        areaXSize = Mth.clamp(areaXSize | 1, 5, 15);
-                        areaZSize = areaXSize;
+                        areaXSize = 3;
+                        areaYSize = 3;
+                        areaZSize = 3;
                         this.closeFloor = false;
                         this.closeFluids = true;
                         this.mineWallOres = false;
@@ -237,39 +246,61 @@ public class MiningAreaScreen extends WorkAreaScreen {
                     this.setButtons();
                 }
         );
+        modeDropDown.setBgFillSelected(FastColor.ARGB32.color(255, 139, 139, 139));
         addRenderableWidget(modeDropDown);
 
         boolean stairs = isStairsMode(mode);
-        boolean spiral = isSpiralMode(mode);
-        // STAIRS: only x adjustable (y coupled, z fixed). SPIRAL: x and y adjustable (z coupled).
+
         ySizePlusButton.active = !stairs;
         ySizeMinusButton.active = !stairs;
-        zSizePlusButton.active = !stairs && !spiral;
-        zSizeMinusButton.active = !stairs && !spiral;
+        zSizePlusButton.active = !stairs;
+        zSizeMinusButton.active = !stairs;
     }
     public void sendMessage(){
         if(miningArea == null) return;
 
         this.miningArea.setWidthSize(areaXSize);
-        WorkersMain.SIMPLE_CHANNEL.sendToServer(new MessageUpdateMiningArea(this.miningArea.getUUID(), areaXSize, areaYSize, areaZSize, areaYOffset, closeFloor, closeFluids, mineWallOres, mode.getIndex()));
+        WorkersMain.SIMPLE_CHANNEL.sendToServer(new MessageUpdateMiningArea(this.miningArea.getUUID(), areaXSize, areaYSize, areaZSize, areaYOffset, closeFloor, closeFluids, mineWallOres, fillItem, mode.getIndex()));
     }
     @Override
     public void mouseMoved(double x, double y) {
+        if(modeDropDown != null){
+            modeDropDown.onMouseMove(x,y);
+        }
+        if(fillItemDropDown != null){
+            fillItemDropDown.onMouseMove(x,y);
+        }
         super.mouseMoved(x, y);
     }
 
     @Override
     public boolean mouseClicked(double mouseX, double mouseY, int button) {
+        if (modeDropDown != null && modeDropDown.isMouseOver(mouseX, mouseY)) {
+            modeDropDown.onMouseClick(mouseX, mouseY);
+            return true;
+        }
+        if (fillItemDropDown != null && fillItemDropDown.isMouseOver(mouseX, mouseY)) {
+            fillItemDropDown.onMouseClick(mouseX, mouseY);
+            return true;
+        }
         return super.mouseClicked(mouseX, mouseY, button);
     }
     @Override
     public boolean mouseScrolled(double x, double y, double d) {
+        if(modeDropDown != null) modeDropDown.mouseScrolled(x,y,d);
+        if(fillItemDropDown != null) fillItemDropDown.mouseScrolled(x,y,d);
         return super.mouseScrolled(x, y, d);
     }
-
     @Override
     public void render(GuiGraphics guiGraphics, int mouseX, int mouseY, float partialTicks) {
         super.render(guiGraphics, mouseX, mouseY, partialTicks);
+
+        if (modeDropDown != null) {
+            modeDropDown.renderWidget(guiGraphics, mouseX, mouseY, partialTicks);
+        }
+        if (fillItemDropDown != null) {
+            fillItemDropDown.renderWidget(guiGraphics, mouseX, mouseY, partialTicks);
+        }
     }
 
     @Override
@@ -279,9 +310,5 @@ public class MiningAreaScreen extends WorkAreaScreen {
 
     private static boolean isStairsMode(MiningMode mode) {
         return mode == MiningMode.STAIRS_DOWN || mode == MiningMode.STAIRS_UP;
-    }
-
-    private static boolean isSpiralMode(MiningMode mode) {
-        return mode == MiningMode.SPIRAL_STAIRCASE_DOWN || mode == MiningMode.SPIRAL_STAIRCASE_UP;
     }
 }

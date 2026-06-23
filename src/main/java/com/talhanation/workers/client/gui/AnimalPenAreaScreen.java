@@ -74,10 +74,11 @@ public class AnimalPenAreaScreen extends WorkAreaScreen {
         int checkBoxX = x - checkBoxWidth / 2;
         int checkBoxY = y + checkBoxHeight / 2 - checkBoxHeight + 50;
 
-        animalTypesScrollDropDownMenu = new ScrollDropDownMenu<>(animalType,
+        animalTypesScrollDropDownMenu = new ScrollDropDownMenu<>(
+                this.animalType,
                 x - dropDownWidth / 2, 60 + y + dropDownHeight / 2 - dropDownHeight, dropDownWidth, dropDownHeight,
-                Arrays.stream(AnimalPenArea.AnimalTypes.values()).toList(),
-                Enum::toString,
+                List.of(AnimalPenArea.AnimalTypes.values()),
+                type -> Component.translatable(type.getTranslationKey()).getString(),
                 this::setAnimalType
         );
 

@@ -5,6 +5,7 @@ import com.talhanation.recruits.pathfinding.AsyncGroundPathNavigation;
 import com.talhanation.workers.config.WorkersServerConfig;
 import com.talhanation.workers.entities.ai.CookWorkGoal;
 import com.talhanation.workers.entities.ai.ICanInviteVillager;
+import com.talhanation.workers.entities.ai.navigation.WorkersGroundPathNavigation;
 import com.talhanation.workers.entities.workarea.AbstractWorkAreaEntity;
 import com.talhanation.workers.entities.workarea.KitchenArea;
 import com.talhanation.workers.world.VillagerInviteRegistry;
@@ -91,7 +92,7 @@ public class CookEntity extends AbstractWorkerEntity implements ICanInviteVillag
     public SpawnGroupData finalizeSpawn(ServerLevelAccessor world, DifficultyInstance difficultyInstance, MobSpawnType reason, @Nullable SpawnGroupData data, @Nullable CompoundTag nbt) {
         RandomSource randomsource = world.getRandom();
         SpawnGroupData ilivingentitydata = super.finalizeSpawn(world, difficultyInstance, reason, data, nbt);
-        ((AsyncGroundPathNavigation) this.getNavigation()).setCanOpenDoors(true);
+        ((WorkersGroundPathNavigation) this.getNavigation()).setCanOpenDoors(true);
         this.populateDefaultEquipmentEnchantments(randomsource, difficultyInstance);
         this.initSpawn();
         return ilivingentitydata;

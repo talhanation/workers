@@ -1,4 +1,4 @@
-package com.talhanation.workers.client.gui;
+package com.talhanation.workers.client.gui.widgets;
 
 import com.mojang.blaze3d.systems.RenderSystem;
 import net.minecraft.client.Minecraft;
@@ -60,6 +60,19 @@ public class CourierDropDownMenu<T> extends AbstractWidget {
         }
 
         guiGraphics.drawCenteredString(Minecraft.getInstance().font, getSelectedText(), this.getX() + this.width / 2, this.getY() + (this.height - 8) / 2, displayColor);
+
+        // Toggle arrow on the right: down (U+02C5) when closed, up (U+02C4) when open.
+        // Drawn at 2x scale so it is clearly visible.
+        String arrow = isOpen ? "\u02C4" : "\u02C5";
+        float arrowScale = 2.0F;
+        int arrowWidth = Minecraft.getInstance().font.width(arrow);
+        float arrowX = this.getX() + this.width - arrowWidth * arrowScale - 4;
+        float arrowY = this.getY() + (this.height - 8 * arrowScale) / 2;
+        guiGraphics.pose().pushPose();
+        guiGraphics.pose().translate(arrowX, arrowY, 0.0F);
+        guiGraphics.pose().scale(arrowScale, arrowScale, 1.0F);
+        guiGraphics.drawString(Minecraft.getInstance().font, arrow, 0, 0, displayColor, false);
+        guiGraphics.pose().popPose();
 
         if (isOpen) {
             int dropdownHeight = maxVisibleOptions * optionHeight;

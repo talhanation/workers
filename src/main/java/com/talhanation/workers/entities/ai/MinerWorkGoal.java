@@ -75,7 +75,7 @@ public class MinerWorkGoal extends Goal {
         }
 
         if(minerEntity.tickCount % 20 == 0){
-            if(blockPos != null && moveToPosition(blockPos, 20)) return;
+            if(blockPos != null && moveToPosition(blockPos, 3)) return;
         }
 
         if(state == State.MINING){
@@ -111,7 +111,7 @@ public class MinerWorkGoal extends Goal {
 
             case MOVE_TO_WORK_AREA ->{
                 this.blockPos = null;
-                if(this.moveToPosition(minerEntity.currentMiningArea.getOnPos(), 10)) return;
+                if(this.moveToPosition(minerEntity.currentMiningArea.getOnPos(), 3)) return;
 
                 setState(State.PREPARE_CLOSE_FLOOR);
             }
@@ -199,7 +199,8 @@ public class MinerWorkGoal extends Goal {
                     return;
                 }
 
-                minerEntity.switchMainHandItem(itemStack -> itemStack.is(Items.COBBLESTONE));
+                ItemStack fill = this.minerEntity.currentMiningArea.getFillItem();
+                minerEntity.switchMainHandItem(itemStack -> itemStack.is(fill.getItem()));
 
                 if(this.closeHoles(this.stackToPlace)) return;
 
@@ -358,11 +359,11 @@ public class MinerWorkGoal extends Goal {
 
     public boolean closeHoles(Stack<BlockPos> positions){
         if(positions != null){
-            ItemStack cobbleBlockFromInv;
+            ItemStack fill = minerEntity.currentMiningArea.getFillItem();
 
-            cobbleBlockFromInv = minerEntity.getMatchingItem(itemStack -> itemStack.getItem() instanceof BlockItem blockItem && blockItem.getBlock().defaultBlockState().is(Blocks.COBBLESTONE));
-            if(cobbleBlockFromInv == null){
-                minerEntity.addNeededItem(new NeededItem(itemStack -> itemStack.getItem() instanceof BlockItem blockItem && blockItem.getBlock().defaultBlockState().is(Blocks.COBBLESTONE),  16, true));
+            ItemStack fillBlockFromInv = minerEntity.getMatchingItem(itemStack -> itemStack.is(fill.getItem()));
+            if(fillBlockFromInv == null){
+                minerEntity.addNeededItem(new NeededItem(itemStack -> itemStack.is(fill.getItem()), 16, true));
                 this.blockPos = null;
                 return false;
             }
@@ -386,10 +387,10 @@ public class MinerWorkGoal extends Goal {
                     return false;
                 }
             }
-            else if(cobbleBlockFromInv.getItem() instanceof BlockItem blockItem) {
+            else if(fillBlockFromInv.getItem() instanceof BlockItem blockItem) {
                 minerEntity.getCommandSenderWorld().setBlockAndUpdate(blockPos, blockItem.getBlock().defaultBlockState());
                 minerEntity.getCommandSenderWorld().playSound(null, blockPos.getX(), blockPos.getY(), blockPos.getZ(), SoundEvents.STONE_PLACE, SoundSource.BLOCKS, 1.0F, 1.0F);
-                cobbleBlockFromInv.shrink(1);
+                fillBlockFromInv.shrink(1);
                 this.minerEntity.swing(InteractionHand.MAIN_HAND);
             }
             return true;

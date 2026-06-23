@@ -5,6 +5,7 @@ import com.talhanation.recruits.entities.AbstractRecruitEntity;
 import com.talhanation.recruits.pathfinding.AsyncGroundPathNavigation;
 import com.talhanation.workers.config.WorkersServerConfig;
 import com.talhanation.workers.entities.ai.CourierWorkGoal;
+import com.talhanation.workers.entities.ai.navigation.WorkersGroundPathNavigation;
 import com.talhanation.workers.entities.workarea.AbstractWorkAreaEntity;
 import com.talhanation.workers.inventory.CourierContainer;
 import com.talhanation.workers.world.CourierRoute;
@@ -200,7 +201,7 @@ public class CourierEntity extends AbstractWorkerEntity implements IVillagerWork
         RandomSource rand = world.getRandom();
         SpawnGroupData result = super.finalizeSpawn(world, difficulty, reason, data, nbt);
 
-        ((AsyncGroundPathNavigation) this.getNavigation()).setCanOpenDoors(true);
+        ((WorkersGroundPathNavigation) this.getNavigation()).setCanOpenDoors(true);
 
         this.populateDefaultEquipmentEnchantments(rand, difficulty);
 

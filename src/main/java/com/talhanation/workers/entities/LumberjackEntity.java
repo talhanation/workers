@@ -5,6 +5,7 @@ import com.talhanation.recruits.pathfinding.AsyncGroundPathNavigation;
 import com.talhanation.workers.WorkersMain;
 import com.talhanation.workers.compat.DynamicTrees;
 import com.talhanation.workers.config.WorkersServerConfig;
+import com.talhanation.workers.entities.ai.navigation.WorkersGroundPathNavigation;
 import net.minecraft.core.BlockPos;
 import net.minecraft.server.level.ServerLevel;
 import com.talhanation.workers.entities.ai.LumberjackWorkGoal;
@@ -66,7 +67,7 @@ public class LumberjackEntity extends AbstractWorkerEntity{
     public SpawnGroupData finalizeSpawn(ServerLevelAccessor world, DifficultyInstance difficultyInstance, MobSpawnType reason, @Nullable SpawnGroupData data, @Nullable CompoundTag nbt) {
         RandomSource randomsource = world.getRandom();
         SpawnGroupData ilivingentitydata = super.finalizeSpawn(world, difficultyInstance, reason, data, nbt);
-        ((AsyncGroundPathNavigation)this.getNavigation()).setCanOpenDoors(true);
+        ((WorkersGroundPathNavigation)this.getNavigation()).setCanOpenDoors(true);
         this.populateDefaultEquipmentEnchantments(randomsource, difficultyInstance);
 
         this.initSpawn();

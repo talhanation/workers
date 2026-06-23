@@ -150,6 +150,19 @@ public class ScrollDropDownMenuWithFolders extends AbstractWidget {
         gui.drawCenteredString(Minecraft.getInstance().font, headerText,
                 getX() + width / 2, getY() + (height - 8) / 2, displayColor);
 
+        // Toggle arrow on the right: down (U+02C5) when closed, up (U+02C4) when open.
+        // Drawn at 2x scale so it is clearly visible.
+        String arrow = isOpen ? "\u02C4" : "\u02C5";
+        float arrowScale = 2.0F;
+        int arrowWidth = Minecraft.getInstance().font.width(arrow);
+        float arrowX = getX() + width - arrowWidth * arrowScale - 4;
+        float arrowY = getY() + (height - 8 * arrowScale) / 2;
+        gui.pose().pushPose();
+        gui.pose().translate(arrowX, arrowY, 0.0F);
+        gui.pose().scale(arrowScale, arrowScale, 1.0F);
+        gui.drawString(Minecraft.getInstance().font, arrow, 0, 0, displayColor, false);
+        gui.pose().popPose();
+
         if (!isOpen) return;
 
         int dropdownHeight = maxVisibleOptions * optionHeight;

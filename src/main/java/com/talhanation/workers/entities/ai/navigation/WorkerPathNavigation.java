@@ -63,7 +63,7 @@ public class WorkerPathNavigation extends WorkersGroundPathNavigation {
         // Allow descent up to the evaluator's safe-fall limit so workers (miners
         // especially) can step down to underground targets instead of hugging
         // the surface, then delegate to the unified coordinate moveTo.
-        this.worker.setMaxFallDistance(4);
+        this.worker.setMaxFallDistance(3);
         ((WorkersNodeEvaluator) this.nodeEvaluator).setTarget((int) x, (int) y, (int) z);
         return super.moveTo(x, y, z, speed);
     }

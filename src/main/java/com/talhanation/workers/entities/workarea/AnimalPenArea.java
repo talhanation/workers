@@ -271,6 +271,11 @@ public class AnimalPenArea extends AbstractWorkAreaEntity {
         AnimalTypes(int index, Item breeditem){
             this(index, breeditem, ItemStack.EMPTY.getItem());
         }
+
+        public String getTranslationKey(){
+            return "gui.workers.animal.types." + this.name().toLowerCase();
+        }
+
         public int getIndex(){
             return this.index;
         }

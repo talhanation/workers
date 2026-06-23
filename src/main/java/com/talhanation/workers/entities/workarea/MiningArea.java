@@ -6,7 +6,6 @@ import com.talhanation.workers.entities.MinerEntity;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
-import net.minecraft.util.Mth;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.syncher.EntityDataAccessor;
 import net.minecraft.network.syncher.EntityDataSerializers;
@@ -34,6 +33,7 @@ public class MiningArea extends AbstractWorkAreaEntity {
     public static final EntityDataAccessor<Boolean> CLOSE_FLOOR = SynchedEntityData.defineId(MiningArea.class, EntityDataSerializers.BOOLEAN);
     public static final EntityDataAccessor<Boolean> CLOSE_FLUIDS = SynchedEntityData.defineId(MiningArea.class, EntityDataSerializers.BOOLEAN);
     public static final EntityDataAccessor<Boolean> MINE_WALL_ORES = SynchedEntityData.defineId(MiningArea.class, EntityDataSerializers.BOOLEAN);
+    public static final EntityDataAccessor<ItemStack> FILL_ITEM = SynchedEntityData.defineId(MiningArea.class, EntityDataSerializers.ITEM_STACK);
     public static final EntityDataAccessor<Integer> MODE = SynchedEntityData.defineId(MiningArea.class, EntityDataSerializers.INT);
     public Stack<BlockPos> stackToPlace = new Stack<>();
     public Stack<BlockPos> stackToBreak = new Stack<>();
@@ -47,6 +47,7 @@ public class MiningArea extends AbstractWorkAreaEntity {
         this.entityData.define(CLOSE_FLOOR, false);
         this.entityData.define(CLOSE_FLUIDS, true);
         this.entityData.define(MINE_WALL_ORES, true);
+        this.entityData.define(FILL_ITEM, new ItemStack(Blocks.COBBLESTONE));
         this.entityData.define(MODE, MiningMode.CUSTOM.getIndex());
     }
 
@@ -56,6 +57,9 @@ public class MiningArea extends AbstractWorkAreaEntity {
         this.setCloseFloor(tag.getBoolean("closeFloor"));
         this.setCloseFluids(tag.getBoolean("closeFluids"));
         this.setMineWallOres(tag.getBoolean("mineWallOres"));
+        if (tag.contains("fillItem")) {
+            this.setFillItem(ItemStack.of(tag.getCompound("fillItem")));
+        }
         this.setMode(tag.getInt("miningMode"));
     }
 
@@ -65,6 +69,7 @@ public class MiningArea extends AbstractWorkAreaEntity {
         tag.putBoolean("closeFloor", this.getCloseFloor());
         tag.putBoolean("closeFluids", this.getCloseFluids());
         tag.putBoolean("mineWallOres", this.getMineWallOres());
+        tag.put("fillItem", this.getFillItem().save(new CompoundTag()));
         tag.putInt("miningMode", this.getMode().getIndex());
     }
 
@@ -90,61 +95,32 @@ public class MiningArea extends AbstractWorkAreaEntity {
         int depth = getDepthSize() - 1;
         int height = getHeightSize();
 
-        // SPIRAL_STAIRCASE: square shaft centred on the entity (the central column),
-        // odd width N clamped 5..15, free height. DOWN carves below, UP above.
-        if (isSpiral()) {
-            int n = getSpiralWidth();
-            int radius = (n - 1) / 2;
-            int h = Math.max(1, height) - 1;
-            int yReach = (getMode() == MiningMode.SPIRAL_STAIRCASE_UP) ? h : -h;
-
-            BlockPos center = this.getOnPos();
-            BlockPos start = center.offset(-radius, 0, -radius);
-            BlockPos end = center.offset(radius, yReach, radius);
-            return new AABB(start, end);
+        // Unified, facing-relative axes for BOTH custom and stairs so switching mode
+        // never rotates the area: width (length) runs along the facing direction and
+        // depth (breadth) runs to the right of it. fwd/side are unit offsets per facing.
+        int fwdX, fwdZ, sideX, sideZ;
+        switch (facing) {
+            case NORTH -> { fwdX = 0;  fwdZ = -1; sideX = +1; sideZ = 0;  }
+            case SOUTH -> { fwdX = 0;  fwdZ = +1; sideX = -1; sideZ = 0;  }
+            case WEST  -> { fwdX = -1; fwdZ = 0;  sideX = 0;  sideZ = -1; }
+            default    -> { fwdX = +1; fwdZ = 0;  sideX = 0;  sideZ = +1; }//EAST
         }
 
-        // STAIRS: the entity sits at the near-top corner of the staircase profile.
-        // STAIRS_DOWN carves the box below the entity, STAIRS_UP above it.
         if (isStairs()) {
             int yReach = (getMode() == MiningMode.STAIRS_UP) ? (height - 1) : -(height - 1);
-            BlockPos start = this.getOnPos();
-            BlockPos end;
-            switch (facing) {
-                case NORTH -> end = start.offset(width, yReach, -depth);
-                case SOUTH -> end = start.offset(-width, yReach, depth);
-                case WEST  -> end = start.offset(-width, yReach, -depth);
-                default    -> end = start.offset(width, yReach, depth);//EAST
-            }
+            BlockPos start = (getMode() == MiningMode.STAIRS_UP) ? getOnPos().above() : getOnPos().above(3);
+            BlockPos end = start.offset(fwdX * width + sideX * depth, yReach, fwdZ * width + sideZ * depth);
             return new AABB(start, end);
         }
 
         BlockPos start = this.getOnPos().offset(0, this.getHeightOffset(), 0);
-        BlockPos end;
-        switch (facing) {
-            case NORTH -> end = start.offset(width, height, -depth);
-            case SOUTH -> end = start.offset(-width, height, depth);
-            case WEST  -> end = start.offset(-width, height, -depth);
-            default  -> end = start.offset(width, height, depth);//EAST
-        }
+        BlockPos end = start.offset(fwdX * width + sideX * depth, height, fwdZ * width + sideZ * depth);
         return new AABB(start, end);
     }
 
     public boolean isStairs() {
         MiningMode mode = getMode();
         return mode == MiningMode.STAIRS_DOWN || mode == MiningMode.STAIRS_UP;
-    }
-
-    public boolean isSpiral() {
-        MiningMode mode = getMode();
-        return mode == MiningMode.SPIRAL_STAIRCASE_DOWN || mode == MiningMode.SPIRAL_STAIRCASE_UP;
-    }
-
-    /** Spiral shaft edge length: the width clamped to an odd value between 5 and 15
-     *  so there is always a single 1-block central column. */
-    public int getSpiralWidth() {
-        int n = getWidthSize() | 1; // round up to the next odd number
-        return Mth.clamp(n, 5, 15);
     }
 
     public int getHeightOffset() {
@@ -176,6 +152,18 @@ public class MiningArea extends AbstractWorkAreaEntity {
         this.entityData.set(MINE_WALL_ORES, mine);
     }
 
+    public ItemStack getFillItem() {
+        ItemStack stack = this.entityData.get(FILL_ITEM);
+        // Guard against an empty/invalid selection so closing always has a block.
+        if (stack.isEmpty() || !(stack.getItem() instanceof BlockItem)) {
+            return new ItemStack(Blocks.COBBLESTONE);
+        }
+        return stack;
+    }
+    public void setFillItem(ItemStack stack) {
+        this.entityData.set(FILL_ITEM, stack.isEmpty() ? new ItemStack(Blocks.COBBLESTONE) : stack);
+    }
+
     public MiningMode getMode() {
         return MiningMode.fromIndex(this.entityData.get(MODE));
     }
@@ -191,21 +179,10 @@ public class MiningArea extends AbstractWorkAreaEntity {
 
         Level level = this.getCommandSenderWorld();
         boolean stairs = isStairs();
-        boolean spiral = isSpiral();
 
         BlockPos.betweenClosedStream(area).forEach(pos -> {
             BlockState state = level.getBlockState(pos);
             FluidState fluidState = level.getFluidState(pos);
-
-            // SPIRAL: carve the shaft, keeping the central column and the rotating
-            // tread arm. Same "only mine the air cells" approach as the stairs.
-            if (spiral) {
-                if (isSpiralAir(pos) && !state.isAir() && fluidState.isEmpty()
-                        && !isAir(state) && !shouldIgnore(state)) {
-                    stackToBreak.push(pos.immutable());
-                }
-                return;
-            }
 
             // STAIRS: only carve out the air cells of the staircase profile; the
             // step blocks (#) are left standing. Custom keeps its full-box behaviour.
@@ -237,54 +214,30 @@ public class MiningArea extends AbstractWorkAreaEntity {
 
         BlockPos origin = this.getOnPos();
 
-        // Row index along the climb: 0 at the entity's step, increasing towards the
-        // far end of the staircase. STAIRS_DOWN measures downwards from the top,
-        // STAIRS_UP upwards from the bottom — making UP the vertical mirror of DOWN.
-        int r = (getMode() == MiningMode.STAIRS_UP)
-                ? pos.getY() - (int) area.minY
-                : (int) area.maxY - pos.getY();
+        // Row index measured from the top of the box for BOTH modes. DOWN has its
+        // entrance at the top and digs down; UP has its entrance at the bottom and
+        // digs up, but the carved profile is identical — only the box grows the
+        // other way (see createArea) and the entity sits at the opposite corner.
+        int r = (int) area.maxY - pos.getY();
 
-        // Column along the staircase run. createArea() always lays the width (x size)
-        // along the world X axis, so the run is measured on X from the entity outwards.
-        int i = Math.abs(pos.getX() - origin.getX());
+        // Column along the staircase run. The run follows the facing direction:
+        // X for EAST/WEST, Z for NORTH/SOUTH (matching createArea's axis layout).
+        Direction facing = getFacing();
+        int i = (facing == Direction.NORTH || facing == Direction.SOUTH)
+                ? Math.abs(pos.getZ() - origin.getZ())
+                : Math.abs(pos.getX() - origin.getX());
 
-        boolean keepBlock = (r >= 2 && i < r);
+        // STAIRS_UP enters at the bottom of the run, so mirror the distance along the
+        // run: the entity stands at the foot (in air) and the steps rise away from it.
+        if (getMode() == MiningMode.STAIRS_UP) {
+            i = (getWidthSize() - 1) - i;
+        }
+
+        // Two diagonals leave stone standing: the rising floor (i < r-1) and the
+        // ceiling (i >= r+4). Between them is a constant 4-block tall walkable
+        // corridor — the floor-to-ceiling clearance the staircase keeps open.
+        boolean keepBlock = (i < (r - 1)) || (i >= (r + 4));
         return !keepBlock;
-    }
-
-    /**
-     * Spiral staircase profile test. Returns true if the position is an "air" cell
-     * (should be mined out). Kept standing are the central column and, on each level,
-     * one full radial arm (column → outer wall) that rotates 90° clockwise per level
-     * (N→E→S→W). One block of height per quarter turn leaves three open blocks above
-     * each tread (head room). Width (z) is coupled to the odd shaft width (x).
-     */
-    public boolean isSpiralAir(BlockPos pos) {
-        if (area == null) area = this.getArea();
-
-        BlockPos center = this.getOnPos();
-
-        // Central column always stays.
-        if (pos.getX() == center.getX() && pos.getZ() == center.getZ()) return false;
-
-        // Step index along the climb: 0 at the entity's level, increasing as we climb.
-        int step = (getMode() == MiningMode.SPIRAL_STAIRCASE_UP)
-                ? pos.getY() - (int) area.minY
-                : (int) area.maxY - pos.getY();
-
-        int side = ((step % 4) + 4) % 4; // 0=N(-z) 1=E(+x) 2=S(+z) 3=W(-x)
-
-        int dx = pos.getX() - center.getX();
-        int dz = pos.getZ() - center.getZ();
-
-        boolean onArm = switch (side) {
-            case 0 -> dx == 0 && dz < 0;  // North arm
-            case 1 -> dz == 0 && dx > 0;  // East arm
-            case 2 -> dx == 0 && dz > 0;  // South arm
-            default -> dz == 0 && dx < 0; // West arm
-        };
-
-        return !onArm;
     }
 
     public boolean shouldIgnore(BlockState state){
@@ -299,7 +252,7 @@ public class MiningArea extends AbstractWorkAreaEntity {
 
         // Off when the "mine wall ores" toggle is disabled, and never on a staircase
         // (which is meant to stay a clean stepped tunnel).
-        if (!getMineWallOres() || isStairs() || isSpiral()) return;
+        if (!getMineWallOres() || isStairs()) return;
 
         Level level = this.getCommandSenderWorld();
 
@@ -316,10 +269,29 @@ public class MiningArea extends AbstractWorkAreaEntity {
         if (area == null) area = this.getArea();
         stackToPlace.clear();
 
-        // STAIRS / SPIRAL keep their carved profile — no floor closing or fluid filling.
-        if (isStairs() || isSpiral()) return;
-
         Level level = this.getCommandSenderWorld();
+
+        // STAIRS: when "close floor" is on, fill only the actual STAIR TREADS that
+        // are missing in the world (e.g. where the staircase crosses a cave). A tread
+        // is a profile-stone cell with profile-air directly above it (the walkable
+        // surface). The ceiling and the deeper stone mass are left alone, and
+        // profile-air cells are never filled — so this stays disjoint from the
+        // carving in scanBreakArea and no miner places what another mines away.
+        if (isStairs()) {
+            if (!getCloseFloor()) return;
+
+            BlockPos.betweenClosedStream(area).forEach(pos -> {
+                if (isStairsAir(pos)) return;          // profile wants air → never fill
+                if (!isStairsAir(pos.above())) return; // not a tread (mass/ceiling) → skip
+
+                BlockState state = level.getBlockState(pos);
+                FluidState fluidState = level.getFluidState(pos);
+                if (state.isAir() && fluidState.isEmpty()) {
+                    stackToPlace.push(pos.immutable());
+                }
+            });
+            return;
+        }
 
         boolean closeFloor = getCloseFloor();
         boolean closeFluids = getCloseFluids();
@@ -391,9 +363,7 @@ public class MiningArea extends AbstractWorkAreaEntity {
     public enum MiningMode {
         CUSTOM(0),
         STAIRS_DOWN(1),
-        STAIRS_UP(2),
-        SPIRAL_STAIRCASE_DOWN(3),
-        SPIRAL_STAIRCASE_UP(4);
+        STAIRS_UP(2);
 
         private final int index;
         MiningMode(int index){

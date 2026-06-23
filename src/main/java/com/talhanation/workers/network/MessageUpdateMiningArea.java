@@ -19,10 +19,11 @@ public class MessageUpdateMiningArea implements Message<MessageUpdateMiningArea>
     public boolean closeFloor;
     public boolean closeFluids;
     public boolean mineWallOres;
+    public net.minecraft.world.item.ItemStack fillItem = net.minecraft.world.item.ItemStack.EMPTY;
     public int mode;
     public MessageUpdateMiningArea() {}
 
-    public MessageUpdateMiningArea(UUID uuid, int xSize, int ySize, int zSize, int yOffset, boolean closeFloor, boolean closeFluids, boolean mineWallOres, int mode) {
+    public MessageUpdateMiningArea(UUID uuid, int xSize, int ySize, int zSize, int yOffset, boolean closeFloor, boolean closeFluids, boolean mineWallOres, net.minecraft.world.item.ItemStack fillItem, int mode) {
         this.uuid = uuid;
         this.xSize = xSize;
         this.ySize = ySize;
@@ -31,6 +32,7 @@ public class MessageUpdateMiningArea implements Message<MessageUpdateMiningArea>
         this.closeFloor = closeFloor;
         this.closeFluids = closeFluids;
         this.mineWallOres = mineWallOres;
+        this.fillItem = fillItem;
         this.mode = mode;
     }
 
@@ -60,6 +62,7 @@ public class MessageUpdateMiningArea implements Message<MessageUpdateMiningArea>
         miningArea.setCloseFloor(this.closeFloor);
         miningArea.setCloseFluids(this.closeFluids);
         miningArea.setMineWallOres(this.mineWallOres);
+        miningArea.setFillItem(this.fillItem);
         miningArea.setMode(this.mode);
     }
 
@@ -72,6 +75,7 @@ public class MessageUpdateMiningArea implements Message<MessageUpdateMiningArea>
         this.closeFloor = buf.readBoolean();
         this.closeFluids = buf.readBoolean();
         this.mineWallOres = buf.readBoolean();
+        this.fillItem = buf.readItem();
         this.mode = buf.readInt();
         return this;
     }
@@ -85,6 +89,7 @@ public class MessageUpdateMiningArea implements Message<MessageUpdateMiningArea>
         buf.writeBoolean(closeFloor);
         buf.writeBoolean(closeFluids);
         buf.writeBoolean(mineWallOres);
+        buf.writeItem(fillItem);
         buf.writeInt(mode);
     }
 }
