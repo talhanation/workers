@@ -6,6 +6,8 @@ import com.talhanation.workers.compat.FarmersDelight;
 import com.talhanation.workers.entities.workarea.CropArea;
 import com.talhanation.workers.network.MessageUpdateCropArea;
 import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.network.chat.Component;
+import net.minecraft.network.chat.MutableComponent;
 import net.minecraft.util.FastColor;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.BlockItem;
@@ -25,7 +27,7 @@ public class CropAreaScreen extends WorkAreaScreen {
     private ItemScrollDropDownMenu seedItemSelectionDropDownMenu;
     private ItemStack currentSeeds;
     private List<ItemStack> possibleSeeds;
-
+    private static final MutableComponent TEXT_SELECT_SEED = Component.translatable("gui.workers.command.text.selectSeed");
     public CropAreaScreen(CropArea cropArea, Player player) {
         super(cropArea.getCustomName(), cropArea, player);
         this.cropArea = cropArea;
@@ -49,6 +51,10 @@ public class CropAreaScreen extends WorkAreaScreen {
 
         seedItemSelectionDropDownMenu = new ItemScrollDropDownMenu(currentSeeds,x - dropDownWidth / 2, 50 + y + dropDownHeight / 2 - dropDownHeight, dropDownWidth, dropDownHeight, possibleSeeds, this::setCurrentSeeds);
         seedItemSelectionDropDownMenu.setBgFillSelected(FastColor.ARGB32.color(255, 139, 139, 139));
+
+        if (currentSeeds.isEmpty()) {
+            currentSeeds.setHoverName(TEXT_SELECT_SEED);
+        }
 
         addRenderableWidget(seedItemSelectionDropDownMenu);
     }
