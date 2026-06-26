@@ -126,14 +126,14 @@ dependencies {
 
     implementation fg.deobf("curse.maven:recruits-523860:8253342")
 
-    implementation fg.deobf("curse.maven:dynamictrees-252818:7502488")
+    implementation fg.deobf("curse.maven:dynamictrees-252818:8227003")
     implementation fg.deobf("curse.maven:architectury-api-419699:5137938")
     implementation fg.deobf("curse.maven:lets-do-herbal-brews-951221:6458889")
     implementation fg.deobf("curse.maven:supplementaries-412082:6615104")
     implementation fg.deobf("curse.maven:selene-499980:6681465")
     //implementation fg.deobf("curse.maven:small-ships-450659:5324996")
 
-    implementation fg.deobf("curse.maven:farmers-delight-398521:6597298")
+    implementation fg.deobf("curse.maven:farmers-delight-398521:8083474")
     implementation fg.deobf("curse.maven:worldedit-225608:4586218")
 
 }
