@@ -4,6 +4,7 @@ import com.mojang.blaze3d.systems.RenderSystem;
 import com.talhanation.recruits.client.gui.worldmap.WorldMapScreen;
 import com.talhanation.recruits.client.gui.widgets.ScrollDropDownMenu;
 import com.talhanation.recruits.client.gui.widgets.RecruitsCheckBox;
+import com.talhanation.recruits.client.gui.worldmap.route.RouteNamePopup;
 import com.talhanation.recruits.client.gui.worldmap.storage.WorldMapStorageId;
 import com.talhanation.recruits.world.RecruitsRoute;
 import com.talhanation.workers.WorkersMain;
@@ -225,14 +226,21 @@ public class CourierScreen extends ScreenBase<CourierContainer> {
 
         ExtendedButton mapBtn = new ExtendedButton(
                 x + MAP_X, y + MAP_Y, MAP_W, MAP_H,
-                TEXT_MAP, b -> {
-            WorldMapScreen mapScreen = new WorldMapScreen();
-            if(selectedRoute != null){
-                mapScreen.selectedRoute = this.selectedRoute;
-            }
-            Minecraft.getInstance().setScreen(mapScreen);
-        });
-        mapBtn.active = selectedRoute != null;
+                TEXT_MAP,
+                b -> {
+                    WorldMapScreen mapScreen = new WorldMapScreen();
+                    if(selectedRoute == null){
+                        //mapScreen.routeNamePopup = new RouteNamePopup(mapScreen);
+                        //TODO: ADD Shortcut to create new route
+                    }
+                    else{
+                        mapScreen.selectedRoute = this.selectedRoute;
+                    }
+                    Minecraft.getInstance().setScreen(mapScreen);
+                }
+
+
+        );
         addRenderableWidget(mapBtn);
 
         // ── Apply button — outside image, bottom right ─────────────────────────
