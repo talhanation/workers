@@ -57,6 +57,8 @@
   "gui.workers.command.text.rotate_right": "Rotate R",
   "gui.workers.command.text.rotate_left": "Rotate L",
   "gui.workers.command.text.anySapling":"Any Sapling",
+  "gui.workers.command.text.selectSapling": "Select Sapling",
+  "gui.workers.command.text.selectSeed": "Select Seed",
 
   "gui.workers.checkbox.enabled": "Enabled",
   "gui.workers.checkbox.shearLeaves":"Shear Leaves",

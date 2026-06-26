@@ -46,6 +46,9 @@
   "gui.workers.command.text.place_kitchen": "Küche platzieren",
   "gui.workers.command.tooltip.place_kitchen": "Platziert ein Küchengebiet an der Position, auf die du zeigst.",
 
+  "gui.workers.command.tooltip.disabled_by_server": "Disabled by Server.",
+  "gui.workers.command.tooltip.not_in_claim": "Nur in Claimed Gebiet.",
+
   "gui.workers.command.text.forward": "Vorwärts",
   "gui.workers.command.text.back": "Zurück",
   "gui.workers.command.text.left": "Links",
@@ -54,6 +57,8 @@
   "gui.workers.command.text.rotate_right": "R. Drehen",
   "gui.workers.command.text.rotate_left": "L. Drehen",
   "gui.workers.command.text.anySapling": "Beliebiger Setzling",
+  "gui.workers.command.text.selectSapling": "Setzling auswählen",
+  "gui.workers.command.text.selectSeed": "Saatgut auswählen",
 
   "gui.workers.checkbox.enabled": "Aktiviert",
   "gui.workers.checkbox.shearLeaves": "Blätter scheren",
@@ -78,6 +83,8 @@
   "gui.workers.checkbox.throwEggs": "Eier werfen",
   "gui.workers.checkbox.marketOpen": "Geöffnet",
   "gui.workers.checkbox.closeFloor": "Boden schließen",
+  "gui.workers.checkbox.closeFluids": "Wasser schließen",
+  "gui.workers.checkbox.mineWallOres": "Wand-Erze minen",
   "gui.workers.checkbox.useVehicleInventory": "Fahrzeuginventar verwenden",
   "gui.workers.checkbox.tooltip.useVehicleInventory": "Wenn aktiv, werden die Items in das Fahrzeuginventar gelegt.",
   "gui.workers.checkbox.cycle": "Zyklus",
@@ -90,6 +97,22 @@
   "gui.workers.checkbox.tooltip.feedVillagers": "Wenn aktiv, versorgt der Koch nahe Dorfbewohner mit Essen, um das Bevölkerungswachstum zu fördern.",
   "gui.workers.checkbox.freeArea": "Gebiet räumen",
   "gui.workers.checkbox.tooltip.freeArea": "Wenn aktiv, räumt der Baumeister das Gebiet zuerst.",
+  "gui.workers.checkbox.alwaysShowProjection": "Show Projection",
+  "gui.workers.checkbox.tooltip.alwaysShowProjection": "If true the building will be projected constantly.",
+  "gui.workers.mining.mode.custom": "Custom",
+  "gui.workers.mining.mode.stairs_down": "Stairs Down",
+  "gui.workers.mining.mode.stairs_up": "Stairs Up",
+  "gui.workers.mining.mode.spiral_up": "Spiral Up",
+  "gui.workers.mining.mode.spiral_down": "Spiral Down",
+
+  "gui.workers.animal.types.cow": "Kühe",
+  "gui.workers.animal.types.chicken": "Hühner",
+  "gui.workers.animal.types.sheep": "Schafe",
+  "gui.workers.animal.types.pig": "Schweine",
+  "gui.workers.animal.types.goat": "Ziegen",
+  "gui.workers.animal.types.camel": "Kamele",
+  "gui.workers.animal.types.horse": "Pferde",
+  "gui.workers.animal.types.rabbit": "Kaninchen",
 
   "gui.workers.button.reset": "Zurücksetzen",
   "gui.workers.button.add": "Hinzufügen",
@@ -191,4 +214,6 @@
   "gui.workers.tooltip.courier.storage": "Das nächste zugängliche Lager wird als Ziel ausgewählt.",
   "gui.workers.tooltip.courier.market": "Der nächste Markt an diesem Wegpunkt wird als Ziel ausgewählt, wenn zugänglich.",
   "gui.workers.tooltip.courier.kitchen": "Die nächste Küche an diesem Wegpunkt wird als Ziel ausgewählt, wenn zugänglich."
+
+
 }
