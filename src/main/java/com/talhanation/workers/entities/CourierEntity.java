@@ -129,24 +129,52 @@ public class CourierEntity extends AbstractWorkerEntity implements IVillagerWork
         return currentRoute != null && !currentRoute.isEmpty();
     }
 
+    /**
+     * Night-time safety: the courier may only head home once it is back at the
+     * start of its route (first waypoint, not on a return leg). Without a route it
+     * is free to go immediately. This prevents it from being stranded far out on
+     * the route when night falls and then failing to path all the way home.
+     */
+    @Override
+    public boolean canGoHomeNow() {
+        if (!hasRoute()) return true;
+        return currentWaypointIndex == 0 && !returning;
+    }
+
     public void advanceWaypoint() {
         if(!hasRoute()) return;
 
-        if(currentWaypointIndex == 0 && returning){
+        int size = currentRoute.size();
+        if(size <= 1){
+            currentWaypointIndex = 0;
             returning = false;
+            syncRouteData();
+            return;
         }
 
-        if(currentWaypointIndex == currentRoute.size() - 1 && !shouldCycle){
-            returning = true;
+        if(currentWaypointIndex == 0 && returning){
+            returning = false;
         }
 
         if(returning){
             if(currentWaypointIndex > 0)
                 currentWaypointIndex--;
         }
+        else if(shouldCycle){
+            // Cycle mode: ring the route. At the last waypoint wrap straight back
+            // to 0 (…→N-1→0→1→…). Previously the index just stopped incrementing at
+            // N-1, so the courier got stuck on the final waypoint and never looped.
+            currentWaypointIndex = (currentWaypointIndex + 1) % size;
+        }
         else{
-            if(currentWaypointIndex < currentRoute.size() - 1)
+            // Ping-pong mode: walk to the end, then turn around.
+            if(currentWaypointIndex == size - 1){
+                returning = true;
+                currentWaypointIndex--;
+            }
+            else{
                 currentWaypointIndex++;
+            }
         }
 
         syncRouteData();
@@ -277,15 +305,14 @@ public class CourierEntity extends AbstractWorkerEntity implements IVillagerWork
         return Component.translatable("chat.workers.courier.noTargetFound",
                 this.getName().getString(), waypointName);
     }
-
-    public Component TEXT_SOURCE_EMPTY(String waypointName, String itemName) {
-        return Component.translatable("chat.workers.courier.sourceEmpty",
-                this.getName().getString(), itemName, waypointName);
+    public Component TEXT_CANNOT_DEPOSIT_TARGET_FULL(String waypointName) {
+        return Component.translatable("chat.workers.courier.cannotDepositTargetFull",
+                this.getName().getString(), waypointName);
     }
 
-    public Component TEXT_TARGET_FULL(String waypointName, String itemName) {
-        return Component.translatable("chat.workers.courier.targetFull",
-                this.getName().getString(), itemName, waypointName);
+    public Component TEXT_INVENTORY_FULL(String waypointName) {
+        return Component.translatable("chat.workers.courier.inventoryFull",
+                this.getName().getString(), waypointName);
     }
 
     @Override

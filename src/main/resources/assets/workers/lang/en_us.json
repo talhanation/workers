@@ -176,8 +176,8 @@
 
   "chat.workers.text.noHome": "%s: I need a home...",
   "chat.workers.courier.noTargetFound": "%s: Target: %s could not be found!",
-  "chat.workers.courier.sourceEmpty": "%s: Could not take %s from %s, its empty!",
-  "chat.workers.courier.targetFull": "%s: Could not take %s from %s, its Full!",
+  "chat.workers.courier.inventoryFull": "%s: Could not take stuff from %s, my inventory is full!",
+  "chat.workers.courier.cannotDepositTargetFull": "%s: Could not deposit at %s, its Full!",
   "gui.workers.courier.route" : "Route",
   "gui.workers.courier.noRoute": "No Route",
   "gui.workers.courier.waypoints": "Waypoints",

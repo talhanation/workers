@@ -33,6 +33,9 @@ public class WorkerGoHomeGoal extends Goal {
         if (!worker.needsToSleep()) return false;
         if (!worker.isOwned()) return false;
         if (worker.getFollowState() != 0 && worker.getFollowState() != 6) return false;
+        // Let the worker veto going home right now (e.g. courier must first return
+        // to the start of its route so it doesn't get stranded far away at night).
+        if (!worker.canGoHomeNow()) return false;
         return true;
     }
 
@@ -142,7 +145,7 @@ public class WorkerGoHomeGoal extends Goal {
                 || home.assignedBedPos == null
                 || !home.isResidentOf(worker.getUUID())
                 || !worker.getCommandSenderWorld().getBlockState(home.assignedBedPos)
-                        .isBed(worker.getCommandSenderWorld(), home.assignedBedPos, worker);
+                .isBed(worker.getCommandSenderWorld(), home.assignedBedPos, worker);
 
         if (bedGone) {
             worker.stopSleeping();

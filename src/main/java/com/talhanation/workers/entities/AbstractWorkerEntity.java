@@ -73,6 +73,9 @@ public abstract class AbstractWorkerEntity extends AbstractChunkLoaderEntity {
         this.goalSelector.addGoal(2, new GetNeededItemsFromStorage(this));
         this.goalSelector.addGoal(1, new WorkerGoHomeGoal(this));
 
+        // The inherited recruits door goal only activates on a RecruitPathNavigation,
+        // which workers don't use, so it never fires. Swap it for a worker-aware copy
+        // that checks WorkersGroundPathNavigation instead.
         this.goalSelector.removeAllGoals(g -> g instanceof RecruitsDoorInteractGoal);
         this.goalSelector.addGoal(6, new WorkerOpenDoorGoal(this, true));
 
@@ -424,6 +427,17 @@ public abstract class AbstractWorkerEntity extends AbstractChunkLoaderEntity {
         return notifyGateOpen;
     }
 
+    /**
+     * Safety hook for {@link com.talhanation.workers.entities.ai.WorkerGoHomeGoal}:
+     * lets a worker delay going home at night until it is in a safe position.
+     * Default is always safe; the courier overrides this so it first returns to
+     * the start of its route before heading home (otherwise it could get stranded
+     * far away and fail to path back).
+     */
+    public boolean canGoHomeNow() {
+        return true;
+    }
+
     public void notifyOwner(Component message) {
         if (!canNotifyOwner()) return;
         Player owner = this.getOwner();
@@ -431,6 +445,18 @@ public abstract class AbstractWorkerEntity extends AbstractChunkLoaderEntity {
             owner.sendSystemMessage(message);
             this.lastNotifyDay = this.getCommandSenderWorld().getDayTime() / 24000L;
             this.notifyGateOpen = false;
+        }
+    }
+
+    /**
+     * Sends a message to the owner regardless of the once-per-day anti-spam gate.
+     * Use only for important, action-required notifications (e.g. a target chest
+     * being full) that the player must see even if the worker already spoke today.
+     */
+    public void notifyOwnerAlways(Component message) {
+        Player owner = this.getOwner();
+        if (owner != null) {
+            owner.sendSystemMessage(message);
         }
     }
 

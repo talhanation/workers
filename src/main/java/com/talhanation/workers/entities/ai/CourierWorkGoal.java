@@ -46,6 +46,9 @@ public class CourierWorkGoal extends Goal {
     // When night falls mid-route, we flag this and finish the current cycle safely
     // before releasing control to WorkerGoHomeGoal.
     private boolean pendingGoHome = false;
+    // Ensures the "target full" message is sent at most once per deposit action,
+    // not every tick while the courier keeps retrying a full container.
+    private boolean depositFullReported = false;
 
     // ── Active transfer state ─────────────────────────────────────────────────
     private CourierAction               activeAction;
@@ -156,6 +159,17 @@ public class CourierWorkGoal extends Goal {
                 return; // canContinueToUse will now return false → goal stops
             }
         }
+        else if(courier.shouldCycle && courier.currentWaypointIndex == 0){
+            // In cycle mode `returning` is never set, so the ping-pong branch above
+            // never fires. A wrap-around back to waypoint 0 is the cycle's natural
+            // end: apply any pending mode change and honour a pending go-home here.
+            courier.shouldCycle = courier.pendingShouldCycle;
+
+            if (pendingGoHome) {
+                pendingGoHome = false;
+                return;
+            }
+        }
 
         if (wp == null || courier.returning){
             advanceAndNavigate();
@@ -190,6 +204,7 @@ public class CourierWorkGoal extends Goal {
         activeTargets      = targets;
         activeTransferred  = 0;
         activeContainerIdx = 0;
+        depositFullReported = false;
         activeSlotIdx      = isDepositType(action.getActionType())
                 ? ((getWorkingInventory() == courier.getInventory()) ? 6 : 0)
                 : 0;
@@ -264,6 +279,13 @@ public class CourierWorkGoal extends Goal {
                     state = State.WAIT_TRANSFER_STEP;
                     return;
                 }
+                // Matched the item but couldn't take any → the courier's own
+                // inventory is full. Only tell the owner if we picked up nothing at
+                // all this action (avoid spam once a partial transfer succeeded).
+                if (activeTransferred == 0){
+                    notifyOwner(courier.TEXT_INVENTORY_FULL(
+                            activeWp.displayName));
+                }
                 finishTransfer();
                 return;
             }
@@ -306,22 +328,21 @@ public class CourierWorkGoal extends Goal {
                 return;
             }
 
-            CourierAction.ActionType type = activeAction.getActionType();
-            if ((type == CourierAction.ActionType.PUT || type == CourierAction.ActionType.PUT_ANY) && activeTransferred == 0){
-                notifyOwner(courier.TEXT_TARGET_FULL(
-                        activeWp.displayName, slot.getHoverName().getString()));
+            // Matched a stack to deposit but the target(s) took none → target is
+            // full. Report once per action, bypassing the daily gate so the player
+            // always sees it, for every deposit type.
+            if (!depositFullReported){
+                depositFullReported = true;
+                notifyOwnerAlways(courier.TEXT_CANNOT_DEPOSIT_TARGET_FULL(
+                        activeWp.displayName));
             }
             finishTransfer();
             return;
         }
 
-        CourierAction.ActionType type = activeAction.getActionType();
-        if ((type == CourierAction.ActionType.PUT || type == CourierAction.ActionType.PUT_ANY)
-                && activeTransferred == 0){
-            ItemStack tpl = activeAction.getItemStack();
-            if (tpl != null && !tpl.isEmpty())
-                notifyOwner(courier.TEXT_TARGET_FULL(activeWp.displayName, tpl.getHoverName().getString()));
-        }
+        // Loop exhausted with nothing deposited: the courier simply has none of the
+        // requested item to deposit (item not found). Per design this is silent — no
+        // owner notification.
         finishTransfer();
     }
 
@@ -525,6 +546,10 @@ public class CourierWorkGoal extends Goal {
 
     private void notifyOwner(Component msg){
         courier.notifyOwner(msg);
+    }
+
+    private void notifyOwnerAlways(Component msg){
+        courier.notifyOwnerAlways(msg);
     }
 
     /**

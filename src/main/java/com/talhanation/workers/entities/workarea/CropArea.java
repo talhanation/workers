@@ -132,7 +132,12 @@ public class CropArea extends AbstractWorkAreaEntity {
             }
             else{
                 if(isFarmland(stateBelow) || isTillAble(stateBelow)){
-                    if(isCropDone(state)){
+                    // In a BUSH field, harvestable bushes are PICKED (right-click),
+                    // never broken. FD's tomato vine is a CropBlock subclass, so it
+                    // satisfied isCropDone() at max age and was destroyed right after
+                    // being picked. Exclude anything the bush field picks from breaking.
+                    boolean pickableBush = fieldType == FieldType.BUSH && isPickable(state);
+                    if(!pickableBush && isCropDone(state)){
                         this.stackToBreak.push(pos.immutable());
                     }
                     else if(fieldType != FieldType.BUSH && isBush(state) && !isCrop(state)){

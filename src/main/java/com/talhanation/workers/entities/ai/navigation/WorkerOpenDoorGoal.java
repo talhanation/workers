@@ -5,7 +5,6 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.ai.goal.Goal;
-import net.minecraft.world.entity.ai.util.GoalUtils;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.DoorBlock;
 import net.minecraft.world.level.block.FenceGateBlock;
@@ -15,6 +14,7 @@ import net.minecraft.world.level.pathfinder.Node;
 import net.minecraft.world.level.pathfinder.Path;
 
 import java.util.EnumSet;
+
 
 public class WorkerOpenDoorGoal extends Goal {
     protected final AbstractWorkerEntity worker;
@@ -74,9 +74,11 @@ public class WorkerOpenDoorGoal extends Goal {
 
     @Override
     public boolean canUse() {
-        if (!GoalUtils.hasGroundPathNavigation(this.worker)) {
-            return false;
-        } else if (!this.worker.horizontalCollision) {
+        // NOTE: intentionally NOT using GoalUtils.hasGroundPathNavigation() here.
+        // Worker/recruit navigations extend the async PathNavigation, not vanilla
+        // GroundPathNavigation, so that helper returns false and would block the
+        // goal entirely. We type-check WorkersGroundPathNavigation directly below.
+        if (!this.worker.horizontalCollision) {
             return false;
         } else {
             WorkersGroundPathNavigation groundpathnavigation = this.worker.getNavigation() instanceof WorkersGroundPathNavigation wNav ? wNav : null;

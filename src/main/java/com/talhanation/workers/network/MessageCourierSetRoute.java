@@ -59,13 +59,17 @@ public class MessageCourierSetRoute implements Message<MessageCourierSetRoute> {
                 .forEach(courier -> {
                     courier.useVehicleInventory = this.useVehicleInventory;
 
-                    if(this.shouldCycle){
-                        courier.pendingShouldCycle = true;
+                    // Always buffer the requested value. If the courier is safely at
+                    // the start of its route (waypoint 0, not travelling) apply it
+                    // right away; otherwise it takes effect when it next reaches
+                    // waypoint 0 (see CourierWorkGoal.tickExecute). This keeps a
+                    // mid-travel change safe WITHOUT the old bug where turning cycle
+                    // OFF left pendingShouldCycle=true and flipped it back on at wp 0.
+                    courier.pendingShouldCycle = this.shouldCycle;
+                    boolean safeAtStart = courier.currentWaypointIndex == 0 && !courier.returning;
+                    if (safeAtStart){
+                        courier.shouldCycle = this.shouldCycle;
                     }
-                    else{
-                        courier.shouldCycle = false;
-                    }
-
 
                     if (!hasRoute) {
                         courier.clearRoute();
