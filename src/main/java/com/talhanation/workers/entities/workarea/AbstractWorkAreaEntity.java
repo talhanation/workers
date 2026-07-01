@@ -241,6 +241,7 @@ public abstract class AbstractWorkAreaEntity extends Entity {
     }
 
     public static boolean isAreaOverlapping(Level level, AbstractWorkAreaEntity currentArea, AABB targetBox) {
+        if (currentArea instanceof BuildArea) return false;
         for (AbstractWorkAreaEntity other : level.getEntitiesOfClass(AbstractWorkAreaEntity.class, targetBox.inflate(64))) {
             if (other == currentArea) continue;
             if (other instanceof BuildArea) continue;  // BuildAreas are excluded

@@ -99,6 +99,8 @@
   "gui.workers.checkbox.tooltip.freeArea": "If true the builder will free the area first.",
   "gui.workers.checkbox.alwaysShowProjection": "Show Projection",
   "gui.workers.checkbox.tooltip.alwaysShowProjection": "If true the building will be projected constantly.",
+  "gui.workers.checkbox.keepOn": "Keep",
+  "gui.workers.checkbox.tooltip.keepOn": "If true the mining area will not be deleted after finish.",
   "gui.workers.mining.mode.custom" : "Custom",
   "gui.workers.mining.mode.stairs_down" : "Stairs Down",
   "gui.workers.mining.mode.stairs_up" : "Stairs Up",

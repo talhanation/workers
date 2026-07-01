@@ -11,6 +11,7 @@ import com.talhanation.workers.entities.workarea.MiningArea.MiningMode;
 import com.talhanation.workers.network.MessageUpdateMiningArea;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.components.Button;
+import net.minecraft.client.gui.components.Tooltip;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.MutableComponent;
 import net.minecraft.util.FastColor;
@@ -27,6 +28,8 @@ public class MiningAreaScreen extends WorkAreaScreen {
     private static final MutableComponent TEXT_CLOSE_FLOOR = Component.translatable("gui.workers.checkbox.closeFloor");
     private static final MutableComponent TEXT_CLOSE_FLUIDS = Component.translatable("gui.workers.checkbox.closeFluids");
     private static final MutableComponent TEXT_MINE_WALL_ORES = Component.translatable("gui.workers.checkbox.mineWallOres");
+    private static final MutableComponent TEXT_KEEP_ON = Component.translatable("gui.workers.checkbox.keepOn");
+    private static final MutableComponent TOOLTIP_KEEP_ON = Component.translatable("gui.workers.checkbox.tooltip.keepOn");
     public final MiningArea miningArea;
     public Button xSizePlusButton;
     public Button xSizeMinusButton;
@@ -48,6 +51,8 @@ public class MiningAreaScreen extends WorkAreaScreen {
     private ItemStack fillItem = new ItemStack(Blocks.COBBLESTONE);
     private ScrollDropDownMenu<MiningMode> modeDropDown;
     private MiningMode mode;
+    private RecruitsCheckBox keepOnCheckBox;
+    private boolean keepOn;
     public MiningAreaScreen(MiningArea miningArea, Player player) {
         super(miningArea.getCustomName(), miningArea, player);
         this.miningArea = miningArea;
@@ -65,6 +70,7 @@ public class MiningAreaScreen extends WorkAreaScreen {
         this.mineWallOres = miningArea.getMineWallOres();
         this.fillItem = miningArea.getFillItem();
         this.mode = miningArea.getMode();
+        this.keepOn = miningArea.getKeepOn();
 
         this.setButtons();
     }
@@ -249,6 +255,15 @@ public class MiningAreaScreen extends WorkAreaScreen {
         modeDropDown.setBgFillSelected(FastColor.ARGB32.color(255, 139, 139, 139));
         addRenderableWidget(modeDropDown);
 
+        this.keepOnCheckBox = new RecruitsCheckBox(x - boxWidth/2 + boxWidth + 4, y - previewHeight / 2 + 85, boxWidth, boxHeight, TEXT_KEEP_ON,
+                this.keepOn,
+                bool -> {
+                    this.keepOn = bool;
+                    this.sendMessage();
+                });
+        this.keepOnCheckBox.setTooltip(Tooltip.create(TOOLTIP_KEEP_ON));
+        addRenderableWidget(keepOnCheckBox);
+
         boolean stairs = isStairsMode(mode);
 
         ySizePlusButton.active = !stairs;
@@ -260,7 +275,7 @@ public class MiningAreaScreen extends WorkAreaScreen {
         if(miningArea == null) return;
 
         this.miningArea.setWidthSize(areaXSize);
-        WorkersMain.SIMPLE_CHANNEL.sendToServer(new MessageUpdateMiningArea(this.miningArea.getUUID(), areaXSize, areaYSize, areaZSize, areaYOffset, closeFloor, closeFluids, mineWallOres, fillItem, mode.getIndex()));
+        WorkersMain.SIMPLE_CHANNEL.sendToServer(new MessageUpdateMiningArea(this.miningArea.getUUID(), areaXSize, areaYSize, areaZSize, areaYOffset, closeFloor, closeFluids, mineWallOres, fillItem, mode.getIndex(), keepOn));
     }
     @Override
     public void mouseMoved(double x, double y) {

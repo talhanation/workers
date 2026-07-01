@@ -35,6 +35,7 @@ public class MiningArea extends AbstractWorkAreaEntity {
     public static final EntityDataAccessor<Boolean> MINE_WALL_ORES = SynchedEntityData.defineId(MiningArea.class, EntityDataSerializers.BOOLEAN);
     public static final EntityDataAccessor<ItemStack> FILL_ITEM = SynchedEntityData.defineId(MiningArea.class, EntityDataSerializers.ITEM_STACK);
     public static final EntityDataAccessor<Integer> MODE = SynchedEntityData.defineId(MiningArea.class, EntityDataSerializers.INT);
+    public static final EntityDataAccessor<Boolean> KEEP_ON = SynchedEntityData.defineId(MiningArea.class, EntityDataSerializers.BOOLEAN);
     public Stack<BlockPos> stackToPlace = new Stack<>();
     public Stack<BlockPos> stackToBreak = new Stack<>();
 
@@ -49,6 +50,7 @@ public class MiningArea extends AbstractWorkAreaEntity {
         this.entityData.define(MINE_WALL_ORES, true);
         this.entityData.define(FILL_ITEM, new ItemStack(Blocks.COBBLESTONE));
         this.entityData.define(MODE, MiningMode.CUSTOM.getIndex());
+        this.entityData.define(KEEP_ON, false);
     }
 
     @Override
@@ -61,6 +63,7 @@ public class MiningArea extends AbstractWorkAreaEntity {
             this.setFillItem(ItemStack.of(tag.getCompound("fillItem")));
         }
         this.setMode(tag.getInt("miningMode"));
+        this.setKeepOn(tag.getBoolean("keepOn"));
     }
 
     @Override
@@ -71,12 +74,13 @@ public class MiningArea extends AbstractWorkAreaEntity {
         tag.putBoolean("mineWallOres", this.getMineWallOres());
         tag.put("fillItem", this.getFillItem().save(new CompoundTag()));
         tag.putInt("miningMode", this.getMode().getIndex());
+        tag.putBoolean("keepOn", this.getKeepOn());
     }
 
     @Override
     public void tick() {
         super.tick();
-        if(this.isDone()) this.remove(RemovalReason.DISCARDED);
+        if(this.isDone() && !this.getKeepOn()) this.remove(RemovalReason.DISCARDED);
     }
 
     public Item getRenderItem()  {
@@ -128,7 +132,6 @@ public class MiningArea extends AbstractWorkAreaEntity {
     }
     public void setHeightOffset(int offset) {
         this.entityData.set(HEIGHT_OFFSET, offset);
-        area = this.createArea();
     }
 
     public boolean getCloseFloor() {
@@ -169,12 +172,34 @@ public class MiningArea extends AbstractWorkAreaEntity {
     }
     public void setMode(int index) {
         this.entityData.set(MODE, index);
-        area = this.createArea();
+    }
+
+    public boolean getKeepOn() {
+        return this.entityData.get(KEEP_ON);
+    }
+    public void setKeepOn(boolean keepOn) {
+        this.entityData.set(KEEP_ON, keepOn);
     }
 
 
+    /**
+     * Drops any cached work plan so the next scan rebuilds from the CURRENT
+     * geometry. Must be called whenever the area definition changes (size,
+     * depth/width, height offset, facing/rotation, mode); otherwise the miner
+     * keeps consuming the old stairs/box layout — even across goal restarts,
+     * because PREPARE_MINING only rescans when the break stack is empty.
+     */
+    public void resetWork() {
+        this.stackToBreak.clear();
+        this.stackToPlace.clear();
+        this.setDone(false);
+        this.setTime(0);
+    }
+
     public void scanBreakArea() {
-        if (area == null) area = this.getArea();
+        // Always recompute: facing/size/mode/position can all change at runtime,
+        // and a cached box would leave stairs (and custom) scanning the old shape.
+        AABB area = this.getArea();
         stackToBreak.clear();
 
         Level level = this.getCommandSenderWorld();
@@ -210,7 +235,9 @@ public class MiningArea extends AbstractWorkAreaEntity {
      * two head-room rows kept open at the top. Width (z) is fixed.
      */
     public boolean isStairsAir(BlockPos pos) {
-        if (area == null) area = this.getArea();
+        // Always recompute: facing/size/mode/position can all change at runtime,
+        // and a cached box would leave stairs (and custom) scanning the old shape.
+        AABB area = this.getArea();
 
         BlockPos origin = this.getOnPos();
 
@@ -247,7 +274,9 @@ public class MiningArea extends AbstractWorkAreaEntity {
     }
 
     public void scanForOresOnWalls() {
-        if (area == null) area = this.getArea();
+        // Always recompute: facing/size/mode/position can all change at runtime,
+        // and a cached box would leave stairs (and custom) scanning the old shape.
+        AABB area = this.getArea();
         stackToBreak.clear();
 
         // Off when the "mine wall ores" toggle is disabled, and never on a staircase
@@ -266,7 +295,9 @@ public class MiningArea extends AbstractWorkAreaEntity {
     }
 
     public void scanFloorArea() {
-        if (area == null) area = this.getArea();
+        // Always recompute: facing/size/mode/position can all change at runtime,
+        // and a cached box would leave stairs (and custom) scanning the old shape.
+        AABB area = this.getArea();
         stackToPlace.clear();
 
         Level level = this.getCommandSenderWorld();
@@ -328,6 +359,12 @@ public class MiningArea extends AbstractWorkAreaEntity {
         }
     }
 
+    @Override
+    public void setDone(boolean b) {
+        if(this.getKeepOn()) return;
+
+        super.setDone(b);
+    }
 
     private Stream<BlockPos> getWallBlocks(AABB base, int inflate) {
         AABB expanded = base.inflate(inflate);

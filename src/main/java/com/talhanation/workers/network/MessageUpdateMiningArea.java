@@ -21,9 +21,10 @@ public class MessageUpdateMiningArea implements Message<MessageUpdateMiningArea>
     public boolean mineWallOres;
     public net.minecraft.world.item.ItemStack fillItem = net.minecraft.world.item.ItemStack.EMPTY;
     public int mode;
+    public boolean keepOn;
     public MessageUpdateMiningArea() {}
 
-    public MessageUpdateMiningArea(UUID uuid, int xSize, int ySize, int zSize, int yOffset, boolean closeFloor, boolean closeFluids, boolean mineWallOres, net.minecraft.world.item.ItemStack fillItem, int mode) {
+    public MessageUpdateMiningArea(UUID uuid, int xSize, int ySize, int zSize, int yOffset, boolean closeFloor, boolean closeFluids, boolean mineWallOres, net.minecraft.world.item.ItemStack fillItem, int mode, boolean keepOn) {
         this.uuid = uuid;
         this.xSize = xSize;
         this.ySize = ySize;
@@ -34,6 +35,7 @@ public class MessageUpdateMiningArea implements Message<MessageUpdateMiningArea>
         this.mineWallOres = mineWallOres;
         this.fillItem = fillItem;
         this.mode = mode;
+        this.keepOn = keepOn;
     }
 
     @Override
@@ -64,6 +66,8 @@ public class MessageUpdateMiningArea implements Message<MessageUpdateMiningArea>
         miningArea.setMineWallOres(this.mineWallOres);
         miningArea.setFillItem(this.fillItem);
         miningArea.setMode(this.mode);
+        miningArea.setKeepOn(this.keepOn);
+        miningArea.resetWork();
     }
 
     public MessageUpdateMiningArea fromBytes(FriendlyByteBuf buf) {
@@ -77,6 +81,7 @@ public class MessageUpdateMiningArea implements Message<MessageUpdateMiningArea>
         this.mineWallOres = buf.readBoolean();
         this.fillItem = buf.readItem();
         this.mode = buf.readInt();
+        this.keepOn = buf.readBoolean();
         return this;
     }
 
@@ -91,5 +96,6 @@ public class MessageUpdateMiningArea implements Message<MessageUpdateMiningArea>
         buf.writeBoolean(mineWallOres);
         buf.writeItem(fillItem);
         buf.writeInt(mode);
+        buf.writeBoolean(keepOn);
     }
 }

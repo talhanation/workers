@@ -1,6 +1,7 @@
 package com.talhanation.workers.network;
 
 import com.talhanation.workers.entities.workarea.AbstractWorkAreaEntity;
+import com.talhanation.workers.entities.workarea.MiningArea;
 import de.maxhenkel.corelib.net.Message;
 import net.minecraft.core.Direction;
 import net.minecraft.network.FriendlyByteBuf;
@@ -52,6 +53,11 @@ public class MessageRotateWorkArea implements Message<MessageRotateWorkArea> {
             // Revert to original facing
             workArea.setFacing(current);
             workArea.createArea();
+            return;
+        }
+
+        if (workArea instanceof MiningArea miningArea) {
+            miningArea.resetWork();
         }
     }
 

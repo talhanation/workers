@@ -5,6 +5,8 @@ import com.talhanation.recruits.config.RecruitsClientConfig;
 import com.talhanation.recruits.entities.AbstractChunkLoaderEntity;
 import com.talhanation.workers.entities.ai.*;
 import com.talhanation.workers.entities.ai.navigation.WorkerPathNavigation;
+import com.talhanation.workers.entities.ai.navigation.WorkerOpenDoorGoal;
+import com.talhanation.recruits.entities.ai.navigation.RecruitsDoorInteractGoal;
 import com.talhanation.workers.entities.workarea.AbstractWorkAreaEntity;
 import com.talhanation.workers.entities.workarea.HomeArea;
 import com.talhanation.workers.world.NeededItem;
@@ -70,6 +72,9 @@ public abstract class AbstractWorkerEntity extends AbstractChunkLoaderEntity {
         this.goalSelector.addGoal(2, new DepositItemsToStorage(this));
         this.goalSelector.addGoal(2, new GetNeededItemsFromStorage(this));
         this.goalSelector.addGoal(1, new WorkerGoHomeGoal(this));
+
+        this.goalSelector.removeAllGoals(g -> g instanceof RecruitsDoorInteractGoal);
+        this.goalSelector.addGoal(6, new WorkerOpenDoorGoal(this, true));
 
         this.goalSelector.removeGoal(new MoveTowardsTargetGoal(this, 0.9D, 32.0F));
     }

@@ -5,6 +5,7 @@ import com.talhanation.workers.entities.MinerEntity;
 import com.talhanation.workers.entities.workarea.MiningArea;
 import com.talhanation.workers.world.NeededItem;
 import net.minecraft.core.BlockPos;
+import net.minecraft.core.Direction;
 import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.sounds.SoundEvents;
@@ -17,12 +18,10 @@ import net.minecraft.world.item.Items;
 import net.minecraft.world.item.PickaxeItem;
 import net.minecraft.world.item.ShovelItem;
 import net.minecraft.tags.BlockTags;
-import net.minecraft.world.level.ClipContext;
-import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Blocks;
+import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.material.FluidState;
-import net.minecraft.world.phys.Vec3;
 
 import javax.annotation.Nullable;
 import java.util.*;
@@ -37,12 +36,13 @@ public class MinerWorkGoal extends Goal {
     public BlockPos blockPos;
     public Stack<BlockPos> stackToBreak;
     public Stack<BlockPos> stackToPlace;
-    private boolean needToSeeBlock;
     // Loop guard: detect CHECK cycles that make no mining progress (e.g. unreachable
     // blocks the scan keeps re-finding) and finish instead of switching states forever.
     private int lastBreakCount = -1;
     private int noProgressChecks = 0;
     private static final int MAX_NO_PROGRESS_CHECKS = 3;
+    private static final int MINING_REACH = 10;
+    private static final double MINING_REACH_SQR = MINING_REACH * MINING_REACH;
 
     public MinerWorkGoal(MinerEntity minerEntity) {
         this.minerEntity = minerEntity;
@@ -143,8 +143,6 @@ public class MinerWorkGoal extends Goal {
                 boolean hasAxe = minerEntity.getMainHandItem().getItem() instanceof PickaxeItem;
                 if(!hasAxe){
                     minerEntity.addNeededItem(new NeededItem(stack -> stack.getItem() instanceof PickaxeItem, 1, true));
-                    this.blockPos = null;
-                    return;
                 }
 
                 boolean areaHasShovelBlocks = stackToBreak.stream().anyMatch(pos ->
@@ -152,11 +150,8 @@ public class MinerWorkGoal extends Goal {
                 boolean hasShovel = minerEntity.getInventory().hasAnyMatching(itemStack -> itemStack.getItem() instanceof ShovelItem);
                 if(areaHasShovelBlocks && !hasShovel){
                     minerEntity.addNeededItem(new NeededItem(stack -> stack.getItem() instanceof ShovelItem, 1, true));
-                    this.blockPos = null;
-                    return;
                 }
 
-                needToSeeBlock = true;
                 setState(State.MINING);
             }
 
@@ -174,10 +169,7 @@ public class MinerWorkGoal extends Goal {
                 boolean hasAxe = minerEntity.getMainHandItem().getItem() instanceof PickaxeItem;
                 if(!hasAxe){
                     minerEntity.addNeededItem(new NeededItem(stack -> stack.getItem() instanceof PickaxeItem, 1, true));
-                    this.blockPos = null;
-                    return;
                 }
-                needToSeeBlock = false;
                 setState(State.MINE_WALLS);
             }
 
@@ -328,6 +320,11 @@ public class MinerWorkGoal extends Goal {
                 blockBreakTime = 0;
             }
             else{
+                if(minerEntity.distanceToSqr(blockPos.getCenter()) > MINING_REACH_SQR){
+                    this.moveToPosition(blockPos, MINING_REACH);
+                    return true;
+                }
+
                 this.minerEntity.changeTool(state);
 
                 this.minerEntity.mineBlock(blockPos);
@@ -339,66 +336,52 @@ public class MinerWorkGoal extends Goal {
     }
 
     private BlockPos getNewMiningPosition(Stack<BlockPos> positions) {
-        positions.sort(Comparator.comparingDouble(
-                pos -> minerEntity.position().distanceToSqr(pos.getCenter())
-        ));
-        positions.sort(Comparator.reverseOrder());
+        BlockPos newPosition;
 
-        BlockPos newPosition = null;
-
-        if(blockPos == null){
+        if(blockPos != null && positions.contains(blockPos.above())){
+            newPosition = blockPos.above();
+        }
+        else if(blockPos != null && positions.contains(blockPos.below())){
+            newPosition = blockPos.below();
+        }
+        else{
             if(positions.isEmpty()){
                 setState(State.MOVE_TO_WORK_AREA);
                 return null;
             }
 
-            if(this.needToSeeBlock){
-                // Prefer a block in line of sight, but DON'T discard the rest: if none
-                // is visible (digging through stone / around a corner), walk to the
-                // nearest target instead of looping back to the work area.
-                BlockPos visible = null;
-                for(int idx = positions.size() - 1; idx >= 0; idx--){
-                    BlockPos candidate = positions.get(idx);
-                    if(canSeeBlock(minerEntity.getCommandSenderWorld(), minerEntity.position().add(0, 1, 0), candidate)){
-                        visible = candidate;
-                        break;
-                    }
-                }
+            BlockPos origin = this.minerEntity.currentMiningArea.getOnPos();
 
-                if(visible != null){
-                    positions.remove(visible);
-                    return visible;
-                }
+            newPosition = positions.stream()
+                    .filter(this::isReachableNow)
+                    .min(Comparator.comparingDouble(pos -> pos.distSqr(origin)))
+                    .orElse(null);
 
+            if(newPosition == null){
                 newPosition = positions.stream()
-                        .min(Comparator.comparingDouble(pos -> this.minerEntity.distanceToSqr(pos.getX(), pos.getY(), pos.getZ())))
+                        .min(Comparator.comparingDouble(pos -> pos.distSqr(origin)))
                         .orElse(null);
             }
-            else {
-                newPosition = positions.pop();
-            }
-        }
-        else if(positions.contains(blockPos.above())){
-            newPosition = blockPos.above();
-        }
-        else if(positions.contains(blockPos.below())){
-            newPosition = blockPos.below();
-        }
-        else{
-            newPosition = positions.pop();
         }
         positions.remove(newPosition);
         return newPosition;
     }
 
-    //PERFORMANCE HEAVY DO NOT USE FREQUENTLY
-    private boolean canSeeBlock(Level level, Vec3 start, BlockPos target) {
-        Vec3 targetCenter = target.getCenter();
-        ClipContext ctx = new ClipContext(start, targetCenter, ClipContext.Block.COLLIDER, ClipContext.Fluid.NONE, minerEntity);
-        BlockPos ctxPos = level.clip(ctx).getBlockPos();
-        return ctxPos.equals(target);
+    private boolean isReachableNow(BlockPos pos) {
+        Level level = minerEntity.getCommandSenderWorld();
+        BlockPos minerPos = minerEntity.blockPosition();
+        for(Direction dir : Direction.values()){
+            BlockPos n = pos.relative(dir);
+            if(n.equals(minerPos) || n.equals(minerPos.above())){
+                return true;
+            }
+            BlockState ns = level.getBlockState(n);
+            if(ns.isAir() || minerEntity.shouldIgnoreBlock(ns)){
+                return true;
+            }
+        }
+        return false;
     }
-
     public boolean closeHoles(Stack<BlockPos> positions){
         if(positions != null){
             ItemStack fill = minerEntity.currentMiningArea.getFillItem();
