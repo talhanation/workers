@@ -2,16 +2,16 @@ package com.talhanation.workers.network;
 
 
 import com.talhanation.workers.entities.MerchantEntity;
-import de.maxhenkel.corelib.net.Message;
+import com.talhanation.workers.network.compat.WorkersMessage;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.player.Player;
-import net.minecraftforge.api.distmarker.Dist;
-import net.minecraftforge.network.NetworkEvent;
+import net.minecraft.network.protocol.PacketFlow;
+import com.talhanation.workers.network.compat.WorkersNetworkContext;
 
 import java.util.UUID;
 
-public class MessageOpenMerchantTradeScreen implements Message<MessageOpenMerchantTradeScreen> {
+public class MessageOpenMerchantTradeScreen implements WorkersMessage<MessageOpenMerchantTradeScreen> {
     private UUID player;
     private UUID merchantUuid;
     public MessageOpenMerchantTradeScreen() {
@@ -23,11 +23,11 @@ public class MessageOpenMerchantTradeScreen implements Message<MessageOpenMercha
         this.merchantUuid = merchant;
     }
     @Override
-    public Dist getExecutingSide() {
-        return Dist.DEDICATED_SERVER;
+    public PacketFlow getExecutingSide() {
+        return PacketFlow.SERVERBOUND;
     }
     @Override
-    public void executeServerSide(NetworkEvent.Context context) {
+    public void executeServerSide(WorkersNetworkContext context) {
         ServerPlayer player = context.getSender();
         player.getCommandSenderWorld().getEntitiesOfClass(MerchantEntity.class, player.getBoundingBox()
                         .inflate(32.0D), v -> v

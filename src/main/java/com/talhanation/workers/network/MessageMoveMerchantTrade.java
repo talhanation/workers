@@ -1,15 +1,15 @@
 package com.talhanation.workers.network;
 
 import com.talhanation.workers.entities.MerchantEntity;
-import de.maxhenkel.corelib.net.Message;
+import com.talhanation.workers.network.compat.WorkersMessage;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.server.level.ServerPlayer;
-import net.minecraftforge.api.distmarker.Dist;
-import net.minecraftforge.network.NetworkEvent;
+import net.minecraft.network.protocol.PacketFlow;
+import com.talhanation.workers.network.compat.WorkersNetworkContext;
 
 import java.util.UUID;
 
-public class MessageMoveMerchantTrade implements Message<MessageMoveMerchantTrade> {
+public class MessageMoveMerchantTrade implements WorkersMessage<MessageMoveMerchantTrade> {
 
     public UUID merchantUuid;
     public UUID tradeUuid;
@@ -23,10 +23,10 @@ public class MessageMoveMerchantTrade implements Message<MessageMoveMerchantTrad
     }
 
     @Override
-    public Dist getExecutingSide() { return Dist.DEDICATED_SERVER; }
+    public PacketFlow getExecutingSide() { return PacketFlow.SERVERBOUND; }
 
     @Override
-    public void executeServerSide(NetworkEvent.Context context) {
+    public void executeServerSide(WorkersNetworkContext context) {
         ServerPlayer player = context.getSender();
         if (player == null) return;
 

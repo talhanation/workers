@@ -20,8 +20,8 @@ import net.minecraft.world.level.block.state.properties.IntegerProperty;
 import net.minecraft.world.level.block.state.properties.Property;
 import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.Vec3;
-import net.minecraftforge.common.util.FakePlayer;
-import net.minecraftforge.common.util.FakePlayerFactory;
+import net.neoforged.neoforge.common.util.FakePlayer;
+import net.neoforged.neoforge.common.util.FakePlayerFactory;
 
 import java.util.UUID;
 
@@ -30,8 +30,8 @@ public class FarmersDelight {
     public static final String MOD_ID = "farmersdelight";
 
     // Knives are matched via tags first (string-based ResourceLocations), with a registry-name fallback.
-    private static final TagKey<Item> KNIVES_FD = ItemTags.create(new ResourceLocation(MOD_ID, "tools/knives"));
-    private static final TagKey<Item> KNIVES_FORGE = ItemTags.create(new ResourceLocation("forge", "tools/knives"));
+    private static final TagKey<Item> KNIVES_FD = ItemTags.create(ResourceLocation.fromNamespaceAndPath(MOD_ID, "tools/knives"));
+    private static final TagKey<Item> KNIVES_FORGE = ItemTags.create(ResourceLocation.fromNamespaceAndPath("forge", "tools/knives"));
 
     private static final GameProfile FARMER_FAKE_PROFILE = new GameProfile(
             UUID.fromString("b1d4f6a2-7c8e-4d3a-9f0b-1e2c3d4e5f60"), "WorkerFarmer"

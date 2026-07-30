@@ -23,7 +23,7 @@ import java.util.function.Consumer;
 
 public class ScrollDropDownMenuWithFolders extends AbstractWidget {
 
-    private static final ResourceLocation FOLDER_ICON = new ResourceLocation(WorkersMain.MOD_ID, "textures/gui/folder_image.png");
+    private static final ResourceLocation FOLDER_ICON = ResourceLocation.fromNamespaceAndPath(WorkersMain.MOD_ID, "textures/gui/folder_image.png");
     private static final ItemStack PICKAXE_STACK = new ItemStack(Items.IRON_PICKAXE);
     private static final int ICON_SIZE   = 16;
     private static final int ICON_MARGIN = 2;
@@ -289,7 +289,7 @@ public class ScrollDropDownMenuWithFolders extends AbstractWidget {
     }
 
     @Override
-    public boolean mouseScrolled(double mouseX, double mouseY, double delta) {
+    public boolean mouseScrolled(double mouseX, double mouseY, double horizontalAmount, double delta) {
         if (!visible || !isOpen) return false;
         scrollOffset -= (int) delta;
         scrollOffset = Math.max(0, Math.min(scrollOffset, entries.size() - maxVisibleOptions));

@@ -1,13 +1,14 @@
 package com.talhanation.workers.network;
 
-import de.maxhenkel.corelib.net.Message;
+import com.talhanation.workers.network.compat.WorkersMessage;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.FriendlyByteBuf;
-import net.minecraftforge.api.distmarker.Dist;
-import net.minecraftforge.api.distmarker.OnlyIn;
-import net.minecraftforge.network.NetworkEvent;
+import net.minecraft.network.protocol.PacketFlow;
+import net.neoforged.api.distmarker.OnlyIn;
+import net.neoforged.api.distmarker.Dist;
+import com.talhanation.workers.network.compat.WorkersNetworkContext;
 
-public class MessageToClientPresetContent implements Message<MessageToClientPresetContent> {
+public class MessageToClientPresetContent implements WorkersMessage<MessageToClientPresetContent> {
 
     public String presetName;
     public CompoundTag nbt;
@@ -21,11 +22,11 @@ public class MessageToClientPresetContent implements Message<MessageToClientPres
     }
 
     @Override
-    public Dist getExecutingSide() { return Dist.CLIENT; }
+    public PacketFlow getExecutingSide() { return PacketFlow.CLIENTBOUND; }
 
     @Override
     @OnlyIn(Dist.CLIENT)
-    public void executeClientSide(NetworkEvent.Context context) {
+    public void executeClientSide(WorkersNetworkContext context) {
         if (pendingCallback != null) {
             pendingCallback.accept(this);
             pendingCallback = null;

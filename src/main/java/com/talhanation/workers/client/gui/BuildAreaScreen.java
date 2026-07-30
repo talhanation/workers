@@ -27,7 +27,7 @@ import net.minecraft.util.Mth;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.Level;
-import net.minecraftforge.client.gui.widget.ExtendedButton;
+import net.neoforged.neoforge.client.gui.widget.ExtendedButton;
 
 import java.nio.file.Path;
 import java.util.ArrayList;
@@ -102,7 +102,6 @@ public class BuildAreaScreen extends WorkAreaScreen {
     @Override
     public void tick() {
         super.tick();
-        if (scanNameEditBox != null && scanNameEditBox.isFocused()) scanNameEditBox.tick();
     }
 
     @Override
@@ -471,11 +470,11 @@ public class BuildAreaScreen extends WorkAreaScreen {
     }
 
     @Override
-    public boolean mouseScrolled(double x, double y, double d) {
-        if (structureOptions != null && structureOptions.isMouseOver(x, y)) structureOptions.mouseScrolled(x, y, d);
+    public boolean mouseScrolled(double x, double y, double horizontalAmount, double d) {
+        if (structureOptions != null && structureOptions.isMouseOver(x, y)) structureOptions.mouseScrolled(x, y, horizontalAmount, d);
         if (requiredItemsDropDownMenu != null && requiredItemsDropDownMenu.isMouseOver(x, y))
-            requiredItemsDropDownMenu.mouseScrolled(x, y, d);
-        return super.mouseScrolled(x, y, d);
+            requiredItemsDropDownMenu.mouseScrolled(x, y, horizontalAmount, d);
+        return super.mouseScrolled(x, y, horizontalAmount, d);
     }
 
     @Override

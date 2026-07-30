@@ -1,16 +1,16 @@
 package com.talhanation.workers.network;
 
 import com.talhanation.workers.entities.workarea.StorageArea;
-import de.maxhenkel.corelib.net.Message;
+import com.talhanation.workers.network.compat.WorkersMessage;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerPlayer;
-import net.minecraftforge.api.distmarker.Dist;
-import net.minecraftforge.network.NetworkEvent;
+import net.minecraft.network.protocol.PacketFlow;
+import com.talhanation.workers.network.compat.WorkersNetworkContext;
 
 import java.util.UUID;
 
-public class MessageUpdateStorageArea implements Message<MessageUpdateStorageArea> {
+public class MessageUpdateStorageArea implements WorkersMessage<MessageUpdateStorageArea> {
 
     public UUID uuid;
     public int mask;
@@ -25,11 +25,11 @@ public class MessageUpdateStorageArea implements Message<MessageUpdateStorageAre
         this.name = name;
     }
 
-    public Dist getExecutingSide() {
-        return Dist.DEDICATED_SERVER;
+    public PacketFlow getExecutingSide() {
+        return PacketFlow.SERVERBOUND;
     }
 
-    public void executeServerSide(NetworkEvent.Context context){
+    public void executeServerSide(WorkersNetworkContext context){
         ServerPlayer player = context.getSender();
         if(player == null) return;
 

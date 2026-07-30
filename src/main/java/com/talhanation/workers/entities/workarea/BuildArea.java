@@ -1,12 +1,10 @@
 package com.talhanation.workers.entities.workarea;
 
 import com.talhanation.workers.WorkersMain;
-import com.talhanation.workers.client.gui.BuildAreaScreen;
 import com.talhanation.workers.entities.workarea.AbstractWorkAreaEntity;
 import com.talhanation.workers.network.MessageToClientOpenWorkAreaScreen;
 import com.talhanation.workers.world.BuildBlock;
 import com.talhanation.workers.world.BuildBlockParse;
-import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.core.registries.BuiltInRegistries;
@@ -23,7 +21,7 @@ import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
-import net.minecraftforge.registries.ForgeRegistries;
+import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.world.item.BlockItem;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
@@ -33,9 +31,7 @@ import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.block.state.properties.*;
-import net.minecraftforge.api.distmarker.Dist;
-import net.minecraftforge.api.distmarker.OnlyIn;
-import net.minecraftforge.network.PacketDistributor;
+import com.talhanation.workers.network.compat.WorkersPacketDistributor;
 
 import javax.annotation.Nullable;
 import java.util.*;
@@ -54,11 +50,11 @@ public class BuildArea extends AbstractWorkAreaEntity {
         super(type, level);
     }
 
-    protected void defineSynchedData() {
-        super.defineSynchedData();
-        this.entityData.define(STRUCTURE, new CompoundTag());
-        this.entityData.define(FREE_AREA, false);
-        this.entityData.define(ALWAYS_SHOW_PROJECTION, false);
+    protected void defineSynchedData(net.minecraft.network.syncher.SynchedEntityData.Builder builder) {
+        super.defineSynchedData(builder);
+        builder.define(STRUCTURE, new CompoundTag());
+        builder.define(FREE_AREA, false);
+        builder.define(ALWAYS_SHOW_PROJECTION, false);
     }
     @Override
     public void readAdditionalSaveData(CompoundTag tag) {
@@ -88,12 +84,6 @@ public class BuildArea extends AbstractWorkAreaEntity {
     @Override
     public Item getRenderItem() {
         return Items.IRON_SHOVEL;
-    }
-
-    @Override
-    @OnlyIn(Dist.CLIENT)
-    public Screen getScreen(Player player) {
-        return new BuildAreaScreen(this, player);
     }
 
     @Override
@@ -182,8 +172,8 @@ public class BuildArea extends AbstractWorkAreaEntity {
             int relZ = entityTag.getInt("z");
             int scanFacingVal = entityTag.getInt("facing");
 
-            ResourceLocation rl = new ResourceLocation(typeId);
-            EntityType<?> entityType = ForgeRegistries.ENTITY_TYPES.getValue(rl);
+            ResourceLocation rl = ResourceLocation.parse(typeId);
+            EntityType<?> entityType = BuiltInRegistries.ENTITY_TYPE.get(rl);
             if (entityType == null) continue;
 
             BlockPos worldPos = origin

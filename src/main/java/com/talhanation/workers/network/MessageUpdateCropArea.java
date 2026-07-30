@@ -1,22 +1,22 @@
 package com.talhanation.workers.network;
 
 import com.talhanation.workers.entities.workarea.CropArea;
-import de.maxhenkel.corelib.net.Message;
-import net.minecraft.nbt.CompoundTag;
+import com.talhanation.workers.network.compat.WorkersMessage;
 import net.minecraft.network.FriendlyByteBuf;
+import net.minecraft.network.RegistryFriendlyByteBuf;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.item.ItemStack;
-import net.minecraftforge.api.distmarker.Dist;
-import net.minecraftforge.network.NetworkEvent;
+import net.minecraft.network.protocol.PacketFlow;
+import com.talhanation.workers.network.compat.WorkersNetworkContext;
 
 import java.util.UUID;
 
 import static com.talhanation.workers.entities.workarea.AbstractWorkAreaEntity.DONE_TIME;
 
-public class MessageUpdateCropArea implements Message<MessageUpdateCropArea> {
+public class MessageUpdateCropArea implements WorkersMessage<MessageUpdateCropArea> {
 
     public UUID uuid;
-    public CompoundTag tag;
+    public ItemStack cropItem = ItemStack.EMPTY;
     public MessageUpdateCropArea() {
 
     }
@@ -24,15 +24,14 @@ public class MessageUpdateCropArea implements Message<MessageUpdateCropArea> {
     public MessageUpdateCropArea(UUID uuid, ItemStack cropItem) {
         this.uuid = uuid;
 
-        CompoundTag compoundnbt = new CompoundTag();
-        this.tag = cropItem.save(compoundnbt);
+        this.cropItem = cropItem.copy();
     }
 
-    public Dist getExecutingSide() {
-        return Dist.DEDICATED_SERVER;
+    public PacketFlow getExecutingSide() {
+        return PacketFlow.SERVERBOUND;
     }
 
-    public void executeServerSide(NetworkEvent.Context context){
+    public void executeServerSide(WorkersNetworkContext context){
         ServerPlayer player = context.getSender();
         if(player == null) return;
 
@@ -47,21 +46,20 @@ public class MessageUpdateCropArea implements Message<MessageUpdateCropArea> {
     }
 
     public void update(CropArea cropArea){
-        ItemStack itemStack = ItemStack.of(tag);
-        cropArea.setSeedStack(itemStack);
+        cropArea.setSeedStack(this.cropItem);
         cropArea.updateType();
         cropArea.setTime(cropArea.getTime() + DONE_TIME);
     }
 
     public MessageUpdateCropArea fromBytes(FriendlyByteBuf buf) {
         this.uuid = buf.readUUID();
-        this.tag = buf.readNbt();
+        this.cropItem = ItemStack.OPTIONAL_STREAM_CODEC.decode((RegistryFriendlyByteBuf) buf);
         return this;
     }
 
     public void toBytes(FriendlyByteBuf buf) {
         buf.writeUUID(uuid);
-        buf.writeNbt(tag);
+        ItemStack.OPTIONAL_STREAM_CODEC.encode((RegistryFriendlyByteBuf) buf, cropItem);
 
     }
 

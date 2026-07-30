@@ -12,6 +12,7 @@ import com.talhanation.workers.entities.workarea.AbstractWorkAreaEntity;
 import com.talhanation.workers.entities.workarea.HomeArea;
 import com.talhanation.workers.world.NeededItem;
 import net.minecraft.core.BlockPos;
+import net.minecraft.core.component.DataComponents;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerLevel;
@@ -38,8 +39,8 @@ import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.material.Fluid;
 import net.minecraft.world.level.material.Fluids;
 import net.minecraft.world.phys.Vec3;
-import net.minecraftforge.api.distmarker.Dist;
-import net.minecraftforge.api.distmarker.OnlyIn;
+import net.neoforged.api.distmarker.Dist;
+import net.neoforged.api.distmarker.OnlyIn;
 import org.jetbrains.annotations.NotNull;
 
 import javax.annotation.Nullable;
@@ -129,11 +130,11 @@ public abstract class AbstractWorkerEntity extends AbstractChunkLoaderEntity {
         boolean flag = false;
         List<ItemStack> inventorySlots = new ArrayList<>();
         for(int i = 6; i < this.inventory.getContainerSize(); i++){
-            inventorySlots.add(inventory.items.get(i));
+            inventorySlots.add(inventory.getItems().get(i));
         }
 
         for(ItemStack itemstack : inventorySlots) {
-            if (itemstack.isEmpty() || ItemStack.isSameItemSameTags(itemstack, itemToAdd) && itemstack.getCount() < itemstack.getMaxStackSize()) {
+            if (itemstack.isEmpty() || ItemStack.isSameItemSameComponents(itemstack, itemToAdd) && itemstack.getCount() < itemstack.getMaxStackSize()) {
                 flag = true;
                 break;
             }
@@ -142,7 +143,8 @@ public abstract class AbstractWorkerEntity extends AbstractChunkLoaderEntity {
         return flag;
     }
     public boolean wantsToKeep(ItemStack itemStack) {
-        return (itemStack.isEdible() && itemStack.getFoodProperties(this).getNutrition() > 4);
+        return itemStack.has(DataComponents.FOOD)
+                && itemStack.get(DataComponents.FOOD).nutrition() > 4;
     }
     @Override
     public boolean wantsToPickUp(ItemStack itemStack) {
@@ -197,7 +199,7 @@ public abstract class AbstractWorkerEntity extends AbstractChunkLoaderEntity {
     private void moveItemToOccupiedSlotsWithSameType(ItemStack itemStackToMove) {
         for(int i = 6; i < this.getInventory().getContainerSize(); ++i) {
             ItemStack itemstack = this.getInventory().getItem(i);
-            if (ItemStack.isSameItemSameTags(itemstack, itemStackToMove)) {
+            if (ItemStack.isSameItemSameComponents(itemstack, itemStackToMove)) {
                 this.moveItemsBetweenStacks(itemStackToMove, itemstack);
                 if (itemStackToMove.isEmpty()) {
                     return;
@@ -238,8 +240,8 @@ public abstract class AbstractWorkerEntity extends AbstractChunkLoaderEntity {
 
     //////////////////////////////////// REGISTER////////////////////////////////////
 
-    protected void defineSynchedData() {
-        super.defineSynchedData();
+    protected void defineSynchedData(net.minecraft.network.syncher.SynchedEntityData.Builder builder) {
+        super.defineSynchedData(builder);
     }
 
     public void addAdditionalSaveData(@NotNull CompoundTag nbt) {
@@ -317,7 +319,7 @@ public abstract class AbstractWorkerEntity extends AbstractChunkLoaderEntity {
     }
     @Nullable
     public ItemStack getMatchingItem(Predicate<ItemStack> predicate) {
-        for (ItemStack stack : this.getInventory().items) {
+        for (ItemStack stack : this.getInventory().getItems()) {
             if (!stack.isEmpty() && predicate.test(stack)) {
                 return stack;
             }
@@ -328,7 +330,7 @@ public abstract class AbstractWorkerEntity extends AbstractChunkLoaderEntity {
     public int countMatchingItems(Predicate<ItemStack> predicate) {
         int count = 0;
 
-        for (ItemStack stack : this.getInventory().items) {
+        for (ItemStack stack : this.getInventory().getItems()) {
             if (!stack.isEmpty() && predicate.test(stack)) {
                 count += stack.getCount();
             }
@@ -340,7 +342,7 @@ public abstract class AbstractWorkerEntity extends AbstractChunkLoaderEntity {
     public int countMatchingStacks(Predicate<ItemStack> predicate) {
         int count = 0;
 
-        for (ItemStack stack : this.getInventory().items) {
+        for (ItemStack stack : this.getInventory().getItems()) {
             if (!stack.isEmpty() && predicate.test(stack)) {
                 count++;
             }

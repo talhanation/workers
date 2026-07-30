@@ -8,6 +8,7 @@ import com.talhanation.workers.network.MessageUpdateCropArea;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.MutableComponent;
+import net.minecraft.core.component.DataComponents;
 import net.minecraft.util.FastColor;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.BlockItem;
@@ -53,7 +54,7 @@ public class CropAreaScreen extends WorkAreaScreen {
         seedItemSelectionDropDownMenu.setBgFillSelected(FastColor.ARGB32.color(255, 139, 139, 139));
 
         if (currentSeeds.isEmpty()) {
-            currentSeeds.setHoverName(TEXT_SELECT_SEED);
+            currentSeeds.set(DataComponents.CUSTOM_NAME, TEXT_SELECT_SEED);
         }
 
         addRenderableWidget(seedItemSelectionDropDownMenu);
@@ -108,9 +109,9 @@ public class CropAreaScreen extends WorkAreaScreen {
         return super.mouseClicked(mouseX, mouseY, button);
     }
     @Override
-    public boolean mouseScrolled(double x, double y, double d) {
-        if(seedItemSelectionDropDownMenu != null) seedItemSelectionDropDownMenu.mouseScrolled(x,y,d);
-        return super.mouseScrolled(x, y, d);
+    public boolean mouseScrolled(double x, double y, double horizontalAmount, double d) {
+        if(seedItemSelectionDropDownMenu != null) seedItemSelectionDropDownMenu.mouseScrolled(x, y, horizontalAmount, d);
+        return super.mouseScrolled(x, y, horizontalAmount, d);
     }
     @Override
     public void render(GuiGraphics guiGraphics, int mouseX, int mouseY, float partialTicks) {

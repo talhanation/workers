@@ -23,10 +23,9 @@ import net.minecraft.world.level.block.*;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.Vec3;
-import net.minecraftforge.common.IPlantable;
-import net.minecraftforge.common.PlantType;
-import net.minecraftforge.common.util.FakePlayer;
-import net.minecraftforge.common.util.FakePlayerFactory;
+import net.neoforged.neoforge.common.SpecialPlantable;
+import net.neoforged.neoforge.common.util.FakePlayer;
+import net.neoforged.neoforge.common.util.FakePlayerFactory;
 
 import javax.annotation.Nullable;
 import java.util.*;
@@ -258,7 +257,7 @@ public class FarmerWorkGoal extends Goal {
                 ItemStack seedFromInv = farmer.getMatchingItem(itemStack -> itemStack.is(this.farmer.currentCropArea.getSeedStack().getItem()));
                 if(seedFromInv == null){
                     ItemStack seedStack = this.farmer.currentCropArea.getSeedStack();
-                    this.neededItems.add(new NeededItem(itemStack -> ItemStack.isSameItemSameTags(itemStack, seedStack),  stackToPlant.size(), true, this.farmer.currentCropArea.getUUID()));
+                    this.neededItems.add(new NeededItem(itemStack -> ItemStack.isSameItemSameComponents(itemStack, seedStack),  stackToPlant.size(), true, this.farmer.currentCropArea.getUUID()));
                     setState(State.DONE);
                     this.blockPos = null;
                     return;
@@ -400,14 +399,12 @@ public class FarmerWorkGoal extends Goal {
                 seedFromInv.shrink(1);
                 this.farmer.swing(InteractionHand.MAIN_HAND);
             }
-            else if (seedFromInv.getItem() instanceof IPlantable plantable) {
-                if (plantable.getPlantType(farmer.getCommandSenderWorld(), blockPos) == PlantType.CROP) {
-                    farmer.getCommandSenderWorld().setBlock(blockPos, plantable.getPlant(farmer.getCommandSenderWorld(), blockPos), 3);
-
-                    farmer.getCommandSenderWorld().playSound(null, blockPos.getX(), blockPos.getY(), blockPos.getZ(), SoundEvents.CROP_PLANTED, SoundSource.BLOCKS, 1.0F, 1.0F);
-                    seedFromInv.shrink(1);
-                    this.farmer.swing(InteractionHand.MAIN_HAND);
-                }
+            else if (seedFromInv.getItem() instanceof SpecialPlantable plantable
+                    && plantable.canPlacePlantAtPosition(seedFromInv, farmer.getCommandSenderWorld(), blockPos, Direction.DOWN)) {
+                plantable.spawnPlantAtPosition(seedFromInv, farmer.getCommandSenderWorld(), blockPos, Direction.DOWN);
+                farmer.getCommandSenderWorld().playSound(null, blockPos.getX(), blockPos.getY(), blockPos.getZ(), SoundEvents.CROP_PLANTED, SoundSource.BLOCKS, 1.0F, 1.0F);
+                seedFromInv.shrink(1);
+                this.farmer.swing(InteractionHand.MAIN_HAND);
             }
             return true;
         }
@@ -488,7 +485,7 @@ public class FarmerWorkGoal extends Goal {
 
         Vec3 hitVec = new Vec3(pos.getX() + 0.5, pos.getY() + 0.5, pos.getZ() + 0.5);
         BlockHitResult hitResult = new BlockHitResult(hitVec, Direction.UP, pos, false);
-        state.use(level, fake, InteractionHand.MAIN_HAND, hitResult);
+        state.useWithoutItem(level, fake, hitResult);
     }
 
     /**

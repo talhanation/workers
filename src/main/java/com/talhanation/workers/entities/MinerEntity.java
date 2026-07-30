@@ -25,10 +25,9 @@ import net.minecraft.world.item.*;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.ServerLevelAccessor;
 import net.minecraft.world.level.block.state.BlockState;
-import net.minecraftforge.common.ForgeMod;
-import net.minecraftforge.common.Tags;
-import net.minecraftforge.common.TierSortingRegistry;
-import net.minecraftforge.registries.ForgeRegistries;
+import net.neoforged.neoforge.common.NeoForgeMod;
+import net.neoforged.neoforge.common.Tags;
+import net.minecraft.core.registries.BuiltInRegistries;
 
 import javax.annotation.Nullable;
 import java.util.List;
@@ -50,11 +49,11 @@ public class MinerEntity extends AbstractWorkerEntity{
         return Mob.createMobAttributes()
                 .add(Attributes.MAX_HEALTH, 40.0D)
                 .add(Attributes.MOVEMENT_SPEED, 0.3D)
-                .add(ForgeMod.SWIM_SPEED.get(), 0.3D)
+                .add(NeoForgeMod.SWIM_SPEED, 0.3D)
                 .add(Attributes.KNOCKBACK_RESISTANCE, 0.1D)
                 .add(Attributes.ATTACK_DAMAGE, 0.5D)
                 .add(Attributes.FOLLOW_RANGE, 32.0D)
-                .add(ForgeMod.ENTITY_REACH.get(), 0D)
+                .add(Attributes.ENTITY_INTERACTION_RANGE, 0D)
                 .add(Attributes.ATTACK_SPEED);
     }
 
@@ -63,15 +62,15 @@ public class MinerEntity extends AbstractWorkerEntity{
         RandomSource randomsource = world.getRandom();
         SpawnGroupData ilivingentitydata = super.finalizeSpawn(world, difficultyInstance, reason, data, nbt);
         ((WorkersGroundPathNavigation)this.getNavigation()).setCanOpenDoors(true);
-        this.populateDefaultEquipmentEnchantments(randomsource, difficultyInstance);
+        this.populateDefaultEquipmentEnchantments(world, randomsource, difficultyInstance);
 
         this.initSpawn();
 
         return ilivingentitydata;
     }
 
-    protected void defineSynchedData() {
-        super.defineSynchedData();
+    protected void defineSynchedData(net.minecraft.network.syncher.SynchedEntityData.Builder builder) {
+        super.defineSynchedData(builder);
     }
 
     @Override//not used
@@ -121,17 +120,17 @@ public class MinerEntity extends AbstractWorkerEntity{
         return super.wantsToKeep(itemStack);
     }
     public boolean wantsToPickUp(ItemStack itemStack) {
-        ResourceLocation id = ForgeRegistries.ITEMS.getKey(itemStack.getItem());
+        ResourceLocation id = BuiltInRegistries.ITEM.getKey(itemStack.getItem());
         if(id == null) return false;
 
         if(WorkersServerConfig.MinerPickup.get().contains(id.toString())) return true;
 
         if(itemStack.getItem() instanceof BlockItem blockItem && blockItem.getBlock().defaultBlockState().is(BlockTags.BASE_STONE_OVERWORLD)) return true;
-        if(itemStack.getItem() instanceof BlockItem blockItem && blockItem.getBlock().defaultBlockState().is(Tags.Blocks.STONE)) return true;
+        if(itemStack.getItem() instanceof BlockItem blockItem && blockItem.getBlock().defaultBlockState().is(Tags.Blocks.STONES)) return true;
         if(itemStack.getItem() instanceof BlockItem blockItem && blockItem.getBlock().defaultBlockState().is(BlockTags.BASE_STONE_NETHER)) return true;
         if(itemStack.is(Tags.Items.RAW_MATERIALS)) return true;
-        if(itemStack.is(Tags.Items.SAND)) return true;
-        if(itemStack.is(Tags.Items.STONE)) return true;
+        if(itemStack.is(Tags.Items.SANDS)) return true;
+        if(itemStack.is(Tags.Items.STONES)) return true;
         if(itemStack.is(ItemTags.STONE_BRICKS)) return true;
         if(itemStack.is(ItemTags.COAL_ORES)) return true;
         if(itemStack.is(ItemTags.IRON_ORES)) return true;
@@ -153,15 +152,15 @@ public class MinerEntity extends AbstractWorkerEntity{
     }
 
     public boolean shouldIgnoreBlock(BlockState blockState) {
-        ResourceLocation id = ForgeRegistries.BLOCKS.getKey(blockState.getBlock());
+        ResourceLocation id = BuiltInRegistries.BLOCK.getKey(blockState.getBlock());
         if(id == null) return false;
         return (WorkersServerConfig.MinerIgnore.get().contains(id.toString()) || !canBreakBlock(blockState));
     }
 
     public boolean canBreakBlock(BlockState state){
         ItemStack tool = this.getMainHandItem();
-        if(tool.getItem() instanceof DiggerItem diggerItem){
-            return TierSortingRegistry.isCorrectTierForDrops(diggerItem.getTier(), state);
+        if(tool.getItem() instanceof DiggerItem){
+            return tool.isCorrectToolForDrops(state);
         }
         else
             return false;

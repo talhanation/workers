@@ -2,33 +2,34 @@ package com.talhanation.workers.network;
 
 import com.talhanation.workers.entities.MerchantEntity;
 import com.talhanation.workers.world.WorkersMerchantTrade;
-import de.maxhenkel.corelib.net.Message;
+import net.minecraft.core.HolderLookup;
+import com.talhanation.workers.network.compat.WorkersMessage;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.server.level.ServerPlayer;
-import net.minecraftforge.api.distmarker.Dist;
-import net.minecraftforge.network.NetworkEvent;
+import net.minecraft.network.protocol.PacketFlow;
+import com.talhanation.workers.network.compat.WorkersNetworkContext;
 
 import java.util.UUID;
 
-public class MessageUpdateMerchantTrade implements Message<MessageUpdateMerchantTrade> {
+public class MessageUpdateMerchantTrade implements WorkersMessage<MessageUpdateMerchantTrade> {
 
     public UUID merchantUuid;
     public CompoundTag nbt;
     public boolean remove;
     public MessageUpdateMerchantTrade() {}
-    public MessageUpdateMerchantTrade(UUID merchantUuid, WorkersMerchantTrade trade, boolean remove) {
+    public MessageUpdateMerchantTrade(UUID merchantUuid, WorkersMerchantTrade trade, HolderLookup.Provider registries, boolean remove) {
         this.merchantUuid = merchantUuid;
-        this.nbt = trade.toNbt();
+        this.nbt = trade.toNbt(registries);
         this.remove = remove;
     }
 
     @Override
-    public Dist getExecutingSide() {
-        return Dist.DEDICATED_SERVER;
+    public PacketFlow getExecutingSide() {
+        return PacketFlow.SERVERBOUND;
     }
 
-    public void executeServerSide(NetworkEvent.Context context){
+    public void executeServerSide(WorkersNetworkContext context){
         ServerPlayer player = context.getSender();
         if(player == null) return;
 
@@ -44,10 +45,10 @@ public class MessageUpdateMerchantTrade implements Message<MessageUpdateMerchant
 
     public void update(MerchantEntity merchant){
         if(remove){
-            merchant.removeTrade(WorkersMerchantTrade.fromNbt(nbt));
+            merchant.removeTrade(WorkersMerchantTrade.fromNbt(merchant.registryAccess(), nbt));
         }
         else{
-            merchant.addOrUpdateTrade(WorkersMerchantTrade.fromNbt(nbt));
+            merchant.addOrUpdateTrade(WorkersMerchantTrade.fromNbt(merchant.registryAccess(), nbt));
         }
     }
 

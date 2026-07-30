@@ -1,17 +1,18 @@
 package com.talhanation.workers.network;
 
 import com.talhanation.workers.client.WorkersClientManager;
-import de.maxhenkel.corelib.net.Message;
+import com.talhanation.workers.network.compat.WorkersMessage;
 import net.minecraft.network.FriendlyByteBuf;
-import net.minecraftforge.api.distmarker.Dist;
-import net.minecraftforge.api.distmarker.OnlyIn;
-import net.minecraftforge.network.NetworkEvent;
+import net.minecraft.network.protocol.PacketFlow;
+import net.neoforged.api.distmarker.OnlyIn;
+import net.neoforged.api.distmarker.Dist;
+import com.talhanation.workers.network.compat.WorkersNetworkContext;
 
 import java.util.ArrayList;
 import java.util.List;
 
 /** Server → Client: delivers the list of available preset file names. */
-public class MessageToClientPresetList implements Message<MessageToClientPresetList> {
+public class MessageToClientPresetList implements WorkersMessage<MessageToClientPresetList> {
 
     public List<String> names;
 
@@ -19,11 +20,11 @@ public class MessageToClientPresetList implements Message<MessageToClientPresetL
     public MessageToClientPresetList(List<String> names) { this.names = names; }
 
     @Override
-    public Dist getExecutingSide() { return Dist.CLIENT; }
+    public PacketFlow getExecutingSide() { return PacketFlow.CLIENTBOUND; }
 
     @Override
     @OnlyIn(Dist.CLIENT)
-    public void executeClientSide(NetworkEvent.Context context) {
+    public void executeClientSide(WorkersNetworkContext context) {
         WorkersClientManager.serverBuildingPresetNames = new ArrayList<>(names);
     }
 

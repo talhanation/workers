@@ -2,15 +2,14 @@ package com.talhanation.workers.network;
 
 import com.talhanation.workers.config.BuildMode;
 import com.talhanation.workers.config.WorkersServerConfig;
-import de.maxhenkel.corelib.net.Message;
+import com.talhanation.workers.network.compat.WorkersMessage;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.scores.Team;
-import net.minecraftforge.api.distmarker.Dist;
-import net.minecraftforge.network.NetworkDirection;
-import net.minecraftforge.network.NetworkEvent;
+import net.minecraft.network.protocol.PacketFlow;
+import com.talhanation.workers.network.compat.WorkersNetworkContext;
 import com.talhanation.workers.WorkersMain;
-import net.minecraftforge.network.PacketDistributor;
+import com.talhanation.workers.network.compat.WorkersPacketDistributor;
 
 import java.io.IOException;
 import java.nio.file.Files;
@@ -19,24 +18,24 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Stream;
 
-public class MessageRequestPresetList implements Message<MessageRequestPresetList> {
+public class MessageRequestPresetList implements WorkersMessage<MessageRequestPresetList> {
 
     public MessageRequestPresetList(){}
 
     @Override
-    public Dist getExecutingSide(){
-        return Dist.DEDICATED_SERVER;
+    public PacketFlow getExecutingSide(){
+        return PacketFlow.SERVERBOUND;
     }
 
     @Override
-    public void executeServerSide(NetworkEvent.Context context){
+    public void executeServerSide(WorkersNetworkContext context){
         ServerPlayer player = context.getSender();
         if (player == null) return;
 
         BuildMode mode = WorkersServerConfig.BuildModeConfig.get();
         if (mode == BuildMode.FREE) return;
 
-        Path scanRoot = Path.of(player.server.getServerDirectory().getAbsolutePath(), "workers", "scan");
+        Path scanRoot = player.server.getServerDirectory().resolve("workers").resolve("scan");
 
         String teamId = null;
         if (mode == BuildMode.PRESET_FACTIONS) {
@@ -49,7 +48,7 @@ public class MessageRequestPresetList implements Message<MessageRequestPresetLis
             catch (Exception ignored) {}
 
             if (teamId == null) {
-                WorkersMain.SIMPLE_CHANNEL.send(PacketDistributor.PLAYER.with(() -> player), new MessageToClientPresetList(new ArrayList<>()));
+                WorkersMain.SIMPLE_CHANNEL.send(WorkersPacketDistributor.PLAYER.with(() -> player), new MessageToClientPresetList(new ArrayList<>()));
                 return;
             }
             scanRoot = scanRoot.resolve("factions").resolve(teamId);
@@ -57,7 +56,7 @@ public class MessageRequestPresetList implements Message<MessageRequestPresetLis
 
         List<String> names = collectNbtNames(scanRoot);
 
-        WorkersMain.SIMPLE_CHANNEL.send(PacketDistributor.PLAYER.with(() -> player), new MessageToClientPresetList(names));
+        WorkersMain.SIMPLE_CHANNEL.send(WorkersPacketDistributor.PLAYER.with(() -> player), new MessageToClientPresetList(names));
     }
 
     private static List<String> collectNbtNames(Path root) {

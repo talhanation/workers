@@ -9,6 +9,7 @@ import com.talhanation.workers.network.MessageUpdateLumberArea;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.MutableComponent;
+import net.minecraft.core.component.DataComponents;
 import net.minecraft.util.FastColor;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.BlockItem;
@@ -70,7 +71,7 @@ public class LumberAreaScreen extends WorkAreaScreen {
         // No "any sapling" entry anymore — an unset selection shows a placeholder
         // instead, so the worker only ever plants the explicitly chosen sapling.
         if (currentSapling.isEmpty()) {
-            currentSapling.setHoverName(TEXT_SELECT_SAPLING);
+            currentSapling.set(DataComponents.CUSTOM_NAME, TEXT_SELECT_SAPLING);
         }
         seedItemSelectionDropDownMenu.setBgFillSelected(FastColor.ARGB32.color(255, 139, 139, 139));
 
@@ -140,9 +141,9 @@ public class LumberAreaScreen extends WorkAreaScreen {
         return super.mouseClicked(mouseX, mouseY, button);
     }
     @Override
-    public boolean mouseScrolled(double x, double y, double d) {
-        if(seedItemSelectionDropDownMenu != null) seedItemSelectionDropDownMenu.mouseScrolled(x,y,d);
-        return super.mouseScrolled(x, y, d);
+    public boolean mouseScrolled(double x, double y, double horizontalAmount, double d) {
+        if(seedItemSelectionDropDownMenu != null) seedItemSelectionDropDownMenu.mouseScrolled(x, y, horizontalAmount, d);
+        return super.mouseScrolled(x, y, horizontalAmount, d);
     }
     @Override
     public void render(GuiGraphics guiGraphics, int mouseX, int mouseY, float partialTicks) {

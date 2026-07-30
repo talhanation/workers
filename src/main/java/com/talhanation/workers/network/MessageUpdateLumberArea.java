@@ -1,22 +1,22 @@
 package com.talhanation.workers.network;
 
 import com.talhanation.workers.entities.workarea.LumberArea;
-import de.maxhenkel.corelib.net.Message;
-import net.minecraft.nbt.CompoundTag;
+import com.talhanation.workers.network.compat.WorkersMessage;
 import net.minecraft.network.FriendlyByteBuf;
+import net.minecraft.network.RegistryFriendlyByteBuf;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.item.ItemStack;
-import net.minecraftforge.api.distmarker.Dist;
-import net.minecraftforge.network.NetworkEvent;
+import net.minecraft.network.protocol.PacketFlow;
+import com.talhanation.workers.network.compat.WorkersNetworkContext;
 
 import java.util.UUID;
 
 import static com.talhanation.workers.entities.workarea.AbstractWorkAreaEntity.DONE_TIME;
 
-public class MessageUpdateLumberArea implements Message<MessageUpdateLumberArea> {
+public class MessageUpdateLumberArea implements WorkersMessage<MessageUpdateLumberArea> {
 
     public UUID uuid;
-    public CompoundTag tag;
+    public ItemStack saplingItem = ItemStack.EMPTY;
     public boolean shearLeaves;
     public boolean stripLogs;
     public boolean replant;
@@ -26,18 +26,17 @@ public class MessageUpdateLumberArea implements Message<MessageUpdateLumberArea>
 
     public MessageUpdateLumberArea(UUID uuid, ItemStack saplingItem, boolean shearLeaves, boolean stripLogs, boolean replant) {
         this.uuid = uuid;
-        CompoundTag compoundnbt = new CompoundTag();
-        this.tag = saplingItem.save(compoundnbt);
+        this.saplingItem = saplingItem.copy();
         this.shearLeaves = shearLeaves;
         this.stripLogs = stripLogs;
         this.replant = replant;
     }
 
-    public Dist getExecutingSide() {
-        return Dist.DEDICATED_SERVER;
+    public PacketFlow getExecutingSide() {
+        return PacketFlow.SERVERBOUND;
     }
 
-    public void executeServerSide(NetworkEvent.Context context){
+    public void executeServerSide(WorkersNetworkContext context){
         ServerPlayer player = context.getSender();
         if(player == null) return;
 
@@ -52,8 +51,7 @@ public class MessageUpdateLumberArea implements Message<MessageUpdateLumberArea>
     }
 
     public void update(LumberArea lumberArea){
-        ItemStack itemStack = ItemStack.of(tag);
-        lumberArea.setSaplingStack(itemStack);
+        lumberArea.setSaplingStack(this.saplingItem);
         lumberArea.setShearLeaves(this.shearLeaves);
         lumberArea.setStripLogs(this.stripLogs);
         lumberArea.setReplant(this.replant);
@@ -63,7 +61,7 @@ public class MessageUpdateLumberArea implements Message<MessageUpdateLumberArea>
 
     public MessageUpdateLumberArea fromBytes(FriendlyByteBuf buf) {
         this.uuid = buf.readUUID();
-        this.tag = buf.readNbt();
+        this.saplingItem = ItemStack.OPTIONAL_STREAM_CODEC.decode((RegistryFriendlyByteBuf) buf);
         this.shearLeaves = buf.readBoolean();
         this.stripLogs = buf.readBoolean();
         this.replant = buf.readBoolean();
@@ -72,7 +70,7 @@ public class MessageUpdateLumberArea implements Message<MessageUpdateLumberArea>
 
     public void toBytes(FriendlyByteBuf buf) {
         buf.writeUUID(uuid);
-        buf.writeNbt(tag);
+        ItemStack.OPTIONAL_STREAM_CODEC.encode((RegistryFriendlyByteBuf) buf, saplingItem);
         buf.writeBoolean(shearLeaves);
         buf.writeBoolean(stripLogs);
         buf.writeBoolean(replant);

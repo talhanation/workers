@@ -4,6 +4,7 @@ import net.minecraft.world.entity.ai.goal.Goal;
 import net.minecraft.world.entity.item.ItemEntity;
 import net.minecraft.world.entity.npc.Villager;
 import net.minecraft.world.food.FoodProperties;
+import net.minecraft.core.component.DataComponents;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.phys.AABB;
 
@@ -106,7 +107,7 @@ public class VillagerPickupFoodGoal extends Goal {
 
     private static boolean isFood(ItemStack stack) {
         if (stack.isEmpty()) return false;
-        FoodProperties food = stack.getItem().getFoodProperties();
-        return food != null && food.getNutrition() > 0;
+        FoodProperties food = stack.get(DataComponents.FOOD);
+        return food != null && food.nutrition() > 0;
     }
 }

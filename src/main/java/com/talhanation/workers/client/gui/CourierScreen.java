@@ -1,11 +1,10 @@
 package com.talhanation.workers.client.gui;
 
 import com.mojang.blaze3d.systems.RenderSystem;
+import com.talhanation.recruits.client.ClientManager;
 import com.talhanation.recruits.client.gui.worldmap.WorldMapScreen;
 import com.talhanation.recruits.client.gui.widgets.ScrollDropDownMenu;
 import com.talhanation.recruits.client.gui.widgets.RecruitsCheckBox;
-import com.talhanation.recruits.client.gui.worldmap.route.RouteNamePopup;
-import com.talhanation.recruits.client.gui.worldmap.storage.WorldMapStorageId;
 import com.talhanation.recruits.world.RecruitsRoute;
 import com.talhanation.workers.WorkersMain;
 import com.talhanation.workers.entities.CourierEntity;
@@ -28,21 +27,22 @@ import net.minecraft.util.FastColor;
 import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
-import net.minecraftforge.client.gui.widget.ExtendedButton;
+import net.neoforged.neoforge.client.gui.widget.ExtendedButton;
 
 import javax.annotation.Nullable;
-import java.io.File;
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
-import static net.minecraft.client.gui.components.AbstractWidget.WIDGETS_LOCATION;
 
 public class CourierScreen extends ScreenBase<CourierContainer> {
 
     private static final ResourceLocation TEXTURE =
-            new ResourceLocation(WorkersMain.MOD_ID, "textures/gui/courier.png");
+            ResourceLocation.fromNamespaceAndPath(WorkersMain.MOD_ID, "textures/gui/courier.png");
+    private static final ResourceLocation BUTTON_TEXTURE =
+            ResourceLocation.withDefaultNamespace("widget/button");
+    private static final ResourceLocation BUTTON_HIGHLIGHTED_TEXTURE =
+            ResourceLocation.withDefaultNamespace("widget/button_highlighted");
 
     private static final int IMG_W = 256;
     private static final int IMG_H = 197;
@@ -163,23 +163,17 @@ public class CourierScreen extends ScreenBase<CourierContainer> {
         loadWorkingDataFromEntity();
         buildWidgets();
     }
-    public static File getRoutesDirectory() {
-        return new File(Minecraft.getInstance().gameDirectory, "recruits/routes/" + WorldMapStorageId.detectCurrent());
-    }
     private void loadAvailableRoutes() {
         availableRoutes.clear();
-        try {
-            availableRoutes.addAll(RecruitsRoute.loadAllRoutes(getRoutesDirectory()));
-            availableRoutes.sort((a, b) -> a.getName().compareToIgnoreCase(b.getName()));
-        } catch (IOException e) {
-            WorkersMain.LOGGER.warn("Could not load courier routes: {}", e.getMessage());
-        }
+        ClientManager.loadRoutes();
+        availableRoutes.addAll(ClientManager.getRoutesList());
+        availableRoutes.sort((a, b) -> a.getName().compareToIgnoreCase(b.getName()));
     }
 
     private void loadWorkingDataFromEntity() {
         var routeData = courierEntity.getRouteData();
         if (routeData.getBoolean("hasRoute") && routeData.contains("route"))
-            workingRoute = CourierRoute.fromNBT(routeData.getCompound("route"));
+            workingRoute = CourierRoute.fromNBT(courierEntity.registryAccess(), routeData.getCompound("route"));
 
         if (workingRoute != null && workingRoute.getRouteId() != null) {
             var id = workingRoute.getRouteId();
@@ -287,10 +281,7 @@ public class CourierScreen extends ScreenBase<CourierContainer> {
 
         waypointList = new WaypointList(
                 minecraft, WP_W, WP_H, listTop, listBottom, WP_ITEM_H, WP_W);
-        waypointList.setLeftPos(listLeft);
-        waypointList.setRenderBackground(false);
-        waypointList.setRenderTopAndBottom(false);
-        waypointList.setRenderSelection(false);
+        waypointList.setX(listLeft);
         addRenderableWidget(waypointList);
 
         if (workingRoute != null) {
@@ -469,7 +460,7 @@ public class CourierScreen extends ScreenBase<CourierContainer> {
     private void applyChanges(boolean start) {
         if (workingRoute == null) return;
         WorkersMain.SIMPLE_CHANNEL.sendToServer(
-                new MessageCourierSetRoute(courierEntity.getUUID(), workingRoute, useVehicleInventory, shouldCycle, start));
+                new MessageCourierSetRoute(courierEntity.getUUID(), workingRoute, courierEntity.registryAccess(), useVehicleInventory, shouldCycle, start));
     }
 
     /** Auto-save on close (ESC, map button, etc.). */
@@ -764,13 +755,13 @@ public class CourierScreen extends ScreenBase<CourierContainer> {
     }
 
     @Override
-    public boolean mouseScrolled(double mx, double my, double delta) {
+    public boolean mouseScrolled(double mx, double my, double horizontalAmount, double delta) {
         // Action dropdowns get priority — isMouseOver() returns true for the expanded list
         // only when the dropdown is open, so this naturally lets open dropdowns consume scroll.
         for (var dropDownMenu : actionTypeDropDowns)
-            if (dropDownMenu.isMouseOver(mx, my)) return dropDownMenu.mouseScrolled(mx, my, delta);
+            if (dropDownMenu.isMouseOver(mx, my)) return dropDownMenu.mouseScrolled(mx, my, horizontalAmount, delta);
         for (var dropDownMenu : sourceTypeDropDowns)
-            if (dropDownMenu.isMouseOver(mx, my)) return dropDownMenu.mouseScrolled(mx, my, delta);
+            if (dropDownMenu.isMouseOver(mx, my)) return dropDownMenu.mouseScrolled(mx, my, horizontalAmount, delta);
 
         // Action area row scroll (only reached when no action dropdown is open over it)
         if (workingRoute != null && selectedWaypointIndex >= 0
@@ -785,10 +776,10 @@ public class CourierScreen extends ScreenBase<CourierContainer> {
             }
         }
         if (routeDropDown != null && routeDropDown.isMouseOver(mx, my))
-            return routeDropDown.mouseScrolled(mx, my, delta);
+            return routeDropDown.mouseScrolled(mx, my, horizontalAmount, delta);
         if (waypointList != null && waypointList.isMouseOver(mx, my))
-            return waypointList.mouseScrolled(mx, my, delta);
-        return super.mouseScrolled(mx, my, delta);
+            return waypointList.mouseScrolled(mx, my, horizontalAmount, delta);
+        return super.mouseScrolled(mx, my, horizontalAmount, delta);
     }
 
     @Override
@@ -825,7 +816,7 @@ public class CourierScreen extends ScreenBase<CourierContainer> {
     private class WaypointList extends ObjectSelectionList<WaypointList.WaypointEntry> {
 
         WaypointList(Minecraft mc, int width, int height, int top, int bottom, int itemHeight, int itemWidth) {
-            super(mc, width, height, top, bottom, itemHeight);
+            super(mc, width, height, top, itemHeight);
         }
 
         @Override protected int  addEntry(WaypointEntry e) { return super.addEntry(e); }
@@ -855,12 +846,14 @@ public class CourierScreen extends ScreenBase<CourierContainer> {
             @Override
             public void render(GuiGraphics g, int index, int top, int left, int entryW, int entryH, int mouseX, int mouseY, boolean hovered, float partial) {
                 boolean selected = (WaypointList.this.getSelected() == this);
-                int textureY = (selected || hovered) ? 86 : 66;
-
                 RenderSystem.enableBlend();
-                g.blitNineSliced(WIDGETS_LOCATION, left, top,
-                        WaypointList.this.getRowWidth(), entryH,
-                        20, 4, 200, 20, 0, textureY);
+                g.blitSprite(
+                        selected || hovered ? BUTTON_HIGHLIGHTED_TEXTURE : BUTTON_TEXTURE,
+                        left,
+                        top,
+                        WaypointList.this.getRowWidth(),
+                        entryH
+                );
 
                 // Show only the action count; show waypoint name as hover tooltip
                 int actionCount = 0;

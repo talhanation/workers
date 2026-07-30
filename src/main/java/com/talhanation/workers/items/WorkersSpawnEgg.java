@@ -27,9 +27,9 @@ public class WorkersSpawnEgg extends RecruitsSpawnEgg {
         } else {
             ItemStack stack = context.getItemInHand();
             BlockPos pos = context.getClickedPos();
-            EntityType<?> entitytype = this.getType(stack.getTag());
+            EntityType<?> entitytype = this.getType(stack);
             Entity entity = entitytype.create(world);
-            CompoundTag entityTag = stack.getTag();
+            CompoundTag entityTag = readEntityData(stack);
             if (entity instanceof AbstractRecruitEntity) {
                 AbstractRecruitEntity recruit = (AbstractRecruitEntity)entity;
                 if (entityTag != null) {
@@ -53,7 +53,7 @@ public class WorkersSpawnEgg extends RecruitsSpawnEgg {
     public void fillMerchant(MerchantEntity merchant, CompoundTag entityTag, BlockPos pos){
         fillRecruit(merchant, entityTag, pos);
 
-        entityTag.put("Trades", WorkersMerchantTrade.listToNbt(merchant.getTrades()));
+        entityTag.put("Trades", WorkersMerchantTrade.listToNbt(merchant.registryAccess(), merchant.getTrades()));
         entityTag.putBoolean("isCreative", merchant.isCreative());
         entityTag.putInt("TraderProgress", merchant.getTraderProgress());
         entityTag.putInt("TraderLevel", merchant.getTraderLevel());

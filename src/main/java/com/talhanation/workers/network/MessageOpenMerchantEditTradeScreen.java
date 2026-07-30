@@ -3,17 +3,17 @@ package com.talhanation.workers.network;
 import com.talhanation.workers.CommandEvents;
 import com.talhanation.workers.entities.MerchantEntity;
 import com.talhanation.workers.world.WorkersMerchantTrade;
-import de.maxhenkel.corelib.net.Message;
+import com.talhanation.workers.network.compat.WorkersMessage;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.player.Player;
-import net.minecraftforge.api.distmarker.Dist;
-import net.minecraftforge.network.NetworkEvent;
+import net.minecraft.network.protocol.PacketFlow;
+import com.talhanation.workers.network.compat.WorkersNetworkContext;
 
 import java.util.UUID;
 
-public class MessageOpenMerchantEditTradeScreen implements Message<MessageOpenMerchantEditTradeScreen> {
+public class MessageOpenMerchantEditTradeScreen implements WorkersMessage<MessageOpenMerchantEditTradeScreen> {
     private UUID player;
     private UUID merchantUuid;
     private CompoundTag nbt;
@@ -24,14 +24,14 @@ public class MessageOpenMerchantEditTradeScreen implements Message<MessageOpenMe
     public MessageOpenMerchantEditTradeScreen(Player player, UUID merchantUuid, WorkersMerchantTrade trade) {
         this.player = player.getUUID();
         this.merchantUuid = merchantUuid;
-        this.nbt = trade.toNbt();
+        this.nbt = trade.toNbt(player.registryAccess());
     }
     @Override
-    public Dist getExecutingSide() {
-        return Dist.DEDICATED_SERVER;
+    public PacketFlow getExecutingSide() {
+        return PacketFlow.SERVERBOUND;
     }
     @Override
-    public void executeServerSide(NetworkEvent.Context context) {
+    public void executeServerSide(WorkersNetworkContext context) {
         if (!context.getSender().getUUID().equals(player)) {
             return;
         }
@@ -42,7 +42,7 @@ public class MessageOpenMerchantEditTradeScreen implements Message<MessageOpenMe
                         .equals(this.merchantUuid))
                 .stream()
                 .findAny()
-                .ifPresent(merchant -> merchant.openAddEditTradeGUI(player, WorkersMerchantTrade.fromNbt(nbt)));
+                .ifPresent(merchant -> merchant.openAddEditTradeGUI(player, WorkersMerchantTrade.fromNbt(player.registryAccess(), nbt)));
     }
     @Override
     public MessageOpenMerchantEditTradeScreen fromBytes(FriendlyByteBuf buf) {
@@ -58,4 +58,3 @@ public class MessageOpenMerchantEditTradeScreen implements Message<MessageOpenMe
         buf.writeNbt(this.nbt);
     }
 }
-

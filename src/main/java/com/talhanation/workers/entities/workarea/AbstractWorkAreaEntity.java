@@ -3,7 +3,6 @@ package com.talhanation.workers.entities.workarea;
 import com.talhanation.workers.WorkersMain;
 import com.talhanation.workers.entities.AbstractWorkerEntity;
 import com.talhanation.workers.network.MessageToClientOpenWorkAreaScreen;
-import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.nbt.CompoundTag;
@@ -25,9 +24,7 @@ import net.minecraft.world.level.block.ChestBlock;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.AABB;
-import net.minecraftforge.api.distmarker.Dist;
-import net.minecraftforge.api.distmarker.OnlyIn;
-import net.minecraftforge.network.PacketDistributor;
+import com.talhanation.workers.network.compat.WorkersPacketDistributor;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
@@ -58,15 +55,15 @@ public abstract class AbstractWorkAreaEntity extends Entity {
     }
 
     @Override
-    protected void defineSynchedData() {
-        this.entityData.define(PLAYER_NAME, "");
-        this.entityData.define(PLAYER_UUID, Optional.empty());
-        this.entityData.define(WIDTH, 0);
-        this.entityData.define(HEIGHT, 0);
-        this.entityData.define(DEPTH, 0);
-        this.entityData.define(FACING, Direction.SOUTH);
-        this.entityData.define(TEAM_STRING_ID, "");
-        this.entityData.define(TEAM_ACCESS, true);
+    protected void defineSynchedData(net.minecraft.network.syncher.SynchedEntityData.Builder builder) {
+        builder.define(PLAYER_NAME, "");
+        builder.define(PLAYER_UUID, Optional.empty());
+        builder.define(WIDTH, 0);
+        builder.define(HEIGHT, 0);
+        builder.define(DEPTH, 0);
+        builder.define(FACING, Direction.SOUTH);
+        builder.define(TEAM_STRING_ID, "");
+        builder.define(TEAM_ACCESS, true);
     }
 
     @Override
@@ -117,7 +114,7 @@ public abstract class AbstractWorkAreaEntity extends Entity {
             }
             else{
 
-                WorkersMain.SIMPLE_CHANNEL.send(PacketDistributor.PLAYER.with(() -> (ServerPlayer) player), new MessageToClientOpenWorkAreaScreen(this.getUUID()));
+                WorkersMain.SIMPLE_CHANNEL.send(WorkersPacketDistributor.PLAYER.with(() -> (ServerPlayer) player), new MessageToClientOpenWorkAreaScreen(this.getUUID()));
                 return InteractionResult.SUCCESS;
             }
         }
@@ -226,7 +223,7 @@ public abstract class AbstractWorkAreaEntity extends Entity {
             case EAST  -> end = start.offset(depth, height, width);   // depth entlang +X, width entlang +Z
             default    -> end = start.offset(-depth, height, -width); // WEST: depth entlang -X, width entlang -Z
         }
-        return new AABB(start, end);
+        return AABB.encapsulatingFullBlocks(start, end);
     }
     public static List<AbstractWorkAreaEntity> getNearbyAreas(Level level, BlockPos center, int radius) {
         List<AbstractWorkAreaEntity> nearby = new ArrayList<>();
@@ -339,8 +336,6 @@ public abstract class AbstractWorkAreaEntity extends Entity {
     }
 
     public abstract Item getRenderItem();
-    @OnlyIn(Dist.CLIENT)
-    public abstract Screen getScreen(Player player);
 
     public BlockPos getOriginPos() {
         return this.getOnPos();

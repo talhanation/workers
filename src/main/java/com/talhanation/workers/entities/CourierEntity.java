@@ -9,7 +9,6 @@ import com.talhanation.workers.entities.ai.navigation.WorkersGroundPathNavigatio
 import com.talhanation.workers.entities.workarea.AbstractWorkAreaEntity;
 import com.talhanation.workers.inventory.CourierContainer;
 import com.talhanation.workers.world.CourierRoute;
-import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.syncher.EntityDataAccessor;
@@ -32,8 +31,8 @@ import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.ServerLevelAccessor;
-import net.minecraftforge.common.ForgeMod;
-import net.minecraftforge.network.NetworkHooks;
+import net.neoforged.neoforge.common.NeoForgeMod;
+import com.talhanation.workers.network.compat.WorkersNetworkHooks;
 import org.jetbrains.annotations.NotNull;
 
 import javax.annotation.Nullable;
@@ -64,16 +63,16 @@ public class CourierEntity extends AbstractWorkerEntity implements IVillagerWork
     // ── Synced data ────────────────────────────────────────────────────────────
 
     @Override
-    protected void defineSynchedData() {
-        super.defineSynchedData();
-        this.entityData.define(ROUTE_DATA, new CompoundTag());
+    protected void defineSynchedData(net.minecraft.network.syncher.SynchedEntityData.Builder builder) {
+        super.defineSynchedData(builder);
+        builder.define(ROUTE_DATA, new CompoundTag());
     }
 
     public void syncRouteData() {
         CompoundTag nbt = new CompoundTag();
         nbt.putBoolean("hasRoute", currentRoute != null);
         if (currentRoute != null) {
-            nbt.put("route", currentRoute.toNBT());
+            nbt.put("route", currentRoute.toNBT(this.registryAccess()));
             nbt.putInt("currentIndex", currentWaypointIndex);
         }
         nbt.putBoolean("useVehicleInventory", useVehicleInventory);
@@ -215,11 +214,11 @@ public class CourierEntity extends AbstractWorkerEntity implements IVillagerWork
         return Mob.createMobAttributes()
                 .add(Attributes.MAX_HEALTH, 30.0D)
                 .add(Attributes.MOVEMENT_SPEED, 0.3D)
-                .add(ForgeMod.SWIM_SPEED.get(), 0.3D)
+                .add(NeoForgeMod.SWIM_SPEED, 0.3D)
                 .add(Attributes.KNOCKBACK_RESISTANCE, 0.1D)
                 .add(Attributes.ATTACK_DAMAGE, 0.5D)
                 .add(Attributes.FOLLOW_RANGE, 32.0D)
-                .add(ForgeMod.ENTITY_REACH.get(), 0D)
+                .add(Attributes.ENTITY_INTERACTION_RANGE, 0D)
                 .add(Attributes.ATTACK_SPEED);
     }
 
@@ -231,7 +230,7 @@ public class CourierEntity extends AbstractWorkerEntity implements IVillagerWork
 
         ((WorkersGroundPathNavigation) this.getNavigation()).setCanOpenDoors(true);
 
-        this.populateDefaultEquipmentEnchantments(rand, difficulty);
+        this.populateDefaultEquipmentEnchantments(world, rand, difficulty);
 
         this.initSpawn();
 
@@ -276,7 +275,7 @@ public class CourierEntity extends AbstractWorkerEntity implements IVillagerWork
         nbt.putBoolean("pendingShouldCycle", pendingShouldCycle);
 
         if (currentRoute != null) {
-            nbt.put("CourierRoute", currentRoute.toNBT());
+            nbt.put("CourierRoute", currentRoute.toNBT(this.registryAccess()));
         }
     }
 
@@ -286,7 +285,7 @@ public class CourierEntity extends AbstractWorkerEntity implements IVillagerWork
 
         this.currentRoute = null;
         if (nbt.contains("CourierRoute")) {
-            this.currentRoute = CourierRoute.fromNBT(nbt.getCompound("CourierRoute"));
+            this.currentRoute = CourierRoute.fromNBT(this.registryAccess(), nbt.getCompound("CourierRoute"));
         }
 
         int savedIndex = nbt.getInt("currentWaypointIndex");
@@ -331,13 +330,8 @@ public class CourierEntity extends AbstractWorkerEntity implements IVillagerWork
     }
 
     @Override
-    public Screen getSpecialScreen(AbstractRecruitEntity abstractRecruitEntity, Player player) {
-        return null;
-    }
-
-    @Override
     public void openSpecialGUI(ServerPlayer serverPlayer) {
-        NetworkHooks.openScreen(serverPlayer, new MenuProvider() {
+        WorkersNetworkHooks.openScreen(serverPlayer, new MenuProvider() {
             @Override
             public @NotNull Component getDisplayName(){
                 return CourierEntity.this.getName();

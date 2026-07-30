@@ -1,9 +1,7 @@
 package com.talhanation.workers.entities.workarea;
 
-import com.talhanation.workers.client.gui.FishingAreaScreen;
 import com.talhanation.workers.entities.AbstractWorkerEntity;
 import com.talhanation.workers.entities.FishermanEntity;
-import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.core.BlockPos;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.world.entity.EntityType;
@@ -12,8 +10,6 @@ import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.*;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.state.BlockState;
-import net.minecraftforge.api.distmarker.Dist;
-import net.minecraftforge.api.distmarker.OnlyIn;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -27,8 +23,8 @@ public class FishingArea extends AbstractWorkAreaEntity {
     public FishingArea(EntityType<?> type, Level level) {
         super(type, level);
     }
-    protected void defineSynchedData() {
-        super.defineSynchedData();
+    protected void defineSynchedData(net.minecraft.network.syncher.SynchedEntityData.Builder builder) {
+        super.defineSynchedData(builder);
     }
 
     @Override
@@ -43,12 +39,6 @@ public class FishingArea extends AbstractWorkAreaEntity {
 
     public Item getRenderItem(){
         return Items.FISHING_ROD;
-    }
-
-    @Override
-    @OnlyIn(Dist.CLIENT)
-    public Screen getScreen(Player player) {
-        return new FishingAreaScreen(this, player);
     }
 
     @Override

@@ -1,8 +1,6 @@
 package com.talhanation.workers.entities.workarea;
 
-import com.talhanation.workers.client.gui.StorageAreaScreen;
 import com.talhanation.workers.entities.*;
-import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.core.BlockPos;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.syncher.EntityDataAccessor;
@@ -16,28 +14,27 @@ import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.*;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
-import net.minecraftforge.api.distmarker.Dist;
-import net.minecraftforge.api.distmarker.OnlyIn;
 
 import java.util.*;
 
 public class StorageArea extends AbstractWorkAreaEntity implements IPermissionArea, Container {
 
     public static final EntityDataAccessor<Integer> STORAGE_TYPES = SynchedEntityData.defineId(StorageArea.class, EntityDataSerializers.INT);
-    public Map<BlockPos, Container> storageMap = new HashMap<>();
+    public Map<BlockPos, Container> storageMap = new LinkedHashMap<>();
 
     public StorageArea(EntityType<?> type, Level level) {
         super(type, level);
     }
-    protected void defineSynchedData() {
-        super.defineSynchedData();
-        this.entityData.define(STORAGE_TYPES, 0);
+    protected void defineSynchedData(net.minecraft.network.syncher.SynchedEntityData.Builder builder) {
+        super.defineSynchedData(builder);
+        builder.define(STORAGE_TYPES, 0);
     }
 
     @Override
     public void readAdditionalSaveData(CompoundTag tag) {
         super.readAdditionalSaveData(tag);
         this.entityData.set(STORAGE_TYPES, tag.getInt("StorageTypes"));
+        this.storageMap.clear();
     }
 
     @Override
@@ -48,12 +45,6 @@ public class StorageArea extends AbstractWorkAreaEntity implements IPermissionAr
 
     public Item getRenderItem(){
         return Items.CHEST;
-    }
-
-    @Override
-    @OnlyIn(Dist.CLIENT)
-    public Screen getScreen(Player player) {
-        return new StorageAreaScreen(this, player);
     }
     public void scanStorageBlocks(){
         if(area == null) area = this.getArea();
@@ -95,52 +86,99 @@ public class StorageArea extends AbstractWorkAreaEntity implements IPermissionAr
         }
         return set;
     }
-    //TODO: REMOVE ONCE RECRUITS HAS UPDATED OTHERWISE UPKEEP ON STORAGE DOES NOT WORK
+    /**
+     * Exposes every detected storage block as one logical container. Slot order follows the
+     * deterministic scan order of {@link BlockPos#betweenClosedStream}, so a global slot keeps
+     * referring to the same underlying chest until the area is rescanned.
+     */
     @Override
     public int getContainerSize() {
-        return 0;
+        ensureStorageScanned();
+        return storageMap.values().stream().mapToInt(Container::getContainerSize).sum();
     }
 
     @Override
     public boolean isEmpty() {
-        return false;
+        ensureStorageScanned();
+        return storageMap.values().stream().allMatch(Container::isEmpty);
     }
 
     @Override
-    public ItemStack getItem(int p_18941_) {
-        return null;
+    public ItemStack getItem(int slot) {
+        ContainerSlot resolved = resolveSlot(slot);
+        return resolved == null ? ItemStack.EMPTY : resolved.container().getItem(resolved.slot());
     }
 
     @Override
-    public ItemStack removeItem(int p_18942_, int p_18943_) {
-        return null;
+    public ItemStack removeItem(int slot, int amount) {
+        ContainerSlot resolved = resolveSlot(slot);
+        return resolved == null
+                ? ItemStack.EMPTY
+                : resolved.container().removeItem(resolved.slot(), amount);
     }
 
     @Override
-    public ItemStack removeItemNoUpdate(int p_18951_) {
-        return null;
+    public ItemStack removeItemNoUpdate(int slot) {
+        ContainerSlot resolved = resolveSlot(slot);
+        return resolved == null
+                ? ItemStack.EMPTY
+                : resolved.container().removeItemNoUpdate(resolved.slot());
     }
 
     @Override
-    public void setItem(int p_18944_, ItemStack p_18945_) {
-
+    public void setItem(int slot, ItemStack stack) {
+        ContainerSlot resolved = resolveSlot(slot);
+        if (resolved != null) {
+            resolved.container().setItem(resolved.slot(), stack);
+        }
     }
 
     @Override
     public void setChanged() {
-
+        ensureStorageScanned();
+        storageMap.values().forEach(Container::setChanged);
     }
 
     @Override
-    public boolean stillValid(Player p_18946_) {
-        return false;
+    public boolean stillValid(Player player) {
+        if (this.isRemoved()) {
+            return false;
+        }
+        ensureStorageScanned();
+        return storageMap.values().stream().allMatch(container -> container.stillValid(player));
     }
 
     @Override
     public void clearContent() {
-
+        ensureStorageScanned();
+        storageMap.values().forEach(Container::clearContent);
     }
-    //TODO ABOVE IS DESCRIPTION
+
+    private void ensureStorageScanned() {
+        if (storageMap.isEmpty() && !this.getCommandSenderWorld().isClientSide()) {
+            scanStorageBlocks();
+        }
+    }
+
+    private ContainerSlot resolveSlot(int globalSlot) {
+        if (globalSlot < 0) {
+            return null;
+        }
+
+        ensureStorageScanned();
+        int slot = globalSlot;
+        for (Container container : storageMap.values()) {
+            int size = container.getContainerSize();
+            if (slot < size) {
+                return new ContainerSlot(container, slot);
+            }
+            slot -= size;
+        }
+        return null;
+    }
+
+    private record ContainerSlot(Container container, int slot) {
+    }
     public enum StorageType {
         MINERS(0),
         LUMBERS(1),

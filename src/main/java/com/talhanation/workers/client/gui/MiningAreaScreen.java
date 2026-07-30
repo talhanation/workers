@@ -19,7 +19,7 @@ import net.minecraft.util.Mth;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.block.Blocks;
-import net.minecraftforge.client.gui.widget.ExtendedButton;
+import net.neoforged.neoforge.client.gui.widget.ExtendedButton;
 
 import java.util.List;
 import java.util.UUID;
@@ -301,10 +301,10 @@ public class MiningAreaScreen extends WorkAreaScreen {
         return super.mouseClicked(mouseX, mouseY, button);
     }
     @Override
-    public boolean mouseScrolled(double x, double y, double d) {
-        if(modeDropDown != null) modeDropDown.mouseScrolled(x,y,d);
-        if(fillItemDropDown != null) fillItemDropDown.mouseScrolled(x,y,d);
-        return super.mouseScrolled(x, y, d);
+    public boolean mouseScrolled(double x, double y, double horizontalAmount, double d) {
+        if(modeDropDown != null) modeDropDown.mouseScrolled(x, y, horizontalAmount, d);
+        if(fillItemDropDown != null) fillItemDropDown.mouseScrolled(x, y, horizontalAmount, d);
+        return super.mouseScrolled(x, y, horizontalAmount, d);
     }
     @Override
     public void render(GuiGraphics guiGraphics, int mouseX, int mouseY, float partialTicks) {

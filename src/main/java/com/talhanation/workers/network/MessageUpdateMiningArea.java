@@ -1,15 +1,16 @@
 package com.talhanation.workers.network;
 
 import com.talhanation.workers.entities.workarea.MiningArea;
-import de.maxhenkel.corelib.net.Message;
+import com.talhanation.workers.network.compat.WorkersMessage;
 import net.minecraft.network.FriendlyByteBuf;
+import net.minecraft.network.RegistryFriendlyByteBuf;
 import net.minecraft.server.level.ServerPlayer;
-import net.minecraftforge.api.distmarker.Dist;
-import net.minecraftforge.network.NetworkEvent;
+import net.minecraft.network.protocol.PacketFlow;
+import com.talhanation.workers.network.compat.WorkersNetworkContext;
 
 import java.util.UUID;
 
-public class MessageUpdateMiningArea implements Message<MessageUpdateMiningArea> {
+public class MessageUpdateMiningArea implements WorkersMessage<MessageUpdateMiningArea> {
 
     public UUID uuid;
     public int xSize;
@@ -39,11 +40,11 @@ public class MessageUpdateMiningArea implements Message<MessageUpdateMiningArea>
     }
 
     @Override
-    public Dist getExecutingSide() {
-        return Dist.DEDICATED_SERVER;
+    public PacketFlow getExecutingSide() {
+        return PacketFlow.SERVERBOUND;
     }
 
-    public void executeServerSide(NetworkEvent.Context context){
+    public void executeServerSide(WorkersNetworkContext context){
         ServerPlayer player = context.getSender();
         if(player == null) return;
 
@@ -79,7 +80,7 @@ public class MessageUpdateMiningArea implements Message<MessageUpdateMiningArea>
         this.closeFloor = buf.readBoolean();
         this.closeFluids = buf.readBoolean();
         this.mineWallOres = buf.readBoolean();
-        this.fillItem = buf.readItem();
+        this.fillItem = net.minecraft.world.item.ItemStack.OPTIONAL_STREAM_CODEC.decode((RegistryFriendlyByteBuf) buf);
         this.mode = buf.readInt();
         this.keepOn = buf.readBoolean();
         return this;
@@ -94,7 +95,7 @@ public class MessageUpdateMiningArea implements Message<MessageUpdateMiningArea>
         buf.writeBoolean(closeFloor);
         buf.writeBoolean(closeFluids);
         buf.writeBoolean(mineWallOres);
-        buf.writeItem(fillItem);
+        net.minecraft.world.item.ItemStack.OPTIONAL_STREAM_CODEC.encode((RegistryFriendlyByteBuf) buf, fillItem);
         buf.writeInt(mode);
         buf.writeBoolean(keepOn);
     }

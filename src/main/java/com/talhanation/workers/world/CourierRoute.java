@@ -2,6 +2,7 @@ package com.talhanation.workers.world;
 
 import com.talhanation.recruits.world.RecruitsRoute;
 import net.minecraft.core.BlockPos;
+import net.minecraft.core.HolderLookup;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.ListTag;
 import net.minecraft.nbt.Tag;
@@ -64,20 +65,20 @@ public class CourierRoute {
 
     // ── NBT ────────────────────────────────────────────────────────────────────
 
-    public CompoundTag toNBT() {
+    public CompoundTag toNBT(HolderLookup.Provider registries) {
         CompoundTag nbt = new CompoundTag();
         if (routeId != null) nbt.putUUID("RouteId", routeId);
 
         ListTag waypointList = new ListTag();
         for (CourierWaypoint wp : waypoints) {
-            waypointList.add(wp.toNBT());
+            waypointList.add(wp.toNBT(registries));
         }
         nbt.put("Waypoints", waypointList);
         return nbt;
     }
 
     @Nullable
-    public static CourierRoute fromNBT(CompoundTag nbt) {
+    public static CourierRoute fromNBT(HolderLookup.Provider registries, CompoundTag nbt) {
         if (nbt == null || nbt.isEmpty()) return null;
 
         UUID routeId = nbt.hasUUID("RouteId") ? nbt.getUUID("RouteId") : null;
@@ -85,7 +86,7 @@ public class CourierRoute {
         List<CourierWaypoint> wps = new ArrayList<>();
         ListTag waypointList = nbt.getList("Waypoints", Tag.TAG_COMPOUND);
         for (int i = 0; i < waypointList.size(); i++) {
-            CourierWaypoint wp = CourierWaypoint.fromNBT(waypointList.getCompound(i));
+            CourierWaypoint wp = CourierWaypoint.fromNBT(registries, waypointList.getCompound(i));
             if (wp != null) wps.add(wp);
         }
 
@@ -108,7 +109,7 @@ public class CourierRoute {
             return position;
         }
 
-        public CompoundTag toNBT() {
+        public CompoundTag toNBT(HolderLookup.Provider registries) {
             CompoundTag nbt = new CompoundTag();
             nbt.putInt("X", position.getX());
             nbt.putInt("Y", position.getY());
@@ -117,14 +118,14 @@ public class CourierRoute {
 
             ListTag actionList = new ListTag();
             for (CourierAction action : actions) {
-                actionList.add(action.toNBT());
+                actionList.add(action.toNBT(registries));
             }
             nbt.put("Actions", actionList);
             return nbt;
         }
 
         @Nullable
-        public static CourierWaypoint fromNBT(CompoundTag nbt) {
+        public static CourierWaypoint fromNBT(HolderLookup.Provider registries, CompoundTag nbt) {
             if (nbt == null || nbt.isEmpty()) return null;
 
             BlockPos pos  = new BlockPos(nbt.getInt("X"), nbt.getInt("Y"), nbt.getInt("Z"));
@@ -133,7 +134,7 @@ public class CourierRoute {
             List<CourierAction> actions = new ArrayList<>();
             ListTag actionList = nbt.getList("Actions", Tag.TAG_COMPOUND);
             for (int i = 0; i < Math.min(actionList.size(), 8); i++) {
-                CourierAction action = CourierAction.fromNBT(actionList.getCompound(i));
+                CourierAction action = CourierAction.fromNBT(registries, actionList.getCompound(i));
                 if (action != null) actions.add(action);
             }
 

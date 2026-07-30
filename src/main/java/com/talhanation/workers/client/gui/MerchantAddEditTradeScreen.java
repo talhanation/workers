@@ -18,11 +18,11 @@ import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
-import net.minecraftforge.client.gui.widget.ExtendedButton;
+import net.neoforged.neoforge.client.gui.widget.ExtendedButton;
 
 public class MerchantAddEditTradeScreen extends ScreenBase<MerchantAddEditTradeContainer> {
 
-    private static final ResourceLocation RESOURCE_LOCATION = new ResourceLocation(WorkersMain.MOD_ID,"textures/gui/merchant_add_edit_trade_screen.png" );
+    private static final ResourceLocation RESOURCE_LOCATION = ResourceLocation.fromNamespaceAndPath(WorkersMain.MOD_ID,"textures/gui/merchant_add_edit_trade_screen.png" );
     private static final MutableComponent BUTTON_CANCEL = Component.translatable("gui.workers.button.cancel");
     private static final MutableComponent BUTTON_SAVE = Component.translatable("gui.workers.button.save");
     private static final MutableComponent BUTTON_EDIT = Component.translatable("gui.workers.button.edit");
@@ -100,7 +100,7 @@ public class MerchantAddEditTradeScreen extends ScreenBase<MerchantAddEditTradeC
                         this.trade.allowDamagedCurrency = allowDamagedCurrency;
                     }
 
-                    WorkersMain.SIMPLE_CHANNEL.sendToServer(new MessageUpdateMerchantTrade(this.merchantEntity.getUUID(), this.trade, false));
+                    WorkersMain.SIMPLE_CHANNEL.sendToServer(new MessageUpdateMerchantTrade(this.merchantEntity.getUUID(), this.trade, this.merchantEntity.registryAccess(), false));
 
                     new java.util.Timer().schedule(new java.util.TimerTask() {
                         @Override

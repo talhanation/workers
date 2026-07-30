@@ -14,14 +14,14 @@ import net.minecraft.resources.ResourceLocation;
 import net.minecraft.util.Mth;
 import net.minecraft.world.entity.HumanoidArm;
 import net.minecraft.world.item.ItemStack;
-import net.minecraftforge.api.distmarker.Dist;
-import net.minecraftforge.api.distmarker.OnlyIn;
+import net.neoforged.api.distmarker.Dist;
+import net.neoforged.api.distmarker.OnlyIn;
 import org.joml.Matrix3f;
 import org.joml.Matrix4f;
 
 @OnlyIn(Dist.CLIENT)
 public class FishingBobberRenderer extends EntityRenderer<FishingBobberEntity> {
-    private static final ResourceLocation TEXTURE_LOCATION = new ResourceLocation("textures/entity/fishing_hook.png");
+    private static final ResourceLocation TEXTURE_LOCATION = ResourceLocation.withDefaultNamespace("textures/entity/fishing_hook.png");
     private static final RenderType RENDER_TYPE = RenderType.entityCutout(TEXTURE_LOCATION);
     private static final double VIEW_BOBBING_SCALE = 960.0D;
 
@@ -38,17 +38,15 @@ public class FishingBobberRenderer extends EntityRenderer<FishingBobberEntity> {
             poseStack.mulPose(this.entityRenderDispatcher.cameraOrientation());
             poseStack.mulPose(Axis.YP.rotationDegrees(180.0F));
             PoseStack.Pose posestack$pose = poseStack.last();
-            Matrix4f matrix4f = posestack$pose.pose();
-            Matrix3f matrix3f = posestack$pose.normal();
             VertexConsumer vertexconsumer = multiBufferSource.getBuffer(RENDER_TYPE);
-            vertex(vertexconsumer, matrix4f, matrix3f, packetLight, 0.0F, 0, 0, 1);
-            vertex(vertexconsumer, matrix4f, matrix3f, packetLight, 1.0F, 0, 1, 1);
-            vertex(vertexconsumer, matrix4f, matrix3f, packetLight, 1.0F, 1, 1, 0);
-            vertex(vertexconsumer, matrix4f, matrix3f, packetLight, 0.0F, 1, 0, 0);
+            vertex(vertexconsumer, posestack$pose, packetLight, 0.0F, 0, 0, 1);
+            vertex(vertexconsumer, posestack$pose, packetLight, 1.0F, 0, 1, 1);
+            vertex(vertexconsumer, posestack$pose, packetLight, 1.0F, 1, 1, 0);
+            vertex(vertexconsumer, posestack$pose, packetLight, 0.0F, 1, 0, 0);
             poseStack.popPose();
             int i = fisherman.getMainArm() == HumanoidArm.RIGHT ? 1 : -1;
             ItemStack itemstack = fisherman.getMainHandItem();
-            if (!itemstack.canPerformAction(net.minecraftforge.common.ToolActions.FISHING_ROD_CAST)) {
+            if (!itemstack.canPerformAction(net.neoforged.neoforge.common.ItemAbilities.FISHING_ROD_CAST)) {
                 i = -i;
             }
 
@@ -93,8 +91,13 @@ public class FishingBobberRenderer extends EntityRenderer<FishingBobberEntity> {
         return (float) p_114691_ / (float) p_114692_;
     }
 
-    private static void vertex(VertexConsumer p_254464_, Matrix4f p_254085_, Matrix3f p_253962_, int p_254296_, float p_253632_, int p_254132_, int p_254171_, int p_254026_) {
-        p_254464_.vertex(p_254085_, p_253632_ - 0.5F, (float) p_254132_ - 0.5F, 0.0F).color(255, 255, 255, 255).uv((float) p_254171_, (float) p_254026_).overlayCoords(OverlayTexture.NO_OVERLAY).uv2(p_254296_).normal(p_253962_, 0.0F, 1.0F, 0.0F).endVertex();
+    private static void vertex(VertexConsumer p_254464_, PoseStack.Pose pose, int p_254296_, float p_253632_, int p_254132_, int p_254171_, int p_254026_) {
+        p_254464_.addVertex(pose, p_253632_ - 0.5F, (float) p_254132_ - 0.5F, 0.0F)
+                .setColor(255, 255, 255, 255)
+                .setUv((float) p_254171_, (float) p_254026_)
+                .setOverlay(OverlayTexture.NO_OVERLAY)
+                .setLight(p_254296_)
+                .setNormal(pose, 0.0F, 1.0F, 0.0F);
     }
 
     private static void stringVertex(float p_174119_, float p_174120_, float p_174121_, VertexConsumer p_174122_, PoseStack.Pose p_174123_, float p_174124_, float p_174125_) {
@@ -108,7 +111,7 @@ public class FishingBobberRenderer extends EntityRenderer<FishingBobberEntity> {
         f3 /= f6;
         f4 /= f6;
         f5 /= f6;
-        p_174122_.vertex(p_174123_.pose(), f, f1, f2).color(0, 0, 0, 255).normal(p_174123_.normal(), f3, f4, f5).endVertex();
+        p_174122_.addVertex(p_174123_, f, f1, f2).setColor(0, 0, 0, 255).setNormal(p_174123_, f3, f4, f5);
     }
 
     public ResourceLocation getTextureLocation(FishingBobberEntity p_114703_) {

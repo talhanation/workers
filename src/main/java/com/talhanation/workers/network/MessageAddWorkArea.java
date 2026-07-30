@@ -8,16 +8,16 @@ import com.talhanation.workers.WorkAreaTypes;
 import com.talhanation.workers.config.WorkersServerConfig;
 import com.talhanation.workers.entities.workarea.*;
 import com.talhanation.workers.init.ModEntityTypes;
-import de.maxhenkel.corelib.net.Message;
+import com.talhanation.workers.network.compat.WorkersMessage;
 import net.minecraft.core.BlockPos;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.level.ChunkPos;
-import net.minecraftforge.api.distmarker.Dist;
-import net.minecraftforge.network.NetworkEvent;
+import net.minecraft.network.protocol.PacketFlow;
+import com.talhanation.workers.network.compat.WorkersNetworkContext;
 
-public class MessageAddWorkArea implements Message<MessageAddWorkArea> {
+public class MessageAddWorkArea implements WorkersMessage<MessageAddWorkArea> {
     public BlockPos pos;
     public int typeIndex;
     public MessageAddWorkArea() {
@@ -29,11 +29,11 @@ public class MessageAddWorkArea implements Message<MessageAddWorkArea> {
         this.typeIndex = type.getIndex();
     }
 
-    public Dist getExecutingSide() {
-        return Dist.DEDICATED_SERVER;
+    public PacketFlow getExecutingSide() {
+        return PacketFlow.SERVERBOUND;
     }
 
-    public void executeServerSide(NetworkEvent.Context context){
+    public void executeServerSide(WorkersNetworkContext context){
         ServerPlayer player = context.getSender();
         if(player == null) return;
         String teamStringID = "";

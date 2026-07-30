@@ -33,16 +33,15 @@ import net.minecraft.world.item.Items;
 import net.minecraft.world.item.crafting.Ingredient;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.phys.AABB;
-import net.minecraftforge.api.distmarker.Dist;
-import net.minecraftforge.api.distmarker.OnlyIn;
-import net.minecraftforge.client.event.ClientPlayerNetworkEvent;
-import net.minecraftforge.event.entity.EntityJoinLevelEvent;
-import net.minecraftforge.event.entity.player.PlayerInteractEvent;
-import net.minecraftforge.event.server.ServerStartedEvent;
-import net.minecraftforge.event.server.ServerStoppingEvent;
-import net.minecraftforge.eventbus.api.SubscribeEvent;
-import net.minecraftforge.network.PacketDistributor;
-import net.minecraftforge.registries.RegistryObject;
+import net.neoforged.api.distmarker.Dist;
+import net.neoforged.api.distmarker.OnlyIn;
+import net.neoforged.neoforge.client.event.ClientPlayerNetworkEvent;
+import net.neoforged.neoforge.event.entity.EntityJoinLevelEvent;
+import net.neoforged.neoforge.event.entity.player.PlayerInteractEvent;
+import net.neoforged.neoforge.event.server.ServerStartedEvent;
+import net.neoforged.neoforge.event.server.ServerStoppingEvent;
+import net.neoforged.bus.api.SubscribeEvent;
+import com.talhanation.workers.network.compat.WorkersPacketDistributor;
 
 import java.util.List;
 import java.util.UUID;
@@ -72,7 +71,7 @@ public class VillagerEvents {
         if(event.getLevel().isClientSide()) return;
 
         if(event.getEntity() instanceof ServerPlayer player){
-                WorkersMain.SIMPLE_CHANNEL.send(PacketDistributor.PLAYER.with(() -> player),
+                WorkersMain.SIMPLE_CHANNEL.send(WorkersPacketDistributor.PLAYER.with(() -> player),
                         new MessageToClientUpdateConfig(
                                 WorkersServerConfig.ShouldWorkAreaOnlyBeInFactionClaim.get(),
                                 WorkersServerConfig.ShouldOnlyPlacingBuildingsBePossible.get(),
@@ -148,7 +147,7 @@ public class VillagerEvents {
         }
 
         if (entity instanceof Chicken chicken) {
-            chicken.goalSelector.addGoal(3, new WorkerTemptGoal(chicken,1.0, Chicken.FOOD_ITEMS));
+            chicken.goalSelector.addGoal(3, new WorkerTemptGoal(chicken, 1.0, Ingredient.of(net.minecraft.tags.ItemTags.CHICKEN_FOOD)));
         }
         else if(entity instanceof Cow cow) {
             cow.goalSelector.addGoal(3, new WorkerTemptGoal(cow,1.0, Ingredient.of(Items.WHEAT)));
@@ -157,7 +156,7 @@ public class VillagerEvents {
             sheep.goalSelector.addGoal(3, new WorkerTemptGoal(sheep,1.0, Ingredient.of(Items.WHEAT)));
         }
         else if(entity instanceof Pig pig) {
-            pig.goalSelector.addGoal(3, new WorkerTemptGoal(pig,1.0, Pig.FOOD_ITEMS));
+            pig.goalSelector.addGoal(3, new WorkerTemptGoal(pig, 1.0, Ingredient.of(net.minecraft.tags.ItemTags.PIG_FOOD)));
         }
         else if(entity instanceof Villager villager) {
             villager.goalSelector.addGoal(4, new VillagerRespondToInvitationGoal(villager));
@@ -172,7 +171,7 @@ public class VillagerEvents {
     }
 
     private void createWorkerFromAllay(Allay allay) {
-        List<RegistryObject<EntityType<?>>> types = ModEntityTypes.WORKER_TYPES.getEntries().stream().toList();
+        var types = new java.util.ArrayList<>(ModEntityTypes.WORKER_TYPES.getEntries());
 
         int rnd = allay.getRandom().nextInt(types.size() -1);
         var type = types.get(rnd).get().create(allay.getCommandSenderWorld());
@@ -190,15 +189,22 @@ public class VillagerEvents {
     }
 
     @SubscribeEvent
-    public void onRightClickBlock(PlayerInteractEvent event) {
+    public void onRightClickBlock(PlayerInteractEvent.RightClickBlock event) {
+        handleBlockInteraction(event);
+    }
+
+    @SubscribeEvent
+    public void onLeftClickBlock(PlayerInteractEvent.LeftClickBlock event) {
+        handleBlockInteraction(event);
+    }
+
+    private void handleBlockInteraction(PlayerInteractEvent event) {
         if (event.getLevel() == null || event.getEntity() == null) return;
 
-        if(!(event instanceof PlayerInteractEvent.RightClickBlock) && !(event instanceof PlayerInteractEvent.LeftClickBlock)) {
-            return;
-        }
-
         if(disableInteractionInPermissionArea(event.getEntity(), event.getLevel(), event.getPos())){
-            event.setCanceled(true);
+            if (event instanceof net.neoforged.bus.api.ICancellableEvent cancellable) {
+                cancellable.setCanceled(true);
+            }
         }
     }
 

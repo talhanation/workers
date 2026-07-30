@@ -2,20 +2,21 @@ package com.talhanation.workers.network;
 
 import com.talhanation.workers.entities.CourierEntity;
 import com.talhanation.workers.world.CourierRoute;
-import de.maxhenkel.corelib.net.Message;
+import com.talhanation.workers.network.compat.WorkersMessage;
+import net.minecraft.core.HolderLookup;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.NbtIo;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.server.level.ServerPlayer;
-import net.minecraftforge.api.distmarker.Dist;
-import net.minecraftforge.network.NetworkEvent;
+import net.minecraft.network.protocol.PacketFlow;
+import com.talhanation.workers.network.compat.WorkersNetworkContext;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.util.UUID;
 
-public class MessageCourierSetRoute implements Message<MessageCourierSetRoute> {
+public class MessageCourierSetRoute implements WorkersMessage<MessageCourierSetRoute> {
 
     private UUID        courierUuid;
     private boolean     hasRoute;
@@ -25,11 +26,11 @@ public class MessageCourierSetRoute implements Message<MessageCourierSetRoute> {
     private boolean     start;
     public MessageCourierSetRoute() {}
 
-    public MessageCourierSetRoute(UUID courierUuid, CourierRoute routeNBT, boolean useVehicleInventory, boolean shouldCycle, boolean start) {
+    public MessageCourierSetRoute(UUID courierUuid, CourierRoute routeNBT, HolderLookup.Provider registries, boolean useVehicleInventory, boolean shouldCycle, boolean start) {
         this.courierUuid = courierUuid;
         this.hasRoute = routeNBT != null;
         if(hasRoute){
-            this.routeNBT = routeNBT.toNBT();
+            this.routeNBT = routeNBT.toNBT(registries);
         }
 
         this.useVehicleInventory  = useVehicleInventory;
@@ -43,12 +44,12 @@ public class MessageCourierSetRoute implements Message<MessageCourierSetRoute> {
     }
 
     @Override
-    public Dist getExecutingSide() {
-        return Dist.DEDICATED_SERVER;
+    public PacketFlow getExecutingSide() {
+        return PacketFlow.SERVERBOUND;
     }
 
     @Override
-    public void executeServerSide(NetworkEvent.Context context) {
+    public void executeServerSide(WorkersNetworkContext context) {
         ServerPlayer player = context.getSender();
         if (player == null) return;
 
@@ -79,7 +80,7 @@ public class MessageCourierSetRoute implements Message<MessageCourierSetRoute> {
                         courier.clearRoute();
                         return;
                     }
-                    CourierRoute route = CourierRoute.fromNBT(routeNBT);
+                    CourierRoute route = CourierRoute.fromNBT(player.registryAccess(), routeNBT);
                     if (this.start) {
 
                         courier.loadRouteFromNearestWaypoint(route);
@@ -101,7 +102,7 @@ public class MessageCourierSetRoute implements Message<MessageCourierSetRoute> {
         if (this.hasRoute) {
             byte[] compressed = buf.readByteArray();
             try {
-                this.routeNBT = NbtIo.readCompressed(new ByteArrayInputStream(compressed));
+                this.routeNBT = NbtIo.readCompressed(new ByteArrayInputStream(compressed), net.minecraft.nbt.NbtAccounter.unlimitedHeap());
             } catch (IOException e) {
                 e.printStackTrace();
                 this.routeNBT = new CompoundTag();

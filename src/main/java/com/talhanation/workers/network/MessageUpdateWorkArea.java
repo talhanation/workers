@@ -3,7 +3,7 @@ package com.talhanation.workers.network;
 import com.talhanation.recruits.world.RecruitsPlayerInfo;
 import com.talhanation.workers.entities.workarea.AbstractWorkAreaEntity;
 import com.talhanation.workers.entities.workarea.MiningArea;
-import de.maxhenkel.corelib.net.Message;
+import com.talhanation.workers.network.compat.WorkersMessage;
 import net.minecraft.core.BlockPos;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.network.chat.Component;
@@ -11,14 +11,14 @@ import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
-import net.minecraftforge.api.distmarker.Dist;
-import net.minecraftforge.network.NetworkEvent;
+import net.minecraft.network.protocol.PacketFlow;
+import com.talhanation.workers.network.compat.WorkersNetworkContext;
 
 import java.util.UUID;
 
 import static com.talhanation.workers.entities.workarea.AbstractWorkAreaEntity.DONE_TIME;
 
-public class MessageUpdateWorkArea implements Message<MessageUpdateWorkArea> {
+public class MessageUpdateWorkArea implements WorkersMessage<MessageUpdateWorkArea> {
     public float x;
     public float y;
     public float z;
@@ -41,11 +41,11 @@ public class MessageUpdateWorkArea implements Message<MessageUpdateWorkArea> {
         this.teamAccess = teamAccess;
     }
 
-    public Dist getExecutingSide() {
-        return Dist.DEDICATED_SERVER;
+    public PacketFlow getExecutingSide() {
+        return PacketFlow.SERVERBOUND;
     }
 
-    public void executeServerSide(NetworkEvent.Context context){
+    public void executeServerSide(WorkersNetworkContext context){
         ServerPlayer player = context.getSender();
         if(player == null) return;
 

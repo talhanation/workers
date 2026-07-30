@@ -4,6 +4,7 @@ import com.talhanation.workers.entities.CookEntity;
 import com.talhanation.workers.entities.workarea.KitchenArea;
 import com.talhanation.workers.world.VillagerInviteRegistry;
 import net.minecraft.core.BlockPos;
+import net.minecraft.core.component.DataComponents;
 import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.server.level.ServerLevel;
@@ -332,14 +333,14 @@ public class CookWorkGoal extends Goal {
     }
 
     private boolean isSmeltableFood(ItemStack stack, ServerLevel level) {
-        Optional<SmeltingRecipe> recipe = level.getRecipeManager()
-                .getRecipeFor(RecipeType.SMELTING, new SimpleContainer(stack), level);
+        var recipe = level.getRecipeManager()
+                .getRecipeFor(RecipeType.SMELTING, new net.minecraft.world.item.crafting.SingleRecipeInput(stack), level);
 
         if (recipe.isEmpty()) return false;
 
         // Only accept if result is a food item
-        ItemStack result = recipe.get().getResultItem(level.registryAccess());
-        return !result.isEmpty() && result.getItem().isEdible();
+        ItemStack result = recipe.get().value().getResultItem(level.registryAccess());
+        return !result.isEmpty() && result.has(DataComponents.FOOD);
     }
 
     // ── Villager trading ──────────────────────────────────────────────────────
@@ -440,7 +441,7 @@ public class CookWorkGoal extends Goal {
             for (int i = 0; i < container.getContainerSize(); i++) {
                 ItemStack slot = container.getItem(i);
                 if (slot.isEmpty()) continue;
-                if (slot.getItem().isEdible()) return slot.copy();
+                if (slot.has(DataComponents.FOOD)) return slot.copy();
             }
         }
         return null;

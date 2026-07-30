@@ -1,9 +1,7 @@
 package com.talhanation.workers.entities.workarea;
 
-import com.talhanation.workers.client.gui.KitchenAreaScreen;
 import com.talhanation.workers.entities.AbstractWorkerEntity;
 import com.talhanation.workers.entities.CookEntity;
-import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.core.BlockPos;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.syncher.EntityDataAccessor;
@@ -20,8 +18,6 @@ import net.minecraft.world.level.block.ChestBlock;
 import net.minecraft.world.level.block.entity.AbstractFurnaceBlockEntity;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
-import net.minecraftforge.api.distmarker.Dist;
-import net.minecraftforge.api.distmarker.OnlyIn;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -43,14 +39,14 @@ public class KitchenArea extends AbstractWorkAreaEntity implements IPermissionAr
     }
 
     @Override
-    protected void defineSynchedData() {
-        super.defineSynchedData();
-        this.entityData.define(FEED_VILLAGERS, true);
-        this.entityData.define(FURNACE_COUNT, 0);
-        this.entityData.define(CONTAINER_COUNT, 0);
-        this.entityData.define(COOK_NAME, "None");
-        this.entityData.define(TOTAL_SLOTS, 0);
-        this.entityData.define(FREE_SLOTS, 0);
+    protected void defineSynchedData(net.minecraft.network.syncher.SynchedEntityData.Builder builder) {
+        super.defineSynchedData(builder);
+        builder.define(FEED_VILLAGERS, true);
+        builder.define(FURNACE_COUNT, 0);
+        builder.define(CONTAINER_COUNT, 0);
+        builder.define(COOK_NAME, "None");
+        builder.define(TOTAL_SLOTS, 0);
+        builder.define(FREE_SLOTS, 0);
     }
 
     @Override
@@ -75,12 +71,6 @@ public class KitchenArea extends AbstractWorkAreaEntity implements IPermissionAr
     @Override
     public Item getRenderItem() {
         return Items.FURNACE;
-    }
-
-    @Override
-    @OnlyIn(Dist.CLIENT)
-    public Screen getScreen(Player player) {
-        return new KitchenAreaScreen(this, player);
     }
 
     // ── Scanning ──────────────────────────────────────────────────────────────
@@ -139,7 +129,7 @@ public class KitchenArea extends AbstractWorkAreaEntity implements IPermissionAr
         for (Container container : containerMap.values()) {
             for (int i = 0; i < container.getContainerSize(); i++) {
                 ItemStack slot = container.getItem(i);
-                if (!slot.isEmpty() && ItemStack.isSameItemSameTags(slot, stack)) {
+                if (!slot.isEmpty() && ItemStack.isSameItemSameComponents(slot, stack)) {
                     total += slot.getCount();
                 }
             }
@@ -154,7 +144,7 @@ public class KitchenArea extends AbstractWorkAreaEntity implements IPermissionAr
             boolean changed = false;
             for (int i = 0; i < container.getContainerSize() && toShrink > 0; i++) {
                 ItemStack slot = container.getItem(i);
-                if (!slot.isEmpty() && ItemStack.isSameItemSameTags(slot, stack)) {
+                if (!slot.isEmpty() && ItemStack.isSameItemSameComponents(slot, stack)) {
                     int take = Math.min(toShrink, slot.getCount());
                     slot.shrink(take);
                     toShrink -= take;
@@ -182,7 +172,7 @@ public class KitchenArea extends AbstractWorkAreaEntity implements IPermissionAr
                     remaining -= put;
                     changed    = true;
                 }
-                else if (ItemStack.isSameItemSameTags(slot, stack) && slot.getCount() < slot.getMaxStackSize()) {
+                else if (ItemStack.isSameItemSameComponents(slot, stack) && slot.getCount() < slot.getMaxStackSize()) {
                     int put = Math.min(remaining, slot.getMaxStackSize() - slot.getCount());
                     slot.grow(put);
                     remaining -= put;
@@ -200,7 +190,7 @@ public class KitchenArea extends AbstractWorkAreaEntity implements IPermissionAr
             for (int i = 0; i < container.getContainerSize(); i++) {
                 ItemStack slot = container.getItem(i);
                 if (slot.isEmpty()) return true;
-                if (ItemStack.isSameItemSameTags(slot, toAdd) && slot.getCount() < slot.getMaxStackSize()) return true;
+                if (ItemStack.isSameItemSameComponents(slot, toAdd) && slot.getCount() < slot.getMaxStackSize()) return true;
             }
         }
         return false;
@@ -213,7 +203,7 @@ public class KitchenArea extends AbstractWorkAreaEntity implements IPermissionAr
         int total = 0;
         for (AbstractFurnaceBlockEntity furnace : furnaceMap.values()) {
             ItemStack output = furnace.getItem(2);
-            if (!output.isEmpty() && ItemStack.isSameItemSameTags(output, stack)) {
+            if (!output.isEmpty() && ItemStack.isSameItemSameComponents(output, stack)) {
                 total += output.getCount();
             }
         }

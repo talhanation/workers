@@ -19,11 +19,11 @@ import net.minecraft.network.chat.MutableComponent;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.phys.Vec3;
-import net.minecraftforge.client.gui.widget.ExtendedButton;
+import net.neoforged.neoforge.client.gui.widget.ExtendedButton;
 
 public abstract class WorkAreaScreen extends RecruitsScreenBase {
 
-    private static final ResourceLocation TEXTURE = new ResourceLocation(WorkersMain.MOD_ID, "textures/gui/workareascreen.png");
+    private static final ResourceLocation TEXTURE = ResourceLocation.fromNamespaceAndPath(WorkersMain.MOD_ID, "textures/gui/workareascreen.png");
     private static final MutableComponent TEXT_FORWARD = Component.translatable("gui.workers.command.text.forward");
     private static final MutableComponent TEXT_BACKWARD = Component.translatable("gui.workers.command.text.back");
     private static final MutableComponent TEXT_LEFT = Component.translatable("gui.workers.command.text.left");

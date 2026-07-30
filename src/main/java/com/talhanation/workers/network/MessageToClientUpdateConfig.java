@@ -2,13 +2,14 @@ package com.talhanation.workers.network;
 
 import com.talhanation.workers.client.WorkersClientManager;
 import com.talhanation.workers.config.BuildMode;
-import de.maxhenkel.corelib.net.Message;
+import com.talhanation.workers.network.compat.WorkersMessage;
 import net.minecraft.network.FriendlyByteBuf;
-import net.minecraftforge.api.distmarker.Dist;
-import net.minecraftforge.api.distmarker.OnlyIn;
-import net.minecraftforge.network.NetworkEvent;
+import net.minecraft.network.protocol.PacketFlow;
+import net.neoforged.api.distmarker.OnlyIn;
+import net.neoforged.api.distmarker.Dist;
+import com.talhanation.workers.network.compat.WorkersNetworkContext;
 
-public class MessageToClientUpdateConfig implements Message<MessageToClientUpdateConfig> {
+public class MessageToClientUpdateConfig implements WorkersMessage<MessageToClientUpdateConfig> {
     private boolean allowWorkAreaOnlyInFactionClaim;
     private boolean allowOnlyBuildings;
     private BuildMode buildMode;
@@ -22,13 +23,13 @@ public class MessageToClientUpdateConfig implements Message<MessageToClientUpdat
     }
 
     @Override
-    public Dist getExecutingSide() {
-        return Dist.CLIENT;
+    public PacketFlow getExecutingSide() {
+        return PacketFlow.CLIENTBOUND;
     }
 
     @Override
     @OnlyIn(Dist.CLIENT)
-    public void executeClientSide(NetworkEvent.Context context) {
+    public void executeClientSide(WorkersNetworkContext context) {
         WorkersClientManager.configValueWorkAreaOnlyInFactionClaim = this.allowWorkAreaOnlyInFactionClaim;
         WorkersClientManager.configValueOnlyBuildings = this.allowOnlyBuildings;
         WorkersClientManager.buildMode = this.buildMode;

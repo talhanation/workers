@@ -1,5 +1,6 @@
 package com.talhanation.workers.world;
 
+import net.minecraft.core.HolderLookup;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.world.item.ItemStack;
 
@@ -125,24 +126,26 @@ public class CourierAction {
     public void setWaitSeconds(int s)                  { this.waitSeconds = s; }
 
     // NBT
-    public CompoundTag toNBT() {
+    public CompoundTag toNBT(HolderLookup.Provider registries) {
         CompoundTag nbt = new CompoundTag();
         nbt.putString("ActionType", actionType.name());
         if (sourceType != null) nbt.putString("SourceType", sourceType.name());
-        if (itemStack != null && !itemStack.isEmpty()) nbt.put("Item", itemStack.serializeNBT());
+        if (itemStack != null && !itemStack.isEmpty()) nbt.put("Item", itemStack.saveOptional(registries));
         nbt.putInt("WaitSeconds", waitSeconds);
         return nbt;
     }
 
     @Nullable
-    public static CourierAction fromNBT(CompoundTag nbt) {
+    public static CourierAction fromNBT(HolderLookup.Provider registries, CompoundTag nbt) {
         if (nbt == null || nbt.isEmpty()) return null;
         String raw = nbt.getString("ActionType");
         // Backward compatibility: the old single "FILL" action behaved like PUT_FILL.
         ActionType type = "FILL".equals(raw) ? ActionType.PUT_FILL : ActionType.fromString(raw);
         if (type == ActionType.WAIT) return wait(nbt.getInt("WaitSeconds"));
         SourceType source = SourceType.fromString(nbt.getString("SourceType"));
-        ItemStack  item   = nbt.contains("Item") ? ItemStack.of(nbt.getCompound("Item")) : ItemStack.EMPTY;
+        ItemStack item = nbt.contains("Item")
+                ? ItemStack.parseOptional(registries, nbt.getCompound("Item"))
+                : ItemStack.EMPTY;
         return switch (type) {
             case TAKE -> take(source, item);
             case PUT -> put(source, item);

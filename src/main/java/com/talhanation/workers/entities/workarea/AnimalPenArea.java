@@ -1,8 +1,6 @@
 package com.talhanation.workers.entities.workarea;
 
-import com.talhanation.workers.client.gui.AnimalPenAreaScreen;
 import com.talhanation.workers.entities.AnimalFarmerEntity;
-import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.syncher.EntityDataAccessor;
 import net.minecraft.network.syncher.EntityDataSerializers;
@@ -18,9 +16,7 @@ import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.*;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.state.BlockState;
-import net.minecraft.world.level.pathfinder.BlockPathTypes;
-import net.minecraftforge.api.distmarker.Dist;
-import net.minecraftforge.api.distmarker.OnlyIn;
+import net.minecraft.world.level.pathfinder.PathType;
 
 import java.util.Stack;
 
@@ -41,13 +37,13 @@ public class AnimalPenArea extends AbstractWorkAreaEntity {
     public AnimalPenArea(EntityType<?> type, Level level) {
         super(type, level);
     }
-    protected void defineSynchedData() {
-        super.defineSynchedData();
-        this.entityData.define(ANIMAL_TYPE, 0);
-        this.entityData.define(MAX_ANIMALS, 12);
-        this.entityData.define(BREED, true);
-        this.entityData.define(SLAUGHTER, true);
-        this.entityData.define(SPECIAL, true);
+    protected void defineSynchedData(net.minecraft.network.syncher.SynchedEntityData.Builder builder) {
+        super.defineSynchedData(builder);
+        builder.define(ANIMAL_TYPE, 0);
+        builder.define(MAX_ANIMALS, 12);
+        builder.define(BREED, true);
+        builder.define(SLAUGHTER, true);
+        builder.define(SPECIAL, true);
     }
 
     @Override
@@ -85,12 +81,6 @@ public class AnimalPenArea extends AbstractWorkAreaEntity {
         super.tick();
         if(this.getCommandSenderWorld().isClientSide()) return;
         if(breedTime > 0) breedTime--;
-    }
-
-    @Override
-    @OnlyIn(Dist.CLIENT)
-    public Screen getScreen(Player player) {
-        return new AnimalPenAreaScreen(this, player);
     }
 
     public boolean isWorkerPerfectCandidate(AnimalFarmerEntity animalWorker) {

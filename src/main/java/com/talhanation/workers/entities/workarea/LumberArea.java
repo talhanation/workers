@@ -1,11 +1,9 @@
 package com.talhanation.workers.entities.workarea;
 
 import com.talhanation.workers.WorkersMain;
-import com.talhanation.workers.client.gui.LumberAreaScreen;
 import com.talhanation.workers.compat.DynamicTrees;
 import com.talhanation.workers.entities.LumberjackEntity;
 import com.talhanation.workers.world.Tree;
-import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.core.registries.BuiltInRegistries;
@@ -24,8 +22,6 @@ import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.SaplingBlock;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.block.state.properties.BlockStateProperties;
-import net.minecraftforge.api.distmarker.Dist;
-import net.minecraftforge.api.distmarker.OnlyIn;
 
 import javax.annotation.Nullable;
 import java.util.*;
@@ -45,19 +41,19 @@ public class LumberArea extends AbstractWorkAreaEntity {
         super(type, level);
     }
 
-    protected void defineSynchedData() {
-        super.defineSynchedData();
-        this.entityData.define(SAPLING_STACK, ItemStack.EMPTY);
-        this.entityData.define(REPLANT, true);
-        this.entityData.define(SHEAR_LEAVES, false);
-        this.entityData.define(STRIP_LOGS, false);
+    protected void defineSynchedData(net.minecraft.network.syncher.SynchedEntityData.Builder builder) {
+        super.defineSynchedData(builder);
+        builder.define(SAPLING_STACK, ItemStack.EMPTY);
+        builder.define(REPLANT, true);
+        builder.define(SHEAR_LEAVES, false);
+        builder.define(STRIP_LOGS, false);
     }
 
     @Override
     public void readAdditionalSaveData(CompoundTag tag) {
         super.readAdditionalSaveData(tag);
         if(tag.contains("saplingItem")){
-            ItemStack stack = ItemStack.of(tag.getCompound("saplingItem"));
+            ItemStack stack = ItemStack.parseOptional(this.registryAccess(), tag.getCompound("saplingItem"));
             this.setSaplingStack(stack);
         }
         this.setReplant(tag.getBoolean("replantTrees"));
@@ -68,9 +64,7 @@ public class LumberArea extends AbstractWorkAreaEntity {
     @Override
     public void addAdditionalSaveData(CompoundTag tag) {
         super.addAdditionalSaveData(tag);
-        CompoundTag nbt = new CompoundTag();
-        this.getSaplingStack().save(nbt);
-        tag.put("saplingItem", nbt);
+        tag.put("saplingItem", this.getSaplingStack().saveOptional(this.registryAccess()));
         tag.putBoolean("replantTrees", getReplant());
         tag.putBoolean("shearLeaves", getShearLeaves());
         tag.putBoolean("stripLogs", getStripLogs());
@@ -78,12 +72,6 @@ public class LumberArea extends AbstractWorkAreaEntity {
 
     public Item getRenderItem(){
         return Items.IRON_AXE;
-    }
-
-    @Override
-    @OnlyIn(Dist.CLIENT)
-    public Screen getScreen(Player player) {
-        return new LumberAreaScreen(this, player);
     }
 
     public boolean isWorkerPerfectCandidate(LumberjackEntity lumberjack) {
@@ -371,13 +359,13 @@ public class LumberArea extends AbstractWorkAreaEntity {
 
     @Nullable
     public static Block getStrippedBlock(BlockState state) {
-        Block strippedBlock = AxeItem.STRIPPABLES.get(state.getBlock());
-        if(strippedBlock != null) return strippedBlock;
+        BlockState strippedState = AxeItem.getAxeStrippingState(state);
+        if (strippedState != null) return strippedState.getBlock();
 
         ResourceLocation id = BuiltInRegistries.BLOCK.getKey(state.getBlock());
         if(id == null) return null;
 
-        ResourceLocation strippedId = new ResourceLocation(id.getNamespace(), "stripped_" + id.getPath());
+        ResourceLocation strippedId = ResourceLocation.fromNamespaceAndPath(id.getNamespace(), "stripped_" + id.getPath());
         Block candidate = BuiltInRegistries.BLOCK.get(strippedId);
 
         if(candidate.getDescriptionId().contains("dynamictrees")){

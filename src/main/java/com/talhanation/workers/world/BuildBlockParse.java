@@ -103,7 +103,9 @@ public class BuildBlockParse {
 
         Item resolved = null;
         try {
-            for (CraftingRecipe recipe : level.getRecipeManager().getAllRecipesFor(RecipeType.CRAFTING)) {
+            for (net.minecraft.world.item.crafting.RecipeHolder<CraftingRecipe> holder
+                    : level.getRecipeManager().getAllRecipesFor(RecipeType.CRAFTING)) {
+                CraftingRecipe recipe = holder.value();
                 ItemStack result = recipe.getResultItem(level.registryAccess());
                 if (result.isEmpty() || result.getItem() != ownItem) continue;
 

@@ -2,16 +2,16 @@ package com.talhanation.workers.network;
 
 import com.talhanation.workers.entities.workarea.AbstractWorkAreaEntity;
 import com.talhanation.workers.entities.workarea.MiningArea;
-import de.maxhenkel.corelib.net.Message;
+import com.talhanation.workers.network.compat.WorkersMessage;
 import net.minecraft.core.Direction;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.server.level.ServerPlayer;
-import net.minecraftforge.api.distmarker.Dist;
-import net.minecraftforge.network.NetworkEvent;
+import net.minecraft.network.protocol.PacketFlow;
+import com.talhanation.workers.network.compat.WorkersNetworkContext;
 
 import java.util.UUID;
 
-public class MessageRotateWorkArea implements Message<MessageRotateWorkArea> {
+public class MessageRotateWorkArea implements WorkersMessage<MessageRotateWorkArea> {
 
     public UUID uuid;
     public boolean clockwise;
@@ -24,12 +24,12 @@ public class MessageRotateWorkArea implements Message<MessageRotateWorkArea> {
     }
 
     @Override
-    public Dist getExecutingSide() {
-        return Dist.DEDICATED_SERVER;
+    public PacketFlow getExecutingSide() {
+        return PacketFlow.SERVERBOUND;
     }
 
     @Override
-    public void executeServerSide(NetworkEvent.Context context) {
+    public void executeServerSide(WorkersNetworkContext context) {
         ServerPlayer player = context.getSender();
         if (player == null) return;
 

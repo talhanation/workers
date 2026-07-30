@@ -1,8 +1,6 @@
 package com.talhanation.workers.entities.workarea;
 
-import com.talhanation.workers.client.gui.HomeAreaScreen;
 import com.talhanation.workers.entities.AbstractWorkerEntity;
-import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.nbt.CompoundTag;
@@ -22,8 +20,6 @@ import net.minecraft.world.level.block.state.properties.BedPart;
 import net.minecraft.world.level.block.state.properties.BlockStateProperties;
 import net.minecraft.world.level.block.state.properties.IntegerProperty;
 import net.minecraft.world.phys.AABB;
-import net.minecraftforge.api.distmarker.Dist;
-import net.minecraftforge.api.distmarker.OnlyIn;
 
 import javax.annotation.Nullable;
 import java.util.*;
@@ -52,11 +48,11 @@ public class HomeArea extends AbstractWorkAreaEntity implements IPermissionArea 
     //////////////////////////////// LIFECYCLE //////////////////////////////////
 
     @Override
-    protected void defineSynchedData() {
-        super.defineSynchedData();
-        this.entityData.define(RESIDENT_NAME, "");
-        this.entityData.define(IS_PLAYER_HOME, false);
-        this.entityData.define(ROOM_QUALITY, 0);
+    protected void defineSynchedData(net.minecraft.network.syncher.SynchedEntityData.Builder builder) {
+        super.defineSynchedData(builder);
+        builder.define(RESIDENT_NAME, "");
+        builder.define(IS_PLAYER_HOME, false);
+        builder.define(ROOM_QUALITY, 0);
     }
 
     @Override
@@ -126,12 +122,6 @@ public class HomeArea extends AbstractWorkAreaEntity implements IPermissionArea 
     @Override
     public Item getRenderItem() {
         return Items.RED_BED;
-    }
-
-    @Override
-    @OnlyIn(Dist.CLIENT)
-    public Screen getScreen(Player player) {
-        return new HomeAreaScreen(this, player);
     }
 
     //////////////////////////////// RESIDENT ///////////////////////////////////

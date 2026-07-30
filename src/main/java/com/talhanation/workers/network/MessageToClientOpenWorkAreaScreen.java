@@ -1,17 +1,19 @@
 package com.talhanation.workers.network;
 
+import com.talhanation.workers.client.gui.WorkAreaScreenFactory;
 import com.talhanation.workers.entities.workarea.AbstractWorkAreaEntity;
-import de.maxhenkel.corelib.net.Message;
+import com.talhanation.workers.network.compat.WorkersMessage;
 import net.minecraft.client.Minecraft;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.world.entity.player.Player;
-import net.minecraftforge.api.distmarker.Dist;
-import net.minecraftforge.api.distmarker.OnlyIn;
-import net.minecraftforge.network.NetworkEvent;
+import net.minecraft.network.protocol.PacketFlow;
+import net.neoforged.api.distmarker.OnlyIn;
+import net.neoforged.api.distmarker.Dist;
+import com.talhanation.workers.network.compat.WorkersNetworkContext;
 
 import java.util.UUID;
 
-public class MessageToClientOpenWorkAreaScreen implements Message<MessageToClientOpenWorkAreaScreen> {
+public class MessageToClientOpenWorkAreaScreen implements WorkersMessage<MessageToClientOpenWorkAreaScreen> {
 
     private UUID uuid;
 
@@ -24,13 +26,13 @@ public class MessageToClientOpenWorkAreaScreen implements Message<MessageToClien
     }
 
     @Override
-    public Dist getExecutingSide() {
-        return Dist.CLIENT;
+    public PacketFlow getExecutingSide() {
+        return PacketFlow.CLIENTBOUND;
     }
 
     @Override
     @OnlyIn(Dist.CLIENT)
-    public void executeClientSide(NetworkEvent.Context context) {
+    public void executeClientSide(WorkersNetworkContext context) {
         Player player = Minecraft.getInstance().player;
         player.getCommandSenderWorld().getEntitiesOfClass(AbstractWorkAreaEntity.class, player.getBoundingBox()
                         .inflate(16.0D), v -> v
@@ -38,7 +40,7 @@ public class MessageToClientOpenWorkAreaScreen implements Message<MessageToClien
                         .equals(this.uuid))
                 .stream()
                 .findAny()
-                .ifPresent(areaEntity -> Minecraft.getInstance().setScreen(areaEntity.getScreen(player)));
+                .ifPresent(areaEntity -> WorkAreaScreenFactory.open(areaEntity, player));
     }
 
     @Override

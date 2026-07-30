@@ -32,7 +32,7 @@ import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.material.FluidState;
 import net.minecraft.world.phys.Vec3;
-import net.minecraftforge.registries.ForgeRegistries;
+import net.minecraft.core.registries.BuiltInRegistries;
 
 import javax.annotation.Nullable;
 import java.util.*;
@@ -457,8 +457,8 @@ public class BuilderWorkGoal extends Goal {
             int scanFacingVal = entityTag.getInt("facing");
 
             // Look up entity type
-            ResourceLocation rl = new ResourceLocation(typeId);
-            EntityType<?> entityType = ForgeRegistries.ENTITY_TYPES.getValue(rl);
+            ResourceLocation rl = ResourceLocation.parse(typeId);
+            EntityType<?> entityType = BuiltInRegistries.ENTITY_TYPE.get(rl);
             if (entityType == null) continue;
 
             // Compute world position using same formula as setStartBuild / WorkerAreaRenderer

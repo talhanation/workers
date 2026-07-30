@@ -3,21 +3,21 @@ package com.talhanation.workers.network;
 import com.talhanation.workers.WorkersMain;
 import com.talhanation.workers.config.BuildMode;
 import com.talhanation.workers.config.WorkersServerConfig;
-import de.maxhenkel.corelib.net.Message;
+import com.talhanation.workers.network.compat.WorkersMessage;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.NbtIo;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.scores.Team;
-import net.minecraftforge.api.distmarker.Dist;
-import net.minecraftforge.network.NetworkDirection;
-import net.minecraftforge.network.NetworkEvent;
+import net.minecraft.network.protocol.PacketFlow;
+import com.talhanation.workers.network.compat.WorkersNetworkContext;
+import com.talhanation.workers.network.compat.WorkersPacketDistributor;
 
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Path;
 
-public class MessageRequestPresetContent implements Message<MessageRequestPresetContent> {
+public class MessageRequestPresetContent implements WorkersMessage<MessageRequestPresetContent> {
 
     public String presetName;
 
@@ -27,19 +27,19 @@ public class MessageRequestPresetContent implements Message<MessageRequestPreset
     }
 
     @Override
-    public Dist getExecutingSide(){
-        return Dist.DEDICATED_SERVER;
+    public PacketFlow getExecutingSide(){
+        return PacketFlow.SERVERBOUND;
     }
 
     @Override
-    public void executeServerSide(NetworkEvent.Context context){
+    public void executeServerSide(WorkersNetworkContext context){
         ServerPlayer player = context.getSender();
         if (player == null) return;
 
         String safe = presetName.replace("..", "").replace("/", "").replace("\\", "");
 
         BuildMode mode = WorkersServerConfig.BuildModeConfig.get();
-        Path scanRoot = Path.of(player.server.getServerDirectory().getAbsolutePath(), "workers", "scan");
+        Path scanRoot = player.server.getServerDirectory().resolve("workers").resolve("scan");
 
         if (mode == BuildMode.PRESET_FACTIONS) {
             try {
@@ -57,8 +57,11 @@ public class MessageRequestPresetContent implements Message<MessageRequestPreset
         if (!file.exists()) return;
 
         try {
-            CompoundTag nbt = NbtIo.readCompressed(file);
-            WorkersMain.SIMPLE_CHANNEL.sendTo(new MessageToClientPresetContent(safe, nbt), player.connection.connection, NetworkDirection.PLAY_TO_CLIENT);
+            CompoundTag nbt = NbtIo.readCompressed(file.toPath(), net.minecraft.nbt.NbtAccounter.unlimitedHeap());
+            WorkersMain.SIMPLE_CHANNEL.send(
+                    WorkersPacketDistributor.PLAYER.with(() -> player),
+                    new MessageToClientPresetContent(safe, nbt)
+            );
         }
         catch (IOException e) {
             e.printStackTrace();

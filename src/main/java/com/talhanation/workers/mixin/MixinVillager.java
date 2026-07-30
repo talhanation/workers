@@ -4,6 +4,7 @@ import com.talhanation.workers.config.WorkersServerConfig;
 import net.minecraft.world.SimpleContainer;
 import net.minecraft.world.entity.npc.Villager;
 import net.minecraft.world.food.FoodProperties;
+import net.minecraft.core.component.DataComponents;
 import net.minecraft.world.item.ItemStack;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
@@ -99,7 +100,7 @@ public abstract class MixinVillager {
             ItemStack stack = inv.getItem(i);
             if (stack.isEmpty()) continue;
 
-            FoodProperties food = stack.getItem().getFoodProperties();
+            FoodProperties food = stack.get(DataComponents.FOOD);
             if (food == null) continue;
 
             int satInt = workers_saturationOf(food);
@@ -127,7 +128,7 @@ public abstract class MixinVillager {
         for (int i = 0; i < inv.getContainerSize(); i++) {
             ItemStack stack = inv.getItem(i);
             if (stack.isEmpty()) continue;
-            FoodProperties food = stack.getItem().getFoodProperties();
+            FoodProperties food = stack.get(DataComponents.FOOD);
             if (food == null) continue;
             total += workers_saturationOf(food) * stack.getCount();
         }
@@ -135,7 +136,7 @@ public abstract class MixinVillager {
     }
 
     private static int workers_saturationOf(FoodProperties food) {
-        float sat = food.getNutrition() * food.getSaturationModifier() * 2.0f;
+        float sat = food.saturation();
         return Math.max(1, Math.round(sat));
     }
 }

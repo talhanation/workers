@@ -28,7 +28,7 @@ import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.material.FluidState;
 import net.minecraft.world.phys.AABB;
-import net.minecraftforge.client.model.data.ModelData;
+import net.neoforged.neoforge.client.model.data.ModelData;
 import com.talhanation.workers.entities.workarea.BuildArea;
 
 import java.util.ArrayList;
@@ -256,7 +256,7 @@ public class StructurePreviewWidget extends AbstractWidget {
     }
 
     @Override
-    public boolean mouseScrolled(double mouseX, double mouseY, double x) {
+    public boolean mouseScrolled(double mouseX, double mouseY, double horizontalAmount, double x) {
         if (isHoveredOrFocused()) {
             zoom += x;
             zoom = Mth.clamp(zoom, 3f, 20f);

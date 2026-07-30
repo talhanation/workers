@@ -1,19 +1,19 @@
 package com.talhanation.workers.network;
 
 import com.talhanation.workers.entities.workarea.BuildArea;
-import de.maxhenkel.corelib.net.Message;
+import com.talhanation.workers.network.compat.WorkersMessage;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.NbtIo;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.server.level.ServerPlayer;
-import net.minecraftforge.api.distmarker.Dist;
-import net.minecraftforge.network.NetworkEvent;
+import net.minecraft.network.protocol.PacketFlow;
+import com.talhanation.workers.network.compat.WorkersNetworkContext;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.util.UUID;
-public class MessageUpdateBuildArea implements Message<MessageUpdateBuildArea> {
+public class MessageUpdateBuildArea implements WorkersMessage<MessageUpdateBuildArea> {
 
     public UUID uuid;
     public CompoundTag structureNBT;
@@ -47,11 +47,11 @@ public class MessageUpdateBuildArea implements Message<MessageUpdateBuildArea> {
     }
 
     @Override
-    public Dist getExecutingSide() {
-        return Dist.DEDICATED_SERVER;
+    public PacketFlow getExecutingSide() {
+        return PacketFlow.SERVERBOUND;
     }
 
-    public void executeServerSide(NetworkEvent.Context context){
+    public void executeServerSide(WorkersNetworkContext context){
         ServerPlayer player = context.getSender();
         if(player == null) return;
 
@@ -88,7 +88,7 @@ public class MessageUpdateBuildArea implements Message<MessageUpdateBuildArea> {
 
         byte[] compressed = buf.readByteArray();
         try {
-            this.structureNBT = NbtIo.readCompressed(new ByteArrayInputStream(compressed));
+            this.structureNBT = NbtIo.readCompressed(new ByteArrayInputStream(compressed), net.minecraft.nbt.NbtAccounter.unlimitedHeap());
         } catch (IOException e) {
             e.printStackTrace();
             this.structureNBT = new CompoundTag(); // Fallback

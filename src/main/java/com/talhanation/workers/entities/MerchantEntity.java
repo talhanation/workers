@@ -42,8 +42,8 @@ import net.minecraft.world.item.*;
 import net.minecraft.world.item.trading.MerchantOffer;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.ServerLevelAccessor;
-import net.minecraftforge.common.ForgeMod;
-import net.minecraftforge.network.NetworkHooks;
+import net.neoforged.neoforge.common.NeoForgeMod;
+import com.talhanation.workers.network.compat.WorkersNetworkHooks;
 import org.jetbrains.annotations.NotNull;
 
 import javax.annotation.Nullable;
@@ -88,15 +88,15 @@ public class MerchantEntity extends AbstractWorkerEntity implements ICanTradeEmb
     }
 
     @Override
-    protected void defineSynchedData() {
-        super.defineSynchedData();
-        this.entityData.define(TRADES, new CompoundTag());
-        this.entityData.define(TRADER_PROGRESS, 0);
-        this.entityData.define(TRADER_LEVEL, 1);
-        this.entityData.define(IS_TRADING, false);
-        this.entityData.define(IS_CREATIVE, false);
-        this.entityData.define(MARKET_NAME, "");
-        this.entityData.define(DAILY_REFRESH, false);
+    protected void defineSynchedData(net.minecraft.network.syncher.SynchedEntityData.Builder builder) {
+        super.defineSynchedData(builder);
+        builder.define(TRADES, new CompoundTag());
+        builder.define(TRADER_PROGRESS, 0);
+        builder.define(TRADER_LEVEL, 1);
+        builder.define(IS_TRADING, false);
+        builder.define(IS_CREATIVE, false);
+        builder.define(MARKET_NAME, "");
+        builder.define(DAILY_REFRESH, false);
     }
 
     @Override
@@ -139,7 +139,7 @@ public class MerchantEntity extends AbstractWorkerEntity implements ICanTradeEmb
     @Override
     public void addAdditionalSaveData(CompoundTag nbt) {
         super.addAdditionalSaveData(nbt);
-        nbt.put("Trades", WorkersMerchantTrade.listToNbt(getTrades()));
+        nbt.put("Trades", WorkersMerchantTrade.listToNbt(this.registryAccess(), getTrades()));
         nbt.putInt("TraderProgress", this.getTraderProgress());
         nbt.putInt("TraderLevel", this.getTraderLevel());
         nbt.putBoolean("isCreative", this.isCreative());
@@ -150,7 +150,7 @@ public class MerchantEntity extends AbstractWorkerEntity implements ICanTradeEmb
     @Override
     public void readAdditionalSaveData(CompoundTag nbt) {
         super.readAdditionalSaveData(nbt);
-        this.setTrades(WorkersMerchantTrade.listFromNbt(nbt.getCompound("Trades")));
+        this.setTrades(WorkersMerchantTrade.listFromNbt(this.registryAccess(), nbt.getCompound("Trades")));
         this.setTraderProgress(nbt.getInt("TraderProgress"));
         this.setTraderLevel(nbt.getInt("TraderLevel"));
         this.setCreative(nbt.getBoolean("isCreative"));
@@ -181,11 +181,11 @@ public class MerchantEntity extends AbstractWorkerEntity implements ICanTradeEmb
         return Mob.createMobAttributes()
                 .add(Attributes.MAX_HEALTH, 50.0D)
                 .add(Attributes.MOVEMENT_SPEED, 0.3D)
-                .add(ForgeMod.SWIM_SPEED.get(), 0.3D)
+                .add(NeoForgeMod.SWIM_SPEED, 0.3D)
                 .add(Attributes.KNOCKBACK_RESISTANCE, 0.1D)
                 .add(Attributes.ATTACK_DAMAGE, 0.5D)
                 .add(Attributes.FOLLOW_RANGE, 32.0D)
-                .add(ForgeMod.ENTITY_REACH.get(), 0D)
+                .add(Attributes.ENTITY_INTERACTION_RANGE, 0D)
                 .add(Attributes.ATTACK_SPEED);
     }
 
@@ -194,7 +194,7 @@ public class MerchantEntity extends AbstractWorkerEntity implements ICanTradeEmb
         RandomSource randomsource = world.getRandom();
         SpawnGroupData ilivingentitydata = super.finalizeSpawn(world, difficultyInstance, reason, data, nbt);
         ((WorkersGroundPathNavigation) this.getNavigation()).setCanOpenDoors(true);
-        this.populateDefaultEquipmentEnchantments(randomsource, difficultyInstance);
+        this.populateDefaultEquipmentEnchantments(world, randomsource, difficultyInstance);
         this.initSpawn();
         return ilivingentitydata;
     }
@@ -249,7 +249,7 @@ public class MerchantEntity extends AbstractWorkerEntity implements ICanTradeEmb
     public void openTradeGUI(Player player) {
         this.setTrading(true);
         if (player instanceof ServerPlayer sp) {
-            NetworkHooks.openScreen(sp, new MenuProvider() {
+            WorkersNetworkHooks.openScreen(sp, new MenuProvider() {
                 public @NotNull Component getDisplayName() { return MerchantEntity.this.getName(); }
                 public @NotNull AbstractContainerMenu createMenu(int i, @NotNull Inventory inv, @NotNull Player p) {
                     return new MerchantTradeContainer(i, MerchantEntity.this, inv);
@@ -263,12 +263,12 @@ public class MerchantEntity extends AbstractWorkerEntity implements ICanTradeEmb
     public void openAddEditTradeGUI(Player player, WorkersMerchantTrade trade) {
         if (player instanceof ServerPlayer sp) {
             this.setTrading(true);
-            NetworkHooks.openScreen(sp, new MenuProvider() {
+            WorkersNetworkHooks.openScreen(sp, new MenuProvider() {
                 public @NotNull Component getDisplayName() { return Component.literal("trade_edit_screen"); }
                 public @NotNull AbstractContainerMenu createMenu(int i, @NotNull Inventory inv, @NotNull Player p) {
                     return new MerchantAddEditTradeContainer(i, MerchantEntity.this, inv, trade);
                 }
-            }, buf -> { buf.writeUUID(this.getUUID()); buf.writeNbt(trade.toNbt()); });
+            }, buf -> { buf.writeUUID(this.getUUID()); buf.writeNbt(trade.toNbt(this.registryAccess())); });
         } else {
             WorkersMain.SIMPLE_CHANNEL.sendToServer(new MessageOpenMerchantEditTradeScreen(player, this.getUUID(), trade));
         }
@@ -277,12 +277,12 @@ public class MerchantEntity extends AbstractWorkerEntity implements ICanTradeEmb
     public void openVillagerTradeGUI(Player player, WorkersMerchantTrade trade) {
         if (player instanceof ServerPlayer sp) {
             this.setTrading(true);
-            NetworkHooks.openScreen(sp, new MenuProvider() {
+            WorkersNetworkHooks.openScreen(sp, new MenuProvider() {
                 public @NotNull Component getDisplayName() { return Component.literal("villager_trade_edit_screen"); }
                 public @NotNull AbstractContainerMenu createMenu(int i, @NotNull Inventory inv, @NotNull Player p) {
                     return new MerchantAddEditVillagerTradeContainer(i, MerchantEntity.this, inv, trade);
                 }
-            }, buf -> { buf.writeUUID(this.getUUID()); buf.writeNbt(trade.toNbt()); });
+            }, buf -> { buf.writeUUID(this.getUUID()); buf.writeNbt(trade.toNbt(this.registryAccess())); });
         } else {
             WorkersMain.SIMPLE_CHANNEL.sendToServer(new MessageOpenMerchantVillagerTradeScreen(player, this.getUUID(), trade));
         }
@@ -322,11 +322,11 @@ public class MerchantEntity extends AbstractWorkerEntity implements ICanTradeEmb
     }
 
     public List<WorkersMerchantTrade> getTrades() {
-        return WorkersMerchantTrade.listFromNbt(this.entityData.get(TRADES));
+        return WorkersMerchantTrade.listFromNbt(this.registryAccess(), this.entityData.get(TRADES));
     }
 
     public void setTrades(List<WorkersMerchantTrade> list) {
-        this.entityData.set(TRADES, WorkersMerchantTrade.listToNbt(list));
+        this.entityData.set(TRADES, WorkersMerchantTrade.listToNbt(this.registryAccess(), list));
     }
 
     public void addOrUpdateTrade(WorkersMerchantTrade trade) {
@@ -590,7 +590,7 @@ public class MerchantEntity extends AbstractWorkerEntity implements ICanTradeEmb
             return a.getItem() == b.getItem();
         }
         else{
-            return ItemStack.isSameItemSameTags(a, b);
+            return ItemStack.isSameItemSameComponents(a, b);
         }
     }
 

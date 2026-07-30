@@ -523,7 +523,7 @@ public class CourierWorkGoal extends Goal {
         int inserted = 0;
         for (int j = 0; j < destination.getContainerSize() && inserted < amount; j++){
             ItemStack d = destination.getItem(j);
-            if (d.isEmpty() || !ItemStack.isSameItemSameTags(d, stack)) continue;
+            if (d.isEmpty() || !ItemStack.isSameItemSameComponents(d, stack)) continue;
             int canAdd = d.getMaxStackSize() - d.getCount();
             if (canAdd <= 0) continue;
             int add = Math.min(canAdd, amount - inserted);
