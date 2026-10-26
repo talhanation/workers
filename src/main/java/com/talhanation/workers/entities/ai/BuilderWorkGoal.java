@@ -211,6 +211,9 @@ public class BuilderWorkGoal extends Goal {
                 }
 
 
+                // Paid with currency: the builder needs no materials, every block of this level is placeable.
+                boolean paid = builderEntity.currentBuildArea.isPaidWithCurrency();
+
                 this.stackToPlace = new Stack<>();
                 for (BuildBlock buildBlock : builderEntity.currentBuildArea.stackToPlace) {
                     BlockPos pos = buildBlock.getPos();
@@ -222,17 +225,17 @@ public class BuilderWorkGoal extends Goal {
                         builderEntity.currentBuildArea.removeBuildBlockToPlace(pos);
                         return;
                     }
-                    else if (builderEntity.getInventory().hasAnyMatching(itemStack -> itemStack.is(item))) {
+                    else if (paid || builderEntity.getInventory().hasAnyMatching(itemStack -> itemStack.is(item))) {
                         stackToPlace.push(pos);
                     }
                 }
 
-                if (stackToPlace.isEmpty()) {
+                if (stackToPlace.isEmpty() && !paid) {
                     // Nothing placeable in inventory right now. Prefetch several base
-                    // materials at once (look-ahead over the whole structure) so the
-                    // builder makes far fewer storage trips.
-                    List<ItemStack> neededItems = builderEntity.currentBuildArea.getRequiredMaterials();
-                    neededItems.sort(Comparator.comparingInt(ItemStack::getCount).reversed());
+                    // materials at once (look-ahead over the REMAINING structure) so the
+                    // builder makes far fewer storage trips and never over-fetches
+                    // materials for blocks that are already placed.
+                    List<ItemStack> neededItems = builderEntity.currentBuildArea.getRemainingMaterials();
 
                     // The current level must be servable first, so make sure at least
                     // one of its materials is among what we request: prioritise items
@@ -250,12 +253,11 @@ public class BuilderWorkGoal extends Goal {
                     for (ItemStack neededItem : neededItems) {
                         if (requested >= PREFETCH_MATERIAL_BUDGET) break;
 
-                        // Skip materials we already carry enough of to avoid pointless fetches.
-                        if (builderEntity.getInventory().hasAnyMatching(itemStack -> itemStack.is(neededItem.getItem()))) {
-                            continue;
-                        }
+                        // Only fetch what is missing on top of what we already carry.
+                        int carried = builderEntity.countMatchingItems(itemStack -> itemStack.is(neededItem.getItem()));
+                        int amount = Math.min(PREFETCH_STACK_LIMIT, neededItem.getCount()) - carried;
+                        if (amount <= 0) continue;
 
-                        int amount = Math.min(PREFETCH_STACK_LIMIT, neededItem.getCount());
                         builderEntity.addNeededItem(new NeededItem(
                                 itemStack -> itemStack.is(neededItem.getItem()), amount, true
                         ));
@@ -548,15 +550,17 @@ public class BuilderWorkGoal extends Goal {
                 }
 
                 BuildBlockParse blockParse = BuildBlockParse.parseBlock(buildingState.getBlock(), builderEntity.getCommandSenderWorld());
-                ItemStack buildingItem = builderEntity.getMatchingItem(itemStack -> itemStack.is(blockParse.getItem()));
-                if(buildingItem != null){
-                    if(!builderEntity.getMainHandItem().is(buildingItem.getItem())){
+                //Paid with currency: no material needed and nothing is consumed
+                boolean paid = builderEntity.currentBuildArea.isPaidWithCurrency();
+                ItemStack buildingItem = paid ? null : builderEntity.getMatchingItem(itemStack -> itemStack.is(blockParse.getItem()));
+                if(paid || buildingItem != null){
+                    if(buildingItem != null && !builderEntity.getMainHandItem().is(buildingItem.getItem())){
                         builderEntity.switchMainHandItem(itemStack -> itemStack.is(buildingItem.getItem()));
                     }
                     //CHECK IF IT WAS PARSED TO KEEP THE BLOCK-ROTATIONS OF NOT EFFECTED ONES
                     //placeAsBase = true means the base item is also placed as its block (grass -> dirt).
                     //For material-only substitutions (oak_stairs -> oak_planks) we keep the target block.
-                    if(blockParse.placeAsBase() && buildingItem.getItem() instanceof BlockItem blockItem){
+                    if(blockParse.placeAsBase() && blockParse.getItem() instanceof BlockItem blockItem){
                         buildingState = blockItem.getBlock().defaultBlockState();
                     }
 
@@ -573,7 +577,7 @@ public class BuilderWorkGoal extends Goal {
 
                     builderEntity.getCommandSenderWorld().playSound(null, blockPos.getX(), blockPos.getY(), blockPos.getZ(), buildingState.getSoundType().getPlaceSound(), SoundSource.BLOCKS, 1.0F, 1.0F);
                     this.builderEntity.swing(InteractionHand.MAIN_HAND);
-                    buildingItem.shrink(1);
+                    if(buildingItem != null) buildingItem.shrink(1);
                     builderEntity.currentBuildArea.removeBuildBlockToPlace(blockPos);
                 }
                 else{
@@ -717,4 +721,4 @@ public class BuilderWorkGoal extends Goal {
         DONE,
         ERROR
     }
-}
+}

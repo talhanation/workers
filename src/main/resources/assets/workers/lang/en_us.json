@@ -263,5 +263,11 @@
   "gui.workers.tooltip.courier.workshop": "The nearest Workshop to this waypoint will be targeted, if accessible.",
   "gui.workers.workshop.stock": "Keep in stock",
   "gui.workers.workshop.tooltip.maxOrders": "A workshop can hold at most %s orders.",
-  "chat.workers.workshop.maxOrders": "A workshop can hold at most %s orders."
+  "chat.workers.workshop.maxOrders": "A workshop can hold at most %s orders.",
+  "chat.workers.building.alreadyPaid": "This building is already paid and under construction.",
+  "chat.workers.building.blockedMaterial": "This building can not be bought, it contains: %s",
+  "chat.workers.building.notEnoughCurrency": "Not enough currency: %s %s needed.",
+  "chat.workers.building.paid": "Paid %s %s. The builder will start soon.",
+  "gui.workers.building.notPurchasable": "Not purchasable",
+  "gui.workers.building.price": "Price: %s"
 }

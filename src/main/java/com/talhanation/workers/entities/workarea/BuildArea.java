@@ -6,6 +6,7 @@ import com.talhanation.workers.entities.workarea.AbstractWorkAreaEntity;
 import com.talhanation.workers.network.MessageToClientOpenWorkAreaScreen;
 import com.talhanation.workers.world.BuildBlock;
 import com.talhanation.workers.world.BuildBlockParse;
+import com.talhanation.workers.world.BuildingPrice;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
@@ -44,12 +45,21 @@ public class BuildArea extends AbstractWorkAreaEntity {
     public static final EntityDataAccessor<CompoundTag> STRUCTURE = SynchedEntityData.defineId(BuildArea.class, EntityDataSerializers.COMPOUND_TAG);
     public static final EntityDataAccessor<Boolean> FREE_AREA = SynchedEntityData.defineId(BuildArea.class, EntityDataSerializers.BOOLEAN);
     public static final EntityDataAccessor<Boolean> ALWAYS_SHOW_PROJECTION = SynchedEntityData.defineId(BuildArea.class, EntityDataSerializers.BOOLEAN);
+    /** Currency price of the full blueprint for the GUI (CURRENCY payment mode). -1 = contains blocked materials. */
+    public static final EntityDataAccessor<Integer> CURRENCY_PRICE = SynchedEntityData.defineId(BuildArea.class, EntityDataSerializers.INT);
     /** Server-side flag: true once the FREE_AREA step has been completed for the current build. */
     public boolean freeAreaDone;
+    /** Server-side flag: the current build was paid with currency, the builder needs no materials. */
+    public boolean paidWithCurrency;
+    /** stackToPlace is not saved: a paid build is continued once after loading, without charging again. */
+    private boolean restorePaidBuild;
     public Stack<BlockPos> stackToBreak = new Stack<>();
     public Stack<BlockPos> stackToFree = new Stack<>();
     public Stack<BuildBlock> stackToPlace = new Stack<>();
     public Stack<BuildBlock> stackToPlaceMultiBlock = new Stack<>();
+    /** Server-side cache: base material -> count still needed for stackToPlace. null = dirty. */
+    @Nullable
+    private Map<Item, Integer> remainingMaterials;
     public BuildArea(EntityType<?> type, Level level) {
         super(type, level);
     }
@@ -59,6 +69,7 @@ public class BuildArea extends AbstractWorkAreaEntity {
         this.entityData.define(STRUCTURE, new CompoundTag());
         this.entityData.define(FREE_AREA, false);
         this.entityData.define(ALWAYS_SHOW_PROJECTION, false);
+        this.entityData.define(CURRENCY_PRICE, 0);
     }
     @Override
     public void readAdditionalSaveData(CompoundTag tag) {
@@ -67,6 +78,9 @@ public class BuildArea extends AbstractWorkAreaEntity {
         this.setFreeArea(tag.getBoolean("freeArea"));
         this.freeAreaDone = tag.getBoolean("freeAreaDone");
         this.setAlwaysShowProjection(tag.getBoolean("alwaysShowProjection"));
+        this.setCurrencyPrice(tag.getInt("currencyPrice"));
+        this.paidWithCurrency = tag.getBoolean("paidWithCurrency");
+        this.restorePaidBuild = this.paidWithCurrency;
     }
     @Override
     public void addAdditionalSaveData(CompoundTag tag) {
@@ -75,6 +89,24 @@ public class BuildArea extends AbstractWorkAreaEntity {
         tag.putBoolean("freeArea", this.getFreeArea());
         tag.putBoolean("freeAreaDone", this.freeAreaDone);
         tag.putBoolean("alwaysShowProjection", this.getAlwaysShowProjection());
+        tag.putInt("currencyPrice", this.getCurrencyPrice());
+        tag.putBoolean("paidWithCurrency", this.paidWithCurrency);
+    }
+
+    public int getCurrencyPrice() {
+        return this.entityData.get(CURRENCY_PRICE);
+    }
+
+    public void setCurrencyPrice(int price) {
+        this.entityData.set(CURRENCY_PRICE, price);
+    }
+
+    public boolean isPaidWithCurrency() {
+        return this.paidWithCurrency;
+    }
+
+    public void setPaidWithCurrency(boolean paid) {
+        this.paidWithCurrency = paid;
     }
 
     public boolean getFreeAreaDone() {
@@ -100,6 +132,13 @@ public class BuildArea extends AbstractWorkAreaEntity {
     public void tick() {
         super.tick();
         if(isDone()) this.remove(RemovalReason.DISCARDED);
+        else if(restorePaidBuild && !this.getCommandSenderWorld().isClientSide() && this.tickCount > 20){
+            restorePaidBuild = false;
+            //keep freeAreaDone, otherwise the builder would clear the half built house again
+            boolean freeDone = this.freeAreaDone;
+            this.setStartBuild(false);
+            this.freeAreaDone = freeDone;
+        }
     }
 
     public void setStructureNBT(CompoundTag tag){
@@ -113,6 +152,7 @@ public class BuildArea extends AbstractWorkAreaEntity {
     public void setStartBuild(boolean isCreative) {
         stackToPlace.clear();
         stackToPlaceMultiBlock.clear();
+        this.remainingMaterials = null;
         this.freeAreaDone = false;
 
         CompoundTag tag = getStructureNBT();
@@ -374,6 +414,57 @@ public class BuildArea extends AbstractWorkAreaEntity {
 
         return stacks;
     }
+
+    /**
+     * Base materials still needed for the blocks that are NOT placed yet (stackToPlace).
+     * Upper door halves / bed heads live in stackToPlaceMultiBlock and cost nothing,
+     * same as in {@link #getRequiredMaterials(CompoundTag)}.
+     */
+    public Map<Item, Integer> getRemainingMaterialMap() {
+        if (remainingMaterials == null) {
+            remainingMaterials = new HashMap<>();
+            for (BuildBlock buildBlock : stackToPlace) {
+                Item item = BuildBlockParse.parseBlock(buildBlock.getState().getBlock(), this.getCommandSenderWorld()).getItem();
+                if (item instanceof BlockItem) {
+                    remainingMaterials.merge(item, 1, Integer::sum);
+                }
+            }
+        }
+        return remainingMaterials;
+    }
+
+    public List<ItemStack> getRemainingMaterials() {
+        List<ItemStack> stacks = new ArrayList<>();
+        for (Map.Entry<Item, Integer> entry : getRemainingMaterialMap().entrySet()) {
+            ItemStack stack = new ItemStack(entry.getKey());
+            if (stack.isEmpty()) continue;
+
+            stack.setCount(entry.getValue());
+            stacks.add(stack);
+        }
+        return stacks;
+    }
+
+    public int getRemainingMaterialCount(Item item) {
+        return getRemainingMaterialMap().getOrDefault(item, 0);
+    }
+
+    /** Price of the full blueprint (shown in the GUI). The actual charge only counts missing blocks. */
+    public int calculateCurrencyPrice(CompoundTag tag) {
+        Map<Item, Integer> materials = new HashMap<>();
+        for (ItemStack stack : this.getRequiredMaterials(tag)) {
+            materials.merge(stack.getItem(), stack.getCount(), Integer::sum);
+        }
+        return BuildingPrice.calculate(materials);
+    }
+
+    public void cancelBuild() {
+        stackToPlace.clear();
+        stackToPlaceMultiBlock.clear();
+        this.remainingMaterials = null;
+        this.paidWithCurrency = false;
+    }
+
     @Nullable
     public BlockState getStateFromPos(BlockPos blockPos) {
         for (BuildBlock buildBlock : stackToPlace) {
@@ -415,10 +506,12 @@ public class BuildArea extends AbstractWorkAreaEntity {
     }
 
     public void removeBuildBlockToPlace(BlockPos blockPos) {
-        stackToPlace.removeIf(buildBlock -> buildBlock.getPos().equals(blockPos));
+        if (stackToPlace.removeIf(buildBlock -> buildBlock.getPos().equals(blockPos))) {
+            this.remainingMaterials = null;
+        }
     }
 
     public void removeMultiBlockToPlace(BlockPos blockPos) {
         stackToPlaceMultiBlock.removeIf(buildBlock -> buildBlock.getPos().equals(blockPos));
     }
-}
+}

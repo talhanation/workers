@@ -9,6 +9,7 @@ import com.talhanation.workers.entities.workarea.AbstractWorkAreaEntity;
 import com.talhanation.workers.entities.workarea.IPermissionArea;
 import com.talhanation.workers.entities.workarea.WorkshopArea;
 import com.talhanation.workers.init.ModEntityTypes;
+import com.talhanation.recruits.FactionEvents;
 import com.talhanation.recruits.world.RecruitsHireTradesRegistry;
 import com.talhanation.recruits.entities.AbstractRecruitEntity;
 import com.talhanation.recruits.entities.ai.RecruitUpkeepEntityGoal;
@@ -79,7 +80,9 @@ public class VillagerEvents {
                         new MessageToClientUpdateConfig(
                                 WorkersServerConfig.ShouldWorkAreaOnlyBeInFactionClaim.get(),
                                 WorkersServerConfig.ShouldOnlyPlacingBuildingsBePossible.get(),
-                                WorkersServerConfig.BuildModeConfig.get()
+                                WorkersServerConfig.BuildModeConfig.get(),
+                                WorkersServerConfig.BuildPaymentModeConfig.get(),
+                                FactionEvents.getCurrency()
                         ));
         }
     }
@@ -239,4 +242,4 @@ public class VillagerEvents {
 
         return !isOwner && !isTeamMate && !isAdmin;
     }
-}
+}

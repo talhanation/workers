@@ -26,6 +26,12 @@ public class WorkersServerConfig {
     public static ForgeConfigSpec.BooleanValue ShouldWorkAreaOnlyBeInFactionClaim;
     public static ForgeConfigSpec.BooleanValue ShouldOnlyPlacingBuildingsBePossible;
     public static ForgeConfigSpec.EnumValue<BuildMode> BuildModeConfig;
+    public static ForgeConfigSpec.EnumValue<BuildPaymentMode> BuildPaymentModeConfig;
+    public static ForgeConfigSpec.IntValue BuildingBasePrice;
+    public static ForgeConfigSpec.DoubleValue BuildingSizePrice;
+    public static ForgeConfigSpec.DoubleValue BuildingDefaultMaterialPrice;
+    public static ForgeConfigSpec.ConfigValue<List<String>> BuildingMaterialPrices;
+    public static ForgeConfigSpec.ConfigValue<List<String>> BuildingBlockedMaterials;
     public static ForgeConfigSpec.ConfigValue<List<String>> MinerPickup;
     public static ForgeConfigSpec.ConfigValue<List<String>> MinerIgnore;
     public static ForgeConfigSpec.ConfigValue<List<String>> FarmerPickup;
@@ -134,6 +140,126 @@ public class WorkersServerConfig {
                     "dynamictrees:apple_oak_seed",
                     "dynamictrees:spruce_seed",
                     "dynamictrees:cocoa_seed"
+            ));
+
+    // Currency per 64 BASE items (what the builder would consume, e.g. stairs count as their planks/stone).
+    // Every price is above what villagers pay for that item, so "buy building -> break it -> sell to villagers"
+    // never makes profit (e.g. mason buys 20 stone per emerald = 3.2 per stack, stone costs 4).
+    // "#" entries are item tags, the first matching entry wins.
+    public static ArrayList<String> BUILDING_MATERIAL_PRICES = new ArrayList<>(
+            Arrays.asList(
+                    "minecraft:dirt=1",
+                    "minecraft:coarse_dirt=1",
+                    "minecraft:sand=1",
+                    "minecraft:red_sand=1",
+                    "minecraft:gravel=1",
+                    "minecraft:netherrack=1",
+                    "minecraft:cobblestone=3",
+                    "minecraft:cobbled_deepslate=3",
+                    "minecraft:mossy_cobblestone=4",
+                    "minecraft:stone=4",
+                    "minecraft:deepslate=4",
+                    "minecraft:smooth_stone=5",
+                    "minecraft:stone_bricks=5",
+                    "minecraft:cracked_stone_bricks=5",
+                    "minecraft:chiseled_stone_bricks=5",
+                    "minecraft:mossy_stone_bricks=6",
+                    "minecraft:granite=5",
+                    "minecraft:diorite=5",
+                    "minecraft:andesite=5",
+                    "minecraft:polished_granite=5",
+                    "minecraft:polished_diorite=5",
+                    "minecraft:polished_andesite=5",
+                    "minecraft:polished_deepslate=5",
+                    "minecraft:deepslate_bricks=5",
+                    "minecraft:deepslate_tiles=5",
+                    "minecraft:sandstone=2",
+                    "minecraft:cut_sandstone=2",
+                    "minecraft:smooth_sandstone=3",
+                    "minecraft:red_sandstone=2",
+                    "minecraft:cut_red_sandstone=2",
+                    "minecraft:smooth_red_sandstone=3",
+                    "minecraft:bricks=8",
+                    "minecraft:mud_bricks=4",
+                    "minecraft:packed_mud=3",
+                    "minecraft:clay=28",
+                    "minecraft:end_stone=3",
+                    "minecraft:end_stone_bricks=4",
+                    "minecraft:purpur_block=8",
+                    "minecraft:blackstone=3",
+                    "minecraft:polished_blackstone=4",
+                    "minecraft:polished_blackstone_bricks=4",
+                    "minecraft:basalt=3",
+                    "minecraft:smooth_basalt=4",
+                    "minecraft:nether_bricks=6",
+                    "minecraft:red_nether_bricks=8",
+                    "minecraft:quartz_block=28",
+                    "minecraft:smooth_quartz=28",
+                    "minecraft:quartz_bricks=28",
+                    "minecraft:quartz_pillar=28",
+                    "minecraft:chiseled_quartz_block=28",
+                    "minecraft:prismarine=12",
+                    "minecraft:prismarine_bricks=20",
+                    "minecraft:dark_prismarine=20",
+                    "minecraft:sea_lantern=32",
+                    "minecraft:glowstone=16",
+                    "minecraft:hay_block=36",
+                    "minecraft:melon=20",
+                    "minecraft:pumpkin=14",
+                    "minecraft:bookshelf=60",
+                    "minecraft:torch=2",
+                    "minecraft:lantern=16",
+                    "minecraft:ladder=4",
+                    "minecraft:iron_bars=8",
+                    "minecraft:iron_door=40",
+                    "minecraft:chest=40",
+                    "minecraft:barrel=40",
+                    "minecraft:crafting_table=20",
+                    "minecraft:furnace=24",
+                    "minecraft:copper_block=40",
+                    "minecraft:cut_copper=40",
+                    "minecraft:coal_block=48",
+                    "minecraft:redstone_block=48",
+                    "minecraft:lapis_block=64",
+                    "minecraft:iron_block=180",
+                    "minecraft:raw_iron_block=180",
+                    "minecraft:gold_block=240",
+                    "minecraft:raw_gold_block=240",
+                    "minecraft:diamond_block=720",
+                    "minecraft:emerald_block=720",
+                    "#minecraft:planks=5",
+                    "#minecraft:logs=20",
+                    "#minecraft:wool=5",
+                    "#minecraft:terracotta=6",
+                    "#minecraft:beds=32",
+                    "#forge:glass=3",
+                    "#forge:glass_panes=2"
+            ));
+
+    // Base items a building can NOT contain when it should be bought with currency.
+    public static ArrayList<String> BUILDING_BLOCKED_MATERIALS = new ArrayList<>(
+            Arrays.asList(
+                    "#forge:ores",
+                    "#minecraft:shulker_boxes",
+                    "minecraft:spawner",
+                    "minecraft:budding_amethyst",
+                    "minecraft:ancient_debris",
+                    "minecraft:netherite_block",
+                    "minecraft:beacon",
+                    "minecraft:conduit",
+                    "minecraft:dragon_egg",
+                    "minecraft:end_portal_frame",
+                    "minecraft:reinforced_deepslate",
+                    "minecraft:bedrock",
+                    "minecraft:sponge",
+                    "minecraft:wet_sponge",
+                    "minecraft:command_block",
+                    "minecraft:chain_command_block",
+                    "minecraft:repeating_command_block",
+                    "minecraft:structure_block",
+                    "minecraft:jigsaw",
+                    "minecraft:barrier",
+                    "minecraft:light"
             ));
 
     static {
@@ -270,6 +396,58 @@ public class WorkersServerConfig {
                         \t(takes effect after restart)""")
                 .worldRestart()
                 .defineEnum("BuildMode", BuildMode.FREE);
+
+        BuildPaymentModeConfig = BUILDER.comment("""
+
+                        Controls how buildings are paid on this server.
+                        \t MATERIALS - the builder fetches the base materials from storage (default)
+                        \t CURRENCY  - the player pays a price in currency when pressing build,
+                        \t             the builder needs no materials. Only missing blocks are charged.
+                        \t             price = BuildingBasePrice + placed blocks / 64 * BuildingSizePrice + material prices
+                        \t(takes effect after restart)""")
+                .worldRestart()
+                .defineEnum("BuildPaymentMode", BuildPaymentMode.MATERIALS);
+
+        BuildingBasePrice = BUILDER.comment("""
+
+                        CURRENCY mode: flat fee in currency for every building.
+                        \t(takes effect after restart)
+                        \tdefault: 2""")
+                .worldRestart()
+                .defineInRange("BuildingBasePrice", 2, 0, 1453);
+
+        BuildingSizePrice = BUILDER.comment("""
+
+                        CURRENCY mode: currency per 64 placed blocks (the work of the builder).
+                        \t(takes effect after restart)
+                        \tdefault: 1.0""")
+                .worldRestart()
+                .defineInRange("BuildingSizePrice", 1.0D, 0.0D, 1453.0D);
+
+        BuildingDefaultMaterialPrice = BUILDER.comment("""
+
+                        CURRENCY mode: currency per 64 base items for materials that are not in BuildingMaterialPrices.
+                        \t(takes effect after restart)
+                        \tdefault: 8.0""")
+                .worldRestart()
+                .defineInRange("BuildingDefaultMaterialPrice", 8.0D, 0.0D, 100000.0D);
+
+        BuildingMaterialPrices = BUILDER.comment("""
+
+                        CURRENCY mode: currency per 64 BASE items ("item=price" or "#item_tag=price", first match wins).
+                        Blocks are counted as their base material: stairs, slabs, doors, ... count as their planks/stone.
+                        Keep prices above what villagers pay for the item, otherwise players can buy a building,
+                        break it and sell the blocks for profit.
+                        \t(takes effect after restart)""")
+                .worldRestart()
+                .define("BuildingMaterialPrices", BUILDING_MATERIAL_PRICES);
+
+        BuildingBlockedMaterials = BUILDER.comment("""
+
+                        CURRENCY mode: buildings containing these base items ("item" or "#item_tag") can not be bought.
+                        \t(takes effect after restart)""")
+                .worldRestart()
+                .define("BuildingBlockedMaterials", BUILDING_BLOCKED_MATERIALS);
 
         WorkersReplaceAllay = BUILDER.comment("""
                         

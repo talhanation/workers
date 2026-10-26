@@ -22,6 +22,25 @@ public class Translatable {
     public static final Component TOOLTIP_SEND_INFO =  Component.translatable("gui.workers.tooltip.sendInfo");
     public static final Component TOOLTIP_LUMBER_REPLANT = Component.translatable("gui.workers.tooltip.lumberjackReplant");
 
+    public static final Component TEXT_BUILDING_ALREADY_PAID = Component.translatable("chat.workers.building.alreadyPaid");
+    public static final Component TEXT_BUILDING_NOT_PURCHASABLE = Component.translatable("gui.workers.building.notPurchasable");
+
+    public static Component TEXT_BUILDING_BLOCKED_MATERIAL(String material) {
+        return Component.translatable("chat.workers.building.blockedMaterial", material);
+    }
+
+    public static Component TEXT_BUILDING_NOT_ENOUGH_CURRENCY(int price, String currency) {
+        return Component.translatable("chat.workers.building.notEnoughCurrency", price, currency);
+    }
+
+    public static Component TEXT_BUILDING_PAID(int price, String currency) {
+        return Component.translatable("chat.workers.building.paid", price, currency);
+    }
+
+    public static Component TEXT_BUILDING_PRICE(int price) {
+        return Component.translatable("gui.workers.building.price", price);
+    }
+
     public static Component TEXT_HELLO(String job) {
         return Component.translatable("chat.workers.text.hello", job);
     }

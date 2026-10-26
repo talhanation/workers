@@ -110,6 +110,14 @@ public class BuilderEntity extends AbstractWorkerEntity{
             int items = countMatchingItems(stack -> stack.getItem() instanceof ShovelItem);
             return items <= 1;
         }
+        //Keep base materials the current build still needs (max one stack), so they are not deposited again
+        if (currentBuildArea != null && !currentBuildArea.isPaidWithCurrency() && itemStack.getItem() instanceof BlockItem) {
+            int remaining = currentBuildArea.getRemainingMaterialCount(itemStack.getItem());
+            if (remaining > 0) {
+                int items = countMatchingItems(stack -> stack.is(itemStack.getItem()));
+                return items <= Math.min(remaining, 64);
+            }
+        }
 
         return super.wantsToKeep(itemStack);
     }

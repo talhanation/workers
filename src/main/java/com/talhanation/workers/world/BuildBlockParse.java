@@ -1,17 +1,16 @@
 package com.talhanation.workers.world;
 
+import net.minecraft.core.registries.BuiltInRegistries;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.item.Item;
-import net.minecraft.world.item.ItemStack;
-import net.minecraft.world.item.crafting.CraftingRecipe;
-import net.minecraft.world.item.crafting.Ingredient;
-import net.minecraft.world.item.crafting.RecipeType;
+import net.minecraft.world.item.Items;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.FlowerPotBlock;
 
-import java.util.HashMap;
 import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 
 public class BuildBlockParse {
     private final Item item;
@@ -21,9 +20,43 @@ public class BuildBlockParse {
     //          block is still placed (oak_stairs consumes oak_planks but places stairs).
     private final boolean placeAsBase;
 
-    // Caches the resolved base item per block so we don't scan the recipe manager
-    // every time. null value = "resolved to no simpler base, use block's own item".
-    private static final Map<Block, Item> BASE_ITEM_CACHE = new HashMap<>();
+    // Caches the resolved base item per block so we don't recompute every time.
+    // Items.AIR value = "no simpler base, use block's own item".
+    // Concurrent because the BuildAreaScreen (client thread) and the BuilderWorkGoal
+    // (server thread) both resolve materials at the same time in singleplayer.
+    private static final Map<Block, Item> BASE_ITEM_CACHE = new ConcurrentHashMap<>();
+
+    // Suffixes whose family collapses to <base>_planks (wooden building blocks).
+    // Order matters: longer/more specific suffixes must come before shorter ones
+    // (e.g. _fence_gate before _fence, _wall_sign before _sign).
+    private static final String[] WOOD_SUFFIXES = {
+            "_pressure_plate",
+            "_trapdoor",
+            "_fence_gate",
+            "_wall_hanging_sign",
+            "_wall_sign",
+            "_hanging_sign",
+            "_stairs",
+            "_slab",
+            "_fence",
+            "_button",
+            "_door",
+            "_sign"
+    };
+
+    // Suffixes whose base is the full/plural block itself (stone-like families):
+    // <base>, <base>s or <base>_block (stone_brick_stairs -> stone_bricks,
+    // brick_wall -> bricks, quartz_stairs -> quartz_block, stone_button -> stone).
+    private static final String[] GENERIC_SUFFIXES = {
+            "_pressure_plate",
+            "_stairs",
+            "_slab",
+            "_button",
+            "_fence",
+            "_wall"
+    };
+
+    private static final String CARPET_SUFFIX = "_carpet";
 
     public BuildBlockParse(Item item, boolean wasParsed) {
         this(item, wasParsed, wasParsed);
@@ -64,11 +97,12 @@ public class BuildBlockParse {
 
     /**
      * Like {@link #parseBlock(Block)}, but additionally resolves the block to its
-     * "base material" so the builder consumes the cheapest ingredient instead of
-     * the finished block (e.g. oak_stairs -> oak_planks). This is done through the
-     * crafting recipe manager, so it works for modded blocks too, not just a hard
-     * coded vanilla list. If no unambiguous base is found, the block's own item is
-     * used as the fallback (same result as {@link #parseBlock(Block)}).
+     * "base material" so the builder consumes the base resource instead of the
+     * finished block (e.g. cobblestone_stairs -> cobblestone, oak_door -> oak_planks).
+     * Resolution is name-based (see {@link #resolveByName(Block)}), so it works for
+     * modded blocks that follow the vanilla naming scheme too. 1 block = 1 base item.
+     * If no base is found, the block's own item is used as the fallback (same result
+     * as {@link #parseBlock(Block)}).
      */
     public static BuildBlockParse parseBlock(Block block, Level level) {
         // Fast special-cases first (grass/dirt, flower pot) keep their existing behaviour.
@@ -77,7 +111,7 @@ public class BuildBlockParse {
             return special;
         }
 
-        Item baseItem = resolveBaseItem(block, level);
+        Item baseItem = resolveBaseItem(block);
         if (baseItem != null && baseItem != special.getItem()) {
             // Material-only substitution: consume the base item, still place the block.
             return new BuildBlockParse(baseItem, true, false);
@@ -86,63 +120,93 @@ public class BuildBlockParse {
     }
 
     /**
-     * Finds the base crafting material for a block by scanning crafting recipes
-     * whose result is the block's item and that use a SINGLE ingredient item type
-     * (typical for stairs/slabs/fences/walls/doors). Returns that ingredient's
-     * item, or null if none/ambiguous. Cached per block.
+     * Finds the base crafting material for a block from its RESOURCE NAME, staying
+     * inside the block's own namespace. This is deterministic and mod-safe: the
+     * recipe scan could pick the wrong wood (e.g. AppleWood for oak_planks) when a
+     * mod defines recipes via wood tags, but name-based resolution keeps oak -> oak.
+     *
+     * Examples: oak_stairs/oak_slab/oak_fence -> oak_planks; stone_brick_stairs ->
+     * stone_bricks; cobblestone_wall -> cobblestone. Returns null if the name has no
+     * known building suffix or the derived base block does not exist, in which case
+     * the block's own item is used. Cached per block.
      */
-    private static Item resolveBaseItem(Block block, Level level) {
-        if (level == null) return null;
-
+    private static Item resolveBaseItem(Block block) {
         Item ownItem = Item.BY_BLOCK.get(block);
-        if (ownItem == null || ownItem == net.minecraft.world.item.Items.AIR) return null;
+        if (ownItem == null || ownItem == Items.AIR) return null;
 
-        if (BASE_ITEM_CACHE.containsKey(block)) {
-            return BASE_ITEM_CACHE.get(block);
+        Item cached = BASE_ITEM_CACHE.get(block);
+        if (cached != null) {
+            return cached == Items.AIR ? null : cached;
         }
 
-        Item resolved = null;
-        try {
-            for (CraftingRecipe recipe : level.getRecipeManager().getAllRecipesFor(RecipeType.CRAFTING)) {
-                ItemStack result = recipe.getResultItem(level.registryAccess());
-                if (result.isEmpty() || result.getItem() != ownItem) continue;
-
-                Item single = singleIngredientItem(recipe);
-                // Guard against self-referential/looping results (e.g. planks<->block).
-                if (single != null && single != ownItem) {
-                    resolved = single;
-                    break;
-                }
-            }
-        } catch (Exception ignored) {
+        Item resolved = resolveByName(block);
+        // Never resolve to the block's own item (no-op) and never to air.
+        if (resolved == null || resolved == ownItem || resolved == Items.AIR) {
             resolved = null;
         }
 
-        BASE_ITEM_CACHE.put(block, resolved);
+        BASE_ITEM_CACHE.put(block, resolved == null ? Items.AIR : resolved);
         return resolved;
     }
 
-    /**
-     * If every non-empty ingredient of the recipe resolves to the same single
-     * item, returns that item; otherwise null (ambiguous / multi-material recipe).
-     */
-    private static Item singleIngredientItem(CraftingRecipe recipe) {
-        Item found = null;
-        for (Ingredient ingredient : recipe.getIngredients()) {
-            if (ingredient.isEmpty()) continue;
+    private static Item resolveByName(Block block) {
+        ResourceLocation key = BuiltInRegistries.BLOCK.getKey(block);
+        if (key == null) return null;
 
-            ItemStack[] matching = ingredient.getItems();
-            if (matching.length == 0) return null;
+        String namespace = key.getNamespace();
+        String path = key.getPath();
 
-            // Use the first matching item of the ingredient as its representative.
-            Item candidate = matching[0].getItem();
-            if (found == null) {
-                found = candidate;
-            }
-            else if (found != candidate) {
-                return null; // more than one distinct base material -> ambiguous
+        // Build candidate base names in priority order. Wood suffixes prefer
+        // <base>_planks; generic (stone-like) suffixes prefer <base> then <base>s.
+        // A block like stone_brick_stairs matches both a wood suffix (_stairs) and a
+        // generic one, so we try _planks first and, if that block doesn't exist,
+        // fall through to stone_bricks — hence we collect ALL candidates and return
+        // the first that actually exists rather than committing to the first suffix.
+        java.util.List<String> candidates = new java.util.ArrayList<>();
+
+        for (String suffix : WOOD_SUFFIXES) {
+            if (path.endsWith(suffix)) {
+                String base = path.substring(0, path.length() - suffix.length());
+                candidates.add(base + "_planks");
+                break;
             }
         }
-        return found;
+
+        for (String suffix : GENERIC_SUFFIXES) {
+            if (path.endsWith(suffix)) {
+                String base = path.substring(0, path.length() - suffix.length());
+                candidates.add(base);            // stone_brick_stairs -> stone_brick (miss) ...
+                candidates.add(base + "s");      // ... -> stone_bricks
+                candidates.add(base + "_block"); // quartz_stairs -> quartz_block, purpur_slab -> purpur_block
+                break;
+            }
+        }
+
+        // Carpets collapse to their wool (white_carpet -> white_wool, moss_carpet -> moss_block).
+        if (path.endsWith(CARPET_SUFFIX)) {
+            String base = path.substring(0, path.length() - CARPET_SUFFIX.length());
+            candidates.add(base + "_wool");
+            candidates.add(base + "_block");
+        }
+
+        for (String candidate : candidates) {
+            Item item = itemFromName(namespace, candidate);
+            if (item != null) return item;
+        }
+
+        return null;
     }
-}
+
+    /**
+     * Looks up a block by "namespace:path" and returns its item, or null if the
+     * block does not exist or has no item.
+     */
+    private static Item itemFromName(String namespace, String path) {
+        ResourceLocation id = new ResourceLocation(namespace, path);
+        if (!BuiltInRegistries.BLOCK.containsKey(id)) return null;
+        Block block = BuiltInRegistries.BLOCK.get(id);
+        if (block == Blocks.AIR) return null;
+        Item item = Item.BY_BLOCK.get(block);
+        return (item == null || item == Items.AIR) ? null : item;
+    }
+}

@@ -3,6 +3,7 @@ package com.talhanation.workers.client.gui;
 import com.talhanation.recruits.client.gui.component.ActivateableButton;
 import com.talhanation.recruits.client.gui.widgets.BlackShowingTextField;
 import com.talhanation.recruits.client.gui.widgets.RecruitsCheckBox;
+import com.talhanation.workers.Translatable;
 import com.talhanation.workers.WorkersMain;
 import com.talhanation.workers.client.gui.widgets.DisplayTextItemScrollDropDownMenu;
 import com.talhanation.workers.client.gui.widgets.ScrollDropDownMenuWithFolders;
@@ -11,6 +12,7 @@ import com.talhanation.workers.client.gui.structureRenderer.StructurePreviewWidg
 import com.talhanation.workers.entities.workarea.BuildArea;
 import com.talhanation.workers.client.WorkersClientManager;
 import com.talhanation.workers.config.BuildMode;
+import com.talhanation.workers.config.BuildPaymentMode;
 import com.talhanation.workers.network.MessageRequestPresetContent;
 import com.talhanation.workers.network.MessageRequestPresetList;
 import com.talhanation.workers.network.MessageToClientPresetContent;
@@ -492,6 +494,21 @@ public class BuildAreaScreen extends WorkAreaScreen {
                     Component.literal("Loading..."),
                     x, y + 130, 0xFFFFFF);
         }
+
+        //CURRENCY payment mode: show the building price (full blueprint, synced from the server) under the build button
+        if (mode == Mode.LOAD && structure != null && buildButton != null && WorkersClientManager.buildPaymentMode == BuildPaymentMode.CURRENCY) {
+            int price = buildArea.getCurrencyPrice();
+            int priceY = buildButton.getY() + buildButton.getHeight() + 4;
+            if (price < 0) {
+                guiGraphics.drawCenteredString(font, Translatable.TEXT_BUILDING_NOT_PURCHASABLE, x, priceY + 4, 0xFF5555);
+            }
+            else {
+                Component priceText = Translatable.TEXT_BUILDING_PRICE(price);
+                int startX = x - (18 + font.width(priceText)) / 2;
+                guiGraphics.renderFakeItem(WorkersClientManager.currency, startX, priceY);
+                guiGraphics.drawString(font, priceText, startX + 18, priceY + 4, 0xFFFFFF);
+            }
+        }
     }
 
     @Override
@@ -504,4 +521,4 @@ public class BuildAreaScreen extends WorkAreaScreen {
         SCAN,
         LOAD
     }
-}
+}

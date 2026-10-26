@@ -1,17 +1,24 @@
 package com.talhanation.workers.network;
 
+import com.talhanation.recruits.FactionEvents;
+import com.talhanation.workers.Translatable;
+import com.talhanation.workers.config.BuildPaymentMode;
+import com.talhanation.workers.config.WorkersServerConfig;
 import com.talhanation.workers.entities.workarea.BuildArea;
+import com.talhanation.workers.world.BuildingPrice;
 import de.maxhenkel.corelib.net.Message;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.NbtIo;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.world.item.Item;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.network.NetworkEvent;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import java.util.Map;
 import java.util.UUID;
 public class MessageUpdateBuildArea implements Message<MessageUpdateBuildArea> {
 
@@ -61,11 +68,17 @@ public class MessageUpdateBuildArea implements Message<MessageUpdateBuildArea> {
                         .equals(this.uuid))
                 .stream()
                 .findAny()
-                .ifPresent(this::update);
+                .ifPresent(buildArea -> this.update(player, buildArea));
 
     }
 
-    public void update(BuildArea buildArea){
+    public void update(ServerPlayer player, BuildArea buildArea){
+        //a paid building can not be swapped while it is under construction (pay hut -> build mansion)
+        if(buildArea.isPaidWithCurrency() && !buildArea.stackToPlace.isEmpty() && !buildArea.getStructureNBT().equals(this.structureNBT)){
+            player.sendSystemMessage(Translatable.TEXT_BUILDING_ALREADY_PAID);
+            return;
+        }
+
         buildArea.setWidthSize(this.xSize);
         buildArea.setHeightSize(this.ySize);
         buildArea.setDepthSize(this.zSize);
@@ -74,9 +87,54 @@ public class MessageUpdateBuildArea implements Message<MessageUpdateBuildArea> {
         if(this.updateAlwaysShowProjection){
             buildArea.setAlwaysShowProjection(this.alwaysShowProjection);
         }
-        if(build){
-            buildArea.setStartBuild(this.isCreative);
+
+        boolean currencyMode = WorkersServerConfig.BuildPaymentModeConfig.get() == BuildPaymentMode.CURRENCY;
+        if(currencyMode){
+            buildArea.setCurrencyPrice(buildArea.calculateCurrencyPrice(this.structureNBT));
         }
+
+        if(build){
+            //never trust the client: instant placing only for creative players
+            boolean creative = this.isCreative && player.isCreative();
+
+            if(!creative && currencyMode){
+                this.buildWithCurrency(player, buildArea);
+            }
+            else{
+                buildArea.setPaidWithCurrency(false);
+                buildArea.setStartBuild(creative);
+            }
+        }
+    }
+
+    private void buildWithCurrency(ServerPlayer player, BuildArea buildArea){
+        if(buildArea.isPaidWithCurrency() && !buildArea.stackToPlace.isEmpty()){
+            player.sendSystemMessage(Translatable.TEXT_BUILDING_ALREADY_PAID);
+            return;
+        }
+
+        //only the blocks that are still missing in the world are charged
+        buildArea.setStartBuild(false);
+        Map<Item, Integer> materials = buildArea.getRemainingMaterialMap();
+
+        Item blocked = BuildingPrice.findBlocked(materials);
+        if(blocked != null){
+            buildArea.cancelBuild();
+            player.sendSystemMessage(Translatable.TEXT_BUILDING_BLOCKED_MATERIAL(blocked.getDescription().getString()));
+            return;
+        }
+
+        int price = BuildingPrice.calculate(materials);
+        String currencyName = FactionEvents.getCurrency().getHoverName().getString();
+        if(!FactionEvents.playerHasEnoughEmeralds(player, price)){
+            buildArea.cancelBuild();
+            player.sendSystemMessage(Translatable.TEXT_BUILDING_NOT_ENOUGH_CURRENCY(price, currencyName));
+            return;
+        }
+
+        FactionEvents.doPayment(player, price);
+        buildArea.setPaidWithCurrency(true);
+        player.sendSystemMessage(Translatable.TEXT_BUILDING_PAID(price, currencyName));
     }
 
     @Override

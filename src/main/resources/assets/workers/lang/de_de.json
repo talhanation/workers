@@ -260,5 +260,11 @@
   "gui.workers.tooltip.courier.workshop": "Die nächste Werkstatt an diesem Wegpunkt wird als Ziel ausgewählt, wenn zugänglich.",
   "gui.workers.workshop.stock": "Vorrat halten",
   "gui.workers.workshop.tooltip.maxOrders": "Eine Werkstatt kann höchstens %s Aufträge haben.",
-  "chat.workers.workshop.maxOrders": "Eine Werkstatt kann höchstens %s Aufträge haben."
+  "chat.workers.workshop.maxOrders": "Eine Werkstatt kann höchstens %s Aufträge haben.",
+  "chat.workers.building.alreadyPaid": "Dieses Gebäude ist bereits bezahlt und im Bau.",
+  "chat.workers.building.blockedMaterial": "Dieses Gebäude kann nicht gekauft werden, es enthält: %s",
+  "chat.workers.building.notEnoughCurrency": "Nicht genug Währung: %s %s benötigt.",
+  "chat.workers.building.paid": "%s %s bezahlt. Der Builder beginnt bald.",
+  "gui.workers.building.notPurchasable": "Nicht kaufbar",
+  "gui.workers.building.price": "Preis: %s"
 }

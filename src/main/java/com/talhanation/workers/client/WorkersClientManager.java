@@ -5,15 +5,20 @@ import com.talhanation.recruits.world.RecruitsClaim;
 import com.talhanation.recruits.world.RecruitsClaimManager;
 import com.talhanation.workers.WorkAreaTypes;
 import com.talhanation.workers.config.BuildMode;
+import com.talhanation.workers.config.BuildPaymentMode;
 import java.util.ArrayList;
 import java.util.List;
 import net.minecraft.core.BlockPos;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.Items;
 import net.minecraft.world.level.ChunkPos;
 
 public class WorkersClientManager {
 
     public static boolean configValueWorkAreaOnlyInFactionClaim;
     public static BuildMode buildMode = BuildMode.FREE;
+    public static BuildPaymentMode buildPaymentMode = BuildPaymentMode.MATERIALS;
+    public static ItemStack currency = new ItemStack(Items.EMERALD);
     public static List<String> serverBuildingPresetNames = new ArrayList<>();
     public static boolean configValueOnlyBuildings;
     public static boolean isInFactionClaim(BlockPos pos, WorkAreaTypes type){
