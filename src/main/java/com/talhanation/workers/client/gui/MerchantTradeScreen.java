@@ -25,6 +25,8 @@ import net.minecraftforge.client.gui.widget.ExtendedButton;
 
 import javax.annotation.Nullable;
 import java.util.List;
+import java.util.Map;
+import java.util.HashMap;
 import java.util.UUID;
 
 public class MerchantTradeScreen extends ScreenBase<MerchantTradeContainer> {
@@ -66,8 +68,13 @@ public class MerchantTradeScreen extends ScreenBase<MerchantTradeContainer> {
     private int hoveredTooltipY = 0;
     private TradeList tradeList;
 
+    // Remembers the trade-list scroll position per merchant across screen rebuilds
+    // and reopenings (switching to add/edit and back creates a NEW screen instance,
+    // which would otherwise reset the scroll). Static so it survives that recreation.
+    private static final Map<UUID, Double> SCROLL_MEMORY = new HashMap<>();
+
     public MerchantTradeScreen(MerchantTradeContainer tradeContainer, Inventory playerInventory, Component title) {
-        super(RESOURCE_LOCATION, tradeContainer, playerInventory, Component.literal("Trades"));
+        super(RESOURCE_LOCATION, tradeContainer, playerInventory, Component.empty());
         this.tradeContainer = tradeContainer;
         this.merchantEntity = tradeContainer.getMerchantEntity();
         this.player = playerInventory.player;
@@ -91,6 +98,7 @@ public class MerchantTradeScreen extends ScreenBase<MerchantTradeContainer> {
     }
 
     public void setWidgets(){
+        this.saveScroll();
         this.clearWidgets();
 
         int listLeft   = leftPos + LIST_X;
@@ -104,6 +112,7 @@ public class MerchantTradeScreen extends ScreenBase<MerchantTradeContainer> {
         this.tradeList.setRenderSelection(false);
 
         this.loadTrades();
+        this.restoreScroll();
         this.addRenderableWidget(this.tradeList);
 
         if((merchantEntity.isCreative() && player.isCreative()) || isOwner){
@@ -294,6 +303,21 @@ public class MerchantTradeScreen extends ScreenBase<MerchantTradeContainer> {
         }
     }
 
+    private void saveScroll(){
+        if(this.tradeList != null){
+            SCROLL_MEMORY.put(merchantEntity.getUUID(), this.tradeList.getScroll());
+        }
+    }
+
+    private void restoreScroll(){
+        if(this.tradeList != null){
+            Double amount = SCROLL_MEMORY.get(merchantEntity.getUUID());
+            if(amount != null){
+                this.tradeList.setScroll(amount);
+            }
+        }
+    }
+
     public void onSelected(TradeList.TradeEntry entry){
         this.selection = entry.trade;
         this.updateButtonState();
@@ -345,7 +369,28 @@ public class MerchantTradeScreen extends ScreenBase<MerchantTradeContainer> {
                 : Component.literal(merchantEntity.getDisplayName().getString() + " - " + marketName);
         guiGraphics.drawString(font, nameLabel, 92, 5, fontColor, false);
 
+        // Trade count for quick reference (helpful with long, scrollable lists).
+        int tradeCount = getAvailableTrades();
+        Component countLabel = Component.translatable("gui.workers.merchant.tradeCount", tradeCount);
+        guiGraphics.drawString(font, countLabel, LIST_X, LIST_Y - 10, fontColor, false);
+
         guiGraphics.drawString(font, player.getInventory().getDisplayName().getVisualOrderText(), 92, this.imageHeight - 96 + 2, fontColor, false);
+    }
+
+    public int getAvailableTrades(){
+        if(player.getUUID().equals(merchantEntity.getOwnerUUID()) || player.isCreative() && player.hasPermissions(4)) {
+            return merchantEntity.getTrades().size();
+        }
+        int i = 0;
+        for(WorkersMerchantTrade trade : merchantEntity.getTrades()){
+            if(trade.isVillagerTrade) continue;
+
+            if(!trade.enabled) continue;
+
+            i++;
+        }
+
+        return i;
     }
 
     protected void renderItemStackTooltip(GuiGraphics guiGraphics, ItemStack itemstack, int mouseX, int mouseY) {
@@ -365,6 +410,10 @@ public class MerchantTradeScreen extends ScreenBase<MerchantTradeContainer> {
 
         @Override protected int addEntry(TradeList.TradeEntry entry) { return super.addEntry(entry); }
         @Override protected void clearEntries() { super.clearEntries(); }
+
+        // Bridge the (protected) scroll API so the screen can save/restore position.
+        public double getScroll() { return this.getScrollAmount(); }
+        public void setScroll(double amount) { this.setScrollAmount(amount); }
 
         /** Scrollbar sits flush against the right edge of the list area. */
         @Override
@@ -503,6 +552,7 @@ public class MerchantTradeScreen extends ScreenBase<MerchantTradeContainer> {
 
     @Override
     public void onClose() {
+        this.saveScroll();
         super.onClose();
         WorkersMain.SIMPLE_CHANNEL.sendToServer(new MessageUpdateMerchant(merchantEntity.getUUID(), isCreative, false, isDailyRefresh));
     }
