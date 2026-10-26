@@ -7,6 +7,7 @@ import com.talhanation.workers.entities.ai.VillagerRespondToInvitationGoal;
 import com.talhanation.workers.entities.ai.animals.WorkerTemptGoal;
 import com.talhanation.workers.entities.workarea.AbstractWorkAreaEntity;
 import com.talhanation.workers.entities.workarea.IPermissionArea;
+import com.talhanation.workers.entities.workarea.WorkshopArea;
 import com.talhanation.workers.init.ModEntityTypes;
 import com.talhanation.recruits.world.RecruitsHireTradesRegistry;
 import com.talhanation.recruits.entities.AbstractRecruitEntity;
@@ -57,6 +58,7 @@ public class VillagerEvents {
     public static final Component TITLE_ANIMAL_FARMER = Component.translatable("description.workers.title.animalFarmer");
     public static final Component TITLE_COURIER = Component.translatable("description.workers.title.courier");
     public static final Component TITLE_COOK    = Component.translatable("description.workers.title.cook");
+    public static final Component TITLE_CRAFTSMAN = Component.translatable("description.workers.title.craftsman");
     public static final Component DESCRIPTION_FARMER = Component.translatable("description.workers.farmer");
     public static final Component DESCRIPTION_MINER = Component.translatable("description.workers.miner");
     public static final Component DESCRIPTION_LUMBERJACK = Component.translatable("description.workers.lumberjack");
@@ -66,6 +68,7 @@ public class VillagerEvents {
     public static final Component DESCRIPTION_ANIMAL_FARMER = Component.translatable("description.workers.animalFarmer");
     public static final Component DESCRIPTION_COURIER = Component.translatable("description.workers.courier");
     public static final Component DESCRIPTION_COOK    = Component.translatable("description.workers.cook");
+    public static final Component DESCRIPTION_CRAFTSMAN = Component.translatable("description.workers.craftsman");
 
     @SubscribeEvent
     public void onPlayerJoinWorld(EntityJoinLevelEvent event) {
@@ -103,11 +106,12 @@ public class VillagerEvents {
         RecruitsHireTrade ANIMAL_FARMER = new RecruitsHireTrade(ModEntityTypes.ANIMAL_FARMER.getId(), WorkersServerConfig.BuilderCost.get(), TITLE_ANIMAL_FARMER, DESCRIPTION_ANIMAL_FARMER);
         RecruitsHireTrade COURIER = new RecruitsHireTrade(ModEntityTypes.COURIER.getId(), WorkersServerConfig.CourierCost.get(), TITLE_COURIER, DESCRIPTION_COURIER);
         RecruitsHireTrade COOK    = new RecruitsHireTrade(ModEntityTypes.COOK.getId(), WorkersServerConfig.CookCost.get(), TITLE_COOK, DESCRIPTION_COOK);
+        RecruitsHireTrade CRAFTSMAN = new RecruitsHireTrade(ModEntityTypes.CRAFTSMAN.getId(), WorkersServerConfig.CraftsmanCost.get(), TITLE_CRAFTSMAN, DESCRIPTION_CRAFTSMAN);
 
 
         RecruitsHireTradesRegistry.addTrade("workers", 1, FARMER, LUMBERJACK);
         RecruitsHireTradesRegistry.addTrade("workers", 2, COURIER, COOK);
-        RecruitsHireTradesRegistry.addTrade("workers", 3, MERCHANT, BUILDER);
+        RecruitsHireTradesRegistry.addTrade("workers", 3, MERCHANT, BUILDER, CRAFTSMAN);
 
         RecruitsHireTradesRegistry.addTrade("workers2", 1, FARMER, MINER);
         RecruitsHireTradesRegistry.addTrade("workers2", 2, COURIER);
@@ -123,7 +127,7 @@ public class VillagerEvents {
 
         RecruitsHireTradesRegistry.addTrade("workers5", 1, MINER, LUMBERJACK);
         RecruitsHireTradesRegistry.addTrade("workers5", 2, BUILDER, COURIER);
-        RecruitsHireTradesRegistry.addTrade("workers5", 3, MERCHANT);
+        RecruitsHireTradesRegistry.addTrade("workers5", 3, MERCHANT, CRAFTSMAN);
     }
 
     @SubscribeEvent
@@ -199,6 +203,13 @@ public class VillagerEvents {
 
         if(disableInteractionInPermissionArea(event.getEntity(), event.getLevel(), event.getPos())){
             event.setCanceled(true);
+            return;
+        }
+
+        // a player opened a container: the workshop it belongs to checks its orders again
+        if(event instanceof PlayerInteractEvent.RightClickBlock && !event.getLevel().isClientSide()
+                && event.getLevel().getBlockEntity(event.getPos()) instanceof Container){
+            WorkshopArea.onContainerInteraction(event.getLevel(), event.getPos());
         }
     }
 

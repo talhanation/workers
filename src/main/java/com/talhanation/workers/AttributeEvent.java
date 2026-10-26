@@ -20,5 +20,6 @@ public class AttributeEvent {
         event.put(ModEntityTypes.ANIMAL_FARMER.get(), AnimalFarmerEntity.setAttributes().build());
         event.put(ModEntityTypes.COURIER.get(), AnimalFarmerEntity.setAttributes().build());
         event.put(ModEntityTypes.COOK.get(), CookEntity.setAttributes().build());
+        event.put(ModEntityTypes.CRAFTSMAN.get(), CraftsmanEntity.setAttributes().build());
     }
 }

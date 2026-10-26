@@ -44,6 +44,8 @@ public class WorkerCommandScreen implements ICommandCategory {
     private static final MutableComponent TOOLTIP_PLACE_HOME_AREA = Component.translatable("gui.workers.command.tooltip.place_home");
     private static final MutableComponent TEXT_PLACE_KITCHEN_AREA = Component.translatable("gui.workers.command.text.place_kitchen");
     private static final MutableComponent TOOLTIP_PLACE_KITCHEN_AREA = Component.translatable("gui.workers.command.tooltip.place_kitchen");
+    private static final MutableComponent TEXT_PLACE_WORKSHOP_AREA = Component.translatable("gui.workers.command.text.place_workshop");
+    private static final MutableComponent TOOLTIP_PLACE_WORKSHOP_AREA = Component.translatable("gui.workers.command.tooltip.place_workshop");
     private static final MutableComponent TOOLTIP_DISABLED_BY_SERVER = Component.translatable("gui.workers.command.tooltip.disabled_by_server");
     private static final MutableComponent TOOLTIP_NOT_IN_CLAIM = Component.translatable("gui.workers.command.tooltip.not_in_claim");
     @Override
@@ -80,11 +82,12 @@ public class WorkerCommandScreen implements ICommandCategory {
         addButton(screen, colLeft, r4, TEXT_PLACE_FISHING,    TOOLTIP_PLACE_FISHING,    WorkAreaTypes.FISHING);
         addButton(screen, colLeft, r5, TEXT_PLACE_ANIMAL_PEN, TOOLTIP_PLACE_ANIMAL_PEN, WorkAreaTypes.ANIMAL_PEN);
 
-        // ── Right column (4 buttons) ──────────────────────────────────────────
+        // ── Right column (5 buttons) ──────────────────────────────────────────
         addButton(screen, colRight, r1, TEXT_PLACE_STORAGE,      TOOLTIP_PLACE_STORAGE,      WorkAreaTypes.STORAGE);
         addButton(screen, colRight, r2, TEXT_PLACE_MARKET_AREA,  TOOLTIP_PLACE_MARKET_AREA,  WorkAreaTypes.MARKET);
         addButton(screen, colRight, r3, TEXT_PLACE_KITCHEN_AREA, TOOLTIP_PLACE_KITCHEN_AREA, WorkAreaTypes.KITCHEN);
         addButton(screen, colRight, r4, TEXT_PLACE_HOME_AREA,    TOOLTIP_PLACE_HOME_AREA,    WorkAreaTypes.HOME);
+        addButton(screen, colRight, r5, TEXT_PLACE_WORKSHOP_AREA, TOOLTIP_PLACE_WORKSHOP_AREA, WorkAreaTypes.WORKSHOP);
 
         // ── Building centered below both columns ──────────────────────────────
         addButton(screen, colCenter, r6, TEXT_PLACE_BUILDING, null, WorkAreaTypes.BUILDING);

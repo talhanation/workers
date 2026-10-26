@@ -24,7 +24,8 @@ public class WorkersVillagerProfessionLayer extends RenderLayer<AbstractRecruitE
             new ResourceLocation(WorkersMain.MOD_ID,"textures/entity/villager/villager_merchant_cloth.png"),
             new ResourceLocation(WorkersMain.MOD_ID,"textures/entity/villager/villager_courier_cloth.png"),
             new ResourceLocation(WorkersMain.MOD_ID,"textures/entity/villager/villager_builder_cloth.png"),
-            new ResourceLocation(WorkersMain.MOD_ID,"textures/entity/villager/villager_cook_cloth.png")
+            new ResourceLocation(WorkersMain.MOD_ID,"textures/entity/villager/villager_cook_cloth.png"),
+            new ResourceLocation(WorkersMain.MOD_ID,"textures/entity/villager/villager_craftsman_cloth.png")
     };
 
     public WorkersVillagerProfessionLayer(LivingEntityRenderer<AbstractRecruitEntity, HumanoidModel<AbstractRecruitEntity>> renderer) {
@@ -65,6 +66,9 @@ public class WorkersVillagerProfessionLayer extends RenderLayer<AbstractRecruitE
         }
         else if(worker instanceof CookEntity){
             return TEXTURE[8];
+        }
+        else if(worker instanceof CraftsmanEntity){
+            return TEXTURE[9];
         }
         return TEXTURE[0];
     }

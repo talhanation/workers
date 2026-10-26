@@ -8,12 +8,16 @@ import com.talhanation.workers.client.gui.CourierScreen;
 import com.talhanation.workers.client.gui.MerchantAddEditTradeScreen;
 import com.talhanation.workers.client.gui.MerchantTradeScreen;
 import com.talhanation.workers.client.gui.MerchantAddEditVillagerTradeScreen;
+import com.talhanation.workers.client.gui.WorkshopEditOrderScreen;
 import com.talhanation.workers.entities.CourierEntity;
 import com.talhanation.workers.entities.MerchantEntity;
+import com.talhanation.workers.entities.workarea.WorkshopArea;
 import com.talhanation.workers.inventory.CourierContainer;
 import com.talhanation.workers.inventory.MerchantAddEditTradeContainer;
 import com.talhanation.workers.inventory.MerchantTradeContainer;
 import com.talhanation.workers.inventory.MerchantAddEditVillagerTradeContainer;
+import com.talhanation.workers.inventory.WorkshopEditOrderContainer;
+import com.talhanation.workers.world.CraftOrder;
 import com.talhanation.workers.world.WorkersMerchantTrade;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraftforge.common.extensions.IForgeMenuType;
@@ -45,6 +49,7 @@ public class ModMenuTypes {
         registerMenu(MERCHANT_VILLAGER_TRADE_CONTAINER_TYPE.get(), MerchantAddEditVillagerTradeScreen::new);
         registerMenu(MERCHANT_TRADE_CONTAINER_TYPE.get(), MerchantTradeScreen::new);
         registerMenu(COURIER_CONTAINER_TYPE.get(), CourierScreen::new);
+        registerMenu(WORKSHOP_EDIT_ORDER_CONTAINER_TYPE.get(), WorkshopEditOrderScreen::new);
     }
 
     public static final RegistryObject<MenuType<MerchantAddEditTradeContainer>> MERCHANT_ADD_EDIT_TRADE_CONTAINER_TYPE =
@@ -85,6 +90,17 @@ public class ModMenuTypes {
                 return new CourierContainer(windowId, courier, inv);
             }));
 
+    public static final RegistryObject<MenuType<WorkshopEditOrderContainer>> WORKSHOP_EDIT_ORDER_CONTAINER_TYPE =
+            MENU_TYPES.register("workshop_edit_order_container", () -> IForgeMenuType.create((windowId, inv, data) -> {
+                UUID workshopUuid = data.readUUID();
+                CompoundTag nbt = data.readNbt();
+                WorkshopArea workshop = inv.player.getCommandSenderWorld().getEntitiesOfClass(WorkshopArea.class,
+                        inv.player.getBoundingBox().inflate(64D), area -> area.getUUID().equals(workshopUuid)).stream().findAny().orElse(null);
+                if (workshop == null || nbt == null) {
+                    return null;
+                }
+                return new WorkshopEditOrderContainer(windowId, workshop, inv, CraftOrder.fromNbt(nbt));
+            }));
 
     /**
      * Registers a menuType/container with a screen constructor.

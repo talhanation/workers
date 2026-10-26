@@ -4,6 +4,7 @@ import com.talhanation.workers.entities.CourierEntity;
 import com.talhanation.workers.entities.workarea.KitchenArea;
 import com.talhanation.workers.entities.workarea.StorageArea;
 import com.talhanation.workers.entities.workarea.MarketArea;
+import com.talhanation.workers.entities.workarea.WorkshopArea;
 import com.talhanation.workers.world.CourierAction;
 import com.talhanation.workers.world.CourierRoute;
 import net.minecraft.core.BlockPos;
@@ -496,9 +497,29 @@ public class CourierWorkGoal extends Goal {
                 }
             }
 
+            case WORKSHOP -> {
+                // the workshop itself is a container that links all its chests
+                List<WorkshopArea> workshops = level.getEntitiesOfClass(
+                        WorkshopArea.class, scanBox, this::canAccessWorkshop);
+                for (WorkshopArea w : workshops){
+                    w.scanArea();
+                    result.add(w);
+                }
+            }
+
         }
         return result;
     }
+    private boolean canAccessWorkshop(WorkshopArea area){
+        if (!courier.isOwned()) return false;
+        boolean sameOwner = courier.getOwnerUUID().equals(area.getPlayerUUID());
+        boolean sameTeam  = area.getTeamAccess() && courier.getTeam() != null
+                && area.getTeamStringID() != null
+                && !area.getTeamStringID().isEmpty()
+                && area.getTeamStringID().equals(courier.getTeam().getName());
+        return sameOwner || sameTeam;
+    }
+
     private boolean canAccessKitchen(KitchenArea kitchen){
         if (!courier.isOwned()) return false;
         boolean sameOwner = courier.getOwnerUUID().equals(kitchen.getPlayerUUID());

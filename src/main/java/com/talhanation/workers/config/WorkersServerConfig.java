@@ -18,6 +18,8 @@ public class WorkersServerConfig {
     public static ForgeConfigSpec.IntValue MerchantCost;
     public static ForgeConfigSpec.IntValue CourierCost;
     public static ForgeConfigSpec.IntValue CookCost;
+    public static ForgeConfigSpec.IntValue CraftsmanCost;
+    public static ForgeConfigSpec.ConfigValue<List<? extends Integer>> CraftsmanMoraleTicks;
     public static ForgeConfigSpec.BooleanValue VillagerBreedMixinEnabled;
     public static ForgeConfigSpec.IntValue VillagerBreedSaturationThreshold;
     public static ForgeConfigSpec.IntValue AnimalPenMaxAnimals;
@@ -191,6 +193,23 @@ public class WorkersServerConfig {
                         \tdefault: 25""")
                 .worldRestart()
                 .defineInRange("CookCost", 25, 0, 1453);
+
+        CraftsmanCost = BUILDER.comment("""
+                        
+                        The amount of currency required to hire a craftsman.
+                        \t(takes effect after restart)
+                        \tdefault: 30""")
+                .worldRestart()
+                .defineInRange("CraftsmanCost", 30, 0, 1453);
+
+        CraftsmanMoraleTicks = BUILDER.comment("""
+                        
+                        Ticks the craftsman needs for one crafted item, depending on his morale.
+                        The five values are used for morale >= 80, >= 60, >= 40, >= 20 and below 20.
+                        \t(takes effect after restart)
+                        \tdefault: [1, 2, 3, 5, 8]""")
+                .worldRestart()
+                .defineList("CraftsmanMoraleTicks", Arrays.asList(1, 2, 3, 5, 8), o -> o instanceof Integer i && i >= 1);
 
         VillagerBreedMixinEnabled = BUILDER.comment("""
                         

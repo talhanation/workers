@@ -121,6 +121,14 @@ public class MessageAddWorkArea implements Message<MessageAddWorkArea> {
                 workArea.setTeamAccess(false);
             }
 
+            case WORKSHOP -> {
+                workArea = new WorkshopArea(ModEntityTypes.WORKSHOP_AREA.get(), player.level());
+                workArea.setWidthSize(7);
+                workArea.setHeightSize(5);
+                workArea.setDepthSize(7);
+                workArea.setTeamAccess(false);
+            }
+
             default -> {
                 //IGNORE
                 return;

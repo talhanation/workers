@@ -59,7 +59,8 @@ public class CourierAction {
         CHEST,
         STORAGE,
         MARKET,
-        KITCHEN;
+        KITCHEN,
+        WORKSHOP;
         //WORKER;
 
         public static SourceType fromString(String s) {

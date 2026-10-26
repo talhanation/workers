@@ -67,6 +67,12 @@ public class ModEntityTypes {
                     .fireImmune().noSummon()
                     .build(new ResourceLocation(WorkersMain.MOD_ID, "animalpenarea").toString()));
 
+    public static final RegistryObject<EntityType<WorkshopArea>> WORKSHOP_AREA = ENTITY_TYPES.register("workshoparea",
+            () -> EntityType.Builder.of(WorkshopArea::new, MobCategory.MISC)
+                    .sized(1.2F, 2.00F)
+                    .fireImmune().noSummon()
+                    .build(new ResourceLocation(WorkersMain.MOD_ID, "workshoparea").toString()));
+
     public static final RegistryObject<EntityType<HomeArea>> HOMEAREA = ENTITY_TYPES.register("homearea",
             () -> EntityType.Builder.of(HomeArea::new, MobCategory.MISC)
                     .sized(1.2F, 2.00F)
@@ -138,6 +144,14 @@ public class ModEntityTypes {
                         .setTrackingRange(32)
                         .setShouldReceiveVelocityUpdates(true)
                         .build(new ResourceLocation(WorkersMain.MOD_ID, "cook").toString()));
+
+       public static final RegistryObject<EntityType<CraftsmanEntity>> CRAFTSMAN = WORKER_TYPES.register("craftsman",
+                () -> EntityType.Builder.of(CraftsmanEntity::new, MobCategory.CREATURE)
+                        .sized(0.6F, 1.95F)
+                        .canSpawnFarFromPlayer()
+                        .setTrackingRange(32)
+                        .setShouldReceiveVelocityUpdates(true)
+                        .build(new ResourceLocation(WorkersMain.MOD_ID, "craftsman").toString()));
 
        public static final RegistryObject<EntityType<FishingBobberEntity>> FISHING_BOBBER = ENTITY_TYPES.register("fishing_bobber",
                         () -> EntityType.Builder.<FishingBobberEntity>of(FishingBobberEntity::new, MobCategory.MISC)

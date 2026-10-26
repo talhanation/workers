@@ -113,6 +113,7 @@ public class CourierScreen extends ScreenBase<CourierContainer> {
     private static final MutableComponent TOOLTIP_STORAGE = Component.translatable("gui.workers.tooltip.courier.storage");
     private static final MutableComponent TOOLTIP_MARKET = Component.translatable("gui.workers.tooltip.courier.market");
     private static final MutableComponent TOOLTIP_KITCHEN = Component.translatable("gui.workers.tooltip.courier.kitchen");
+    private static final MutableComponent TOOLTIP_WORKSHOP = Component.translatable("gui.workers.tooltip.courier.workshop");
 
     // ── Screen state ──────────────────────────────────────────────────────────
 
@@ -407,7 +408,8 @@ public class CourierScreen extends ScreenBase<CourierContainer> {
                     List.of(CourierAction.SourceType.CHEST,
                             CourierAction.SourceType.STORAGE,
                             CourierAction.SourceType.MARKET,
-                            CourierAction.SourceType.KITCHEN
+                            CourierAction.SourceType.KITCHEN,
+                            CourierAction.SourceType.WORKSHOP
                     ),
                     //CourierAction.SourceType.WORKER),
                     s -> switch (s) {
@@ -415,6 +417,7 @@ public class CourierScreen extends ScreenBase<CourierContainer> {
                         case STORAGE -> "Storage";
                         case MARKET  -> "Market";
                         case KITCHEN  -> "Kitchen";
+                        case WORKSHOP -> "Workshop";
                         //case WORKER  -> "Worker";
                     },
                     s -> { action.setSourceType(s); buildWidgets(); },
@@ -503,6 +506,7 @@ public class CourierScreen extends ScreenBase<CourierContainer> {
             case STORAGE -> TOOLTIP_STORAGE.getString();
             case MARKET  -> TOOLTIP_MARKET.getString();
             case KITCHEN -> TOOLTIP_KITCHEN.getString();
+            case WORKSHOP -> TOOLTIP_WORKSHOP.getString();
         };
         return List.of(Component.literal(s));
     }
