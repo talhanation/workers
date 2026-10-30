@@ -1,15 +1,20 @@
 package com.talhanation.workers.entities;
 
 import com.talhanation.recruits.entities.AbstractRecruitEntity;
+import com.talhanation.workers.WorkersMain;
 import com.talhanation.workers.config.WorkersServerConfig;
 import com.talhanation.workers.entities.ai.CraftsmanWorkGoal;
 import com.talhanation.workers.entities.ai.navigation.WorkersGroundPathNavigation;
 import com.talhanation.workers.entities.workarea.AbstractWorkAreaEntity;
 import com.talhanation.workers.entities.workarea.WorkshopArea;
+import com.talhanation.workers.network.MessageToClientOpenWorkshopOrders;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.chat.Component;
+import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.util.RandomSource;
 import net.minecraft.world.DifficultyInstance;
+import net.minecraft.world.InteractionHand;
+import net.minecraft.world.InteractionResult;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.Mob;
 import net.minecraft.world.entity.MobSpawnType;
@@ -17,10 +22,13 @@ import net.minecraft.world.entity.SpawnGroupData;
 import net.minecraft.world.entity.ai.attributes.AttributeSupplier;
 import net.minecraft.world.entity.ai.attributes.Attributes;
 import net.minecraft.world.entity.item.ItemEntity;
+import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.ServerLevelAccessor;
 import net.minecraftforge.common.ForgeMod;
+import net.minecraftforge.network.PacketDistributor;
+import org.jetbrains.annotations.NotNull;
 
 import javax.annotation.Nullable;
 import java.util.List;
@@ -66,6 +74,17 @@ public class CraftsmanEntity extends AbstractWorkerEntity {
     @Override
     public void readAdditionalSaveData(CompoundTag nbt) {
         super.readAdditionalSaveData(nbt);
+    }
+
+    /** A click on the craftsman while he works in a workshop opens its order list. Crouching keeps the normal behaviour. */
+    @Override
+    public @NotNull InteractionResult mobInteract(@NotNull Player player, @NotNull InteractionHand hand) {
+        if (!this.getCommandSenderWorld().isClientSide() && !player.isCrouching() && player instanceof ServerPlayer serverPlayer
+                && currentWorkshopArea != null && !currentWorkshopArea.isRemoved() && currentWorkshopArea.canPlayerSee(player)) {
+            WorkersMain.SIMPLE_CHANNEL.send(PacketDistributor.PLAYER.with(() -> serverPlayer), new MessageToClientOpenWorkshopOrders(currentWorkshopArea.getUUID()));
+            return InteractionResult.SUCCESS;
+        }
+        return super.mobInteract(player, hand);
     }
 
     public static AttributeSupplier.Builder setAttributes() {

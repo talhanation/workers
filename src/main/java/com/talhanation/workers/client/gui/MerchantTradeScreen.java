@@ -3,18 +3,23 @@ package com.talhanation.workers.client.gui;
 import com.mojang.blaze3d.systems.RenderSystem;
 import com.talhanation.recruits.client.gui.widgets.RecruitsCheckBox;
 import com.talhanation.workers.WorkersMain;
+import com.talhanation.workers.client.WorkersClientManager;
 import com.talhanation.workers.entities.MerchantEntity;
 import com.talhanation.workers.inventory.MerchantTradeContainer;
 import com.talhanation.workers.network.MessageDoTradeWithMerchant;
 import com.talhanation.workers.network.MessageMoveMerchantTrade;
+import com.talhanation.workers.network.MessageRequestMerchantMemory;
+import com.talhanation.workers.network.MessageSetFarTrader;
 import com.talhanation.workers.network.MessageUpdateMerchant;
 import com.talhanation.workers.network.MessageUpdateMerchantTrade;
+import com.talhanation.workers.world.VillagerPriceTable;
 import com.talhanation.workers.world.WorkersMerchantTrade;
 import de.maxhenkel.corelib.inventory.ScreenBase;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.components.AbstractButton;
 import net.minecraft.client.gui.components.ObjectSelectionList;
+import net.minecraft.client.gui.components.Tooltip;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.MutableComponent;
 import net.minecraft.resources.ResourceLocation;
@@ -40,6 +45,9 @@ public class MerchantTradeScreen extends ScreenBase<MerchantTradeContainer> {
     private static final MutableComponent BUTTON_TRADE = Component.translatable("gui.workers.button.trade");
     private static final MutableComponent TEXT_CREATIVE = Component.translatable("gui.workers.text.creative");
     private static final MutableComponent TEXT_DAILY_REFRESH = Component.translatable("gui.workers.text.dailyRefresh");
+    private static final MutableComponent TEXT_FAR_TRADER = Component.translatable("gui.workers.checkbox.farTrader");
+    private static final MutableComponent TOOLTIP_FAR_TRADER = Component.translatable("gui.workers.checkbox.tooltip.farTrader");
+    private static final MutableComponent BUTTON_KNOWN_MARKETS = Component.translatable("gui.workers.button.knownMarkets");
     private static final int fontColor = 4210752;
 
     private static final int LIST_X       = 5;
@@ -63,6 +71,7 @@ public class MerchantTradeScreen extends ScreenBase<MerchantTradeContainer> {
     private ExtendedButton moveDownButton;
     private boolean isCreative;
     private boolean isDailyRefresh;
+    private boolean isFarTrader;
     private ItemStack hoveredTooltipStack = ItemStack.EMPTY;
     private int hoveredTooltipX = 0;
     private int hoveredTooltipY = 0;
@@ -87,6 +96,7 @@ public class MerchantTradeScreen extends ScreenBase<MerchantTradeContainer> {
     protected void init() {
         super.init();
         this.isCreative = merchantEntity.isCreative();
+        this.isFarTrader = merchantEntity.isFarTrader();
         this.isDailyRefresh = merchantEntity.isDailyRefresh();
         this.setWidgets();
     }
@@ -200,6 +210,24 @@ public class MerchantTradeScreen extends ScreenBase<MerchantTradeContainer> {
                         restoreSelection(selectedUuid);
                     });
             addRenderableWidget(moveDownButton);
+
+            if(isOwner) {
+                // travelling merchant: visits the markets of other players
+                RecruitsCheckBox farTraderCheckBox = new RecruitsCheckBox(leftPos + 256, topPos + 5, 100, 20, TEXT_FAR_TRADER,
+                        this.isFarTrader,
+                        (bool) -> {
+                            this.isFarTrader = bool;
+                            WorkersMain.SIMPLE_CHANNEL.sendToServer(new MessageSetFarTrader(merchantEntity.getUUID(), bool));
+                            setWidgets(); // the markets button only exists for travelling merchants
+                        });
+                farTraderCheckBox.setTooltip(Tooltip.create(TOOLTIP_FAR_TRADER));
+                addRenderableWidget(farTraderCheckBox);
+
+                if(this.isFarTrader) {
+                    addRenderableWidget(new ExtendedButton(leftPos + 256, topPos + 27, 100, 20, BUTTON_KNOWN_MARKETS,
+                            button -> WorkersMain.SIMPLE_CHANNEL.sendToServer(new MessageRequestMerchantMemory(merchantEntity.getUUID()))));
+                }
+            }
 
             if(player.isCreative()) {
                 this.creativeCheckbox = new RecruitsCheckBox(leftPos + 256, topPos + 172, 100, 20, TEXT_CREATIVE,
@@ -494,15 +522,39 @@ public class MerchantTradeScreen extends ScreenBase<MerchantTradeContainer> {
                     }
                 }
                 else {
-                    // Villager trade: emerald-green tint + single centred item
-                    guiGraphics.fill(rowLeft, top, rowLeft + rowWidth, top + entryHeight, 0x5500AA44);
+                    // Villager trade: green tint = sell to villagers, blue tint = buy from villagers
+                    boolean buy = trade.isVillagerBuy();
+                    guiGraphics.fill(rowLeft, top, rowLeft + rowWidth, top + entryHeight, buy ? 0x553366CC : 0x5500AA44);
 
-                    final int itemX = rowLeft + rowWidth / 2 - 8;
-                    guiGraphics.renderFakeItem(trade.tradeItem, itemX, itemY);
-                    guiGraphics.renderItemDecorations(font, trade.tradeItem, itemX, itemY);
+                    // what the merchant gives -> what the merchant gets
+                    // the amount comes from the villager, the ghost item count means nothing
+                    ItemStack tradeItem = trade.tradeItem.copyWithCount(1);
+                    ItemStack currency = VillagerPriceTable.getCurrencyStack();
+                    ItemStack given    = buy ? currency : tradeItem;
+                    ItemStack received = buy ? tradeItem : currency;
 
-                    if (!trade.tradeItem.isEmpty() && mouseX >= itemX && mouseX < itemX + 16 && mouseY >= top && mouseY < top + entryHeight) {
-                        MerchantTradeScreen.this.hoveredTooltipStack = trade.tradeItem;
+                    final int item1X = rowLeft + 2;
+                    final int arrowX = rowLeft + rowWidth / 2 - 9;
+                    final int item2X = rowLeft + rowWidth - 18;
+
+                    guiGraphics.setColor(1.0F, 1.0F, 1.0F, alpha);
+                    guiGraphics.blit(ARROW_IMAGE, arrowX, itemY - 3, 0, 0, 21, 21, 21, 21);
+
+                    guiGraphics.renderFakeItem(given, item1X, itemY);
+                    guiGraphics.renderFakeItem(received, item2X, itemY);
+
+                    // vanilla price, e.g. 20 clay -> 1 emerald; "?" when no villager trades the item this way
+                    VillagerPriceTable.Rate rate = VillagerPriceTable.getRate(WorkersClientManager.villagerPrices.get(trade.tradeItem.getItem()), buy);
+                    String itemsText = rate == null ? null : rate.items();
+                    String priceText = rate == null ? "?" : rate.price();
+                    guiGraphics.renderItemDecorations(font, given, item1X, itemY, countText(buy ? priceText : itemsText));
+                    guiGraphics.renderItemDecorations(font, received, item2X, itemY, countText(buy ? itemsText : priceText));
+
+                    ItemStack hoveredStack = ItemStack.EMPTY;
+                    if (mouseX >= item1X && mouseX < item1X + 16 && mouseY >= top && mouseY < top + entryHeight) hoveredStack = given;
+                    else if (mouseX >= item2X && mouseX < item2X + 16 && mouseY >= top && mouseY < top + entryHeight) hoveredStack = received;
+                    if (!hoveredStack.isEmpty()) {
+                        MerchantTradeScreen.this.hoveredTooltipStack = hoveredStack;
                         MerchantTradeScreen.this.hoveredTooltipX = mouseX;
                         MerchantTradeScreen.this.hoveredTooltipY = mouseY;
                     }
@@ -521,6 +573,11 @@ public class MerchantTradeScreen extends ScreenBase<MerchantTradeContainer> {
 
             @Override
             public Component getNarration() { return Component.empty(); }
+
+            @Nullable
+            private String countText(@Nullable String text) {
+                return "1".equals(text) ? null : text;
+            }
 
             private int getButtonTextureY(boolean hovered, boolean selected, boolean out) {
                 final int BUTTON_Y_OUT     = 46;
@@ -556,4 +613,4 @@ public class MerchantTradeScreen extends ScreenBase<MerchantTradeContainer> {
         super.onClose();
         WorkersMain.SIMPLE_CHANNEL.sendToServer(new MessageUpdateMerchant(merchantEntity.getUUID(), isCreative, false, isDailyRefresh));
     }
-}
+}

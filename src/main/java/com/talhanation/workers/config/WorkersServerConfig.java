@@ -355,9 +355,9 @@ public class WorkersServerConfig {
                         to trigger breeding (only used when VillagerBreedMixinEnabled = true).
                         Saturation is calculated as: nutrition * saturationModifier * 2
                         Examples at default threshold 15:
-                        - Bread (saturation 6.0): needs 3 bread  → 18 >= 15
-                        - Cooked Beef (saturation 12.8): needs 2 → 25 >= 15
-                        - Baked Potato (saturation 6.0): needs 3 → 18 >= 15
+                        - Bread (saturation 6.0): needs 3 bread  \u2192 18 >= 15
+                        - Cooked Beef (saturation 12.8): needs 2 \u2192 25 >= 15
+                        - Baked Potato (saturation 6.0): needs 3 \u2192 18 >= 15
                         \t(takes effect after restart)
                         \tdefault: 15""")
                 .worldRestart()

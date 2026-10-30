@@ -14,13 +14,19 @@ public class MessageUpdateMarketArea implements Message<MessageUpdateMarketArea>
     public UUID uuid;
     public boolean isOpen;
     public String marketName;
+    public boolean useStorage;
+    public int currencyReserve;
+    public boolean acceptForeign;
 
     public MessageUpdateMarketArea() {}
 
-    public MessageUpdateMarketArea(UUID uuid, boolean isOpen, String marketName) {
+    public MessageUpdateMarketArea(UUID uuid, boolean isOpen, String marketName, boolean useStorage, int currencyReserve, boolean acceptForeign) {
         this.uuid = uuid;
         this.isOpen = isOpen;
         this.marketName = marketName;
+        this.useStorage = useStorage;
+        this.currencyReserve = currencyReserve;
+        this.acceptForeign = acceptForeign;
     }
 
     @Override
@@ -38,6 +44,9 @@ public class MessageUpdateMarketArea implements Message<MessageUpdateMarketArea>
                 .ifPresent(market -> {
                     market.setOpen(isOpen);
                     market.setMarketName(marketName);
+                    market.setUseStorage(useStorage);
+                    market.setCurrencyReserve(currencyReserve);
+                    market.setAcceptForeignMerchants(acceptForeign);
                 });
     }
 
@@ -46,6 +55,9 @@ public class MessageUpdateMarketArea implements Message<MessageUpdateMarketArea>
         this.uuid = buf.readUUID();
         this.isOpen = buf.readBoolean();
         this.marketName = buf.readUtf();
+        this.useStorage = buf.readBoolean();
+        this.currencyReserve = buf.readInt();
+        this.acceptForeign = buf.readBoolean();
         return this;
     }
 
@@ -54,5 +66,8 @@ public class MessageUpdateMarketArea implements Message<MessageUpdateMarketArea>
         buf.writeUUID(uuid);
         buf.writeBoolean(isOpen);
         buf.writeUtf(marketName);
+        buf.writeBoolean(useStorage);
+        buf.writeInt(currencyReserve);
+        buf.writeBoolean(acceptForeign);
     }
 }

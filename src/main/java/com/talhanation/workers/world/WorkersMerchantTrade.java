@@ -10,6 +10,10 @@ import java.util.List;
 import java.util.UUID;
 
 public class WorkersMerchantTrade {
+    /** Sell trades sell everything by default, keeping something is set on purpose. */
+    public static final int DEFAULT_KEEP_AMOUNT = 0;
+    /** Villager buy trades buy one stack by default. */
+    public static final int DEFAULT_BUY_AMOUNT = 64;
     public int maxTrades;
     public int currentTrades;
     public ItemStack currencyItem;
@@ -18,16 +22,28 @@ public class WorkersMerchantTrade {
     public boolean isVillagerTrade;
     public ItemStack tradeItem;
     public UUID uuid;
+    /** Villager trades only: sell the trade item to villagers or buy it from them. */
+    public VillagerTradeMode villagerMode;
+    /** Player trades: refill the market from a nearby storage. Villager trades always use the storage of the market. */
+    public boolean useStorage;
+    /**
+     * Player trades: amount that always stays in the storages.
+     * Villager sell: sell only while market and storages hold more. Villager buy: buy only until market and storages hold this amount.
+     */
+    public int storageAmount;
 
     public WorkersMerchantTrade copy(){
         WorkersMerchantTrade t = new WorkersMerchantTrade(this.currencyItem, this.tradeItem, this.maxTrades, this.allowDamagedCurrency);
         t.enabled = this.enabled;
         t.isVillagerTrade = this.isVillagerTrade;
+        t.villagerMode = this.villagerMode;
+        t.useStorage = this.useStorage;
+        t.storageAmount = this.storageAmount;
         return t;
     }
 
     public WorkersMerchantTrade(){
-        this(ItemStack.EMPTY, ItemStack.EMPTY, 16, false);
+        this(ItemStack.EMPTY, ItemStack.EMPTY, -1, false);
     }
     public WorkersMerchantTrade(ItemStack currencyItem, ItemStack tradeItem, int maxTrades, boolean allowDamagedCurrency){
         this(UUID.randomUUID(), currencyItem, tradeItem, maxTrades, allowDamagedCurrency);
@@ -40,6 +56,13 @@ public class WorkersMerchantTrade {
         this.allowDamagedCurrency = allowDamagedCurrency;
         this.enabled = true;
         this.isVillagerTrade = false;
+        this.villagerMode = VillagerTradeMode.SELL;
+        this.useStorage = true;
+        this.storageAmount = DEFAULT_KEEP_AMOUNT;
+    }
+
+    public boolean isVillagerBuy() {
+        return isVillagerTrade && villagerMode == VillagerTradeMode.BUY;
     }
 
     public CompoundTag toNbt() {
@@ -52,6 +75,9 @@ public class WorkersMerchantTrade {
         tag.putBoolean("allowDamagedCurrency", this.allowDamagedCurrency);
         tag.putBoolean("enabled", this.enabled);
         tag.putBoolean("isVillagerTrade", this.isVillagerTrade);
+        tag.putString("villagerMode", this.villagerMode.name());
+        tag.putBoolean("useStorage", this.useStorage);
+        tag.putInt("storageAmount", this.storageAmount);
         return tag;
     }
 
@@ -69,6 +95,11 @@ public class WorkersMerchantTrade {
         trade.currentTrades = currentTrades;
         trade.enabled = enabled;
         trade.isVillagerTrade = tag.getBoolean("isVillagerTrade");
+        trade.villagerMode = VillagerTradeMode.fromName(tag.getString("villagerMode"));
+        // villager trades are limited by the item amount, not by the number of trades
+        if (trade.isVillagerTrade) trade.maxTrades = -1;
+        if (tag.contains("useStorage")) trade.useStorage = tag.getBoolean("useStorage");
+        if (tag.contains("storageAmount")) trade.storageAmount = tag.getInt("storageAmount");
         return trade;
     }
     public static CompoundTag listToNbt(List<WorkersMerchantTrade> trades) {
@@ -96,5 +127,17 @@ public class WorkersMerchantTrade {
             out.add(WorkersMerchantTrade.fromNbt(entry));
         }
         return out;
+    }
+
+    public enum VillagerTradeMode {
+        SELL,
+        BUY;
+
+        public static VillagerTradeMode fromName(String name) {
+            for (VillagerTradeMode mode : values()) {
+                if (mode.name().equals(name)) return mode;
+            }
+            return SELL;
+        }
     }
 }

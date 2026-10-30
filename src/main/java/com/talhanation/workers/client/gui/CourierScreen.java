@@ -11,6 +11,8 @@ import com.talhanation.workers.WorkersMain;
 import com.talhanation.workers.entities.CourierEntity;
 import com.talhanation.workers.inventory.CourierContainer;
 import com.talhanation.workers.network.MessageCourierSetRoute;
+import com.talhanation.workers.network.MessageRequestCourierTargets;
+import com.talhanation.workers.network.MessageToClientCourierTargets;
 import com.talhanation.workers.world.CourierAction;
 import com.talhanation.workers.world.CourierRoute;
 import com.talhanation.workers.client.gui.widgets.CourierDropDownMenu;
@@ -21,8 +23,12 @@ import net.minecraft.client.gui.components.AbstractWidget;
 import net.minecraft.client.gui.components.ObjectSelectionList;
 import net.minecraft.client.gui.components.Tooltip;
 import net.minecraft.client.gui.components.events.GuiEventListener;
+import net.minecraft.client.gui.screens.Screen;
+import net.minecraft.core.BlockPos;
+import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.MutableComponent;
+import net.minecraft.ChatFormatting;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.util.FastColor;
 import net.minecraft.world.entity.player.Inventory;
@@ -34,8 +40,13 @@ import javax.annotation.Nullable;
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
+import java.util.UUID;
 
 import static net.minecraft.client.gui.components.AbstractWidget.WIDGETS_LOCATION;
 
@@ -74,7 +85,10 @@ public class CourierScreen extends ScreenBase<CourierContainer> {
     private static final int ACT_SB_X = ACT_X + ACT_W - ACT_SB_W;  // = 241
     private static final int ACT_SB_H = ACT_MAX_VIS * ACT_ROW_H;   // = 72
     private static final int COL_TYPE = 50;
-    private static final int COL_SRC  = 50;
+    private static final int COL_SRC  = 58;
+    private static final int SRC_DROPDOWN_W   = 150;   // open target list is wider than the column
+    private static final int SRC_DROPDOWN_VIS = 8;
+    private static final int MAX_AMOUNT       = 9999;
     private static final int COL_ITEM = 16;
     private static final int COL_ADJ  = 12;
     private static final int COL_GAP  = 3;
@@ -88,6 +102,20 @@ public class CourierScreen extends ScreenBase<CourierContainer> {
 
     private static final int SLOT_BORDER = 0xFF000000;
     private static final int SLOT_FILL = 0xFF8B8B8B;
+
+    private static final int COLOR_TARGET_ANY      = 0xFFFFFFFF;
+    private static final int COLOR_TARGET_SPECIFIC = 0xFFFFD27F;
+    private static final int COLOR_TARGET_UNKNOWN  = 0xFFAAAAAA;
+    private static final int COLOR_TARGET_MISSING  = 0xFFFF5555;
+    private static final int COLOR_CURRENT_WP      = 0x55FF55;
+    private static final int COLOR_HINT            = 0x707070;
+
+    private static final List<CourierAction.SourceType> SOURCE_TYPES = List.of(
+            CourierAction.SourceType.CHEST,
+            CourierAction.SourceType.STORAGE,
+            CourierAction.SourceType.MARKET,
+            CourierAction.SourceType.KITCHEN,
+            CourierAction.SourceType.WORKSHOP);
 
     // ── i18n ──────────────────────────────────────────────────────────────────
 
@@ -115,6 +143,32 @@ public class CourierScreen extends ScreenBase<CourierContainer> {
     private static final MutableComponent TOOLTIP_KITCHEN = Component.translatable("gui.workers.tooltip.courier.kitchen");
     private static final MutableComponent TOOLTIP_WORKSHOP = Component.translatable("gui.workers.tooltip.courier.workshop");
 
+    private static final MutableComponent TEXT_ADD_ACTION = Component.translatable("gui.workers.courier.addAction");
+    private static final MutableComponent TEXT_CHEST = Component.translatable("gui.workers.courier.source.chest");
+    private static final MutableComponent TEXT_STORAGE = Component.translatable("gui.workers.courier.source.storage");
+    private static final MutableComponent TEXT_MARKET = Component.translatable("gui.workers.courier.source.market");
+    private static final MutableComponent TEXT_KITCHEN = Component.translatable("gui.workers.courier.source.kitchen");
+    private static final MutableComponent TEXT_WORKSHOP = Component.translatable("gui.workers.courier.source.workshop");
+
+    private static final MutableComponent TEXT_TAKE = Component.translatable("gui.workers.courier.action.take");
+    private static final MutableComponent TEXT_PUT = Component.translatable("gui.workers.courier.action.put");
+    private static final MutableComponent TEXT_TAKE_ANY = Component.translatable("gui.workers.courier.action.take_any");
+    private static final MutableComponent TEXT_PUT_ANY = Component.translatable("gui.workers.courier.action.put_any");
+    private static final MutableComponent TEXT_TAKE_ALL = Component.translatable("gui.workers.courier.action.take_all");
+    private static final MutableComponent TEXT_PUT_ALL = Component.translatable("gui.workers.courier.action.put_all");
+    private static final MutableComponent TEXT_TAKE_FILL = Component.translatable("gui.workers.courier.action.take_fill");
+    private static final MutableComponent TEXT_PUT_FILL = Component.translatable("gui.workers.courier.action.put_fill");
+    private static final MutableComponent TEXT_WAIT = Component.translatable("gui.workers.courier.action.wait");
+
+    private static final MutableComponent TEXT_TARGETS_LOADING = Component.translatable("gui.workers.courier.targetsLoading");
+    private static final MutableComponent TEXT_TARGETS_NOT_LOADED = Component.translatable("gui.workers.courier.targetsNotLoaded");
+    private static final MutableComponent TOOLTIP_TARGETS_NOT_LOADED = Component.translatable("gui.workers.tooltip.courier.targetsNotLoaded");
+    private static final MutableComponent TOOLTIP_TARGET_MISSING = Component.translatable("gui.workers.tooltip.courier.targetMissing");
+    private static final MutableComponent TOOLTIP_TARGET_UNKNOWN = Component.translatable("gui.workers.tooltip.courier.targetUnknown");
+    private static final MutableComponent TOOLTIP_AMOUNT = Component.translatable("gui.workers.tooltip.courier.amount");
+    private static final MutableComponent TOOLTIP_EMPTY_SLOT = Component.translatable("gui.workers.tooltip.courier.emptySlot");
+    private static final MutableComponent TOOLTIP_CURRENT_WP = Component.translatable("gui.workers.tooltip.courier.currentWaypoint");
+
     // ── Screen state ──────────────────────────────────────────────────────────
 
     private final CourierEntity courierEntity;
@@ -137,13 +191,20 @@ public class CourierScreen extends ScreenBase<CourierContainer> {
     @Nullable private WaypointList                                        waypointList;
     private final List<AbstractWidget>                                    actionWidgets = new ArrayList<>();
     private final List<CourierDropDownMenu<CourierAction.ActionType>> actionTypeDropDowns = new ArrayList<>();
-    private final List<CourierDropDownMenu<CourierAction.SourceType>> sourceTypeDropDowns = new ArrayList<>();
+    private final List<CourierDropDownMenu<SourceOption>>             sourceTypeDropDowns = new ArrayList<>();
     /** [screenX, screenY, actionIndex] for each visible item slot. */
     private final List<int[]> itemSlotPos = new ArrayList<>();
 
     private ItemStack hoveredTooltipStack = ItemStack.EMPTY;
     private int hoveredTooltipX, hoveredTooltipY;
-    @Nullable private Component hoveredWaypointTooltip   = null;
+    @Nullable private List<Component> hoveredWaypointTooltip = null;
+    @Nullable private List<Component> hoveredSlotTooltip     = null;
+    @Nullable private Component hoveredHintTooltip            = null;
+
+    // Work areas at each waypoint, as reported by the server (see MessageRequestCourierTargets).
+    private final Map<BlockPos, List<MessageToClientCourierTargets.Target>> targetCache = new HashMap<>();
+    private final Set<BlockPos> unloadedWaypoints  = new HashSet<>();
+    private final Set<BlockPos> requestedWaypoints = new HashSet<>();
 
     // ── Constructor ────────────────────────────────────────────────────────────
 
@@ -362,11 +423,12 @@ public class CourierScreen extends ScreenBase<CourierContainer> {
                         CourierAction.ActionType.PUT_ALL,
                         CourierAction.ActionType.PUT_FILL,
                         CourierAction.ActionType.WAIT),
-                CourierAction.ActionType::displayLabel,
+                CourierScreen::actionLabel,
                 t -> {
                     action.setActionType(t);
                     if (t == CourierAction.ActionType.WAIT) {
                         action.setSourceType(null);
+                        action.clearTarget();
                         action.setItemStack(null);
                         if (action.getWaitSeconds() <= 0) action.setWaitSeconds(5);
                     } else {
@@ -398,30 +460,33 @@ public class CourierScreen extends ScreenBase<CourierContainer> {
 
         if (action.getActionType() != CourierAction.ActionType.WAIT) {
 
-            // ── SourceType dropdown ───────────────────────────────────────────
+            // ── Source / target dropdown ──────────────────────────────────────
+            // One entry per source type ("any in range") followed by the concrete work areas
+            // the server found at this waypoint.
 
-            CourierDropDownMenu<CourierAction.SourceType> srcDD = new CourierDropDownMenu<>(
-                    action.getSourceType() != null
-                            ? action.getSourceType()
-                            : CourierAction.SourceType.CHEST,
+            List<SourceOption> sourceOptions = buildSourceOptions(action, wp);
+            SourceOption selectedSource = findSelectedSource(sourceOptions, action);
+
+            CourierDropDownMenu<SourceOption> srcDD = new CourierDropDownMenu<>(
+                    selectedSource,
                     x, rowY, COL_SRC, h,
-                    List.of(CourierAction.SourceType.CHEST,
-                            CourierAction.SourceType.STORAGE,
-                            CourierAction.SourceType.MARKET,
-                            CourierAction.SourceType.KITCHEN,
-                            CourierAction.SourceType.WORKSHOP
-                    ),
-                    //CourierAction.SourceType.WORKER),
-                    s -> switch (s) {
-                        case CHEST   -> "Chest";
-                        case STORAGE -> "Storage";
-                        case MARKET  -> "Market";
-                        case KITCHEN  -> "Kitchen";
-                        case WORKSHOP -> "Workshop";
-                        //case WORKER  -> "Worker";
+                    sourceOptions,
+                    this::sourceOptionText,
+                    o -> {
+                        action.setSourceType(o.type());
+                        if (o.id() == null) action.clearTarget();
+                        else {
+                            action.setTargetId(o.id());
+                            action.setTargetName(o.label());
+                        }
+                        buildWidgets();
                     },
-                    s -> { action.setSourceType(s); buildWidgets(); },
-                    CourierScreen::sourceTooltip);
+                    this::sourceOptionTooltip);
+            srcDD.setDropdownWidth(SRC_DROPDOWN_W);
+            srcDD.setMaxVisibleOptions(SRC_DROPDOWN_VIS);
+            srcDD.setDisplayTextGetter(o -> font.plainSubstrByWidth(o.id() == null ? sourceLabel(o.type()) : o.label(), COL_SRC - 16));
+            srcDD.setDisplayColor(sourceOptionColor(selectedSource));
+            srcDD.setOptionColorGetter(this::sourceOptionColor);
             addRenderableWidget(srcDD);
             actionWidgets.add(srcDD);
             sourceTypeDropDowns.add(srcDD);
@@ -464,7 +529,109 @@ public class CourierScreen extends ScreenBase<CourierContainer> {
             actionScrollOffset = 0;
         }
         selectedWaypointIndex = index;
+        if (workingRoute != null && index >= 0 && index < workingRoute.size())
+            requestTargets(workingRoute.getWaypoints().get(index).getPosition());
         buildActionArea();
+    }
+
+    // ── Work area targets ──────────────────────────────────────────────────────
+
+    private void requestTargets(BlockPos waypointPos) {
+        if (!requestedWaypoints.add(waypointPos)) return;
+        WorkersMain.SIMPLE_CHANNEL.sendToServer(new MessageRequestCourierTargets(courierEntity.getUUID(), waypointPos));
+    }
+
+    /** Called by {@link MessageToClientCourierTargets} when the server answered. */
+    public void onTargetsReceived(BlockPos waypointPos, boolean loaded, List<MessageToClientCourierTargets.Target> targets) {
+        if (loaded) {
+            targetCache.put(waypointPos, new ArrayList<>(targets));
+            unloadedWaypoints.remove(waypointPos);
+        } else {
+            // Not loaded on the server → allow asking again the next time this waypoint is selected.
+            targetCache.remove(waypointPos);
+            unloadedWaypoints.add(waypointPos);
+            requestedWaypoints.remove(waypointPos);
+        }
+        var wp = getSelectedWaypoint();
+        if (wp != null && wp.getPosition().equals(waypointPos)) buildActionArea();
+    }
+
+    @Nullable
+    private CourierRoute.CourierWaypoint getSelectedWaypoint() {
+        if (workingRoute == null || selectedWaypointIndex < 0 || selectedWaypointIndex >= workingRoute.size()) return null;
+        return workingRoute.getWaypoints().get(selectedWaypointIndex);
+    }
+
+    private List<SourceOption> buildSourceOptions(CourierAction action, CourierRoute.CourierWaypoint wp) {
+        List<MessageToClientCourierTargets.Target> targets = targetCache.getOrDefault(wp.getPosition(), List.of());
+        boolean known = targetCache.containsKey(wp.getPosition());
+        List<SourceOption> options = new ArrayList<>();
+
+        for (CourierAction.SourceType type : SOURCE_TYPES) {
+            options.add(SourceOption.any(type));
+            if (type == CourierAction.SourceType.CHEST) continue;
+
+            boolean savedListed = false;
+            for (MessageToClientCourierTargets.Target t : targets) {
+                if (t.type() != type) continue;
+                int distance = (int) Math.round(Math.sqrt(t.pos().distSqr(wp.getPosition())));
+                options.add(new SourceOption(type, t.id(), targetLabel(t, distance), t.pos(), distance, t.slots(), false, false));
+                if (t.id().equals(action.getTargetId())) savedListed = true;
+            }
+            // Keep the saved target visible even if the server did not list it: unknown while the
+            // waypoint is not loaded, missing when the area is gone.
+            if (action.hasTarget() && action.getSourceType() == type && !savedListed) {
+                String label = action.getTargetName().isEmpty() ? sourceLabel(type) : action.getTargetName();
+                options.add(new SourceOption(type, action.getTargetId(), label, null, -1, -1, known, !known));
+            }
+        }
+        return options;
+    }
+
+    private static SourceOption findSelectedSource(List<SourceOption> options, CourierAction action) {
+        CourierAction.SourceType type = action.getSourceType() != null ? action.getSourceType() : CourierAction.SourceType.CHEST;
+        UUID id = type == CourierAction.SourceType.CHEST ? null : action.getTargetId();
+        for (SourceOption o : options) {
+            if (o.type() == type && java.util.Objects.equals(o.id(), id)) return o;
+        }
+        return options.get(0);
+    }
+
+    /** Area name, or for unnamed areas the type with its distance to the waypoint. */
+    private String targetLabel(MessageToClientCourierTargets.Target t, int distance) {
+        if (!t.name().isEmpty()) return t.name();
+        return Component.translatable("gui.workers.courier.unnamedTarget", sourceLabel(t.type()), distance).getString();
+    }
+
+    private String sourceOptionText(SourceOption o) {
+        if (o.id() == null) return Component.translatable("gui.workers.courier.source.any", sourceLabel(o.type())).getString();
+        return font.plainSubstrByWidth("  " + o.label(), SRC_DROPDOWN_W - 12);
+    }
+
+    private int sourceOptionColor(SourceOption o) {
+        if (o.id() == null) return COLOR_TARGET_ANY;
+        if (o.missing()) return COLOR_TARGET_MISSING;
+        if (o.unknown()) return COLOR_TARGET_UNKNOWN;
+        return COLOR_TARGET_SPECIFIC;
+    }
+
+    private List<Component> sourceOptionTooltip(SourceOption o) {
+        if (o.id() == null) return sourceTooltip(o.type());
+        List<Component> lines = new ArrayList<>();
+        lines.add(Component.literal(sourceLabel(o.type()) + ": " + o.label()).withStyle(ChatFormatting.GOLD));
+        if (o.pos() != null)
+            lines.add(Component.translatable("gui.workers.tooltip.courier.targetInfo", o.distance(), o.slots()));
+        if (o.missing()) lines.add(TOOLTIP_TARGET_MISSING.copy().withStyle(ChatFormatting.RED));
+        if (o.unknown()) lines.add(TOOLTIP_TARGET_UNKNOWN.copy().withStyle(ChatFormatting.GRAY));
+        return lines;
+    }
+
+    /** One entry of the source dropdown: a source type ("any", {@code id == null}) or a concrete work area. */
+    private record SourceOption(CourierAction.SourceType type, @Nullable UUID id, String label, @Nullable BlockPos pos,
+                                int distance, int slots, boolean missing, boolean unknown) {
+        static SourceOption any(CourierAction.SourceType type) {
+            return new SourceOption(type, null, "", null, -1, -1, false, false);
+        }
     }
 
     // ── Apply / save ──────────────────────────────────────────────────────────
@@ -483,6 +650,30 @@ public class CourierScreen extends ScreenBase<CourierContainer> {
     }
 
     // ── Rendering ─────────────────────────────────────────────────────────────
+
+    private static String actionLabel(CourierAction.ActionType type) {
+        return switch (type) {
+            case TAKE      -> TEXT_TAKE.getString();
+            case PUT       -> TEXT_PUT.getString();
+            case TAKE_ANY  -> TEXT_TAKE_ANY.getString();
+            case PUT_ANY   -> TEXT_PUT_ANY.getString();
+            case TAKE_ALL  -> TEXT_TAKE_ALL.getString();
+            case PUT_ALL   -> TEXT_PUT_ALL.getString();
+            case PUT_FILL  -> TEXT_PUT_FILL.getString();
+            case TAKE_FILL -> TEXT_TAKE_FILL.getString();
+            case WAIT      -> TEXT_WAIT.getString();
+        };
+    }
+
+    private static String sourceLabel(CourierAction.SourceType type) {
+        return switch (type) {
+            case CHEST    -> TEXT_CHEST.getString();
+            case STORAGE  -> TEXT_STORAGE.getString();
+            case MARKET   -> TEXT_MARKET.getString();
+            case KITCHEN  -> TEXT_KITCHEN.getString();
+            case WORKSHOP -> TEXT_WORKSHOP.getString();
+        };
+    }
 
     private static List<Component> actionTooltip(CourierAction.ActionType type) {
         String s = switch (type) {
@@ -514,15 +705,26 @@ public class CourierScreen extends ScreenBase<CourierContainer> {
     public void render(GuiGraphics g, int mouseX, int mouseY, float partialTicks) {
         hoveredTooltipStack    = ItemStack.EMPTY;
         hoveredWaypointTooltip = null;
+        hoveredSlotTooltip     = null;
+        hoveredHintTooltip     = null;
 
         super.render(g, mouseX, mouseY, partialTicks);
         renderActionRows(g, mouseX, mouseY);
         renderActionScrollbar(g, mouseX, mouseY);
 
-        if (!hoveredTooltipStack.isEmpty())
-            g.renderTooltip(font, hoveredTooltipStack, hoveredTooltipX, hoveredTooltipY);
+        if (!hoveredTooltipStack.isEmpty()) {
+            // Item tooltip + the configured amount (may exceed the stack size) and how to change it.
+            List<Component> lines = new ArrayList<>(Screen.getTooltipFromItem(minecraft, hoveredTooltipStack));
+            lines.add(Component.translatable("gui.workers.tooltip.courier.amountValue", hoveredTooltipStack.getCount()).withStyle(ChatFormatting.GOLD));
+            lines.add(TOOLTIP_AMOUNT.copy().withStyle(ChatFormatting.GRAY));
+            g.renderComponentTooltip(font, lines, hoveredTooltipX, hoveredTooltipY);
+        }
+        else if (hoveredSlotTooltip != null)
+            g.renderComponentTooltip(font, hoveredSlotTooltip, mouseX, mouseY);
         if (hoveredWaypointTooltip != null)
-            g.renderTooltip(font, hoveredWaypointTooltip, mouseX, mouseY);
+            g.renderComponentTooltip(font, hoveredWaypointTooltip, mouseX, mouseY);
+        if (hoveredHintTooltip != null)
+            g.renderTooltip(font, font.split(hoveredHintTooltip, 200), mouseX, mouseY);
 
         // Dropdown tooltips — rendered last and at a high z so they sit above an open dropdown
         // (whose options are drawn at z+500). Works for both the closed display and open options.
@@ -532,7 +734,7 @@ public class CourierScreen extends ScreenBase<CourierContainer> {
             if (ddTooltip != null) break;
         }
         if (ddTooltip == null) {
-            for (CourierDropDownMenu<CourierAction.SourceType> dd : sourceTypeDropDowns) {
+            for (CourierDropDownMenu<SourceOption> dd : sourceTypeDropDowns) {
                 ddTooltip = dd.getHoverTooltip(mouseX, mouseY);
                 if (ddTooltip != null) break;
             }
@@ -564,7 +766,7 @@ public class CourierScreen extends ScreenBase<CourierContainer> {
                 RenderSystem.enableBlend();
                 guiGraphics.fill(rowX, rowY, rowX + ACT_W, rowY + ACT_ROW_H - 1,
                         hovered ? FastColor.ARGB32.color(200, 60, 60, 60) : ADD_ENTRY_COLOR);
-                String lbl = "+ Add Action";
+                String lbl = TEXT_ADD_ACTION.getString();
                 guiGraphics.drawString(font, lbl,
                         rowX + (ACT_W - font.width(lbl)) / 2,
                         rowY + (ACT_ROW_H - 8) / 2,
@@ -592,12 +794,16 @@ public class CourierScreen extends ScreenBase<CourierContainer> {
                     guiGraphics.renderFakeItem(item, sx, sy);
                     guiGraphics.renderItemDecorations(font, item, sx, sy);
 
-                    if (!item.isEmpty()
-                            && mouseX >= sx && mouseX < sx + COL_ITEM
-                            && mouseY >= sy && mouseY < sy + COL_ITEM) {
-                        hoveredTooltipStack = item;
-                        hoveredTooltipX     = mouseX;
-                        hoveredTooltipY     = mouseY;
+                    if (mouseX >= sx && mouseX < sx + COL_ITEM
+                            && mouseY >= sy && mouseY < sy + COL_ITEM
+                            && !isOverActionDropDown(mouseX, mouseY)) {
+                        if (!item.isEmpty()) {
+                            hoveredTooltipStack = item;
+                            hoveredTooltipX     = mouseX;
+                            hoveredTooltipY     = mouseY;
+                        } else {
+                            hoveredSlotTooltip = List.of(TOOLTIP_EMPTY_SLOT);
+                        }
                     }
                 }
 
@@ -634,6 +840,23 @@ public class CourierScreen extends ScreenBase<CourierContainer> {
     @Override
     protected void renderLabels(GuiGraphics guiGraphics, int mouseX, int mouseY) {
         guiGraphics.drawString(font, player.getInventory().getDisplayName().getVisualOrderText(), menu.getInvXOffset() + 8, INV_LABEL_Y, FONT_COLOR, false);
+
+        // Target list state of the selected waypoint, right-aligned above the inventory.
+        var wp = getSelectedWaypoint();
+        if (wp != null) {
+            Component hint = null;
+            if (unloadedWaypoints.contains(wp.getPosition())) hint = TEXT_TARGETS_NOT_LOADED;
+            else if (!targetCache.containsKey(wp.getPosition())) hint = TEXT_TARGETS_LOADING;
+
+            if (hint != null) {
+                int hintX = ACT_X + ACT_W - font.width(hint);
+                guiGraphics.drawString(font, hint, hintX, INV_LABEL_Y, COLOR_HINT, false);
+                if (hint == TEXT_TARGETS_NOT_LOADED
+                        && mouseX - leftPos >= hintX && mouseX - leftPos < ACT_X + ACT_W
+                        && mouseY - topPos >= INV_LABEL_Y && mouseY - topPos < INV_LABEL_Y + 9)
+                    hoveredHintTooltip = TOOLTIP_TARGETS_NOT_LOADED;
+            }
+        }
     }
 
     // ── Scrollbar helpers ──────────────────────────────────────────────────────
@@ -730,7 +953,7 @@ public class CourierScreen extends ScreenBase<CourierContainer> {
                             if (current != null && !current.isEmpty()
                                     && ItemStack.isSameItem(current, cursor)) {
                                 // Same item → accumulate count
-                                current.setCount(current.getCount() + cursor.getCount());
+                                current.setCount(Math.min(MAX_AMOUNT, current.getCount() + cursor.getCount()));
                             } else {
                                 action.setItemStack(cursor.copy());
                             }
@@ -748,7 +971,7 @@ public class CourierScreen extends ScreenBase<CourierContainer> {
                 int rowY = topPos + ACT_Y + i * ACT_ROW_H;
                 if (mx >= leftPos + ACT_X && mx < leftPos + ACT_X + ACT_W
                         && my >= rowY && my < rowY + ACT_ROW_H) {
-                    wp.actions.add(CourierAction.wait(5));
+                    wp.actions.add(CourierAction.take(CourierAction.SourceType.CHEST, ItemStack.EMPTY));
                     buildWidgets();
                     return true;
                 }
@@ -769,6 +992,15 @@ public class CourierScreen extends ScreenBase<CourierContainer> {
 
     @Override
     public boolean mouseScrolled(double mx, double my, double delta) {
+        // Scrolling over an item slot changes the amount: 1, Shift = 10, Ctrl = 64.
+        CourierAction slotAction = getActionAtItemSlot(mx, my);
+        if (slotAction != null && slotAction.getItemStack() != null && !slotAction.getItemStack().isEmpty()) {
+            int step = hasControlDown() ? 64 : hasShiftDown() ? 10 : 1;
+            ItemStack stack = slotAction.getItemStack();
+            stack.setCount(Math.max(1, Math.min(MAX_AMOUNT, stack.getCount() + (delta > 0 ? step : -step))));
+            return true;
+        }
+
         // Action dropdowns get priority — isMouseOver() returns true for the expanded list
         // only when the dropdown is open, so this naturally lets open dropdowns consume scroll.
         for (var dropDownMenu : actionTypeDropDowns)
@@ -793,6 +1025,30 @@ public class CourierScreen extends ScreenBase<CourierContainer> {
         if (waypointList != null && waypointList.isMouseOver(mx, my))
             return waypointList.mouseScrolled(mx, my, delta);
         return super.mouseScrolled(mx, my, delta);
+    }
+
+    private boolean isOverActionDropDown(double mx, double my) {
+        for (var dd : actionTypeDropDowns) if (dd.isMouseOver(mx, my)) return true;
+        for (var dd : sourceTypeDropDowns) if (dd.isMouseOver(mx, my)) return true;
+        return false;
+    }
+
+    @Nullable
+    private CourierAction getActionAtItemSlot(double mx, double my) {
+        var wp = getSelectedWaypoint();
+        if (wp == null) return null;
+        // An open dropdown lies above the slots.
+        if (isOverActionDropDown(mx, my)) return null;
+
+        for (int[] slot : itemSlotPos) {
+            int sx = slot[0], sy = slot[1], idx = slot[2];
+            if (idx >= wp.actions.size()) continue;
+            if (mx >= sx && mx < sx + COL_ITEM && my >= sy && my < sy + COL_ITEM) {
+                CourierAction action = wp.actions.get(idx);
+                return action.getActionType().hasItemSlot() ? action : null;
+            }
+        }
+        return null;
     }
 
     @Override
@@ -826,6 +1082,16 @@ public class CourierScreen extends ScreenBase<CourierContainer> {
         if (isDraggingScrollbar && button == 0) { isDraggingScrollbar = false; return true; }
         return super.mouseReleased(mx, my, button);
     }
+    /** True if the courier is currently working this route and is at / heading to the given waypoint. */
+    private boolean isCourierCurrentWaypoint(int index) {
+        if (workingRoute == null) return false;
+        CompoundTag data = courierEntity.getRouteData();
+        if (!data.getBoolean("hasRoute") || !data.contains("route")) return false;
+        CompoundTag route = data.getCompound("route");
+        if (workingRoute.getRouteId() == null || !route.hasUUID("RouteId") || !workingRoute.getRouteId().equals(route.getUUID("RouteId"))) return false;
+        return data.getInt("currentIndex") == index;
+    }
+
     private class WaypointList extends ObjectSelectionList<WaypointList.WaypointEntry> {
 
         WaypointList(Minecraft mc, int width, int height, int top, int bottom, int itemHeight, int itemWidth) {
@@ -866,28 +1132,42 @@ public class CourierScreen extends ScreenBase<CourierContainer> {
                         WaypointList.this.getRowWidth(), entryH,
                         20, 4, 200, 20, 0, textureY);
 
-                // Show only the action count; show waypoint name as hover tooltip
                 int actionCount = 0;
                 String name     = "";
+                boolean hasName = false;
                 if (workingRoute != null && waypointIndex < workingRoute.size()) {
                     var wp = workingRoute.getWaypoints().get(waypointIndex);
                     actionCount = wp.actions.size();
+                    hasName     = !wp.displayName.isEmpty();
                     name        = wp.displayName.isEmpty()
-                            ? "Waypoint " + (waypointIndex + 1)
+                            ? Component.translatable("gui.workers.courier.waypoint", waypointIndex + 1).getString()
                             : wp.displayName;
                 }
+                boolean current = isCourierCurrentWaypoint(waypointIndex);
 
-                // Waypoint number + action count, centred vertically
+                // Waypoint number (green = where the courier currently is / is heading to)
                 String indexStr = String.valueOf(waypointIndex + 1);
-                g.drawString(font, indexStr, left + 4, top + 5, FONT_COLOR, false);
+                g.drawString(font, indexStr, left + 4, top + 5, current ? COLOR_CURRENT_WP : FONT_COLOR, false);
 
                 // Action count in white, right-aligned
                 String countStr = "(" + actionCount + ")";
-                g.drawString(font, countStr, left + WaypointList.this.getRowWidth() - 4 - font.width(countStr), top + 5, 0xFFFFFF, false);
+                int countX = left + WaypointList.this.getRowWidth() - 4 - font.width(countStr);
+                g.drawString(font, countStr, countX, top + 5, 0xFFFFFF, false);
 
-                // Accumulate tooltip for the hover name (rendered after all entries)
-                if (hovered && !name.isEmpty())
-                    CourierScreen.this.hoveredWaypointTooltip = Component.literal(name);
+                // Name, cut to the space between number and count
+                int nameX = left + 4 + font.width(indexStr) + 4;
+                if (hasName) {
+                    String shortName = font.plainSubstrByWidth(name, Math.max(0, countX - 3 - nameX));
+                    g.drawString(font, shortName, nameX, top + 5, 0xFFFFFF, false);
+                }
+
+                // Full name as hover tooltip (rendered after all entries)
+                if (hovered && !name.isEmpty()) {
+                    List<Component> lines = new ArrayList<>();
+                    lines.add(Component.literal(name));
+                    if (current) lines.add(TOOLTIP_CURRENT_WP.copy().withStyle(ChatFormatting.GREEN));
+                    CourierScreen.this.hoveredWaypointTooltip = lines;
+                }
             }
 
             @Override

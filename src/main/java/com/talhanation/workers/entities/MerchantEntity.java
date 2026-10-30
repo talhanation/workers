@@ -16,6 +16,9 @@ import com.talhanation.workers.inventory.MerchantAddEditVillagerTradeContainer;
 import com.talhanation.workers.network.MessageOpenMerchantEditTradeScreen;
 import com.talhanation.workers.network.MessageOpenMerchantTradeScreen;
 import com.talhanation.workers.network.MessageOpenMerchantVillagerTradeScreen;
+import com.talhanation.workers.entities.ai.MerchantTripGoal;
+import com.talhanation.workers.world.MerchantMemory;
+import com.talhanation.workers.world.MerchantTrip;
 import com.talhanation.workers.world.VillagerInviteRegistry;
 import com.talhanation.workers.world.WorkersMerchantTrade;
 import net.minecraft.nbt.CompoundTag;
@@ -60,6 +63,8 @@ public class MerchantEntity extends AbstractWorkerEntity implements ICanTradeEmb
     private static final EntityDataAccessor<Boolean> IS_CREATIVE = SynchedEntityData.defineId(MerchantEntity.class, EntityDataSerializers.BOOLEAN);
     private static final EntityDataAccessor<String> MARKET_NAME = SynchedEntityData.defineId(MerchantEntity.class, EntityDataSerializers.STRING);
     private static final EntityDataAccessor<Boolean> DAILY_REFRESH = SynchedEntityData.defineId(MerchantEntity.class, EntityDataSerializers.BOOLEAN);
+    /** Travelling merchant: visits the markets of other players to trade. */
+    private static final EntityDataAccessor<Boolean> FAR_TRADER = SynchedEntityData.defineId(MerchantEntity.class, EntityDataSerializers.BOOLEAN);
 
     private boolean lastWasDawn = false;
 
@@ -77,6 +82,15 @@ public class MerchantEntity extends AbstractWorkerEntity implements ICanTradeEmb
     public int villagerTradeTimeout;
     public int villagerTradesRemaining;  // how many trades left in the current session
     public int villagerTradeCooldown;    // ticks until the next trade in the session
+
+    /** The running trading trip, null if the merchant works at home. */
+    @Nullable private MerchantTrip trip;
+    private MerchantMemory memory = new MerchantMemory();
+    /** True while the work goal stands at the market without a villager session or storage walk. */
+    public boolean idleAtMarket;
+    /** A travelling merchant trading with this one, no villager sessions meanwhile. */
+    @Nullable private UUID visitor;
+    private long visitorUntil;
 
     public MerchantEntity(EntityType<? extends AbstractWorkerEntity> entityType, Level world) {
         super(entityType, world);
@@ -97,6 +111,7 @@ public class MerchantEntity extends AbstractWorkerEntity implements ICanTradeEmb
         this.entityData.define(IS_CREATIVE, false);
         this.entityData.define(MARKET_NAME, "");
         this.entityData.define(DAILY_REFRESH, false);
+        this.entityData.define(FAR_TRADER, false);
     }
 
     @Override
@@ -129,6 +144,7 @@ public class MerchantEntity extends AbstractWorkerEntity implements ICanTradeEmb
     @Override
     protected void registerGoals() {
         super.registerGoals();
+        this.goalSelector.addGoal(2, new MerchantTripGoal(this));
         this.goalSelector.addGoal(3, new MerchantWorkGoal(this));
     }
 
@@ -145,6 +161,9 @@ public class MerchantEntity extends AbstractWorkerEntity implements ICanTradeEmb
         nbt.putBoolean("isCreative", this.isCreative());
         nbt.putBoolean("dailyRefresh", this.isDailyRefresh());
         if (marketAreaUUID != null) nbt.putUUID("marketAreaUUID", marketAreaUUID);
+        nbt.putBoolean("farTrader", this.isFarTrader());
+        if (trip != null) nbt.put("Trip", trip.toNbt());
+        nbt.put("Memory", memory.toNbt());
     }
 
     @Override
@@ -156,6 +175,9 @@ public class MerchantEntity extends AbstractWorkerEntity implements ICanTradeEmb
         this.setCreative(nbt.getBoolean("isCreative"));
         this.setDailyRefresh(nbt.getBoolean("dailyRefresh"));
         if (nbt.contains("marketAreaUUID")) this.marketAreaUUID = nbt.getUUID("marketAreaUUID");
+        this.setFarTrader(nbt.getBoolean("farTrader"));
+        this.trip = nbt.contains("Trip") ? MerchantTrip.fromNbt(nbt.getCompound("Trip")) : null;
+        this.memory = MerchantMemory.fromNbt(nbt.getCompound("Memory"));
     }
 
     @Override
@@ -371,6 +393,10 @@ public class MerchantEntity extends AbstractWorkerEntity implements ICanTradeEmb
 
         if(trade == null) return;
         if(!trade.enabled) return;
+        if(trade.maxTrades != -1 && trade.currentTrades >= trade.maxTrades) {
+            player.sendSystemMessage(TEXT_LIMIT_REACHED());
+            return;
+        }
 
         Inventory playerInv = player.getInventory();
 
@@ -475,11 +501,46 @@ public class MerchantEntity extends AbstractWorkerEntity implements ICanTradeEmb
         shrinkMerchantItemStack(trade.tradeItem, costItem.getCount(), false);
         addItemToMerchant(reward, reward.getCount());
 
+        countVillagerTrade(trade);
+        return true;
+    }
+
+    /** Buys the offer result from a villager, paying costA and costB out of the market. */
+    public boolean tryExecuteVillagerBuy(WorkersMerchantTrade trade, MerchantOffer offer) {
+        ItemStack costA = offer.getCostA();
+        ItemStack costB = offer.getCostB();
+        ItemStack result = offer.getResult();
+        if(!canPayVillagerOffer(offer)) return false;
+        if(!canAddItemToMerchant(result)) return false;
+
+        shrinkMerchantItemStack(costA, costA.getCount(), false);
+        if(!costB.isEmpty()) shrinkMerchantItemStack(costB, costB.getCount(), false);
+        addItemToMerchant(result, result.getCount());
+
+        countVillagerTrade(trade);
+        return true;
+    }
+
+    public boolean canPayVillagerOffer(MerchantOffer offer) {
+        ItemStack costA = offer.getCostA();
+        ItemStack costB = offer.getCostB();
+        boolean sameItem = !costB.isEmpty() && ItemStack.isSameItemSameTags(costA, costB);
+        int neededA = costA.getCount() + (sameItem ? costB.getCount() : 0);
+        if(countMerchantItemStack(costA, false) < neededA) return false;
+        return costB.isEmpty() || sameItem || countMerchantItemStack(costB, false) >= costB.getCount();
+    }
+
+    /** Counts a villager trade on the given trade and on the stored trade list. */
+    private void countVillagerTrade(WorkersMerchantTrade trade) {
         trade.currentTrades++;
         List<WorkersMerchantTrade> list = getTrades();
+        for(WorkersMerchantTrade stored : list){
+            if(stored.uuid.equals(trade.uuid)){
+                stored.currentTrades = trade.currentTrades;
+                break;
+            }
+        }
         setTrades(list);
-
-        return true;
     }
 
     public void clearVillagerTrade() {
@@ -646,6 +707,46 @@ public class MerchantEntity extends AbstractWorkerEntity implements ICanTradeEmb
     }
     public boolean isDailyRefresh(){
         return this.entityData.get(DAILY_REFRESH);
+    }
+
+    public boolean isFarTrader(){
+        return this.entityData.get(FAR_TRADER);
+    }
+    public void setFarTrader(boolean b){
+        this.entityData.set(FAR_TRADER, b);
+    }
+
+    @Nullable
+    public MerchantTrip getTrip() {
+        return trip;
+    }
+
+    public void setTrip(@Nullable MerchantTrip trip) {
+        this.trip = trip;
+    }
+
+    public MerchantMemory getMemory() {
+        return memory;
+    }
+
+    /** A visiting merchant keeps this one at the market, the lock runs out if he stops renewing it. */
+    public void setVisitor(@Nullable UUID visitor, long until) {
+        this.visitor = visitor;
+        this.visitorUntil = until;
+    }
+
+    public boolean hasVisitor() {
+        return visitor != null && this.getCommandSenderWorld().getGameTime() < visitorUntil;
+    }
+
+    public boolean isVisitor(UUID uuid) {
+        return hasVisitor() && visitor.equals(uuid);
+    }
+
+    /** Workers go home at night, a merchant on a trip finishes it first. */
+    @Override
+    public boolean canGoHomeNow() {
+        return trip == null;
     }
 
     public void refreshAllTrades() {

@@ -37,6 +37,7 @@ import net.minecraftforge.fml.event.lifecycle.FMLCommonSetupEvent;
 import net.minecraftforge.fml.javafmlmod.FMLJavaModLoadingContext;
 import net.minecraftforge.network.simple.SimpleChannel;
 import com.talhanation.workers.world.StructureManager;
+import com.talhanation.workers.world.WorkersRemoteTravel;
 
 @Mod(WorkersMain.MOD_ID)
 public class WorkersMain {
@@ -102,6 +103,7 @@ public class WorkersMain {
         MinecraftForge.EVENT_BUS.register(new WorkerClaimEvents());
         MinecraftForge.EVENT_BUS.register(this);
         MinecraftForge.EVENT_BUS.register(new UpdateChecker());
+        MinecraftForge.EVENT_BUS.register(new WorkersRemoteTravel.Events());
 
         SIMPLE_CHANNEL = CommonRegistry.registerChannel(WorkersMain.MOD_ID, "default");
 
@@ -135,7 +137,19 @@ public class WorkersMain {
                 MessageUpdateHomeArea.class,
                 MessageOpenMerchantVillagerTradeScreen.class,
                 MessageOpenWorkshopEditOrderScreen.class,
-                MessageUpdateWorkshopOrder.class
+                MessageUpdateWorkshopOrder.class,
+                MessageRequestCourierTargets.class,
+                MessageToClientCourierTargets.class,
+                MessageUpdateWorkAreaName.class,
+                MessageUpdateWorkshopArea.class,
+                MessageToClientVillagerPrices.class,
+                MessageToClientOpenWorkshopOrders.class,
+                MessageSetFarTrader.class,
+                MessageRequestMerchantMemory.class,
+                MessageToClientMerchantMemory.class,
+                MessageUpdateMerchantMemory.class,
+                MessageSetGhostItem.class,
+                MessageSetWorkshopRecipe.class
         };
         for (int i = 0; i < messages.length; i++) CommonRegistry.registerMessage(SIMPLE_CHANNEL, i, messages[i]);
     }
@@ -163,4 +177,4 @@ public class WorkersMain {
             event.accept(ModItems.CRAFTSMAN_SPAWN_EGG.get());
         }
     }
-}
+}

@@ -27,8 +27,6 @@ import java.util.*;
 public class CraftOrder {
 
     public static final int GRID_SIZE = 9;
-    public static final int MIN_PRIORITY = 1;
-    public static final int MAX_PRIORITY = 9;
     public static final int MAX_AMOUNT = 9999;
 
     public UUID uuid;
@@ -40,7 +38,6 @@ public class CraftOrder {
     public int amount;
     public int produced;
     public Mode mode;
-    public int priority;
     public boolean enabled;
     public Source source;
     @Nullable public String sourceKey;
@@ -61,11 +58,10 @@ public class CraftOrder {
         this.type = OrderType.CRAFTING;
         this.recipeId = null;
         this.result = ItemStack.EMPTY;
-        this.allowVariants = false;
-        this.amount = 16;
+        this.allowVariants = true;
+        this.amount = 64;
         this.produced = 0;
         this.mode = Mode.STOCK;
-        this.priority = 1;
         this.enabled = true;
         this.source = Source.PLAYER;
         this.sourceKey = null;
@@ -102,7 +98,6 @@ public class CraftOrder {
 
     public void clampValues() {
         this.amount = Math.max(1, Math.min(MAX_AMOUNT, amount));
-        this.priority = Math.max(MIN_PRIORITY, Math.min(MAX_PRIORITY, priority));
         this.produced = Math.max(0, produced);
         for (int i = 0; i < GRID_SIZE; i++) {
             if (grid[i] == null) grid[i] = ItemStack.EMPTY;
@@ -326,7 +321,6 @@ public class CraftOrder {
         tag.putInt("amount", amount);
         tag.putInt("produced", produced);
         tag.putString("mode", mode.name());
-        tag.putInt("priority", priority);
         tag.putInt("stock", stock);
         tag.putBoolean("enabled", enabled);
         tag.putString("source", source.name());
@@ -360,7 +354,6 @@ public class CraftOrder {
         // old saves: DAILY became STOCK, its max stock is the stock amount now
         if ("DAILY".equals(tag.getString("mode")) && tag.getInt("maxStock") > 0) order.amount = tag.getInt("maxStock");
         order.stock = tag.getInt("stock");
-        order.priority = tag.contains("priority") ? tag.getInt("priority") : 1;
         order.enabled = !tag.contains("enabled") || tag.getBoolean("enabled");
         order.source = Source.fromString(tag.getString("source"));
         order.sourceKey = tag.contains("sourceKey") ? tag.getString("sourceKey") : null;
@@ -475,7 +468,8 @@ public class CraftOrder {
         NO_SPACE,
         DONE,
         INVALID,
-        DISABLED;
+        DISABLED,
+        FETCHING;
 
         public static Status fromString(String s) {
             try { return valueOf(s); } catch (Exception e) { return OK; }

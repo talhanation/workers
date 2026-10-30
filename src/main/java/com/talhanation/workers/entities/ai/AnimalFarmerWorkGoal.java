@@ -10,12 +10,15 @@ import net.minecraft.sounds.SoundSource;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.entity.ai.goal.Goal;
 import net.minecraft.world.entity.animal.Animal;
+import net.minecraft.world.entity.animal.Chicken;
+import net.minecraft.world.entity.animal.Pig;
 import net.minecraft.world.entity.animal.Sheep;
 import net.minecraft.world.entity.projectile.ThrownEgg;
 import net.minecraft.world.item.AxeItem;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
+import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
 
 import javax.annotation.Nullable;
@@ -33,6 +36,7 @@ public class AnimalFarmerWorkGoal extends Goal {
     public Stack<Animal> stackOfAnimals = new Stack<>();
     public List<NeededItem> neededItems = new ArrayList<>();
     public int time;
+    public int moveTime;
     public boolean isHolding;
 
     public AnimalFarmerWorkGoal(AnimalFarmerEntity animalFarmerEntity) {
@@ -65,6 +69,8 @@ public class AnimalFarmerWorkGoal extends Goal {
     public void stop() {
         super.stop();
         animalFarmerEntity.setAggroState(0);
+        //interrupted (deposit, needed items, sleep...) -> don't walk away with feed in hand
+        this.putAwayTemptItem();
     }
 
     @Override
@@ -97,14 +103,15 @@ public class AnimalFarmerWorkGoal extends Goal {
 
             case MOVE_TO_WORK_AREA ->{
                 this.animal = null;
-                if(this.moveToPosition(animalFarmerEntity.currentAnimalPen.position(), 100)) return;
+                if(this.moveToPosition(this.getPenCenter(), 100)) return;
 
                 setState(State.MOVE_TO_CENTER);
             }
 
             case MOVE_TO_CENTER ->{
                 this.animal = null;
-                if(this.moveToPosition(animalFarmerEntity.currentAnimalPen.position(), 30)) return;
+                //position() is the corner of the area (often on the fence) -> walk into the pen instead
+                if(!this.isInsidePen() && ++moveTime < 15 && this.moveToPosition(this.getPenCenter(), 4)) return;
 
                 setState(State.PREPARE_BREED);
             }
@@ -250,6 +257,10 @@ public class AnimalFarmerWorkGoal extends Goal {
             if(!stackOfAnimals.isEmpty()) animal = stackOfAnimals.pop();
             else return false;
         }
+        if(!this.isAnimalInPen(animal)){
+            this.animal = null;
+            return true;
+        }
         if(this.moveToPosition(animal.position(), 6)) return true;
         this.animalFarmerEntity.getLookControl().setLookAt(animal);
 
@@ -300,6 +311,10 @@ public class AnimalFarmerWorkGoal extends Goal {
             if(!stackOfAnimals.isEmpty()) animal = stackOfAnimals.pop();
             else return false;
         }
+        if(!this.isAnimalInPen(animal)){
+            this.animal = null;
+            return true;
+        }
         if(this.moveToPosition(animal.position(), 6)) return true;
 
         if(animalType == AnimalPenArea.AnimalTypes.SHEEP){
@@ -333,6 +348,10 @@ public class AnimalFarmerWorkGoal extends Goal {
         if(this.animal == null) {
             if(!stackOfAnimals.isEmpty()) animal = stackOfAnimals.pop();
             else return false;
+        }
+        if(!this.isAnimalInPen(animal)){
+            this.animal = null;
+            return true;
         }
 
         if(this.moveToPosition(animal.position(), 6)) return true;
@@ -403,6 +422,41 @@ public class AnimalFarmerWorkGoal extends Goal {
     public void setState(State state) {
         //if(animalFarmerEntity.getOwner() != null) animalFarmerEntity.getOwner().sendSystemMessage(Component.literal(state.toString()));
         this.state = state;
+        this.moveTime = 0;
+
+        //only hold feed while breeding, otherwise the animals follow him out of the gate
+        if(state != State.PREPARE_BREED && state != State.BREED) this.putAwayTemptItem();
+    }
+
+    private void putAwayTemptItem(){
+        if(this.animalFarmerEntity.getCommandSenderWorld().isClientSide()) return;
+        if(!isTemptItem(animalFarmerEntity.getMainHandItem())) return;
+
+        animalFarmerEntity.switchMainHandItem(ItemStack::isEmpty);
+        if(isTemptItem(animalFarmerEntity.getMainHandItem())){
+            animalFarmerEntity.switchMainHandItem(stack -> !isTemptItem(stack));
+        }
+    }
+
+    //same items as WorkerTemptGoal in VillagerEvents
+    public static boolean isTemptItem(ItemStack stack){
+        if(stack.isEmpty()) return false;
+        return stack.is(Items.WHEAT) || Chicken.FOOD_ITEMS.test(stack) || Pig.FOOD_ITEMS.test(stack);
+    }
+
+    private Vec3 getPenCenter(){
+        Vec3 center = animalFarmerEntity.currentAnimalPen.getArea().getCenter();
+        return new Vec3(center.x(), animalFarmerEntity.currentAnimalPen.getY(), center.z());
+    }
+
+    private boolean isInsidePen(){
+        AABB inner = animalFarmerEntity.currentAnimalPen.getArea().inflate(-1.0D, 0, -1.0D);
+        return inner.contains(animalFarmerEntity.position());
+    }
+
+    //animal escaped or died since the scan -> don't follow it out of the pen
+    private boolean isAnimalInPen(Animal animal){
+        return animal.isAlive() && animalFarmerEntity.currentAnimalPen.getArea().contains(animal.position());
     }
 
     @Override

@@ -7,6 +7,7 @@ import com.talhanation.workers.world.NeededItem;
 import com.talhanation.workers.world.Tree;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.registries.BuiltInRegistries;
+import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.sounds.SoundEvents;
@@ -298,7 +299,7 @@ public class LumberjackWorkGoal extends Goal {
     }
 
     public void setState(State state) {
-        //if(lumberjack.getOwner() != null) lumberjack.getOwner().sendSystemMessage(Component.literal(state.toString()));
+        if(lumberjack.getOwner() != null) lumberjack.getOwner().sendSystemMessage(Component.literal(state.toString()));
         this.state = state;
     }
 

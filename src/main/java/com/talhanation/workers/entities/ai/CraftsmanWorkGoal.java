@@ -2,6 +2,7 @@ package com.talhanation.workers.entities.ai;
 
 import com.talhanation.workers.WorkshopEvent;
 import com.talhanation.workers.entities.CraftsmanEntity;
+import com.talhanation.workers.entities.workarea.StorageArea;
 import com.talhanation.workers.entities.workarea.WorkshopArea;
 import com.talhanation.workers.world.CraftOrder;
 import com.talhanation.workers.world.CraftOrder.SlotMatcher;
@@ -22,6 +23,7 @@ import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
 import net.minecraft.world.item.crafting.CraftingRecipe;
+import net.minecraft.world.item.crafting.Ingredient;
 import net.minecraft.world.item.crafting.Recipe;
 import net.minecraft.world.item.crafting.RecipeType;
 import net.minecraft.world.item.crafting.SmeltingRecipe;
@@ -31,6 +33,7 @@ import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.entity.ChestBlockEntity;
 import net.minecraft.world.level.block.entity.FurnaceBlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.phys.AABB;
 import net.minecraftforge.common.ForgeHooks;
 import net.minecraftforge.common.MinecraftForge;
 
@@ -38,9 +41,9 @@ import javax.annotation.Nullable;
 import java.util.*;
 
 /**
- * The craftsman works like the cook: he picks the order with the lowest priority number that can be produced,
- * collects the items from the workshop chests, crafts at the crafting table (or loads a furnace) and puts
- * everything back. Orders that can not be produced right now are skipped.
+ * The craftsman works like the cook: he goes through the orders in turn, collects the items from the workshop
+ * chests, crafts at the crafting table (or loads a furnace) and puts everything back. Orders that can not be
+ * produced right now are skipped. Items no active order needs any more go back to the storage.
  */
 public class CraftsmanWorkGoal extends Goal {
 
@@ -48,11 +51,14 @@ public class CraftsmanWorkGoal extends Goal {
     private static final int INTERACT_TIME         = 10;
     private static final int FURNACE_INTERACT_TIME = 20;
     private static final int DEPOSIT_RETRY_TIME    = 200;
-    private static final int MAX_MOVE_TICKS        = 400;
+    private static final int MAX_MOVE_TICKS        = 600;
+    private static final int TIDY_RETRY_TIME       = 2400;
     private static final int FIRST_INV_SLOT        = 6;
 
     /** Fuel the craftsman uses, strictly in this order. Nothing else burnable is taken. */
     private static final List<TagKey<Item>> FUEL_TAGS = List.of(ItemTags.COALS, ItemTags.PLANKS, ItemTags.LOGS_THAT_BURN);
+    /** Missing fuel is fetched from a storage as coal or charcoal only. */
+    private static final SlotMatcher COAL_MATCHER = SlotMatcher.ingredient(Ingredient.of(ItemTags.COALS), new ItemStack(Items.COAL));
 
     private final CraftsmanEntity craftsman;
     private State state;
@@ -80,6 +86,24 @@ public class CraftsmanWorkGoal extends Goal {
     private final List<BlockPos> chestQueue = new ArrayList<>();
     /** Items the craftsman took or produced in the workshop: these are always put back, even food. */
     private final Set<Item> handledItems = new HashSet<>();
+
+    // ── Storage: fetch missing items, store finished products ────────────────
+    /** Storage areas the craftsman may use, refreshed on every planning. Empty = everything stays in the workshop. */
+    private final List<StorageArea> storages = new ArrayList<>();
+    /** Missing items of blocked orders, collected during planning. */
+    private final Map<UUID, List<Need>> missingNeeds = new HashMap<>();
+    /** Results produced in this round, they are brought to the storage. */
+    private final Set<Item> productItems = new HashSet<>();
+    @Nullable private StorageArea fetchStorage;
+    @Nullable private StorageArea deliverStorage;
+    @Nullable private BlockPos deliverPos;
+    private boolean deliveryFailed;
+    /** Ingredients of the orders that still want to produce: these stay in the workshop, everything else may go to the storage. */
+    private final List<SlotMatcher> orderIngredients = new ArrayList<>();
+    /** The craftsman collects items no order needs right now to bring them to the storage. */
+    private boolean tidying;
+    /** After a failed delivery the workshop is not tidied up again before this game time. */
+    private long tidyBlockedUntil;
 
     public CraftsmanWorkGoal(CraftsmanEntity craftsman) {
         this.craftsman = craftsman;
@@ -153,6 +177,10 @@ public class CraftsmanWorkGoal extends Goal {
         }
 
         WorkshopArea area = craftsman.currentWorkshopArea;
+        if (area != null && !area.isBeingWorkedOn() && state != State.SELECT_WORK_AREA
+                && craftsman.getHorizontalDistanceTo(area.position()) < 1000) {
+            area.setBeingWorkedOn(true);
+        }
         switch (state) {
             case SELECT_WORK_AREA -> tickSelectWorkArea(level);
             case WALK_TO_CENTER   -> tickWalkToCenter();
@@ -162,6 +190,7 @@ public class CraftsmanWorkGoal extends Goal {
             case LOAD_FURNACE     -> tickLoadFurnace(level, area);
             case COLLECT_FURNACE  -> tickCollectFurnace(level, area);
             case DEPOSIT          -> tickDeposit(level, area);
+            case DELIVER          -> tickDeliver(level, area);
         }
     }
 
@@ -202,7 +231,7 @@ public class CraftsmanWorkGoal extends Goal {
     private void tickIdle(ServerLevel level, WorkshopArea area) {
         craftsman.getNavigation().stop();
 
-        if (hasItemsToDeposit()) {
+        if (hasItemsToDeposit() || hasProductsToDeliver(area)) {
             if (depositRetry > 0) depositRetry--;
             else {
                 startDeposit(level);
@@ -240,7 +269,7 @@ public class CraftsmanWorkGoal extends Goal {
             return;
         }
 
-        Container container = area.containerMap.get(pos);
+        Container container = fetchStorage != null ? fetchStorage.storageMap.get(pos) : area.containerMap.get(pos);
         if (container != null) takeNeeds(container);
 
         closeContainer(level);
@@ -325,6 +354,7 @@ public class CraftsmanWorkGoal extends Goal {
                 int taken = before - rest.getCount();
                 if (taken > 0) {
                     handledItems.add(item);
+                    productItems.add(item);
                     furnace.setItem(2, rest);
                     furnace.setChanged();
                     if (order != null) {
@@ -342,8 +372,16 @@ public class CraftsmanWorkGoal extends Goal {
     private void tickDeposit(ServerLevel level, WorkshopArea area) {
         if (!hasItemsToDeposit()) {
             closeContainer(level);
-            handledItems.clear();
             depositPos = null;
+            if (hasProductsToDeliver(area)) {
+                interactTimer = 0;
+                setState(State.DELIVER);
+                return;
+            }
+            handledItems.clear();
+            productItems.clear();
+            deliveryFailed = false;
+            checkTimer = CHECK_INTERVAL;
             setState(State.IDLE);
             return;
         }
@@ -378,7 +416,7 @@ public class CraftsmanWorkGoal extends Goal {
             SimpleContainer inventory = craftsman.getInventory();
             for (int i = FIRST_INV_SLOT; i < inventory.getContainerSize(); i++) {
                 ItemStack stack = inventory.getItem(i);
-                if (!shouldDeposit(stack)) continue;
+                if (!shouldDeposit(stack) || isDeliverable(area, stack)) continue;
                 WorkshopArea.insertInto(container, stack);
                 inventory.setItem(i, stack.isEmpty() ? ItemStack.EMPTY : stack);
             }
@@ -386,6 +424,56 @@ public class CraftsmanWorkGoal extends Goal {
 
         closeContainer(level);
         depositPos = null;
+        interactTimer = 0;
+    }
+
+    /** Brings the finished products to the nearest storage. If no storage has space, they stay in the workshop. */
+    private void tickDeliver(ServerLevel level, WorkshopArea area) {
+        if (!hasProductsToDeliver(area)) {
+            closeContainer(level);
+            deliverPos = null;
+            deliverStorage = null;
+            setState(State.DEPOSIT);
+            return;
+        }
+
+        if (deliverPos == null) {
+            if (!findDeliverTarget(level, area)) {
+                deliveryFailed = true;
+                tidyBlockedUntil = level.getGameTime() + TIDY_RETRY_TIME;
+                setState(State.DEPOSIT);
+                return;
+            }
+            interactTimer = 0;
+        }
+
+        if (moveToPosition(deliverPos, 3)) return;
+        craftsman.getNavigation().stop();
+        craftsman.getLookControl().setLookAt(deliverPos.getCenter());
+
+        if (interactTimer == 0) {
+            openContainerPos = deliverPos;
+            interactContainer(level, deliverPos, true);
+        }
+        if (interactTimer < INTERACT_TIME) {
+            interactTimer++;
+            if (interactTimer % 5 == 0) craftsman.swing(InteractionHand.MAIN_HAND);
+            return;
+        }
+
+        Container container = deliverStorage != null ? deliverStorage.storageMap.get(deliverPos) : null;
+        if (container != null) {
+            SimpleContainer inventory = craftsman.getInventory();
+            for (int i = FIRST_INV_SLOT; i < inventory.getContainerSize(); i++) {
+                ItemStack stack = inventory.getItem(i);
+                if (!isDeliverable(area, stack)) continue;
+                WorkshopArea.insertInto(container, stack);
+                inventory.setItem(i, stack.isEmpty() ? ItemStack.EMPTY : stack);
+            }
+        }
+
+        closeContainer(level);
+        deliverPos = null;
         interactTimer = 0;
     }
 
@@ -412,13 +500,15 @@ public class CraftsmanWorkGoal extends Goal {
             }
         }
 
-        List<CraftOrder> sorted = new ArrayList<>(area.getOrders());
-        sorted.sort(Comparator.comparingInt(order -> order.priority));
+        List<CraftOrder> orders = new ArrayList<>(area.getOrders());
+
+        refreshStorages(level, area);
+        missingNeeds.clear();
 
         List<ItemStack> snapshot = area.snapshotContents();
         List<Job> candidates = new ArrayList<>();
         boolean changed = false;
-        for (CraftOrder order : sorted) {
+        for (CraftOrder order : orders) {
             CraftOrder.Status before = order.status;
             int missingBefore = missingTotal(order);
             int stockBefore = order.stock;
@@ -426,20 +516,34 @@ public class CraftsmanWorkGoal extends Goal {
             if (job != null) candidates.add(job);
             if (before != order.status || missingBefore != missingTotal(order) || stockBefore != order.stock) changed = true;
         }
+        // the statuses are fresh now: only orders that still want to produce keep their ingredients in the workshop
+        refreshIngredients(level, area);
+
+        // A blocked order whose missing items lie in a storage: fetch them first
+        if (!storages.isEmpty()) {
+            for (CraftOrder order : orders) {
+                List<Need> missing = missingNeeds.get(order.uuid);
+                if (missing == null || missing.isEmpty()) continue;
+                if (startFetch(area, order, missing)) {
+                    order.status = CraftOrder.Status.FETCHING;
+                    area.onOrdersChanged(false);
+                    return;
+                }
+            }
+        }
+
         if (changed) area.onOrdersChanged(false);
+
+        // Items no order needs right now go back to the storage before new work starts
+        if (startTidy(level, area)) return;
         if (candidates.isEmpty()) return;
 
-        // lowest priority number first, round robin between orders of the same priority
-        int bestPriority = candidates.get(0).order.priority;
-        List<Job> top = new ArrayList<>();
-        for (Job job : candidates) {
-            if (job.order.priority == bestPriority) top.add(job);
-        }
-        Job pick = top.get(0);
+        // round robin between all orders that can be produced
+        Job pick = candidates.get(0);
         if (lastServedOrder != null) {
-            for (int i = 0; i < top.size(); i++) {
-                if (top.get(i).order.uuid.equals(lastServedOrder)) {
-                    pick = top.get((i + 1) % top.size());
+            for (int i = 0; i < candidates.size(); i++) {
+                if (candidates.get(i).order.uuid.equals(lastServedOrder)) {
+                    pick = candidates.get((i + 1) % candidates.size());
                     break;
                 }
             }
@@ -473,7 +577,9 @@ public class CraftsmanWorkGoal extends Goal {
         }
         int pending = order.type == CraftOrder.OrderType.SMELTING ? countPendingInFurnaces(area, order, matchers[0], perOutput) : 0;
         if (order.mode == CraftOrder.Mode.STOCK) {
-            order.stock = area.countMatching(stack -> ItemStack.isSameItemSameTags(stack, order.result));
+            // products go to the storage, so the stock counts the workshop and the used storages
+            order.stock = area.countMatching(stack -> ItemStack.isSameItemSameTags(stack, order.result))
+                    + countInStorages(stack -> ItemStack.isSameItemSameTags(stack, order.result));
         }
         int wanted = order.getRemaining() - pending;
 
@@ -526,7 +632,11 @@ public class CraftsmanWorkGoal extends Goal {
             else hi = mid - 1;
         }
         if (lo <= 0) {
-            setStatus(area, order, CraftOrder.Status.MISSING_ITEMS, missingFor(perCraft, allocate(perCraft, snapshot, runs)));
+            int[] deficits = allocate(perCraft, snapshot, runs);
+            for (int i = 0; i < perCraft.size(); i++) {
+                if (deficits[i] > 0) addMissingNeed(order, perCraft.get(i).matcher, deficits[i]);
+            }
+            setStatus(area, order, CraftOrder.Status.MISSING_ITEMS, missingFor(perCraft, deficits));
             return null;
         }
 
@@ -570,6 +680,7 @@ public class CraftsmanWorkGoal extends Goal {
         List<ItemStack> pool = copyPool(snapshot);
         int inputAmount = takeFromPool(pool, input, Math.min(runs, capacity));
         if (inputAmount <= 0) {
+            addMissingNeed(order, input, runs);
             setStatus(area, order, CraftOrder.Status.MISSING_ITEMS, List.of(input.display.copyWithCount(runs)));
             return null;
         }
@@ -606,6 +717,7 @@ public class CraftsmanWorkGoal extends Goal {
         }
         if (inputAmount <= 0) {
             int coal = Math.max(1, (runs * cookTime + 1599) / 1600);
+            addMissingNeed(order, COAL_MATCHER, coal);
             setStatus(area, order, CraftOrder.Status.MISSING_ITEMS, List.of(new ItemStack(Items.COAL, coal)));
             return null;
         }
@@ -645,6 +757,7 @@ public class CraftsmanWorkGoal extends Goal {
             ItemStack fuelItem = chooseFuel(pool);
             if (fuelItem == null) {
                 int coal = Math.max(1, (in.getCount() * Math.max(1, recipe.getCookingTime()) + 1599) / 1600);
+                addMissingNeed(order, COAL_MATCHER, coal);
                 setStatus(area, order, CraftOrder.Status.MISSING_ITEMS, List.of(new ItemStack(Items.COAL, coal)));
                 return null;
             }
@@ -692,6 +805,19 @@ public class CraftsmanWorkGoal extends Goal {
     }
 
     private void finishCollect(ServerLevel level, WorkshopArea area) {
+        if (tidying) {
+            // the collected items count as products, so the delivery brings them to the storage
+            tidying = false;
+            for (Need need : needs) productItems.add(need.matcher.display.getItem());
+            startDeposit(level);
+            return;
+        }
+        if (fetchStorage != null) {
+            // items from the storage are put into the workshop chests, then the orders are planned again
+            fetchStorage = null;
+            startDeposit(level);
+            return;
+        }
         CraftOrder order = getCurrentOrder(area);
         if (order == null || jobMatchers == null) {
             finishJob(level, area);
@@ -728,7 +854,8 @@ public class CraftsmanWorkGoal extends Goal {
     }
 
     private void setStatus(WorkshopArea area, CraftOrder order, CraftOrder.Status status, @Nullable List<ItemStack> missing) {
-        boolean blockedNow = status == CraftOrder.Status.MISSING_ITEMS && order.status != CraftOrder.Status.MISSING_ITEMS;
+        boolean blockedNow = status == CraftOrder.Status.MISSING_ITEMS
+                && order.status != CraftOrder.Status.MISSING_ITEMS && order.status != CraftOrder.Status.FETCHING;
         order.status = status;
         order.missing.clear();
         if (missing != null) order.missing.addAll(missing);
@@ -774,6 +901,7 @@ public class CraftsmanWorkGoal extends Goal {
 
         int count = result.getCount();
         handledItems.add(result.getItem());
+        productItems.add(result.getItem());
         ItemStack rest = craftsman.addItem(result);
         if (!rest.isEmpty()) craftsman.spawnAtLocation(rest);
 
@@ -846,18 +974,14 @@ public class CraftsmanWorkGoal extends Goal {
         return pending;
     }
 
-    /** The smelting order a furnace output belongs to: not finished ones first, lowest priority number first. */
+    /** The smelting order a furnace output belongs to: not finished ones first. */
     @Nullable
     private CraftOrder findSmeltOrderFor(WorkshopArea area, ItemStack output) {
         CraftOrder fallback = null;
         for (CraftOrder order : area.getOrders()) {
             if (order.type != CraftOrder.OrderType.SMELTING || !ItemStack.isSameItemSameTags(order.result, output)) continue;
-            if (!order.isTargetReached() && (fallback == null || fallback.isTargetReached() || order.priority < fallback.priority)) {
-                fallback = order;
-            }
-            else if (fallback == null) {
-                fallback = order;
-            }
+            if (!order.isTargetReached()) return order;
+            if (fallback == null) fallback = order;
         }
         return fallback;
     }
@@ -1058,9 +1182,235 @@ public class CraftsmanWorkGoal extends Goal {
     }
 
     private boolean hasItemsToDeposit() {
+        WorkshopArea area = craftsman.currentWorkshopArea;
         SimpleContainer inventory = craftsman.getInventory();
         for (int i = FIRST_INV_SLOT; i < inventory.getContainerSize(); i++) {
-            if (shouldDeposit(inventory.getItem(i))) return true;
+            ItemStack stack = inventory.getItem(i);
+            if (shouldDeposit(stack) && !isDeliverable(area, stack)) return true;
+        }
+        return false;
+    }
+
+    // ── Storage helpers ───────────────────────────────────────────────────────
+
+    /** Storages near the workshop that allow craftsmen, nearest first. None if the workshop does not use storages. */
+    private void refreshStorages(ServerLevel level, WorkshopArea area) {
+        storages.clear();
+        refreshIngredients(level, area);
+        if (!area.getUseStorage()) return;
+        List<StorageArea> found = level.getEntitiesOfClass(StorageArea.class, new AABB(area.blockPosition()).inflate(WorkshopArea.STORAGE_RANGE),
+                storage -> storage.isAlive() && storage.canWorkHere(craftsman));
+        found.sort(Comparator.comparingDouble(storage -> storage.distanceToSqr(area)));
+        for (StorageArea storage : found) {
+            storage.scanStorageBlocks();
+            if (!storage.storageMap.isEmpty()) storages.add(storage);
+        }
+    }
+
+    /** Ingredients of the orders that still want to produce, based on their last status. */
+    private void refreshIngredients(ServerLevel level, WorkshopArea area) {
+        orderIngredients.clear();
+        for (CraftOrder order : area.getOrders()) {
+            if (!isActive(order)) continue;
+            for (SlotMatcher matcher : order.buildSlotMatchers(level)) {
+                if (matcher != null) orderIngredients.add(matcher);
+            }
+        }
+    }
+
+    /** An order that still wants to produce. Done, full, disabled or invalid orders do not need their ingredients. */
+    private static boolean isActive(CraftOrder order) {
+        if (!order.enabled) return false;
+        return switch (order.status) {
+            case OK, MISSING_ITEMS, FETCHING, NO_SPACE -> true;
+            default -> false;
+        };
+    }
+
+    /**
+     * Collects items from the workshop chests that no active order needs (products and ingredients of the orders)
+     * and brings them to the storage. Coal always stays, other fuel stays while something is smelted.
+     */
+    private boolean startTidy(ServerLevel level, WorkshopArea area) {
+        if (storages.isEmpty() || level.getGameTime() < tidyBlockedUntil) return false;
+        int free = countFreeInventorySlots();
+        if (free <= 0) return false;
+
+        List<SlotMatcher> related = new ArrayList<>();
+        boolean smelting = false;
+        for (CraftOrder order : area.getOrders()) {
+            for (SlotMatcher matcher : order.buildSlotMatchers(level)) {
+                if (matcher != null) related.add(matcher);
+            }
+            if (isActive(order) && order.type == CraftOrder.OrderType.SMELTING) smelting = true;
+        }
+
+        List<Need> take = new ArrayList<>();
+        int stacks = 0;
+        for (ItemStack stack : area.snapshotContents()) {
+            if (stacks >= free) break;
+            if (!isTidyItem(area, stack, related, smelting)) continue;
+            Need existing = null;
+            for (Need need : take) {
+                if (need.matcher.test(stack)) {
+                    existing = need;
+                    break;
+                }
+            }
+            if (existing != null) existing.amount += stack.getCount();
+            else take.add(new Need(SlotMatcher.exact(stack), stack.getCount()));
+            stacks++;
+        }
+        if (take.isEmpty()) return false;
+
+        clearJob();
+        needs.addAll(take);
+        tidying = true;
+        chestQueue.addAll(area.findContainersWith(stack -> take.stream().anyMatch(need -> need.matcher.test(stack))));
+        chestQueue.sort(Comparator.comparingDouble(pos -> pos.distToCenterSqr(craftsman.position())));
+        interactTimer = 0;
+        setState(State.COLLECT);
+        return true;
+    }
+
+    private boolean isTidyItem(WorkshopArea area, ItemStack stack, List<SlotMatcher> related, boolean smelting) {
+        if (stack.isEmpty() || stack.is(ItemTags.COALS)) return false;
+        if (smelting && isFuel(stack)) return false;
+        for (SlotMatcher matcher : orderIngredients) {
+            if (matcher.test(stack)) return false;
+        }
+        for (CraftOrder order : area.getOrders()) {
+            if (ItemStack.isSameItemSameTags(order.result, stack)) return true;
+        }
+        for (SlotMatcher matcher : related) {
+            if (matcher.test(stack)) return true;
+        }
+        // items the orders have nothing to do with belong to the player and stay
+        return false;
+    }
+
+    private static boolean isFuel(ItemStack stack) {
+        for (TagKey<Item> tag : FUEL_TAGS) {
+            if (stack.is(tag)) return true;
+        }
+        return false;
+    }
+
+    private int countInStorages(java.util.function.Predicate<ItemStack> predicate) {
+        int total = 0;
+        for (StorageArea storage : storages) {
+            for (Container container : storage.storageMap.values()) {
+                for (int i = 0; i < container.getContainerSize(); i++) {
+                    ItemStack stack = container.getItem(i);
+                    if (!stack.isEmpty() && predicate.test(stack)) total += stack.getCount();
+                }
+            }
+        }
+        return total;
+    }
+
+    private void addMissingNeed(CraftOrder order, SlotMatcher matcher, int amount) {
+        if (amount <= 0) return;
+        missingNeeds.computeIfAbsent(order.uuid, id -> new ArrayList<>()).add(new Need(matcher, amount));
+    }
+
+    /** Goes to the nearest storage that has some of the missing items. Only takes what is there and what he can carry. */
+    private boolean startFetch(WorkshopArea area, CraftOrder order, List<Need> missing) {
+        int free = countFreeInventorySlots();
+        if (free <= 0) return false;
+
+        for (StorageArea storage : storages) {
+            List<ItemStack> pool = new ArrayList<>();
+            for (Container container : storage.storageMap.values()) {
+                for (int i = 0; i < container.getContainerSize(); i++) {
+                    ItemStack stack = container.getItem(i);
+                    if (!stack.isEmpty()) pool.add(stack.copy());
+                }
+            }
+
+            List<Need> take = new ArrayList<>();
+            int stacks = 0;
+            for (Need need : missing) {
+                int max = Math.max(1, need.matcher.display.getMaxStackSize());
+                int room = free - stacks;
+                if (room <= 0) break;
+                int amount = takeFromPool(pool, need.matcher, Math.min(need.amount, room * max));
+                if (amount <= 0) continue;
+                take.add(new Need(need.matcher, amount));
+                stacks += (amount + max - 1) / max;
+            }
+            if (take.isEmpty()) continue;
+
+            clearJob();
+            needs.addAll(take);
+            fetchStorage = storage;
+            currentOrderId = order.uuid;
+            for (Map.Entry<BlockPos, Container> entry : storage.storageMap.entrySet()) {
+                Container container = entry.getValue();
+                for (int i = 0; i < container.getContainerSize(); i++) {
+                    ItemStack stack = container.getItem(i);
+                    if (take.stream().anyMatch(need -> need.matcher.test(stack))) {
+                        chestQueue.add(entry.getKey());
+                        break;
+                    }
+                }
+            }
+            chestQueue.sort(Comparator.comparingDouble(pos -> pos.distToCenterSqr(craftsman.position())));
+            interactTimer = 0;
+            setState(State.COLLECT);
+            return true;
+        }
+        return false;
+    }
+
+    /**
+     * A product goes to the storage, unless it is needed as an ingredient by an order of this workshop
+     * (then it stays here) or no storage could take it.
+     */
+    private boolean isDeliverable(@Nullable WorkshopArea area, ItemStack stack) {
+        if (stack.isEmpty() || area == null || deliveryFailed || storages.isEmpty() || !area.getUseStorage()) return false;
+        if (!productItems.contains(stack.getItem())) return false;
+        for (SlotMatcher matcher : orderIngredients) {
+            if (matcher.test(stack)) return false;
+        }
+        return true;
+    }
+
+    private boolean hasProductsToDeliver(WorkshopArea area) {
+        SimpleContainer inventory = craftsman.getInventory();
+        for (int i = FIRST_INV_SLOT; i < inventory.getContainerSize(); i++) {
+            if (isDeliverable(area, inventory.getItem(i))) return true;
+        }
+        return false;
+    }
+
+    /** A storage chest for one of the carried products: chests that already hold the item first. */
+    private boolean findDeliverTarget(ServerLevel level, WorkshopArea area) {
+        refreshStorages(level, area);
+        SimpleContainer inventory = craftsman.getInventory();
+        for (StorageArea storage : storages) {
+            BlockPos fallback = null;
+            for (int i = FIRST_INV_SLOT; i < inventory.getContainerSize(); i++) {
+                ItemStack stack = inventory.getItem(i);
+                if (!isDeliverable(area, stack)) continue;
+                for (Map.Entry<BlockPos, Container> entry : storage.storageMap.entrySet()) {
+                    Container container = entry.getValue();
+                    if (WorkshopArea.getSpaceFor(container, stack) <= 0) continue;
+                    for (int j = 0; j < container.getContainerSize(); j++) {
+                        if (ItemStack.isSameItemSameTags(container.getItem(j), stack)) {
+                            deliverStorage = storage;
+                            deliverPos = entry.getKey();
+                            return true;
+                        }
+                    }
+                    if (fallback == null) fallback = entry.getKey();
+                }
+            }
+            if (fallback != null) {
+                deliverStorage = storage;
+                deliverPos = fallback;
+                return true;
+            }
         }
         return false;
     }
@@ -1072,7 +1422,7 @@ public class CraftsmanWorkGoal extends Goal {
         BlockPos fallback = null;
         for (int i = FIRST_INV_SLOT; i < inventory.getContainerSize(); i++) {
             ItemStack stack = inventory.getItem(i);
-            if (!shouldDeposit(stack)) continue;
+            if (!shouldDeposit(stack) || isDeliverable(area, stack)) continue;
             for (Map.Entry<BlockPos, Container> entry : area.containerMap.entrySet()) {
                 Container container = entry.getValue();
                 if (WorkshopArea.getSpaceFor(container, stack) <= 0) continue;
@@ -1107,6 +1457,10 @@ public class CraftsmanWorkGoal extends Goal {
         fuelCount = 0;
         furnacePos = null;
         depositPos = null;
+        fetchStorage = null;
+        deliverStorage = null;
+        deliverPos = null;
+        tidying = false;
         batch = 0;
         interactTimer = 0;
         craftTimer = 0;
@@ -1247,6 +1601,7 @@ public class CraftsmanWorkGoal extends Goal {
         CRAFT,
         LOAD_FURNACE,
         COLLECT_FURNACE,
-        DEPOSIT
+        DEPOSIT,
+        DELIVER
     }
 }

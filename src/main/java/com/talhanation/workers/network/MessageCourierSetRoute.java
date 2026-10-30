@@ -57,6 +57,9 @@ public class MessageCourierSetRoute implements Message<MessageCourierSetRoute> {
                         player.getBoundingBox().inflate(32.0D),
                         c -> c.getUUID().equals(this.courierUuid) && c.isAlive())
                 .forEach(courier -> {
+                    // Only the owner may reprogram the courier.
+                    if (!courier.isOwned() || !player.getUUID().equals(courier.getOwnerUUID())) return;
+
                     courier.useVehicleInventory = this.useVehicleInventory;
 
                     // Always buffer the requested value. If the courier is safely at
@@ -85,8 +88,9 @@ public class MessageCourierSetRoute implements Message<MessageCourierSetRoute> {
                         courier.loadRouteFromNearestWaypoint(route);
                         courier.setFollowState(6);
                     }
-                    else {
-
+                    else if (!courier.updateRouteKeepProgress(route)) {
+                        // Waypoints changed (or a different route) → restart from the first waypoint.
+                        // Same waypoints → only the actions changed, the courier keeps its progress.
                         courier.loadRoute(route);
                     }
                 });

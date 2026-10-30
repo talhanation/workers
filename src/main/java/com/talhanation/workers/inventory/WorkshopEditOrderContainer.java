@@ -9,6 +9,11 @@ import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.inventory.Slot;
 import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.crafting.CraftingRecipe;
+import net.minecraft.world.item.crafting.Ingredient;
+import net.minecraft.world.item.crafting.Recipe;
+import net.minecraft.world.item.crafting.SmeltingRecipe;
+import net.minecraftforge.common.crafting.IShapedRecipe;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -69,6 +74,42 @@ public class WorkshopEditOrderContainer extends ContainerBase {
         }
         if (smeltMode) grid[0] = smeltContainer.getItem(0).copy();
         return grid;
+    }
+
+    /**
+     * Fills the grid with the recipe like the recipe book does. Shaped recipes keep their shape, shapeless ones are
+     * filled row by row. Of each ingredient the item the player carries is used, otherwise its first item.
+     * Recipes of the other mode are ignored.
+     */
+    public void applyRecipe(Recipe<?> recipe, Player player) {
+        if (recipe instanceof SmeltingRecipe) {
+            if (!smeltMode || recipe.getIngredients().isEmpty()) return;
+            smeltContainer.setItem(0, pickItem(recipe.getIngredients().get(0), player));
+            return;
+        }
+        if (!(recipe instanceof CraftingRecipe) || smeltMode) return;
+
+        int width = 3;
+        if (recipe instanceof IShapedRecipe<?> shaped) {
+            width = shaped.getRecipeWidth();
+            if (width > 3 || shaped.getRecipeHeight() > 3) return;
+        }
+        if (recipe.getIngredients().size() > CraftOrder.GRID_SIZE) return;
+
+        for (int i = 0; i < CraftOrder.GRID_SIZE; i++) gridContainer.setItem(i, ItemStack.EMPTY);
+        for (int i = 0; i < recipe.getIngredients().size(); i++) {
+            int slot = (i / width) * 3 + i % width;
+            gridContainer.setItem(slot, pickItem(recipe.getIngredients().get(i), player));
+        }
+    }
+
+    private static ItemStack pickItem(Ingredient ingredient, Player player) {
+        if (ingredient.isEmpty()) return ItemStack.EMPTY;
+        for (ItemStack stack : player.getInventory().items) {
+            if (!stack.isEmpty() && ingredient.test(stack)) return stack.copyWithCount(1);
+        }
+        ItemStack[] items = ingredient.getItems();
+        return items.length > 0 ? items[0].copyWithCount(1) : ItemStack.EMPTY;
     }
 
     /** Switches between crafting (0) and smelting (1), sent by the screen via handleInventoryButtonClick so both sides match. */

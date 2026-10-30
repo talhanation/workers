@@ -1,6 +1,7 @@
 package com.talhanation.workers.network;
 
 import com.talhanation.workers.entities.MerchantEntity;
+import com.talhanation.workers.world.VillagerPriceTable;
 import com.talhanation.workers.world.WorkersMerchantTrade;
 import de.maxhenkel.corelib.net.Message;
 import net.minecraft.nbt.CompoundTag;
@@ -47,7 +48,16 @@ public class MessageUpdateMerchantTrade implements Message<MessageUpdateMerchant
             merchant.removeTrade(WorkersMerchantTrade.fromNbt(nbt));
         }
         else{
-            merchant.addOrUpdateTrade(WorkersMerchantTrade.fromNbt(nbt));
+            WorkersMerchantTrade trade = WorkersMerchantTrade.fromNbt(nbt);
+            if(trade.isVillagerTrade) {
+                // the villager currency can not be the trade item, villager trades always pay with it
+                if(trade.tradeItem.is(VillagerPriceTable.getCurrency())) return;
+                trade.currencyItem = VillagerPriceTable.getCurrencyStack();
+                trade.allowDamagedCurrency = false;
+                trade.useStorage = true;
+                if(!trade.tradeItem.isEmpty()) trade.tradeItem = trade.tradeItem.copyWithCount(1);
+            }
+            merchant.addOrUpdateTrade(trade);
         }
     }
 

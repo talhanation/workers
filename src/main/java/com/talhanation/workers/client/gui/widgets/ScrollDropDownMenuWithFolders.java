@@ -230,10 +230,10 @@ public class ScrollDropDownMenuWithFolders extends AbstractWidget {
     private String clampText(String text, int maxWidth) {
         var font = Minecraft.getInstance().font;
         if (font.width(text) <= maxWidth) return text;
-        while (text.length() > 1 && font.width(text + "…") > maxWidth) {
+        while (text.length() > 1 && font.width(text + "\u2026") > maxWidth) {
             text = text.substring(0, text.length() - 1);
         }
-        return text + "…";
+        return text + "\u2026";
     }
 
     public void onMouseClick(double mouseX, double mouseY) {

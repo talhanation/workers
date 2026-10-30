@@ -29,6 +29,7 @@ import net.minecraft.world.level.ClipContext;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.Blocks;
+import net.minecraft.world.level.block.FallingBlock;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.material.FluidState;
 import net.minecraft.world.phys.Vec3;
@@ -55,6 +56,18 @@ public class BuilderWorkGoal extends Goal {
     // DISTINCT materials in one storage trip, sized to the whole structure's needs.
     private static final int PREFETCH_MATERIAL_BUDGET = 4;
     private static final int PREFETCH_STACK_LIMIT = 64;
+
+    // Materials the storages did not have. Blocks of these items are skipped and the builder
+    // goes on with the next blocks/levels. After MISSING_RETRY ticks he asks the storages again.
+    private static final int MISSING_RETRY = 1200;
+    private static final int WAIT_CHECK_INTERVAL = 200;
+    private final Map<Item, Long> missingItems = new HashMap<>();
+    private final Set<Item> requestedItems = new HashSet<>();
+    private final Set<Item> notifiedMissing = new HashSet<>();
+    /** Only true when nothing else is left: blocks without support are placed anyway. */
+    private boolean forcePlace;
+    private int waitTime;
+    @Nullable private UUID lastAreaUUID;
 
     public BuilderWorkGoal(BuilderEntity builderEntity) {
         this.builderEntity = builderEntity;
@@ -124,6 +137,13 @@ public class BuilderWorkGoal extends Goal {
                 builderEntity.currentBuildArea.setBeingWorkedOn(true);
                 this.builderEntity.currentBuildArea.setTime(0);
                 workDone = false;
+                // start() runs again after every storage trip, only forget the missing materials for a new area
+                if(!builderEntity.currentBuildArea.getUUID().equals(this.lastAreaUUID)){
+                    this.lastAreaUUID = builderEntity.currentBuildArea.getUUID();
+                    this.missingItems.clear();
+                    this.requestedItems.clear();
+                    this.notifiedMissing.clear();
+                }
                 setState(State.MOVE_TO_WORK_AREA);
             }
 
@@ -201,71 +221,95 @@ public class BuilderWorkGoal extends Goal {
                     return;
                 }
 
-                minBuildHeight = (int) builderEntity.currentBuildArea.getArea().maxY;
+                Level level = builderEntity.getCommandSenderWorld();
+                this.updateMissingItems(level);
 
-                for (BuildBlock bb : builderEntity.currentBuildArea.stackToPlace) {
-                    int y = bb.getPos().getY();
-                    if (y < minBuildHeight) {
-                        minBuildHeight = y;
-                    }
-                }
-
-
-                // Paid with currency: the builder needs no materials, every block of this level is placeable.
+                // Paid with currency: the builder needs no materials, every block is placeable.
                 boolean paid = builderEntity.currentBuildArea.isPaidWithCurrency();
 
-                this.stackToPlace = new Stack<>();
+                // Remaining blocks per level, lowest level first
+                TreeMap<Integer, List<BuildBlock>> levels = new TreeMap<>();
                 for (BuildBlock buildBlock : builderEntity.currentBuildArea.stackToPlace) {
-                    BlockPos pos = buildBlock.getPos();
-                    if (pos.getY() != minBuildHeight) continue;
+                    levels.computeIfAbsent(buildBlock.getPos().getY(), y -> new ArrayList<>()).add(buildBlock);
+                }
 
-                    Item item = BuildBlockParse.parseBlock(buildBlock.getState().getBlock(), builderEntity.getCommandSenderWorld()).getItem();
-                    if(item == null){
-                        if(builderEntity.getOwner() != null) builderEntity.getOwner().sendSystemMessage(Component.literal("Could not found item for " + buildBlock.getState().getBlock().getName() + " i, will skip this block." ));
-                        builderEntity.currentBuildArea.removeBuildBlockToPlace(pos);
-                        return;
+                this.blockPos = null;
+                this.forcePlace = false;
+                this.stackToPlace = new Stack<>();
+                Stack<BlockPos> unsupported = new Stack<>();
+                Set<Item> missingOnBuild = new HashSet<>();
+                boolean requested = false;
+
+                // Lowest level that can be worked on. A level whose blocks are all missing in the
+                // storages (or have no support yet) is skipped, the builder goes on with the next one.
+                for (Map.Entry<Integer, List<BuildBlock>> entry : levels.entrySet()) {
+                    Set<Item> levelNeeds = new HashSet<>();
+                    for (BuildBlock buildBlock : entry.getValue()) {
+                        BlockPos pos = buildBlock.getPos();
+                        Item item = BuildBlockParse.parseBlock(buildBlock.getState().getBlock(), level).getItem();
+                        if(item == null){
+                            if(builderEntity.getOwner() != null) builderEntity.getOwner().sendSystemMessage(Component.literal("Could not found item for " + buildBlock.getState().getBlock().getName() + " i, will skip this block." ));
+                            builderEntity.currentBuildArea.removeBuildBlockToPlace(pos);
+                            return;
+                        }
+
+                        if (!paid && !builderEntity.getInventory().hasAnyMatching(itemStack -> itemStack.is(item))) {
+                            if (missingItems.containsKey(item)) missingOnBuild.add(item);
+                            else levelNeeds.add(item);
+                            continue;
+                        }
+
+                        if (canPlaceNow(level, pos, buildBlock.getState())) stackToPlace.push(pos);
+                        else unsupported.push(pos);
                     }
-                    else if (paid || builderEntity.getInventory().hasAnyMatching(itemStack -> itemStack.is(item))) {
-                        stackToPlace.push(pos);
+
+                    if (!stackToPlace.isEmpty()) {
+                        minBuildHeight = entry.getKey();
+                        break;
+                    }
+
+                    if (!levelNeeds.isEmpty()) {
+                        if (this.requestMaterials(levelNeeds)) {
+                            minBuildHeight = entry.getKey();
+                            requested = true;
+                            break;
+                        }
+                        // could not request anything for this level: treat as missing, go on with the next level
+                        long time = level.getGameTime();
+                        for (Item item : levelNeeds) missingItems.put(item, time);
+                        missingOnBuild.addAll(levelNeeds);
                     }
                 }
 
-                if (stackToPlace.isEmpty() && !paid) {
-                    // Nothing placeable in inventory right now. Prefetch several base
-                    // materials at once (look-ahead over the REMAINING structure) so the
-                    // builder makes far fewer storage trips and never over-fetches
-                    // materials for blocks that are already placed.
-                    List<ItemStack> neededItems = builderEntity.currentBuildArea.getRemainingMaterials();
-
-                    // The current level must be servable first, so make sure at least
-                    // one of its materials is among what we request: prioritise items
-                    // needed on this level, then fall back to the rest of the build.
-                    Set<Item> currentLevelItems = builderEntity.currentBuildArea.stackToPlace.stream()
-                            .filter(bb -> bb.getPos().getY() == minBuildHeight)
-                            .map(bb -> BuildBlockParse.parseBlock(bb.getState().getBlock(), builderEntity.getCommandSenderWorld()).getItem())
-                            .collect(Collectors.toSet());
-
-                    neededItems.sort(Comparator
-                            .comparing((ItemStack s) -> !currentLevelItems.contains(s.getItem()))
-                            .thenComparing(Comparator.comparingInt(ItemStack::getCount).reversed()));
-
-                    int requested = 0;
-                    for (ItemStack neededItem : neededItems) {
-                        if (requested >= PREFETCH_MATERIAL_BUDGET) break;
-
-                        // Only fetch what is missing on top of what we already carry.
-                        int carried = builderEntity.countMatchingItems(itemStack -> itemStack.is(neededItem.getItem()));
-                        int amount = Math.min(PREFETCH_STACK_LIMIT, neededItem.getCount()) - carried;
-                        if (amount <= 0) continue;
-
-                        builderEntity.addNeededItem(new NeededItem(
-                                itemStack -> itemStack.is(neededItem.getItem()), amount, true
-                        ));
-                        requested++;
+                if (stackToPlace.isEmpty() && !requested) {
+                    if (!missingOnBuild.isEmpty()) {
+                        // everything left needs materials the storages do not have
+                        if (!notifiedMissing.containsAll(missingOnBuild)) {
+                            notifiedMissing.addAll(missingOnBuild);
+                            builderEntity.notifyOwner(Component.literal(builderEntity.getName().getString() + ": I am waiting for materials: " + getItemNames(missingOnBuild)));
+                        }
+                        waitTime = 0;
+                        setState(State.WAIT_FOR_MATERIALS);
+                        return;
+                    }
+                    if (!unsupported.isEmpty()) {
+                        // nothing else left, e.g. a torch whose wall is not part of the structure: place them anyway
+                        this.stackToPlace = unsupported;
+                        this.forcePlace = true;
                     }
                 }
 
                 setState(State.PLACE_BLOCKS);
+            }
+
+            case WAIT_FOR_MATERIALS -> {
+                this.blockPos = null;
+                // the tick switch runs every 5 ticks, missing materials expire after MISSING_RETRY
+                waitTime += 5;
+                if (waitTime < WAIT_CHECK_INTERVAL) return;
+                waitTime = 0;
+
+                setState(State.PREPARE_PLACE_BLOCKS);
             }
 
 
@@ -332,6 +376,64 @@ public class BuilderWorkGoal extends Goal {
     public void setState(State state) {
         //if(builderEntity.getOwner() != null) builderEntity.getOwner().sendSystemMessage(Component.literal(state.toString()));
         this.state = state;
+    }
+
+    /** After a storage trip: requested materials he still does not carry are missing in the storages. */
+    private void updateMissingItems(Level level) {
+        long time = level.getGameTime();
+        if (!requestedItems.isEmpty() && !builderEntity.needsToGetItems()) {
+            for (Item item : requestedItems) {
+                if (builderEntity.countMatchingItems(itemStack -> itemStack.is(item)) <= 0) missingItems.put(item, time);
+            }
+            requestedItems.clear();
+        }
+        // ask the storages again after a while, the player may have brought the materials
+        missingItems.values().removeIf(markTime -> time - markTime > MISSING_RETRY);
+        notifiedMissing.retainAll(missingItems.keySet());
+    }
+
+    /**
+     * Prefetch several base materials at once (look-ahead over the REMAINING structure) so the
+     * builder makes far fewer storage trips. Materials of the current level first, missing ones are skipped.
+     */
+    private boolean requestMaterials(Set<Item> currentLevelItems) {
+        List<ItemStack> neededItems = builderEntity.currentBuildArea.getRemainingMaterials();
+        neededItems.removeIf(stack -> missingItems.containsKey(stack.getItem()));
+
+        neededItems.sort(Comparator
+                .comparing((ItemStack s) -> !currentLevelItems.contains(s.getItem()))
+                .thenComparing(Comparator.comparingInt(ItemStack::getCount).reversed()));
+
+        int requested = 0;
+        boolean currentLevelRequested = false;
+        for (ItemStack neededItem : neededItems) {
+            if (requested >= PREFETCH_MATERIAL_BUDGET) break;
+
+            // Only fetch what is missing on top of what we already carry.
+            int carried = builderEntity.countMatchingItems(itemStack -> itemStack.is(neededItem.getItem()));
+            int amount = Math.min(PREFETCH_STACK_LIMIT, neededItem.getCount()) - carried;
+            if (amount <= 0) continue;
+
+            builderEntity.addNeededItem(new NeededItem(
+                    itemStack -> itemStack.is(neededItem.getItem()), amount, true
+            ));
+            requestedItems.add(neededItem.getItem());
+            if (currentLevelItems.contains(neededItem.getItem())) currentLevelRequested = true;
+            requested++;
+        }
+        return currentLevelRequested;
+    }
+
+    /** Falling blocks need a block below, torches/doors/carpets need their support. */
+    private boolean canPlaceNow(Level level, BlockPos pos, BlockState state) {
+        if (state.getBlock() instanceof FallingBlock && FallingBlock.isFree(level.getBlockState(pos.below()))) return false;
+        return state.canSurvive(level, pos);
+    }
+
+    private static String getItemNames(Set<Item> items) {
+        return items.stream()
+                .map(item -> new ItemStack(item).getHoverName().getString())
+                .collect(Collectors.joining(", "));
     }
 
     int blockBreakTime;
@@ -549,6 +651,16 @@ public class BuilderWorkGoal extends Goal {
                     return true;
                 }
 
+                // no support yet (block below still missing): skip, it is tried again in the next round
+                if (!forcePlace && !canPlaceNow(builderEntity.getCommandSenderWorld(), blockPos, buildingState)) {
+                    if (!positions.isEmpty()) {
+                        blockPos = positions.pop();
+                        return true;
+                    }
+                    blockPos = null;
+                    return false;
+                }
+
                 BuildBlockParse blockParse = BuildBlockParse.parseBlock(buildingState.getBlock(), builderEntity.getCommandSenderWorld());
                 //Paid with currency: no material needed and nothing is consumed
                 boolean paid = builderEntity.currentBuildArea.isPaidWithCurrency();
@@ -581,6 +693,8 @@ public class BuilderWorkGoal extends Goal {
                     builderEntity.currentBuildArea.removeBuildBlockToPlace(blockPos);
                 }
                 else{
+                    // material ran out: forget this block so the next round does not get stuck on it
+                    blockPos = null;
                     return false;
                 }
             }
@@ -716,6 +830,7 @@ public class BuilderWorkGoal extends Goal {
         BREAK_BLOCKS,
         PREPARE_PLACE_BLOCKS,
         PLACE_BLOCKS,
+        WAIT_FOR_MATERIALS,
         PREPARE_PLACE_MULTIBLOCK,
         PLACE_MULTIBLOCK,
         DONE,

@@ -34,6 +34,10 @@ public class KitchenArea extends AbstractWorkAreaEntity implements IPermissionAr
     public static final EntityDataAccessor<String>  COOK_NAME         = SynchedEntityData.defineId(KitchenArea.class, EntityDataSerializers.STRING);
     public static final EntityDataAccessor<Integer> TOTAL_SLOTS       = SynchedEntityData.defineId(KitchenArea.class, EntityDataSerializers.INT);
     public static final EntityDataAccessor<Integer> FREE_SLOTS        = SynchedEntityData.defineId(KitchenArea.class, EntityDataSerializers.INT);
+    public static final EntityDataAccessor<Boolean> USE_STORAGE       = SynchedEntityData.defineId(KitchenArea.class, EntityDataSerializers.BOOLEAN);
+
+    /** Storage areas within this range are used to fetch raw food and fuel. */
+    public static final int STORAGE_RANGE = 64;
 
     public Map<BlockPos, AbstractFurnaceBlockEntity> furnaceMap   = new HashMap<>();
     public Map<BlockPos, Container>                  containerMap = new HashMap<>();
@@ -51,6 +55,7 @@ public class KitchenArea extends AbstractWorkAreaEntity implements IPermissionAr
         this.entityData.define(COOK_NAME, "None");
         this.entityData.define(TOTAL_SLOTS, 0);
         this.entityData.define(FREE_SLOTS, 0);
+        this.entityData.define(USE_STORAGE, true);
     }
 
     @Override
@@ -62,6 +67,7 @@ public class KitchenArea extends AbstractWorkAreaEntity implements IPermissionAr
         } else if (tag.contains("sellToVillagers")) {
             this.setFeedVillagers(tag.getBoolean("sellToVillagers"));
         }
+        if (tag.contains("useStorage")) this.setUseStorage(tag.getBoolean("useStorage"));
         setBeingWorkedOn(false);
         this.setCookName("None");
     }
@@ -70,6 +76,7 @@ public class KitchenArea extends AbstractWorkAreaEntity implements IPermissionAr
     public void addAdditionalSaveData(CompoundTag tag) {
         super.addAdditionalSaveData(tag);
         tag.putBoolean("feedVillagers", this.getFeedVillagers());
+        tag.putBoolean("useStorage", this.getUseStorage());
     }
 
     @Override
@@ -246,6 +253,9 @@ public class KitchenArea extends AbstractWorkAreaEntity implements IPermissionAr
     }
 
     // ── Synced data ───────────────────────────────────────────────────────────
+
+    public boolean getUseStorage()           { return this.entityData.get(USE_STORAGE); }
+    public void setUseStorage(boolean b)     { this.entityData.set(USE_STORAGE, b); }
 
     public boolean getFeedVillagers()        { return this.entityData.get(FEED_VILLAGERS); }
     public void setFeedVillagers(boolean b) { this.entityData.set(FEED_VILLAGERS, b); }

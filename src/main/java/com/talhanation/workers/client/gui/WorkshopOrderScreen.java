@@ -26,13 +26,12 @@ import net.minecraftforge.client.gui.widget.ExtendedButton;
 
 import javax.annotation.Nullable;
 import java.util.ArrayList;
-import java.util.Comparator;
 import java.util.List;
 import java.util.UUID;
 
 /**
  * Order list of a workshop, in the design of the recruits faction list.
- * Entries are shown sorted by priority (1 = first).
+ * The craftsman works the orders in turn.
  */
 @OnlyIn(Dist.CLIENT)
 public class WorkshopOrderScreen extends RecruitsScreenBase {
@@ -132,7 +131,6 @@ public class WorkshopOrderScreen extends RecruitsScreenBase {
     private void loadOrders() {
         this.lastOrdersTag = workshopArea.getSyncedOrdersTag().copy();
         List<CraftOrder> orders = new ArrayList<>(workshopArea.getOrders());
-        orders.sort(Comparator.comparingInt(order -> order.priority));
 
         List<OrderEntry> entries = new ArrayList<>();
         for (CraftOrder order : orders) entries.add(new OrderEntry(this, order));
@@ -249,9 +247,9 @@ public class WorkshopOrderScreen extends RecruitsScreenBase {
             int textX = itemX + 16 + PADDING;
             int textWidth = width - (textX - left) - PADDING;
 
-            // line 1: priority, item, type
+            // line 1: item, type
             String type = Component.translatable(order.type == CraftOrder.OrderType.SMELTING ? "gui.workers.workshop.smelting" : "gui.workers.workshop.crafting").getString();
-            String line1 = "[" + order.priority + "] " + order.result.getHoverName().getString() + " (" + type + ")";
+            String line1 = order.result.getHoverName().getString() + " (" + type + ")";
             int nameColor = order.enabled ? WorkersPanelList.TEXT_COLOR : WorkersPanelList.TEXT_GRAY;
             guiGraphics.drawString(font, font.plainSubstrByWidth(line1, textWidth), textX, top + 3, nameColor, false);
 
@@ -267,7 +265,7 @@ public class WorkshopOrderScreen extends RecruitsScreenBase {
             guiGraphics.drawString(font, status, left + width - PADDING - font.width(status), top + 3 + font.lineHeight + 1, statusColor, false);
 
             if (order.isGovernorOrder()) {
-                guiGraphics.drawString(font, "⚑", left + width - PADDING - font.width("⚑"), top + 3, 0xFFFFAA00, false);
+                guiGraphics.drawString(font, "\u2691", left + width - PADDING - font.width("\u2691"), top + 3, 0xFFFFAA00, false);
             }
         }
 
@@ -294,7 +292,7 @@ public class WorkshopOrderScreen extends RecruitsScreenBase {
                 case OK -> WorkersPanelList.TEXT_GREEN;
                 case DONE -> 0xFF55FFFF;
                 case DISABLED -> WorkersPanelList.TEXT_GRAY;
-                case STOCK_FULL -> 0xFFFFFF55;
+                case STOCK_FULL, FETCHING -> 0xFFFFFF55;
                 default -> WorkersPanelList.TEXT_RED;
             };
         }

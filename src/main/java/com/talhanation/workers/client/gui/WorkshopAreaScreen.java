@@ -1,7 +1,13 @@
 package com.talhanation.workers.client.gui;
 
 import com.talhanation.recruits.client.gui.widgets.BlackShowingTextField;
+import com.talhanation.recruits.client.gui.widgets.RecruitsCheckBox;
+import com.talhanation.workers.WorkersMain;
 import com.talhanation.workers.entities.workarea.WorkshopArea;
+import com.talhanation.workers.network.MessageUpdateWorkAreaName;
+import com.talhanation.workers.network.MessageUpdateWorkshopArea;
+import net.minecraft.client.gui.components.EditBox;
+import net.minecraft.client.gui.components.Tooltip;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.MutableComponent;
 import net.minecraft.world.entity.player.Player;
@@ -17,15 +23,23 @@ public class WorkshopAreaScreen extends WorkAreaScreen {
     private static final MutableComponent TEXT_YES         = Component.translatable("gui.workers.text.yes");
     private static final MutableComponent TEXT_NO          = Component.translatable("gui.workers.text.no");
     private static final MutableComponent BUTTON_ORDERS    = Component.translatable("gui.workers.button.orders");
+    private static final MutableComponent TEXT_NAME_HINT   = Component.translatable("entity.workers.workshop");
+    private static final MutableComponent TEXT_USE_STORAGE    = Component.translatable("gui.workers.checkbox.useStorage");
+    private static final MutableComponent TOOLTIP_USE_STORAGE = Component.translatable("gui.workers.checkbox.tooltip.useStorage");
 
     public final WorkshopArea workshopArea;
     private String craftsmanName;
     private int freeSlots;
     private int totalSlots;
+    private EditBox nameEditBox;
+    private String areaName;
+    private boolean useStorage;
 
     public WorkshopAreaScreen(WorkshopArea workshopArea, Player player) {
         super(Component.translatable("entity.workers.workshop"), workshopArea, player);
         this.workshopArea = workshopArea;
+        this.areaName     = workshopArea.getCustomName() != null ? workshopArea.getCustomName().getString() : "";
+        this.useStorage   = workshopArea.getUseStorage();
     }
 
     @Override
@@ -45,6 +59,16 @@ public class WorkshopAreaScreen extends WorkAreaScreen {
         int h  = 20;
         int bx = x - w / 2;
         int by = y + h / 2 + 42;
+
+        nameEditBox = new EditBox(font, bx, by - h, w, h, Component.literal(""));
+        nameEditBox.setValue(areaName);
+        nameEditBox.setHint(TEXT_NAME_HINT);
+        nameEditBox.setTextColor(-1);
+        nameEditBox.setTextColorUneditable(-1);
+        nameEditBox.setBordered(true);
+        nameEditBox.setMaxLength(32);
+        nameEditBox.setResponder(s -> this.areaName = s);
+        addRenderableWidget(nameEditBox);
 
         addRenderableWidget(new BlackShowingTextField(bx, by + 10, w / 2, h,
                 Component.literal(TEXT_CRAFTSMAN.getString() + ":")));
@@ -71,7 +95,30 @@ public class WorkshopAreaScreen extends WorkAreaScreen {
         addRenderableWidget(new BlackShowingTextField(bx + w / 2, by + 90, w / 2, h,
                 Component.literal("" + this.freeSlots + " / " + this.totalSlots)));
 
-        addRenderableWidget(new ExtendedButton(bx, by + 115, w, h, BUTTON_ORDERS,
-                button -> minecraft.setScreen(new WorkshopOrderScreen(workshopArea, player))));
+        RecruitsCheckBox useStorageCheckBox = new RecruitsCheckBox(bx, by + 112, w, h, TEXT_USE_STORAGE, useStorage,
+                bool -> {
+                    this.useStorage = bool;
+                    WorkersMain.SIMPLE_CHANNEL.sendToServer(new MessageUpdateWorkshopArea(workshopArea.getUUID(), useStorage));
+                });
+        useStorageCheckBox.setTooltip(Tooltip.create(TOOLTIP_USE_STORAGE));
+        addRenderableWidget(useStorageCheckBox);
+
+        addRenderableWidget(new ExtendedButton(bx, by + 135, w, h, BUTTON_ORDERS,
+                button -> {
+                    sendName();
+                    minecraft.setScreen(new WorkshopOrderScreen(workshopArea, player));
+                }));
+    }
+
+    @Override
+    public void onClose() {
+        super.onClose();
+        sendName();
+    }
+
+    private void sendName() {
+        String current = workArea.getCustomName() != null ? workArea.getCustomName().getString() : "";
+        if (areaName.equals(current)) return;
+        WorkersMain.SIMPLE_CHANNEL.sendToServer(new MessageUpdateWorkAreaName(workArea.getUUID(), areaName));
     }
 }

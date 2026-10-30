@@ -1,6 +1,7 @@
 package com.talhanation.workers.entities.ai;
 
 import com.talhanation.workers.entities.CourierEntity;
+import com.talhanation.workers.entities.workarea.AbstractWorkAreaEntity;
 import com.talhanation.workers.entities.workarea.KitchenArea;
 import com.talhanation.workers.entities.workarea.StorageArea;
 import com.talhanation.workers.entities.workarea.MarketArea;
@@ -23,17 +24,22 @@ import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.ChestBlock;
+import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.entity.ChestBlockEntity;
+import net.minecraft.world.level.chunk.LevelChunk;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.gameevent.GameEvent;
 import net.minecraft.world.phys.AABB;
 
+import javax.annotation.Nullable;
 import java.util.*;
 
 public class CourierWorkGoal extends Goal {
 
     private static final int ARRIVAL_DIST_SQ    = 9;
-    private static final int SCAN_RADIUS         = 16;
+    // Actions are only executed near the waypoint; further away the courier walks back first.
+    private static final int EXECUTE_DIST_SQ    = 81;
+    public static final int SCAN_RADIUS          = 16;
     private static final int NAVIGATION_TIMEOUT  = 2000;
     private static final int REPATH_INTERVAL     = 20;
     private static final int TICKS_PER_TRANSFER  = 20;
@@ -50,6 +56,12 @@ public class CourierWorkGoal extends Goal {
     // Ensures the "target full" message is sent at most once per deposit action,
     // not every tick while the courier keeps retrying a full container.
     private boolean depositFullReported = false;
+    // Route version the goal state belongs to; a new route resets the goal (see CourierEntity.routeVersion).
+    private int lastRouteVersion;
+    // Containers found at the current waypoint, per source/target. Cleared when the courier moves on.
+    private final Map<String, List<Container>> containerCache = new HashMap<>();
+    // Selected target areas that were reported missing, so the owner is told only once per route.
+    private final Set<UUID> reportedMissingTargets = new HashSet<>();
 
     // ── Active transfer state ─────────────────────────────────────────────────
     private CourierAction               activeAction;
@@ -97,6 +109,8 @@ public class CourierWorkGoal extends Goal {
         waitTicks          = 0;
         activeTransferred  = 0;
         pendingGoHome      = false;
+        lastRouteVersion   = courier.routeVersion;
+        containerCache.clear();
         // The working state (6) is set by the route-start command, not here, so an
         // owner command issued mid-route is never overridden back to working.
         state = State.NAVIGATE_TO_WAYPOINT;
@@ -112,6 +126,12 @@ public class CourierWorkGoal extends Goal {
     public void tick(){
         if (courier.getCommandSenderWorld().isClientSide()) return;
         if (state == null) return;
+        if (lastRouteVersion != courier.routeVersion){
+            // The owner loaded a new route: drop whatever was in progress and start fresh.
+            lastRouteVersion = courier.routeVersion;
+            resetRouteState();
+            return;
+        }
         switch (state){
             case NAVIGATE_TO_WAYPOINT -> tickNavigate();
             case EXECUTE_ACTIONS      -> tickExecute();
@@ -139,6 +159,7 @@ public class CourierWorkGoal extends Goal {
         navigationTicks++;
 
         if (navigationTicks >= NAVIGATION_TIMEOUT){
+            notifyOwner(courier.TEXT_WAYPOINT_UNREACHABLE(waypointLabel(waypoint)));
             advanceAndNavigate();
             return;
         }
@@ -150,6 +171,12 @@ public class CourierWorkGoal extends Goal {
 
     private void tickExecute(){
         CourierRoute.CourierWaypoint wp = courier.getCurrentWaypoint();
+        if (wp != null && courier.distanceToSqr(wp.getPosition().getX() + 0.5, wp.getPosition().getY(), wp.getPosition().getZ() + 0.5) > EXECUTE_DIST_SQ){
+            // Pushed away or the waypoint changed under us → walk back before touching any container.
+            navigationTicks = 0;
+            state = State.NAVIGATE_TO_WAYPOINT;
+            return;
+        }
         if(courier.returning && courier.currentWaypointIndex == 0){
             courier.returning = false;
             courier.shouldCycle = courier.pendingShouldCycle;
@@ -193,9 +220,14 @@ public class CourierWorkGoal extends Goal {
     }
 
     private void initTransferAction(CourierAction action, CourierRoute.CourierWaypoint wp){
-        List<Container> targets = findContainers(action.getSourceType(), wp.getPosition());
+        List<Container> targets = getTargetContainers(action, wp);
+        if (targets == null){
+            // A specific work area was selected but it is gone → skip, the owner was informed.
+            actionIndex++;
+            return;
+        }
         if (targets.isEmpty()){
-            notifyOwner(courier.TEXT_NO_TARGET_FOUND(wp.displayName));
+            notifyOwner(courier.TEXT_NO_TARGET_FOUND(waypointLabel(wp)));
             actionIndex++;
             return;
         }
@@ -285,7 +317,7 @@ public class CourierWorkGoal extends Goal {
                 // all this action (avoid spam once a partial transfer succeeded).
                 if (activeTransferred == 0){
                     notifyOwner(courier.TEXT_INVENTORY_FULL(
-                            activeWp.displayName));
+                            waypointLabel(activeWp)));
                 }
                 finishTransfer();
                 return;
@@ -335,7 +367,7 @@ public class CourierWorkGoal extends Goal {
             if (!depositFullReported){
                 depositFullReported = true;
                 notifyOwnerAlways(courier.TEXT_CANNOT_DEPOSIT_TARGET_FULL(
-                        activeWp.displayName));
+                        waypointLabel(activeWp)));
             }
             finishTransfer();
             return;
@@ -432,86 +464,95 @@ public class CourierWorkGoal extends Goal {
         return courier.getInventory();
     }
 
-    private List<Container> findContainers(CourierAction.SourceType type, BlockPos center){
-        List<Container> result = new ArrayList<>();
-        if (type == null || center == null) return result;
+    /**
+     * Containers the action works on at this waypoint. Returns {@code null} when the action points to a
+     * specific work area that no longer exists or is no longer accessible (the owner is informed once).
+     */
+    @Nullable
+    private List<Container> getTargetContainers(CourierAction action, CourierRoute.CourierWaypoint wp){
+        CourierAction.SourceType type = action.getSourceType();
+        if (type == null) return new ArrayList<>();
 
-        AABB scanBox = new AABB(center).inflate(SCAN_RADIUS);
         ServerLevel level = (ServerLevel) courier.getCommandSenderWorld();
+        BlockPos center = wp.getPosition();
+        boolean specific = action.hasTarget() && type != CourierAction.SourceType.CHEST;
+        String key = type.name() + (specific ? ":" + action.getTargetId() : "");
 
-        switch (type){
-            case CHEST -> {
-                List<MarketArea> blockedMarkets = level.getEntitiesOfClass(
-                        MarketArea.class, scanBox, m -> !canAccessMarket(m));
-                List<MarketArea> allowedMarkets = level.getEntitiesOfClass(
-                        MarketArea.class, scanBox, this::canAccessMarket);
+        List<Container> cached = containerCache.get(key);
+        if (cached != null) return cached;
 
-                Set<BlockPos> blockedPositions = new HashSet<>();
-                for (MarketArea bm : blockedMarkets){
-                    bm.scanContainers();
-                    blockedPositions.addAll(bm.containerMap.keySet());
+        List<Container> result = new ArrayList<>();
+        if (specific){
+            AbstractWorkAreaEntity area = resolveTargetArea(courier, level, center, type, action.getTargetId());
+            if (area == null){
+                if (reportedMissingTargets.add(action.getTargetId())){
+                    String name = action.getTargetName().isEmpty() ? type.name() : action.getTargetName();
+                    notifyOwnerAlways(courier.TEXT_TARGET_AREA_MISSING(name, waypointLabel(wp)));
                 }
-
-                Set<BlockPos> allowedMarketPositions = new java.util.HashSet<>();
-                for (MarketArea am : allowedMarkets){
-                    am.scanContainers();
-                    allowedMarketPositions.addAll(am.containerMap.keySet());
-                }
-
-                BlockPos.betweenClosed(
-                        center.offset(-SCAN_RADIUS, -SCAN_RADIUS, -SCAN_RADIUS),
-                        center.offset( SCAN_RADIUS,  SCAN_RADIUS,  SCAN_RADIUS)
-                ).forEach(pos -> {
-                    if (blockedPositions.contains(pos.immutable())) return;
-                    if (allowedMarketPositions.contains(pos.immutable())) return;
-
-                    BlockState st = level.getBlockState(pos);
-                    if (st.getBlock() instanceof ChestBlock chestBlock){
-                        Container c = ChestBlock.getContainer(chestBlock, st, level, pos, true);
-                        if (c != null) result.add(c);
-                    }
-                });
+                return null;
             }
-            case STORAGE -> {
-                List<StorageArea> areas = level.getEntitiesOfClass(StorageArea.class, scanBox, s -> s.canWorkHere(courier));
-                for (StorageArea a : areas){
-                    a.scanStorageBlocks();
-                    result.addAll(a.storageMap.values());
-                }
-            }
-            case MARKET -> {
-                List<MarketArea> markets = level.getEntitiesOfClass(
-                        MarketArea.class, scanBox, this::canAccessMarket);
-                for (MarketArea m : markets){
-                    m.scanContainers();
-                    result.addAll(m.containerMap.values());
-                }
-            }
-
-            case KITCHEN -> {
-                List<KitchenArea> kitchens = level.getEntitiesOfClass(
-                        KitchenArea.class, scanBox, this::canAccessKitchen);
-                for (KitchenArea k : kitchens){
-                    k.scanArea();
-                    result.addAll(k.containerMap.values());
-                }
-            }
-
-            case WORKSHOP -> {
-                // the workshop itself is a container that links all its chests
-                List<WorkshopArea> workshops = level.getEntitiesOfClass(
-                        WorkshopArea.class, scanBox, this::canAccessWorkshop);
-                for (WorkshopArea w : workshops){
-                    w.scanArea();
-                    result.add(w);
-                }
-            }
-
+            result.addAll(getTargetContainersOf(area));
         }
+        else if (type == CourierAction.SourceType.CHEST){
+            result.addAll(findChests(courier, level, center));
+        }
+        else {
+            for (AbstractWorkAreaEntity area : findTargetAreas(courier, level, center, type)){
+                for (Container c : getTargetContainersOf(area)){
+                    if (!containsContainer(result, c)) result.add(c);
+                }
+            }
+        }
+        containerCache.put(key, result);
         return result;
     }
-    private boolean canAccessWorkshop(WorkshopArea area){
-        if (!courier.isOwned()) return false;
+
+    private static AABB getScanBox(BlockPos center){
+        return new AABB(center).inflate(SCAN_RADIUS);
+    }
+
+    /** All work areas of the given source type in range of the waypoint that the courier may use, nearest first. */
+    public static List<AbstractWorkAreaEntity> findTargetAreas(CourierEntity courier, ServerLevel level, BlockPos center, CourierAction.SourceType type){
+        List<AbstractWorkAreaEntity> result = new ArrayList<>();
+        if (type == null || type == CourierAction.SourceType.CHEST) return result;
+
+        for (AbstractWorkAreaEntity area : level.getEntitiesOfClass(AbstractWorkAreaEntity.class, getScanBox(center))){
+            if (area.isAlive() && matchesSourceType(area, type) && isValidTarget(courier, area)) result.add(area);
+        }
+        result.sort(Comparator.comparingDouble(a -> a.blockPosition().distSqr(center)));
+        return result;
+    }
+
+    @Nullable
+    public static AbstractWorkAreaEntity resolveTargetArea(CourierEntity courier, ServerLevel level, BlockPos center, CourierAction.SourceType type, UUID targetId){
+        if (targetId == null) return null;
+        Entity entity = level.getEntity(targetId);
+        if (!(entity instanceof AbstractWorkAreaEntity area) || !area.isAlive()) return null;
+        if (!matchesSourceType(area, type)) return null;
+        if (!area.getBoundingBox().intersects(getScanBox(center))) return null;
+        if (!isValidTarget(courier, area)) return null;
+        return area;
+    }
+
+    public static boolean matchesSourceType(AbstractWorkAreaEntity area, CourierAction.SourceType type){
+        return switch (type){
+            case STORAGE  -> area instanceof StorageArea;
+            case MARKET   -> area instanceof MarketArea;
+            case KITCHEN  -> area instanceof KitchenArea;
+            case WORKSHOP -> area instanceof WorkshopArea;
+            case CHEST    -> false;
+        };
+    }
+
+    /** Storages additionally need the courier storage type enabled, like for every other worker. */
+    public static boolean isValidTarget(CourierEntity courier, AbstractWorkAreaEntity area){
+        if (area instanceof StorageArea storage) return storage.canWorkHere(courier);
+        return canAccessArea(courier, area);
+    }
+
+    /** Owner or team access, independent of which worker type the area is made for. */
+    public static boolean canAccessArea(CourierEntity courier, AbstractWorkAreaEntity area){
+        if (!courier.isOwned() || courier.getOwnerUUID() == null) return false;
         boolean sameOwner = courier.getOwnerUUID().equals(area.getPlayerUUID());
         boolean sameTeam  = area.getTeamAccess() && courier.getTeam() != null
                 && area.getTeamStringID() != null
@@ -520,24 +561,89 @@ public class CourierWorkGoal extends Goal {
         return sameOwner || sameTeam;
     }
 
-    private boolean canAccessKitchen(KitchenArea kitchen){
-        if (!courier.isOwned()) return false;
-        boolean sameOwner = courier.getOwnerUUID().equals(kitchen.getPlayerUUID());
-        boolean sameTeam  = kitchen.getTeamAccess() && courier.getTeam() != null
-                && kitchen.getTeamStringID() != null
-                && !kitchen.getTeamStringID().isEmpty()
-                && kitchen.getTeamStringID().equals(courier.getTeam().getName());
-        return sameOwner || sameTeam;
+    /** Scans the area and returns the containers it links. The workshop is itself a container over all its chests. */
+    public static List<Container> getTargetContainersOf(AbstractWorkAreaEntity area){
+        if (area instanceof WorkshopArea workshop){
+            workshop.scanArea();
+            return List.of(workshop);
+        }
+        return new ArrayList<>(scanAreaContainers(area));
     }
 
-    private boolean canAccessMarket(MarketArea market){
-        if (!courier.isOwned()) return false;
-        boolean sameOwner = courier.getOwnerUUID().equals(market.getPlayerUUID());
-        boolean sameTeam  = market.getTeamAccess() && courier.getTeam() != null
-                && market.getTeamStringID() != null
-                && !market.getTeamStringID().isEmpty()
-                && market.getTeamStringID().equals(courier.getTeam().getName());
-        return sameOwner || sameTeam;
+    public static Collection<Container> scanAreaContainers(AbstractWorkAreaEntity area){
+        if (area instanceof StorageArea storage){
+            storage.scanStorageBlocks();
+            return storage.storageMap.values();
+        }
+        if (area instanceof MarketArea market){
+            market.scanContainers();
+            return market.containerMap.values();
+        }
+        if (area instanceof KitchenArea kitchen){
+            kitchen.scanArea();
+            return kitchen.containerMap.values();
+        }
+        if (area instanceof WorkshopArea workshop){
+            workshop.scanArea();
+            return workshop.containerMap.values();
+        }
+        return List.of();
+    }
+
+    /**
+     * Loose chests around the waypoint, nearest first. Chests belonging to a work area the courier may not
+     * use are skipped, and so are market chests (market stock is only handled via the MARKET source).
+     * Double chests are only listed once.
+     */
+    private static List<Container> findChests(CourierEntity courier, ServerLevel level, BlockPos center){
+        List<Container> excluded = new ArrayList<>();
+        for (AbstractWorkAreaEntity area : level.getEntitiesOfClass(AbstractWorkAreaEntity.class, getScanBox(center))){
+            if (!(area instanceof MarketArea) && canAccessArea(courier, area)) continue;
+            excluded.addAll(scanAreaContainers(area));
+        }
+
+        int minX = center.getX() - SCAN_RADIUS, maxX = center.getX() + SCAN_RADIUS;
+        int minY = center.getY() - SCAN_RADIUS, maxY = center.getY() + SCAN_RADIUS;
+        int minZ = center.getZ() - SCAN_RADIUS, maxZ = center.getZ() + SCAN_RADIUS;
+
+        // Only look at block entities of loaded chunks instead of every block in the 33³ box.
+        List<BlockPos> chestPositions = new ArrayList<>();
+        for (int cx = minX >> 4; cx <= maxX >> 4; cx++){
+            for (int cz = minZ >> 4; cz <= maxZ >> 4; cz++){
+                LevelChunk chunk = level.getChunkSource().getChunkNow(cx, cz);
+                if (chunk == null) continue;
+                for (BlockEntity blockEntity : chunk.getBlockEntities().values()){
+                    BlockPos pos = blockEntity.getBlockPos();
+                    if (pos.getX() < minX || pos.getX() > maxX || pos.getY() < minY || pos.getY() > maxY || pos.getZ() < minZ || pos.getZ() > maxZ) continue;
+                    if (blockEntity instanceof ChestBlockEntity) chestPositions.add(pos.immutable());
+                }
+            }
+        }
+        chestPositions.sort(Comparator.comparingDouble(pos -> pos.distSqr(center)));
+
+        List<Container> result = new ArrayList<>();
+        for (BlockPos pos : chestPositions){
+            BlockState st = level.getBlockState(pos);
+            if (!(st.getBlock() instanceof ChestBlock chestBlock)) continue;
+            Container c = ChestBlock.getContainer(chestBlock, st, level, pos, true);
+            if (c == null || containsContainer(excluded, c) || containsContainer(result, c)) continue;
+            result.add(c);
+        }
+        return result;
+    }
+
+    private static boolean containsContainer(Collection<Container> containers, Container container){
+        for (Container c : containers){
+            if (AbstractWorkAreaEntity.isSameContainer(c, container)) return true;
+        }
+        return false;
+    }
+
+    private String waypointLabel(CourierRoute.CourierWaypoint wp){
+        if (wp == null) return "";
+        if (wp.displayName != null && !wp.displayName.isEmpty()) return wp.displayName;
+        int index = courier.currentRoute != null ? courier.currentRoute.getWaypoints().indexOf(wp) : -1;
+        return index >= 0 ? String.valueOf(index + 1) : "?";
     }
 
     private int insertIntoContainer(Container destination, ItemStack stack, int amount){
@@ -562,6 +668,19 @@ public class CourierWorkGoal extends Goal {
         courier.advanceWaypoint();
         actionIndex     = 0;
         navigationTicks = 0;
+        containerCache.clear();
+        state = State.NAVIGATE_TO_WAYPOINT;
+    }
+
+    private void resetRouteState(){
+        closeOpenedChests();
+        courier.getNavigation().stop();
+        actionIndex       = 0;
+        navigationTicks   = 0;
+        waitTicks         = 0;
+        activeTransferred = 0;
+        containerCache.clear();
+        reportedMissingTargets.clear();
         state = State.NAVIGATE_TO_WAYPOINT;
     }
 

@@ -4,6 +4,7 @@ import net.minecraft.nbt.CompoundTag;
 import net.minecraft.world.item.ItemStack;
 
 import javax.annotation.Nullable;
+import java.util.UUID;
 
 public class CourierAction {
 
@@ -72,6 +73,10 @@ public class CourierAction {
     @Nullable private SourceType sourceType;
     @Nullable private ItemStack  itemStack;
     private int                  waitSeconds;
+    // Specific work area to use at the waypoint. null = every accessible area of the source type in range.
+    @Nullable private UUID       targetId;
+    // Display name of the target, cached so the GUI can show it while the area is not loaded.
+    private String               targetName = "";
 
     // Factories
 
@@ -124,14 +129,32 @@ public class CourierAction {
     public void setItemStack(@Nullable ItemStack s)    { this.itemStack = (s != null) ? s.copy() : null; }
     public int getWaitSeconds()                        { return waitSeconds; }
     public void setWaitSeconds(int s)                  { this.waitSeconds = s; }
+    @Nullable public UUID getTargetId()                { return targetId; }
+    public void setTargetId(@Nullable UUID id)         { this.targetId = id; }
+    public String getTargetName()                      { return targetName; }
+    public void setTargetName(@Nullable String name)   { this.targetName = (name != null) ? name : ""; }
+    public boolean hasTarget()                         { return targetId != null; }
+
+    public void clearTarget() {
+        this.targetId   = null;
+        this.targetName = "";
+    }
 
     // NBT
     public CompoundTag toNBT() {
         CompoundTag nbt = new CompoundTag();
         nbt.putString("ActionType", actionType.name());
         if (sourceType != null) nbt.putString("SourceType", sourceType.name());
-        if (itemStack != null && !itemStack.isEmpty()) nbt.put("Item", itemStack.serializeNBT());
+        if (itemStack != null && !itemStack.isEmpty()) {
+            // ItemStack stores its count as a byte, so amounts > 127 are saved separately as int.
+            nbt.put("Item", itemStack.copyWithCount(1).serializeNBT());
+            nbt.putInt("Amount", itemStack.getCount());
+        }
         nbt.putInt("WaitSeconds", waitSeconds);
+        if (targetId != null) {
+            nbt.putUUID("TargetId", targetId);
+            nbt.putString("TargetName", targetName);
+        }
         return nbt;
     }
 
@@ -144,7 +167,9 @@ public class CourierAction {
         if (type == ActionType.WAIT) return wait(nbt.getInt("WaitSeconds"));
         SourceType source = SourceType.fromString(nbt.getString("SourceType"));
         ItemStack  item   = nbt.contains("Item") ? ItemStack.of(nbt.getCompound("Item")) : ItemStack.EMPTY;
-        return switch (type) {
+        if (!item.isEmpty() && nbt.contains("Amount")) item.setCount(Math.max(1, nbt.getInt("Amount")));
+
+        CourierAction action = switch (type) {
             case TAKE -> take(source, item);
             case PUT -> put(source, item);
             case TAKE_ANY -> takeAny(source, item);
@@ -155,5 +180,10 @@ public class CourierAction {
             case TAKE_FILL -> takeFill(source, item);
             default          -> null;
         };
+        if (action != null && nbt.hasUUID("TargetId")) {
+            action.setTargetId(nbt.getUUID("TargetId"));
+            action.setTargetName(nbt.getString("TargetName"));
+        }
+        return action;
     }
 }

@@ -3,6 +3,7 @@ package com.talhanation.workers.entities.workarea;
 import com.talhanation.workers.client.gui.MarketAreaScreen;
 import com.talhanation.workers.entities.AbstractWorkerEntity;
 import com.talhanation.workers.entities.MerchantEntity;
+import com.talhanation.workers.world.MarketDirectory;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.core.BlockPos;
 
@@ -12,6 +13,7 @@ import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.syncher.EntityDataAccessor;
 import net.minecraft.network.syncher.EntityDataSerializers;
 import net.minecraft.network.syncher.SynchedEntityData;
+import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.Container;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.player.Player;
@@ -22,6 +24,7 @@ import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.ChestBlock;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.phys.AABB;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
 
@@ -34,6 +37,17 @@ public class MarketArea extends AbstractWorkAreaEntity implements IPermissionAre
     public static final EntityDataAccessor<Integer> TOTAL_SLOTS = SynchedEntityData.defineId(MarketArea.class, EntityDataSerializers.INT);
     public static final EntityDataAccessor<Integer> FREE_SLOTS = SynchedEntityData.defineId(MarketArea.class, EntityDataSerializers.INT);
     public static final EntityDataAccessor<String> MERCHANT_NAME = SynchedEntityData.defineId(MarketArea.class, EntityDataSerializers.STRING);
+    public static final EntityDataAccessor<Boolean> USE_STORAGE = SynchedEntityData.defineId(MarketArea.class, EntityDataSerializers.BOOLEAN);
+    /** The merchant never buys from villagers if less than this amount of currency would stay in the market. */
+    public static final EntityDataAccessor<Integer> CURRENCY_RESERVE = SynchedEntityData.defineId(MarketArea.class, EntityDataSerializers.INT);
+    public static final int MAX_CURRENCY_RESERVE = 9999;
+    /** Travelling merchants of other players may trade here. */
+    public static final EntityDataAccessor<Boolean> ACCEPT_FOREIGN = SynchedEntityData.defineId(MarketArea.class, EntityDataSerializers.BOOLEAN);
+    /** The merchant of this market is on a trading trip. */
+    public static final EntityDataAccessor<Boolean> MERCHANT_TRAVELLING = SynchedEntityData.defineId(MarketArea.class, EntityDataSerializers.BOOLEAN);
+    private static final int DIRECTORY_UPDATE_INTERVAL = 200;
+    /** Storages within this range around the market are used by the merchant. */
+    public static final int STORAGE_RANGE = 64;
     public Map<BlockPos, Container> containerMap = new HashMap<>();
 
     /** Persistent server-side UUID of the assigned merchant (one per market). */
@@ -51,6 +65,10 @@ public class MarketArea extends AbstractWorkAreaEntity implements IPermissionAre
         this.entityData.define(MERCHANT_NAME, "None");
         this.entityData.define(TOTAL_SLOTS, 0);
         this.entityData.define(FREE_SLOTS, 0);
+        this.entityData.define(USE_STORAGE, true);
+        this.entityData.define(CURRENCY_RESERVE, 0);
+        this.entityData.define(ACCEPT_FOREIGN, true);
+        this.entityData.define(MERCHANT_TRAVELLING, false);
     }
 
     @Override
@@ -60,6 +78,10 @@ public class MarketArea extends AbstractWorkAreaEntity implements IPermissionAre
         if (tag.contains("marketName"))   this.setMarketName(tag.getString("marketName"));
         if (tag.contains("merchantName")) this.setMerchantName(tag.getString("merchantName"));
         if (tag.contains("assignedMerchantUUID")) this.assignedMerchantUUID = tag.getUUID("assignedMerchantUUID");
+        if (tag.contains("useStorage")) this.setUseStorage(tag.getBoolean("useStorage"));
+        this.setCurrencyReserve(tag.getInt("currencyReserve"));
+        if (tag.contains("acceptForeign")) this.setAcceptForeignMerchants(tag.getBoolean("acceptForeign"));
+        this.setMerchantTravelling(tag.getBoolean("merchantTravelling"));
 
         setBeingWorkedOn(false);
     }
@@ -71,6 +93,10 @@ public class MarketArea extends AbstractWorkAreaEntity implements IPermissionAre
         tag.putString("marketName", this.getMarketName());
         tag.putString("merchantName", this.getMerchantName());
         if (assignedMerchantUUID != null) tag.putUUID("assignedMerchantUUID", assignedMerchantUUID);
+        tag.putBoolean("useStorage", this.getUseStorage());
+        tag.putInt("currencyReserve", this.getCurrencyReserve());
+        tag.putBoolean("acceptForeign", this.getAcceptForeignMerchants());
+        tag.putBoolean("merchantTravelling", this.isMerchantTravelling());
     }
 
     @Override
@@ -82,6 +108,34 @@ public class MarketArea extends AbstractWorkAreaEntity implements IPermissionAre
     @OnlyIn(Dist.CLIENT)
     public Screen getScreen(Player player) {
         return new MarketAreaScreen(this, player);
+    }
+
+    @Override
+    public void tick() {
+        super.tick();
+        // travelling merchants find markets in unloaded chunks through the directory
+        if (this.getCommandSenderWorld() instanceof ServerLevel level && (tickCount == 20 || tickCount % DIRECTORY_UPDATE_INTERVAL == 0)) {
+            MarketDirectory.update(level, this);
+        }
+    }
+
+    @Override
+    public void remove(RemovalReason reason) {
+        if (reason.shouldDestroy() && this.getCommandSenderWorld() instanceof ServerLevel level) {
+            MarketDirectory.remove(level, this.getUUID());
+        }
+        super.remove(reason);
+    }
+
+    /** Storages with the merchant checkbox within range of the market, nearest first, already scanned. */
+    public List<StorageArea> findStorages(ServerLevel level, AbstractWorkerEntity worker) {
+        if (!this.getUseStorage()) return new ArrayList<>();
+        List<StorageArea> storages = level.getEntitiesOfClass(StorageArea.class, new AABB(this.blockPosition()).inflate(STORAGE_RANGE),
+                storage -> storage.isAlive() && storage.canWorkHere(worker));
+        storages.sort(Comparator.comparingDouble(storage -> storage.distanceToSqr(this)));
+        storages.forEach(StorageArea::scanStorageBlocks);
+        storages.removeIf(storage -> storage.storageMap.isEmpty());
+        return storages;
     }
 
     public void scanContainers() {
@@ -119,14 +173,17 @@ public class MarketArea extends AbstractWorkAreaEntity implements IPermissionAre
         if (containerMap.isEmpty()) scanContainers();
         int toShrink = count;
         for (Container container : containerMap.values()) {
+            boolean changed = false;
             for (int i = 0; i < container.getContainerSize() && toShrink > 0; i++) {
                 ItemStack slot = container.getItem(i);
                 if (!slot.isEmpty() && itemsMatch(slot, stack, allowDamaged)) {
                     int take = Math.min(toShrink, slot.getCount());
                     slot.shrink(take);
                     toShrink -= take;
+                    changed = true;
                 }
             }
+            if (changed) container.setChanged();
         }
         return toShrink <= 0;
     }
@@ -145,11 +202,13 @@ public class MarketArea extends AbstractWorkAreaEntity implements IPermissionAre
         return total;
     }
 
-    public void depositItemToContainers(ItemStack stack, int count) {
+    /** Puts count of the stack into the market containers, returns what did not fit. */
+    public int depositItemToContainers(ItemStack stack, int count) {
         if (containerMap.isEmpty()) scanContainers();
         int remaining = count;
         for (Container container : containerMap.values()) {
             if (remaining <= 0) break;
+            int before = remaining;
             for (int i = 0; i < container.getContainerSize() && remaining > 0; i++) {
                 ItemStack slot = container.getItem(i);
                 if (slot.isEmpty()) {
@@ -165,7 +224,9 @@ public class MarketArea extends AbstractWorkAreaEntity implements IPermissionAre
                     remaining -= put;
                 }
             }
+            if (remaining != before) container.setChanged();
         }
+        return remaining;
     }
 
     public boolean canAddItem(ItemStack toAdd) {
@@ -232,6 +293,14 @@ public class MarketArea extends AbstractWorkAreaEntity implements IPermissionAre
     public int getFreeSlots() {
         return this.entityData.get(FREE_SLOTS);
     }
+    public boolean getUseStorage() { return this.entityData.get(USE_STORAGE); }
+    public void setUseStorage(boolean b) { this.entityData.set(USE_STORAGE, b); }
+    public boolean getAcceptForeignMerchants() { return this.entityData.get(ACCEPT_FOREIGN); }
+    public void setAcceptForeignMerchants(boolean b) { this.entityData.set(ACCEPT_FOREIGN, b); }
+    public boolean isMerchantTravelling() { return this.entityData.get(MERCHANT_TRAVELLING); }
+    public void setMerchantTravelling(boolean b) { this.entityData.set(MERCHANT_TRAVELLING, b); }
+    public int getCurrencyReserve() { return this.entityData.get(CURRENCY_RESERVE); }
+    public void setCurrencyReserve(int x) { this.entityData.set(CURRENCY_RESERVE, Math.max(0, Math.min(MAX_CURRENCY_RESERVE, x))); }
     public void setFreeSlots(int x) {
         this.entityData.set(FREE_SLOTS, x);
     }

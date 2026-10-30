@@ -13,12 +13,14 @@ public class MessageUpdateKitchenArea implements Message<MessageUpdateKitchenAre
 
     public UUID uuid;
     public boolean sellToVillagers;
+    public boolean useStorage;
 
     public MessageUpdateKitchenArea() {}
 
-    public MessageUpdateKitchenArea(UUID uuid, boolean sellToVillagers) {
+    public MessageUpdateKitchenArea(UUID uuid, boolean sellToVillagers, boolean useStorage) {
         this.uuid            = uuid;
         this.sellToVillagers = sellToVillagers;
+        this.useStorage      = useStorage;
     }
 
     @Override
@@ -35,6 +37,7 @@ public class MessageUpdateKitchenArea implements Message<MessageUpdateKitchenAre
                 .stream().findAny()
                 .ifPresent(kitchen -> {
                     kitchen.setFeedVillagers(sellToVillagers);
+                    kitchen.setUseStorage(useStorage);
                     kitchen.scanArea();
                 });
     }
@@ -43,6 +46,7 @@ public class MessageUpdateKitchenArea implements Message<MessageUpdateKitchenAre
     public MessageUpdateKitchenArea fromBytes(FriendlyByteBuf buf) {
         this.uuid            = buf.readUUID();
         this.sellToVillagers = buf.readBoolean();
+        this.useStorage      = buf.readBoolean();
         return this;
     }
 
@@ -50,5 +54,6 @@ public class MessageUpdateKitchenArea implements Message<MessageUpdateKitchenAre
     public void toBytes(FriendlyByteBuf buf) {
         buf.writeUUID(uuid);
         buf.writeBoolean(sellToVillagers);
+        buf.writeBoolean(useStorage);
     }
 }

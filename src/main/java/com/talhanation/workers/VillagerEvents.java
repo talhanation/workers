@@ -14,9 +14,11 @@ import com.talhanation.recruits.world.RecruitsHireTradesRegistry;
 import com.talhanation.recruits.entities.AbstractRecruitEntity;
 import com.talhanation.recruits.entities.ai.RecruitUpkeepEntityGoal;
 import com.talhanation.workers.network.MessageToClientUpdateConfig;
+import com.talhanation.workers.network.MessageToClientVillagerPrices;
 import com.talhanation.recruits.world.RecruitsHireTrade;
 import com.talhanation.workers.config.WorkersServerConfig;
 import com.talhanation.workers.world.VillagerInviteRegistry;
+import com.talhanation.workers.world.VillagerPriceTable;
 import net.minecraft.core.BlockPos;
 import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerLevel;
@@ -39,6 +41,7 @@ import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
 import net.minecraftforge.client.event.ClientPlayerNetworkEvent;
 import net.minecraftforge.event.entity.EntityJoinLevelEvent;
+import net.minecraftforge.event.entity.player.PlayerEvent;
 import net.minecraftforge.event.entity.player.PlayerInteractEvent;
 import net.minecraftforge.event.server.ServerStartedEvent;
 import net.minecraftforge.event.server.ServerStoppingEvent;
@@ -87,8 +90,17 @@ public class VillagerEvents {
         }
     }
     @SubscribeEvent
+    public void onPlayerLoggedIn(PlayerEvent.PlayerLoggedInEvent event) {
+        if(event.getEntity() instanceof ServerPlayer player){
+            WorkersMain.SIMPLE_CHANNEL.send(PacketDistributor.PLAYER.with(() -> player),
+                    new MessageToClientVillagerPrices(VillagerPriceTable.getPrices(), VillagerPriceTable.getCurrency()));
+        }
+    }
+
+    @SubscribeEvent
     public void onServerStart(ServerStartedEvent event) {
         registerWorkerTrades();
+        VillagerPriceTable.build(event.getServer().overworld());
     }
 
     @SubscribeEvent
@@ -242,4 +254,4 @@ public class VillagerEvents {
 
         return !isOwner && !isTeamMate && !isAdmin;
     }
-}
+}

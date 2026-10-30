@@ -31,13 +31,14 @@ public class StorageArea extends AbstractWorkAreaEntity implements IPermissionAr
     }
     protected void defineSynchedData() {
         super.defineSynchedData();
-        this.entityData.define(STORAGE_TYPES, 0);
+        // a new storage is open for every worker, the player only unticks what he does not want
+        this.entityData.define(STORAGE_TYPES, getAllTypesMask());
     }
 
     @Override
     public void readAdditionalSaveData(CompoundTag tag) {
         super.readAdditionalSaveData(tag);
-        this.entityData.set(STORAGE_TYPES, tag.getInt("StorageTypes"));
+        if (tag.contains("StorageTypes")) this.entityData.set(STORAGE_TYPES, tag.getInt("StorageTypes"));
     }
 
     @Override
@@ -81,6 +82,14 @@ public class StorageArea extends AbstractWorkAreaEntity implements IPermissionAr
 
         return mask;
     }
+    public static int getAllTypesMask() {
+        int mask = 0;
+        for (StorageType type : StorageType.values()) {
+            mask |= (1 << type.getIndex());
+        }
+        return mask;
+    }
+
     public void setStorageTypes(int mask) {
         this.entityData.set(STORAGE_TYPES, mask);
     }
@@ -150,7 +159,8 @@ public class StorageArea extends AbstractWorkAreaEntity implements IPermissionAr
         FISHERMAN(5),
         ANIMAL_FARMERS(6),
         COOK(7),
-        COURIER(8);
+        COURIER(8),
+        CRAFTSMAN(10);
         private final int index;
         StorageType(int index){
             this.index = index;
@@ -198,6 +208,9 @@ public class StorageArea extends AbstractWorkAreaEntity implements IPermissionAr
             }
             else if( worker instanceof CookEntity){
                 return this.getStorageTypes().contains(StorageType.COOK);
+            }
+            else if( worker instanceof CraftsmanEntity){
+                return this.getStorageTypes().contains(StorageType.CRAFTSMAN);
             }
         }
         return false;

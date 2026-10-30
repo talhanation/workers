@@ -26,12 +26,17 @@ public class CourierDropDownMenu<T> extends AbstractWidget {
     private final Consumer<T> onSelect;
     private final Function<T, String> optionTextGetter;
     @Nullable private final Function<T, List<Component>> tooltipGetter;
+    // Optional: text for the closed display (defaults to the option text) and per-option text colour.
+    @Nullable private Function<T, String> displayTextGetter;
+    @Nullable private Function<T, Integer> optionColorGetter;
     private T selectedOption;
     private boolean isOpen;
     private final int optionHeight;
+    // The open list may be wider than the closed display; options are then drawn left-aligned.
+    private int dropdownWidth;
 
     private int scrollOffset = 0;
-    private final int maxVisibleOptions;
+    private int maxVisibleOptions;
     private boolean isScrolling = false;
     private final int scrollbarWidth = 6;
     public boolean canSelect = true;
@@ -47,6 +52,23 @@ public class CourierDropDownMenu<T> extends AbstractWidget {
         this.tooltipGetter = tooltipGetter;
         this.optionHeight = height;
         this.maxVisibleOptions = Math.min(5, options.size());
+        this.dropdownWidth = width;
+    }
+
+    public void setDropdownWidth(int dropdownWidth) {
+        this.dropdownWidth = Math.max(this.width, dropdownWidth);
+    }
+
+    public void setMaxVisibleOptions(int max) {
+        this.maxVisibleOptions = Math.max(1, Math.min(max, options.size()));
+    }
+
+    public void setDisplayTextGetter(@Nullable Function<T, String> displayTextGetter) {
+        this.displayTextGetter = displayTextGetter;
+    }
+
+    public void setOptionColorGetter(@Nullable Function<T, Integer> optionColorGetter) {
+        this.optionColorGetter = optionColorGetter;
     }
 
     @Override
@@ -76,32 +98,37 @@ public class CourierDropDownMenu<T> extends AbstractWidget {
 
         if (isOpen) {
             int dropdownHeight = maxVisibleOptions * optionHeight;
-            guiGraphics.fill(this.getX(), this.getY() + this.height, this.getX() + this.width, this.getY() + this.height + dropdownHeight, bgFill);
+            guiGraphics.fill(this.getX(), this.getY() + this.height, this.getX() + this.dropdownWidth, this.getY() + this.height + dropdownHeight, bgFill);
 
             guiGraphics.pose().pushPose();
             guiGraphics.pose().translate(0, 0, 500);
             RenderSystem.enableScissor((int) (this.getX() * Minecraft.getInstance().getWindow().getGuiScale()),
                     (int) (Minecraft.getInstance().getWindow().getHeight() - (this.getY() + this.height + dropdownHeight) * Minecraft.getInstance().getWindow().getGuiScale()),
-                    (int) (this.width * Minecraft.getInstance().getWindow().getGuiScale()),
+                    (int) (this.dropdownWidth * Minecraft.getInstance().getWindow().getGuiScale()),
                     (int) (dropdownHeight * Minecraft.getInstance().getWindow().getGuiScale()));
 
             for (int i = 0; i < options.size(); i++) {
                 int optionY = this.getY() + this.height + (i - scrollOffset) * optionHeight;
 
                 if (isMouseOverOption(mouseX, mouseY, optionY)) {
-                    guiGraphics.fill(this.getX(), optionY, this.getX() + this.width, optionY + optionHeight, bgFillHovered);
+                    guiGraphics.fill(this.getX(), optionY, this.getX() + this.dropdownWidth, optionY + optionHeight, bgFillHovered);
                 } else {
-                    guiGraphics.fill(this.getX(), optionY, this.getX() + this.width, optionY + optionHeight, bgFill);
+                    guiGraphics.fill(this.getX(), optionY, this.getX() + this.dropdownWidth, optionY + optionHeight, bgFill);
                 }
 
                 String text = optionTextGetter.apply(options.get(i));
-                guiGraphics.drawCenteredString(Minecraft.getInstance().font, text, this.getX() + this.width / 2, optionY + (optionHeight - 8) / 2, optionTextColor);
+                int color = optionColorGetter != null ? optionColorGetter.apply(options.get(i)) : optionTextColor;
+                if (dropdownWidth > width) {
+                    guiGraphics.drawString(Minecraft.getInstance().font, text, this.getX() + 4, optionY + (optionHeight - 8) / 2, color);
+                } else {
+                    guiGraphics.drawCenteredString(Minecraft.getInstance().font, text, this.getX() + this.width / 2, optionY + (optionHeight - 8) / 2, color);
+                }
             }
 
             RenderSystem.disableScissor();
 
             if (options.size() > maxVisibleOptions) {
-                int scrollbarX = this.getX() + this.width - scrollbarWidth;
+                int scrollbarX = this.getX() + this.dropdownWidth - scrollbarWidth;
                 int scrollbarY = this.getY() + this.height + (int) ((float) scrollOffset / options.size() * dropdownHeight);
                 int scrollbarHeight = (int) ((float) maxVisibleOptions / options.size() * dropdownHeight);
 
@@ -154,7 +181,10 @@ public class CourierDropDownMenu<T> extends AbstractWidget {
                 return;
             }
             for (int i = 0; i < options.size(); i++) {
-                int optionY = this.getY() + this.height + (i - scrollOffset) * optionHeight;
+                int visibleIndex = i - scrollOffset;
+                // Options scrolled out of the list are not drawn, so they must not be clickable either.
+                if (visibleIndex < 0 || visibleIndex >= maxVisibleOptions) continue;
+                int optionY = this.getY() + this.height + visibleIndex * optionHeight;
                 if (isMouseOverOption((int) mouseX, (int) mouseY, optionY)) {
                     selectOption(options.get(i));
                     return;
@@ -211,7 +241,7 @@ public class CourierDropDownMenu<T> extends AbstractWidget {
 
     private boolean isMouseOverScrollbar(int mouseX, int mouseY) {
         if (!isOpen || options.size() <= maxVisibleOptions) return false;
-        int scrollbarX = this.getX() + this.width - scrollbarWidth;
+        int scrollbarX = this.getX() + this.dropdownWidth - scrollbarWidth;
         int scrollbarY = this.getY() + this.height;
         int scrollbarHeight = maxVisibleOptions * optionHeight;
         return mouseX >= scrollbarX && mouseX <= scrollbarX + scrollbarWidth &&
@@ -226,13 +256,13 @@ public class CourierDropDownMenu<T> extends AbstractWidget {
         if (!isOpen) return false;
         int dropdownStartX = this.getX();
         int dropdownStartY = this.getY() + this.height;
-        int dropdownEndX = dropdownStartX + this.width;
+        int dropdownEndX = dropdownStartX + this.dropdownWidth;
         int dropdownEndY = dropdownStartY + maxVisibleOptions * optionHeight;
         return mouseX >= dropdownStartX && mouseX <= dropdownEndX && mouseY >= dropdownStartY && mouseY <= dropdownEndY;
     }
 
     private boolean isMouseOverOption(int mouseX, int mouseY, int optionY) {
-        return mouseX >= this.getX() && mouseX <= this.getX() + this.width && mouseY >= optionY && mouseY <= optionY + optionHeight;
+        return mouseX >= this.getX() && mouseX <= this.getX() + this.dropdownWidth && mouseY >= optionY && mouseY < optionY + optionHeight;
     }
 
     @Override
@@ -251,7 +281,8 @@ public class CourierDropDownMenu<T> extends AbstractWidget {
     }
 
     private String getSelectedText() {
-        return selectedOption != null ? optionTextGetter.apply(selectedOption) : "";
+        if (selectedOption == null) return "";
+        return displayTextGetter != null ? displayTextGetter.apply(selectedOption) : optionTextGetter.apply(selectedOption);
     }
 
     public void setBgFill(int bgFill) { this.bgFill = bgFill; }

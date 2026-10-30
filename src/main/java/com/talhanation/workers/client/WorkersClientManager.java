@@ -6,9 +6,13 @@ import com.talhanation.recruits.world.RecruitsClaimManager;
 import com.talhanation.workers.WorkAreaTypes;
 import com.talhanation.workers.config.BuildMode;
 import com.talhanation.workers.config.BuildPaymentMode;
+import com.talhanation.workers.world.VillagerPriceTable;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import net.minecraft.core.BlockPos;
+import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
 import net.minecraft.world.level.ChunkPos;
@@ -21,6 +25,7 @@ public class WorkersClientManager {
     public static ItemStack currency = new ItemStack(Items.EMERALD);
     public static List<String> serverBuildingPresetNames = new ArrayList<>();
     public static boolean configValueOnlyBuildings;
+    public static Map<Item, VillagerPriceTable.Entry> villagerPrices = new HashMap<>();
     public static boolean isInFactionClaim(BlockPos pos, WorkAreaTypes type){
         if(configValueOnlyBuildings && type != WorkAreaTypes.BUILDING) return false;
 

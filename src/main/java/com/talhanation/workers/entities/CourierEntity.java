@@ -38,6 +38,7 @@ import org.jetbrains.annotations.NotNull;
 
 import javax.annotation.Nullable;
 import java.util.List;
+import java.util.Objects;
 import java.util.function.Predicate;
 
 public class CourierEntity extends AbstractWorkerEntity implements IVillagerWorker {
@@ -49,6 +50,8 @@ public class CourierEntity extends AbstractWorkerEntity implements IVillagerWork
     public boolean useVehicleInventory = false;
     public boolean shouldCycle = false;
     public boolean pendingShouldCycle = false;
+    // Increased whenever the route geometry is replaced; CourierWorkGoal resets its state when it changes.
+    public int routeVersion = 0;
 
     private final Predicate<ItemEntity> ALLOWED_ITEMS =
             item -> !item.hasPickUpDelay() && item.isAlive()
@@ -92,12 +95,35 @@ public class CourierEntity extends AbstractWorkerEntity implements IVillagerWork
         this.currentRoute         = route;
         this.currentWaypointIndex = 0;
         this.returning            = true;
+        this.routeVersion++;
         syncRouteData();
+    }
+
+    /**
+     * Replaces the waypoint actions while keeping the current progress (index and direction).
+     * Only possible when the waypoint positions are unchanged; returns false otherwise.
+     */
+    public boolean updateRouteKeepProgress(CourierRoute route) {
+        if (route == null || !isSameRouteGeometry(route)) return false;
+        this.currentRoute = route;
+        syncRouteData();
+        return true;
+    }
+
+    public boolean isSameRouteGeometry(CourierRoute route) {
+        if (currentRoute == null || route == null) return false;
+        if (!Objects.equals(currentRoute.getRouteId(), route.getRouteId())) return false;
+        if (currentRoute.size() != route.size()) return false;
+        for (int i = 0; i < route.size(); i++) {
+            if (!currentRoute.getWaypoints().get(i).getPosition().equals(route.getWaypoints().get(i).getPosition())) return false;
+        }
+        return true;
     }
 
     public void loadRouteFromNearestWaypoint(CourierRoute route) {
         this.currentRoute         = route;
         this.returning            = true;
+        this.routeVersion++;
 
         if (route != null && !route.isEmpty()) {
             int    nearestIdx = 0;
@@ -122,6 +148,7 @@ public class CourierEntity extends AbstractWorkerEntity implements IVillagerWork
     public void clearRoute() {
         this.currentRoute         = null;
         this.currentWaypointIndex = 0;
+        this.routeVersion++;
         syncRouteData();
     }
 
@@ -313,6 +340,16 @@ public class CourierEntity extends AbstractWorkerEntity implements IVillagerWork
     public Component TEXT_INVENTORY_FULL(String waypointName) {
         return Component.translatable("chat.workers.courier.inventoryFull",
                 this.getName().getString(), waypointName);
+    }
+
+    public Component TEXT_WAYPOINT_UNREACHABLE(String waypointName) {
+        return Component.translatable("chat.workers.courier.waypointUnreachable",
+                this.getName().getString(), waypointName);
+    }
+
+    public Component TEXT_TARGET_AREA_MISSING(String targetName, String waypointName) {
+        return Component.translatable("chat.workers.courier.targetAreaMissing",
+                this.getName().getString(), targetName, waypointName);
     }
 
     @Override

@@ -45,7 +45,7 @@ import java.util.*;
 import java.util.function.Predicate;
 
 /**
- * Work area of the craftsman. Needs at least one crafting table, one furnace and four containers.
+ * Work area of the craftsman. Needs at least one crafting table, one furnace and one container.
  * The area itself is a {@link Container} that links all its containers (used by the courier, hoppers and upkeep),
  * the craftsman still walks to the real chest of a slot.
  */
@@ -58,14 +58,17 @@ public class WorkshopArea extends AbstractWorkAreaEntity implements IPermissionA
     public static final EntityDataAccessor<Integer>     TOTAL_SLOTS     = SynchedEntityData.defineId(WorkshopArea.class, EntityDataSerializers.INT);
     public static final EntityDataAccessor<Integer>     FREE_SLOTS      = SynchedEntityData.defineId(WorkshopArea.class, EntityDataSerializers.INT);
     public static final EntityDataAccessor<CompoundTag> ORDERS          = SynchedEntityData.defineId(WorkshopArea.class, EntityDataSerializers.COMPOUND_TAG);
+    public static final EntityDataAccessor<Boolean>     USE_STORAGE     = SynchedEntityData.defineId(WorkshopArea.class, EntityDataSerializers.BOOLEAN);
 
-    public static final int MIN_CONTAINERS = 4;
+    public static final int MIN_CONTAINERS = 1;
     /** Minimum ticks between two material checks triggered by container changes. */
     public static final int CHECK_COOLDOWN = 40;
     private static final int SCAN_INTERVAL = 200;
     private static final int SYNC_INTERVAL = 10;
     /** Max orders per workshop. */
     public static final int MAX_ORDERS = 16;
+    /** Storage areas within this range are used to fetch missing items and to store finished products. */
+    public static final int STORAGE_RANGE = 64;
 
     public Map<BlockPos, Container>          containerMap = new LinkedHashMap<>();
     public Map<BlockPos, FurnaceBlockEntity> furnaceMap   = new LinkedHashMap<>();
@@ -96,6 +99,7 @@ public class WorkshopArea extends AbstractWorkAreaEntity implements IPermissionA
         this.entityData.define(TOTAL_SLOTS, 0);
         this.entityData.define(FREE_SLOTS, 0);
         this.entityData.define(ORDERS, new CompoundTag());
+        this.entityData.define(USE_STORAGE, true);
     }
 
     @Override
@@ -103,6 +107,7 @@ public class WorkshopArea extends AbstractWorkAreaEntity implements IPermissionA
         super.readAdditionalSaveData(tag);
         this.orders.clear();
         this.orders.addAll(CraftOrder.listFromNbt(tag.getCompound("Orders")));
+        if (tag.contains("useStorage")) this.setUseStorage(tag.getBoolean("useStorage"));
         this.pushOrders();
         setBeingWorkedOn(false);
         this.setCraftsmanName("None");
@@ -112,6 +117,7 @@ public class WorkshopArea extends AbstractWorkAreaEntity implements IPermissionA
     public void addAdditionalSaveData(CompoundTag tag) {
         super.addAdditionalSaveData(tag);
         tag.put("Orders", CraftOrder.listToNbt(this.orders));
+        tag.putBoolean("useStorage", this.getUseStorage());
     }
 
     @Override
@@ -533,6 +539,9 @@ public class WorkshopArea extends AbstractWorkAreaEntity implements IPermissionA
     }
 
     // ── Synced data ───────────────────────────────────────────────────────────
+
+    public boolean getUseStorage()            { return this.entityData.get(USE_STORAGE); }
+    public void setUseStorage(boolean b)      { this.entityData.set(USE_STORAGE, b); }
 
     public String getCraftsmanName()          { return this.entityData.get(CRAFTSMAN_NAME); }
     public void setCraftsmanName(String name) { this.entityData.set(CRAFTSMAN_NAME, name); }
