@@ -78,8 +78,7 @@ public class FishermanEntity extends AbstractWorkerEntity{
     @Override
     public void initSpawn() {
         this.setCustomName(Component.literal("Fisherman"));
-        //this.setCost(WorkersServerConfig.Fisherman.get());
-        this.setCost(10);
+        this.setCost(WorkersServerConfig.FishermanCost.get());
 
         this.setEquipment();
         this.setDropEquipment();

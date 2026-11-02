@@ -81,8 +81,7 @@ public class BuilderEntity extends AbstractWorkerEntity{
     @Override
     public void initSpawn() {
         this.setCustomName(Component.literal("Builder"));
-        //this.setCost(WorkersServerConfig.FarmerCost.get());
-        this.setCost(20);
+        this.setCost(WorkersServerConfig.BuilderCost.get());
 
         this.setEquipment();
         this.setDropEquipment();

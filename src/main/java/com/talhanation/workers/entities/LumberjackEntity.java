@@ -87,8 +87,7 @@ public class LumberjackEntity extends AbstractWorkerEntity{
     @Override
     public void initSpawn() {
         this.setCustomName(Component.literal("Lumberman"));
-        //this.setCost(WorkersServerConfig.FarmerCost.get());
-        this.setCost(10);
+        this.setCost(WorkersServerConfig.LumberjackCost.get());
 
         this.setEquipment();
         this.setDropEquipment();

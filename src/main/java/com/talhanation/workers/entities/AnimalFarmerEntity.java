@@ -79,8 +79,7 @@ public class AnimalFarmerEntity extends AbstractWorkerEntity{
     @Override
     public void initSpawn() {
         this.setCustomName(Component.literal("Animal Farmer"));
-        //this.setCost(WorkersServerConfig.FarmerCost.get());
-        this.setCost(20);
+        this.setCost(WorkersServerConfig.AnimalFarmerCost.get());
 
         this.setEquipment();
         this.setDropEquipment();

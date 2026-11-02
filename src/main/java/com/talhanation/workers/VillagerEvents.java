@@ -116,9 +116,9 @@ public class VillagerEvents {
         RecruitsHireTrade MERCHANT = new RecruitsHireTrade(ModEntityTypes.MERCHANT.getId(), WorkersServerConfig.MerchantCost.get(), TITLE_MERCHANT, DESCRIPTION_MERCHANT);
         RecruitsHireTrade BUILDER = new RecruitsHireTrade(ModEntityTypes.BUILDER.getId(), WorkersServerConfig.BuilderCost.get(), TITLE_BUILDER, DESCRIPTION_BUILDER);
 
-        RecruitsHireTrade FISHERMAN = new RecruitsHireTrade(ModEntityTypes.FISHERMAN.getId(), WorkersServerConfig.BuilderCost.get(), TITLE_FISHERMAN, DESCRIPTION_FISHERMAN);
+        RecruitsHireTrade FISHERMAN = new RecruitsHireTrade(ModEntityTypes.FISHERMAN.getId(), WorkersServerConfig.FishermanCost.get(), TITLE_FISHERMAN, DESCRIPTION_FISHERMAN);
 
-        RecruitsHireTrade ANIMAL_FARMER = new RecruitsHireTrade(ModEntityTypes.ANIMAL_FARMER.getId(), WorkersServerConfig.BuilderCost.get(), TITLE_ANIMAL_FARMER, DESCRIPTION_ANIMAL_FARMER);
+        RecruitsHireTrade ANIMAL_FARMER = new RecruitsHireTrade(ModEntityTypes.ANIMAL_FARMER.getId(), WorkersServerConfig.AnimalFarmerCost.get(), TITLE_ANIMAL_FARMER, DESCRIPTION_ANIMAL_FARMER);
         RecruitsHireTrade COURIER = new RecruitsHireTrade(ModEntityTypes.COURIER.getId(), WorkersServerConfig.CourierCost.get(), TITLE_COURIER, DESCRIPTION_COURIER);
         RecruitsHireTrade COOK    = new RecruitsHireTrade(ModEntityTypes.COOK.getId(), WorkersServerConfig.CookCost.get(), TITLE_COOK, DESCRIPTION_COOK);
         RecruitsHireTrade CRAFTSMAN = new RecruitsHireTrade(ModEntityTypes.CRAFTSMAN.getId(), WorkersServerConfig.CraftsmanCost.get(), TITLE_CRAFTSMAN, DESCRIPTION_CRAFTSMAN);
@@ -130,7 +130,7 @@ public class VillagerEvents {
 
         RecruitsHireTradesRegistry.addTrade("workers2", 1, FARMER, MINER);
         RecruitsHireTradesRegistry.addTrade("workers2", 2, COURIER);
-        RecruitsHireTradesRegistry.addTrade("workers2", 3, MERCHANT, BUILDER);
+        RecruitsHireTradesRegistry.addTrade("workers2", 3, MERCHANT, BUILDER, CRAFTSMAN); //miner village: ores for the craftsman
 
         RecruitsHireTradesRegistry.addTrade("workers3", 1, FARMER, ANIMAL_FARMER);
         RecruitsHireTradesRegistry.addTrade("workers3", 2, COURIER, COOK);

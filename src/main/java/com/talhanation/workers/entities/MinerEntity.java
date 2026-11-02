@@ -82,8 +82,7 @@ public class MinerEntity extends AbstractWorkerEntity{
     @Override
     public void initSpawn() {
         this.setCustomName(Component.literal("Miner"));
-        //this.setCost(WorkersServerConfig.FarmerCost.get());
-        this.setCost(20);
+        this.setCost(WorkersServerConfig.MinerCost.get());
 
         this.setEquipment();
         this.setDropEquipment();

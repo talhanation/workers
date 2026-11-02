@@ -19,6 +19,8 @@ public class WorkersServerConfig {
     public static ForgeConfigSpec.IntValue CourierCost;
     public static ForgeConfigSpec.IntValue CookCost;
     public static ForgeConfigSpec.IntValue CraftsmanCost;
+    public static ForgeConfigSpec.IntValue FishermanCost;
+    public static ForgeConfigSpec.IntValue AnimalFarmerCost;
     public static ForgeConfigSpec.ConfigValue<List<? extends Integer>> CraftsmanMoraleTicks;
     public static ForgeConfigSpec.BooleanValue VillagerBreedMixinEnabled;
     public static ForgeConfigSpec.IntValue VillagerBreedSaturationThreshold;
@@ -327,6 +329,22 @@ public class WorkersServerConfig {
                         \tdefault: 30""")
                 .worldRestart()
                 .defineInRange("CraftsmanCost", 30, 0, 1453);
+
+        FishermanCost = BUILDER.comment("""
+                        
+                        The amount of currency required to hire a fisherman.
+                        \t(takes effect after restart)
+                        \tdefault: 10""")
+                .worldRestart()
+                .defineInRange("FishermanCost", 10, 0, 1453);
+
+        AnimalFarmerCost = BUILDER.comment("""
+                        
+                        The amount of currency required to hire an animal farmer.
+                        \t(takes effect after restart)
+                        \tdefault: 20""")
+                .worldRestart()
+                .defineInRange("AnimalFarmerCost", 20, 0, 1453);
 
         CraftsmanMoraleTicks = BUILDER.comment("""
                         
