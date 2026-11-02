@@ -86,9 +86,23 @@ public class HomeArea extends AbstractWorkAreaEntity implements IPermissionArea 
         }
     }
 
+    public static final int WIDTH_SIZE = 3;
+    public static final int HEIGHT_SIZE = 4;
+    public static final int DEPTH_SIZE = 3;
+
+    // The home starts one block above the floor, so the floor is not part of the room
+    @Override
+    protected BlockPos getAreaStart() {
+        return this.getOnPos().above();
+    }
+
     @Override
     public void readAdditionalSaveData(CompoundTag tag) {
         super.readAdditionalSaveData(tag);
+        // old homes were 3x5x3 including the floor: now 3x4x3 above the floor (same ceiling)
+        if (!tag.contains("aboveFloor") && this.getHeightSize() == 5) {
+            this.setHeightSize(HEIGHT_SIZE);
+        }
         if (tag.contains("residentUUID")) {
             this.residentUUID         = tag.getUUID("residentUUID");
             this.lastResidentSeenTick = tag.getLong("lastResidentSeen");
@@ -121,6 +135,7 @@ public class HomeArea extends AbstractWorkAreaEntity implements IPermissionArea 
             tag.putInt("assignedBedZ", assignedBedPos.getZ());
         }
         tag.putInt("roomQuality", this.entityData.get(ROOM_QUALITY));
+        tag.putBoolean("aboveFloor", true);
     }
 
     @Override

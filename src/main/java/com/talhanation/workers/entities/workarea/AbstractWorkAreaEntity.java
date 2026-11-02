@@ -212,13 +212,18 @@ public abstract class AbstractWorkAreaEntity extends Entity {
         return createArea();
     }
 
+    /** Lowest corner of the area. Default: the block below the entity (the floor is part of the area). */
+    protected BlockPos getAreaStart() {
+        return this.getOnPos();
+    }
+
     public AABB createArea() {
         Direction facing = getFacing();
         int width = getWidthSize() - 1;
         int depth = getDepthSize() - 1;
         int height = getHeightSize();
 
-        BlockPos start = this.getOnPos();
+        BlockPos start = this.getAreaStart();
         BlockPos end;
         switch (facing) {
             case NORTH -> end = start.offset(width, height, -depth);

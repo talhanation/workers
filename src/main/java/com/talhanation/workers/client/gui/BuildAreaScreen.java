@@ -312,6 +312,8 @@ public class BuildAreaScreen extends WorkAreaScreen {
 
                 buildButton = addRenderableWidget(new ExtendedButton(x - buttonWidth / 2, y + 182, buttonWidth, buttonHeight, Component.literal("Build"),
                         btn -> {
+                            // never send an empty structure, it would overwrite the one on the server
+                            if (this.structureNBT == null || this.structureNBT.isEmpty()) return;
                             WorkersMain.SIMPLE_CHANNEL.sendToServer(new MessageUpdateBuildArea(this.buildArea.getUUID(), areaWidthSize, areaHeightSize, areaDepthSize, this.structureNBT, true, false, freeArea));
                         }
                 ));
@@ -319,6 +321,7 @@ public class BuildAreaScreen extends WorkAreaScreen {
                 if (player.isCreative()) {
                     placeButton = addRenderableWidget(new ExtendedButton(x - buttonWidth / 2 + buttonWidth, y + 182, buttonWidth, buttonHeight, Component.literal("Place"),
                             btn -> {
+                                if (this.structureNBT == null || this.structureNBT.isEmpty()) return;
                                 WorkersMain.SIMPLE_CHANNEL.sendToServer(new MessageUpdateBuildArea(this.buildArea.getUUID(), areaWidthSize, areaHeightSize, areaDepthSize, this.structureNBT, true, true, freeArea));
                             }
                     ));
@@ -465,7 +468,8 @@ public class BuildAreaScreen extends WorkAreaScreen {
         }
 
         if (structureOptions != null && structureOptions.isMouseOver(mouseX, mouseY)) {
-            this.resetScan();
+            // no resetScan here: only opening the dropdown would lose the selected file,
+            // applyLoadedNbt replaces it once a new file is picked
             this.structureOptions.onMouseClick(mouseX, mouseY);
             return true;
         }
@@ -513,6 +517,10 @@ public class BuildAreaScreen extends WorkAreaScreen {
 
     @Override
     public void onAreaMoved() {
+        // A loaded file does not depend on the position or facing of the area, keep it.
+        // Only a scan has to be redone, because it scanned the blocks at the old position.
+        if (mode == Mode.LOAD) return;
+
         this.resetScan();
         checkScanButtonActive();
     }
