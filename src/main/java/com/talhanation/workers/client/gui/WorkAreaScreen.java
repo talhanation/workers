@@ -64,10 +64,16 @@ public abstract class WorkAreaScreen extends RecruitsScreenBase {
     }
     public int x;
     public int y;
+
+    /** Y of the move buttons, the owner widget sits 50 above. Screens with more content can move it up. */
+    protected int getLayoutY() {
+        return this.height / 2 - 70;
+    }
+
     public void setButtons(){
         clearWidgets();
         x = this.width / 2;
-        y = this.height / 2 - 70;
+        y = this.getLayoutY();
         int buttonWidth = 80;
         int buttonHeight = 20;
 

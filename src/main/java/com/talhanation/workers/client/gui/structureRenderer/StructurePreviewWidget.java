@@ -29,6 +29,7 @@ import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.material.FluidState;
 import net.minecraft.world.phys.AABB;
 import net.minecraftforge.client.model.data.ModelData;
+import org.lwjgl.opengl.GL11;
 import com.talhanation.workers.entities.workarea.BuildArea;
 
 import java.util.ArrayList;
@@ -80,6 +81,10 @@ public class StructurePreviewWidget extends AbstractWidget {
         renderStructurePreview(guiGraphics.pose(), getX() + getWidth() / 2, getY() + getHeight() / 2, partialTicks);
 
         RenderSystem.disableScissor();
+
+        // The blocks are drawn at z ~1000 with depth test. Clear the depth afterwards, otherwise everything
+        // drawn later at a lower z (tooltips at 400, dropdowns) is hidden behind the preview.
+        RenderSystem.clear(GL11.GL_DEPTH_BUFFER_BIT, Minecraft.ON_OSX);
     }
 
     @SuppressWarnings("unchecked")

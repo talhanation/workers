@@ -3,6 +3,7 @@ package com.talhanation.workers.entities.workarea;
 import com.talhanation.workers.WorkersMain;
 import com.talhanation.workers.entities.AbstractWorkerEntity;
 import com.talhanation.workers.network.MessageToClientOpenWorkAreaScreen;
+import com.talhanation.workers.world.WorkAreaIndex;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
@@ -104,10 +105,41 @@ public abstract class AbstractWorkAreaEntity extends Entity {
     }
 
     public int time;
+    /** Chunk under which this area is listed in the {@link WorkAreaIndex}, server only. */
+    private long indexedChunk;
+    private boolean indexed;
+
     @Override
     public void tick() {
         super.tick();
         if(tickCount % 20 == 0) time++;
+        // areas can be moved by the player: keep the index entry in the right chunk
+        if(indexed){
+            long chunk = this.chunkPosition().toLong();
+            if(chunk != indexedChunk){
+                WorkAreaIndex.move(this, indexedChunk, chunk);
+                indexedChunk = chunk;
+            }
+        }
+    }
+
+    @Override
+    public void onAddedToWorld() {
+        super.onAddedToWorld();
+        if(!this.level().isClientSide()){
+            indexedChunk = this.chunkPosition().toLong();
+            WorkAreaIndex.add(this, indexedChunk);
+            indexed = true;
+        }
+    }
+
+    @Override
+    public void onRemovedFromWorld() {
+        super.onRemovedFromWorld();
+        if(indexed){
+            WorkAreaIndex.remove(this, indexedChunk);
+            indexed = false;
+        }
     }
     @Override
     public @NotNull InteractionResult interact(Player player, @NotNull InteractionHand hand) {

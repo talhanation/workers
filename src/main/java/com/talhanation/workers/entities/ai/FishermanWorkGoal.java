@@ -220,7 +220,7 @@ public class FishermanWorkGoal extends Goal {
     }
 
     public static List<FishingArea> getAvailableWorkAreasByPriority(ServerLevel level, FishermanEntity fisherman, @Nullable FishingArea currentArea) {
-        List<FishingArea> list = level.getEntitiesOfClass(FishingArea.class, fisherman.getBoundingBox().inflate(64));
+        List<FishingArea> list = fisherman.findWorkAreas(FishingArea.class, 64);
 
 
         return list;

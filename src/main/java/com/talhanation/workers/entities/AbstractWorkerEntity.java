@@ -11,6 +11,7 @@ import com.talhanation.recruits.entities.ai.navigation.RecruitsDoorInteractGoal;
 import com.talhanation.workers.entities.workarea.AbstractWorkAreaEntity;
 import com.talhanation.workers.entities.workarea.HomeArea;
 import com.talhanation.workers.world.NeededItem;
+import com.talhanation.workers.world.WorkAreaIndex;
 import net.minecraft.core.BlockPos;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.chat.Component;
@@ -51,6 +52,10 @@ public abstract class AbstractWorkerEntity extends AbstractChunkLoaderEntity {
 
     public static final Set<Block> UNBREAKABLES = ImmutableSet.of(Blocks.BEDROCK, Blocks.BARRIER);
     @Nullable public UUID homeAreaUUID = null;
+    /** Claim of the Governor this worker belongs to, null = a normal worker of his owner. */
+    @Nullable private UUID governorClaim = null;
+    /** Work area the worker must use (set by the Governor), null = he picks one nearby himself. */
+    @Nullable private UUID assignedWorkArea = null;
     private boolean moraleNightChecked = false;
 
     /** Set by WorkerClaimEvents when a siege is won — makes WorkerFleeGoal active. */
@@ -248,6 +253,8 @@ public abstract class AbstractWorkerEntity extends AbstractChunkLoaderEntity {
         nbt.putInt("farmedItems", farmedItems);
         if(lastStorage != null) nbt.putUUID("lastStorage", lastStorage);
         if(homeAreaUUID != null) nbt.putUUID("homeAreaUUID", homeAreaUUID);
+        if(governorClaim != null) nbt.putUUID("governorClaim", governorClaim);
+        if(assignedWorkArea != null) nbt.putUUID("assignedWorkArea", assignedWorkArea);
     }
 
     public void readAdditionalSaveData(@NotNull CompoundTag nbt) {
@@ -256,6 +263,50 @@ public abstract class AbstractWorkerEntity extends AbstractChunkLoaderEntity {
         this.farmedItems = nbt.getInt("farmedItems");
         if(nbt.contains("lastStorage")) this.lastStorage = nbt.getUUID("lastStorage");
         if(nbt.contains("homeAreaUUID")) this.homeAreaUUID = nbt.getUUID("homeAreaUUID");
+        this.governorClaim = nbt.hasUUID("governorClaim") ? nbt.getUUID("governorClaim") : null;
+        this.assignedWorkArea = nbt.hasUUID("assignedWorkArea") ? nbt.getUUID("assignedWorkArea") : null;
+    }
+
+    // ── Governor API ──────────────────────────────────────────────────────────
+
+    @Nullable
+    public UUID getGovernorClaim() {
+        return governorClaim;
+    }
+
+    /** Marks the worker as one of the Governor's workers of this claim, null releases him. */
+    public void setGovernorClaim(@Nullable UUID claim) {
+        this.governorClaim = claim;
+        if (claim == null) this.assignedWorkArea = null;
+    }
+
+    @Nullable
+    public UUID getAssignedWorkArea() {
+        return assignedWorkArea;
+    }
+
+    /** The worker only uses this work area (any distance, as long as it is loaded). Null = he picks one himself. */
+    public void setAssignedWorkArea(@Nullable UUID workArea) {
+        this.assignedWorkArea = workArea;
+    }
+
+    /**
+     * Work areas this worker may choose from: only the assigned one if it is loaded and of the right type,
+     * otherwise all of the type within the range. Uses the {@link WorkAreaIndex}, no entity box search.
+     * The work goals still check {@code canWorkHere} and their own conditions.
+     */
+    public <T extends AbstractWorkAreaEntity> List<T> findWorkAreas(Class<T> type, int range) {
+        if (!(this.getCommandSenderWorld() instanceof ServerLevel serverLevel)) return new ArrayList<>();
+        WorkAreaIndex index = WorkAreaIndex.get(serverLevel);
+        if (assignedWorkArea != null) {
+            T assigned = index.get(assignedWorkArea, type);
+            if (assigned != null) {
+                List<T> list = new ArrayList<>(1);
+                list.add(assigned);
+                return list;
+            }
+        }
+        return index.inRange(type, this.blockPosition(), range);
     }
 
     @OnlyIn(Dist.CLIENT)

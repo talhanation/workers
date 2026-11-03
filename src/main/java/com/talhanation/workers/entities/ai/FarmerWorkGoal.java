@@ -580,7 +580,7 @@ public class FarmerWorkGoal extends Goal {
     }
 
     public static List<CropArea> getAvailableWorkAreasByPriority(ServerLevel level, FarmerEntity farmer, @Nullable CropArea currentArea) {
-        List<CropArea> list = level.getEntitiesOfClass(CropArea.class, farmer.getBoundingBox().inflate(64));
+        List<CropArea> list = farmer.findWorkAreas(CropArea.class, 64);
 
         Map<CropArea, Integer> priorityMap = new HashMap<>();
 

@@ -104,6 +104,7 @@ public class WorkersMain {
         MinecraftForge.EVENT_BUS.register(this);
         MinecraftForge.EVENT_BUS.register(new UpdateChecker());
         MinecraftForge.EVENT_BUS.register(new WorkersRemoteTravel.Events());
+        MinecraftForge.EVENT_BUS.register(new com.talhanation.workers.world.template.TemplateEvents());
 
         SIMPLE_CHANNEL = CommonRegistry.registerChannel(WorkersMain.MOD_ID, "default");
 
@@ -149,7 +150,8 @@ public class WorkersMain {
                 MessageToClientMerchantMemory.class,
                 MessageUpdateMerchantMemory.class,
                 MessageSetGhostItem.class,
-                MessageSetWorkshopRecipe.class
+                MessageSetWorkshopRecipe.class,
+                MessageUpdateBuildAreaFoundation.class
         };
         for (int i = 0; i < messages.length; i++) CommonRegistry.registerMessage(SIMPLE_CHANNEL, i, messages[i]);
     }

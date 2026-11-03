@@ -1,12 +1,16 @@
 package com.talhanation.workers.entities.workarea;
 
+import com.talhanation.workers.BuildEvent;
 import com.talhanation.workers.WorkersMain;
 import com.talhanation.workers.client.gui.BuildAreaScreen;
+import com.talhanation.workers.entities.BuilderEntity;
 import com.talhanation.workers.entities.workarea.AbstractWorkAreaEntity;
 import com.talhanation.workers.network.MessageToClientOpenWorkAreaScreen;
 import com.talhanation.workers.world.BuildBlock;
 import com.talhanation.workers.world.BuildBlockParse;
 import com.talhanation.workers.world.BuildingPrice;
+import com.talhanation.workers.world.Foundation;
+import com.talhanation.workers.config.WorkersServerConfig;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
@@ -14,6 +18,7 @@ import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.ListTag;
 import net.minecraft.nbt.NbtUtils;
+import net.minecraft.nbt.StringTag;
 import net.minecraft.nbt.Tag;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.syncher.EntityDataAccessor;
@@ -36,6 +41,7 @@ import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.block.state.properties.*;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
+import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.network.PacketDistributor;
 
 import javax.annotation.Nullable;
@@ -43,14 +49,33 @@ import java.util.*;
 
 public class BuildArea extends AbstractWorkAreaEntity {
     public static final EntityDataAccessor<CompoundTag> STRUCTURE = SynchedEntityData.defineId(BuildArea.class, EntityDataSerializers.COMPOUND_TAG);
-    public static final EntityDataAccessor<Boolean> FREE_AREA = SynchedEntityData.defineId(BuildArea.class, EntityDataSerializers.BOOLEAN);
     public static final EntityDataAccessor<Boolean> ALWAYS_SHOW_PROJECTION = SynchedEntityData.defineId(BuildArea.class, EntityDataSerializers.BOOLEAN);
     /** Currency price of the full blueprint for the GUI (CURRENCY payment mode). -1 = contains blocked materials. */
     public static final EntityDataAccessor<Integer> CURRENCY_PRICE = SynchedEntityData.defineId(BuildArea.class, EntityDataSerializers.INT);
-    /** Server-side flag: true once the FREE_AREA step has been completed for the current build. */
+    /** Foundation mode: level the ground of the footprint (cut above, fill below), see {@link Foundation}. */
+    public static final EntityDataAccessor<Boolean> FOUNDATION = SynchedEntityData.defineId(BuildArea.class, EntityDataSerializers.BOOLEAN);
+    /** Fill block for the foundation. Empty = picked from the ground of each column. */
+    public static final EntityDataAccessor<ItemStack> FILL_ITEM = SynchedEntityData.defineId(BuildArea.class, EntityDataSerializers.ITEM_STACK);
+    /** Status of the build for the GUI and the Governor, see {@link BuildStatus}. Not saved: a build starts again after loading. */
+    public static final EntityDataAccessor<Integer> BUILD_STATUS = SynchedEntityData.defineId(BuildArea.class, EntityDataSerializers.INT);
+    public static final EntityDataAccessor<String> BUILDER_NAME = SynchedEntityData.defineId(BuildArea.class, EntityDataSerializers.STRING);
+    public static final EntityDataAccessor<Integer> BLOCKS_PLACED = SynchedEntityData.defineId(BuildArea.class, EntityDataSerializers.INT);
+    public static final EntityDataAccessor<Integer> BLOCKS_TOTAL = SynchedEntityData.defineId(BuildArea.class, EntityDataSerializers.INT);
+    /** Item ids the builder waits for (WAITING_FOR_MATERIALS). */
+    public static final EntityDataAccessor<CompoundTag> MISSING_MATERIALS = SynchedEntityData.defineId(BuildArea.class, EntityDataSerializers.COMPOUND_TAG);
+    private static final int BUILDER_CHECK_INTERVAL = 100;
+    /** Server-side: the builder working on this area, null = none. */
+    @Nullable
+    private UUID builderUUID;
+    /** Server-side flag: true once the clearing step (cut of the foundation) has been completed for the current build. */
     public boolean freeAreaDone;
     /** Server-side flag: the current build was paid with currency, the builder needs no materials. */
     public boolean paidWithCurrency;
+    /** Server-side: spawn the work areas of the template when the build is done. The Governor turns it off for villager houses. */
+    public boolean spawnWorkAreas = true;
+    /** Server-side: set by the Governor, the claim this building belongs to (null = built by a player). */
+    @Nullable
+    public UUID governorClaim;
     /** stackToPlace is not saved: a paid build is continued once after loading, without charging again. */
     private boolean restorePaidBuild;
     public Stack<BlockPos> stackToBreak = new Stack<>();
@@ -67,30 +92,42 @@ public class BuildArea extends AbstractWorkAreaEntity {
     protected void defineSynchedData() {
         super.defineSynchedData();
         this.entityData.define(STRUCTURE, new CompoundTag());
-        this.entityData.define(FREE_AREA, false);
         this.entityData.define(ALWAYS_SHOW_PROJECTION, false);
         this.entityData.define(CURRENCY_PRICE, 0);
+        this.entityData.define(FOUNDATION, false);
+        this.entityData.define(FILL_ITEM, ItemStack.EMPTY);
+        this.entityData.define(BUILD_STATUS, BuildStatus.NONE.ordinal());
+        this.entityData.define(BUILDER_NAME, "");
+        this.entityData.define(BLOCKS_PLACED, 0);
+        this.entityData.define(BLOCKS_TOTAL, 0);
+        this.entityData.define(MISSING_MATERIALS, new CompoundTag());
     }
     @Override
     public void readAdditionalSaveData(CompoundTag tag) {
         super.readAdditionalSaveData(tag);
         this.setStructureNBT(tag.getCompound("structureNBT"));
-        this.setFreeArea(tag.getBoolean("freeArea"));
         this.freeAreaDone = tag.getBoolean("freeAreaDone");
         this.setAlwaysShowProjection(tag.getBoolean("alwaysShowProjection"));
         this.setCurrencyPrice(tag.getInt("currencyPrice"));
         this.paidWithCurrency = tag.getBoolean("paidWithCurrency");
         this.restorePaidBuild = this.paidWithCurrency;
+        this.setFoundation(tag.getBoolean("foundation"));
+        this.spawnWorkAreas = !tag.contains("spawnWorkAreas") || tag.getBoolean("spawnWorkAreas");
+        this.governorClaim = tag.hasUUID("governorClaim") ? tag.getUUID("governorClaim") : null;
+        this.setFillItem(tag.contains("fillItem") ? ItemStack.of(tag.getCompound("fillItem")) : ItemStack.EMPTY);
     }
     @Override
     public void addAdditionalSaveData(CompoundTag tag) {
         super.addAdditionalSaveData(tag);
         tag.put("structureNBT", this.getStructureNBT());
-        tag.putBoolean("freeArea", this.getFreeArea());
         tag.putBoolean("freeAreaDone", this.freeAreaDone);
         tag.putBoolean("alwaysShowProjection", this.getAlwaysShowProjection());
         tag.putInt("currencyPrice", this.getCurrencyPrice());
         tag.putBoolean("paidWithCurrency", this.paidWithCurrency);
+        tag.putBoolean("foundation", this.getFoundation());
+        tag.putBoolean("spawnWorkAreas", this.spawnWorkAreas);
+        if (this.governorClaim != null) tag.putUUID("governorClaim", this.governorClaim);
+        if (!this.getFillItem().isEmpty()) tag.put("fillItem", this.getFillItem().save(new CompoundTag()));
     }
 
     public int getCurrencyPrice() {
@@ -131,6 +168,7 @@ public class BuildArea extends AbstractWorkAreaEntity {
     @Override
     public void tick() {
         super.tick();
+        if(!this.getCommandSenderWorld().isClientSide() && this.tickCount % BUILDER_CHECK_INTERVAL == 0) this.checkBuilder();
         if(isDone()) this.remove(RemovalReason.DISCARDED);
         else if(restorePaidBuild && !this.getCommandSenderWorld().isClientSide() && this.tickCount > 20){
             restorePaidBuild = false;
@@ -166,6 +204,8 @@ public class BuildArea extends AbstractWorkAreaEntity {
         Direction right = facing.getClockWise();
         int rotationSteps = (4 + facing.get2DDataValue() - scanFacing.get2DDataValue()) % 4;
 
+        if (this.getFoundation()) this.startFoundation(isCreative);
+
         for (Tag t : blockList) {
             CompoundTag blockTag = (CompoundTag) t;
 
@@ -197,8 +237,19 @@ public class BuildArea extends AbstractWorkAreaEntity {
         }
 
         // For creative (Place), spawn entities immediately after all blocks are placed
-        if (isCreative) {
+        if (isCreative && this.spawnWorkAreas) {
             spawnScannedEntities(tag, scanFacing, facing, origin, width);
+        }
+
+        // status: a builder can start now (Place in creative is already done)
+        this.entityData.set(BLOCKS_TOTAL, stackToPlace.size() + stackToPlaceMultiBlock.size());
+        this.updateProgress();
+        if (isCreative || (stackToPlace.isEmpty() && stackToPlaceMultiBlock.isEmpty())) {
+            this.setBuildStatus(BuildStatus.NONE);
+        }
+        else {
+            if (!this.getBuildStatus().isWorking()) this.setBuildStatus(BuildStatus.WAITING_FOR_BUILDER);
+            if (!this.getCommandSenderWorld().isClientSide()) MinecraftForge.EVENT_BUS.post(new BuildEvent.Started(this));
         }
     }
 
@@ -315,24 +366,95 @@ public class BuildArea extends AbstractWorkAreaEntity {
         Level level = this.getCommandSenderWorld();
 
         java.util.List<BlockPos> found = new java.util.ArrayList<>();
-        BlockPos.betweenClosedStream(getArea()).forEach(pos -> {
-            BlockState levelState = level.getBlockState(pos);
-            if (!levelState.isAir()) {
-                found.add(pos.immutable());
-            }
-        });
+        if (this.getFoundation()) {
+            // the cut of the foundation, it also reaches above the area (hills)
+            found.addAll(Foundation.computeCut(level, collectStructureStates(), WorkersServerConfig.FoundationMaxCutHeight.get()));
+        }
 
         // Sort ascending by Y, then push — stack pops highest Y first → top-down mining.
         found.sort(java.util.Comparator.comparingInt(BlockPos::getY));
         for (BlockPos p : found) stackToFree.push(p);
     }
 
-    public boolean getFreeArea() {
-        return this.entityData.get(FREE_AREA);
+    /** True if the builder has to clear something before building: the cut of the foundation. */
+    public boolean needsClearing() {
+        return this.getFoundation();
     }
 
-    public void setFreeArea(boolean freeArea) {
-        this.entityData.set(FREE_AREA, freeArea);
+    public boolean getFoundation() {
+        return this.entityData.get(FOUNDATION);
+    }
+
+    public void setFoundation(boolean foundation) {
+        this.entityData.set(FOUNDATION, foundation);
+    }
+
+    public ItemStack getFillItem() {
+        return this.entityData.get(FILL_ITEM);
+    }
+
+    /** Fill block for the foundation, an empty stack (or no block item) means: chosen from the ground. */
+    public void setFillItem(ItemStack stack) {
+        this.entityData.set(FILL_ITEM, stack == null ? ItemStack.EMPTY : stack.copyWithCount(1));
+    }
+
+    @Nullable
+    private BlockState getFillOverride() {
+        ItemStack stack = this.getFillItem();
+        if (!stack.isEmpty() && stack.getItem() instanceof BlockItem blockItem) return blockItem.getBlock().defaultBlockState();
+        return null;
+    }
+
+    /**
+     * Foundation at build start. Creative: cut and fill right away.
+     * Builder: the fill goes into stackToPlace (lowest level first, so before the building),
+     * the cut is done in the free area step ({@link #scanFreeArea()}).
+     */
+    private void startFoundation(boolean isCreative) {
+        Level level = this.getCommandSenderWorld();
+        Map<BlockPos, BlockState> structure = collectStructureStates();
+        if (structure.isEmpty()) return;
+
+        if (isCreative) {
+            for (BlockPos pos : Foundation.computeCut(level, structure, WorkersServerConfig.FoundationMaxCutHeight.get())) {
+                level.setBlock(pos, Blocks.AIR.defaultBlockState(), 3);
+            }
+        }
+
+        for (BuildBlock fill : Foundation.computeFill(level, structure, getFillOverride(), WorkersServerConfig.FoundationMaxFillDepth.get())) {
+            if (isCreative) {
+                level.setBlock(fill.getPos(), fill.getState(), 3);
+            }
+            else if (!statesMatch(level.getBlockState(fill.getPos()), fill.getState())) {
+                this.stackToPlace.push(fill);
+            }
+        }
+    }
+
+    /** World position -> rotated state of every block of the structure, same placement as {@link #setStartBuild}. */
+    public Map<BlockPos, BlockState> collectStructureStates() {
+        Map<BlockPos, BlockState> map = new HashMap<>();
+        CompoundTag tag = getStructureNBT();
+        if (tag == null || !tag.contains("blocks", Tag.TAG_LIST)) return map;
+
+        int width = tag.getInt("width");
+        Direction scanFacing = Direction.byName(tag.getString("facing"));
+        if (scanFacing == null) scanFacing = Direction.SOUTH;
+        BlockPos origin = this.getOriginPos();
+        Direction facing = this.getFacing();
+        Direction right = facing.getClockWise();
+        int rotationSteps = (4 + facing.get2DDataValue() - scanFacing.get2DDataValue()) % 4;
+
+        for (Tag t : tag.getList("blocks", Tag.TAG_COMPOUND)) {
+            CompoundTag blockTag = (CompoundTag) t;
+            BlockPos worldPos = origin
+                    .relative(facing, blockTag.getInt("z"))
+                    .relative(right, width - 1 - blockTag.getInt("x"))
+                    .above(blockTag.getInt("y"));
+            BlockState state = NbtUtils.readBlockState(BuiltInRegistries.BLOCK.asLookup(), blockTag.getCompound("state"));
+            map.put(worldPos, rotateBlockState(state, rotationSteps));
+        }
+        return map;
     }
 
     public boolean getAlwaysShowProjection() {
@@ -346,12 +468,20 @@ public class BuildArea extends AbstractWorkAreaEntity {
     public static boolean canDirectlyReplace(BlockState levelState, BlockState buildingState) {
         if (levelState.isAir()) return true;
         if (buildingState.is(Blocks.DIRT_PATH)) {
-            return levelState.is(Blocks.GRASS_BLOCK)
-                    || levelState.is(Blocks.DIRT)
-                    || levelState.is(Blocks.FARMLAND)
-                    || levelState.is(Blocks.COARSE_DIRT);
+            return isPathGround(levelState);
         }
         return false;
+    }
+
+    /** Ground a shovel turns into dirt path (like a player does it). */
+    public static boolean isPathGround(BlockState state) {
+        return state.is(Blocks.GRASS_BLOCK)
+                || state.is(Blocks.DIRT)
+                || state.is(Blocks.COARSE_DIRT)
+                || state.is(Blocks.ROOTED_DIRT)
+                || state.is(Blocks.PODZOL)
+                || state.is(Blocks.MYCELIUM)
+                || state.is(Blocks.FARMLAND);
     }
 
     public boolean statesMatch(BlockState levelState, BlockState buildingState) {
@@ -424,6 +554,9 @@ public class BuildArea extends AbstractWorkAreaEntity {
         if (remainingMaterials == null) {
             remainingMaterials = new HashMap<>();
             for (BuildBlock buildBlock : stackToPlace) {
+                // dirt path on grass/dirt is only flattened with a shovel, no dirt needed
+                if (buildBlock.getState().is(Blocks.DIRT_PATH) && isPathGround(this.getCommandSenderWorld().getBlockState(buildBlock.getPos()))) continue;
+
                 Item item = BuildBlockParse.parseBlock(buildBlock.getState().getBlock(), this.getCommandSenderWorld()).getItem();
                 if (item instanceof BlockItem) {
                     remainingMaterials.merge(item, 1, Integer::sum);
@@ -463,6 +596,10 @@ public class BuildArea extends AbstractWorkAreaEntity {
         stackToPlaceMultiBlock.clear();
         this.remainingMaterials = null;
         this.paidWithCurrency = false;
+        this.entityData.set(BLOCKS_TOTAL, 0);
+        this.updateProgress();
+        this.setBuilder(null);
+        this.setBuildStatus(BuildStatus.NONE);
     }
 
     @Nullable
@@ -490,28 +627,193 @@ public class BuildArea extends AbstractWorkAreaEntity {
         return null;
     }
 
+    /** Second part of the block at primaryPos that is still to place: upper door half above, bed head in front of the foot. */
     @Nullable
     public BlockState findPairedMultiBlockState(BlockPos primaryPos) {
-        BlockPos above = primaryPos.above();
-        return getStateFromMultiBlockPos(above);
+        BlockPos paired = findPairedMultiBlockPos(primaryPos);
+        return paired == null ? null : getStateFromMultiBlockPos(paired);
     }
 
     @Nullable
     public BlockPos findPairedMultiBlockPos(BlockPos primaryPos) {
-        BlockPos above = primaryPos.above();
+        BlockPos paired = getSecondaryPos(primaryPos, getStateFromPos(primaryPos));
         for (BuildBlock bb : stackToPlaceMultiBlock) {
-            if (bb.getPos().equals(above)) return above;
+            if (bb.getPos().equals(paired)) return paired;
         }
         return null;
+    }
+
+    /** Where the secondary part of a multi-block lies: the bed head in facing direction of the foot, otherwise above. */
+    private static BlockPos getSecondaryPos(BlockPos primaryPos, @Nullable BlockState primary) {
+        if (primary != null && primary.hasProperty(BlockStateProperties.BED_PART) && primary.hasProperty(BlockStateProperties.HORIZONTAL_FACING)) {
+            return primaryPos.relative(primary.getValue(BlockStateProperties.HORIZONTAL_FACING));
+        }
+        return primaryPos.above();
+    }
+
+    /**
+     * The primary part (bed foot, lower door half) that belongs to a secondary part, or null if the block
+     * is no multi-block. Used to check that a secondary part is never placed alone.
+     */
+    @Nullable
+    public static BuildBlock getPrimaryFor(BlockPos secondaryPos, BlockState secondary) {
+        if (secondary.hasProperty(BlockStateProperties.BED_PART) && secondary.hasProperty(BlockStateProperties.HORIZONTAL_FACING)) {
+            Direction facing = secondary.getValue(BlockStateProperties.HORIZONTAL_FACING);
+            return new BuildBlock(secondaryPos.relative(facing.getOpposite()), secondary.setValue(BlockStateProperties.BED_PART, BedPart.FOOT));
+        }
+        if (secondary.hasProperty(BlockStateProperties.DOUBLE_BLOCK_HALF)) {
+            return new BuildBlock(secondaryPos.below(), secondary.setValue(BlockStateProperties.DOUBLE_BLOCK_HALF, DoubleBlockHalf.LOWER));
+        }
+        return null;
+    }
+
+    /** Puts a block back on the list, e.g. the half of a bed or door a player has broken. */
+    public void addBuildBlockToPlace(BuildBlock buildBlock) {
+        removeBuildBlockToPlace(buildBlock.getPos());
+        stackToPlace.push(buildBlock);
+        this.remainingMaterials = null;
+        this.updateProgress();
     }
 
     public void removeBuildBlockToPlace(BlockPos blockPos) {
         if (stackToPlace.removeIf(buildBlock -> buildBlock.getPos().equals(blockPos))) {
             this.remainingMaterials = null;
+            this.updateProgress();
         }
     }
 
     public void removeMultiBlockToPlace(BlockPos blockPos) {
-        stackToPlaceMultiBlock.removeIf(buildBlock -> buildBlock.getPos().equals(blockPos));
+        if (stackToPlaceMultiBlock.removeIf(buildBlock -> buildBlock.getPos().equals(blockPos))) {
+            this.updateProgress();
+        }
+    }
+
+    // ── Build status (GUI and Governor) ───────────────────────────────────────
+
+    public BuildStatus getBuildStatus() {
+        return BuildStatus.fromIndex(this.entityData.get(BUILD_STATUS));
+    }
+
+    /** Server: changes the status and fires {@link BuildEvent.StatusChanged}. Missing materials only stay while waiting for them. */
+    public void setBuildStatus(BuildStatus status) {
+        if (status != BuildStatus.WAITING_FOR_MATERIALS) this.setMissingMaterials(List.of());
+
+        BuildStatus old = this.getBuildStatus();
+        if (old == status) return;
+        this.entityData.set(BUILD_STATUS, status.ordinal());
+        if (!this.getCommandSenderWorld().isClientSide()) MinecraftForge.EVENT_BUS.post(new BuildEvent.StatusChanged(this, old, status));
+    }
+
+    /** Server: the builder that works on this area, null = none. */
+    @Nullable
+    public UUID getBuilderUUID() {
+        return this.builderUUID;
+    }
+
+    /** Name of the builder for the GUI, empty = none. */
+    public String getBuilderName() {
+        return this.entityData.get(BUILDER_NAME);
+    }
+
+    public void setBuilder(@Nullable BuilderEntity builder) {
+        this.builderUUID = builder != null ? builder.getUUID() : null;
+        this.entityData.set(BUILDER_NAME, builder != null ? builder.getName().getString() : "");
+    }
+
+    /** Blocks placed of the current build (doors and beds count each half). */
+    public int getPlacedBlocks() {
+        return this.entityData.get(BLOCKS_PLACED);
+    }
+
+    public int getTotalBlocks() {
+        return this.entityData.get(BLOCKS_TOTAL);
+    }
+
+    /** 0 to 1. */
+    public float getProgress() {
+        int total = this.getTotalBlocks();
+        return total <= 0 ? 0F : (float) this.getPlacedBlocks() / total;
+    }
+
+    private void updateProgress() {
+        int remaining = stackToPlace.size() + stackToPlaceMultiBlock.size();
+        int total = Math.max(this.getTotalBlocks(), remaining);
+        this.entityData.set(BLOCKS_TOTAL, total);
+        this.entityData.set(BLOCKS_PLACED, total - remaining);
+    }
+
+    /** Materials the builder waits for, only filled while the status is WAITING_FOR_MATERIALS. */
+    public List<ItemStack> getMissingMaterials() {
+        List<ItemStack> items = new ArrayList<>();
+        ListTag list = this.entityData.get(MISSING_MATERIALS).getList("items", Tag.TAG_STRING);
+        for (int i = 0; i < list.size(); i++) {
+            Item item = ForgeRegistries.ITEMS.getValue(new ResourceLocation(list.getString(i)));
+            if (item != null && item != Items.AIR) items.add(new ItemStack(item));
+        }
+        return items;
+    }
+
+    public void setMissingMaterials(Collection<Item> items) {
+        ListTag list = new ListTag();
+        for (Item item : items) {
+            ResourceLocation id = ForgeRegistries.ITEMS.getKey(item);
+            if (id != null) list.add(StringTag.valueOf(id.toString()));
+        }
+        CompoundTag tag = new CompoundTag();
+        tag.put("items", list);
+        if (!tag.equals(this.entityData.get(MISSING_MATERIALS))) this.entityData.set(MISSING_MATERIALS, tag);
+    }
+
+    /** The builder died, left for another area or is unloaded: the build waits for a builder again. */
+    private void checkBuilder() {
+        if (this.builderUUID == null || !this.getBuildStatus().isWorking()) return;
+        if (!(this.getCommandSenderWorld() instanceof ServerLevel serverLevel)) return;
+
+        Entity entity = serverLevel.getEntity(this.builderUUID);
+        if (entity instanceof BuilderEntity builder && builder.isAlive() && builder.currentBuildArea == this) return;
+
+        this.setBuilder(null);
+        boolean started = !stackToPlace.isEmpty() || !stackToPlaceMultiBlock.isEmpty();
+        this.setBuildStatus(started ? BuildStatus.WAITING_FOR_BUILDER : BuildStatus.NONE);
+    }
+
+    public enum BuildStatus {
+        /** No build started (no structure loaded or Build not pressed). */
+        NONE("Not started", 0xAAAAAA),
+        /** Started, but no builder works on it (none free, or he died / left). */
+        WAITING_FOR_BUILDER("Waiting for a builder", 0xFFAA00),
+        /** The builder clears the ground (cut of the foundation). */
+        CLEARING("Clearing the ground", 0xFFFF55),
+        /** The builder places blocks (or fetches materials for them). */
+        BUILDING("Building", 0x55FF55),
+        /** The builder can not go on, see {@link #getMissingMaterials()}. */
+        WAITING_FOR_MATERIALS("Waiting for materials", 0xFF5555),
+        /** All blocks are placed, the area is removed right after. */
+        DONE("Done", 0x55FF55);
+
+        private final String fallbackName;
+        private final int color;
+
+        BuildStatus(String fallbackName, int color) {
+            this.fallbackName = fallbackName;
+            this.color = color;
+        }
+
+        /** A builder is assigned and busy with the build. */
+        public boolean isWorking() {
+            return this == CLEARING || this == BUILDING || this == WAITING_FOR_MATERIALS;
+        }
+
+        public Component getDisplayName() {
+            return Component.translatableWithFallback("gui.workers.buildStatus." + this.name().toLowerCase(Locale.ROOT), this.fallbackName);
+        }
+
+        public int getColor() {
+            return this.color;
+        }
+
+        public static BuildStatus fromIndex(int index) {
+            return index >= 0 && index < values().length ? values()[index] : NONE;
+        }
     }
 }

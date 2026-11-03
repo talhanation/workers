@@ -29,6 +29,7 @@ import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.ChestBlock;
 import net.minecraft.world.level.block.CraftingTableBlock;
 import net.minecraft.world.level.block.entity.AbstractFurnaceBlockEntity;
+import net.minecraft.world.level.block.entity.BlastFurnaceBlockEntity;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.entity.BrewingStandBlockEntity;
 import net.minecraft.world.level.block.entity.FurnaceBlockEntity;
@@ -46,6 +47,7 @@ import java.util.function.Predicate;
 
 /**
  * Work area of the craftsman. Needs at least one crafting table, one furnace and one container.
+ * Blast furnaces are optional: the craftsman uses them for smelting orders that have a blasting recipe.
  * The area itself is a {@link Container} that links all its containers (used by the courier, hoppers and upkeep),
  * the craftsman still walks to the real chest of a slot.
  */
@@ -72,6 +74,7 @@ public class WorkshopArea extends AbstractWorkAreaEntity implements IPermissionA
 
     public Map<BlockPos, Container>          containerMap = new LinkedHashMap<>();
     public Map<BlockPos, FurnaceBlockEntity> furnaceMap   = new LinkedHashMap<>();
+    public Map<BlockPos, BlastFurnaceBlockEntity> blastFurnaceMap = new LinkedHashMap<>();
     @Nullable public BlockPos craftingTablePos;
 
     // aggregate slot index -> container position + local slot
@@ -149,6 +152,7 @@ public class WorkshopArea extends AbstractWorkAreaEntity implements IPermissionA
         Level level = this.getCommandSenderWorld();
         containerMap.clear();
         furnaceMap.clear();
+        blastFurnaceMap.clear();
         craftingTablePos = null;
 
         BlockPos.betweenClosedStream(area).forEach(pos -> {
@@ -160,6 +164,9 @@ public class WorkshopArea extends AbstractWorkAreaEntity implements IPermissionA
             }
             else if (be instanceof FurnaceBlockEntity furnace && !furnace.isRemoved()) {
                 furnaceMap.put(pos.immutable(), furnace);
+            }
+            else if (be instanceof BlastFurnaceBlockEntity blastFurnace && !blastFurnace.isRemoved()) {
+                blastFurnaceMap.put(pos.immutable(), blastFurnace);
             }
             else if (be instanceof AbstractFurnaceBlockEntity || be instanceof HopperBlockEntity || be instanceof BrewingStandBlockEntity) {
                 // not a storage container
@@ -210,9 +217,17 @@ public class WorkshopArea extends AbstractWorkAreaEntity implements IPermissionA
         return craftingTablePos != null && !furnaceMap.isEmpty() && containerMap.size() >= MIN_CONTAINERS;
     }
 
+    /** Furnaces and blast furnaces of the workshop, furnaces first. */
+    public Map<BlockPos, AbstractFurnaceBlockEntity> getAllFurnaces() {
+        Map<BlockPos, AbstractFurnaceBlockEntity> all = new LinkedHashMap<>(furnaceMap);
+        all.putAll(blastFurnaceMap);
+        return all;
+    }
+
     /** Removes stale entries whose BlockEntity has been removed from the world. */
     public void pruneRemoved() {
         furnaceMap.values().removeIf(AbstractFurnaceBlockEntity::isRemoved);
+        blastFurnaceMap.values().removeIf(AbstractFurnaceBlockEntity::isRemoved);
         boolean dirty = containerMap.entrySet().removeIf(e -> e.getValue() instanceof BlockEntity be && be.isRemoved());
         if (dirty) rebuildSlotMap();
     }

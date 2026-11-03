@@ -5,6 +5,7 @@ import net.minecraft.nbt.ListTag;
 import net.minecraft.nbt.Tag;
 import net.minecraft.world.item.ItemStack;
 
+import javax.annotation.Nullable;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
@@ -31,7 +32,12 @@ public class WorkersMerchantTrade {
      * Villager sell: sell only while market and storages hold more. Villager buy: buy only until market and storages hold this amount.
      */
     public int storageAmount;
+    /** Who made the trade. Governor trades are managed by the Governor, players can only switch them on and off. */
+    public Source source = Source.PLAYER;
+    /** Governor trades: stable key so the Governor finds his trade again ("gov:<claim>:buy:minecraft:iron_ingot"). */
+    @Nullable public String sourceKey;
 
+    /** A copy is always a player trade, also when the Governor's trade is copied. */
     public WorkersMerchantTrade copy(){
         WorkersMerchantTrade t = new WorkersMerchantTrade(this.currencyItem, this.tradeItem, this.maxTrades, this.allowDamagedCurrency);
         t.enabled = this.enabled;
@@ -61,6 +67,10 @@ public class WorkersMerchantTrade {
         this.storageAmount = DEFAULT_KEEP_AMOUNT;
     }
 
+    public boolean isGovernorTrade() {
+        return source == Source.GOVERNOR;
+    }
+
     public boolean isVillagerBuy() {
         return isVillagerTrade && villagerMode == VillagerTradeMode.BUY;
     }
@@ -78,6 +88,8 @@ public class WorkersMerchantTrade {
         tag.putString("villagerMode", this.villagerMode.name());
         tag.putBoolean("useStorage", this.useStorage);
         tag.putInt("storageAmount", this.storageAmount);
+        if (this.source != Source.PLAYER) tag.putString("source", this.source.name());
+        if (this.sourceKey != null) tag.putString("sourceKey", this.sourceKey);
         return tag;
     }
 
@@ -100,6 +112,8 @@ public class WorkersMerchantTrade {
         if (trade.isVillagerTrade) trade.maxTrades = -1;
         if (tag.contains("useStorage")) trade.useStorage = tag.getBoolean("useStorage");
         if (tag.contains("storageAmount")) trade.storageAmount = tag.getInt("storageAmount");
+        trade.source = Source.fromName(tag.getString("source"));
+        trade.sourceKey = tag.contains("sourceKey") ? tag.getString("sourceKey") : null;
         return trade;
     }
     public static CompoundTag listToNbt(List<WorkersMerchantTrade> trades) {
@@ -127,6 +141,18 @@ public class WorkersMerchantTrade {
             out.add(WorkersMerchantTrade.fromNbt(entry));
         }
         return out;
+    }
+
+    public enum Source {
+        PLAYER,
+        GOVERNOR;
+
+        public static Source fromName(String name) {
+            for (Source source : values()) {
+                if (source.name().equals(name)) return source;
+            }
+            return PLAYER;
+        }
     }
 
     public enum VillagerTradeMode {

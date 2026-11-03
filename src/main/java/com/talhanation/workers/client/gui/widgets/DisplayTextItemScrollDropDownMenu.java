@@ -130,6 +130,15 @@ public class DisplayTextItemScrollDropDownMenu extends AbstractWidget {
         this.canSelect = can;
     }
 
+    public boolean isOpen() {
+        return this.isOpen;
+    }
+
+    /** Lowest y the widget covers: the display row, or the end of the option list while it is open. */
+    public int getBottom() {
+        return this.getY() + this.height + (this.isOpen ? this.maxVisibleOptions * this.optionHeight : 0);
+    }
+
     public void insertOption(int index, ItemStack stack, String text) {
         ItemStack toInsert = stack;
 

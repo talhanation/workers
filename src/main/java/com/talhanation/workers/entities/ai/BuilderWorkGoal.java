@@ -24,16 +24,24 @@ import net.minecraft.world.item.BlockItem;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.DiggerItem;
+import net.minecraft.world.item.Items;
 import net.minecraft.world.item.PickaxeItem;
+import net.minecraft.world.item.ShovelItem;
 import net.minecraft.world.level.ClipContext;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.Blocks;
+import net.minecraft.world.level.block.DoorBlock;
 import net.minecraft.world.level.block.FallingBlock;
+import net.minecraft.world.level.block.FenceGateBlock;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.material.FluidState;
+import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
+import net.minecraft.world.phys.shapes.CollisionContext;
+import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.registries.ForgeRegistries;
+import com.talhanation.workers.BuildEvent;
 
 import javax.annotation.Nullable;
 import java.util.*;
@@ -63,11 +71,35 @@ public class BuilderWorkGoal extends Goal {
     private static final int WAIT_CHECK_INTERVAL = 200;
     private final Map<Item, Long> missingItems = new HashMap<>();
     private final Set<Item> requestedItems = new HashSet<>();
-    private final Set<Item> notifiedMissing = new HashSet<>();
+    // Owner messages of the builder: always sent (not only once a day), the same text at most every NOTIFY_REPEAT ticks
+    private static final int NOTIFY_REPEAT = 6000;
+    @Nullable private String lastNotifyText;
+    private long lastNotifyTime;
     /** Only true when nothing else is left: blocks without support are placed anyway. */
     private boolean forcePlace;
     private int waitTime;
     @Nullable private UUID lastAreaUUID;
+
+    // The builder must not build himself in: blocks are never placed into an entity (he steps aside),
+    // and a block that would close his last way out of the area is placed from outside.
+    private static final int ESCAPE_TIMEOUT = 300;
+    private static final int ENCLOSE_SEARCH_LIMIT = 2048;
+    @Nullable private BlockPos escapePos;
+    private int escapeTicks;
+    @Nullable private BlockPos outsidePlacePos;
+
+    // Where the builder stands while placing: never on a block of the building and outside the area if
+    // possible, so he can not build himself in. He places only from there (WORK_REACH blocks around).
+    private static final int WORK_REACH = 5;
+    private static final int WORK_SPOT_TIMEOUT = 200;
+    @Nullable private BlockPos workSpot;
+    @Nullable private BlockPos workTarget;
+    private int workSpotTicks;
+    private boolean walkingToWork;
+    @Nullable private Set<BlockPos> plannedPositions;
+
+    // Dirt path is made with a shovel. The shovel is asked for at most every MISSING_RETRY ticks.
+    private long lastShovelRequest = -100000L;
 
     public BuilderWorkGoal(BuilderEntity builderEntity) {
         this.builderEntity = builderEntity;
@@ -84,6 +116,12 @@ public class BuilderWorkGoal extends Goal {
         super.start();
         if(this.builderEntity.getCommandSenderWorld().isClientSide()) return;
         if(builderEntity.getFollowState() == 0) builderEntity.setFollowState(6); //Working
+
+        // after a storage trip or sleeping the old escape is not valid anymore
+        this.escapePos = null;
+        this.outsidePlacePos = null;
+        this.workSpot = null;
+        this.plannedPositions = null;
 
         setState(State.SELECT_WORK_AREA);
     }
@@ -103,8 +141,24 @@ public class BuilderWorkGoal extends Goal {
             return;
         }
 
+        // safety net: stuck in a block (suffocating) -> out to the nearest free spot
+        if(builderEntity.tickCount % 20 == 0 && builderEntity.isInWall()){
+            BlockPos free = findStandSpot(builderEntity.getCommandSenderWorld(), null, null, false);
+            if(free == null && builderEntity.currentBuildArea != null) free = findOutsideSpot(builderEntity.getCommandSenderWorld());
+            if(free != null) builderEntity.teleportTo(free.getX() + 0.5D, free.getY(), free.getZ() + 0.5D);
+        }
+
+        // stepping aside / leaving the area before a block is placed
+        if(this.tickEscape()) return;
+
         if(builderEntity.tickCount % 10 == 0){
-            if(blockPos != null && moveToPosition(blockPos, 40)) return;
+            if(state == State.PLACE_BLOCKS || state == State.PLACE_MULTIBLOCK){
+                // placing: walk to a work spot near the block, not onto the block itself.
+                // A block that closes the way out is placed from outside, no walking back to it.
+                walkingToWork = blockPos != null && !blockPos.equals(outsidePlacePos) && moveToWorkSpot(blockPos);
+                if(walkingToWork) return;
+            }
+            else if(blockPos != null && moveToPosition(blockPos, 40)) return;
 
 
             if(state == State.BREAK_BLOCKS){
@@ -135,6 +189,7 @@ public class BuilderWorkGoal extends Goal {
                 if(builderEntity.currentBuildArea == null) return;
 
                 builderEntity.currentBuildArea.setBeingWorkedOn(true);
+                builderEntity.currentBuildArea.setBuilder(builderEntity);
                 this.builderEntity.currentBuildArea.setTime(0);
                 workDone = false;
                 // start() runs again after every storage trip, only forget the missing materials for a new area
@@ -142,7 +197,7 @@ public class BuilderWorkGoal extends Goal {
                     this.lastAreaUUID = builderEntity.currentBuildArea.getUUID();
                     this.missingItems.clear();
                     this.requestedItems.clear();
-                    this.notifiedMissing.clear();
+                    this.lastNotifyText = null;
                 }
                 setState(State.MOVE_TO_WORK_AREA);
             }
@@ -151,7 +206,8 @@ public class BuilderWorkGoal extends Goal {
                 this.blockPos = null;
                 if(this.moveToPosition(builderEntity.currentBuildArea.getOnPos(), 20)) return;
 
-                if(builderEntity.currentBuildArea.getFreeArea() && !builderEntity.currentBuildArea.getFreeAreaDone()){
+                // free area and/or the cut of the foundation mode, done once per build
+                if(builderEntity.currentBuildArea.needsClearing() && !builderEntity.currentBuildArea.getFreeAreaDone()){
                     setState(State.PREPARE_FREE_AREA);
                 }
                 else{
@@ -172,6 +228,7 @@ public class BuilderWorkGoal extends Goal {
                 boolean hasDigger = builderEntity.getInventory().hasAnyMatching(
                         itemStack -> itemStack.getItem() instanceof DiggerItem);
                 if (!hasDigger) {
+                    notifyOwnerThrottled(Component.literal(builderEntity.getName().getString() + ": I need a pickaxe to clear the area."));
                     builderEntity.addNeededItem(new NeededItem(
                             stack -> stack.getItem() instanceof PickaxeItem, 1, true));
                     this.blockPos = null;
@@ -198,6 +255,7 @@ public class BuilderWorkGoal extends Goal {
                 boolean hasDigger = builderEntity.getInventory().hasAnyMatching(
                         itemStack -> itemStack.getItem() instanceof DiggerItem);
                 if (!hasDigger) {
+                    notifyOwnerThrottled(Component.literal(builderEntity.getName().getString() + ": I need a pickaxe to clear the area."));
                     builderEntity.addNeededItem(new NeededItem(
                             stack -> stack.getItem() instanceof PickaxeItem, 1, true));
                     this.blockPos = null;
@@ -235,10 +293,12 @@ public class BuilderWorkGoal extends Goal {
 
                 this.blockPos = null;
                 this.forcePlace = false;
+                this.plannedPositions = null;
                 this.stackToPlace = new Stack<>();
                 Stack<BlockPos> unsupported = new Stack<>();
                 Set<Item> missingOnBuild = new HashSet<>();
                 boolean requested = false;
+                boolean needsShovel = false;
 
                 // Lowest level that can be worked on. A level whose blocks are all missing in the
                 // storages (or have no support yet) is skipped, the builder goes on with the next one.
@@ -246,6 +306,20 @@ public class BuilderWorkGoal extends Goal {
                     Set<Item> levelNeeds = new HashSet<>();
                     for (BuildBlock buildBlock : entry.getValue()) {
                         BlockPos pos = buildBlock.getPos();
+
+                        // dirt path: made with a shovel, grass/dirt on the spot needs no material (else one dirt)
+                        if (!paid && buildBlock.getState().is(Blocks.DIRT_PATH)) {
+                            if (!hasShovel()) {
+                                needsShovel = true;
+                                continue;
+                            }
+                            if (BuildArea.isPathGround(level.getBlockState(pos))) {
+                                if (canPlaceNow(level, pos, buildBlock.getState())) stackToPlace.push(pos);
+                                else unsupported.push(pos);
+                                continue;
+                            }
+                        }
+
                         Item item = BuildBlockParse.parseBlock(buildBlock.getState().getBlock(), level).getItem();
                         if(item == null){
                             if(builderEntity.getOwner() != null) builderEntity.getOwner().sendSystemMessage(Component.literal("Could not found item for " + buildBlock.getState().getBlock().getName() + " i, will skip this block." ));
@@ -281,15 +355,23 @@ public class BuilderWorkGoal extends Goal {
                     }
                 }
 
+                if (needsShovel) {
+                    missingOnBuild.add(Items.IRON_SHOVEL);
+                    long time = level.getGameTime();
+                    if (time - lastShovelRequest > MISSING_RETRY) {
+                        lastShovelRequest = time;
+                        notifyOwnerThrottled(Component.literal(builderEntity.getName().getString() + ": I need a shovel to make dirt paths."));
+                        builderEntity.addNeededItem(new NeededItem(stack -> stack.getItem() instanceof ShovelItem, 1, true));
+                    }
+                }
+
                 if (stackToPlace.isEmpty() && !requested) {
                     if (!missingOnBuild.isEmpty()) {
                         // everything left needs materials the storages do not have
-                        if (!notifiedMissing.containsAll(missingOnBuild)) {
-                            notifiedMissing.addAll(missingOnBuild);
-                            builderEntity.notifyOwner(Component.literal(builderEntity.getName().getString() + ": I am waiting for materials: " + getItemNames(missingOnBuild)));
-                        }
+                        notifyOwnerThrottled(Component.literal(builderEntity.getName().getString() + ": I am waiting for materials: " + getItemNames(missingOnBuild)));
                         waitTime = 0;
                         setState(State.WAIT_FOR_MATERIALS);
+                        builderEntity.currentBuildArea.setMissingMaterials(missingOnBuild);
                         return;
                     }
                     if (!unsupported.isEmpty()) {
@@ -314,6 +396,7 @@ public class BuilderWorkGoal extends Goal {
 
 
             case PLACE_BLOCKS -> {
+                if(walkingToWork) return;
                 if(this.placeBlocks(this.stackToPlace)) return;
 
                 setState(State.PREPARE_PLACE_BLOCKS);
@@ -325,6 +408,7 @@ public class BuilderWorkGoal extends Goal {
                     return;
                 }
 
+                this.plannedPositions = null;
                 this.stackToPlace = new Stack<>();
                 for (BuildBlock bb : builderEntity.currentBuildArea.stackToPlaceMultiBlock) {
                     stackToPlace.push(bb.getPos());
@@ -334,9 +418,12 @@ public class BuilderWorkGoal extends Goal {
             }
 
             case PLACE_MULTIBLOCK -> {
+                if (walkingToWork) return;
                 if (this.placeMultiBlocks(this.stackToPlace)) return;
 
-                setState(State.DONE);
+                // halves that were broken went back on the list: build them first
+                if (!builderEntity.currentBuildArea.stackToPlace.isEmpty()) setState(State.PREPARE_PLACE_BLOCKS);
+                else setState(State.DONE);
             }
 
             case DONE -> {
@@ -344,7 +431,11 @@ public class BuilderWorkGoal extends Goal {
                     workDone = true;
 
                     // Spawn any entities that were scanned with the structure (work areas, etc.)
-                    spawnScannedEntities(builderEntity.currentBuildArea);
+                    BuildArea finished = builderEntity.currentBuildArea;
+                    List<AbstractWorkAreaEntity> spawned = finished.spawnWorkAreas ? spawnScannedEntities(finished) : new ArrayList<>();
+                    MinecraftForge.EVENT_BUS.post(new BuildEvent.Finished(finished, builderEntity, spawned));
+                    // the Governor's job is done, the builder picks his next area himself again
+                    if (finished.getUUID().equals(builderEntity.getAssignedWorkArea())) builderEntity.setAssignedWorkArea(null);
 
                     builderEntity.currentBuildArea.setBeingWorkedOn(false);
                     if(this.builderEntity.getFollowState() == 6) this.builderEntity.setFollowState(0);//Wander
@@ -374,8 +465,27 @@ public class BuilderWorkGoal extends Goal {
     }
 
     public void setState(State state) {
+        this.walkingToWork = false;
         //if(builderEntity.getOwner() != null) builderEntity.getOwner().sendSystemMessage(Component.literal(state.toString()));
         this.state = state;
+        this.updateBuildStatus(state);
+    }
+
+    /**
+     * The status of the build area follows the work (GUI and Governor). The PREPARE states change nothing,
+     * so waiting for materials does not flicker while he checks again.
+     */
+    private void updateBuildStatus(State state) {
+        BuildArea area = builderEntity.currentBuildArea;
+        if (area == null || builderEntity.getCommandSenderWorld().isClientSide()) return;
+
+        switch (state) {
+            case PREPARE_FREE_AREA, FREE_AREA -> area.setBuildStatus(BuildArea.BuildStatus.CLEARING);
+            case MOVE_TO_WORK_AREA, BREAK_BLOCKS, PLACE_BLOCKS, PLACE_MULTIBLOCK -> area.setBuildStatus(BuildArea.BuildStatus.BUILDING);
+            case WAIT_FOR_MATERIALS -> area.setBuildStatus(BuildArea.BuildStatus.WAITING_FOR_MATERIALS);
+            case DONE -> area.setBuildStatus(BuildArea.BuildStatus.DONE);
+            default -> {}
+        }
     }
 
     /** After a storage trip: requested materials he still does not carry are missing in the storages. */
@@ -389,7 +499,6 @@ public class BuilderWorkGoal extends Goal {
         }
         // ask the storages again after a while, the player may have brought the materials
         missingItems.values().removeIf(markTime -> time - markTime > MISSING_RETRY);
-        notifiedMissing.retainAll(missingItems.keySet());
     }
 
     /**
@@ -431,9 +540,25 @@ public class BuilderWorkGoal extends Goal {
     }
 
     private static String getItemNames(Set<Item> items) {
+        // sorted, so the same materials always give the same text (see notifyOwnerThrottled)
         return items.stream()
                 .map(item -> new ItemStack(item).getHoverName().getString())
+                .sorted()
                 .collect(Collectors.joining(", "));
+    }
+
+    /**
+     * Tells the owner why the builder stands still. The normal notifyOwner only sends once a day, then the
+     * player wonders why nothing happens. A new text is sent at once, the same text again after NOTIFY_REPEAT.
+     */
+    private void notifyOwnerThrottled(Component message) {
+        long time = builderEntity.getCommandSenderWorld().getGameTime();
+        String text = message.getString();
+        if (text.equals(lastNotifyText) && time - lastNotifyTime < NOTIFY_REPEAT) return;
+
+        lastNotifyText = text;
+        lastNotifyTime = time;
+        builderEntity.notifyOwnerAlways(message);
     }
 
     int blockBreakTime;
@@ -531,15 +656,16 @@ public class BuilderWorkGoal extends Goal {
      * Each entity is placed at the world position corresponding to its scanned relative offset,
      * rotated from scan-facing to build-facing, and inherits the owner UUID + team of the BuildArea.
      */
-    private void spawnScannedEntities(BuildArea buildArea) {
+    private List<AbstractWorkAreaEntity> spawnScannedEntities(BuildArea buildArea) {
+        List<AbstractWorkAreaEntity> spawned = new ArrayList<>();
         Level level = builderEntity.getCommandSenderWorld();
-        if (!(level instanceof ServerLevel serverLevel)) return;
+        if (!(level instanceof ServerLevel serverLevel)) return spawned;
 
         CompoundTag nbt = buildArea.getStructureNBT();
-        if (nbt == null || !nbt.contains("entities", Tag.TAG_LIST)) return;
+        if (nbt == null || !nbt.contains("entities", Tag.TAG_LIST)) return spawned;
 
         ListTag entityList = nbt.getList("entities", Tag.TAG_COMPOUND);
-        if (entityList.isEmpty()) return;
+        if (entityList.isEmpty()) return spawned;
 
         Direction scanFacing  = Direction.byName(nbt.getString("facing"));
         Direction buildFacing = buildArea.getFacing();
@@ -610,8 +736,9 @@ public class BuilderWorkGoal extends Goal {
                 wa.setCustomName(Component.literal(""));
             }
 
-            serverLevel.addFreshEntity(entity);
+            if (serverLevel.addFreshEntity(entity) && entity instanceof AbstractWorkAreaEntity wa) spawned.add(wa);
         }
+        return spawned;
     }
 
     /** Rotates a horizontal Direction clockwise by the given number of 90° steps. */
@@ -644,6 +771,9 @@ public class BuilderWorkGoal extends Goal {
                 }
             }
             else if(buildingState != null) {
+                // only from the work spot (a block that closes the way out is placed from outside)
+                if (!blockPos.equals(outsidePlacePos) && !isInReach(builderEntity.blockPosition(), blockPos, WORK_REACH + 1)) return true;
+
                 if (!levelState.isAir() && !BuildArea.canDirectlyReplace(levelState, buildingState)) {
                     this.builderEntity.changeTool(levelState);
                     this.builderEntity.mineBlock(blockPos);
@@ -659,6 +789,17 @@ public class BuilderWorkGoal extends Goal {
                     }
                     blockPos = null;
                     return false;
+                }
+
+                // flee from the block first: it is never placed right next to him (feet/head height), so it
+                // can not hit him or box him in. He walks to a spot at least 2 blocks away, then places it.
+                BlockPos pairedPos = builderEntity.currentBuildArea.findPairedMultiBlockPos(blockPos);
+                if (isTooClose(blockPos) || (pairedPos != null && isTooClose(pairedPos))) {
+                    if (stepAside(builderEntity.getCommandSenderWorld(), blockPos, pairedPos)) return true;
+                }
+
+                if (buildingState.is(Blocks.DIRT_PATH)) {
+                    return placeDirtPath(positions, levelState);
                 }
 
                 BuildBlockParse blockParse = BuildBlockParse.parseBlock(buildingState.getBlock(), builderEntity.getCommandSenderWorld());
@@ -677,8 +818,35 @@ public class BuilderWorkGoal extends Goal {
                     }
 
                     BlockState secondaryState = builderEntity.currentBuildArea.findPairedMultiBlockState(blockPos);
+                    BlockPos secondaryPos = secondaryState != null ? builderEntity.currentBuildArea.findPairedMultiBlockPos(blockPos) : null;
+
+                    // never build into an entity: the builder steps aside, someone else is waited for
+                    Level level = builderEntity.getCommandSenderWorld();
+                    if (isBlockedByEntity(level, blockPos, buildingState) || (secondaryPos != null && isBlockedByEntity(level, secondaryPos, secondaryState))) {
+                        boolean builderInTheWay = isBuilderIn(blockPos) || (secondaryPos != null && isBuilderIn(secondaryPos));
+                        if (builderInTheWay && stepAside(level, blockPos, secondaryPos)) return true;
+
+                        // try the next block, this one comes again in the next round
+                        if (!positions.isEmpty()) {
+                            blockPos = positions.pop();
+                            return true;
+                        }
+                        blockPos = null;
+                        return false;
+                    }
+
+                    // do not wall himself in: this block would close the last way out, leave the area first
+                    // (from outside the check is always false, then the block is placed from there)
+                    if (wouldEncloseBuilder(level, blockPos, secondaryPos)) {
+                        BlockPos outside = findOutsideSpot(level);
+                        if (outside != null) {
+                            outsidePlacePos = blockPos;
+                            startEscape(outside);
+                            return true;
+                        }
+                    }
+
                     if (secondaryState != null) {
-                        BlockPos secondaryPos = builderEntity.currentBuildArea.findPairedMultiBlockPos(blockPos);
                         builderEntity.getCommandSenderWorld().setBlock(blockPos, buildingState, Block.UPDATE_CLIENTS);
                         builderEntity.getCommandSenderWorld().setBlock(secondaryPos, secondaryState, Block.UPDATE_ALL);
                         builderEntity.getCommandSenderWorld().blockUpdated(blockPos, buildingState.getBlock());
@@ -691,6 +859,7 @@ public class BuilderWorkGoal extends Goal {
                     this.builderEntity.swing(InteractionHand.MAIN_HAND);
                     if(buildingItem != null) buildingItem.shrink(1);
                     builderEntity.currentBuildArea.removeBuildBlockToPlace(blockPos);
+                    if(blockPos.equals(outsidePlacePos)) outsidePlacePos = null;
                 }
                 else{
                     // material ran out: forget this block so the next round does not get stuck on it
@@ -714,10 +883,37 @@ public class BuilderWorkGoal extends Goal {
         if (blockPos == null) {
             blockPos = positions.pop();
         }
+        if (!isInReach(builderEntity.blockPosition(), blockPos, WORK_REACH + 1)) return true;
 
         BlockState buildingState = builderEntity.currentBuildArea.getStateFromMultiBlockPos(blockPos);
         if (buildingState != null) {
             BlockState levelState = builderEntity.getCommandSenderWorld().getBlockState(blockPos);
+
+            // a bed head / upper door half is never placed alone: if the other half is missing (e.g. broken
+            // by a player) the pair goes back on the list and is placed together again, with a new item.
+            // A half placed alone could be broken for a free item.
+            BuildBlock primary = BuildArea.getPrimaryFor(blockPos, buildingState);
+            if (!levelState.equals(buildingState) && primary != null
+                    && !builderEntity.currentBuildArea.statesMatch(builderEntity.getCommandSenderWorld().getBlockState(primary.getPos()), primary.getState())) {
+                builderEntity.currentBuildArea.addBuildBlockToPlace(primary);
+                if (!positions.isEmpty()) {
+                    blockPos = positions.pop();
+                    return true;
+                }
+                blockPos = null;
+                return false;
+            }
+
+            // flee from the block first, like for normal blocks
+            if (!levelState.equals(buildingState) && isTooClose(blockPos) && stepAside(builderEntity.getCommandSenderWorld(), blockPos, null)) return true;
+
+            if (!levelState.equals(buildingState) && isBlockedByEntity(builderEntity.getCommandSenderWorld(), blockPos, buildingState)) {
+                // the builder steps aside and tries again, someone else is waited for
+                if (isBuilderIn(blockPos)) stepAside(builderEntity.getCommandSenderWorld(), blockPos, null);
+                positions.add(0, blockPos);
+                blockPos = positions.pop();
+                return true;
+            }
             if (!levelState.equals(buildingState)) {
                 builderEntity.getCommandSenderWorld().setBlockAndUpdate(blockPos, buildingState);
                 builderEntity.getCommandSenderWorld().playSound(null, blockPos.getX(), blockPos.getY(), blockPos.getZ(),
@@ -734,6 +930,380 @@ public class BuilderWorkGoal extends Goal {
 
         blockPos = null;
         return false;
+    }
+
+    // ── Not building himself in ──────────────────────────────────────────────
+
+    /** True if an entity (builder, player, animal...) stands where the block would get a collision box. */
+    private static boolean isBlockedByEntity(Level level, BlockPos pos, BlockState state) {
+        return !level.isUnobstructed(state, pos, CollisionContext.empty());
+    }
+
+    private boolean isBuilderIn(BlockPos pos) {
+        return builderEntity.getBoundingBox().intersects(new AABB(pos));
+    }
+
+    /** The builder stands where a block goes: a free spot nearby that is not part of the building, else outside the area. */
+    private boolean stepAside(Level level, BlockPos pos, @Nullable BlockPos secondaryPos) {
+        // a work spot near the block (outside the area if possible), else just outside the area
+        BlockPos spot = findWorkSpot(level, pos, secondaryPos);
+        if (spot == null) {
+            spot = findOutsideSpot(level);
+            // an outside spot right next to the block does not help, he would flee forever
+            if (spot != null && (isNextTo(spot, pos) || (secondaryPos != null && isNextTo(spot, secondaryPos)))) spot = null;
+        }
+        if (spot == null) return false;
+
+        startEscape(spot);
+        return true;
+    }
+
+    private void startEscape(BlockPos target) {
+        this.escapePos = target;
+        this.escapeTicks = 0;
+        builderEntity.getNavigation().stop();
+    }
+
+    /** Walks to the escape spot. If he can not get there in time, he is put there. */
+    private boolean tickEscape() {
+        if (escapePos == null) return false;
+
+        if (++escapeTicks > ESCAPE_TIMEOUT) {
+            builderEntity.getNavigation().stop();
+            builderEntity.teleportTo(escapePos.getX() + 0.5D, escapePos.getY(), escapePos.getZ() + 0.5D);
+            escapePos = null;
+            return false;
+        }
+        if (builderEntity.tickCount % 10 != 0) return true;
+
+        // he has to really stand there, roughly near is not enough (he is 0.6 wide)
+        if (!isAtSpot(escapePos)) {
+            walkToSpot(escapePos);
+            return true;
+        }
+        builderEntity.getNavigation().stop();
+        escapePos = null;
+        return false;
+    }
+
+    /**
+     * Would the block close the builder in? Searches the ways he can WALK from his position (same height,
+     * dropping down up to 3, one block up), with the new block as solid. Doors and gates count as open.
+     * If he can walk out of the area there is still a way out. A big open area is not searched
+     * completely: then it is assumed to be open.
+     */
+    private boolean wouldEncloseBuilder(Level level, BlockPos placed, @Nullable BlockPos secondaryPos) {
+        BlockPos start = builderEntity.blockPosition();
+        if (!isInArea(start, 0)) return false;
+
+        Set<BlockPos> blocked = new HashSet<>();
+        blocked.add(placed);
+        if (secondaryPos != null) blocked.add(secondaryPos);
+
+        Set<BlockPos> visited = new HashSet<>();
+        ArrayDeque<BlockPos> queue = new ArrayDeque<>();
+        visited.add(start);
+        queue.add(start);
+        while (!queue.isEmpty()) {
+            if (visited.size() > ENCLOSE_SEARCH_LIMIT) return false;
+            BlockPos pos = queue.poll();
+            if (!isInArea(pos, 1)) return false; // way out found
+
+            for (Direction direction : Direction.Plane.HORIZONTAL) {
+                BlockPos next = findWalkTarget(level, pos, pos.relative(direction), blocked);
+                if (next != null && visited.add(next)) queue.add(next);
+            }
+        }
+        return true;
+    }
+
+    /** Where he ends up walking from pos to the side: same height, dropping down (max 3) or one block up. */
+    @Nullable
+    private static BlockPos findWalkTarget(Level level, BlockPos pos, BlockPos side, Set<BlockPos> blocked) {
+        if (isPassable(level, side, blocked) && isPassable(level, side.above(), blocked)) {
+            for (int drop = 0; drop <= 3; drop++) {
+                BlockPos feet = side.below(drop);
+                if (drop > 0 && !isPassable(level, feet, blocked)) return null;
+                if (isGround(level, feet.below(), blocked)) return feet;
+            }
+            return null;
+        }
+        // one block up: room above his head and on top of the block
+        BlockPos up = side.above();
+        if (isGround(level, side, blocked) && isPassable(level, pos.above(2), blocked)
+                && isPassable(level, up, blocked) && isPassable(level, up.above(), blocked)) {
+            return up;
+        }
+        return null;
+    }
+
+    private static boolean isPassable(Level level, BlockPos pos, Set<BlockPos> blocked) {
+        return !blocked.contains(pos) && isOpen(level, pos);
+    }
+
+    private static boolean isGround(Level level, BlockPos pos, Set<BlockPos> blocked) {
+        if (blocked.contains(pos)) return true;
+        return !level.getBlockState(pos).getCollisionShape(level, pos).isEmpty();
+    }
+
+    private static boolean isOpen(Level level, BlockPos pos) {
+        BlockState state = level.getBlockState(pos);
+        if (state.getBlock() instanceof DoorBlock || state.getBlock() instanceof FenceGateBlock) return true;
+        return state.getCollisionShape(level, pos).isEmpty();
+    }
+
+    private boolean isInArea(BlockPos pos, int margin) {
+        AABB area = builderEntity.currentBuildArea.getArea();
+        return pos.getX() >= area.minX - margin && pos.getX() <= area.maxX + margin
+                && pos.getY() >= area.minY - margin && pos.getY() <= area.maxY + margin
+                && pos.getZ() >= area.minZ - margin && pos.getZ() <= area.maxZ + margin;
+    }
+
+    private static boolean canStandAt(Level level, BlockPos feet) {
+        BlockState ground = level.getBlockState(feet.below());
+        return isOpen(level, feet) && isOpen(level, feet.above())
+                && level.getBlockState(feet).getFluidState().isEmpty()
+                && ground.isFaceSturdy(level, feet.below(), Direction.UP);
+    }
+
+    /**
+     * Nearest spot (radius 3) he can stand on, not on the given block(s). With avoidPlanned also not
+     * where a block of the building still goes, so he is not in the way again right after.
+     */
+    @Nullable
+    private BlockPos findStandSpot(Level level, @Nullable BlockPos pos, @Nullable BlockPos secondaryPos, boolean avoidPlanned) {
+        Set<BlockPos> planned = new HashSet<>();
+        if (avoidPlanned) {
+            for (BuildBlock buildBlock : builderEntity.currentBuildArea.stackToPlace) planned.add(buildBlock.getPos());
+        }
+
+        BlockPos origin = builderEntity.blockPosition();
+        BlockPos best = null;
+        double bestDistance = Double.MAX_VALUE;
+        for (BlockPos candidate : BlockPos.betweenClosed(origin.offset(-3, -2, -3), origin.offset(3, 2, 3))) {
+            BlockPos feet = candidate.immutable();
+            BlockPos head = feet.above();
+            if (feet.equals(pos) || head.equals(pos) || feet.equals(secondaryPos) || head.equals(secondaryPos)) continue;
+            if (planned.contains(feet) || planned.contains(head)) continue;
+            if (!canStandAt(level, feet)) continue;
+
+            double distance = feet.distSqr(origin);
+            if (distance < bestDistance) {
+                bestDistance = distance;
+                best = feet;
+            }
+        }
+        return best;
+    }
+
+    /** Nearest spot just outside the build area (1 to 3 blocks), on the height of the builder if possible. */
+    @Nullable
+    private BlockPos findOutsideSpot(Level level) {
+        AABB area = builderEntity.currentBuildArea.getArea();
+        BlockPos origin = builderEntity.blockPosition();
+        BlockPos best = null;
+        double bestDistance = Double.MAX_VALUE;
+
+        for (int ring = 1; ring <= 3; ring++) {
+            int minX = (int) area.minX - ring, maxX = (int) area.maxX + ring;
+            int minZ = (int) area.minZ - ring, maxZ = (int) area.maxZ + ring;
+            for (int x = minX; x <= maxX; x++) {
+                for (int z = minZ; z <= maxZ; z++) {
+                    if (x != minX && x != maxX && z != minZ && z != maxZ) continue; // only the ring
+                    for (int dy = 0; dy <= 4; dy++) {
+                        BlockPos feet = null;
+                        BlockPos up = new BlockPos(x, origin.getY() + dy, z);
+                        BlockPos down = new BlockPos(x, origin.getY() - dy, z);
+                        if (canStandAt(level, up)) feet = up;
+                        else if (canStandAt(level, down)) feet = down;
+                        if (feet == null) continue;
+
+                        double distance = feet.distSqr(origin);
+                        if (distance < bestDistance) {
+                            bestDistance = distance;
+                            best = feet;
+                        }
+                        break;
+                    }
+                }
+            }
+            if (best != null) return best;
+        }
+        return null;
+    }
+
+    // ── Work spot ────────────────────────────────────────────────────────────
+
+    /** Walks to a work spot for the target block. Returns true while he is still walking. */
+    private boolean moveToWorkSpot(BlockPos target) {
+        Level level = builderEntity.getCommandSenderWorld();
+        BlockPos pairedPos = builderEntity.currentBuildArea.findPairedMultiBlockPos(target);
+        // where he stands is fine: stay
+        if (builderEntity.onGround() && isGoodWorkSpot(level, builderEntity.blockPosition(), target, pairedPos)
+                && !isTooClose(target) && (pairedPos == null || !isTooClose(pairedPos))) {
+            builderEntity.getNavigation().stop();
+            workSpot = null;
+            return false;
+        }
+
+        if (!target.equals(workTarget) || workSpot == null || !isGoodWorkSpot(level, workSpot, target, pairedPos)) {
+            workTarget = target;
+            workSpot = findWorkSpot(level, target, pairedPos);
+            workSpotTicks = 0;
+        }
+        if (workSpot == null) {
+            // no free spot near the block: walk to the block like before (30 = within the place reach of 6)
+            return moveToPosition(target, 30);
+        }
+
+        workSpotTicks += 10;
+        if (workSpotTicks > WORK_SPOT_TIMEOUT) {
+            // can not get there (path blocked): put him there instead of standing around
+            builderEntity.getNavigation().stop();
+            builderEntity.teleportTo(workSpot.getX() + 0.5D, workSpot.getY(), workSpot.getZ() + 0.5D);
+            workSpotTicks = 0;
+            return false;
+        }
+        if (isAtSpot(workSpot)) {
+            builderEntity.getNavigation().stop();
+            return false;
+        }
+        walkToSpot(workSpot);
+        builderEntity.getLookControl().setLookAt(target.getCenter());
+        return true;
+    }
+
+    /** Best spot to place the target from: in reach, not on a block of the building, outside the area first. */
+    @Nullable
+    private BlockPos findWorkSpot(Level level, BlockPos target, @Nullable BlockPos secondaryPos) {
+        BlockPos origin = builderEntity.blockPosition();
+        BlockPos best = null;
+        double bestScore = Double.MAX_VALUE;
+        for (BlockPos candidate : BlockPos.betweenClosed(target.offset(-WORK_REACH, -8, -WORK_REACH), target.offset(WORK_REACH, 2, WORK_REACH))) {
+            if (!isGoodWorkSpot(level, candidate, target, secondaryPos)) continue;
+
+            double score = candidate.distSqr(target) + 0.25D * candidate.distSqr(origin);
+            // outside the area nothing can be built around him
+            if (isInArea(candidate, 0)) score += 100;
+            if (score < bestScore) {
+                bestScore = score;
+                best = candidate.immutable();
+            }
+        }
+        return best;
+    }
+
+    private boolean isGoodWorkSpot(Level level, BlockPos spot, BlockPos target, @Nullable BlockPos secondaryPos) {
+        if (!isInReach(spot, target, WORK_REACH)) return false;
+        BlockPos head = spot.above();
+        // not on the block and not right next to it, so placing it can not hit or box him in
+        if (isNextTo(spot, target) || (secondaryPos != null && isNextTo(spot, secondaryPos))) return false;
+        Set<BlockPos> planned = getPlannedPositions();
+        if (planned.contains(spot) || planned.contains(head)) return false;
+        return canStandAt(level, spot);
+    }
+
+    /** True if the block is at feet or head height of the spot, on it or one of the 8 blocks around it. */
+    private static boolean isNextTo(BlockPos spot, BlockPos block) {
+        if (block.getY() < spot.getY() || block.getY() > spot.getY() + 1) return false;
+        return Math.abs(block.getX() - spot.getX()) <= 1 && Math.abs(block.getZ() - spot.getZ()) <= 1;
+    }
+
+    /** Same as isNextTo, but with his real position (he can stand near the edge of his block). */
+    private boolean isTooClose(BlockPos block) {
+        int feetY = builderEntity.getBlockY();
+        if (block.getY() < feetY || block.getY() > feetY + 1) return false;
+        return Math.abs(builderEntity.getX() - (block.getX() + 0.5D)) < 1.4D
+                && Math.abs(builderEntity.getZ() - (block.getZ() + 0.5D)) < 1.4D;
+    }
+
+    /** He really stands on the spot (middle of the block), roughly near is not enough. */
+    private boolean isAtSpot(BlockPos spot) {
+        double dx = builderEntity.getX() - (spot.getX() + 0.5D);
+        double dz = builderEntity.getZ() - (spot.getZ() + 0.5D);
+        return dx * dx + dz * dz <= 0.16D && Math.abs(builderEntity.getY() - spot.getY()) < 1.0D;
+    }
+
+    /** Walks to the middle of the spot, the last bit straight with the move control (the path ends roughly). */
+    private void walkToSpot(BlockPos spot) {
+        double x = spot.getX() + 0.5D;
+        double z = spot.getZ() + 0.5D;
+        double dx = builderEntity.getX() - x;
+        double dz = builderEntity.getZ() - z;
+        if (dx * dx + dz * dz < 2.25D) {
+            builderEntity.getNavigation().stop();
+            builderEntity.getMoveControl().setWantedPosition(x, spot.getY(), z, 0.8D);
+        }
+        else {
+            builderEntity.getNavigation().moveTo(x, spot.getY(), z, 0.8F);
+        }
+    }
+
+    /** Horizontal reach, he can place higher and lower blocks like before. */
+    private static boolean isInReach(BlockPos from, BlockPos target, int reach) {
+        int dx = from.getX() - target.getX();
+        int dz = from.getZ() - target.getZ();
+        return dx * dx + dz * dz <= reach * reach;
+    }
+
+    /** Positions of blocks the building still needs, rebuilt when a new round of placing starts. */
+    private Set<BlockPos> getPlannedPositions() {
+        if (plannedPositions == null) {
+            plannedPositions = new HashSet<>();
+            for (BuildBlock buildBlock : builderEntity.currentBuildArea.stackToPlace) plannedPositions.add(buildBlock.getPos());
+            for (BuildBlock buildBlock : builderEntity.currentBuildArea.stackToPlaceMultiBlock) plannedPositions.add(buildBlock.getPos());
+        }
+        return plannedPositions;
+    }
+
+    // ── Dirt path ────────────────────────────────────────────────────────────
+
+    private boolean hasShovel() {
+        return builderEntity.getInventory().hasAnyMatching(itemStack -> itemStack.getItem() instanceof ShovelItem);
+    }
+
+    /**
+     * Dirt path is made with a shovel like a player does: grass/dirt on the spot is flattened without
+     * material, on air he needs one dirt. The dirt path item itself is never needed.
+     */
+    private boolean placeDirtPath(Stack<BlockPos> positions, BlockState levelState) {
+        Level level = builderEntity.getCommandSenderWorld();
+        boolean paid = builderEntity.currentBuildArea.isPaidWithCurrency();
+        ItemStack dirt = null;
+        if (!paid) {
+            // the next round asks for what is missing
+            if (!hasShovel()) {
+                blockPos = null;
+                return false;
+            }
+            if (!BuildArea.isPathGround(levelState)) {
+                dirt = builderEntity.getMatchingItem(itemStack -> itemStack.is(Items.DIRT));
+                if (dirt == null) {
+                    blockPos = null;
+                    return false;
+                }
+            }
+            builderEntity.switchMainHandItem(itemStack -> itemStack.getItem() instanceof ShovelItem);
+        }
+
+        BlockState path = Blocks.DIRT_PATH.defaultBlockState();
+        if (isBlockedByEntity(level, blockPos, path)) {
+            if (isBuilderIn(blockPos) && stepAside(level, blockPos, null)) return true;
+            if (!positions.isEmpty()) {
+                blockPos = positions.pop();
+                return true;
+            }
+            blockPos = null;
+            return false;
+        }
+
+        level.setBlockAndUpdate(blockPos, path);
+        level.playSound(null, blockPos, SoundEvents.SHOVEL_FLATTEN, SoundSource.BLOCKS, 1.0F, 1.0F);
+        builderEntity.swing(InteractionHand.MAIN_HAND);
+        if (dirt != null) dirt.shrink(1);
+        if (!paid) builderEntity.damageMainHandItem();
+        builderEntity.currentBuildArea.removeBuildBlockToPlace(blockPos);
+        return true;
     }
 
     //PERFORMANCE HEAVY DO NOT USE FREQUENTLY
@@ -760,7 +1330,7 @@ public class BuilderWorkGoal extends Goal {
     }
 
     public static List<BuildArea> getAvailableWorkAreasByPriority(ServerLevel level, BuilderEntity builderEntity, @Nullable BuildArea currentArea) {
-        List<BuildArea> list = level.getEntitiesOfClass(BuildArea.class, builderEntity.getBoundingBox().inflate(64));
+        List<BuildArea> list = builderEntity.findWorkAreas(BuildArea.class, 64);
 
         Map<BuildArea, Integer> priorityMap = new HashMap<>();
 

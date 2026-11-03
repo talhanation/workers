@@ -439,7 +439,7 @@ public class MinerWorkGoal extends Goal {
     }
 
     public static List<MiningArea> getAvailableWorkAreasByPriority(ServerLevel level, MinerEntity minerEntity, @Nullable MiningArea currentArea) {
-        List<MiningArea> list = level.getEntitiesOfClass(MiningArea.class, minerEntity.getBoundingBox().inflate(64));
+        List<MiningArea> list = minerEntity.findWorkAreas(MiningArea.class, 64);
 
         Map<MiningArea, Integer> priorityMap = new HashMap<>();
 

@@ -22,6 +22,7 @@ import net.minecraft.world.inventory.CraftingContainer;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
+import net.minecraft.world.item.crafting.BlastingRecipe;
 import net.minecraft.world.item.crafting.CraftingRecipe;
 import net.minecraft.world.item.crafting.Ingredient;
 import net.minecraft.world.item.crafting.Recipe;
@@ -29,6 +30,8 @@ import net.minecraft.world.item.crafting.RecipeType;
 import net.minecraft.world.item.crafting.SmeltingRecipe;
 import net.minecraft.world.level.block.AbstractFurnaceBlock;
 import net.minecraft.world.level.block.Block;
+import net.minecraft.world.level.block.entity.AbstractFurnaceBlockEntity;
+import net.minecraft.world.level.block.entity.BlastFurnaceBlockEntity;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.entity.ChestBlockEntity;
 import net.minecraft.world.level.block.entity.FurnaceBlockEntity;
@@ -321,9 +324,9 @@ public class CraftsmanWorkGoal extends Goal {
             return;
         }
 
-        FurnaceBlockEntity furnace = getFurnace(level, furnacePos);
+        AbstractFurnaceBlockEntity furnace = getFurnace(level, furnacePos);
         if (furnace != null && jobMatchers != null) {
-            loadFurnace(furnace, jobMatchers[0]);
+            loadFurnace(level, area, furnace, jobMatchers[0]);
         }
         finishJob(level, area);
     }
@@ -343,7 +346,7 @@ public class CraftsmanWorkGoal extends Goal {
             return;
         }
 
-        FurnaceBlockEntity furnace = getFurnace(level, furnacePos);
+        AbstractFurnaceBlockEntity furnace = getFurnace(level, furnacePos);
         if (furnace != null) {
             ItemStack output = furnace.getItem(2);
             if (!output.isEmpty()) {
@@ -489,7 +492,7 @@ public class CraftsmanWorkGoal extends Goal {
 
         // Finished smelting output of an order is collected first
         if (craftsman.hasFreeInvSlot()) {
-            for (Map.Entry<BlockPos, FurnaceBlockEntity> entry : area.furnaceMap.entrySet()) {
+            for (Map.Entry<BlockPos, AbstractFurnaceBlockEntity> entry : area.getAllFurnaces().entrySet()) {
                 ItemStack output = entry.getValue().getItem(2);
                 if (!output.isEmpty() && findSmeltOrderFor(area, output) != null) {
                     furnacePos = entry.getKey();
@@ -572,7 +575,7 @@ public class CraftsmanWorkGoal extends Goal {
 
         // a furnace of this order that ran out of fuel is refueled first
         if (order.type == CraftOrder.OrderType.SMELTING && recipe instanceof SmeltingRecipe smelting && matchers[0] != null) {
-            Job refuel = evaluateRefuel(area, order, smelting, matchers, snapshot);
+            Job refuel = evaluateRefuel(level, area, order, smelting, matchers, snapshot);
             if (refuel != null) return refuel;
         }
         int pending = order.type == CraftOrder.OrderType.SMELTING ? countPendingInFurnaces(area, order, matchers[0], perOutput) : 0;
@@ -656,19 +659,29 @@ public class CraftsmanWorkGoal extends Goal {
             return null;
         }
 
-        // a furnace that is free or already smelts this
+        // a furnace that is free or already smelts this. A blast furnace only for recipes it can do
+        // (blasting recipe with the same result), then it is preferred because it is twice as fast.
+        boolean canBlast = canBlast(level, input.display, order.result);
         BlockPos chosen = null;
+        boolean chosenBlast = false;
         int capacity = 0;
-        for (Map.Entry<BlockPos, FurnaceBlockEntity> entry : area.furnaceMap.entrySet()) {
-            FurnaceBlockEntity furnace = entry.getValue();
+        for (Map.Entry<BlockPos, AbstractFurnaceBlockEntity> entry : area.getAllFurnaces().entrySet()) {
+            AbstractFurnaceBlockEntity furnace = entry.getValue();
+            boolean blast = furnace instanceof BlastFurnaceBlockEntity;
+            if (blast && !canBlast) continue;
+
             ItemStack in = furnace.getItem(0);
             ItemStack out = furnace.getItem(2);
             if (!out.isEmpty() && !ItemStack.isSameItemSameTags(out, order.result)) continue;
             if (!in.isEmpty() && !input.test(in)) continue;
             int space = in.isEmpty() ? input.display.getMaxStackSize() : in.getMaxStackSize() - in.getCount();
-            if (space > capacity) {
+            if (space <= 0) continue;
+
+            boolean better = chosen == null || (blast && !chosenBlast) || (blast == chosenBlast && space > capacity);
+            if (better) {
                 capacity = space;
                 chosen = entry.getKey();
+                chosenBlast = blast;
             }
         }
         if (chosen == null || capacity <= 0) {
@@ -686,8 +699,8 @@ public class CraftsmanWorkGoal extends Goal {
         }
 
         // fuel: coal/charcoal, then planks, then logs
-        FurnaceBlockEntity furnace = area.furnaceMap.get(chosen);
-        int cookTime = Math.max(1, recipe.getCookingTime());
+        AbstractFurnaceBlockEntity furnace = area.getAllFurnaces().get(chosen);
+        int cookTime = getFuelPerItem(level, furnace, input.display, recipe);
         ItemStack fuelSlot = furnace.getItem(1);
         int existingBurn = fuelSlot.isEmpty() ? 0 : fuelSlot.getCount() * getBurnTime(fuelSlot);
         int requiredBurn = inputAmount * cookTime - existingBurn;
@@ -745,9 +758,9 @@ public class CraftsmanWorkGoal extends Goal {
 
     /** Fuel for a furnace that still holds input of this order but is out of fuel and not burning. */
     @Nullable
-    private Job evaluateRefuel(WorkshopArea area, CraftOrder order, SmeltingRecipe recipe, SlotMatcher[] matchers, List<ItemStack> snapshot) {
-        for (Map.Entry<BlockPos, FurnaceBlockEntity> entry : area.furnaceMap.entrySet()) {
-            FurnaceBlockEntity furnace = entry.getValue();
+    private Job evaluateRefuel(ServerLevel level, WorkshopArea area, CraftOrder order, SmeltingRecipe recipe, SlotMatcher[] matchers, List<ItemStack> snapshot) {
+        for (Map.Entry<BlockPos, AbstractFurnaceBlockEntity> entry : area.getAllFurnaces().entrySet()) {
+            AbstractFurnaceBlockEntity furnace = entry.getValue();
             ItemStack in = furnace.getItem(0);
             if (!matchers[0].test(in) || !furnace.getItem(1).isEmpty()) continue;
             BlockState furnaceState = furnace.getBlockState();
@@ -756,7 +769,7 @@ public class CraftsmanWorkGoal extends Goal {
             List<ItemStack> pool = copyPool(snapshot);
             ItemStack fuelItem = chooseFuel(pool);
             if (fuelItem == null) {
-                int coal = Math.max(1, (in.getCount() * Math.max(1, recipe.getCookingTime()) + 1599) / 1600);
+                int coal = Math.max(1, (in.getCount() * getFuelPerItem(level, furnace, in, recipe) + 1599) / 1600);
                 addMissingNeed(order, COAL_MATCHER, coal);
                 setStatus(area, order, CraftOrder.Status.MISSING_ITEMS, List.of(new ItemStack(Items.COAL, coal)));
                 return null;
@@ -765,7 +778,7 @@ public class CraftsmanWorkGoal extends Goal {
 
             int burn = Math.max(1, getBurnTime(fuelItem));
             SlotMatcher fuel = SlotMatcher.exact(fuelItem);
-            int requiredBurn = in.getCount() * Math.max(1, recipe.getCookingTime());
+            int requiredBurn = in.getCount() * getFuelPerItem(level, furnace, in, recipe);
             int fuelAmount = takeFromPool(pool, fuel, Math.min(fuelItem.getMaxStackSize(), (requiredBurn + burn - 1) / burn));
             if (fuelAmount <= 0) return null;
 
@@ -924,14 +937,19 @@ public class CraftsmanWorkGoal extends Goal {
         return true;
     }
 
-    private void loadFurnace(FurnaceBlockEntity furnace, @Nullable SlotMatcher input) {
+    private void loadFurnace(ServerLevel level, WorkshopArea area, AbstractFurnaceBlockEntity furnace, @Nullable SlotMatcher input) {
         SimpleContainer inventory = craftsman.getInventory();
         int inputLeft = input != null ? batch : 0;
         int fuelLeft = fuelMatcher != null ? fuelCount : 0;
 
+        // a blast furnace only gets items it can smelt into the product of the order (variants may differ)
+        CraftOrder order = getCurrentOrder(area);
+        boolean blast = furnace instanceof BlastFurnaceBlockEntity;
+
         for (int i = FIRST_INV_SLOT; i < inventory.getContainerSize() && inputLeft > 0; i++) {
             ItemStack stack = inventory.getItem(i);
             if (!input.test(stack)) continue;
+            if (blast && (order == null || !canBlast(level, stack, order.result))) continue;
             inputLeft -= moveIntoFurnaceSlot(furnace, 0, stack, inputLeft);
             inventory.setItem(i, stack.isEmpty() ? ItemStack.EMPTY : stack);
         }
@@ -948,7 +966,7 @@ public class CraftsmanWorkGoal extends Goal {
     }
 
     /** Moves up to max items of the stack into the furnace slot, the stack is shrunk. */
-    private int moveIntoFurnaceSlot(FurnaceBlockEntity furnace, int slot, ItemStack stack, int max) {
+    private int moveIntoFurnaceSlot(AbstractFurnaceBlockEntity furnace, int slot, ItemStack stack, int max) {
         ItemStack current = furnace.getItem(slot);
         if (current.isEmpty()) {
             int put = Math.min(max, Math.min(stack.getCount(), stack.getMaxStackSize()));
@@ -965,7 +983,7 @@ public class CraftsmanWorkGoal extends Goal {
 
     private int countPendingInFurnaces(WorkshopArea area, CraftOrder order, @Nullable SlotMatcher input, int perOutput) {
         int pending = 0;
-        for (FurnaceBlockEntity furnace : area.furnaceMap.values()) {
+        for (AbstractFurnaceBlockEntity furnace : area.getAllFurnaces().values()) {
             ItemStack in = furnace.getItem(0);
             ItemStack out = furnace.getItem(2);
             if (input != null && input.test(in)) pending += in.getCount() * perOutput;
@@ -1012,10 +1030,29 @@ public class CraftsmanWorkGoal extends Goal {
     }
 
     @Nullable
-    private FurnaceBlockEntity getFurnace(ServerLevel level, BlockPos pos) {
+    private AbstractFurnaceBlockEntity getFurnace(ServerLevel level, BlockPos pos) {
         BlockEntity be = level.getBlockEntity(pos);
-        if (be instanceof FurnaceBlockEntity furnace && !furnace.isRemoved()) return furnace;
+        if ((be instanceof FurnaceBlockEntity || be instanceof BlastFurnaceBlockEntity) && !be.isRemoved()) return (AbstractFurnaceBlockEntity) be;
         return null;
+    }
+
+    /** True if the blast furnace can smelt the item into the result of the order. */
+    private static boolean canBlast(ServerLevel level, ItemStack stack, ItemStack result) {
+        if (stack.isEmpty() || result.isEmpty()) return false;
+        Optional<BlastingRecipe> blasting = level.getRecipeManager().getRecipeFor(RecipeType.BLASTING, new SimpleContainer(stack.copyWithCount(1)), level);
+        return blasting.isPresent() && ItemStack.isSameItemSameTags(blasting.get().getResultItem(level.registryAccess()), result);
+    }
+
+    /**
+     * Fuel ticks one item needs. The blast furnace cooks twice as fast but also burns its fuel twice as fast,
+     * so per item it is the blasting cooking time times 2 (same as the smelting time for vanilla recipes).
+     */
+    private static int getFuelPerItem(ServerLevel level, AbstractFurnaceBlockEntity furnace, ItemStack input, SmeltingRecipe recipe) {
+        if (furnace instanceof BlastFurnaceBlockEntity && !input.isEmpty()) {
+            Optional<BlastingRecipe> blasting = level.getRecipeManager().getRecipeFor(RecipeType.BLASTING, new SimpleContainer(input.copyWithCount(1)), level);
+            if (blasting.isPresent()) return Math.max(1, blasting.get().getCookingTime() * 2);
+        }
+        return Math.max(1, recipe.getCookingTime());
     }
 
     // ── Item planning helpers ─────────────────────────────────────────────────
@@ -1541,8 +1578,7 @@ public class CraftsmanWorkGoal extends Goal {
 
     @Nullable
     private WorkshopArea findBestArea(ServerLevel level) {
-        List<WorkshopArea> areas = level.getEntitiesOfClass(
-                WorkshopArea.class, craftsman.getBoundingBox().inflate(64));
+        List<WorkshopArea> areas = craftsman.findWorkAreas(WorkshopArea.class, 64);
 
         WorkshopArea best = null;
         int bestScore    = -1;

@@ -88,6 +88,10 @@ public class BuildBlockParse {
                 || block == Blocks.FARMLAND) {
             return new BuildBlockParse(Item.BY_BLOCK.get(Blocks.DIRT), true);
         }
+        else if (block == Blocks.DIRT_PATH) {
+            // made with a shovel: material is dirt (only on air), the path itself is placed
+            return new BuildBlockParse(Item.BY_BLOCK.get(Blocks.DIRT), true, false);
+        }
         else if (block instanceof FlowerPotBlock) {
             return new BuildBlockParse(Item.BY_BLOCK.get(Blocks.FLOWER_POT), true);
         }

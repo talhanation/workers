@@ -299,7 +299,7 @@ public class LumberjackWorkGoal extends Goal {
     }
 
     public void setState(State state) {
-        if(lumberjack.getOwner() != null) lumberjack.getOwner().sendSystemMessage(Component.literal(state.toString()));
+        //if(lumberjack.getOwner() != null) lumberjack.getOwner().sendSystemMessage(Component.literal(state.toString()));
         this.state = state;
     }
 
@@ -520,7 +520,7 @@ public class LumberjackWorkGoal extends Goal {
     }
 
     public static List<LumberArea> getAvailableWorkAreasByPriority(ServerLevel level, LumberjackEntity lumberjack, @Nullable LumberArea currentArea) {
-        List<LumberArea> list = level.getEntitiesOfClass(LumberArea.class, lumberjack.getBoundingBox().inflate(64));
+        List<LumberArea> list = lumberjack.findWorkAreas(LumberArea.class, 64);
 
         Map<LumberArea, Integer> priorityMap = new HashMap<>();
 

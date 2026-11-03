@@ -373,6 +373,57 @@ public class MerchantEntity extends AbstractWorkerEntity implements ICanTradeEmb
         setTrades(currentTrades);
     }
 
+    // ── Governor API ──────────────────────────────────────────────────────────
+
+    @Nullable
+    public WorkersMerchantTrade findTrade(String sourceKey) {
+        if (sourceKey == null) return null;
+        for (WorkersMerchantTrade trade : getTrades()) {
+            if (sourceKey.equals(trade.sourceKey)) return trade;
+        }
+        return null;
+    }
+
+    /**
+     * Creates or updates the Governor trade with the given key. Progress (currentTrades) and the position in the list
+     * of an existing trade are kept, so the Governor can set the wanted amounts every check.
+     * Returns null if the trade is new and the merchant has no free trade slot (trader level).
+     */
+    @Nullable
+    public WorkersMerchantTrade upsertTrade(String sourceKey, WorkersMerchantTrade template) {
+        List<WorkersMerchantTrade> trades = new ArrayList<>(getTrades());
+        WorkersMerchantTrade trade = template.copy();
+        trade.source = WorkersMerchantTrade.Source.GOVERNOR;
+        trade.sourceKey = sourceKey;
+
+        for (int i = 0; i < trades.size(); i++) {
+            WorkersMerchantTrade existing = trades.get(i);
+            if (sourceKey.equals(existing.sourceKey)) {
+                trade.uuid = existing.uuid;
+                trade.currentTrades = existing.currentTrades;
+                // the player may have switched it off, the Governor does not switch it on again
+                trade.enabled = existing.enabled;
+                trades.set(i, trade);
+                setTrades(trades);
+                return trade;
+            }
+        }
+        if (trades.size() >= getMaxAvailableTrades()) return null;
+        trades.add(trade);
+        setTrades(trades);
+        return trade;
+    }
+
+    /** Removes all Governor trades whose key starts with the prefix, e.g. all trades of one claim. */
+    public int removeTradesBySource(String prefix) {
+        List<WorkersMerchantTrade> trades = new ArrayList<>(getTrades());
+        int before = trades.size();
+        trades.removeIf(trade -> trade.sourceKey != null && trade.sourceKey.startsWith(prefix));
+        int removed = before - trades.size();
+        if (removed > 0) setTrades(trades);
+        return removed;
+    }
+
     public void removeTrade(WorkersMerchantTrade trade) {
         if (trade == null) return;
         List<WorkersMerchantTrade> currents = getTrades();

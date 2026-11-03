@@ -163,6 +163,12 @@ public class MerchantTradeScreen extends ScreenBase<MerchantTradeContainer> {
 
             removeTradeButton = new ExtendedButton(leftPos + 186, topPos + 77, 60, 18, BUTTON_REMOVE,
                     button -> {
+                        // Governor trades can not be removed, only switched on and off
+                        if (selection.isGovernorTrade()) {
+                            selection.enabled = !selection.enabled;
+                            WorkersMain.SIMPLE_CHANNEL.sendToServer(new MessageUpdateMerchantTrade(merchantEntity.getUUID(), selection, false));
+                            return;
+                        }
                         tradeList.children().removeIf(tradeEntry -> tradeEntry.trade.uuid.equals(selection.uuid));
                         WorkersMain.SIMPLE_CHANNEL.sendToServer(new MessageUpdateMerchantTrade(merchantEntity.getUUID(), selection, true));
                         this.selection = null;
@@ -352,11 +358,15 @@ public class MerchantTradeScreen extends ScreenBase<MerchantTradeContainer> {
     }
 
     public void updateButtonState(){
+        boolean governorTrade = selection != null && selection.isGovernorTrade();
         if(addEditTradeButton != null){
             this.addEditTradeButton.setMessage(selection != null ? BUTTON_EDIT : BUTTON_ADD);
+            this.addEditTradeButton.active = !governorTrade;
         }
         if(removeTradeButton != null){
             removeTradeButton.active = selection != null;
+            removeTradeButton.setMessage(governorTrade ? Component.translatable("gui.workers.button.onOff") : BUTTON_REMOVE);
+            removeTradeButton.setTooltip(governorTrade ? Tooltip.create(Component.translatable("gui.workers.merchant.tooltip.governorTrade")) : null);
         }
         if(copyTradeButton != null){
             copyTradeButton.active = selection != null;
@@ -561,6 +571,11 @@ public class MerchantTradeScreen extends ScreenBase<MerchantTradeContainer> {
                 }
 
                 guiGraphics.setColor(1.0F, 1.0F, 1.0F, 1.0F);
+
+                // Governor trades: small gold mark in the corner
+                if (trade.isGovernorTrade()) {
+                    guiGraphics.drawString(font, "G", rowLeft + rowWidth - 7, top + 1, 0xFFD700, true);
+                }
             }
 
             @Override

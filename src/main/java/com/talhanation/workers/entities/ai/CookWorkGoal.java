@@ -1328,8 +1328,7 @@ public class CookWorkGoal extends Goal {
 
     @Nullable
     private KitchenArea findBestArea(ServerLevel level) {
-        List<KitchenArea> areas = level.getEntitiesOfClass(
-                KitchenArea.class, cook.getBoundingBox().inflate(64));
+        List<KitchenArea> areas = cook.findWorkAreas(KitchenArea.class, 64);
 
         KitchenArea best = null;
         int bestScore    = -1;

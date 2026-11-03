@@ -34,6 +34,8 @@ public class WorkersServerConfig {
     public static ForgeConfigSpec.DoubleValue BuildingDefaultMaterialPrice;
     public static ForgeConfigSpec.ConfigValue<List<String>> BuildingMaterialPrices;
     public static ForgeConfigSpec.ConfigValue<List<String>> BuildingBlockedMaterials;
+    public static ForgeConfigSpec.IntValue FoundationMaxFillDepth;
+    public static ForgeConfigSpec.IntValue FoundationMaxCutHeight;
     public static ForgeConfigSpec.ConfigValue<List<String>> MinerPickup;
     public static ForgeConfigSpec.ConfigValue<List<String>> MinerIgnore;
     public static ForgeConfigSpec.ConfigValue<List<String>> FarmerPickup;
@@ -466,6 +468,19 @@ public class WorkersServerConfig {
                         \t(takes effect after restart)""")
                 .worldRestart()
                 .define("BuildingBlockedMaterials", BUILDING_BLOCKED_MATERIALS);
+
+        FoundationMaxFillDepth = BUILDER.comment("""
+
+                        Foundation mode: how deep the builder fills holes under a building (air and plants, never fluids).
+                        A column that reaches no ground within this depth becomes a pillar of non-falling blocks.
+                        \tdefault: 8""")
+                .defineInRange("FoundationMaxFillDepth", 8, 0, 64);
+
+        FoundationMaxCutHeight = BUILDER.comment("""
+
+                        Foundation mode: how many blocks above the top of a building the builder removes terrain (hills, tree trunks).
+                        \tdefault: 8""")
+                .defineInRange("FoundationMaxCutHeight", 8, 0, 64);
 
         WorkersReplaceAllay = BUILDER.comment("""
                         

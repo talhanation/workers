@@ -5,6 +5,7 @@ import com.talhanation.workers.world.VillagerPriceTable;
 import com.talhanation.workers.world.WorkersMerchantTrade;
 import de.maxhenkel.corelib.net.Message;
 import net.minecraft.nbt.CompoundTag;
+import net.minecraft.network.chat.Component;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraftforge.api.distmarker.Dist;
@@ -39,16 +40,35 @@ public class MessageUpdateMerchantTrade implements Message<MessageUpdateMerchant
                         .equals(this.merchantUuid))
                 .stream()
                 .findAny()
-                .ifPresent(this::update);
+                .ifPresent(merchant -> this.update(player, merchant));
 
     }
 
-    public void update(MerchantEntity merchant){
+    public void update(ServerPlayer player, MerchantEntity merchant){
+        WorkersMerchantTrade incoming = WorkersMerchantTrade.fromNbt(nbt);
+        WorkersMerchantTrade existing = null;
+        for(WorkersMerchantTrade t : merchant.getTrades()){
+            if(t.uuid.equals(incoming.uuid)) existing = t;
+        }
+        // Governor trades can only be switched on and off by players
+        if(existing != null && existing.isGovernorTrade()){
+            if(remove || existing.enabled == incoming.enabled){
+                player.sendSystemMessage(Component.translatable("chat.workers.merchant.governorTradeLocked"));
+                return;
+            }
+            existing.enabled = incoming.enabled;
+            merchant.addOrUpdateTrade(existing);
+            return;
+        }
+
         if(remove){
             merchant.removeTrade(WorkersMerchantTrade.fromNbt(nbt));
         }
         else{
-            WorkersMerchantTrade trade = WorkersMerchantTrade.fromNbt(nbt);
+            WorkersMerchantTrade trade = incoming;
+            // never trust the client: trades from the GUI are always player trades
+            trade.source = WorkersMerchantTrade.Source.PLAYER;
+            trade.sourceKey = null;
             if(trade.isVillagerTrade) {
                 // the villager currency can not be the trade item, villager trades always pay with it
                 if(trade.tradeItem.is(VillagerPriceTable.getCurrency())) return;

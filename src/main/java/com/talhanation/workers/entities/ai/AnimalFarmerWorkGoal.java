@@ -475,7 +475,7 @@ public class AnimalFarmerWorkGoal extends Goal {
     }
 
     public static List<AnimalPenArea> getAvailableWorkAreasByPriority(ServerLevel level, AnimalFarmerEntity animalFarmerEntity, @Nullable AnimalPenArea currentArea) {
-        List<AnimalPenArea> list = level.getEntitiesOfClass(AnimalPenArea.class, animalFarmerEntity.getBoundingBox().inflate(64));
+        List<AnimalPenArea> list = animalFarmerEntity.findWorkAreas(AnimalPenArea.class, 64);
 
         Map<AnimalPenArea, Integer> priorityMap = new HashMap<>();
 
