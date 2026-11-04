@@ -177,6 +177,7 @@ public class WorkersMain {
             event.accept(ModItems.COURIER_SPAWN_EGG.get());
             event.accept(ModItems.COOK_SPAWN_EGG.get());
             event.accept(ModItems.CRAFTSMAN_SPAWN_EGG.get());
+            event.accept(ModItems.STOREKEEPER_SPAWN_EGG.get());
         }
     }
 }

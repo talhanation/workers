@@ -19,6 +19,7 @@ public class WorkersServerConfig {
     public static ForgeConfigSpec.IntValue CourierCost;
     public static ForgeConfigSpec.IntValue CookCost;
     public static ForgeConfigSpec.IntValue CraftsmanCost;
+    public static ForgeConfigSpec.IntValue StorekeeperCost;
     public static ForgeConfigSpec.IntValue FishermanCost;
     public static ForgeConfigSpec.IntValue AnimalFarmerCost;
     public static ForgeConfigSpec.ConfigValue<List<? extends Integer>> CraftsmanMoraleTicks;
@@ -331,6 +332,14 @@ public class WorkersServerConfig {
                         \tdefault: 30""")
                 .worldRestart()
                 .defineInRange("CraftsmanCost", 30, 0, 1453);
+
+        StorekeeperCost = BUILDER.comment("""
+                        
+                        The amount of currency required to hire a storekeeper.
+                        \t(takes effect after restart)
+                        \tdefault: 20""")
+                .worldRestart()
+                .defineInRange("StorekeeperCost", 20, 0, 1453);
 
         FishermanCost = BUILDER.comment("""
                         

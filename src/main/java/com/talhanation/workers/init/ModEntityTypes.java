@@ -153,6 +153,14 @@ public class ModEntityTypes {
                         .setShouldReceiveVelocityUpdates(true)
                         .build(new ResourceLocation(WorkersMain.MOD_ID, "craftsman").toString()));
 
+       public static final RegistryObject<EntityType<StorekeeperEntity>> STOREKEEPER = WORKER_TYPES.register("storekeeper",
+                () -> EntityType.Builder.of(StorekeeperEntity::new, MobCategory.CREATURE)
+                        .sized(0.6F, 1.95F)
+                        .canSpawnFarFromPlayer()
+                        .setTrackingRange(32)
+                        .setShouldReceiveVelocityUpdates(true)
+                        .build(new ResourceLocation(WorkersMain.MOD_ID, "storekeeper").toString()));
+
        public static final RegistryObject<EntityType<FishingBobberEntity>> FISHING_BOBBER = ENTITY_TYPES.register("fishing_bobber",
                         () -> EntityType.Builder.<FishingBobberEntity>of(FishingBobberEntity::new, MobCategory.MISC)
                                 .sized(0.25F, 0.25F)

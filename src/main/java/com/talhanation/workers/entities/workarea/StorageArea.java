@@ -5,6 +5,9 @@ import com.talhanation.workers.entities.*;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.core.BlockPos;
 import net.minecraft.nbt.CompoundTag;
+import net.minecraft.nbt.ListTag;
+import net.minecraft.nbt.NbtUtils;
+import net.minecraft.nbt.Tag;
 import net.minecraft.network.syncher.EntityDataAccessor;
 import net.minecraft.network.syncher.EntityDataSerializers;
 import net.minecraft.network.syncher.SynchedEntityData;
@@ -19,12 +22,19 @@ import net.minecraft.world.level.block.state.BlockState;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
 
+import javax.annotation.Nullable;
 import java.util.*;
 
 public class StorageArea extends AbstractWorkAreaEntity implements IPermissionArea, Container {
 
     public static final EntityDataAccessor<Integer> STORAGE_TYPES = SynchedEntityData.defineId(StorageArea.class, EntityDataSerializers.INT);
-    public Map<BlockPos, Container> storageMap = new HashMap<>();
+    public Map<BlockPos, Container> storageMap = new LinkedHashMap<>();
+    /** Storekeeper order: which chest holds which category or item, see StorageSorter. Saved. */
+    private final Map<BlockPos, String> chestLabels = new HashMap<>();
+    /** Items with their own chests, worked out on every plan of the storekeeper. Not saved. */
+    private final Set<Item> dedicatedItems = new HashSet<>();
+    /** The storekeeper of this storage, one per storage. Saved. */
+    @Nullable private UUID storekeeperUUID;
 
     public StorageArea(EntityType<?> type, Level level) {
         super(type, level);
@@ -39,12 +49,30 @@ public class StorageArea extends AbstractWorkAreaEntity implements IPermissionAr
     public void readAdditionalSaveData(CompoundTag tag) {
         super.readAdditionalSaveData(tag);
         if (tag.contains("StorageTypes")) this.entityData.set(STORAGE_TYPES, tag.getInt("StorageTypes"));
+
+        chestLabels.clear();
+        ListTag labels = tag.getList("ChestLabels", Tag.TAG_COMPOUND);
+        for (int i = 0; i < labels.size(); i++) {
+            CompoundTag entry = labels.getCompound(i);
+            chestLabels.put(NbtUtils.readBlockPos(entry.getCompound("Pos")), entry.getString("Label"));
+        }
+        this.storekeeperUUID = tag.hasUUID("Storekeeper") ? tag.getUUID("Storekeeper") : null;
     }
 
     @Override
     public void addAdditionalSaveData(CompoundTag tag) {
         super.addAdditionalSaveData(tag);
         tag.putInt("StorageTypes", this.entityData.get(STORAGE_TYPES));
+
+        ListTag labels = new ListTag();
+        for (Map.Entry<BlockPos, String> entry : chestLabels.entrySet()) {
+            CompoundTag nbt = new CompoundTag();
+            nbt.put("Pos", NbtUtils.writeBlockPos(entry.getKey()));
+            nbt.putString("Label", entry.getValue());
+            labels.add(nbt);
+        }
+        tag.put("ChestLabels", labels);
+        if (storekeeperUUID != null) tag.putUUID("Storekeeper", storekeeperUUID);
     }
 
     public Item getRenderItem(){
@@ -72,6 +100,28 @@ public class StorageArea extends AbstractWorkAreaEntity implements IPermissionAr
                 }
             }
         });
+    }
+
+    public Map<BlockPos, String> getChestLabels() {
+        return chestLabels;
+    }
+
+    @Nullable
+    public String getChestLabel(BlockPos pos) {
+        return chestLabels.get(pos);
+    }
+
+    public Set<Item> getDedicatedItems() {
+        return dedicatedItems;
+    }
+
+    @Nullable
+    public UUID getStorekeeperUUID() {
+        return storekeeperUUID;
+    }
+
+    public void setStorekeeperUUID(@Nullable UUID uuid) {
+        this.storekeeperUUID = uuid;
     }
 
     public int getStorageMask(EnumSet<StorageType> types){
@@ -211,6 +261,9 @@ public class StorageArea extends AbstractWorkAreaEntity implements IPermissionAr
             }
             else if( worker instanceof CraftsmanEntity){
                 return this.getStorageTypes().contains(StorageType.CRAFTSMAN);
+            }
+            else if( worker instanceof StorekeeperEntity){
+                return true;
             }
         }
         return false;

@@ -63,6 +63,7 @@ public class VillagerEvents {
     public static final Component TITLE_COURIER = Component.translatable("description.workers.title.courier");
     public static final Component TITLE_COOK    = Component.translatable("description.workers.title.cook");
     public static final Component TITLE_CRAFTSMAN = Component.translatable("description.workers.title.craftsman");
+    public static final Component TITLE_STOREKEEPER = Component.translatable("description.workers.title.storekeeper");
     public static final Component DESCRIPTION_FARMER = Component.translatable("description.workers.farmer");
     public static final Component DESCRIPTION_MINER = Component.translatable("description.workers.miner");
     public static final Component DESCRIPTION_LUMBERJACK = Component.translatable("description.workers.lumberjack");
@@ -73,6 +74,7 @@ public class VillagerEvents {
     public static final Component DESCRIPTION_COURIER = Component.translatable("description.workers.courier");
     public static final Component DESCRIPTION_COOK    = Component.translatable("description.workers.cook");
     public static final Component DESCRIPTION_CRAFTSMAN = Component.translatable("description.workers.craftsman");
+    public static final Component DESCRIPTION_STOREKEEPER = Component.translatable("description.workers.storekeeper");
 
     @SubscribeEvent
     public void onPlayerJoinWorld(EntityJoinLevelEvent event) {
@@ -122,26 +124,27 @@ public class VillagerEvents {
         RecruitsHireTrade COURIER = new RecruitsHireTrade(ModEntityTypes.COURIER.getId(), WorkersServerConfig.CourierCost.get(), TITLE_COURIER, DESCRIPTION_COURIER);
         RecruitsHireTrade COOK    = new RecruitsHireTrade(ModEntityTypes.COOK.getId(), WorkersServerConfig.CookCost.get(), TITLE_COOK, DESCRIPTION_COOK);
         RecruitsHireTrade CRAFTSMAN = new RecruitsHireTrade(ModEntityTypes.CRAFTSMAN.getId(), WorkersServerConfig.CraftsmanCost.get(), TITLE_CRAFTSMAN, DESCRIPTION_CRAFTSMAN);
+        RecruitsHireTrade STOREKEEPER = new RecruitsHireTrade(ModEntityTypes.STOREKEEPER.getId(), WorkersServerConfig.StorekeeperCost.get(), TITLE_STOREKEEPER, DESCRIPTION_STOREKEEPER);
 
 
         RecruitsHireTradesRegistry.addTrade("workers", 1, FARMER, LUMBERJACK);
-        RecruitsHireTradesRegistry.addTrade("workers", 2, COURIER, COOK);
+        RecruitsHireTradesRegistry.addTrade("workers", 2, COURIER, COOK, STOREKEEPER);
         RecruitsHireTradesRegistry.addTrade("workers", 3, MERCHANT, BUILDER, CRAFTSMAN);
 
         RecruitsHireTradesRegistry.addTrade("workers2", 1, FARMER, MINER);
-        RecruitsHireTradesRegistry.addTrade("workers2", 2, COURIER);
+        RecruitsHireTradesRegistry.addTrade("workers2", 2, COURIER, STOREKEEPER);
         RecruitsHireTradesRegistry.addTrade("workers2", 3, MERCHANT, BUILDER, CRAFTSMAN); //miner village: ores for the craftsman
 
         RecruitsHireTradesRegistry.addTrade("workers3", 1, FARMER, ANIMAL_FARMER);
-        RecruitsHireTradesRegistry.addTrade("workers3", 2, COURIER, COOK);
+        RecruitsHireTradesRegistry.addTrade("workers3", 2, COURIER, COOK, STOREKEEPER);
         RecruitsHireTradesRegistry.addTrade("workers3", 3, MERCHANT, BUILDER);
 
         RecruitsHireTradesRegistry.addTrade("workers4", 1, FARMER, FISHERMAN);
-        RecruitsHireTradesRegistry.addTrade("workers4", 2, COURIER, COOK);
+        RecruitsHireTradesRegistry.addTrade("workers4", 2, COURIER, COOK, STOREKEEPER);
         RecruitsHireTradesRegistry.addTrade("workers4", 3, MERCHANT, BUILDER);
 
         RecruitsHireTradesRegistry.addTrade("workers5", 1, MINER, LUMBERJACK);
-        RecruitsHireTradesRegistry.addTrade("workers5", 2, BUILDER, COURIER);
+        RecruitsHireTradesRegistry.addTrade("workers5", 2, BUILDER, COURIER, STOREKEEPER);
         RecruitsHireTradesRegistry.addTrade("workers5", 3, MERCHANT, CRAFTSMAN);
     }
 
