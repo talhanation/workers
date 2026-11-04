@@ -19,9 +19,11 @@ import net.minecraft.world.item.*;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.pathfinder.BlockPathTypes;
+import net.minecraft.world.phys.AABB;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
 
+import java.util.List;
 import java.util.Stack;
 
 public class AnimalPenArea extends AbstractWorkAreaEntity {
@@ -31,6 +33,9 @@ public class AnimalPenArea extends AbstractWorkAreaEntity {
     public static final EntityDataAccessor<Boolean> BREED = SynchedEntityData.defineId(AnimalPenArea.class, EntityDataSerializers.BOOLEAN);
     public static final EntityDataAccessor<Boolean> SPECIAL = SynchedEntityData.defineId(AnimalPenArea.class, EntityDataSerializers.BOOLEAN);
     public static final EntityDataAccessor<Integer> MAX_ANIMALS = SynchedEntityData.defineId(AnimalPenArea.class, EntityDataSerializers.INT);
+    public static final EntityDataAccessor<Boolean> GATHER = SynchedEntityData.defineId(AnimalPenArea.class, EntityDataSerializers.BOOLEAN);
+    /** Animals of the pen's type this far around the pen are brought in with a lead. */
+    public static final int GATHER_RANGE = 32;
 
     public Stack<Animal> animalsToBreed = new Stack<>();
     public Stack<Animal> animalsForSpecialTask = new Stack<>();
@@ -48,6 +53,7 @@ public class AnimalPenArea extends AbstractWorkAreaEntity {
         this.entityData.define(BREED, true);
         this.entityData.define(SLAUGHTER, true);
         this.entityData.define(SPECIAL, true);
+        this.entityData.define(GATHER, true);
     }
 
     @Override
@@ -57,6 +63,8 @@ public class AnimalPenArea extends AbstractWorkAreaEntity {
         this.setBreed(tag.getBoolean("breed"));
         this.setSpecial(tag.getBoolean("special"));
         this.setMaxAnimals(tag.getInt("maxAnimals"));
+        // pens saved before this option gather too
+        if(tag.contains("gather")) this.setGather(tag.getBoolean("gather"));
 
         this.setAnimalType(AnimalTypes.fromIndex(tag.getInt("animalType")));
 
@@ -70,6 +78,7 @@ public class AnimalPenArea extends AbstractWorkAreaEntity {
         tag.putBoolean("breed", getBreed());
         tag.putBoolean("special", getSpecial());
         tag.putInt("maxAnimals", getMaxAnimals());
+        tag.putBoolean("gather", getGather());
 
         tag.putInt("animalType", this.getAnimalType().getIndex());
 
@@ -131,6 +140,10 @@ public class AnimalPenArea extends AbstractWorkAreaEntity {
         this.entityData.set(BREED, bool);
     }
 
+    public void setGather(boolean bool){
+        this.entityData.set(GATHER, bool);
+    }
+
     public void setMaxAnimals(int max){
         this.entityData.set(MAX_ANIMALS, Math.min(max, 64));
     }
@@ -154,6 +167,47 @@ public class AnimalPenArea extends AbstractWorkAreaEntity {
 
     public int getMaxAnimals(){
         return this.entityData.get(MAX_ANIMALS);
+    }
+
+    public boolean getGather() {
+        return this.entityData.get(GATHER);
+    }
+
+    /** All animals of the pen's type in the pen, babies included. */
+    public int countAnimals(){
+        if(area == null) area = this.getArea();
+
+        return this.getCommandSenderWorld().getEntitiesOfClass(Animal.class, area, this::isCorrectAnimal).size();
+    }
+
+    /** Where the animal farmer looks for animals to bring into the pen (the task, not on the way). */
+    public AABB getGatherRange(){
+        if(area == null) area = this.getArea();
+
+        return area.inflate(GATHER_RANGE, 8, GATHER_RANGE);
+    }
+
+    /** Animals of the pen's type in the range that are not in a pen and belong to nobody. */
+    public List<Animal> getAnimalsToGather(AABB range){
+        List<AnimalPenArea> pens = this.getCommandSenderWorld().getEntitiesOfClass(AnimalPenArea.class, range.inflate(64));
+        return this.getCommandSenderWorld().getEntitiesOfClass(Animal.class, range, animal -> canBeGathered(animal, pens));
+    }
+
+    /** Checked again before the animal is taken: it may have been leashed, ridden or brought into a pen meanwhile. */
+    public boolean canBeGathered(Animal animal){
+        return canBeGathered(animal, this.getCommandSenderWorld().getEntitiesOfClass(AnimalPenArea.class, animal.getBoundingBox().inflate(64)));
+    }
+
+    private boolean canBeGathered(Animal animal, List<AnimalPenArea> pens){
+        if(!animal.isAlive() || !isCorrectAnimal(animal)) return false;
+        // pets and animals somebody uses stay where they are
+        if(animal.isLeashed() || animal.isVehicle() || animal.isPassenger() || animal.hasCustomName()) return false;
+        if(animal instanceof AbstractHorse horse && horse.isTamed()) return false;
+        // already in this or another pen
+        for(AnimalPenArea pen : pens){
+            if(pen.getArea().contains(animal.position())) return false;
+        }
+        return true;
     }
 
     public void scanAnimalSlaughter(){

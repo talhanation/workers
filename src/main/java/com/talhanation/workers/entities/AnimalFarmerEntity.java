@@ -100,6 +100,11 @@ public class AnimalFarmerEntity extends AbstractWorkerEntity{
             int items = countMatchingItems(stack -> stack.getItem() instanceof AxeItem);
             return items <= 1;
         }
+        //one lead to bring animals into the pen
+        if (itemStack.is(Items.LEAD)) {
+            int items = countMatchingItems(stack -> stack.is(Items.LEAD));
+            return items <= 1;
+        }
         if(currentAnimalPen != null) {
             ItemStack breedItem = currentAnimalPen.getAnimalType().getBreedItem().getDefaultInstance();
             if(ItemStack.isSameItem(breedItem, itemStack)){
@@ -116,6 +121,8 @@ public class AnimalFarmerEntity extends AbstractWorkerEntity{
         if(WorkersServerConfig.AnimalFarmerPickup.get().contains(id.toString())) return true;
 
         if(itemStack.is(ItemTags.WOOL)) return true;
+        //a lead that broke while bringing an animal
+        if(itemStack.is(Items.LEAD)) return true;
 
         return super.wantsToPickUp(itemStack);
     }

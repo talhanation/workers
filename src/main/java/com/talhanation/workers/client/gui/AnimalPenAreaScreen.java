@@ -8,6 +8,7 @@ import com.talhanation.workers.entities.workarea.AnimalPenArea;
 import com.talhanation.workers.network.MessageUpdateAnimalPenArea;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.components.Button;
+import net.minecraft.client.gui.components.Tooltip;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.MutableComponent;
 import net.minecraft.util.FastColor;
@@ -28,6 +29,8 @@ public class AnimalPenAreaScreen extends WorkAreaScreen {
     private static final MutableComponent TEXT_SHEAR_SHEEP = Component.translatable("gui.workers.checkbox.shearSheep");
     private static final MutableComponent TEXT_MILK_COW = Component.translatable("gui.workers.checkbox.milkCow");
     private static final MutableComponent TEXT_THROW_EGGS = Component.translatable("gui.workers.checkbox.throwEggs");
+    private static final MutableComponent TEXT_GATHER = Component.translatable("gui.workers.checkbox.gatherAnimals");
+    private static final MutableComponent TOOLTIP_GATHER = Component.translatable("gui.workers.checkbox.tooltip.gatherAnimals");
     private MutableComponent TEXT_SPECIAL = Component.empty();
     public final AnimalPenArea animalPenArea;
     private ScrollDropDownMenu<AnimalPenArea.AnimalTypes> animalTypesScrollDropDownMenu;
@@ -35,6 +38,7 @@ public class AnimalPenAreaScreen extends WorkAreaScreen {
     private boolean breed;
     private boolean slaughter;
     private boolean special;
+    private boolean gather;
     private int maxAnimals;
     private Button maxAnimalsPlusButton;
     private Button maxAnimalsMinusButton;
@@ -42,6 +46,8 @@ public class AnimalPenAreaScreen extends WorkAreaScreen {
     private RecruitsCheckBox breedCheckBox;
     private RecruitsCheckBox slaughterCheckBox;
     private RecruitsCheckBox specialCheckBox;
+    private RecruitsCheckBox gatherCheckBox;
+    private int gatherCheckBoxY;
     private BlackShowingTextField maxAnimalShowField;
     public AnimalPenAreaScreen(AnimalPenArea animalPenArea, Player player) {
         super(animalPenArea.getCustomName(), animalPenArea, player);
@@ -50,6 +56,7 @@ public class AnimalPenAreaScreen extends WorkAreaScreen {
         this.special = animalPenArea.getSpecial();
         this.slaughter = animalPenArea.getSlaughter();
         this.breed = animalPenArea.getBreed();
+        this.gather = animalPenArea.getGather();
         this.maxAnimals = animalPenArea.getMaxAnimals();
     }
 
@@ -139,6 +146,18 @@ public class AnimalPenAreaScreen extends WorkAreaScreen {
                 }
         );
         addRenderableWidget(specialCheckBox);
+
+        // below the special task, moves up when the animal has none (see checkSpecialCheckBox)
+        this.gatherCheckBoxY = 110 + checkBoxY;
+        this.gatherCheckBox = new RecruitsCheckBox(checkBoxX, gatherCheckBoxY, checkBoxWidth, checkBoxHeight, TEXT_GATHER,
+                this.gather,
+                (bool) -> {
+                    this.gather = bool;
+                    sendUpdate();
+                }
+        );
+        this.gatherCheckBox.setTooltip(Tooltip.create(TOOLTIP_GATHER));
+        addRenderableWidget(gatherCheckBox);
         checkSpecialCheckBox();
     }
 
@@ -152,7 +171,7 @@ public class AnimalPenAreaScreen extends WorkAreaScreen {
     }
 
     public void sendUpdate(){
-        WorkersMain.SIMPLE_CHANNEL.sendToServer(new MessageUpdateAnimalPenArea(animalPenArea.getUUID(), animalType, breed, slaughter, special, maxAnimals));
+        WorkersMain.SIMPLE_CHANNEL.sendToServer(new MessageUpdateAnimalPenArea(animalPenArea.getUUID(), animalType, breed, slaughter, special, gather, maxAnimals));
     }
 
 
@@ -175,6 +194,7 @@ public class AnimalPenAreaScreen extends WorkAreaScreen {
         specialCheckBox.active = active;
         specialCheckBox.visible = active;
         specialCheckBox.setMessage(TEXT_SPECIAL);
+        if(gatherCheckBox != null) gatherCheckBox.setY(active ? gatherCheckBoxY + 20 : gatherCheckBoxY);
     }
 
     private List<ItemStack> getPossibleAnimalTypes() {

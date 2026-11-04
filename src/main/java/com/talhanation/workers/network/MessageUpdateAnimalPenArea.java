@@ -19,16 +19,18 @@ public class MessageUpdateAnimalPenArea implements Message<MessageUpdateAnimalPe
     public boolean slaughter;
     public boolean breed;
     public boolean special;
+    public boolean gather;
     public int maxAnimals;
     public int animalTypeIndex;
     public MessageUpdateAnimalPenArea() {
     }
-    public MessageUpdateAnimalPenArea(UUID uuid, AnimalPenArea.AnimalTypes animalType, boolean breed, boolean slaughter, boolean special, int maxAnimals) {
+    public MessageUpdateAnimalPenArea(UUID uuid, AnimalPenArea.AnimalTypes animalType, boolean breed, boolean slaughter, boolean special, boolean gather, int maxAnimals) {
         this.uuid = uuid;
         this.animalTypeIndex = animalType.getIndex();
         this.breed = breed;
         this.slaughter = slaughter;
         this.special = special;
+        this.gather = gather;
         this.maxAnimals = maxAnimals;
     }
 
@@ -55,6 +57,7 @@ public class MessageUpdateAnimalPenArea implements Message<MessageUpdateAnimalPe
         animalPenArea.setSlaughter(this.slaughter);
         animalPenArea.setBreed(this.breed);
         animalPenArea.setSpecial(this.special);
+        animalPenArea.setGather(this.gather);
         animalPenArea.setAnimalType(AnimalPenArea.AnimalTypes.fromIndex(this.animalTypeIndex));
 
         animalPenArea.time += DONE_TIME;
@@ -65,6 +68,7 @@ public class MessageUpdateAnimalPenArea implements Message<MessageUpdateAnimalPe
         this.slaughter = buf.readBoolean();
         this.breed = buf.readBoolean();
         this.special = buf.readBoolean();
+        this.gather = buf.readBoolean();
         this.maxAnimals = buf.readInt();
         this.animalTypeIndex = buf.readInt();
         return this;
@@ -75,6 +79,7 @@ public class MessageUpdateAnimalPenArea implements Message<MessageUpdateAnimalPe
         buf.writeBoolean(slaughter);
         buf.writeBoolean(breed);
         buf.writeBoolean(special);
+        buf.writeBoolean(gather);
         buf.writeInt(maxAnimals);
         buf.writeInt(animalTypeIndex);
     }
