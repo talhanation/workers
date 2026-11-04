@@ -116,6 +116,12 @@ public class BuilderEntity extends AbstractWorkerEntity{
                 int items = countMatchingItems(stack -> stack.is(itemStack.getItem()));
                 return items <= Math.min(remaining, 64);
             }
+            //Finished items (red_carpet) taken from the storage instead of the base material are kept too
+            int finished = currentBuildArea.getRemainingFinishedItemCount(itemStack.getItem());
+            if (finished > 0) {
+                int items = countMatchingItems(stack -> stack.is(itemStack.getItem()));
+                return items <= Math.min(finished, 64);
+            }
         }
 
         return super.wantsToKeep(itemStack);

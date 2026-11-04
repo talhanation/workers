@@ -85,6 +85,8 @@ public class BuildArea extends AbstractWorkAreaEntity {
     /** Server-side cache: base material -> count still needed for stackToPlace. null = dirty. */
     @Nullable
     private Map<Item, Integer> remainingMaterials;
+    /** Server-side cache: finished item (red_carpet) -> count still needed for stackToPlace. null = dirty. */
+    private Map<Item, Integer> remainingFinishedItems;
     public BuildArea(EntityType<?> type, Level level) {
         super(type, level);
     }
@@ -94,7 +96,7 @@ public class BuildArea extends AbstractWorkAreaEntity {
         this.entityData.define(STRUCTURE, new CompoundTag());
         this.entityData.define(ALWAYS_SHOW_PROJECTION, false);
         this.entityData.define(CURRENCY_PRICE, 0);
-        this.entityData.define(FOUNDATION, false);
+        this.entityData.define(FOUNDATION, true);
         this.entityData.define(FILL_ITEM, ItemStack.EMPTY);
         this.entityData.define(BUILD_STATUS, BuildStatus.NONE.ordinal());
         this.entityData.define(BUILDER_NAME, "");
@@ -111,7 +113,8 @@ public class BuildArea extends AbstractWorkAreaEntity {
         this.setCurrencyPrice(tag.getInt("currencyPrice"));
         this.paidWithCurrency = tag.getBoolean("paidWithCurrency");
         this.restorePaidBuild = this.paidWithCurrency;
-        this.setFoundation(tag.getBoolean("foundation"));
+        // on by default, also for areas saved before the setting existed
+        this.setFoundation(!tag.contains("foundation") || tag.getBoolean("foundation"));
         this.spawnWorkAreas = !tag.contains("spawnWorkAreas") || tag.getBoolean("spawnWorkAreas");
         this.governorClaim = tag.hasUUID("governorClaim") ? tag.getUUID("governorClaim") : null;
         this.setFillItem(tag.contains("fillItem") ? ItemStack.of(tag.getCompound("fillItem")) : ItemStack.EMPTY);
@@ -191,6 +194,7 @@ public class BuildArea extends AbstractWorkAreaEntity {
         stackToPlace.clear();
         stackToPlaceMultiBlock.clear();
         this.remainingMaterials = null;
+        this.remainingFinishedItems = null;
         this.freeAreaDone = false;
 
         CompoundTag tag = getStructureNBT();
@@ -398,6 +402,22 @@ public class BuildArea extends AbstractWorkAreaEntity {
         this.entityData.set(FILL_ITEM, stack == null ? ItemStack.EMPTY : stack.copyWithCount(1));
     }
 
+    /** Fill blocks the player can choose for the foundation, in this order. Empty = auto (from the ground). */
+    public static final List<Item> FILL_PALETTE = List.of(Items.DIRT, Items.SAND, Items.STONE, Items.COBBLESTONE, Items.RED_SAND, Items.SNOW_BLOCK, Items.ICE);
+
+    /** Next fill block of the palette: auto, dirt, sand, ... ice, auto. Back = the other way round. */
+    public static ItemStack cycleFillItem(ItemStack current, boolean back) {
+        int index = current == null || current.isEmpty() ? -1 : FILL_PALETTE.indexOf(current.getItem());
+        int size = FILL_PALETTE.size() + 1; // + auto
+        int next = Math.floorMod(index + 1 + (back ? -1 : 1), size) - 1;
+        return next < 0 ? ItemStack.EMPTY : new ItemStack(FILL_PALETTE.get(next));
+    }
+
+    /** Only auto or a block of the palette (the server does not trust the client). */
+    public static boolean isValidFillItem(ItemStack stack) {
+        return stack == null || stack.isEmpty() || FILL_PALETTE.contains(stack.getItem());
+    }
+
     @Nullable
     private BlockState getFillOverride() {
         ItemStack stack = this.getFillItem();
@@ -582,6 +602,25 @@ public class BuildArea extends AbstractWorkAreaEntity {
         return getRemainingMaterialMap().getOrDefault(item, 0);
     }
 
+    /**
+     * Finished items (red_carpet) of the blocks not placed yet, whose base material (red_wool) is consumed.
+     * The builder may use them instead of the base material, see {@link BuildBlockParse#getFinishedItem}.
+     */
+    public Map<Item, Integer> getRemainingFinishedItemMap() {
+        if (remainingFinishedItems == null) {
+            remainingFinishedItems = new HashMap<>();
+            for (BuildBlock buildBlock : stackToPlace) {
+                Item item = BuildBlockParse.getFinishedItem(buildBlock.getState().getBlock(), this.getCommandSenderWorld());
+                if (item != null) remainingFinishedItems.merge(item, 1, Integer::sum);
+            }
+        }
+        return remainingFinishedItems;
+    }
+
+    public int getRemainingFinishedItemCount(Item item) {
+        return getRemainingFinishedItemMap().getOrDefault(item, 0);
+    }
+
     /** Price of the full blueprint (shown in the GUI). The actual charge only counts missing blocks. */
     public int calculateCurrencyPrice(CompoundTag tag) {
         Map<Item, Integer> materials = new HashMap<>();
@@ -595,6 +634,7 @@ public class BuildArea extends AbstractWorkAreaEntity {
         stackToPlace.clear();
         stackToPlaceMultiBlock.clear();
         this.remainingMaterials = null;
+        this.remainingFinishedItems = null;
         this.paidWithCurrency = false;
         this.entityData.set(BLOCKS_TOTAL, 0);
         this.updateProgress();
@@ -672,12 +712,14 @@ public class BuildArea extends AbstractWorkAreaEntity {
         removeBuildBlockToPlace(buildBlock.getPos());
         stackToPlace.push(buildBlock);
         this.remainingMaterials = null;
+        this.remainingFinishedItems = null;
         this.updateProgress();
     }
 
     public void removeBuildBlockToPlace(BlockPos blockPos) {
         if (stackToPlace.removeIf(buildBlock -> buildBlock.getPos().equals(blockPos))) {
             this.remainingMaterials = null;
+            this.remainingFinishedItems = null;
             this.updateProgress();
         }
     }

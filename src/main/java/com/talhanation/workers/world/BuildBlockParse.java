@@ -9,6 +9,7 @@ import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.FlowerPotBlock;
 
+import javax.annotation.Nullable;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -121,6 +122,22 @@ public class BuildBlockParse {
             return new BuildBlockParse(baseItem, true, false);
         }
         return special;
+    }
+
+    /**
+     * The block's own item when the builder only consumes a base material for it (red_carpet -> red_wool).
+     * He uses this finished item first if he has it, but it is never requested itself. Else null.
+     */
+    @Nullable
+    public static Item getFinishedItem(Block block, Level level) {
+        // dirt path is made with a shovel, the dirt path item itself is never used
+        if (block == Blocks.DIRT_PATH) return null;
+
+        BuildBlockParse parse = parseBlock(block, level);
+        if (!parse.wasParsed() || parse.placeAsBase()) return null;
+
+        Item item = Item.BY_BLOCK.get(block);
+        return (item == null || item == Items.AIR || item == parse.getItem()) ? null : item;
     }
 
     /**

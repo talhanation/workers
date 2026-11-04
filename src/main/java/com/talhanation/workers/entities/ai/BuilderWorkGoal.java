@@ -3,6 +3,7 @@ package com.talhanation.workers.entities.ai;
 import com.talhanation.workers.entities.BuilderEntity;
 import com.talhanation.workers.entities.workarea.AbstractWorkAreaEntity;
 import com.talhanation.workers.entities.workarea.BuildArea;
+import com.talhanation.workers.entities.workarea.StorageArea;
 import com.talhanation.workers.world.BuildBlock;
 import com.talhanation.workers.world.BuildBlockParse;
 import com.talhanation.workers.world.NeededItem;
@@ -16,6 +17,7 @@ import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.sounds.SoundSource;
+import net.minecraft.world.Container;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EntityType;
@@ -320,14 +322,16 @@ public class BuilderWorkGoal extends Goal {
                             }
                         }
 
-                        Item item = BuildBlockParse.parseBlock(buildBlock.getState().getBlock(), level).getItem();
+                        Block block = buildBlock.getState().getBlock();
+                        Item item = BuildBlockParse.parseBlock(block, level).getItem();
                         if(item == null){
                             if(builderEntity.getOwner() != null) builderEntity.getOwner().sendSystemMessage(Component.literal("Could not found item for " + buildBlock.getState().getBlock().getName() + " i, will skip this block." ));
                             builderEntity.currentBuildArea.removeBuildBlockToPlace(pos);
                             return;
                         }
 
-                        if (!paid && !builderEntity.getInventory().hasAnyMatching(itemStack -> itemStack.is(item))) {
+                        // the finished item (red_carpet) counts too, but only the base material (red_wool) is missing
+                        if (!paid && getBuildingItem(block, item) == null) {
                             if (missingItems.containsKey(item)) missingOnBuild.add(item);
                             else levelNeeds.add(item);
                             continue;
@@ -492,8 +496,9 @@ public class BuilderWorkGoal extends Goal {
     private void updateMissingItems(Level level) {
         long time = level.getGameTime();
         if (!requestedItems.isEmpty() && !builderEntity.needsToGetItems()) {
+            Map<Item, Map<Item, Integer>> finishedItems = getFinishedItemsByMaterial(level);
             for (Item item : requestedItems) {
-                if (builderEntity.countMatchingItems(itemStack -> itemStack.is(item)) <= 0) missingItems.put(item, time);
+                if (countCarriedMaterial(item, finishedItems.getOrDefault(item, Map.of())) <= 0) missingItems.put(item, time);
             }
             requestedItems.clear();
         }
@@ -506,6 +511,7 @@ public class BuilderWorkGoal extends Goal {
      * builder makes far fewer storage trips. Materials of the current level first, missing ones are skipped.
      */
     private boolean requestMaterials(Set<Item> currentLevelItems) {
+        Level level = builderEntity.getCommandSenderWorld();
         List<ItemStack> neededItems = builderEntity.currentBuildArea.getRemainingMaterials();
         neededItems.removeIf(stack -> missingItems.containsKey(stack.getItem()));
 
@@ -513,24 +519,108 @@ public class BuilderWorkGoal extends Goal {
                 .comparing((ItemStack s) -> !currentLevelItems.contains(s.getItem()))
                 .thenComparing(Comparator.comparingInt(ItemStack::getCount).reversed()));
 
+        // Finished items (red_carpet) lying in the storage are taken first, the base material (red_wool)
+        // is only asked for the rest. The finished item is never asked for if the storage does not have it.
+        Map<Item, Map<Item, Integer>> finishedItems = getFinishedItemsByMaterial(level);
+        Map<Item, Integer> storedFinishedItems = null;
+
         int requested = 0;
         boolean currentLevelRequested = false;
         for (ItemStack neededItem : neededItems) {
             if (requested >= PREFETCH_MATERIAL_BUDGET) break;
 
+            Item material = neededItem.getItem();
+            Map<Item, Integer> finished = finishedItems.getOrDefault(material, Map.of());
+
             // Only fetch what is missing on top of what we already carry.
-            int carried = builderEntity.countMatchingItems(itemStack -> itemStack.is(neededItem.getItem()));
+            int carried = countCarriedMaterial(material, finished);
             int amount = Math.min(PREFETCH_STACK_LIMIT, neededItem.getCount()) - carried;
             if (amount <= 0) continue;
 
-            builderEntity.addNeededItem(new NeededItem(
-                    itemStack -> itemStack.is(neededItem.getItem()), amount, true
-            ));
-            requestedItems.add(neededItem.getItem());
+            if (!finished.isEmpty()) {
+                if (storedFinishedItems == null) {
+                    Set<Item> allFinished = new HashSet<>();
+                    finishedItems.values().forEach(map -> allFinished.addAll(map.keySet()));
+                    storedFinishedItems = countStoredItems(allFinished);
+                }
+
+                for (Map.Entry<Item, Integer> entry : finished.entrySet()) {
+                    if (amount <= 0) break;
+                    Item finishedItem = entry.getKey();
+                    int stillNeeded = entry.getValue() - builderEntity.countMatchingItems(itemStack -> itemStack.is(finishedItem));
+                    int take = Math.min(amount, Math.min(stillNeeded, storedFinishedItems.getOrDefault(finishedItem, 0)));
+                    if (take <= 0) continue;
+
+                    builderEntity.addNeededItem(new NeededItem(
+                            itemStack -> itemStack.is(finishedItem), take, true
+                    ));
+                    amount -= take;
+                }
+            }
+
+            if (amount > 0) {
+                builderEntity.addNeededItem(new NeededItem(
+                        itemStack -> itemStack.is(material), amount, true
+                ));
+            }
+            requestedItems.add(material);
             if (currentLevelItems.contains(neededItem.getItem())) currentLevelRequested = true;
             requested++;
         }
         return currentLevelRequested;
+    }
+
+    /** The finished item (red_carpet) is used first, otherwise the base material (red_wool). */
+    @Nullable
+    private ItemStack getBuildingItem(Block block, Item material) {
+        Item finished = BuildBlockParse.getFinishedItem(block, builderEntity.getCommandSenderWorld());
+        ItemStack stack = finished != null ? builderEntity.getMatchingItem(itemStack -> itemStack.is(finished)) : null;
+        return stack != null ? stack : builderEntity.getMatchingItem(itemStack -> itemStack.is(material));
+    }
+
+    /** Finished items still needed (red_carpet -> 10), grouped by their base material (red_wool). */
+    private Map<Item, Map<Item, Integer>> getFinishedItemsByMaterial(Level level) {
+        Map<Item, Map<Item, Integer>> map = new HashMap<>();
+        for (Map.Entry<Item, Integer> entry : builderEntity.currentBuildArea.getRemainingFinishedItemMap().entrySet()) {
+            if (!(entry.getKey() instanceof BlockItem blockItem)) continue;
+            Item material = BuildBlockParse.parseBlock(blockItem.getBlock(), level).getItem();
+            map.computeIfAbsent(material, key -> new HashMap<>()).put(entry.getKey(), entry.getValue());
+        }
+        return map;
+    }
+
+    /** Carried base material plus the finished items that stand in for it (at most as many as still needed). */
+    private int countCarriedMaterial(Item material, Map<Item, Integer> finishedItems) {
+        int carried = builderEntity.countMatchingItems(itemStack -> itemStack.is(material));
+        for (Map.Entry<Item, Integer> entry : finishedItems.entrySet()) {
+            carried += Math.min(entry.getValue(), builderEntity.countMatchingItems(itemStack -> itemStack.is(entry.getKey())));
+        }
+        return carried;
+    }
+
+    /** Count of these items in the storages the builder fetches from (same choice as GetNeededItemsFromStorage). */
+    private Map<Item, Integer> countStoredItems(Set<Item> items) {
+        Map<Item, Integer> stored = new HashMap<>();
+        if (items.isEmpty()) return stored;
+
+        List<StorageArea> storages = builderEntity.getCommandSenderWorld().getEntitiesOfClass(StorageArea.class, builderEntity.getBoundingBox().inflate(64));
+        storages.removeIf(storage -> !storage.canWorkHere(builderEntity));
+
+        UUID lastStorage = builderEntity.lastStorage;
+        if (lastStorage != null && storages.stream().anyMatch(storage -> storage.getUUID().equals(lastStorage))) {
+            storages.removeIf(storage -> !storage.getUUID().equals(lastStorage));
+        }
+
+        for (StorageArea storage : storages) {
+            storage.scanStorageBlocks();
+            for (Container container : storage.storageMap.values()) {
+                for (int i = 0; i < container.getContainerSize(); i++) {
+                    ItemStack stack = container.getItem(i);
+                    if (!stack.isEmpty() && items.contains(stack.getItem())) stored.merge(stack.getItem(), stack.getCount(), Integer::sum);
+                }
+            }
+        }
+        return stored;
     }
 
     /** Falling blocks need a block below, torches/doors/carpets need their support. */
@@ -805,7 +895,8 @@ public class BuilderWorkGoal extends Goal {
                 BuildBlockParse blockParse = BuildBlockParse.parseBlock(buildingState.getBlock(), builderEntity.getCommandSenderWorld());
                 //Paid with currency: no material needed and nothing is consumed
                 boolean paid = builderEntity.currentBuildArea.isPaidWithCurrency();
-                ItemStack buildingItem = paid ? null : builderEntity.getMatchingItem(itemStack -> itemStack.is(blockParse.getItem()));
+                // the finished item (red_carpet) first, otherwise the base material (red_wool)
+                ItemStack buildingItem = paid ? null : getBuildingItem(buildingState.getBlock(), blockParse.getItem());
                 if(paid || buildingItem != null){
                     if(buildingItem != null && !builderEntity.getMainHandItem().is(buildingItem.getItem())){
                         builderEntity.switchMainHandItem(itemStack -> itemStack.is(buildingItem.getItem()));

@@ -408,16 +408,13 @@ public class BuildAreaScreen extends WorkAreaScreen {
         this.foundationCheckBox.setTooltip(Tooltip.create(Component.translatable("gui.workers.checkbox.tooltip.foundation")));
         addRenderableWidget(foundationCheckBox);
 
-        // Fill item: click with a block in the main hand to use it, click with anything else for "auto" (from the ground)
-        this.fillItemButton = addRenderableWidget(new Button.Builder(getFillItemText(), btn -> {
-                    ItemStack held = player.getMainHandItem();
-                    this.fillItem = held.getItem() instanceof BlockItem ? held.copyWithCount(1) : ItemStack.EMPTY;
+        // Fill item: every click the next block of the fixed palette (auto, dirt, sand, ... ice), shift = back
+        this.fillItemButton = addRenderableWidget(new FillItemButton(rightX, previewTop + 42, 100, 20, btn -> {
+                    this.fillItem = BuildArea.cycleFillItem(this.fillItem, hasShiftDown());
                     WorkersMain.SIMPLE_CHANNEL.sendToServer(new MessageUpdateBuildAreaFoundation(this.buildArea.getUUID(), foundation, fillItem));
-                    btn.setMessage(getFillItemText());
-                })
-                .bounds(rightX, previewTop + 42, 100, 20)
-                .tooltip(Tooltip.create(Component.translatable("gui.workers.button.tooltip.fillItem")))
-                .build());
+                }));
+        this.fillItemButton.setTooltip(Tooltip.create(Component.translatableWithFallback("gui.workers.button.tooltip.fillItemPalette",
+                "Fill block of the foundation. Click: next block, Shift: back. Auto: taken from the ground.")));
         this.fillItemButton.active = foundation;
 
         // build status under the options: status, builder, progress
@@ -594,11 +591,34 @@ public class BuildAreaScreen extends WorkAreaScreen {
         checkScanButtonActive();
     }
 
+    /** Fill item button: name on the left, the block itself on the right. */
+    public class FillItemButton extends ExtendedButton {
+
+        public FillItemButton(int x, int y, int width, int height, OnPress onPress) {
+            super(x, y, width, height, Component.empty(), onPress);
+        }
+
+        @Override
+        public void renderWidget(GuiGraphics guiGraphics, int mouseX, int mouseY, float partialTicks) {
+            super.renderWidget(guiGraphics, mouseX, mouseY, partialTicks);
+
+            String text = getFillItemText().getString();
+            int color = this.active ? 0xFFFFFF : 0xA0A0A0;
+            guiGraphics.drawString(font, font.plainSubstrByWidth(text, this.width - 26), getX() + 4, getY() + (this.height - 8) / 2, color);
+
+            if (!fillItem.isEmpty()) {
+                guiGraphics.renderFakeItem(fillItem, getX() + this.width - 19, getY() + (this.height - 16) / 2);
+            }
+        }
+    }
+
     /** Status of the build (same data the Governor reads): status, builder and progress. Hover while waiting shows the materials. */
     public class BuildStatusWidget extends AbstractWidget {
+        // same background as the BlackShowingTextField displays
+        private static final int BG_FILL = FastColor.ARGB32.color(255, 10, 10, 10);
 
         public BuildStatusWidget(int x, int y) {
-            super(x, y, 110, 30, Component.empty());
+            super(x, y, 110, 32, Component.empty());
             this.active = false;
         }
 
@@ -607,17 +627,21 @@ public class BuildAreaScreen extends WorkAreaScreen {
             BuildArea.BuildStatus status = buildArea.getBuildStatus();
             if (status == BuildArea.BuildStatus.NONE) return;
 
-            guiGraphics.drawString(font, font.plainSubstrByWidth(status.getDisplayName().getString(), this.width), getX(), getY(), status.getColor());
+            guiGraphics.fill(getX(), getY(), getX() + this.width, getY() + this.height, BG_FILL);
+
+            int textX = getX() + 2;
+            int textWidth = this.width - 4;
+            guiGraphics.drawString(font, font.plainSubstrByWidth(status.getDisplayName().getString(), textWidth), textX, getY() + 2, status.getColor(), false);
 
             String builder = buildArea.getBuilderName();
             if (!builder.isEmpty()) {
-                guiGraphics.drawString(font, font.plainSubstrByWidth(builder, this.width), getX(), getY() + 10, 0xFFFFFF);
+                guiGraphics.drawString(font, font.plainSubstrByWidth(builder, textWidth), textX, getY() + 12, 0xFFFFFF, false);
             }
 
             int total = buildArea.getTotalBlocks();
             if (total > 0) {
                 String progress = buildArea.getPlacedBlocks() + " / " + total + " (" + Math.round(buildArea.getProgress() * 100) + "%)";
-                guiGraphics.drawString(font, progress, getX(), getY() + 20, 0xAAAAAA);
+                guiGraphics.drawString(font, font.plainSubstrByWidth(progress, textWidth), textX, getY() + 22, 0xAAAAAA, false);
             }
 
             if (this.isHovered && status == BuildArea.BuildStatus.WAITING_FOR_MATERIALS) {

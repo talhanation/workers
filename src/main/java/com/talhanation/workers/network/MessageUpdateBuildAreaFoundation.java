@@ -43,7 +43,8 @@ public class MessageUpdateBuildAreaFoundation implements Message<MessageUpdateBu
                 .filter(area -> area.canPlayerSee(player))
                 .ifPresent(area -> {
                     area.setFoundation(this.foundation);
-                    area.setFillItem(this.fillItem);
+                    // only auto or a block of the palette
+                    area.setFillItem(BuildArea.isValidFillItem(this.fillItem) ? this.fillItem : ItemStack.EMPTY);
                 });
     }
 
