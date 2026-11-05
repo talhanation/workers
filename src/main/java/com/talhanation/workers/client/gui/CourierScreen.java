@@ -34,7 +34,7 @@ import net.minecraft.util.FastColor;
 import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
-import net.minecraftforge.client.gui.widget.ExtendedButton;
+import net.neoforged.neoforge.client.gui.widget.ExtendedButton;
 
 import javax.annotation.Nullable;
 import java.io.File;
@@ -48,12 +48,11 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
 
-import static net.minecraft.client.gui.components.AbstractWidget.WIDGETS_LOCATION;
 
 public class CourierScreen extends ScreenBase<CourierContainer> {
 
     private static final ResourceLocation TEXTURE =
-            new ResourceLocation(WorkersMain.MOD_ID, "textures/gui/courier.png");
+            ResourceLocation.fromNamespaceAndPath(WorkersMain.MOD_ID, "textures/gui/courier.png");
 
     private static final int IMG_W = 256;
     private static final int IMG_H = 197;
@@ -241,7 +240,7 @@ public class CourierScreen extends ScreenBase<CourierContainer> {
     private void loadWorkingDataFromEntity() {
         var routeData = courierEntity.getRouteData();
         if (routeData.getBoolean("hasRoute") && routeData.contains("route"))
-            workingRoute = CourierRoute.fromNBT(routeData.getCompound("route"));
+            workingRoute = CourierRoute.fromNBT(routeData.getCompound("route"), courierEntity.registryAccess());
 
         if (workingRoute != null && workingRoute.getRouteId() != null) {
             var id = workingRoute.getRouteId();
@@ -349,10 +348,7 @@ public class CourierScreen extends ScreenBase<CourierContainer> {
 
         waypointList = new WaypointList(
                 minecraft, WP_W, WP_H, listTop, listBottom, WP_ITEM_H, WP_W);
-        waypointList.setLeftPos(listLeft);
-        waypointList.setRenderBackground(false);
-        waypointList.setRenderTopAndBottom(false);
-        waypointList.setRenderSelection(false);
+        waypointList.setX(listLeft);
         addRenderableWidget(waypointList);
 
         if (workingRoute != null) {
@@ -639,7 +635,7 @@ public class CourierScreen extends ScreenBase<CourierContainer> {
     private void applyChanges(boolean start) {
         if (workingRoute == null) return;
         WorkersMain.SIMPLE_CHANNEL.sendToServer(
-                new MessageCourierSetRoute(courierEntity.getUUID(), workingRoute, useVehicleInventory, shouldCycle, start));
+                new MessageCourierSetRoute(courierEntity.getUUID(), workingRoute, useVehicleInventory, shouldCycle, start, courierEntity.registryAccess()));
     }
 
     /** Auto-save on close (ESC, map button, etc.). */
@@ -991,7 +987,7 @@ public class CourierScreen extends ScreenBase<CourierContainer> {
     }
 
     @Override
-    public boolean mouseScrolled(double mx, double my, double delta) {
+    public boolean mouseScrolled(double mx, double my, double scrollX, double delta) {
         // Scrolling over an item slot changes the amount: 1, Shift = 10, Ctrl = 64.
         CourierAction slotAction = getActionAtItemSlot(mx, my);
         if (slotAction != null && slotAction.getItemStack() != null && !slotAction.getItemStack().isEmpty()) {
@@ -1004,9 +1000,9 @@ public class CourierScreen extends ScreenBase<CourierContainer> {
         // Action dropdowns get priority — isMouseOver() returns true for the expanded list
         // only when the dropdown is open, so this naturally lets open dropdowns consume scroll.
         for (var dropDownMenu : actionTypeDropDowns)
-            if (dropDownMenu.isMouseOver(mx, my)) return dropDownMenu.mouseScrolled(mx, my, delta);
+            if (dropDownMenu.isMouseOver(mx, my)) return dropDownMenu.mouseScrolled(mx, my, 0, delta);
         for (var dropDownMenu : sourceTypeDropDowns)
-            if (dropDownMenu.isMouseOver(mx, my)) return dropDownMenu.mouseScrolled(mx, my, delta);
+            if (dropDownMenu.isMouseOver(mx, my)) return dropDownMenu.mouseScrolled(mx, my, 0, delta);
 
         // Action area row scroll (only reached when no action dropdown is open over it)
         if (workingRoute != null && selectedWaypointIndex >= 0
@@ -1021,10 +1017,10 @@ public class CourierScreen extends ScreenBase<CourierContainer> {
             }
         }
         if (routeDropDown != null && routeDropDown.isMouseOver(mx, my))
-            return routeDropDown.mouseScrolled(mx, my, delta);
+            return routeDropDown.mouseScrolled(mx, my, 0, delta);
         if (waypointList != null && waypointList.isMouseOver(mx, my))
-            return waypointList.mouseScrolled(mx, my, delta);
-        return super.mouseScrolled(mx, my, delta);
+            return waypointList.mouseScrolled(mx, my, 0, delta);
+        return super.mouseScrolled(mx, my, scrollX, delta);
     }
 
     private boolean isOverActionDropDown(double mx, double my) {
@@ -1095,7 +1091,20 @@ public class CourierScreen extends ScreenBase<CourierContainer> {
     private class WaypointList extends ObjectSelectionList<WaypointList.WaypointEntry> {
 
         WaypointList(Minecraft mc, int width, int height, int top, int bottom, int itemHeight, int itemWidth) {
-            super(mc, width, height, top, bottom, itemHeight);
+            super(mc, width, height, top, itemHeight);
+        }
+
+        // 1.20.1: setRenderBackground(false), setRenderTopAndBottom(false), setRenderSelection(false)
+        @Override
+        protected void renderListBackground(GuiGraphics guiGraphics) {
+        }
+
+        @Override
+        protected void renderListSeparators(GuiGraphics guiGraphics) {
+        }
+
+        @Override
+        protected void renderSelection(GuiGraphics guiGraphics, int top, int width, int height, int outerColor, int innerColor) {
         }
 
         @Override protected int  addEntry(WaypointEntry e) { return super.addEntry(e); }
@@ -1122,15 +1131,21 @@ public class CourierScreen extends ScreenBase<CourierContainer> {
 
             WaypointEntry(int index) { this.waypointIndex = index; }
 
+            private net.minecraft.resources.ResourceLocation getButtonSprite(int textureY) {
+                if (textureY == 46) return net.minecraft.resources.ResourceLocation.withDefaultNamespace("widget/button_disabled");
+                if (textureY == 86) return net.minecraft.resources.ResourceLocation.withDefaultNamespace("widget/button_highlighted");
+                return net.minecraft.resources.ResourceLocation.withDefaultNamespace("widget/button");
+            }
+
             @Override
             public void render(GuiGraphics g, int index, int top, int left, int entryW, int entryH, int mouseX, int mouseY, boolean hovered, float partial) {
                 boolean selected = (WaypointList.this.getSelected() == this);
                 int textureY = (selected || hovered) ? 86 : 66;
 
                 RenderSystem.enableBlend();
-                g.blitNineSliced(WIDGETS_LOCATION, left, top,
-                        WaypointList.this.getRowWidth(), entryH,
-                        20, 4, 200, 20, 0, textureY);
+                // 1.20.2+: widgets.png was split into sprites; 66/86 were the normal/highlighted button rows
+                g.blitSprite(getButtonSprite(textureY), left, top,
+                        WaypointList.this.getRowWidth(), entryH);
 
                 int actionCount = 0;
                 String name     = "";
@@ -1179,4 +1194,4 @@ public class CourierScreen extends ScreenBase<CourierContainer> {
             @Override public Component getNarration() { return Component.empty(); }
         }
     }
-}
+}

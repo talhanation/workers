@@ -15,9 +15,9 @@ import net.minecraft.util.FormattedCharSequence;
 import net.minecraft.util.Mth;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.Item;
-import net.minecraftforge.api.distmarker.Dist;
-import net.minecraftforge.api.distmarker.OnlyIn;
-import net.minecraftforge.client.gui.widget.ExtendedButton;
+import net.neoforged.api.distmarker.Dist;
+import net.neoforged.api.distmarker.OnlyIn;
+import net.neoforged.neoforge.client.gui.widget.ExtendedButton;
 
 import java.util.*;
 
@@ -87,9 +87,15 @@ public class MerchantMemoryScreen extends Screen {
         return false;
     }
 
+    // 1.20.1: renderBackground(GuiGraphics) only dimmed the world. Since 1.20.2 Screen#render draws the background
+    // (blur) itself after our content, so the dimming is done here and the background of Screen#render is skipped.
+    @Override
+    public void renderBackground(GuiGraphics guiGraphics, int mouseX, int mouseY, float partialTicks) {
+    }
+
     @Override
     public void render(GuiGraphics guiGraphics, int mouseX, int mouseY, float partialTicks) {
-        renderBackground(guiGraphics);
+        renderTransparentBackground(guiGraphics);
         guiGraphics.fill(left, top, left + PANEL_WIDTH, listBottom + 32, 0xC0101010);
         guiGraphics.renderOutline(left, top, PANEL_WIDTH, listBottom + 32 - top, 0xFF555555);
         guiGraphics.drawCenteredString(font, title, left + PANEL_WIDTH / 2, top + 6, COLOR_TEXT);
@@ -201,7 +207,7 @@ public class MerchantMemoryScreen extends Screen {
     }
 
     @Override
-    public boolean mouseScrolled(double mouseX, double mouseY, double delta) {
+    public boolean mouseScrolled(double mouseX, double mouseY, double scrollX, double delta) {
         int max = Math.max(0, contentHeight - (listBottom - listTop));
         scroll = Mth.clamp(scroll - delta * 12, 0, max);
         return true;

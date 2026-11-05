@@ -3,10 +3,13 @@ package com.talhanation.workers.network;
 import com.talhanation.workers.entities.MerchantEntity;
 import com.talhanation.workers.world.MerchantMemory;
 import de.maxhenkel.corelib.net.Message;
-import net.minecraft.network.FriendlyByteBuf;
+import net.minecraft.network.RegistryFriendlyByteBuf;
 import net.minecraft.server.level.ServerPlayer;
-import net.minecraftforge.api.distmarker.Dist;
-import net.minecraftforge.network.NetworkEvent;
+import net.neoforged.api.distmarker.Dist;
+import net.neoforged.neoforge.network.handling.IPayloadContext;
+import net.minecraft.network.protocol.PacketFlow;
+import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
+import net.minecraft.resources.ResourceLocation;
 
 import java.util.UUID;
 
@@ -28,13 +31,13 @@ public class MessageUpdateMerchantMemory implements Message<MessageUpdateMerchan
     }
 
     @Override
-    public Dist getExecutingSide() {
-        return Dist.DEDICATED_SERVER;
+    public PacketFlow getExecutingSide() {
+        return PacketFlow.SERVERBOUND;
     }
 
     @Override
-    public void executeServerSide(NetworkEvent.Context context) {
-        ServerPlayer player = context.getSender();
+    public void executeServerSide(IPayloadContext context) {
+        ServerPlayer player = ((ServerPlayer) context.player());
         if (player == null) return;
 
         player.getCommandSenderWorld().getEntitiesOfClass(MerchantEntity.class, player.getBoundingBox().inflate(32.0D),
@@ -51,7 +54,7 @@ public class MessageUpdateMerchantMemory implements Message<MessageUpdateMerchan
     }
 
     @Override
-    public MessageUpdateMerchantMemory fromBytes(FriendlyByteBuf buf) {
+    public MessageUpdateMerchantMemory fromBytes(RegistryFriendlyByteBuf buf) {
         this.merchantUuid = buf.readUUID();
         this.marketUuid = buf.readUUID();
         this.favorite = buf.readBoolean();
@@ -60,10 +63,17 @@ public class MessageUpdateMerchantMemory implements Message<MessageUpdateMerchan
     }
 
     @Override
-    public void toBytes(FriendlyByteBuf buf) {
+    public void toBytes(RegistryFriendlyByteBuf buf) {
         buf.writeUUID(merchantUuid);
         buf.writeUUID(marketUuid);
         buf.writeBoolean(favorite);
         buf.writeBoolean(avoid);
+    }
+
+    public static final CustomPacketPayload.Type<MessageUpdateMerchantMemory> TYPE = new CustomPacketPayload.Type<>(ResourceLocation.fromNamespaceAndPath("workers", "message_update_merchant_memory"));
+
+    @Override
+    public CustomPacketPayload.Type<MessageUpdateMerchantMemory> type() {
+        return TYPE;
     }
 }

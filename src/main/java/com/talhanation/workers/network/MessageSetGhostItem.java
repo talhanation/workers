@@ -5,7 +5,7 @@ import com.talhanation.workers.inventory.MerchantAddEditVillagerTradeContainer;
 import com.talhanation.workers.world.VillagerPriceTable;
 import de.maxhenkel.corelib.net.Message;
 import net.minecraft.core.registries.BuiltInRegistries;
-import net.minecraft.network.FriendlyByteBuf;
+import net.minecraft.network.RegistryFriendlyByteBuf;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.util.Mth;
@@ -14,8 +14,10 @@ import net.minecraft.world.inventory.Slot;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
-import net.minecraftforge.api.distmarker.Dist;
-import net.minecraftforge.network.NetworkEvent;
+import net.neoforged.api.distmarker.Dist;
+import net.neoforged.neoforge.network.handling.IPayloadContext;
+import net.minecraft.network.protocol.PacketFlow;
+import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
 
 /** Sets a ghost slot of a trade edit screen to an item picked in the item search. Only item and count, no NBT. */
 public class MessageSetGhostItem implements Message<MessageSetGhostItem> {
@@ -33,13 +35,13 @@ public class MessageSetGhostItem implements Message<MessageSetGhostItem> {
     }
 
     @Override
-    public Dist getExecutingSide() {
-        return Dist.DEDICATED_SERVER;
+    public PacketFlow getExecutingSide() {
+        return PacketFlow.SERVERBOUND;
     }
 
     @Override
-    public void executeServerSide(NetworkEvent.Context context) {
-        ServerPlayer player = context.getSender();
+    public void executeServerSide(IPayloadContext context) {
+        ServerPlayer player = ((ServerPlayer) context.player());
         if (player == null) return;
 
         AbstractContainerMenu menu = player.containerMenu;
@@ -60,7 +62,7 @@ public class MessageSetGhostItem implements Message<MessageSetGhostItem> {
     }
 
     @Override
-    public MessageSetGhostItem fromBytes(FriendlyByteBuf buf) {
+    public MessageSetGhostItem fromBytes(RegistryFriendlyByteBuf buf) {
         this.slotIndex = buf.readVarInt();
         this.item = buf.readResourceLocation();
         this.count = buf.readVarInt();
@@ -68,9 +70,16 @@ public class MessageSetGhostItem implements Message<MessageSetGhostItem> {
     }
 
     @Override
-    public void toBytes(FriendlyByteBuf buf) {
+    public void toBytes(RegistryFriendlyByteBuf buf) {
         buf.writeVarInt(slotIndex);
         buf.writeResourceLocation(item);
         buf.writeVarInt(count);
+    }
+
+    public static final CustomPacketPayload.Type<MessageSetGhostItem> TYPE = new CustomPacketPayload.Type<>(ResourceLocation.fromNamespaceAndPath("workers", "message_set_ghost_item"));
+
+    @Override
+    public CustomPacketPayload.Type<MessageSetGhostItem> type() {
+        return TYPE;
     }
 }

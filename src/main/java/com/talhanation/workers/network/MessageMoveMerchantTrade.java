@@ -2,10 +2,13 @@ package com.talhanation.workers.network;
 
 import com.talhanation.workers.entities.MerchantEntity;
 import de.maxhenkel.corelib.net.Message;
-import net.minecraft.network.FriendlyByteBuf;
+import net.minecraft.network.RegistryFriendlyByteBuf;
 import net.minecraft.server.level.ServerPlayer;
-import net.minecraftforge.api.distmarker.Dist;
-import net.minecraftforge.network.NetworkEvent;
+import net.neoforged.api.distmarker.Dist;
+import net.neoforged.neoforge.network.handling.IPayloadContext;
+import net.minecraft.network.protocol.PacketFlow;
+import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
+import net.minecraft.resources.ResourceLocation;
 
 import java.util.UUID;
 
@@ -23,11 +26,11 @@ public class MessageMoveMerchantTrade implements Message<MessageMoveMerchantTrad
     }
 
     @Override
-    public Dist getExecutingSide() { return Dist.DEDICATED_SERVER; }
+    public PacketFlow getExecutingSide() { return PacketFlow.SERVERBOUND; }
 
     @Override
-    public void executeServerSide(NetworkEvent.Context context) {
-        ServerPlayer player = context.getSender();
+    public void executeServerSide(IPayloadContext context) {
+        ServerPlayer player = ((ServerPlayer) context.player());
         if (player == null) return;
 
         player.getCommandSenderWorld()
@@ -43,7 +46,7 @@ public class MessageMoveMerchantTrade implements Message<MessageMoveMerchantTrad
     }
 
     @Override
-    public MessageMoveMerchantTrade fromBytes(FriendlyByteBuf buf) {
+    public MessageMoveMerchantTrade fromBytes(RegistryFriendlyByteBuf buf) {
         this.merchantUuid = buf.readUUID();
         this.tradeUuid    = buf.readUUID();
         this.moveUp       = buf.readBoolean();
@@ -51,9 +54,16 @@ public class MessageMoveMerchantTrade implements Message<MessageMoveMerchantTrad
     }
 
     @Override
-    public void toBytes(FriendlyByteBuf buf) {
+    public void toBytes(RegistryFriendlyByteBuf buf) {
         buf.writeUUID(merchantUuid);
         buf.writeUUID(tradeUuid);
         buf.writeBoolean(moveUp);
+    }
+
+    public static final CustomPacketPayload.Type<MessageMoveMerchantTrade> TYPE = new CustomPacketPayload.Type<>(ResourceLocation.fromNamespaceAndPath("workers", "message_move_merchant_trade"));
+
+    @Override
+    public CustomPacketPayload.Type<MessageMoveMerchantTrade> type() {
+        return TYPE;
     }
 }

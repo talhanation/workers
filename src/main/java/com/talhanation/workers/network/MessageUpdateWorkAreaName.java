@@ -2,11 +2,14 @@ package com.talhanation.workers.network;
 
 import com.talhanation.workers.entities.workarea.AbstractWorkAreaEntity;
 import de.maxhenkel.corelib.net.Message;
-import net.minecraft.network.FriendlyByteBuf;
+import net.minecraft.network.RegistryFriendlyByteBuf;
 import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerPlayer;
-import net.minecraftforge.api.distmarker.Dist;
-import net.minecraftforge.network.NetworkEvent;
+import net.neoforged.api.distmarker.Dist;
+import net.neoforged.neoforge.network.handling.IPayloadContext;
+import net.minecraft.network.protocol.PacketFlow;
+import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
+import net.minecraft.resources.ResourceLocation;
 
 import java.util.UUID;
 
@@ -24,13 +27,13 @@ public class MessageUpdateWorkAreaName implements Message<MessageUpdateWorkAreaN
     }
 
     @Override
-    public Dist getExecutingSide() {
-        return Dist.DEDICATED_SERVER;
+    public PacketFlow getExecutingSide() {
+        return PacketFlow.SERVERBOUND;
     }
 
     @Override
-    public void executeServerSide(NetworkEvent.Context context) {
-        ServerPlayer player = context.getSender();
+    public void executeServerSide(IPayloadContext context) {
+        ServerPlayer player = ((ServerPlayer) context.player());
         if (player == null) return;
 
         player.getCommandSenderWorld()
@@ -44,15 +47,22 @@ public class MessageUpdateWorkAreaName implements Message<MessageUpdateWorkAreaN
     }
 
     @Override
-    public MessageUpdateWorkAreaName fromBytes(FriendlyByteBuf buf) {
+    public MessageUpdateWorkAreaName fromBytes(RegistryFriendlyByteBuf buf) {
         this.uuid = buf.readUUID();
         this.name = buf.readUtf(32);
         return this;
     }
 
     @Override
-    public void toBytes(FriendlyByteBuf buf) {
+    public void toBytes(RegistryFriendlyByteBuf buf) {
         buf.writeUUID(uuid);
         buf.writeUtf(name, 32);
+    }
+
+    public static final CustomPacketPayload.Type<MessageUpdateWorkAreaName> TYPE = new CustomPacketPayload.Type<>(ResourceLocation.fromNamespaceAndPath("workers", "message_update_work_area_name"));
+
+    @Override
+    public CustomPacketPayload.Type<MessageUpdateWorkAreaName> type() {
+        return TYPE;
     }
 }

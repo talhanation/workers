@@ -18,10 +18,10 @@ import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.*;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.state.BlockState;
-import net.minecraft.world.level.pathfinder.BlockPathTypes;
+import net.minecraft.world.level.pathfinder.PathType;
 import net.minecraft.world.phys.AABB;
-import net.minecraftforge.api.distmarker.Dist;
-import net.minecraftforge.api.distmarker.OnlyIn;
+import net.neoforged.api.distmarker.Dist;
+import net.neoforged.api.distmarker.OnlyIn;
 
 import java.util.List;
 import java.util.Stack;
@@ -46,14 +46,14 @@ public class AnimalPenArea extends AbstractWorkAreaEntity {
     public AnimalPenArea(EntityType<?> type, Level level) {
         super(type, level);
     }
-    protected void defineSynchedData() {
-        super.defineSynchedData();
-        this.entityData.define(ANIMAL_TYPE, 0);
-        this.entityData.define(MAX_ANIMALS, 12);
-        this.entityData.define(BREED, true);
-        this.entityData.define(SLAUGHTER, true);
-        this.entityData.define(SPECIAL, true);
-        this.entityData.define(GATHER, true);
+    protected void defineSynchedData(SynchedEntityData.Builder builder) {
+        super.defineSynchedData(builder);
+        builder.define(ANIMAL_TYPE, 0);
+        builder.define(MAX_ANIMALS, 12);
+        builder.define(BREED, true);
+        builder.define(SLAUGHTER, true);
+        builder.define(SPECIAL, true);
+        builder.define(GATHER, true);
     }
 
     @Override

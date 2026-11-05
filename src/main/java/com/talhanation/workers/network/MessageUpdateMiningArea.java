@@ -2,10 +2,13 @@ package com.talhanation.workers.network;
 
 import com.talhanation.workers.entities.workarea.MiningArea;
 import de.maxhenkel.corelib.net.Message;
-import net.minecraft.network.FriendlyByteBuf;
+import net.minecraft.network.RegistryFriendlyByteBuf;
 import net.minecraft.server.level.ServerPlayer;
-import net.minecraftforge.api.distmarker.Dist;
-import net.minecraftforge.network.NetworkEvent;
+import net.neoforged.api.distmarker.Dist;
+import net.neoforged.neoforge.network.handling.IPayloadContext;
+import net.minecraft.network.protocol.PacketFlow;
+import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
+import net.minecraft.resources.ResourceLocation;
 
 import java.util.UUID;
 
@@ -33,18 +36,18 @@ public class MessageUpdateMiningArea implements Message<MessageUpdateMiningArea>
         this.closeFloor = closeFloor;
         this.closeFluids = closeFluids;
         this.mineWallOres = mineWallOres;
-        this.fillItem = fillItem;
+        this.fillItem = fillItem.copy(); // NeoForge encodes payloads later on the netty thread: snapshot mutable data here
         this.mode = mode;
         this.keepOn = keepOn;
     }
 
     @Override
-    public Dist getExecutingSide() {
-        return Dist.DEDICATED_SERVER;
+    public PacketFlow getExecutingSide() {
+        return PacketFlow.SERVERBOUND;
     }
 
-    public void executeServerSide(NetworkEvent.Context context){
-        ServerPlayer player = context.getSender();
+    public void executeServerSide(IPayloadContext context){
+        ServerPlayer player = ((ServerPlayer) context.player());
         if(player == null) return;
 
         player.getCommandSenderWorld().getEntitiesOfClass(MiningArea.class, player.getBoundingBox()
@@ -70,7 +73,7 @@ public class MessageUpdateMiningArea implements Message<MessageUpdateMiningArea>
         miningArea.resetWork();
     }
 
-    public MessageUpdateMiningArea fromBytes(FriendlyByteBuf buf) {
+    public MessageUpdateMiningArea fromBytes(RegistryFriendlyByteBuf buf) {
         this.uuid = buf.readUUID();
         this.xSize = buf.readInt();
         this.ySize = buf.readInt();
@@ -79,13 +82,13 @@ public class MessageUpdateMiningArea implements Message<MessageUpdateMiningArea>
         this.closeFloor = buf.readBoolean();
         this.closeFluids = buf.readBoolean();
         this.mineWallOres = buf.readBoolean();
-        this.fillItem = buf.readItem();
+        this.fillItem = net.minecraft.world.item.ItemStack.OPTIONAL_STREAM_CODEC.decode(buf);
         this.mode = buf.readInt();
         this.keepOn = buf.readBoolean();
         return this;
     }
 
-    public void toBytes(FriendlyByteBuf buf) {
+    public void toBytes(RegistryFriendlyByteBuf buf) {
         buf.writeUUID(uuid);
         buf.writeInt(xSize);
         buf.writeInt(ySize);
@@ -94,8 +97,15 @@ public class MessageUpdateMiningArea implements Message<MessageUpdateMiningArea>
         buf.writeBoolean(closeFloor);
         buf.writeBoolean(closeFluids);
         buf.writeBoolean(mineWallOres);
-        buf.writeItem(fillItem);
+        net.minecraft.world.item.ItemStack.OPTIONAL_STREAM_CODEC.encode(buf, fillItem);
         buf.writeInt(mode);
         buf.writeBoolean(keepOn);
     }
-}
+
+    public static final CustomPacketPayload.Type<MessageUpdateMiningArea> TYPE = new CustomPacketPayload.Type<>(ResourceLocation.fromNamespaceAndPath("workers", "message_update_mining_area"));
+
+    @Override
+    public CustomPacketPayload.Type<MessageUpdateMiningArea> type() {
+        return TYPE;
+    }
+}

@@ -5,11 +5,14 @@ import com.talhanation.workers.entities.MerchantEntity;
 import com.talhanation.workers.world.MerchantMemory;
 import de.maxhenkel.corelib.net.Message;
 import net.minecraft.client.Minecraft;
-import net.minecraft.network.FriendlyByteBuf;
+import net.minecraft.network.RegistryFriendlyByteBuf;
 import net.minecraft.world.entity.player.Player;
-import net.minecraftforge.api.distmarker.Dist;
-import net.minecraftforge.api.distmarker.OnlyIn;
-import net.minecraftforge.network.NetworkEvent;
+import net.neoforged.api.distmarker.Dist;
+import net.neoforged.api.distmarker.OnlyIn;
+import net.neoforged.neoforge.network.handling.IPayloadContext;
+import net.minecraft.network.protocol.PacketFlow;
+import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
+import net.minecraft.resources.ResourceLocation;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -24,17 +27,21 @@ public class MessageToClientMerchantMemory implements Message<MessageToClientMer
 
     public MessageToClientMerchantMemory(UUID merchantUuid, List<MerchantMemory.Entry> entries) {
         this.merchantUuid = merchantUuid;
-        this.entries = entries;
+        // NeoForge encodes payloads later on the netty thread: snapshot the (live) entries here
+        net.minecraft.network.FriendlyByteBuf copy = new net.minecraft.network.FriendlyByteBuf(io.netty.buffer.Unpooled.buffer());
+        copy.writeCollection(entries, (b, entry) -> entry.write(b));
+        this.entries = copy.readList(MerchantMemory.Entry::read);
+        copy.release();
     }
 
     @Override
-    public Dist getExecutingSide() {
-        return Dist.CLIENT;
+    public PacketFlow getExecutingSide() {
+        return PacketFlow.CLIENTBOUND;
     }
 
     @Override
     @OnlyIn(Dist.CLIENT)
-    public void executeClientSide(NetworkEvent.Context context) {
+    public void executeClientSide(IPayloadContext context) {
         Player player = Minecraft.getInstance().player;
         if (player == null) return;
         player.getCommandSenderWorld().getEntitiesOfClass(MerchantEntity.class, player.getBoundingBox().inflate(32.0D),
@@ -48,15 +55,22 @@ public class MessageToClientMerchantMemory implements Message<MessageToClientMer
     }
 
     @Override
-    public MessageToClientMerchantMemory fromBytes(FriendlyByteBuf buf) {
+    public MessageToClientMerchantMemory fromBytes(RegistryFriendlyByteBuf buf) {
         this.merchantUuid = buf.readUUID();
         this.entries = buf.readList(MerchantMemory.Entry::read);
         return this;
     }
 
     @Override
-    public void toBytes(FriendlyByteBuf buf) {
+    public void toBytes(RegistryFriendlyByteBuf buf) {
         buf.writeUUID(merchantUuid);
         buf.writeCollection(entries, (b, entry) -> entry.write(b));
+    }
+
+    public static final CustomPacketPayload.Type<MessageToClientMerchantMemory> TYPE = new CustomPacketPayload.Type<>(ResourceLocation.fromNamespaceAndPath("workers", "message_to_client_merchant_memory"));
+
+    @Override
+    public CustomPacketPayload.Type<MessageToClientMerchantMemory> type() {
+        return TYPE;
     }
 }

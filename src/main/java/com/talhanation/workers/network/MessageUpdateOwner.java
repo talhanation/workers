@@ -3,11 +3,14 @@ package com.talhanation.workers.network;
 import com.talhanation.recruits.world.RecruitsPlayerInfo;
 import com.talhanation.workers.entities.workarea.AbstractWorkAreaEntity;
 import de.maxhenkel.corelib.net.Message;
-import net.minecraft.network.FriendlyByteBuf;
+import net.minecraft.network.RegistryFriendlyByteBuf;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.player.Player;
-import net.minecraftforge.api.distmarker.Dist;
-import net.minecraftforge.network.NetworkEvent;
+import net.neoforged.api.distmarker.Dist;
+import net.neoforged.neoforge.network.handling.IPayloadContext;
+import net.minecraft.network.protocol.PacketFlow;
+import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
+import net.minecraft.resources.ResourceLocation;
 
 import java.util.UUID;
 
@@ -27,12 +30,12 @@ public class MessageUpdateOwner implements Message<MessageUpdateOwner> {
         this.playerName = playerInfo.getName();
     }
 
-    public Dist getExecutingSide() {
-        return Dist.DEDICATED_SERVER;
+    public PacketFlow getExecutingSide() {
+        return PacketFlow.SERVERBOUND;
     }
 
-    public void executeServerSide(NetworkEvent.Context context){
-        ServerPlayer player = context.getSender();
+    public void executeServerSide(IPayloadContext context){
+        ServerPlayer player = ((ServerPlayer) context.player());
         if(player == null) return;
 
         player.getCommandSenderWorld().getEntitiesOfClass(AbstractWorkAreaEntity.class, player.getBoundingBox()
@@ -56,15 +59,22 @@ public class MessageUpdateOwner implements Message<MessageUpdateOwner> {
         workArea.setTeamStringID(player.getTeam().getName());
     }
 
-    public MessageUpdateOwner fromBytes(FriendlyByteBuf buf) {
+    public MessageUpdateOwner fromBytes(RegistryFriendlyByteBuf buf) {
         this.uuid = buf.readUUID();
         this.playerUUID = buf.readUUID();
         this.playerName = buf.readUtf();
         return this;
     }
-    public void toBytes(FriendlyByteBuf buf) {
+    public void toBytes(RegistryFriendlyByteBuf buf) {
         buf.writeUUID(uuid);
         buf.writeUUID(playerUUID);
         buf.writeUtf(playerName);
+    }
+
+    public static final CustomPacketPayload.Type<MessageUpdateOwner> TYPE = new CustomPacketPayload.Type<>(ResourceLocation.fromNamespaceAndPath("workers", "message_update_owner"));
+
+    @Override
+    public CustomPacketPayload.Type<MessageUpdateOwner> type() {
+        return TYPE;
     }
 }

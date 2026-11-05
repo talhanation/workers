@@ -223,7 +223,7 @@ public class BuildBlockParse {
      * block does not exist or has no item.
      */
     private static Item itemFromName(String namespace, String path) {
-        ResourceLocation id = new ResourceLocation(namespace, path);
+        ResourceLocation id = ResourceLocation.fromNamespaceAndPath(namespace, path);
         if (!BuiltInRegistries.BLOCK.containsKey(id)) return null;
         Block block = BuiltInRegistries.BLOCK.get(id);
         if (block == Blocks.AIR) return null;

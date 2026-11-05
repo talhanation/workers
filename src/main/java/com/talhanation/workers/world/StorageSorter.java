@@ -6,7 +6,7 @@ import net.minecraft.world.Container;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.phys.Vec3;
-import net.minecraftforge.registries.ForgeRegistries;
+import net.minecraft.core.registries.BuiltInRegistries;
 
 import javax.annotation.Nullable;
 import java.util.*;
@@ -46,7 +46,7 @@ public final class StorageSorter {
     }
 
     private static String itemLabel(Item item) {
-        return ITEM_LABEL + ForgeRegistries.ITEMS.getKey(item);
+        return ITEM_LABEL + BuiltInRegistries.ITEM.getKey(item);
     }
 
     // ── Plan ──────────────────────────────────────────────────────────────────
@@ -254,7 +254,7 @@ public final class StorageSorter {
         for (int i = 0; i < container.getContainerSize(); i++) {
             ItemStack slot = container.getItem(i);
             if (slot.isEmpty()) return true;
-            if (ItemStack.isSameItemSameTags(slot, stack) && slot.getCount() < Math.min(slot.getMaxStackSize(), container.getMaxStackSize())) return true;
+            if (ItemStack.isSameItemSameComponents(slot, stack) && slot.getCount() < Math.min(slot.getMaxStackSize(), container.getMaxStackSize())) return true;
         }
         return false;
     }
@@ -264,7 +264,7 @@ public final class StorageSorter {
         ItemStack rest = stack.copy();
         for (int i = 0; i < container.getContainerSize() && !rest.isEmpty(); i++) {
             ItemStack slot = container.getItem(i);
-            if (slot.isEmpty() || !ItemStack.isSameItemSameTags(slot, rest)) continue;
+            if (slot.isEmpty() || !ItemStack.isSameItemSameComponents(slot, rest)) continue;
             int max = Math.min(slot.getMaxStackSize(), container.getMaxStackSize());
             int move = Math.min(rest.getCount(), max - slot.getCount());
             if (move <= 0) continue;
@@ -290,7 +290,7 @@ public final class StorageSorter {
             boolean moved = false;
             for (int j = 0; j < i && !from.isEmpty(); j++) {
                 ItemStack to = container.getItem(j);
-                if (to.isEmpty() || !ItemStack.isSameItemSameTags(to, from)) continue;
+                if (to.isEmpty() || !ItemStack.isSameItemSameComponents(to, from)) continue;
                 int max = Math.min(to.getMaxStackSize(), container.getMaxStackSize());
                 int move = Math.min(from.getCount(), max - to.getCount());
                 if (move <= 0) continue;

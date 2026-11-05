@@ -6,8 +6,7 @@ import net.minecraft.world.effect.MobEffectCategory;
 import net.minecraft.world.effect.MobEffectInstance;
 import net.minecraft.world.food.FoodProperties;
 import net.minecraft.world.item.*;
-import net.minecraftforge.common.IPlantable;
-import net.minecraftforge.common.Tags;
+import net.neoforged.neoforge.common.Tags;
 
 /**
  * What kind of item a stack is, so the storekeeper knows where it belongs.
@@ -28,22 +27,22 @@ public enum StorageCategory {
     public static StorageCategory of(ItemStack stack) {
         Item item = stack.getItem();
 
-        if (item instanceof ArmorItem || item instanceof HorseArmorItem || stack.is(Tags.Items.ARMORS)) return ARMOR;
+        if (item instanceof ArmorItem || item instanceof AnimalArmorItem || stack.is(Tags.Items.ARMORS)) return ARMOR;
 
         if (item instanceof TieredItem || item instanceof ProjectileWeaponItem || item instanceof ShieldItem || item instanceof TridentItem
                 || stack.is(Tags.Items.TOOLS) || stack.is(ItemTags.ARROWS)) return TOOLS;
 
-        if (isBadFood(stack) || stack.is(Tags.Items.BONES) || stack.is(Tags.Items.STRING) || stack.is(Tags.Items.LEATHER)
-                || stack.is(Tags.Items.FEATHERS) || stack.is(Tags.Items.GUNPOWDER) || stack.is(Tags.Items.SLIMEBALLS)
-                || stack.is(Tags.Items.ENDER_PEARLS) || stack.is(Tags.Items.RODS_BLAZE) || stack.is(Tags.Items.HEADS)) return MOB_DROPS;
+        if (isBadFood(stack) || stack.is(Tags.Items.BONES) || stack.is(Tags.Items.STRINGS) || stack.is(Tags.Items.LEATHERS)
+                || stack.is(Tags.Items.FEATHERS) || stack.is(Tags.Items.GUNPOWDERS) || stack.is(Tags.Items.SLIMEBALLS)
+                || stack.is(Tags.Items.ENDER_PEARLS) || stack.is(Tags.Items.RODS_BLAZE) || stack.is(net.minecraft.tags.ItemTags.SKULLS)) return MOB_DROPS;
 
         if (stack.is(Tags.Items.SEEDS) || stack.is(Tags.Items.CROPS) || stack.is(Tags.Items.MUSHROOMS) || stack.is(Tags.Items.EGGS)
                 || stack.is(ItemTags.SAPLINGS) || stack.is(ItemTags.FLOWERS) || item == Items.BONE_MEAL
                 || item == Items.PUMPKIN || item == Items.MELON || isPlantable(item)) return FARMING;
 
-        if (stack.isEdible()) return FOOD;
+        if (stack.has(net.minecraft.core.component.DataComponents.FOOD)) return FOOD;
 
-        if (stack.is(Tags.Items.INGOTS_BRICK) || stack.is(Tags.Items.INGOTS_NETHER_BRICK)) return BUILDING;
+        if (stack.is(Tags.Items.BRICKS_NORMAL) || stack.is(Tags.Items.BRICKS_NETHER)) return BUILDING;
 
         if (stack.is(Tags.Items.ORES) || stack.is(Tags.Items.RAW_MATERIALS) || stack.is(Tags.Items.INGOTS) || stack.is(Tags.Items.NUGGETS)
                 || stack.is(Tags.Items.GEMS) || stack.is(Tags.Items.DUSTS) || stack.is(Tags.Items.STORAGE_BLOCKS) || stack.is(ItemTags.COALS)) return ORES;
@@ -58,17 +57,20 @@ public enum StorageCategory {
 
     /** Food that mostly makes you sick (rotten flesh, spider eye) is a mob drop, not a meal. Raw chicken (30% hunger) stays food. */
     private static boolean isBadFood(ItemStack stack) {
-        if (!stack.isEdible()) return false;
+        if (!stack.has(net.minecraft.core.component.DataComponents.FOOD)) return false;
         FoodProperties food = stack.getFoodProperties(null);
         if (food == null) return false;
-        for (Pair<MobEffectInstance, Float> effect : food.getEffects()) {
-            if (effect.getFirst().getEffect().getCategory() == MobEffectCategory.HARMFUL && effect.getSecond() >= 0.5F) return true;
+        for (FoodProperties.PossibleEffect effect : food.effects()) {
+            if (effect.effect().getEffect().value().getCategory() == MobEffectCategory.HARMFUL && effect.probability() >= 0.5F) return true;
         }
         return false;
     }
 
     /** Saplings, seeds and plants of other mods that have no tag: their block can be planted. */
     private static boolean isPlantable(Item item) {
-        return item instanceof BlockItem blockItem && blockItem.getBlock() instanceof IPlantable;
+        // 1.21: IPlantable is gone, these are the vanilla blocks that implemented it in 1.20.1
+        return item instanceof BlockItem blockItem && (blockItem.getBlock() instanceof net.minecraft.world.level.block.BushBlock || blockItem.getBlock() instanceof net.minecraft.world.level.block.CactusBlock
+                || blockItem.getBlock() instanceof net.minecraft.world.level.block.SugarCaneBlock || blockItem.getBlock() instanceof net.minecraft.world.level.block.BambooStalkBlock
+                || blockItem.getBlock() == net.minecraft.world.level.block.Blocks.MELON || blockItem.getBlock() instanceof net.minecraft.world.level.block.PumpkinBlock);
     }
 }

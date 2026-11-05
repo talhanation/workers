@@ -4,13 +4,15 @@ import com.talhanation.workers.client.WorkersClientManager;
 import com.talhanation.workers.world.VillagerPriceTable;
 import de.maxhenkel.corelib.net.Message;
 import net.minecraft.core.registries.BuiltInRegistries;
-import net.minecraft.network.FriendlyByteBuf;
+import net.minecraft.network.RegistryFriendlyByteBuf;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.Items;
-import net.minecraftforge.api.distmarker.Dist;
-import net.minecraftforge.api.distmarker.OnlyIn;
-import net.minecraftforge.network.NetworkEvent;
+import net.neoforged.api.distmarker.Dist;
+import net.neoforged.api.distmarker.OnlyIn;
+import net.neoforged.neoforge.network.handling.IPayloadContext;
+import net.minecraft.network.protocol.PacketFlow;
+import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -23,24 +25,24 @@ public class MessageToClientVillagerPrices implements Message<MessageToClientVil
     }
 
     public MessageToClientVillagerPrices(Map<Item, VillagerPriceTable.Entry> prices, Item currency) {
-        this.prices = prices;
+        this.prices = new java.util.HashMap<>(prices); // NeoForge encodes payloads later on the netty thread: snapshot mutable data here
         this.currency = currency;
     }
 
     @Override
-    public Dist getExecutingSide() {
-        return Dist.CLIENT;
+    public PacketFlow getExecutingSide() {
+        return PacketFlow.CLIENTBOUND;
     }
 
     @Override
     @OnlyIn(Dist.CLIENT)
-    public void executeClientSide(NetworkEvent.Context context) {
+    public void executeClientSide(IPayloadContext context) {
         WorkersClientManager.villagerPrices = this.prices;
         VillagerPriceTable.setCurrency(this.currency);
     }
 
     @Override
-    public MessageToClientVillagerPrices fromBytes(FriendlyByteBuf buf) {
+    public MessageToClientVillagerPrices fromBytes(RegistryFriendlyByteBuf buf) {
         this.prices = new HashMap<>();
         this.currency = BuiltInRegistries.ITEM.get(buf.readResourceLocation());
         int size = buf.readVarInt();
@@ -54,12 +56,19 @@ public class MessageToClientVillagerPrices implements Message<MessageToClientVil
     }
 
     @Override
-    public void toBytes(FriendlyByteBuf buf) {
+    public void toBytes(RegistryFriendlyByteBuf buf) {
         buf.writeResourceLocation(BuiltInRegistries.ITEM.getKey(this.currency));
         buf.writeVarInt(this.prices.size());
         for (Map.Entry<Item, VillagerPriceTable.Entry> entry : this.prices.entrySet()) {
             buf.writeResourceLocation(BuiltInRegistries.ITEM.getKey(entry.getKey()));
             entry.getValue().write(buf);
         }
+    }
+
+    public static final CustomPacketPayload.Type<MessageToClientVillagerPrices> TYPE = new CustomPacketPayload.Type<>(ResourceLocation.fromNamespaceAndPath("workers", "message_to_client_villager_prices"));
+
+    @Override
+    public CustomPacketPayload.Type<MessageToClientVillagerPrices> type() {
+        return TYPE;
     }
 }

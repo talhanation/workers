@@ -2,10 +2,13 @@ package com.talhanation.workers.network;
 
 import com.talhanation.workers.entities.workarea.HomeArea;
 import de.maxhenkel.corelib.net.Message;
-import net.minecraft.network.FriendlyByteBuf;
+import net.minecraft.network.RegistryFriendlyByteBuf;
 import net.minecraft.server.level.ServerPlayer;
-import net.minecraftforge.api.distmarker.Dist;
-import net.minecraftforge.network.NetworkEvent;
+import net.neoforged.api.distmarker.Dist;
+import net.neoforged.neoforge.network.handling.IPayloadContext;
+import net.minecraft.network.protocol.PacketFlow;
+import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
+import net.minecraft.resources.ResourceLocation;
 
 import java.util.UUID;
 
@@ -27,12 +30,12 @@ public class MessageUpdateHomeArea implements Message<MessageUpdateHomeArea> {
         this.evict = evict;
     }
 
-    public Dist getExecutingSide() {
-        return Dist.DEDICATED_SERVER;
+    public PacketFlow getExecutingSide() {
+        return PacketFlow.SERVERBOUND;
     }
 
-    public void executeServerSide(NetworkEvent.Context context) {
-        ServerPlayer player = context.getSender();
+    public void executeServerSide(IPayloadContext context) {
+        ServerPlayer player = ((ServerPlayer) context.player());
         if (player == null) return;
 
         player.getCommandSenderWorld().getEntitiesOfClass(HomeArea.class, player.getBoundingBox()
@@ -54,16 +57,23 @@ public class MessageUpdateHomeArea implements Message<MessageUpdateHomeArea> {
         }
     }
 
-    public MessageUpdateHomeArea fromBytes(FriendlyByteBuf buf) {
+    public MessageUpdateHomeArea fromBytes(RegistryFriendlyByteBuf buf) {
         this.uuid       = buf.readUUID();
         this.teamAccess = buf.readBoolean();
         this.evict      = buf.readBoolean();
         return this;
     }
 
-    public void toBytes(FriendlyByteBuf buf) {
+    public void toBytes(RegistryFriendlyByteBuf buf) {
         buf.writeUUID(uuid);
         buf.writeBoolean(teamAccess);
         buf.writeBoolean(evict);
+    }
+
+    public static final CustomPacketPayload.Type<MessageUpdateHomeArea> TYPE = new CustomPacketPayload.Type<>(ResourceLocation.fromNamespaceAndPath("workers", "message_update_home_area"));
+
+    @Override
+    public CustomPacketPayload.Type<MessageUpdateHomeArea> type() {
+        return TYPE;
     }
 }

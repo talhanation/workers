@@ -3,12 +3,12 @@ package com.talhanation.workers;
 import com.talhanation.workers.entities.BuilderEntity;
 import com.talhanation.workers.entities.workarea.AbstractWorkAreaEntity;
 import com.talhanation.workers.entities.workarea.BuildArea;
-import net.minecraftforge.eventbus.api.Event;
+import net.neoforged.bus.api.Event;
 
 import java.util.List;
 
 /**
- * Build events on the {@code MinecraftForge.EVENT_BUS}, server-side only.
+ * Build events on the {@code NeoForge.EVENT_BUS}, server-side only.
  * Meant for the Governor compat: he reacts when one of his buildings is finished instead of checking every tick.
  */
 public abstract class BuildEvent extends Event {

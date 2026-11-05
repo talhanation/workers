@@ -1,0 +1,52 @@
+license="${mod_license}"
+
+modLoader="javafml"
+
+loaderVersion="${loader_version_range}" #mandatory This is typically bumped every Minecraft version by Forge. See our download page for lists of versions.
+
+[[mods]] #mandatory
+
+modId="${mod_id}"
+
+version="${mod_version}"
+
+displayName="${mod_name}"
+updateJSONURL="https://raw.githubusercontent.com/talhanation/workers/main/update.json"
+displayURL="https://modrinth.com/mod/villager-workers"
+
+logoFile="logo.png"
+
+credits="talhanation"
+
+authors="${mod_authors}"
+# The description text for the mod (multi line!) (#mandatory)
+description='''
+${mod_description}
+'''
+
+[[mixins]]
+config="mixins.workers.json"
+
+[[accessTransformers]]
+file="META-INF/accesstransformer.cfg"
+
+[[dependencies."${mod_id}"]]
+    modId="neoforge"
+    type="required"
+    versionRange="${neo_version_range}"
+    ordering="NONE"
+    side="BOTH"
+
+[[dependencies."${mod_id}"]]
+    modId="minecraft"
+    type="required"
+    versionRange="${minecraft_version_range}"
+    ordering="NONE"
+    side="BOTH"
+
+[[dependencies."${mod_id}"]]
+    modId="recruits"
+    type="required"
+    versionRange="[1.15.0,)"
+    ordering="AFTER"
+    side="BOTH"

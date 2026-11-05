@@ -5,10 +5,13 @@ import com.talhanation.workers.world.CourierAction;
 import de.maxhenkel.corelib.net.Message;
 import net.minecraft.client.Minecraft;
 import net.minecraft.core.BlockPos;
-import net.minecraft.network.FriendlyByteBuf;
-import net.minecraftforge.api.distmarker.Dist;
-import net.minecraftforge.api.distmarker.OnlyIn;
-import net.minecraftforge.network.NetworkEvent;
+import net.minecraft.network.RegistryFriendlyByteBuf;
+import net.neoforged.api.distmarker.Dist;
+import net.neoforged.api.distmarker.OnlyIn;
+import net.neoforged.neoforge.network.handling.IPayloadContext;
+import net.minecraft.network.protocol.PacketFlow;
+import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
+import net.minecraft.resources.ResourceLocation;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -28,24 +31,24 @@ public class MessageToClientCourierTargets implements Message<MessageToClientCou
     public MessageToClientCourierTargets(BlockPos waypointPos, boolean loaded, List<Target> targets) {
         this.waypointPos = waypointPos;
         this.loaded      = loaded;
-        this.targets     = targets;
+        this.targets     = new java.util.ArrayList<>(targets); // NeoForge encodes payloads later on the netty thread: snapshot mutable data here
     }
 
     @Override
-    public Dist getExecutingSide() {
-        return Dist.CLIENT;
+    public PacketFlow getExecutingSide() {
+        return PacketFlow.CLIENTBOUND;
     }
 
     @Override
     @OnlyIn(Dist.CLIENT)
-    public void executeClientSide(NetworkEvent.Context context) {
+    public void executeClientSide(IPayloadContext context) {
         if (Minecraft.getInstance().screen instanceof CourierScreen courierScreen) {
             courierScreen.onTargetsReceived(waypointPos, loaded, targets);
         }
     }
 
     @Override
-    public MessageToClientCourierTargets fromBytes(FriendlyByteBuf buf) {
+    public MessageToClientCourierTargets fromBytes(RegistryFriendlyByteBuf buf) {
         this.waypointPos = buf.readBlockPos();
         this.loaded      = buf.readBoolean();
         int size = buf.readVarInt();
@@ -62,7 +65,7 @@ public class MessageToClientCourierTargets implements Message<MessageToClientCou
     }
 
     @Override
-    public void toBytes(FriendlyByteBuf buf) {
+    public void toBytes(RegistryFriendlyByteBuf buf) {
         buf.writeBlockPos(waypointPos);
         buf.writeBoolean(loaded);
         buf.writeVarInt(targets.size());
@@ -77,4 +80,11 @@ public class MessageToClientCourierTargets implements Message<MessageToClientCou
 
     /** A work area at the waypoint. {@code name} is empty when the area has no custom name. */
     public record Target(UUID id, CourierAction.SourceType type, String name, BlockPos pos, int slots) {}
+
+    public static final CustomPacketPayload.Type<MessageToClientCourierTargets> TYPE = new CustomPacketPayload.Type<>(ResourceLocation.fromNamespaceAndPath("workers", "message_to_client_courier_targets"));
+
+    @Override
+    public CustomPacketPayload.Type<MessageToClientCourierTargets> type() {
+        return TYPE;
+    }
 }

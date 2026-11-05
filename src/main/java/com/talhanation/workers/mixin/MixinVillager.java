@@ -99,7 +99,7 @@ public abstract class MixinVillager {
             ItemStack stack = inv.getItem(i);
             if (stack.isEmpty()) continue;
 
-            FoodProperties food = stack.getItem().getFoodProperties();
+            FoodProperties food = stack.getFoodProperties(null);
             if (food == null) continue;
 
             int satInt = workers_saturationOf(food);
@@ -127,7 +127,7 @@ public abstract class MixinVillager {
         for (int i = 0; i < inv.getContainerSize(); i++) {
             ItemStack stack = inv.getItem(i);
             if (stack.isEmpty()) continue;
-            FoodProperties food = stack.getItem().getFoodProperties();
+            FoodProperties food = stack.getFoodProperties(null);
             if (food == null) continue;
             total += workers_saturationOf(food) * stack.getCount();
         }
@@ -135,7 +135,7 @@ public abstract class MixinVillager {
     }
 
     private static int workers_saturationOf(FoodProperties food) {
-        float sat = food.getNutrition() * food.getSaturationModifier() * 2.0f;
+        float sat = food.saturation(); // 1.21: saturation() = nutrition * saturationModifier * 2
         return Math.max(1, Math.round(sat));
     }
-}
+}

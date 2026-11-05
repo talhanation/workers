@@ -53,7 +53,7 @@ public class CropAreaScreen extends WorkAreaScreen {
         seedItemSelectionDropDownMenu.setBgFillSelected(FastColor.ARGB32.color(255, 139, 139, 139));
 
         if (currentSeeds.isEmpty()) {
-            currentSeeds.setHoverName(TEXT_SELECT_SEED);
+            currentSeeds.set(net.minecraft.core.component.DataComponents.CUSTOM_NAME, TEXT_SELECT_SEED);
         }
 
         addRenderableWidget(seedItemSelectionDropDownMenu);
@@ -108,9 +108,9 @@ public class CropAreaScreen extends WorkAreaScreen {
         return super.mouseClicked(mouseX, mouseY, button);
     }
     @Override
-    public boolean mouseScrolled(double x, double y, double d) {
-        if(seedItemSelectionDropDownMenu != null) seedItemSelectionDropDownMenu.mouseScrolled(x,y,d);
-        return super.mouseScrolled(x, y, d);
+    public boolean mouseScrolled(double x, double y, double scrollX, double d) {
+        if(seedItemSelectionDropDownMenu != null) seedItemSelectionDropDownMenu.mouseScrolled(x, y, 0, d);
+        return super.mouseScrolled(x, y, scrollX, d);
     }
     @Override
     public void render(GuiGraphics guiGraphics, int mouseX, int mouseY, float partialTicks) {
@@ -120,4 +120,4 @@ public class CropAreaScreen extends WorkAreaScreen {
             seedItemSelectionDropDownMenu.renderWidget(guiGraphics, mouseX, mouseY, partialTicks);
         }
     }
-}
+}

@@ -23,9 +23,10 @@ import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
 import net.minecraft.world.item.crafting.Recipe;
+import net.minecraft.world.item.crafting.RecipeHolder;
 import net.minecraft.world.item.crafting.RecipeType;
 import net.minecraft.world.level.Level;
-import net.minecraftforge.client.gui.widget.ExtendedButton;
+import net.neoforged.neoforge.client.gui.widget.ExtendedButton;
 
 import javax.annotation.Nullable;
 import java.util.ArrayList;
@@ -39,8 +40,8 @@ import java.util.Map;
  */
 public class WorkshopEditOrderScreen extends ScreenBase<WorkshopEditOrderContainer> {
 
-    private static final ResourceLocation CRAFTING_TEXTURE = new ResourceLocation("textures/gui/container/crafting_table.png");
-    private static final ResourceLocation FURNACE_TEXTURE  = new ResourceLocation("textures/gui/container/furnace.png");
+    private static final ResourceLocation CRAFTING_TEXTURE = ResourceLocation.parse("textures/gui/container/crafting_table.png");
+    private static final ResourceLocation FURNACE_TEXTURE  = ResourceLocation.parse("textures/gui/container/furnace.png");
     private static final MutableComponent TITLE             = Component.translatable("gui.workers.workshop.editOrder");
     private static final MutableComponent BUTTON_SAVE       = Component.translatable("gui.workers.button.save");
     private static final MutableComponent BUTTON_CANCEL     = Component.translatable("gui.workers.button.cancel");
@@ -67,8 +68,8 @@ public class WorkshopEditOrderScreen extends ScreenBase<WorkshopEditOrderContain
     private ItemStack previewResult = ItemStack.EMPTY;
     @Nullable private ItemSearchWidget search;
     /** Recipes by result, one map per mode, built once when the screen opens. */
-    private final Map<Item, List<Recipe<?>>> craftingRecipes = new HashMap<>();
-    private final Map<Item, List<Recipe<?>>> smeltingRecipes = new HashMap<>();
+    private final Map<Item, List<RecipeHolder<?>>> craftingRecipes = new HashMap<>();
+    private final Map<Item, List<RecipeHolder<?>>> smeltingRecipes = new HashMap<>();
     @Nullable private Item lastPicked;
     private int lastRecipeIndex;
 
@@ -181,18 +182,18 @@ public class WorkshopEditOrderScreen extends ScreenBase<WorkshopEditOrderContain
     private void collectRecipes() {
         Level level = player.getCommandSenderWorld();
         if (level == null) return;
-        for (Recipe<?> recipe : level.getRecipeManager().getAllRecipesFor(RecipeType.CRAFTING)) addRecipe(craftingRecipes, recipe, level);
-        for (Recipe<?> recipe : level.getRecipeManager().getAllRecipesFor(RecipeType.SMELTING)) addRecipe(smeltingRecipes, recipe, level);
+        for (RecipeHolder<?> recipe : level.getRecipeManager().getAllRecipesFor(RecipeType.CRAFTING)) addRecipe(craftingRecipes, recipe, level);
+        for (RecipeHolder<?> recipe : level.getRecipeManager().getAllRecipesFor(RecipeType.SMELTING)) addRecipe(smeltingRecipes, recipe, level);
     }
 
-    private static void addRecipe(Map<Item, List<Recipe<?>>> map, Recipe<?> recipe, Level level) {
-        if (recipe.isSpecial()) return; // map cloning, fireworks, ... have no fixed ingredients
-        ItemStack result = recipe.getResultItem(level.registryAccess());
+    private static void addRecipe(Map<Item, List<RecipeHolder<?>>> map, RecipeHolder<?> recipe, Level level) {
+        if (recipe.value().isSpecial()) return; // map cloning, fireworks, ... have no fixed ingredients
+        ItemStack result = recipe.value().getResultItem(level.registryAccess());
         if (result.isEmpty()) return;
         map.computeIfAbsent(result.getItem(), item -> new ArrayList<>()).add(recipe);
     }
 
-    private Map<Item, List<Recipe<?>>> getRecipes() {
+    private Map<Item, List<RecipeHolder<?>>> getRecipes() {
         return smeltMode ? smeltingRecipes : craftingRecipes;
     }
 
@@ -201,11 +202,11 @@ public class WorkshopEditOrderScreen extends ScreenBase<WorkshopEditOrderContain
     public boolean mouseClicked(double mouseX, double mouseY, int button) {
         ItemStack picked = search != null ? search.getItemAt(mouseX, mouseY) : null;
         if (picked != null) {
-            List<Recipe<?>> recipes = getRecipes().get(picked.getItem());
+            List<RecipeHolder<?>> recipes = getRecipes().get(picked.getItem());
             if (recipes != null && !recipes.isEmpty()) {
                 lastRecipeIndex = picked.getItem() == lastPicked ? (lastRecipeIndex + 1) % recipes.size() : 0;
                 lastPicked = picked.getItem();
-                WorkersMain.SIMPLE_CHANNEL.sendToServer(new MessageSetWorkshopRecipe(recipes.get(lastRecipeIndex).getId()));
+                WorkersMain.SIMPLE_CHANNEL.sendToServer(new MessageSetWorkshopRecipe(recipes.get(lastRecipeIndex).id()));
             }
             return true;
         }
@@ -213,9 +214,9 @@ public class WorkshopEditOrderScreen extends ScreenBase<WorkshopEditOrderContain
     }
 
     @Override
-    public boolean mouseScrolled(double mouseX, double mouseY, double delta) {
+    public boolean mouseScrolled(double mouseX, double mouseY, double scrollX, double delta) {
         if (search != null && search.mouseScrolled(mouseX, mouseY, delta)) return true;
-        return super.mouseScrolled(mouseX, mouseY, delta);
+        return super.mouseScrolled(mouseX, mouseY, scrollX, delta);
     }
 
     @Override
@@ -225,7 +226,7 @@ public class WorkshopEditOrderScreen extends ScreenBase<WorkshopEditOrderContain
     }
 
     private void save() {
-        CraftOrder order = orderContainer.getOrder().copy();
+        CraftOrder order = orderContainer.getOrder().copy(workshopArea.registryAccess());
         order.type = smeltMode ? CraftOrder.OrderType.SMELTING : CraftOrder.OrderType.CRAFTING;
         ItemStack[] grid = orderContainer.getGrid();
         for (int i = 0; i < CraftOrder.GRID_SIZE; i++) order.grid[i] = grid[i];
@@ -234,7 +235,7 @@ public class WorkshopEditOrderScreen extends ScreenBase<WorkshopEditOrderContain
         order.mode = mode;
         order.allowVariants = allowVariants;
         order.enabled = enabled;
-        WorkersMain.SIMPLE_CHANNEL.sendToServer(new MessageUpdateWorkshopOrder(workshopArea.getUUID(), order, MessageUpdateWorkshopOrder.Action.ADD_OR_UPDATE));
+        WorkersMain.SIMPLE_CHANNEL.sendToServer(new MessageUpdateWorkshopOrder(workshopArea.getUUID(), order, MessageUpdateWorkshopOrder.Action.ADD_OR_UPDATE, workshopArea.registryAccess()));
     }
 
     private void back() {
@@ -299,7 +300,7 @@ public class WorkshopEditOrderScreen extends ScreenBase<WorkshopEditOrderContain
         if (search != null) {
             search.render(guiGraphics, mouseX, mouseY);
             ItemStack hovered = search.getItemAt(mouseX, mouseY);
-            List<Recipe<?>> recipes = hovered != null ? getRecipes().get(hovered.getItem()) : null;
+            List<RecipeHolder<?>> recipes = hovered != null ? getRecipes().get(hovered.getItem()) : null;
             int count = recipes != null ? recipes.size() : 0;
             search.renderTooltip(guiGraphics, mouseX, mouseY, count > 1
                     ? Component.translatable("gui.workers.search.tooltip.pickRecipes", count)

@@ -1,5 +1,6 @@
 package com.talhanation.workers.entities.workarea;
 
+import net.minecraft.network.syncher.SynchedEntityData;
 import com.talhanation.workers.client.gui.FishingAreaScreen;
 import com.talhanation.workers.entities.AbstractWorkerEntity;
 import com.talhanation.workers.entities.FishermanEntity;
@@ -12,8 +13,8 @@ import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.*;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.state.BlockState;
-import net.minecraftforge.api.distmarker.Dist;
-import net.minecraftforge.api.distmarker.OnlyIn;
+import net.neoforged.api.distmarker.Dist;
+import net.neoforged.api.distmarker.OnlyIn;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -27,8 +28,8 @@ public class FishingArea extends AbstractWorkAreaEntity {
     public FishingArea(EntityType<?> type, Level level) {
         super(type, level);
     }
-    protected void defineSynchedData() {
-        super.defineSynchedData();
+    protected void defineSynchedData(SynchedEntityData.Builder builder) {
+        super.defineSynchedData(builder);
     }
 
     @Override

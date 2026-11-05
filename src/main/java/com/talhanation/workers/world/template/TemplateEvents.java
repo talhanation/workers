@@ -1,8 +1,8 @@
 package com.talhanation.workers.world.template;
 
-import net.minecraftforge.event.server.ServerStartingEvent;
-import net.minecraftforge.event.server.ServerStoppedEvent;
-import net.minecraftforge.eventbus.api.SubscribeEvent;
+import net.neoforged.neoforge.event.server.ServerStartingEvent;
+import net.neoforged.neoforge.event.server.ServerStoppedEvent;
+import net.neoforged.bus.api.SubscribeEvent;
 
 /** Server lifecycle of the Governor helpers: template index on start, both indices cleared on stop. */
 public class TemplateEvents {

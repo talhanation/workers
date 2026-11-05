@@ -7,13 +7,13 @@ import com.talhanation.workers.config.WorkersServerConfig;
 import com.talhanation.workers.network.*;
 import com.talhanation.workers.network.MessageUpdateKitchenArea;
 import net.minecraft.world.item.CreativeModeTabs;
-import net.minecraftforge.event.BuildCreativeModeTabContentsEvent;
-import net.minecraftforge.event.RegisterCommandsEvent;
-import net.minecraftforge.event.server.ServerStartingEvent;
-import net.minecraftforge.fml.DistExecutor;
-import net.minecraftforge.fml.ModList;
-import net.minecraftforge.fml.ModLoadingContext;
-import net.minecraftforge.fml.config.ModConfig;
+import net.neoforged.neoforge.event.BuildCreativeModeTabContentsEvent;
+import net.neoforged.neoforge.event.RegisterCommandsEvent;
+import net.neoforged.neoforge.event.server.ServerStartingEvent;
+import net.neoforged.fml.ModList;
+import net.neoforged.fml.ModContainer;
+import net.neoforged.fml.loading.FMLEnvironment;
+import net.neoforged.fml.config.ModConfig;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -26,16 +26,23 @@ import com.talhanation.workers.init.ModProfessions;
 import com.talhanation.workers.init.ModShortcuts;
 
 import de.maxhenkel.corelib.CommonRegistry;
-import net.minecraftforge.api.distmarker.Dist;
-import net.minecraftforge.api.distmarker.OnlyIn;
-import net.minecraftforge.common.MinecraftForge;
-import net.minecraftforge.eventbus.api.IEventBus;
-import net.minecraftforge.eventbus.api.SubscribeEvent;
-import net.minecraftforge.fml.common.Mod;
-import net.minecraftforge.fml.event.lifecycle.FMLClientSetupEvent;
-import net.minecraftforge.fml.event.lifecycle.FMLCommonSetupEvent;
-import net.minecraftforge.fml.javafmlmod.FMLJavaModLoadingContext;
-import net.minecraftforge.network.simple.SimpleChannel;
+import net.neoforged.api.distmarker.Dist;
+import net.neoforged.api.distmarker.OnlyIn;
+import net.neoforged.neoforge.common.NeoForge;
+import net.neoforged.bus.api.IEventBus;
+import net.neoforged.bus.api.SubscribeEvent;
+import net.neoforged.fml.common.Mod;
+import net.neoforged.fml.event.lifecycle.FMLClientSetupEvent;
+import net.neoforged.fml.event.lifecycle.FMLCommonSetupEvent;
+import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
+import net.neoforged.neoforge.network.PacketDistributor;
+import net.neoforged.neoforge.network.event.RegisterPayloadHandlersEvent;
+import net.neoforged.neoforge.network.registration.PayloadRegistrar;
+import net.neoforged.neoforge.capabilities.Capabilities;
+import net.neoforged.neoforge.capabilities.RegisterCapabilitiesEvent;
+import net.neoforged.neoforge.registries.DeferredHolder;
+import net.minecraft.world.entity.EntityType;
+import com.talhanation.recruits.entities.AbstractInventoryEntity;
 import com.talhanation.workers.world.StructureManager;
 import com.talhanation.workers.world.WorkersRemoteTravel;
 
@@ -43,16 +50,17 @@ import com.talhanation.workers.world.WorkersRemoteTravel;
 public class WorkersMain {
     public static final String MOD_ID = "workers";
     public static final Logger LOGGER = LogManager.getLogger(MOD_ID);
-    public static SimpleChannel SIMPLE_CHANNEL;
+    public static final SimpleChannel SIMPLE_CHANNEL = new SimpleChannel();
 
     public static boolean isDynamicTreesInstalled;
     public static boolean isFarmersDelightInstalled;
 
-    public WorkersMain() {
-        ModLoadingContext.get().registerConfig(ModConfig.Type.SERVER, WorkersServerConfig.SERVER);
+    public WorkersMain(IEventBus modEventBus, ModContainer modContainer) {
+        modContainer.registerConfig(ModConfig.Type.SERVER, WorkersServerConfig.SERVER);
 
-        final IEventBus modEventBus = FMLJavaModLoadingContext.get().getModEventBus();
         modEventBus.addListener(this::setup);
+        modEventBus.addListener(this::registerPayloads);
+        modEventBus.addListener(this::registerCapabilities);
         ModBlocks.BLOCKS.register(modEventBus);
         ModPois.POIS.register(modEventBus);
         ModProfessions.PROFESSIONS.register(modEventBus);
@@ -62,13 +70,14 @@ public class WorkersMain {
         ModEntityTypes.ENTITY_TYPES.register(modEventBus);
         ModEntityTypes.WORKER_TYPES.register(modEventBus);
 
-        FMLJavaModLoadingContext.get().getModEventBus().addListener(this::addCreativeTabs);
+        modEventBus.addListener(this::addCreativeTabs);
 
-        DistExecutor.unsafeRunWhenOn(Dist.CLIENT, () -> () -> {
-            FMLJavaModLoadingContext.get().getModEventBus().addListener(WorkersMain.this::clientSetup);
-        });
+        if (FMLEnvironment.dist == Dist.CLIENT) {
+            modEventBus.addListener(WorkersMain.this::clientSetup);
+            modEventBus.addListener(ModMenuTypes::registerMenus);
+        }
 
-        MinecraftForge.EVENT_BUS.register(this);
+        NeoForge.EVENT_BUS.register(this);
 
 
         //Compat
@@ -86,8 +95,7 @@ public class WorkersMain {
     @SubscribeEvent
     public void onServerStarting(ServerStartingEvent event) {
         if (WorkersServerConfig.BuildModeConfig.get() == com.talhanation.workers.config.BuildMode.PRESET_FACTIONS) {
-            java.io.File factionsDir = event.getServer().getServerDirectory()
-                    .toPath().resolve("workers").resolve("scan").resolve("factions").toFile();
+            java.io.File factionsDir = event.getServer().getServerDirectory().resolve("workers").resolve("scan").resolve("factions").toFile();
             if (!factionsDir.exists()) {
                 factionsDir.mkdirs();
                 LOGGER.info("[Workers] Created factions scan folder: {}", factionsDir.getAbsolutePath());
@@ -98,17 +106,17 @@ public class WorkersMain {
 
     @SuppressWarnings({"unchecked", "rawtypes"})
     private void setup(final FMLCommonSetupEvent event) {
-        MinecraftForge.EVENT_BUS.register(new VillagerEvents());
-        MinecraftForge.EVENT_BUS.register(new CommandEvents());
-        MinecraftForge.EVENT_BUS.register(new WorkerClaimEvents());
-        MinecraftForge.EVENT_BUS.register(this);
-        MinecraftForge.EVENT_BUS.register(new UpdateChecker());
-        MinecraftForge.EVENT_BUS.register(new WorkersRemoteTravel.Events());
-        MinecraftForge.EVENT_BUS.register(new com.talhanation.workers.world.template.TemplateEvents());
+        NeoForge.EVENT_BUS.register(new VillagerEvents());
+        // CommandEvents has no listeners, NeoForge throws when registering a class without @SubscribeEvent methods
+        NeoForge.EVENT_BUS.register(new WorkerClaimEvents());
+        NeoForge.EVENT_BUS.register(this);
+        NeoForge.EVENT_BUS.register(new UpdateChecker());
+        NeoForge.EVENT_BUS.register(new WorkersRemoteTravel.Events());
+        NeoForge.EVENT_BUS.register(new com.talhanation.workers.world.template.TemplateEvents());
 
-        SIMPLE_CHANNEL = CommonRegistry.registerChannel(WorkersMain.MOD_ID, "default");
+    }
 
-        Class[] messages = {
+    private static final Class[] messages = {
                 MessageAddWorkArea.class,
                 MessageToClientOpenWorkAreaScreen.class,
                 MessageUpdateWorkArea.class,
@@ -153,16 +161,26 @@ public class WorkersMain {
                 MessageSetWorkshopRecipe.class,
                 MessageUpdateBuildAreaFoundation.class
         };
-        for (int i = 0; i < messages.length; i++) CommonRegistry.registerMessage(SIMPLE_CHANNEL, i, messages[i]);
+
+    // 1.20.1: AbstractInventoryEntity#getCapability served the item handler for every subclass, NeoForge needs it per entity type
+    @SuppressWarnings({"unchecked", "rawtypes"})
+    private void registerCapabilities(RegisterCapabilitiesEvent event) {
+        for (DeferredHolder<EntityType<?>, ? extends EntityType<?>> holder : ModEntityTypes.WORKER_TYPES.getEntries()) {
+            event.registerEntity(Capabilities.ItemHandler.ENTITY, (EntityType) holder.get(), (entity, context) -> ((AbstractInventoryEntity) entity).getItemHandler());
+        }
     }
 
-    @SubscribeEvent
+    @SuppressWarnings({"unchecked", "rawtypes"})
+    private void registerPayloads(final RegisterPayloadHandlersEvent event) {
+        PayloadRegistrar registrar = event.registrar("1");
+        for (int i = 0; i < messages.length; i++) CommonRegistry.registerMessage(registrar, messages[i]);
+    }
+
     @OnlyIn(Dist.CLIENT)
     public void clientSetup(FMLClientSetupEvent event) {
-        event.enqueueWork(ModMenuTypes::registerMenus);
         event.enqueueWork(StructureManager::copyDefaultStructuresIfMissing);
         CommandCategoryManager.register(new WorkerCommandScreen());
-        MinecraftForge.EVENT_BUS.register(new ScreenEvents());
+        NeoForge.EVENT_BUS.register(new ScreenEvents());
     }
 
     private void addCreativeTabs(BuildCreativeModeTabContentsEvent event) {
@@ -178,6 +196,13 @@ public class WorkersMain {
             event.accept(ModItems.COOK_SPAWN_EGG.get());
             event.accept(ModItems.CRAFTSMAN_SPAWN_EGG.get());
             event.accept(ModItems.STOREKEEPER_SPAWN_EGG.get());
+        }
+    }
+
+    // Forge SimpleChannel replacement, so all WorkersMain.SIMPLE_CHANNEL.sendToServer(...) calls stay as they are
+    public static class SimpleChannel {
+        public void sendToServer(CustomPacketPayload message) {
+            PacketDistributor.sendToServer(message);
         }
     }
 }

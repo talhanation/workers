@@ -25,13 +25,13 @@ import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.inventory.Slot;
 import net.minecraft.world.item.ItemStack;
-import net.minecraftforge.client.gui.widget.ExtendedButton;
+import net.neoforged.neoforge.client.gui.widget.ExtendedButton;
 
 import javax.annotation.Nullable;
 
 public class MerchantAddEditVillagerTradeScreen extends ScreenBase<MerchantAddEditVillagerTradeContainer> {
 
-    private static final ResourceLocation RESOURCE_LOCATION = new ResourceLocation(WorkersMain.MOD_ID, "textures/gui/merchant_add_edit_villager_trade_screen.png");
+    private static final ResourceLocation RESOURCE_LOCATION = ResourceLocation.fromNamespaceAndPath(WorkersMain.MOD_ID, "textures/gui/merchant_add_edit_villager_trade_screen.png");
     private static final MutableComponent BUTTON_CANCEL  = Component.translatable("gui.workers.button.cancel");
     private static final MutableComponent BUTTON_SAVE    = Component.translatable("gui.workers.button.save");
     private static final MutableComponent TEXT_ENABLED   = Component.translatable("gui.workers.checkbox.enabled");
@@ -131,7 +131,7 @@ public class MerchantAddEditVillagerTradeScreen extends ScreenBase<MerchantAddEd
                     this.trade.storageAmount          = amount;
 
                     WorkersMain.SIMPLE_CHANNEL.sendToServer(
-                            new MessageUpdateMerchantTrade(this.merchantEntity.getUUID(), this.trade, false));
+                            new MessageUpdateMerchantTrade(this.merchantEntity.getUUID(), this.trade, false, this.merchantEntity.registryAccess()));
 
                     new java.util.Timer().schedule(new java.util.TimerTask() {
                         @Override
@@ -187,9 +187,9 @@ public class MerchantAddEditVillagerTradeScreen extends ScreenBase<MerchantAddEd
     }
 
     @Override
-    public boolean mouseScrolled(double mouseX, double mouseY, double delta) {
+    public boolean mouseScrolled(double mouseX, double mouseY, double scrollX, double delta) {
         if (search != null && search.mouseScrolled(mouseX, mouseY, delta)) return true;
-        return super.mouseScrolled(mouseX, mouseY, delta);
+        return super.mouseScrolled(mouseX, mouseY, scrollX, delta);
     }
 
     @Override

@@ -14,7 +14,7 @@ import net.minecraft.server.packs.resources.Resource;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.BushBlock;
 import net.minecraft.world.level.block.state.BlockState;
-import net.minecraftforge.registries.ForgeRegistries;
+import net.minecraft.core.registries.BuiltInRegistries;
 
 import java.io.File;
 import java.io.IOException;
@@ -61,7 +61,7 @@ public class StructureManager {
         ListTag entityList = new ListTag();
         List<AbstractWorkAreaEntity> workAreas = level.getEntitiesOfClass(AbstractWorkAreaEntity.class, buildArea.getArea());
         for (AbstractWorkAreaEntity wa : workAreas) {
-            ResourceLocation typeKey = ForgeRegistries.ENTITY_TYPES.getKey(wa.getType());
+            ResourceLocation typeKey = BuiltInRegistries.ENTITY_TYPE.getKey(wa.getType());
             if (typeKey == null || wa instanceof BuildArea) continue;
             BlockPos delta = wa.getOnPos().subtract(origin);
             int relZ = dotHorizontal(delta, facing);
@@ -104,7 +104,7 @@ public class StructureManager {
         File file = new File(dir, filename.endsWith(".nbt") ? filename : filename + ".nbt");
         root.putString("name", filename);
         try {
-            NbtIo.writeCompressed(root, file);
+            NbtIo.writeCompressed(root, file.toPath());
             Minecraft.getInstance().player.displayClientMessage(
                     Component.literal("Scan saved to: " + file.getPath()), true);
         } catch (IOException e) {
@@ -119,7 +119,7 @@ public class StructureManager {
         for (int i = 0; i < parts.length - 1; i++) base = base.resolve(parts[i]);
         Path scanFile = base.resolve(parts[parts.length - 1] + ".nbt");
         try (InputStream input = Files.newInputStream(scanFile)) {
-            return NbtIo.readCompressed(input);
+            return NbtIo.readCompressed(input, net.minecraft.nbt.NbtAccounter.unlimitedHeap());
         } catch (IOException e) {
             e.printStackTrace();
             return null;

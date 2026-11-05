@@ -13,7 +13,7 @@ import net.minecraft.world.item.crafting.CraftingRecipe;
 import net.minecraft.world.item.crafting.Ingredient;
 import net.minecraft.world.item.crafting.Recipe;
 import net.minecraft.world.item.crafting.SmeltingRecipe;
-import net.minecraftforge.common.crafting.IShapedRecipe;
+import net.minecraft.world.item.crafting.ShapedRecipe;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -90,9 +90,9 @@ public class WorkshopEditOrderContainer extends ContainerBase {
         if (!(recipe instanceof CraftingRecipe) || smeltMode) return;
 
         int width = 3;
-        if (recipe instanceof IShapedRecipe<?> shaped) {
-            width = shaped.getRecipeWidth();
-            if (width > 3 || shaped.getRecipeHeight() > 3) return;
+        if (recipe instanceof ShapedRecipe shaped) {
+            width = shaped.getWidth();
+            if (width > 3 || shaped.getHeight() > 3) return;
         }
         if (recipe.getIngredients().size() > CraftOrder.GRID_SIZE) return;
 

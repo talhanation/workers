@@ -721,7 +721,7 @@ public class MerchantTripGoal extends Goal {
     /** With NBT (e.g. an enchanted book) the item must match exactly, otherwise the item is enough. */
     private static boolean sameItem(ItemStack template, ItemStack stack) {
         if (template.isEmpty() || stack.isEmpty()) return false;
-        if (template.hasTag()) return ItemStack.isSameItemSameTags(template, stack);
+        if (!template.getComponentsPatch().isEmpty()) return ItemStack.isSameItemSameComponents(template, stack);
         return stack.is(template.getItem());
     }
 
@@ -771,7 +771,7 @@ public class MerchantTripGoal extends Goal {
         for (int i = FIRST_INV_SLOT; i < inventory.getContainerSize(); i++) {
             ItemStack stack = inventory.getItem(i);
             if (stack.isEmpty()) space += template.getMaxStackSize();
-            else if (ItemStack.isSameItemSameTags(stack, template)) space += stack.getMaxStackSize() - stack.getCount();
+            else if (ItemStack.isSameItemSameComponents(stack, template)) space += stack.getMaxStackSize() - stack.getCount();
         }
         return space;
     }
@@ -811,7 +811,7 @@ public class MerchantTripGoal extends Goal {
             for (int i = 0; i < container.getContainerSize(); i++) {
                 ItemStack stack = container.getItem(i);
                 if (stack.isEmpty()) space += template.getMaxStackSize();
-                else if (ItemStack.isSameItemSameTags(stack, template)) space += stack.getMaxStackSize() - stack.getCount();
+                else if (ItemStack.isSameItemSameComponents(stack, template)) space += stack.getMaxStackSize() - stack.getCount();
             }
         }
         return space;

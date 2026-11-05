@@ -4,10 +4,13 @@ import com.talhanation.workers.entities.MerchantEntity;
 import com.talhanation.workers.world.WorkersMerchantTrade;
 import de.maxhenkel.corelib.net.Message;
 import net.minecraft.nbt.CompoundTag;
-import net.minecraft.network.FriendlyByteBuf;
+import net.minecraft.network.RegistryFriendlyByteBuf;
 import net.minecraft.server.level.ServerPlayer;
-import net.minecraftforge.api.distmarker.Dist;
-import net.minecraftforge.network.NetworkEvent;
+import net.neoforged.api.distmarker.Dist;
+import net.neoforged.neoforge.network.handling.IPayloadContext;
+import net.minecraft.network.protocol.PacketFlow;
+import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
+import net.minecraft.resources.ResourceLocation;
 
 import java.util.UUID;
 
@@ -31,12 +34,12 @@ public class MessageUpdateMerchant implements Message<MessageUpdateMerchant> {
     }
 
     @Override
-    public Dist getExecutingSide() {
-        return Dist.DEDICATED_SERVER;
+    public PacketFlow getExecutingSide() {
+        return PacketFlow.SERVERBOUND;
     }
 
-    public void executeServerSide(NetworkEvent.Context context){
-        ServerPlayer player = context.getSender();
+    public void executeServerSide(IPayloadContext context){
+        ServerPlayer player = ((ServerPlayer) context.player());
         if(player == null) return;
 
         player.getCommandSenderWorld().getEntitiesOfClass(MerchantEntity.class, player.getBoundingBox()
@@ -54,7 +57,7 @@ public class MessageUpdateMerchant implements Message<MessageUpdateMerchant> {
         merchant.setTrading(this.isTrading);
         merchant.setDailyRefresh(this.dailyRefresh);
     }
-    public MessageUpdateMerchant fromBytes(FriendlyByteBuf buf) {
+    public MessageUpdateMerchant fromBytes(RegistryFriendlyByteBuf buf) {
         this.merchantUuid  = buf.readUUID();
         this.isCreative    = buf.readBoolean();
         this.isTrading     = buf.readBoolean();
@@ -62,10 +65,17 @@ public class MessageUpdateMerchant implements Message<MessageUpdateMerchant> {
         return this;
     }
 
-    public void toBytes(FriendlyByteBuf buf) {
+    public void toBytes(RegistryFriendlyByteBuf buf) {
         buf.writeUUID(merchantUuid);
         buf.writeBoolean(this.isCreative);
         buf.writeBoolean(this.isTrading);
         buf.writeBoolean(this.dailyRefresh);
+    }
+
+    public static final CustomPacketPayload.Type<MessageUpdateMerchant> TYPE = new CustomPacketPayload.Type<>(ResourceLocation.fromNamespaceAndPath("workers", "message_update_merchant"));
+
+    @Override
+    public CustomPacketPayload.Type<MessageUpdateMerchant> type() {
+        return TYPE;
     }
 }

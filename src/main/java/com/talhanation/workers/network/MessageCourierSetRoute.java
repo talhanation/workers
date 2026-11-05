@@ -1,14 +1,18 @@
 package com.talhanation.workers.network;
 
+import net.minecraft.core.HolderLookup;
 import com.talhanation.workers.entities.CourierEntity;
 import com.talhanation.workers.world.CourierRoute;
 import de.maxhenkel.corelib.net.Message;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.NbtIo;
-import net.minecraft.network.FriendlyByteBuf;
+import net.minecraft.network.RegistryFriendlyByteBuf;
 import net.minecraft.server.level.ServerPlayer;
-import net.minecraftforge.api.distmarker.Dist;
-import net.minecraftforge.network.NetworkEvent;
+import net.neoforged.api.distmarker.Dist;
+import net.neoforged.neoforge.network.handling.IPayloadContext;
+import net.minecraft.network.protocol.PacketFlow;
+import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
+import net.minecraft.resources.ResourceLocation;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
@@ -25,11 +29,11 @@ public class MessageCourierSetRoute implements Message<MessageCourierSetRoute> {
     private boolean     start;
     public MessageCourierSetRoute() {}
 
-    public MessageCourierSetRoute(UUID courierUuid, CourierRoute routeNBT, boolean useVehicleInventory, boolean shouldCycle, boolean start) {
+    public MessageCourierSetRoute(UUID courierUuid, CourierRoute routeNBT, boolean useVehicleInventory, boolean shouldCycle, boolean start, HolderLookup.Provider provider) {
         this.courierUuid = courierUuid;
         this.hasRoute = routeNBT != null;
         if(hasRoute){
-            this.routeNBT = routeNBT.toNBT();
+            this.routeNBT = routeNBT.toNBT(provider);
         }
 
         this.useVehicleInventory  = useVehicleInventory;
@@ -43,13 +47,13 @@ public class MessageCourierSetRoute implements Message<MessageCourierSetRoute> {
     }
 
     @Override
-    public Dist getExecutingSide() {
-        return Dist.DEDICATED_SERVER;
+    public PacketFlow getExecutingSide() {
+        return PacketFlow.SERVERBOUND;
     }
 
     @Override
-    public void executeServerSide(NetworkEvent.Context context) {
-        ServerPlayer player = context.getSender();
+    public void executeServerSide(IPayloadContext context) {
+        ServerPlayer player = ((ServerPlayer) context.player());
         if (player == null) return;
 
         player.getCommandSenderWorld()
@@ -82,7 +86,7 @@ public class MessageCourierSetRoute implements Message<MessageCourierSetRoute> {
                         courier.clearRoute();
                         return;
                     }
-                    CourierRoute route = CourierRoute.fromNBT(routeNBT);
+                    CourierRoute route = CourierRoute.fromNBT(routeNBT, player.registryAccess());
                     if (this.start) {
 
                         courier.loadRouteFromNearestWaypoint(route);
@@ -97,7 +101,7 @@ public class MessageCourierSetRoute implements Message<MessageCourierSetRoute> {
     }
 
     @Override
-    public MessageCourierSetRoute fromBytes(FriendlyByteBuf buf) {
+    public MessageCourierSetRoute fromBytes(RegistryFriendlyByteBuf buf) {
         this.courierUuid         = buf.readUUID();
         this.useVehicleInventory = buf.readBoolean();
         this.shouldCycle         = buf.readBoolean();
@@ -105,7 +109,7 @@ public class MessageCourierSetRoute implements Message<MessageCourierSetRoute> {
         if (this.hasRoute) {
             byte[] compressed = buf.readByteArray();
             try {
-                this.routeNBT = NbtIo.readCompressed(new ByteArrayInputStream(compressed));
+                this.routeNBT = NbtIo.readCompressed(new ByteArrayInputStream(compressed), net.minecraft.nbt.NbtAccounter.unlimitedHeap());
             } catch (IOException e) {
                 e.printStackTrace();
                 this.routeNBT = new CompoundTag();
@@ -116,7 +120,7 @@ public class MessageCourierSetRoute implements Message<MessageCourierSetRoute> {
     }
 
     @Override
-    public void toBytes(FriendlyByteBuf buf) {
+    public void toBytes(RegistryFriendlyByteBuf buf) {
         buf.writeUUID(courierUuid);
         buf.writeBoolean(useVehicleInventory);
         buf.writeBoolean(shouldCycle);
@@ -136,4 +140,11 @@ public class MessageCourierSetRoute implements Message<MessageCourierSetRoute> {
 
         buf.writeBoolean(start);
     }
-}
+
+    public static final CustomPacketPayload.Type<MessageCourierSetRoute> TYPE = new CustomPacketPayload.Type<>(ResourceLocation.fromNamespaceAndPath("workers", "message_courier_set_route"));
+
+    @Override
+    public CustomPacketPayload.Type<MessageCourierSetRoute> type() {
+        return TYPE;
+    }
+}

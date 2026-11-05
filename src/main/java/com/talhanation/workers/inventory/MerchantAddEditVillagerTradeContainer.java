@@ -64,7 +64,7 @@ public class MerchantAddEditVillagerTradeContainer extends ContainerBase {
             @Override
             public boolean mayPickup(@NotNull Player player) {
                 ItemStack slotStack = slotContainer.getItem(this.getSlotIndex());
-                if (!ItemStack.isSameItemSameTags(slotStack, this.getCarried())) {
+                if (!ItemStack.isSameItemSameComponents(slotStack, this.getCarried())) {
                     slotContainer.setItem(this.getSlotIndex(), ItemStack.EMPTY);
                 }
                 return false;

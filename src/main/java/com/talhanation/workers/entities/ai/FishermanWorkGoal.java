@@ -249,17 +249,17 @@ public class FishermanWorkGoal extends Goal {
     public void spawnFishingLoot() {
         if(fishingBobber == null ) return;
 
-        double luckFromTool = EnchantmentHelper.getFishingLuckBonus(this.fisherman.getItemInHand(InteractionHand.MAIN_HAND));
+        double luckFromTool = EnchantmentHelper.getFishingLuckBonus((ServerLevel) this.fisherman.getCommandSenderWorld(), this.fisherman.getItemInHand(InteractionHand.MAIN_HAND), this.fisherman);
         double luckFromDepth = Math.min(25, fishingBobber.getWaterDepth())/10F;
         double luck = 0.1D + luckFromTool + luckFromDepth;
 
         LootParams lootparams = (new LootParams.Builder((ServerLevel)this.fisherman.getCommandSenderWorld()))
                 .withParameter(LootContextParams.ORIGIN, this.fisherman.position())
                 .withParameter(LootContextParams.TOOL, fisherman.getMainHandItem())
-                .withParameter(LootContextParams.KILLER_ENTITY, this.fisherman)
+                .withParameter(LootContextParams.ATTACKING_ENTITY, this.fisherman)
                 .withLuck((float)(luck + luckFromTool))
                 .create(LootContextParamSets.FISHING);
-        LootTable loottable = this.fisherman.getCommandSenderWorld().getServer().getLootData().getLootTable(BuiltInLootTables.FISHING);
+        LootTable loottable = this.fisherman.getCommandSenderWorld().getServer().reloadableRegistries().getLootTable(BuiltInLootTables.FISHING);
         List<ItemStack> list = loottable.getRandomItems(lootparams);
 
         MinecraftServer server = fisherman.getServer();

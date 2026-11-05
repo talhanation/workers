@@ -2,10 +2,13 @@ package com.talhanation.workers.network;
 
 import com.talhanation.workers.entities.workarea.WorkshopArea;
 import de.maxhenkel.corelib.net.Message;
-import net.minecraft.network.FriendlyByteBuf;
+import net.minecraft.network.RegistryFriendlyByteBuf;
 import net.minecraft.server.level.ServerPlayer;
-import net.minecraftforge.api.distmarker.Dist;
-import net.minecraftforge.network.NetworkEvent;
+import net.neoforged.api.distmarker.Dist;
+import net.neoforged.neoforge.network.handling.IPayloadContext;
+import net.minecraft.network.protocol.PacketFlow;
+import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
+import net.minecraft.resources.ResourceLocation;
 
 import java.util.UUID;
 
@@ -22,11 +25,11 @@ public class MessageUpdateWorkshopArea implements Message<MessageUpdateWorkshopA
     }
 
     @Override
-    public Dist getExecutingSide() { return Dist.DEDICATED_SERVER; }
+    public PacketFlow getExecutingSide() { return PacketFlow.SERVERBOUND; }
 
     @Override
-    public void executeServerSide(NetworkEvent.Context context) {
-        ServerPlayer player = context.getSender();
+    public void executeServerSide(IPayloadContext context) {
+        ServerPlayer player = ((ServerPlayer) context.player());
         if (player == null) return;
 
         player.getCommandSenderWorld()
@@ -41,15 +44,22 @@ public class MessageUpdateWorkshopArea implements Message<MessageUpdateWorkshopA
     }
 
     @Override
-    public MessageUpdateWorkshopArea fromBytes(FriendlyByteBuf buf) {
+    public MessageUpdateWorkshopArea fromBytes(RegistryFriendlyByteBuf buf) {
         this.uuid       = buf.readUUID();
         this.useStorage = buf.readBoolean();
         return this;
     }
 
     @Override
-    public void toBytes(FriendlyByteBuf buf) {
+    public void toBytes(RegistryFriendlyByteBuf buf) {
         buf.writeUUID(uuid);
         buf.writeBoolean(useStorage);
+    }
+
+    public static final CustomPacketPayload.Type<MessageUpdateWorkshopArea> TYPE = new CustomPacketPayload.Type<>(ResourceLocation.fromNamespaceAndPath("workers", "message_update_workshop_area"));
+
+    @Override
+    public CustomPacketPayload.Type<MessageUpdateWorkshopArea> type() {
+        return TYPE;
     }
 }

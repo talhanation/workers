@@ -3,11 +3,14 @@ package com.talhanation.workers.network;
 import com.talhanation.workers.WorkersMain;
 import com.talhanation.workers.entities.MerchantEntity;
 import de.maxhenkel.corelib.net.Message;
-import net.minecraft.network.FriendlyByteBuf;
+import net.minecraft.network.RegistryFriendlyByteBuf;
 import net.minecraft.server.level.ServerPlayer;
-import net.minecraftforge.api.distmarker.Dist;
-import net.minecraftforge.network.NetworkEvent;
-import net.minecraftforge.network.PacketDistributor;
+import net.neoforged.api.distmarker.Dist;
+import net.neoforged.neoforge.network.handling.IPayloadContext;
+import net.minecraft.network.protocol.PacketFlow;
+import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
+import net.minecraft.resources.ResourceLocation;
+import net.neoforged.neoforge.network.PacketDistributor;
 
 import java.util.ArrayList;
 import java.util.UUID;
@@ -24,31 +27,38 @@ public class MessageRequestMerchantMemory implements Message<MessageRequestMerch
     }
 
     @Override
-    public Dist getExecutingSide() {
-        return Dist.DEDICATED_SERVER;
+    public PacketFlow getExecutingSide() {
+        return PacketFlow.SERVERBOUND;
     }
 
     @Override
-    public void executeServerSide(NetworkEvent.Context context) {
-        ServerPlayer player = context.getSender();
+    public void executeServerSide(IPayloadContext context) {
+        ServerPlayer player = ((ServerPlayer) context.player());
         if (player == null) return;
 
         player.getCommandSenderWorld().getEntitiesOfClass(MerchantEntity.class, player.getBoundingBox().inflate(32.0D),
                         merchant -> merchant.getUUID().equals(this.merchantUuid) && player.getUUID().equals(merchant.getOwnerUUID()))
                 .stream()
                 .findAny()
-                .ifPresent(merchant -> WorkersMain.SIMPLE_CHANNEL.send(PacketDistributor.PLAYER.with(() -> player),
+                .ifPresent(merchant -> PacketDistributor.sendToPlayer(player,
                         new MessageToClientMerchantMemory(merchant.getUUID(), new ArrayList<>(merchant.getMemory().getEntries()))));
     }
 
     @Override
-    public MessageRequestMerchantMemory fromBytes(FriendlyByteBuf buf) {
+    public MessageRequestMerchantMemory fromBytes(RegistryFriendlyByteBuf buf) {
         this.merchantUuid = buf.readUUID();
         return this;
     }
 
     @Override
-    public void toBytes(FriendlyByteBuf buf) {
+    public void toBytes(RegistryFriendlyByteBuf buf) {
         buf.writeUUID(merchantUuid);
+    }
+
+    public static final CustomPacketPayload.Type<MessageRequestMerchantMemory> TYPE = new CustomPacketPayload.Type<>(ResourceLocation.fromNamespaceAndPath("workers", "message_request_merchant_memory"));
+
+    @Override
+    public CustomPacketPayload.Type<MessageRequestMerchantMemory> type() {
+        return TYPE;
     }
 }

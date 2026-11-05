@@ -3,11 +3,14 @@ package com.talhanation.workers.network;
 import com.talhanation.workers.entities.workarea.CropArea;
 import de.maxhenkel.corelib.net.Message;
 import net.minecraft.nbt.CompoundTag;
-import net.minecraft.network.FriendlyByteBuf;
+import net.minecraft.network.RegistryFriendlyByteBuf;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.item.ItemStack;
-import net.minecraftforge.api.distmarker.Dist;
-import net.minecraftforge.network.NetworkEvent;
+import net.neoforged.api.distmarker.Dist;
+import net.neoforged.neoforge.network.handling.IPayloadContext;
+import net.minecraft.network.protocol.PacketFlow;
+import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
+import net.minecraft.resources.ResourceLocation;
 
 import java.util.UUID;
 
@@ -16,7 +19,7 @@ import static com.talhanation.workers.entities.workarea.AbstractWorkAreaEntity.D
 public class MessageUpdateCropArea implements Message<MessageUpdateCropArea> {
 
     public UUID uuid;
-    public CompoundTag tag;
+    public ItemStack cropItem;
     public MessageUpdateCropArea() {
 
     }
@@ -24,16 +27,15 @@ public class MessageUpdateCropArea implements Message<MessageUpdateCropArea> {
     public MessageUpdateCropArea(UUID uuid, ItemStack cropItem) {
         this.uuid = uuid;
 
-        CompoundTag compoundnbt = new CompoundTag();
-        this.tag = cropItem.save(compoundnbt);
+        this.cropItem = cropItem.copy();
     }
 
-    public Dist getExecutingSide() {
-        return Dist.DEDICATED_SERVER;
+    public PacketFlow getExecutingSide() {
+        return PacketFlow.SERVERBOUND;
     }
 
-    public void executeServerSide(NetworkEvent.Context context){
-        ServerPlayer player = context.getSender();
+    public void executeServerSide(IPayloadContext context){
+        ServerPlayer player = ((ServerPlayer) context.player());
         if(player == null) return;
 
         player.getCommandSenderWorld().getEntitiesOfClass(CropArea.class, player.getBoundingBox()
@@ -47,22 +49,28 @@ public class MessageUpdateCropArea implements Message<MessageUpdateCropArea> {
     }
 
     public void update(CropArea cropArea){
-        ItemStack itemStack = ItemStack.of(tag);
+        ItemStack itemStack = this.cropItem;
         cropArea.setSeedStack(itemStack);
         cropArea.updateType();
         cropArea.setTime(cropArea.getTime() + DONE_TIME);
     }
 
-    public MessageUpdateCropArea fromBytes(FriendlyByteBuf buf) {
+    public MessageUpdateCropArea fromBytes(RegistryFriendlyByteBuf buf) {
         this.uuid = buf.readUUID();
-        this.tag = buf.readNbt();
+        this.cropItem = ItemStack.OPTIONAL_STREAM_CODEC.decode(buf);
         return this;
     }
 
-    public void toBytes(FriendlyByteBuf buf) {
+    public void toBytes(RegistryFriendlyByteBuf buf) {
         buf.writeUUID(uuid);
-        buf.writeNbt(tag);
+        ItemStack.OPTIONAL_STREAM_CODEC.encode(buf, cropItem);
 
     }
 
+    public static final CustomPacketPayload.Type<MessageUpdateCropArea> TYPE = new CustomPacketPayload.Type<>(ResourceLocation.fromNamespaceAndPath("workers", "message_update_crop_area"));
+
+    @Override
+    public CustomPacketPayload.Type<MessageUpdateCropArea> type() {
+        return TYPE;
+    }
 }

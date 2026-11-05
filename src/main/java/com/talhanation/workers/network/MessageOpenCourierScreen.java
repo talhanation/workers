@@ -2,10 +2,13 @@ package com.talhanation.workers.network;
 
 import com.talhanation.workers.entities.CourierEntity;
 import de.maxhenkel.corelib.net.Message;
-import net.minecraft.network.FriendlyByteBuf;
+import net.minecraft.network.RegistryFriendlyByteBuf;
 import net.minecraft.server.level.ServerPlayer;
-import net.minecraftforge.api.distmarker.Dist;
-import net.minecraftforge.network.NetworkEvent;
+import net.neoforged.api.distmarker.Dist;
+import net.neoforged.neoforge.network.handling.IPayloadContext;
+import net.minecraft.network.protocol.PacketFlow;
+import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
+import net.minecraft.resources.ResourceLocation;
 
 import java.util.UUID;
 
@@ -20,13 +23,13 @@ public class MessageOpenCourierScreen implements Message<MessageOpenCourierScree
     }
 
     @Override
-    public Dist getExecutingSide(){
-        return Dist.DEDICATED_SERVER;
+    public PacketFlow getExecutingSide(){
+        return PacketFlow.SERVERBOUND;
     }
 
     @Override
-    public void executeServerSide(NetworkEvent.Context context){
-        ServerPlayer player = context.getSender();
+    public void executeServerSide(IPayloadContext context){
+        ServerPlayer player = ((ServerPlayer) context.player());
         if (player == null) return;
 
         player.getCommandSenderWorld()
@@ -39,13 +42,20 @@ public class MessageOpenCourierScreen implements Message<MessageOpenCourierScree
     }
 
     @Override
-    public MessageOpenCourierScreen fromBytes(FriendlyByteBuf buf){
+    public MessageOpenCourierScreen fromBytes(RegistryFriendlyByteBuf buf){
         this.courierUuid = buf.readUUID();
         return this;
     }
 
     @Override
-    public void toBytes(FriendlyByteBuf buf){
+    public void toBytes(RegistryFriendlyByteBuf buf){
         buf.writeUUID(courierUuid);
+    }
+
+    public static final CustomPacketPayload.Type<MessageOpenCourierScreen> TYPE = new CustomPacketPayload.Type<>(ResourceLocation.fromNamespaceAndPath("workers", "message_open_courier_screen"));
+
+    @Override
+    public CustomPacketPayload.Type<MessageOpenCourierScreen> type() {
+        return TYPE;
     }
 }

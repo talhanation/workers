@@ -3,14 +3,16 @@ package com.talhanation.workers.network;
 import com.talhanation.workers.config.BuildMode;
 import com.talhanation.workers.config.WorkersServerConfig;
 import de.maxhenkel.corelib.net.Message;
-import net.minecraft.network.FriendlyByteBuf;
+import net.minecraft.network.RegistryFriendlyByteBuf;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.scores.Team;
-import net.minecraftforge.api.distmarker.Dist;
-import net.minecraftforge.network.NetworkDirection;
-import net.minecraftforge.network.NetworkEvent;
+import net.neoforged.api.distmarker.Dist;
+import net.neoforged.neoforge.network.handling.IPayloadContext;
+import net.minecraft.network.protocol.PacketFlow;
+import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
+import net.minecraft.resources.ResourceLocation;
 import com.talhanation.workers.WorkersMain;
-import net.minecraftforge.network.PacketDistributor;
+import net.neoforged.neoforge.network.PacketDistributor;
 
 import java.io.IOException;
 import java.nio.file.Files;
@@ -24,19 +26,19 @@ public class MessageRequestPresetList implements Message<MessageRequestPresetLis
     public MessageRequestPresetList(){}
 
     @Override
-    public Dist getExecutingSide(){
-        return Dist.DEDICATED_SERVER;
+    public PacketFlow getExecutingSide(){
+        return PacketFlow.SERVERBOUND;
     }
 
     @Override
-    public void executeServerSide(NetworkEvent.Context context){
-        ServerPlayer player = context.getSender();
+    public void executeServerSide(IPayloadContext context){
+        ServerPlayer player = ((ServerPlayer) context.player());
         if (player == null) return;
 
         BuildMode mode = WorkersServerConfig.BuildModeConfig.get();
         if (mode == BuildMode.FREE) return;
 
-        Path scanRoot = Path.of(player.server.getServerDirectory().getAbsolutePath(), "workers", "scan");
+        Path scanRoot = Path.of(player.server.getServerDirectory().toAbsolutePath().toString(), "workers", "scan");
 
         String teamId = null;
         if (mode == BuildMode.PRESET_FACTIONS) {
@@ -49,7 +51,7 @@ public class MessageRequestPresetList implements Message<MessageRequestPresetLis
             catch (Exception ignored) {}
 
             if (teamId == null) {
-                WorkersMain.SIMPLE_CHANNEL.send(PacketDistributor.PLAYER.with(() -> player), new MessageToClientPresetList(new ArrayList<>()));
+                PacketDistributor.sendToPlayer(player, new MessageToClientPresetList(new ArrayList<>()));
                 return;
             }
             scanRoot = scanRoot.resolve("factions").resolve(teamId);
@@ -57,7 +59,7 @@ public class MessageRequestPresetList implements Message<MessageRequestPresetLis
 
         List<String> names = collectNbtNames(scanRoot);
 
-        WorkersMain.SIMPLE_CHANNEL.send(PacketDistributor.PLAYER.with(() -> player), new MessageToClientPresetList(names));
+        PacketDistributor.sendToPlayer(player, new MessageToClientPresetList(names));
     }
 
     private static List<String> collectNbtNames(Path root) {
@@ -74,12 +76,19 @@ public class MessageRequestPresetList implements Message<MessageRequestPresetLis
     }
 
     @Override
-    public MessageRequestPresetList fromBytes(FriendlyByteBuf buf){
+    public MessageRequestPresetList fromBytes(RegistryFriendlyByteBuf buf){
         return this;
     }
 
     @Override
-    public void toBytes(FriendlyByteBuf buf){
+    public void toBytes(RegistryFriendlyByteBuf buf){
 
+    }
+
+    public static final CustomPacketPayload.Type<MessageRequestPresetList> TYPE = new CustomPacketPayload.Type<>(ResourceLocation.fromNamespaceAndPath("workers", "message_request_preset_list"));
+
+    @Override
+    public CustomPacketPayload.Type<MessageRequestPresetList> type() {
+        return TYPE;
     }
 }

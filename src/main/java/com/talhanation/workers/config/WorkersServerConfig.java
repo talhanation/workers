@@ -1,49 +1,47 @@
 package com.talhanation.workers.config;
 
-import net.minecraftforge.common.ForgeConfigSpec;
-import net.minecraftforge.fml.common.Mod;
+import net.neoforged.neoforge.common.ModConfigSpec;
 
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
-@Mod.EventBusSubscriber
 public class WorkersServerConfig {
-    private static final ForgeConfigSpec.Builder BUILDER = new ForgeConfigSpec.Builder();
-    public static ForgeConfigSpec SERVER;
-    public static ForgeConfigSpec.IntValue FarmerCost;
-    public static ForgeConfigSpec.IntValue LumberjackCost;
-    public static ForgeConfigSpec.IntValue MinerCost;
-    public static ForgeConfigSpec.IntValue BuilderCost;
-    public static ForgeConfigSpec.IntValue MerchantCost;
-    public static ForgeConfigSpec.IntValue CourierCost;
-    public static ForgeConfigSpec.IntValue CookCost;
-    public static ForgeConfigSpec.IntValue CraftsmanCost;
-    public static ForgeConfigSpec.IntValue StorekeeperCost;
-    public static ForgeConfigSpec.IntValue FishermanCost;
-    public static ForgeConfigSpec.IntValue AnimalFarmerCost;
-    public static ForgeConfigSpec.ConfigValue<List<? extends Integer>> CraftsmanMoraleTicks;
-    public static ForgeConfigSpec.BooleanValue VillagerBreedMixinEnabled;
-    public static ForgeConfigSpec.IntValue VillagerBreedSaturationThreshold;
-    public static ForgeConfigSpec.IntValue AnimalPenMaxAnimals;
-    public static ForgeConfigSpec.BooleanValue ShouldWorkAreaOnlyBeInFactionClaim;
-    public static ForgeConfigSpec.BooleanValue ShouldOnlyPlacingBuildingsBePossible;
-    public static ForgeConfigSpec.EnumValue<BuildMode> BuildModeConfig;
-    public static ForgeConfigSpec.EnumValue<BuildPaymentMode> BuildPaymentModeConfig;
-    public static ForgeConfigSpec.IntValue BuildingBasePrice;
-    public static ForgeConfigSpec.DoubleValue BuildingSizePrice;
-    public static ForgeConfigSpec.DoubleValue BuildingDefaultMaterialPrice;
-    public static ForgeConfigSpec.ConfigValue<List<String>> BuildingMaterialPrices;
-    public static ForgeConfigSpec.ConfigValue<List<String>> BuildingBlockedMaterials;
-    public static ForgeConfigSpec.IntValue FoundationMaxFillDepth;
-    public static ForgeConfigSpec.IntValue FoundationMaxCutHeight;
-    public static ForgeConfigSpec.ConfigValue<List<String>> MinerPickup;
-    public static ForgeConfigSpec.ConfigValue<List<String>> MinerIgnore;
-    public static ForgeConfigSpec.ConfigValue<List<String>> FarmerPickup;
-    public static ForgeConfigSpec.ConfigValue<List<String>> AnimalFarmerPickup;
-    public static ForgeConfigSpec.ConfigValue<List<String>> LumberjackPickup;
-    public static ForgeConfigSpec.ConfigValue<List<String>> FishermanPickup;
-    public static ForgeConfigSpec.BooleanValue WorkersReplaceAllay;
+    private static final ModConfigSpec.Builder BUILDER = new ModConfigSpec.Builder();
+    public static ModConfigSpec SERVER;
+    public static ModConfigSpec.IntValue FarmerCost;
+    public static ModConfigSpec.IntValue LumberjackCost;
+    public static ModConfigSpec.IntValue MinerCost;
+    public static ModConfigSpec.IntValue BuilderCost;
+    public static ModConfigSpec.IntValue MerchantCost;
+    public static ModConfigSpec.IntValue CourierCost;
+    public static ModConfigSpec.IntValue CookCost;
+    public static ModConfigSpec.IntValue CraftsmanCost;
+    public static ModConfigSpec.IntValue StorekeeperCost;
+    public static ModConfigSpec.IntValue FishermanCost;
+    public static ModConfigSpec.IntValue AnimalFarmerCost;
+    public static ModConfigSpec.ConfigValue<List<? extends Integer>> CraftsmanMoraleTicks;
+    public static ModConfigSpec.BooleanValue VillagerBreedMixinEnabled;
+    public static ModConfigSpec.IntValue VillagerBreedSaturationThreshold;
+    public static ModConfigSpec.IntValue AnimalPenMaxAnimals;
+    public static ModConfigSpec.BooleanValue ShouldWorkAreaOnlyBeInFactionClaim;
+    public static ModConfigSpec.BooleanValue ShouldOnlyPlacingBuildingsBePossible;
+    public static ModConfigSpec.EnumValue<BuildMode> BuildModeConfig;
+    public static ModConfigSpec.EnumValue<BuildPaymentMode> BuildPaymentModeConfig;
+    public static ModConfigSpec.IntValue BuildingBasePrice;
+    public static ModConfigSpec.DoubleValue BuildingSizePrice;
+    public static ModConfigSpec.DoubleValue BuildingDefaultMaterialPrice;
+    public static ModConfigSpec.ConfigValue<List<String>> BuildingMaterialPrices;
+    public static ModConfigSpec.ConfigValue<List<String>> BuildingBlockedMaterials;
+    public static ModConfigSpec.IntValue FoundationMaxFillDepth;
+    public static ModConfigSpec.IntValue FoundationMaxCutHeight;
+    public static ModConfigSpec.ConfigValue<List<String>> MinerPickup;
+    public static ModConfigSpec.ConfigValue<List<String>> MinerIgnore;
+    public static ModConfigSpec.ConfigValue<List<String>> FarmerPickup;
+    public static ModConfigSpec.ConfigValue<List<String>> AnimalFarmerPickup;
+    public static ModConfigSpec.ConfigValue<List<String>> LumberjackPickup;
+    public static ModConfigSpec.ConfigValue<List<String>> FishermanPickup;
+    public static ModConfigSpec.BooleanValue WorkersReplaceAllay;
     public static ArrayList<String> FARMER_PICKUP = new ArrayList<>(
             Arrays.asList(
                     "minecraft:wheat",

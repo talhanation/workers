@@ -27,6 +27,9 @@ import net.minecraft.world.item.Items;
 import net.minecraft.world.item.crafting.CraftingRecipe;
 import net.minecraft.world.item.crafting.Ingredient;
 import net.minecraft.world.item.crafting.RecipeType;
+import net.minecraft.world.item.crafting.RecipeHolder;
+import net.minecraft.world.item.crafting.SingleRecipeInput;
+import net.minecraft.world.item.crafting.ShapedRecipe;
 import net.minecraft.world.item.crafting.SmeltingRecipe;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.entity.AbstractFurnaceBlockEntity;
@@ -34,9 +37,7 @@ import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.entity.ChestBlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.AABB;
-import net.minecraftforge.common.ForgeHooks;
-import net.minecraftforge.common.Tags;
-import net.minecraftforge.common.crafting.IShapedRecipe;
+import net.neoforged.neoforge.common.Tags;
 
 import javax.annotation.Nullable;
 import java.util.*;
@@ -766,7 +767,7 @@ public class CookWorkGoal extends Goal {
         CraftingContainer grid = CraftOrder.createCraftingContainer();
         NonNullList<Ingredient> ingredients = recipe.getIngredients();
         // shaped recipes keep their shape, shapeless ones are filled row by row
-        int width = recipe instanceof IShapedRecipe<?> shaped ? shaped.getRecipeWidth() : 3;
+        int width = recipe instanceof ShapedRecipe shaped ? shaped.getWidth() : 3;
 
         for (int i = 0; i < ingredients.size(); i++) {
             Ingredient ingredient = ingredients.get(i);
@@ -780,16 +781,16 @@ public class CookWorkGoal extends Goal {
             grid.setItem((i / width) * 3 + (i % width), taken);
         }
 
-        if (!recipe.matches(grid, level)) {
+        if (!recipe.matches(grid.asCraftInput(), level)) {
             returnToInventory(grid);
             return false;
         }
-        ItemStack result = recipe.assemble(grid, level.registryAccess());
+        ItemStack result = recipe.assemble(grid.asCraftInput(), level.registryAccess());
         if (result.isEmpty()) {
             returnToInventory(grid);
             return false;
         }
-        NonNullList<ItemStack> remaining = recipe.getRemainingItems(grid);
+        NonNullList<ItemStack> remaining = recipe.getRemainingItems(grid.asCraftInput());
 
         craftedItems.add(result.getItem());
         ItemStack rest = cook.addItem(result);
@@ -834,10 +835,10 @@ public class CookWorkGoal extends Goal {
     private List<CraftingRecipe> getKitchenRecipes(ServerLevel level) {
         if (kitchenRecipes == null) {
             kitchenRecipes = new ArrayList<>();
-            for (CraftingRecipe recipe : level.getRecipeManager().getAllRecipesFor(RecipeType.CRAFTING)) {
+            for (CraftingRecipe recipe : level.getRecipeManager().getAllRecipesFor(RecipeType.CRAFTING).stream().map(RecipeHolder::value).toList()) {
                 if (recipe.isSpecial()) continue;
                 ItemStack result = recipe.getResultItem(level.registryAccess());
-                if (result.isEmpty() || !result.isEdible()) continue;
+                if (result.isEmpty() || !result.has(net.minecraft.core.component.DataComponents.FOOD)) continue;
                 if (isKitchenRecipe(recipe)) kitchenRecipes.add(recipe);
             }
         }
@@ -861,7 +862,7 @@ public class CookWorkGoal extends Goal {
     /** Food and typical baking items. Gold, honey blocks and the like are no kitchen ingredients. */
     private static boolean isKitchenIngredient(ItemStack stack) {
         if (stack.isEmpty()) return false;
-        if (stack.isEdible()) return true;
+        if (stack.has(net.minecraft.core.component.DataComponents.FOOD)) return true;
         if (stack.is(Tags.Items.CROPS) || stack.is(Tags.Items.EGGS) || stack.is(Tags.Items.MUSHROOMS)) return true;
         return stack.is(Items.SUGAR) || stack.is(Items.BOWL) || stack.is(Items.MILK_BUCKET)
                 || stack.is(Items.COCOA_BEANS) || stack.is(Items.PUMPKIN);
@@ -974,7 +975,7 @@ public class CookWorkGoal extends Goal {
                     Container container = entry.getValue();
                     if (WorkshopArea.getSpaceFor(container, stack) <= 0) continue;
                     for (int j = 0; j < container.getContainerSize(); j++) {
-                        if (ItemStack.isSameItemSameTags(container.getItem(j), stack)) {
+                        if (ItemStack.isSameItemSameComponents(container.getItem(j), stack)) {
                             deliverStorage = storage;
                             deliverPos = entry.getKey();
                             return true;
@@ -1006,9 +1007,9 @@ public class CookWorkGoal extends Goal {
     private boolean isCookedFood(ItemStack stack, ServerLevel level) {
         if (cookedFoods == null) {
             cookedFoods = new HashSet<>();
-            for (SmeltingRecipe recipe : level.getRecipeManager().getAllRecipesFor(RecipeType.SMELTING)) {
+            for (SmeltingRecipe recipe : level.getRecipeManager().getAllRecipesFor(RecipeType.SMELTING).stream().map(RecipeHolder::value).toList()) {
                 ItemStack result = recipe.getResultItem(level.registryAccess());
-                if (!result.isEmpty() && result.getItem().isEdible()) cookedFoods.add(result.getItem());
+                if (!result.isEmpty() && result.getItem().components().has(net.minecraft.core.component.DataComponents.FOOD)) cookedFoods.add(result.getItem());
             }
             for (CraftingRecipe recipe : getKitchenRecipes(level)) {
                 cookedFoods.add(recipe.getResultItem(level.registryAccess()).getItem());
@@ -1045,7 +1046,7 @@ public class CookWorkGoal extends Goal {
     /** Fuel the cook burns from the kitchen: coal/charcoal, planks, logs. */
     private boolean isKitchenFuel(ItemStack stack) {
         for (TagKey<Item> tag : FUEL_TAGS) {
-            if (stack.is(tag) && ForgeHooks.getBurnTime(stack, RecipeType.SMELTING) > 0) return true;
+            if (stack.is(tag) && stack.getBurnTime(RecipeType.SMELTING) > 0) return true;
         }
         return false;
     }
@@ -1136,7 +1137,7 @@ public class CookWorkGoal extends Goal {
                 for (int i = 0; i < container.getContainerSize(); i++) {
                     ItemStack slot = container.getItem(i);
                     if (slot.isEmpty() || !slot.is(tag)) continue;
-                    int burnTime = ForgeHooks.getBurnTime(slot, RecipeType.SMELTING);
+                    int burnTime = slot.getBurnTime(RecipeType.SMELTING);
                     if (burnTime <= 0) continue;
 
                     // enough fuel for a whole batch (one item = 200 ticks)
@@ -1171,13 +1172,13 @@ public class CookWorkGoal extends Goal {
 
     private boolean isSmeltableFood(ItemStack stack, ServerLevel level) {
         Optional<SmeltingRecipe> recipe = level.getRecipeManager()
-                .getRecipeFor(RecipeType.SMELTING, new SimpleContainer(stack), level);
+                .getRecipeFor(RecipeType.SMELTING, new SingleRecipeInput(stack), level).map(RecipeHolder::value);
 
         if (recipe.isEmpty()) return false;
 
         // Only accept if result is a food item
         ItemStack result = recipe.get().getResultItem(level.registryAccess());
-        return !result.isEmpty() && result.getItem().isEdible();
+        return !result.isEmpty() && result.getItem().components().has(net.minecraft.core.component.DataComponents.FOOD);
     }
 
     // ── Villager trading ──────────────────────────────────────────────────────
@@ -1287,7 +1288,7 @@ public class CookWorkGoal extends Goal {
             for (int i = 0; i < container.getContainerSize(); i++) {
                 ItemStack slot = container.getItem(i);
                 if (slot.isEmpty()) continue;
-                if (slot.getItem().isEdible()) return slot.copy();
+                if (slot.getItem().components().has(net.minecraft.core.component.DataComponents.FOOD)) return slot.copy();
             }
         }
         return null;
@@ -1362,4 +1363,4 @@ public class CookWorkGoal extends Goal {
         CRAFTING,
         WORKING
     }
-}
+}

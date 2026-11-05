@@ -147,8 +147,8 @@ public class VillagerPriceTable {
         RegistryAccess access = level.registryAccess();
         RecipeManager manager = level.getRecipeManager();
         List<Recipe<?>> recipes = new ArrayList<>();
-        recipes.addAll(manager.getAllRecipesFor(RecipeType.CRAFTING));
-        recipes.addAll(manager.getAllRecipesFor(RecipeType.SMELTING));
+        manager.getAllRecipesFor(RecipeType.CRAFTING).forEach(holder -> recipes.add(holder.value()));
+        manager.getAllRecipesFor(RecipeType.SMELTING).forEach(holder -> recipes.add(holder.value()));
 
         for (int pass = 0; pass < VALUE_PASSES; pass++) {
             boolean changed = false;
@@ -297,17 +297,17 @@ public class VillagerPriceTable {
             sellMax = Math.max(sellMax, rate);
         }
 
-        public void write(FriendlyByteBuf buf) {
+        public void write(net.minecraft.network.RegistryFriendlyByteBuf buf) {
             buf.writeDouble(buyMin);
             buf.writeDouble(buyMax);
             buf.writeUtf(buyTrader);
             buf.writeDouble(sellMin);
             buf.writeDouble(sellMax);
             buf.writeUtf(sellTrader);
-            buf.writeItem(sellExtra);
+            net.minecraft.world.item.ItemStack.OPTIONAL_STREAM_CODEC.encode(buf, sellExtra);
         }
 
-        public static Entry read(FriendlyByteBuf buf) {
+        public static Entry read(net.minecraft.network.RegistryFriendlyByteBuf buf) {
             Entry entry = new Entry();
             entry.buyMin = buf.readDouble();
             entry.buyMax = buf.readDouble();
@@ -315,7 +315,7 @@ public class VillagerPriceTable {
             entry.sellMin = buf.readDouble();
             entry.sellMax = buf.readDouble();
             entry.sellTrader = buf.readUtf();
-            entry.sellExtra = buf.readItem();
+            entry.sellExtra = net.minecraft.world.item.ItemStack.OPTIONAL_STREAM_CODEC.decode(buf);
             return entry;
         }
     }

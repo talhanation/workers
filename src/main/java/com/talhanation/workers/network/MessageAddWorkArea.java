@@ -10,12 +10,15 @@ import com.talhanation.workers.entities.workarea.*;
 import com.talhanation.workers.init.ModEntityTypes;
 import de.maxhenkel.corelib.net.Message;
 import net.minecraft.core.BlockPos;
-import net.minecraft.network.FriendlyByteBuf;
+import net.minecraft.network.RegistryFriendlyByteBuf;
 import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.level.ChunkPos;
-import net.minecraftforge.api.distmarker.Dist;
-import net.minecraftforge.network.NetworkEvent;
+import net.neoforged.api.distmarker.Dist;
+import net.neoforged.neoforge.network.handling.IPayloadContext;
+import net.minecraft.network.protocol.PacketFlow;
+import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
+import net.minecraft.resources.ResourceLocation;
 
 public class MessageAddWorkArea implements Message<MessageAddWorkArea> {
     public BlockPos pos;
@@ -29,12 +32,12 @@ public class MessageAddWorkArea implements Message<MessageAddWorkArea> {
         this.typeIndex = type.getIndex();
     }
 
-    public Dist getExecutingSide() {
-        return Dist.DEDICATED_SERVER;
+    public PacketFlow getExecutingSide() {
+        return PacketFlow.SERVERBOUND;
     }
 
-    public void executeServerSide(NetworkEvent.Context context){
-        ServerPlayer player = context.getSender();
+    public void executeServerSide(IPayloadContext context){
+        ServerPlayer player = ((ServerPlayer) context.player());
         if(player == null) return;
         String teamStringID = "";
         if(player.getTeam() != null){
@@ -184,16 +187,22 @@ public class MessageAddWorkArea implements Message<MessageAddWorkArea> {
         return claim.containsChunk(chunkPos) && claim.getOwnerFaction().getStringID().equals(ownFaction.getStringID());
     }
 
-    public MessageAddWorkArea fromBytes(FriendlyByteBuf buf) {
+    public MessageAddWorkArea fromBytes(RegistryFriendlyByteBuf buf) {
         this.pos = buf.readBlockPos();
         this.typeIndex = buf.readInt();
 
         return this;
     }
 
-    public void toBytes(FriendlyByteBuf buf) {
+    public void toBytes(RegistryFriendlyByteBuf buf) {
         buf.writeBlockPos(pos);
         buf.writeInt(typeIndex);
     }
 
-}
+    public static final CustomPacketPayload.Type<MessageAddWorkArea> TYPE = new CustomPacketPayload.Type<>(ResourceLocation.fromNamespaceAndPath("workers", "message_add_work_area"));
+
+    @Override
+    public CustomPacketPayload.Type<MessageAddWorkArea> type() {
+        return TYPE;
+    }
+}

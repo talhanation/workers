@@ -3,12 +3,12 @@ package com.talhanation.workers;
 import com.talhanation.workers.entities.workarea.WorkshopArea;
 import com.talhanation.workers.world.CraftOrder;
 import net.minecraft.world.item.ItemStack;
-import net.minecraftforge.eventbus.api.Event;
+import net.neoforged.bus.api.Event;
 
 import java.util.List;
 
 /**
- * Workshop events on the {@code MinecraftForge.EVENT_BUS}, server-side only.
+ * Workshop events on the {@code NeoForge.EVENT_BUS}, server-side only.
  * Meant for the Governor compat: he can react when one of his orders is done or blocked.
  *
  * <pre>

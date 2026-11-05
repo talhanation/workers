@@ -6,12 +6,15 @@ import com.talhanation.workers.config.WorkersServerConfig;
 import de.maxhenkel.corelib.net.Message;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.NbtIo;
-import net.minecraft.network.FriendlyByteBuf;
+import net.minecraft.network.RegistryFriendlyByteBuf;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.scores.Team;
-import net.minecraftforge.api.distmarker.Dist;
-import net.minecraftforge.network.NetworkDirection;
-import net.minecraftforge.network.NetworkEvent;
+import net.neoforged.api.distmarker.Dist;
+import net.neoforged.neoforge.network.PacketDistributor;
+import net.neoforged.neoforge.network.handling.IPayloadContext;
+import net.minecraft.network.protocol.PacketFlow;
+import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
+import net.minecraft.resources.ResourceLocation;
 
 import java.io.File;
 import java.io.IOException;
@@ -27,19 +30,19 @@ public class MessageRequestPresetContent implements Message<MessageRequestPreset
     }
 
     @Override
-    public Dist getExecutingSide(){
-        return Dist.DEDICATED_SERVER;
+    public PacketFlow getExecutingSide(){
+        return PacketFlow.SERVERBOUND;
     }
 
     @Override
-    public void executeServerSide(NetworkEvent.Context context){
-        ServerPlayer player = context.getSender();
+    public void executeServerSide(IPayloadContext context){
+        ServerPlayer player = ((ServerPlayer) context.player());
         if (player == null) return;
 
         String safe = presetName.replace("..", "").replace("/", "").replace("\\", "");
 
         BuildMode mode = WorkersServerConfig.BuildModeConfig.get();
-        Path scanRoot = Path.of(player.server.getServerDirectory().getAbsolutePath(), "workers", "scan");
+        Path scanRoot = Path.of(player.server.getServerDirectory().toAbsolutePath().toString(), "workers", "scan");
 
         if (mode == BuildMode.PRESET_FACTIONS) {
             try {
@@ -57,8 +60,8 @@ public class MessageRequestPresetContent implements Message<MessageRequestPreset
         if (!file.exists()) return;
 
         try {
-            CompoundTag nbt = NbtIo.readCompressed(file);
-            WorkersMain.SIMPLE_CHANNEL.sendTo(new MessageToClientPresetContent(safe, nbt), player.connection.connection, NetworkDirection.PLAY_TO_CLIENT);
+            CompoundTag nbt = NbtIo.readCompressed(file.toPath(), net.minecraft.nbt.NbtAccounter.unlimitedHeap());
+            PacketDistributor.sendToPlayer(player, new MessageToClientPresetContent(safe, nbt));
         }
         catch (IOException e) {
             e.printStackTrace();
@@ -66,13 +69,20 @@ public class MessageRequestPresetContent implements Message<MessageRequestPreset
     }
 
     @Override
-    public MessageRequestPresetContent fromBytes(FriendlyByteBuf buf) {
+    public MessageRequestPresetContent fromBytes(RegistryFriendlyByteBuf buf) {
         this.presetName = buf.readUtf();
         return this;
     }
 
     @Override
-    public void toBytes(FriendlyByteBuf buf) {
+    public void toBytes(RegistryFriendlyByteBuf buf) {
         buf.writeUtf(presetName);
+    }
+
+    public static final CustomPacketPayload.Type<MessageRequestPresetContent> TYPE = new CustomPacketPayload.Type<>(ResourceLocation.fromNamespaceAndPath("workers", "message_request_preset_content"));
+
+    @Override
+    public CustomPacketPayload.Type<MessageRequestPresetContent> type() {
+        return TYPE;
     }
 }

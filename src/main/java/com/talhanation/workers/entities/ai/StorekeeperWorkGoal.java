@@ -27,10 +27,9 @@ import net.minecraft.world.level.block.entity.ChestBlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
-import net.minecraftforge.common.capabilities.ForgeCapabilities;
-import net.minecraftforge.items.IItemHandler;
-import net.minecraftforge.items.IItemHandlerModifiable;
-import net.minecraftforge.items.wrapper.RecipeWrapper;
+import net.neoforged.neoforge.capabilities.Capabilities;
+import net.neoforged.neoforge.items.IItemHandler;
+import net.neoforged.neoforge.items.IItemHandlerModifiable;
 
 import javax.annotation.Nullable;
 import java.util.*;
@@ -553,7 +552,7 @@ public class StorekeeperWorkGoal extends Goal {
     private boolean isVehicleCandidate(Entity entity) {
         if (!entity.isAlive() || entity instanceof Player || entity instanceof AbstractWorkAreaEntity) return false;
         if (entity instanceof LivingEntity) return entity instanceof AbstractChestedHorse horse && horse.hasChest();
-        return entity instanceof Container || entity.getCapability(ForgeCapabilities.ITEM_HANDLER).isPresent();
+        return entity instanceof Container || entity.getCapability(Capabilities.ItemHandler.ENTITY, null) != null;
     }
 
     /**
@@ -600,8 +599,8 @@ public class StorekeeperWorkGoal extends Goal {
     private static Container getCargo(Entity entity) {
         if (entity instanceof AbstractChestedHorse horse) return horse.hasChest() ? horse.inventory : null;
         if (entity instanceof Container container) return container.getContainerSize() > 0 ? container : null;
-        IItemHandler handler = entity.getCapability(ForgeCapabilities.ITEM_HANDLER).orElse(null);
-        if (handler instanceof IItemHandlerModifiable modifiable && modifiable.getSlots() > 0) return new RecipeWrapper(modifiable);
+        IItemHandler handler = entity.getCapability(Capabilities.ItemHandler.ENTITY, null);
+        if (handler instanceof IItemHandlerModifiable modifiable && modifiable.getSlots() > 0) return new ItemHandlerContainer(modifiable);
         return null;
     }
 
@@ -705,5 +704,77 @@ public class StorekeeperWorkGoal extends Goal {
         UNLOAD,
         SORT_TAKE,
         PUT_AWAY
+    }
+
+    /**
+     * 1.21: NeoForge's RecipeWrapper is a RecipeInput now and no Container anymore.
+     * This is the Container part of the former Forge 1.20.1 RecipeWrapper.
+     */
+    private static class ItemHandlerContainer implements Container {
+        protected final IItemHandlerModifiable inv;
+
+        public ItemHandlerContainer(IItemHandlerModifiable inv) {
+            this.inv = inv;
+        }
+
+        @Override
+        public int getContainerSize() {
+            return inv.getSlots();
+        }
+
+        @Override
+        public ItemStack getItem(int slot) {
+            return inv.getStackInSlot(slot);
+        }
+
+        @Override
+        public ItemStack removeItem(int slot, int count) {
+            ItemStack stack = inv.getStackInSlot(slot);
+            return stack.isEmpty() ? ItemStack.EMPTY : stack.split(count);
+        }
+
+        @Override
+        public void setItem(int slot, ItemStack stack) {
+            inv.setStackInSlot(slot, stack);
+        }
+
+        @Override
+        public ItemStack removeItemNoUpdate(int index) {
+            ItemStack s = getItem(index);
+            if (s.isEmpty()) return ItemStack.EMPTY;
+            setItem(index, ItemStack.EMPTY);
+            return s;
+        }
+
+        @Override
+        public boolean isEmpty() {
+            for (int i = 0; i < inv.getSlots(); i++) {
+                if (!inv.getStackInSlot(i).isEmpty()) return false;
+            }
+            return true;
+        }
+
+        @Override
+        public boolean canPlaceItem(int slot, ItemStack stack) {
+            return inv.isItemValid(slot, stack);
+        }
+
+        @Override
+        public void clearContent() {
+            for (int i = 0; i < inv.getSlots(); i++) {
+                inv.setStackInSlot(i, ItemStack.EMPTY);
+            }
+        }
+
+        @Override
+        public int getMaxStackSize() { return 0; }
+        @Override
+        public void setChanged() {}
+        @Override
+        public boolean stillValid(Player player) { return false; }
+        @Override
+        public void startOpen(Player player) {}
+        @Override
+        public void stopOpen(Player player) {}
     }
 }

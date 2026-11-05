@@ -8,14 +8,17 @@ import com.talhanation.workers.entities.workarea.MarketArea;
 import com.talhanation.workers.world.CourierAction;
 import de.maxhenkel.corelib.net.Message;
 import net.minecraft.core.BlockPos;
-import net.minecraft.network.FriendlyByteBuf;
+import net.minecraft.network.RegistryFriendlyByteBuf;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.Container;
 import net.minecraft.world.level.ChunkPos;
-import net.minecraftforge.api.distmarker.Dist;
-import net.minecraftforge.network.NetworkEvent;
-import net.minecraftforge.network.PacketDistributor;
+import net.neoforged.api.distmarker.Dist;
+import net.neoforged.neoforge.network.handling.IPayloadContext;
+import net.minecraft.network.protocol.PacketFlow;
+import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
+import net.minecraft.resources.ResourceLocation;
+import net.neoforged.neoforge.network.PacketDistributor;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -42,13 +45,13 @@ public class MessageRequestCourierTargets implements Message<MessageRequestCouri
     }
 
     @Override
-    public Dist getExecutingSide() {
-        return Dist.DEDICATED_SERVER;
+    public PacketFlow getExecutingSide() {
+        return PacketFlow.SERVERBOUND;
     }
 
     @Override
-    public void executeServerSide(NetworkEvent.Context context) {
-        ServerPlayer player = context.getSender();
+    public void executeServerSide(IPayloadContext context) {
+        ServerPlayer player = ((ServerPlayer) context.player());
         if (player == null) return;
         ServerLevel level = player.serverLevel();
 
@@ -74,7 +77,7 @@ public class MessageRequestCourierTargets implements Message<MessageRequestCouri
                         }
                     }
 
-                    WorkersMain.SIMPLE_CHANNEL.send(PacketDistributor.PLAYER.with(() -> player),
+                    PacketDistributor.sendToPlayer(player,
                             new MessageToClientCourierTargets(waypointPos, loaded, targets));
                 });
     }
@@ -94,15 +97,22 @@ public class MessageRequestCourierTargets implements Message<MessageRequestCouri
     }
 
     @Override
-    public MessageRequestCourierTargets fromBytes(FriendlyByteBuf buf) {
+    public MessageRequestCourierTargets fromBytes(RegistryFriendlyByteBuf buf) {
         this.courierUuid = buf.readUUID();
         this.waypointPos = buf.readBlockPos();
         return this;
     }
 
     @Override
-    public void toBytes(FriendlyByteBuf buf) {
+    public void toBytes(RegistryFriendlyByteBuf buf) {
         buf.writeUUID(courierUuid);
         buf.writeBlockPos(waypointPos);
+    }
+
+    public static final CustomPacketPayload.Type<MessageRequestCourierTargets> TYPE = new CustomPacketPayload.Type<>(ResourceLocation.fromNamespaceAndPath("workers", "message_request_courier_targets"));
+
+    @Override
+    public CustomPacketPayload.Type<MessageRequestCourierTargets> type() {
+        return TYPE;
     }
 }

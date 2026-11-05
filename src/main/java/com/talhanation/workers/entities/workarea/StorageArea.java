@@ -19,8 +19,8 @@ import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.*;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
-import net.minecraftforge.api.distmarker.Dist;
-import net.minecraftforge.api.distmarker.OnlyIn;
+import net.neoforged.api.distmarker.Dist;
+import net.neoforged.api.distmarker.OnlyIn;
 
 import javax.annotation.Nullable;
 import java.util.*;
@@ -39,10 +39,10 @@ public class StorageArea extends AbstractWorkAreaEntity implements IPermissionAr
     public StorageArea(EntityType<?> type, Level level) {
         super(type, level);
     }
-    protected void defineSynchedData() {
-        super.defineSynchedData();
+    protected void defineSynchedData(SynchedEntityData.Builder builder) {
+        super.defineSynchedData(builder);
         // a new storage is open for every worker, the player only unticks what he does not want
-        this.entityData.define(STORAGE_TYPES, getAllTypesMask());
+        builder.define(STORAGE_TYPES, getAllTypesMask());
     }
 
     @Override
@@ -54,7 +54,7 @@ public class StorageArea extends AbstractWorkAreaEntity implements IPermissionAr
         ListTag labels = tag.getList("ChestLabels", Tag.TAG_COMPOUND);
         for (int i = 0; i < labels.size(); i++) {
             CompoundTag entry = labels.getCompound(i);
-            chestLabels.put(NbtUtils.readBlockPos(entry.getCompound("Pos")), entry.getString("Label"));
+            chestLabels.put(NbtUtils.readBlockPos(entry, "Pos").orElse(BlockPos.ZERO), entry.getString("Label"));
         }
         this.storekeeperUUID = tag.hasUUID("Storekeeper") ? tag.getUUID("Storekeeper") : null;
     }
@@ -268,4 +268,4 @@ public class StorageArea extends AbstractWorkAreaEntity implements IPermissionAr
         }
         return false;
     }
-}
+}

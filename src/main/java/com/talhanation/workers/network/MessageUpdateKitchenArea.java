@@ -2,10 +2,13 @@ package com.talhanation.workers.network;
 
 import com.talhanation.workers.entities.workarea.KitchenArea;
 import de.maxhenkel.corelib.net.Message;
-import net.minecraft.network.FriendlyByteBuf;
+import net.minecraft.network.RegistryFriendlyByteBuf;
 import net.minecraft.server.level.ServerPlayer;
-import net.minecraftforge.api.distmarker.Dist;
-import net.minecraftforge.network.NetworkEvent;
+import net.neoforged.api.distmarker.Dist;
+import net.neoforged.neoforge.network.handling.IPayloadContext;
+import net.minecraft.network.protocol.PacketFlow;
+import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
+import net.minecraft.resources.ResourceLocation;
 
 import java.util.UUID;
 
@@ -24,11 +27,11 @@ public class MessageUpdateKitchenArea implements Message<MessageUpdateKitchenAre
     }
 
     @Override
-    public Dist getExecutingSide() { return Dist.DEDICATED_SERVER; }
+    public PacketFlow getExecutingSide() { return PacketFlow.SERVERBOUND; }
 
     @Override
-    public void executeServerSide(NetworkEvent.Context context) {
-        ServerPlayer player = context.getSender();
+    public void executeServerSide(IPayloadContext context) {
+        ServerPlayer player = ((ServerPlayer) context.player());
         if (player == null) return;
 
         player.getCommandSenderWorld()
@@ -43,7 +46,7 @@ public class MessageUpdateKitchenArea implements Message<MessageUpdateKitchenAre
     }
 
     @Override
-    public MessageUpdateKitchenArea fromBytes(FriendlyByteBuf buf) {
+    public MessageUpdateKitchenArea fromBytes(RegistryFriendlyByteBuf buf) {
         this.uuid            = buf.readUUID();
         this.sellToVillagers = buf.readBoolean();
         this.useStorage      = buf.readBoolean();
@@ -51,9 +54,16 @@ public class MessageUpdateKitchenArea implements Message<MessageUpdateKitchenAre
     }
 
     @Override
-    public void toBytes(FriendlyByteBuf buf) {
+    public void toBytes(RegistryFriendlyByteBuf buf) {
         buf.writeUUID(uuid);
         buf.writeBoolean(sellToVillagers);
         buf.writeBoolean(useStorage);
+    }
+
+    public static final CustomPacketPayload.Type<MessageUpdateKitchenArea> TYPE = new CustomPacketPayload.Type<>(ResourceLocation.fromNamespaceAndPath("workers", "message_update_kitchen_area"));
+
+    @Override
+    public CustomPacketPayload.Type<MessageUpdateKitchenArea> type() {
+        return TYPE;
     }
 }

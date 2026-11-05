@@ -133,7 +133,7 @@ public class ItemScrollDropDownMenu extends AbstractWidget {
 
         if (stack.isEmpty()) {
             toInsert = ItemStack.EMPTY;
-            toInsert.setHoverName(Component.literal(text));
+            toInsert.set(net.minecraft.core.component.DataComponents.CUSTOM_NAME, Component.literal(text));
         }
 
         if (index < 0 || index > options.size()) {
@@ -196,7 +196,7 @@ public class ItemScrollDropDownMenu extends AbstractWidget {
         }
     }
 
-    public boolean mouseScrolled(double mouseX, double mouseY, double delta) {
+    public boolean mouseScrolled(double mouseX, double mouseY, double scrollX, double delta) {
         if (!this.visible) {
             return false;
         } else if (this.isOpen) {
@@ -283,4 +283,4 @@ public class ItemScrollDropDownMenu extends AbstractWidget {
     public void setOptionTextColor(int optionTextColor) {
         this.optionTextColor = optionTextColor;
     }
-}
+}

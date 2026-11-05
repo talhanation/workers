@@ -24,8 +24,8 @@ import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.SaplingBlock;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.block.state.properties.BlockStateProperties;
-import net.minecraftforge.api.distmarker.Dist;
-import net.minecraftforge.api.distmarker.OnlyIn;
+import net.neoforged.api.distmarker.Dist;
+import net.neoforged.api.distmarker.OnlyIn;
 
 import javax.annotation.Nullable;
 import java.util.*;
@@ -45,19 +45,19 @@ public class LumberArea extends AbstractWorkAreaEntity {
         super(type, level);
     }
 
-    protected void defineSynchedData() {
-        super.defineSynchedData();
-        this.entityData.define(SAPLING_STACK, ItemStack.EMPTY);
-        this.entityData.define(REPLANT, true);
-        this.entityData.define(SHEAR_LEAVES, false);
-        this.entityData.define(STRIP_LOGS, false);
+    protected void defineSynchedData(SynchedEntityData.Builder builder) {
+        super.defineSynchedData(builder);
+        builder.define(SAPLING_STACK, ItemStack.EMPTY);
+        builder.define(REPLANT, true);
+        builder.define(SHEAR_LEAVES, false);
+        builder.define(STRIP_LOGS, false);
     }
 
     @Override
     public void readAdditionalSaveData(CompoundTag tag) {
         super.readAdditionalSaveData(tag);
         if(tag.contains("saplingItem")){
-            ItemStack stack = ItemStack.of(tag.getCompound("saplingItem"));
+            ItemStack stack = ItemStack.parseOptional(this.registryAccess(), tag.getCompound("saplingItem"));
             this.setSaplingStack(stack);
         }
         this.setReplant(tag.getBoolean("replantTrees"));
@@ -68,8 +68,7 @@ public class LumberArea extends AbstractWorkAreaEntity {
     @Override
     public void addAdditionalSaveData(CompoundTag tag) {
         super.addAdditionalSaveData(tag);
-        CompoundTag nbt = new CompoundTag();
-        this.getSaplingStack().save(nbt);
+        CompoundTag nbt = (CompoundTag) this.getSaplingStack().saveOptional(this.registryAccess());
         tag.put("saplingItem", nbt);
         tag.putBoolean("replantTrees", getReplant());
         tag.putBoolean("shearLeaves", getShearLeaves());
@@ -377,7 +376,7 @@ public class LumberArea extends AbstractWorkAreaEntity {
         ResourceLocation id = BuiltInRegistries.BLOCK.getKey(state.getBlock());
         if(id == null) return null;
 
-        ResourceLocation strippedId = new ResourceLocation(id.getNamespace(), "stripped_" + id.getPath());
+        ResourceLocation strippedId = ResourceLocation.fromNamespaceAndPath(id.getNamespace(), "stripped_" + id.getPath());
         Block candidate = BuiltInRegistries.BLOCK.get(strippedId);
 
         if(candidate.getDescriptionId().contains("dynamictrees")){
@@ -429,4 +428,4 @@ public class LumberArea extends AbstractWorkAreaEntity {
     public boolean getStripLogs(){
         return entityData.get(STRIP_LOGS);
     }
-}
+}

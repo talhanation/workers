@@ -20,9 +20,9 @@ import net.minecraft.util.FormattedCharSequence;
 import net.minecraft.util.Mth;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
-import net.minecraftforge.api.distmarker.Dist;
-import net.minecraftforge.api.distmarker.OnlyIn;
-import net.minecraftforge.client.gui.widget.ExtendedButton;
+import net.neoforged.api.distmarker.Dist;
+import net.neoforged.api.distmarker.OnlyIn;
+import net.neoforged.neoforge.client.gui.widget.ExtendedButton;
 
 import javax.annotation.Nullable;
 import java.util.ArrayList;
@@ -36,7 +36,7 @@ import java.util.UUID;
 @OnlyIn(Dist.CLIENT)
 public class WorkshopOrderScreen extends RecruitsScreenBase {
 
-    private static final ResourceLocation TEXTURE = new ResourceLocation("recruits", "textures/gui/select_player.png");
+    private static final ResourceLocation TEXTURE = ResourceLocation.fromNamespaceAndPath("workers", "textures/gui/select_player.png");
     private static final MutableComponent TITLE          = Component.translatable("gui.workers.workshop.orders");
     private static final MutableComponent BUTTON_ADD     = Component.translatable("gui.workers.button.add");
     private static final MutableComponent BUTTON_EDIT    = Component.translatable("gui.workers.button.edit");
@@ -106,7 +106,7 @@ public class WorkshopOrderScreen extends RecruitsScreenBase {
                 button -> {
                     CraftOrder order = getSelectedOrder();
                     if (order == null) return;
-                    WorkersMain.SIMPLE_CHANNEL.sendToServer(new MessageUpdateWorkshopOrder(workshopArea.getUUID(), order, MessageUpdateWorkshopOrder.Action.REMOVE));
+                    WorkersMain.SIMPLE_CHANNEL.sendToServer(new MessageUpdateWorkshopOrder(workshopArea.getUUID(), order, MessageUpdateWorkshopOrder.Action.REMOVE, workshopArea.registryAccess()));
                     selected = null;
                     updateButtons();
                 });
@@ -117,7 +117,7 @@ public class WorkshopOrderScreen extends RecruitsScreenBase {
                     CraftOrder order = getSelectedOrder();
                     if (order == null) return;
                     MessageUpdateWorkshopOrder.Action action = hasShiftDown() ? MessageUpdateWorkshopOrder.Action.RESET_PROGRESS : MessageUpdateWorkshopOrder.Action.TOGGLE_ENABLED;
-                    WorkersMain.SIMPLE_CHANNEL.sendToServer(new MessageUpdateWorkshopOrder(workshopArea.getUUID(), order, action));
+                    WorkersMain.SIMPLE_CHANNEL.sendToServer(new MessageUpdateWorkshopOrder(workshopArea.getUUID(), order, action, workshopArea.registryAccess()));
                 });
         toggleButton.setTooltip(Tooltip.create(TOOLTIP_TOGGLE));
         addRenderableWidget(toggleButton);

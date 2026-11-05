@@ -36,9 +36,8 @@ import net.minecraft.world.level.block.entity.FurnaceBlockEntity;
 import net.minecraft.world.level.block.entity.HopperBlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.AABB;
-import net.minecraftforge.api.distmarker.Dist;
-import net.minecraftforge.api.distmarker.OnlyIn;
-import net.minecraftforge.network.NetworkHooks;
+import net.neoforged.api.distmarker.Dist;
+import net.neoforged.api.distmarker.OnlyIn;
 import org.jetbrains.annotations.NotNull;
 
 import javax.annotation.Nullable;
@@ -93,23 +92,23 @@ public class WorkshopArea extends AbstractWorkAreaEntity implements IPermissionA
     }
 
     @Override
-    protected void defineSynchedData() {
-        super.defineSynchedData();
-        this.entityData.define(CRAFTSMAN_NAME, "None");
-        this.entityData.define(HAS_TABLE, false);
-        this.entityData.define(FURNACE_COUNT, 0);
-        this.entityData.define(CONTAINER_COUNT, 0);
-        this.entityData.define(TOTAL_SLOTS, 0);
-        this.entityData.define(FREE_SLOTS, 0);
-        this.entityData.define(ORDERS, new CompoundTag());
-        this.entityData.define(USE_STORAGE, true);
+    protected void defineSynchedData(SynchedEntityData.Builder builder) {
+        super.defineSynchedData(builder);
+        builder.define(CRAFTSMAN_NAME, "None");
+        builder.define(HAS_TABLE, false);
+        builder.define(FURNACE_COUNT, 0);
+        builder.define(CONTAINER_COUNT, 0);
+        builder.define(TOTAL_SLOTS, 0);
+        builder.define(FREE_SLOTS, 0);
+        builder.define(ORDERS, new CompoundTag());
+        builder.define(USE_STORAGE, true);
     }
 
     @Override
     public void readAdditionalSaveData(CompoundTag tag) {
         super.readAdditionalSaveData(tag);
         this.orders.clear();
-        this.orders.addAll(CraftOrder.listFromNbt(tag.getCompound("Orders")));
+        this.orders.addAll(CraftOrder.listFromNbt(tag.getCompound("Orders"), this.registryAccess()));
         if (tag.contains("useStorage")) this.setUseStorage(tag.getBoolean("useStorage"));
         this.pushOrders();
         setBeingWorkedOn(false);
@@ -119,7 +118,7 @@ public class WorkshopArea extends AbstractWorkAreaEntity implements IPermissionA
     @Override
     public void addAdditionalSaveData(CompoundTag tag) {
         super.addAdditionalSaveData(tag);
-        tag.put("Orders", CraftOrder.listToNbt(this.orders));
+        tag.put("Orders", CraftOrder.listToNbt(this.orders, this.registryAccess()));
         tag.putBoolean("useStorage", this.getUseStorage());
     }
 
@@ -295,7 +294,7 @@ public class WorkshopArea extends AbstractWorkAreaEntity implements IPermissionA
         for (int i = 0; i < container.getContainerSize(); i++) {
             ItemStack slot = container.getItem(i);
             if (slot.isEmpty()) space += stack.getMaxStackSize();
-            else if (ItemStack.isSameItemSameTags(slot, stack)) space += Math.max(0, slot.getMaxStackSize() - slot.getCount());
+            else if (ItemStack.isSameItemSameComponents(slot, stack)) space += Math.max(0, slot.getMaxStackSize() - slot.getCount());
         }
         return space;
     }
@@ -312,7 +311,7 @@ public class WorkshopArea extends AbstractWorkAreaEntity implements IPermissionA
         int inserted = 0;
         for (int i = 0; i < container.getContainerSize() && !stack.isEmpty(); i++) {
             ItemStack slot = container.getItem(i);
-            if (slot.isEmpty() || !ItemStack.isSameItemSameTags(slot, stack)) continue;
+            if (slot.isEmpty() || !ItemStack.isSameItemSameComponents(slot, stack)) continue;
             int add = Math.min(stack.getCount(), slot.getMaxStackSize() - slot.getCount());
             if (add <= 0) continue;
             slot.grow(add);
@@ -362,7 +361,7 @@ public class WorkshopArea extends AbstractWorkAreaEntity implements IPermissionA
     /** Server: the live order list. Client: the last synced copy. */
     public List<CraftOrder> getOrders() {
         if (this.getCommandSenderWorld().isClientSide()) {
-            return CraftOrder.listFromNbt(this.entityData.get(ORDERS));
+            return CraftOrder.listFromNbt(this.entityData.get(ORDERS), this.registryAccess());
         }
         return orders;
     }
@@ -426,7 +425,7 @@ public class WorkshopArea extends AbstractWorkAreaEntity implements IPermissionA
     @Nullable
     public CraftOrder upsertOrder(String sourceKey, CraftOrder template) {
         CraftOrder existing = findOrder(sourceKey);
-        CraftOrder order = template.copy();
+        CraftOrder order = template.copy(this.registryAccess());
         order.sourceKey = sourceKey;
         if (existing != null) {
             order.uuid = existing.uuid;
@@ -454,20 +453,20 @@ public class WorkshopArea extends AbstractWorkAreaEntity implements IPermissionA
     }
 
     private void pushOrders() {
-        this.entityData.set(ORDERS, CraftOrder.listToNbt(orders));
+        this.entityData.set(ORDERS, CraftOrder.listToNbt(orders, this.registryAccess()));
         this.ordersDirty = false;
     }
 
     public void openEditOrderGUI(Player player, CraftOrder order) {
         if (player instanceof ServerPlayer sp) {
-            NetworkHooks.openScreen(sp, new MenuProvider() {
+            sp.openMenu(new MenuProvider() {
                 public @NotNull Component getDisplayName() { return Component.literal("workshop_order_edit_screen"); }
                 public @NotNull AbstractContainerMenu createMenu(int i, @NotNull Inventory inv, @NotNull Player p) {
                     return new WorkshopEditOrderContainer(i, WorkshopArea.this, inv, order);
                 }
-            }, buf -> { buf.writeUUID(this.getUUID()); buf.writeNbt(order.toNbt()); });
+            }, buf -> { buf.writeUUID(this.getUUID()); buf.writeNbt(order.toNbt(this.registryAccess())); });
         } else {
-            WorkersMain.SIMPLE_CHANNEL.sendToServer(new MessageOpenWorkshopEditOrderScreen(this.getUUID(), order));
+            WorkersMain.SIMPLE_CHANNEL.sendToServer(new MessageOpenWorkshopEditOrderScreen(this.getUUID(), order, this.registryAccess()));
         }
     }
 

@@ -4,11 +4,14 @@ import com.talhanation.workers.client.gui.WorkshopOrderScreen;
 import com.talhanation.workers.entities.workarea.WorkshopArea;
 import de.maxhenkel.corelib.net.Message;
 import net.minecraft.client.Minecraft;
-import net.minecraft.network.FriendlyByteBuf;
+import net.minecraft.network.RegistryFriendlyByteBuf;
 import net.minecraft.world.entity.player.Player;
-import net.minecraftforge.api.distmarker.Dist;
-import net.minecraftforge.api.distmarker.OnlyIn;
-import net.minecraftforge.network.NetworkEvent;
+import net.neoforged.api.distmarker.Dist;
+import net.neoforged.api.distmarker.OnlyIn;
+import net.neoforged.neoforge.network.handling.IPayloadContext;
+import net.minecraft.network.protocol.PacketFlow;
+import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
+import net.minecraft.resources.ResourceLocation;
 
 import java.util.UUID;
 
@@ -26,13 +29,13 @@ public class MessageToClientOpenWorkshopOrders implements Message<MessageToClien
     }
 
     @Override
-    public Dist getExecutingSide() {
-        return Dist.CLIENT;
+    public PacketFlow getExecutingSide() {
+        return PacketFlow.CLIENTBOUND;
     }
 
     @Override
     @OnlyIn(Dist.CLIENT)
-    public void executeClientSide(NetworkEvent.Context context) {
+    public void executeClientSide(IPayloadContext context) {
         Player player = Minecraft.getInstance().player;
         if (player == null) return;
         player.getCommandSenderWorld().getEntitiesOfClass(WorkshopArea.class, player.getBoundingBox()
@@ -45,13 +48,20 @@ public class MessageToClientOpenWorkshopOrders implements Message<MessageToClien
     }
 
     @Override
-    public MessageToClientOpenWorkshopOrders fromBytes(FriendlyByteBuf buf) {
+    public MessageToClientOpenWorkshopOrders fromBytes(RegistryFriendlyByteBuf buf) {
         this.uuid = buf.readUUID();
         return this;
     }
 
     @Override
-    public void toBytes(FriendlyByteBuf buf) {
+    public void toBytes(RegistryFriendlyByteBuf buf) {
         buf.writeUUID(uuid);
+    }
+
+    public static final CustomPacketPayload.Type<MessageToClientOpenWorkshopOrders> TYPE = new CustomPacketPayload.Type<>(ResourceLocation.fromNamespaceAndPath("workers", "message_to_client_open_workshop_orders"));
+
+    @Override
+    public CustomPacketPayload.Type<MessageToClientOpenWorkshopOrders> type() {
+        return TYPE;
     }
 }

@@ -106,7 +106,7 @@ public class VillagerPickupFoodGoal extends Goal {
 
     private static boolean isFood(ItemStack stack) {
         if (stack.isEmpty()) return false;
-        FoodProperties food = stack.getItem().getFoodProperties();
-        return food != null && food.getNutrition() > 0;
+        FoodProperties food = stack.getFoodProperties(null);
+        return food != null && food.nutrition() > 0;
     }
-}
+}

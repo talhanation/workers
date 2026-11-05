@@ -19,9 +19,9 @@ import net.minecraft.world.level.ChunkPos;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.levelgen.Heightmap;
 import net.minecraft.world.level.saveddata.SavedData;
-import net.minecraftforge.common.world.ForgeChunkManager;
-import net.minecraftforge.event.TickEvent;
-import net.minecraftforge.eventbus.api.SubscribeEvent;
+import net.neoforged.neoforge.event.tick.ServerTickEvent;
+import net.minecraft.core.HolderLookup;
+import net.neoforged.bus.api.SubscribeEvent;
 
 import javax.annotation.Nullable;
 import java.util.*;
@@ -42,7 +42,7 @@ public class WorkersRemoteTravel extends SavedData {
     private final List<Trip> trips = new ArrayList<>();
 
     public static WorkersRemoteTravel get(MinecraftServer server) {
-        return server.overworld().getDataStorage().computeIfAbsent(WorkersRemoteTravel::load, WorkersRemoteTravel::new, DATA_NAME);
+        return server.overworld().getDataStorage().computeIfAbsent(new SavedData.Factory<>(WorkersRemoteTravel::new, WorkersRemoteTravel::load), DATA_NAME);
     }
 
     /** Travel time in ticks for the distance in blocks. */
@@ -116,7 +116,8 @@ public class WorkersRemoteTravel extends SavedData {
         ChunkPos center = entity.chunkPosition();
         for (int x = -1; x <= 1; x++) {
             for (int z = -1; z <= 1; z++) {
-                ForgeChunkManager.forceChunk(level, RECRUITS_MOD_ID, entity, center.x + x, center.z + z, false, false);
+                // NeoForge: Recruits forces these chunks with its own ticket controller (former ForgeChunkManager mod id "recruits")
+                AbstractChunkLoaderEntity.CHUNK_LOADER.forceChunk(level, entity, center.x + x, center.z + z, false, false);
             }
         }
     }
@@ -181,14 +182,14 @@ public class WorkersRemoteTravel extends SavedData {
     // ── Save data ─────────────────────────────────────────────────────────────
 
     @Override
-    public CompoundTag save(CompoundTag tag) {
+    public CompoundTag save(CompoundTag tag, HolderLookup.Provider provider) {
         ListTag list = new ListTag();
         for (Trip trip : trips) list.add(trip.toNbt());
         tag.put("Trips", list);
         return tag;
     }
 
-    public static WorkersRemoteTravel load(CompoundTag tag) {
+    public static WorkersRemoteTravel load(CompoundTag tag, HolderLookup.Provider provider) {
         WorkersRemoteTravel data = new WorkersRemoteTravel();
         ListTag list = tag.getList("Trips", Tag.TAG_COMPOUND);
         for (int i = 0; i < list.size(); i++) {
@@ -243,8 +244,7 @@ public class WorkersRemoteTravel extends SavedData {
     /** Puts arrived travellers back into the world. Registered on the forge event bus. */
     public static class Events {
         @SubscribeEvent
-        public void onServerTick(TickEvent.ServerTickEvent event) {
-            if (event.phase != TickEvent.Phase.END) return;
+        public void onServerTick(ServerTickEvent.Post event) {
             MinecraftServer server = event.getServer();
             if (server == null || server.getTickCount() % 20 != 0) return;
             get(server).tick(server);

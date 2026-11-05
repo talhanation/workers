@@ -654,7 +654,7 @@ public class AnimalFarmerWorkGoal extends Goal {
     //same items as WorkerTemptGoal in VillagerEvents
     public static boolean isTemptItem(ItemStack stack){
         if(stack.isEmpty()) return false;
-        return stack.is(Items.WHEAT) || Chicken.FOOD_ITEMS.test(stack) || Pig.FOOD_ITEMS.test(stack);
+        return stack.is(Items.WHEAT) || stack.is(net.minecraft.tags.ItemTags.CHICKEN_FOOD) || stack.is(net.minecraft.tags.ItemTags.PIG_FOOD);
     }
 
     private Vec3 getPenCenter(){
@@ -755,4 +755,4 @@ public class AnimalFarmerWorkGoal extends Goal {
         ERROR;
 
     }
-}
+}

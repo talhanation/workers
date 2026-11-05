@@ -5,14 +5,17 @@ import com.talhanation.workers.entities.workarea.AbstractWorkAreaEntity;
 import com.talhanation.workers.entities.workarea.MiningArea;
 import de.maxhenkel.corelib.net.Message;
 import net.minecraft.core.BlockPos;
-import net.minecraft.network.FriendlyByteBuf;
+import net.minecraft.network.RegistryFriendlyByteBuf;
 import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
-import net.minecraftforge.api.distmarker.Dist;
-import net.minecraftforge.network.NetworkEvent;
+import net.neoforged.api.distmarker.Dist;
+import net.neoforged.neoforge.network.handling.IPayloadContext;
+import net.minecraft.network.protocol.PacketFlow;
+import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
+import net.minecraft.resources.ResourceLocation;
 
 import java.util.UUID;
 
@@ -41,12 +44,12 @@ public class MessageUpdateWorkArea implements Message<MessageUpdateWorkArea> {
         this.teamAccess = teamAccess;
     }
 
-    public Dist getExecutingSide() {
-        return Dist.DEDICATED_SERVER;
+    public PacketFlow getExecutingSide() {
+        return PacketFlow.SERVERBOUND;
     }
 
-    public void executeServerSide(NetworkEvent.Context context){
-        ServerPlayer player = context.getSender();
+    public void executeServerSide(IPayloadContext context){
+        ServerPlayer player = ((ServerPlayer) context.player());
         if(player == null) return;
 
         player.getCommandSenderWorld().getEntitiesOfClass(AbstractWorkAreaEntity.class, player.getBoundingBox()
@@ -89,7 +92,7 @@ public class MessageUpdateWorkArea implements Message<MessageUpdateWorkArea> {
         workArea.setTime(workArea.getTime() + DONE_TIME);
     }
 
-    public MessageUpdateWorkArea fromBytes(FriendlyByteBuf buf) {
+    public MessageUpdateWorkArea fromBytes(RegistryFriendlyByteBuf buf) {
         this.x = buf.readFloat();
         this.y = buf.readFloat();
         this.z = buf.readFloat();
@@ -100,7 +103,7 @@ public class MessageUpdateWorkArea implements Message<MessageUpdateWorkArea> {
         return this;
     }
 
-    public void toBytes(FriendlyByteBuf buf) {
+    public void toBytes(RegistryFriendlyByteBuf buf) {
         buf.writeFloat(x);
         buf.writeFloat(y);
         buf.writeFloat(z);
@@ -110,4 +113,10 @@ public class MessageUpdateWorkArea implements Message<MessageUpdateWorkArea> {
         buf.writeBoolean(teamAccess);
     }
 
-}
+    public static final CustomPacketPayload.Type<MessageUpdateWorkArea> TYPE = new CustomPacketPayload.Type<>(ResourceLocation.fromNamespaceAndPath("workers", "message_update_work_area"));
+
+    @Override
+    public CustomPacketPayload.Type<MessageUpdateWorkArea> type() {
+        return TYPE;
+    }
+}

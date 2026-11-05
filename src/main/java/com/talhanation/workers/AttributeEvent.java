@@ -2,11 +2,12 @@ package com.talhanation.workers;
 
 import com.talhanation.workers.entities.*;
 import com.talhanation.workers.init.ModEntityTypes;
-import net.minecraftforge.event.entity.EntityAttributeCreationEvent;
-import net.minecraftforge.eventbus.api.SubscribeEvent;
-import net.minecraftforge.fml.common.Mod;
+import net.neoforged.neoforge.event.entity.EntityAttributeCreationEvent;
+import net.neoforged.bus.api.SubscribeEvent;
+import net.neoforged.fml.common.Mod;
+import net.neoforged.fml.common.EventBusSubscriber;
 
-@Mod.EventBusSubscriber(modid = WorkersMain.MOD_ID, bus = Mod.EventBusSubscriber.Bus.MOD)
+@EventBusSubscriber(modid = WorkersMain.MOD_ID, bus = EventBusSubscriber.Bus.MOD)
 public class AttributeEvent {
 
     @SubscribeEvent
@@ -23,4 +24,4 @@ public class AttributeEvent {
         event.put(ModEntityTypes.CRAFTSMAN.get(), CraftsmanEntity.setAttributes().build());
         event.put(ModEntityTypes.STOREKEEPER.get(), StorekeeperEntity.setAttributes().build());
     }
-}
+}

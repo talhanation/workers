@@ -27,6 +27,8 @@ import net.minecraft.world.item.crafting.CraftingRecipe;
 import net.minecraft.world.item.crafting.Ingredient;
 import net.minecraft.world.item.crafting.Recipe;
 import net.minecraft.world.item.crafting.RecipeType;
+import net.minecraft.world.item.crafting.RecipeHolder;
+import net.minecraft.world.item.crafting.SingleRecipeInput;
 import net.minecraft.world.item.crafting.SmeltingRecipe;
 import net.minecraft.world.level.block.AbstractFurnaceBlock;
 import net.minecraft.world.level.block.Block;
@@ -37,8 +39,7 @@ import net.minecraft.world.level.block.entity.ChestBlockEntity;
 import net.minecraft.world.level.block.entity.FurnaceBlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.AABB;
-import net.minecraftforge.common.ForgeHooks;
-import net.minecraftforge.common.MinecraftForge;
+import net.neoforged.neoforge.common.NeoForge;
 
 import javax.annotation.Nullable;
 import java.util.*;
@@ -581,8 +582,8 @@ public class CraftsmanWorkGoal extends Goal {
         int pending = order.type == CraftOrder.OrderType.SMELTING ? countPendingInFurnaces(area, order, matchers[0], perOutput) : 0;
         if (order.mode == CraftOrder.Mode.STOCK) {
             // products go to the storage, so the stock counts the workshop and the used storages
-            order.stock = area.countMatching(stack -> ItemStack.isSameItemSameTags(stack, order.result))
-                    + countInStorages(stack -> ItemStack.isSameItemSameTags(stack, order.result));
+            order.stock = area.countMatching(stack -> ItemStack.isSameItemSameComponents(stack, order.result))
+                    + countInStorages(stack -> ItemStack.isSameItemSameComponents(stack, order.result));
         }
         int wanted = order.getRemaining() - pending;
 
@@ -672,7 +673,7 @@ public class CraftsmanWorkGoal extends Goal {
 
             ItemStack in = furnace.getItem(0);
             ItemStack out = furnace.getItem(2);
-            if (!out.isEmpty() && !ItemStack.isSameItemSameTags(out, order.result)) continue;
+            if (!out.isEmpty() && !ItemStack.isSameItemSameComponents(out, order.result)) continue;
             if (!in.isEmpty() && !input.test(in)) continue;
             int space = in.isEmpty() ? input.display.getMaxStackSize() : in.getMaxStackSize() - in.getCount();
             if (space <= 0) continue;
@@ -857,7 +858,7 @@ public class CraftsmanWorkGoal extends Goal {
     private void completeOrder(WorkshopArea area, CraftOrder order) {
         order.status = CraftOrder.Status.DONE;
         order.missing.clear();
-        MinecraftForge.EVENT_BUS.post(new WorkshopEvent.OrderCompleted(area, order));
+        NeoForge.EVENT_BUS.post(new WorkshopEvent.OrderCompleted(area, order));
         if (order.isGovernorOrder() && order.mode == CraftOrder.Mode.ONCE) {
             area.removeOrder(order.uuid);
         }
@@ -873,7 +874,7 @@ public class CraftsmanWorkGoal extends Goal {
         order.missing.clear();
         if (missing != null) order.missing.addAll(missing);
         if (blockedNow) {
-            MinecraftForge.EVENT_BUS.post(new WorkshopEvent.OrderBlocked(area, order, new ArrayList<>(order.missing)));
+            NeoForge.EVENT_BUS.post(new WorkshopEvent.OrderBlocked(area, order, new ArrayList<>(order.missing)));
         }
     }
 
@@ -901,16 +902,16 @@ public class CraftsmanWorkGoal extends Goal {
             }
         }
 
-        if (!craftingRecipe.matches(grid, level)) {
+        if (!craftingRecipe.matches(grid.asCraftInput(), level)) {
             returnToInventory(grid);
             return false;
         }
-        ItemStack result = craftingRecipe.assemble(grid, level.registryAccess());
+        ItemStack result = craftingRecipe.assemble(grid.asCraftInput(), level.registryAccess());
         if (result.isEmpty() || !craftsman.canAddItem(result)) {
             returnToInventory(grid);
             return false;
         }
-        NonNullList<ItemStack> remaining = craftingRecipe.getRemainingItems(grid);
+        NonNullList<ItemStack> remaining = craftingRecipe.getRemainingItems(grid.asCraftInput());
 
         int count = result.getCount();
         handledItems.add(result.getItem());
@@ -973,7 +974,7 @@ public class CraftsmanWorkGoal extends Goal {
             furnace.setItem(slot, stack.split(put));
             return put;
         }
-        if (!ItemStack.isSameItemSameTags(current, stack)) return 0;
+        if (!ItemStack.isSameItemSameComponents(current, stack)) return 0;
         int put = Math.min(max, Math.min(stack.getCount(), current.getMaxStackSize() - current.getCount()));
         if (put <= 0) return 0;
         current.grow(put);
@@ -987,7 +988,7 @@ public class CraftsmanWorkGoal extends Goal {
             ItemStack in = furnace.getItem(0);
             ItemStack out = furnace.getItem(2);
             if (input != null && input.test(in)) pending += in.getCount() * perOutput;
-            if (!out.isEmpty() && ItemStack.isSameItemSameTags(out, order.result)) pending += out.getCount();
+            if (!out.isEmpty() && ItemStack.isSameItemSameComponents(out, order.result)) pending += out.getCount();
         }
         return pending;
     }
@@ -997,7 +998,7 @@ public class CraftsmanWorkGoal extends Goal {
     private CraftOrder findSmeltOrderFor(WorkshopArea area, ItemStack output) {
         CraftOrder fallback = null;
         for (CraftOrder order : area.getOrders()) {
-            if (order.type != CraftOrder.OrderType.SMELTING || !ItemStack.isSameItemSameTags(order.result, output)) continue;
+            if (order.type != CraftOrder.OrderType.SMELTING || !ItemStack.isSameItemSameComponents(order.result, output)) continue;
             if (!order.isTargetReached()) return order;
             if (fallback == null) fallback = order;
         }
@@ -1026,7 +1027,7 @@ public class CraftsmanWorkGoal extends Goal {
     }
 
     private static int getBurnTime(ItemStack stack) {
-        return ForgeHooks.getBurnTime(stack, RecipeType.SMELTING);
+        return stack.getBurnTime(RecipeType.SMELTING);
     }
 
     @Nullable
@@ -1039,8 +1040,8 @@ public class CraftsmanWorkGoal extends Goal {
     /** True if the blast furnace can smelt the item into the result of the order. */
     private static boolean canBlast(ServerLevel level, ItemStack stack, ItemStack result) {
         if (stack.isEmpty() || result.isEmpty()) return false;
-        Optional<BlastingRecipe> blasting = level.getRecipeManager().getRecipeFor(RecipeType.BLASTING, new SimpleContainer(stack.copyWithCount(1)), level);
-        return blasting.isPresent() && ItemStack.isSameItemSameTags(blasting.get().getResultItem(level.registryAccess()), result);
+        Optional<BlastingRecipe> blasting = level.getRecipeManager().getRecipeFor(RecipeType.BLASTING, new SingleRecipeInput(stack.copyWithCount(1)), level).map(RecipeHolder::value);
+        return blasting.isPresent() && ItemStack.isSameItemSameComponents(blasting.get().getResultItem(level.registryAccess()), result);
     }
 
     /**
@@ -1049,7 +1050,7 @@ public class CraftsmanWorkGoal extends Goal {
      */
     private static int getFuelPerItem(ServerLevel level, AbstractFurnaceBlockEntity furnace, ItemStack input, SmeltingRecipe recipe) {
         if (furnace instanceof BlastFurnaceBlockEntity && !input.isEmpty()) {
-            Optional<BlastingRecipe> blasting = level.getRecipeManager().getRecipeFor(RecipeType.BLASTING, new SimpleContainer(input.copyWithCount(1)), level);
+            Optional<BlastingRecipe> blasting = level.getRecipeManager().getRecipeFor(RecipeType.BLASTING, new SingleRecipeInput(input.copyWithCount(1)), level).map(RecipeHolder::value);
             if (blasting.isPresent()) return Math.max(1, blasting.get().getCookingTime() * 2);
         }
         return Math.max(1, recipe.getCookingTime());
@@ -1317,7 +1318,7 @@ public class CraftsmanWorkGoal extends Goal {
             if (matcher.test(stack)) return false;
         }
         for (CraftOrder order : area.getOrders()) {
-            if (ItemStack.isSameItemSameTags(order.result, stack)) return true;
+            if (ItemStack.isSameItemSameComponents(order.result, stack)) return true;
         }
         for (SlotMatcher matcher : related) {
             if (matcher.test(stack)) return true;
@@ -1434,7 +1435,7 @@ public class CraftsmanWorkGoal extends Goal {
                     Container container = entry.getValue();
                     if (WorkshopArea.getSpaceFor(container, stack) <= 0) continue;
                     for (int j = 0; j < container.getContainerSize(); j++) {
-                        if (ItemStack.isSameItemSameTags(container.getItem(j), stack)) {
+                        if (ItemStack.isSameItemSameComponents(container.getItem(j), stack)) {
                             deliverStorage = storage;
                             deliverPos = entry.getKey();
                             return true;
@@ -1464,7 +1465,7 @@ public class CraftsmanWorkGoal extends Goal {
                 Container container = entry.getValue();
                 if (WorkshopArea.getSpaceFor(container, stack) <= 0) continue;
                 for (int j = 0; j < container.getContainerSize(); j++) {
-                    if (ItemStack.isSameItemSameTags(container.getItem(j), stack)) return entry.getKey();
+                    if (ItemStack.isSameItemSameComponents(container.getItem(j), stack)) return entry.getKey();
                 }
                 if (fallback == null) fallback = entry.getKey();
             }

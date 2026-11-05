@@ -9,11 +9,14 @@ import com.talhanation.workers.world.BuildingPrice;
 import de.maxhenkel.corelib.net.Message;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.NbtIo;
-import net.minecraft.network.FriendlyByteBuf;
+import net.minecraft.network.RegistryFriendlyByteBuf;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.item.Item;
-import net.minecraftforge.api.distmarker.Dist;
-import net.minecraftforge.network.NetworkEvent;
+import net.neoforged.api.distmarker.Dist;
+import net.neoforged.neoforge.network.handling.IPayloadContext;
+import net.minecraft.network.protocol.PacketFlow;
+import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
+import net.minecraft.resources.ResourceLocation;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
@@ -39,7 +42,7 @@ public class MessageUpdateBuildArea implements Message<MessageUpdateBuildArea> {
         this.xSize = xSize;
         this.ySize = ySize;
         this.zSize = zSize;
-        this.structureNBT = structureNBT;
+        this.structureNBT = structureNBT == null ? null : structureNBT.copy(); // NeoForge encodes payloads later on the netty thread: snapshot mutable data here
         this.build = build;
         this.isCreative = isCreative;
         this.updateAlwaysShowProjection = false;
@@ -52,12 +55,12 @@ public class MessageUpdateBuildArea implements Message<MessageUpdateBuildArea> {
     }
 
     @Override
-    public Dist getExecutingSide() {
-        return Dist.DEDICATED_SERVER;
+    public PacketFlow getExecutingSide() {
+        return PacketFlow.SERVERBOUND;
     }
 
-    public void executeServerSide(NetworkEvent.Context context){
-        ServerPlayer player = context.getSender();
+    public void executeServerSide(IPayloadContext context){
+        ServerPlayer player = ((ServerPlayer) context.player());
         if(player == null) return;
 
         player.getCommandSenderWorld().getEntitiesOfClass(BuildArea.class, player.getBoundingBox()
@@ -135,7 +138,7 @@ public class MessageUpdateBuildArea implements Message<MessageUpdateBuildArea> {
     }
 
     @Override
-    public MessageUpdateBuildArea fromBytes(FriendlyByteBuf buf) {
+    public MessageUpdateBuildArea fromBytes(RegistryFriendlyByteBuf buf) {
         this.uuid = buf.readUUID();
         this.xSize = buf.readInt();
         this.ySize = buf.readInt();
@@ -143,7 +146,7 @@ public class MessageUpdateBuildArea implements Message<MessageUpdateBuildArea> {
 
         byte[] compressed = buf.readByteArray();
         try {
-            this.structureNBT = NbtIo.readCompressed(new ByteArrayInputStream(compressed));
+            this.structureNBT = NbtIo.readCompressed(new ByteArrayInputStream(compressed), net.minecraft.nbt.NbtAccounter.unlimitedHeap());
         } catch (IOException e) {
             e.printStackTrace();
             this.structureNBT = new CompoundTag(); // Fallback
@@ -157,7 +160,7 @@ public class MessageUpdateBuildArea implements Message<MessageUpdateBuildArea> {
     }
 
     @Override
-    public void toBytes(FriendlyByteBuf buf) {
+    public void toBytes(RegistryFriendlyByteBuf buf) {
         buf.writeUUID(uuid);
         buf.writeInt(xSize);
         buf.writeInt(ySize);
@@ -177,5 +180,12 @@ public class MessageUpdateBuildArea implements Message<MessageUpdateBuildArea> {
         buf.writeBoolean(isCreative);
         buf.writeBoolean(updateAlwaysShowProjection);
         buf.writeBoolean(alwaysShowProjection);
+    }
+
+    public static final CustomPacketPayload.Type<MessageUpdateBuildArea> TYPE = new CustomPacketPayload.Type<>(ResourceLocation.fromNamespaceAndPath("workers", "message_update_build_area"));
+
+    @Override
+    public CustomPacketPayload.Type<MessageUpdateBuildArea> type() {
+        return TYPE;
     }
 }

@@ -15,7 +15,7 @@ import net.minecraft.util.FastColor;
 import net.minecraft.util.Mth;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
-import net.minecraftforge.client.gui.widget.ExtendedButton;
+import net.neoforged.neoforge.client.gui.widget.ExtendedButton;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -222,9 +222,9 @@ public class AnimalPenAreaScreen extends WorkAreaScreen {
         return super.mouseClicked(mouseX, mouseY, button);
     }
     @Override
-    public boolean mouseScrolled(double x, double y, double d) {
-        if(animalTypesScrollDropDownMenu != null) animalTypesScrollDropDownMenu.mouseScrolled(x,y,d);
-        return super.mouseScrolled(x, y, d);
+    public boolean mouseScrolled(double x, double y, double scrollX, double d) {
+        if(animalTypesScrollDropDownMenu != null) animalTypesScrollDropDownMenu.mouseScrolled(x, y, 0, d);
+        return super.mouseScrolled(x, y, scrollX, d);
     }
     @Override
     public void render(GuiGraphics guiGraphics, int mouseX, int mouseY, float partialTicks) {

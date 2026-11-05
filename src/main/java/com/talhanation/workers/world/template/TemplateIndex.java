@@ -4,8 +4,8 @@ import com.talhanation.workers.WorkersMain;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.NbtIo;
 import net.minecraft.server.MinecraftServer;
-import net.minecraftforge.fml.ModList;
-import net.minecraftforge.forgespi.language.IModFileInfo;
+import net.neoforged.fml.ModList;
+import net.neoforged.neoforgespi.language.IModFileInfo;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -50,7 +50,7 @@ public final class TemplateIndex {
     }
 
     public static Path getScanRoot(MinecraftServer server) {
-        return server.getServerDirectory().toPath().toAbsolutePath().resolve("workers").resolve("scan");
+        return server.getServerDirectory().toAbsolutePath().resolve("workers").resolve("scan");
     }
 
     // ------------------------------------------------------------------ lifecycle
@@ -115,7 +115,7 @@ public final class TemplateIndex {
         Path file = resolve(info.path());
         if (file == null || !Files.isRegularFile(file)) return null;
         try (InputStream in = Files.newInputStream(file)) {
-            return NbtIo.readCompressed(in);
+            return NbtIo.readCompressed(in, net.minecraft.nbt.NbtAccounter.unlimitedHeap());
         } catch (IOException e) {
             LOGGER.warn("Workers: could not read template {}: {}", info.path(), e.getMessage());
             return null;
@@ -157,7 +157,7 @@ public final class TemplateIndex {
     private TemplateInfo parse(Path file, String rel, long modified) {
         CompoundTag root;
         try (InputStream in = Files.newInputStream(file)) {
-            root = NbtIo.readCompressed(in);
+            root = NbtIo.readCompressed(in, net.minecraft.nbt.NbtAccounter.unlimitedHeap());
         } catch (IOException e) {
             LOGGER.warn("Workers: broken template {}: {}", rel, e.getMessage());
             return null;

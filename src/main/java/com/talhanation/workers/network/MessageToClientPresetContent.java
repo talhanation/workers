@@ -2,10 +2,13 @@ package com.talhanation.workers.network;
 
 import de.maxhenkel.corelib.net.Message;
 import net.minecraft.nbt.CompoundTag;
-import net.minecraft.network.FriendlyByteBuf;
-import net.minecraftforge.api.distmarker.Dist;
-import net.minecraftforge.api.distmarker.OnlyIn;
-import net.minecraftforge.network.NetworkEvent;
+import net.minecraft.network.RegistryFriendlyByteBuf;
+import net.neoforged.api.distmarker.Dist;
+import net.neoforged.api.distmarker.OnlyIn;
+import net.neoforged.neoforge.network.handling.IPayloadContext;
+import net.minecraft.network.protocol.PacketFlow;
+import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
+import net.minecraft.resources.ResourceLocation;
 
 public class MessageToClientPresetContent implements Message<MessageToClientPresetContent> {
 
@@ -21,11 +24,11 @@ public class MessageToClientPresetContent implements Message<MessageToClientPres
     }
 
     @Override
-    public Dist getExecutingSide() { return Dist.CLIENT; }
+    public PacketFlow getExecutingSide() { return PacketFlow.CLIENTBOUND; }
 
     @Override
     @OnlyIn(Dist.CLIENT)
-    public void executeClientSide(NetworkEvent.Context context) {
+    public void executeClientSide(IPayloadContext context) {
         if (pendingCallback != null) {
             pendingCallback.accept(this);
             pendingCallback = null;
@@ -33,15 +36,22 @@ public class MessageToClientPresetContent implements Message<MessageToClientPres
     }
 
     @Override
-    public MessageToClientPresetContent fromBytes(FriendlyByteBuf buf) {
+    public MessageToClientPresetContent fromBytes(RegistryFriendlyByteBuf buf) {
         this.presetName = buf.readUtf();
         this.nbt = buf.readNbt();
         return this;
     }
 
     @Override
-    public void toBytes(FriendlyByteBuf buf) {
+    public void toBytes(RegistryFriendlyByteBuf buf) {
         buf.writeUtf(presetName);
         buf.writeNbt(nbt);
+    }
+
+    public static final CustomPacketPayload.Type<MessageToClientPresetContent> TYPE = new CustomPacketPayload.Type<>(ResourceLocation.fromNamespaceAndPath("workers", "message_to_client_preset_content"));
+
+    @Override
+    public CustomPacketPayload.Type<MessageToClientPresetContent> type() {
+        return TYPE;
     }
 }

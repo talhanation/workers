@@ -1,14 +1,18 @@
 package com.talhanation.workers.network;
 
+import net.minecraft.core.HolderLookup;
 import com.talhanation.workers.entities.workarea.WorkshopArea;
 import com.talhanation.workers.world.CraftOrder;
 import de.maxhenkel.corelib.net.Message;
 import net.minecraft.nbt.CompoundTag;
-import net.minecraft.network.FriendlyByteBuf;
+import net.minecraft.network.RegistryFriendlyByteBuf;
 import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerPlayer;
-import net.minecraftforge.api.distmarker.Dist;
-import net.minecraftforge.network.NetworkEvent;
+import net.neoforged.api.distmarker.Dist;
+import net.neoforged.neoforge.network.handling.IPayloadContext;
+import net.minecraft.network.protocol.PacketFlow;
+import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
+import net.minecraft.resources.ResourceLocation;
 
 import java.util.UUID;
 
@@ -20,20 +24,20 @@ public class MessageUpdateWorkshopOrder implements Message<MessageUpdateWorkshop
 
     public MessageUpdateWorkshopOrder() {}
 
-    public MessageUpdateWorkshopOrder(UUID workshopUuid, CraftOrder order, Action action) {
+    public MessageUpdateWorkshopOrder(UUID workshopUuid, CraftOrder order, Action action, HolderLookup.Provider provider) {
         this.workshopUuid = workshopUuid;
-        this.nbt = order.toNbt();
+        this.nbt = order.toNbt(provider);
         this.action = action.ordinal();
     }
 
     @Override
-    public Dist getExecutingSide() {
-        return Dist.DEDICATED_SERVER;
+    public PacketFlow getExecutingSide() {
+        return PacketFlow.SERVERBOUND;
     }
 
     @Override
-    public void executeServerSide(NetworkEvent.Context context) {
-        ServerPlayer player = context.getSender();
+    public void executeServerSide(IPayloadContext context) {
+        ServerPlayer player = ((ServerPlayer) context.player());
         if (player == null || nbt == null) return;
 
         player.getCommandSenderWorld().getEntitiesOfClass(WorkshopArea.class, player.getBoundingBox().inflate(64.0D),
@@ -47,7 +51,7 @@ public class MessageUpdateWorkshopOrder implements Message<MessageUpdateWorkshop
     }
 
     private void update(WorkshopArea workshop, ServerPlayer player) {
-        CraftOrder order = CraftOrder.fromNbt(nbt);
+        CraftOrder order = CraftOrder.fromNbt(nbt, player.registryAccess());
         CraftOrder existing = workshop.getOrder(order.uuid);
         Action type = Action.fromIndex(action);
 
@@ -96,7 +100,7 @@ public class MessageUpdateWorkshopOrder implements Message<MessageUpdateWorkshop
     }
 
     @Override
-    public MessageUpdateWorkshopOrder fromBytes(FriendlyByteBuf buf) {
+    public MessageUpdateWorkshopOrder fromBytes(RegistryFriendlyByteBuf buf) {
         this.workshopUuid = buf.readUUID();
         this.nbt = buf.readNbt();
         this.action = buf.readInt();
@@ -104,7 +108,7 @@ public class MessageUpdateWorkshopOrder implements Message<MessageUpdateWorkshop
     }
 
     @Override
-    public void toBytes(FriendlyByteBuf buf) {
+    public void toBytes(RegistryFriendlyByteBuf buf) {
         buf.writeUUID(this.workshopUuid);
         buf.writeNbt(this.nbt);
         buf.writeInt(this.action);
@@ -120,5 +124,12 @@ public class MessageUpdateWorkshopOrder implements Message<MessageUpdateWorkshop
             Action[] values = values();
             return index >= 0 && index < values.length ? values[index] : ADD_OR_UPDATE;
         }
+    }
+
+    public static final CustomPacketPayload.Type<MessageUpdateWorkshopOrder> TYPE = new CustomPacketPayload.Type<>(ResourceLocation.fromNamespaceAndPath("workers", "message_update_workshop_order"));
+
+    @Override
+    public CustomPacketPayload.Type<MessageUpdateWorkshopOrder> type() {
+        return TYPE;
     }
 }

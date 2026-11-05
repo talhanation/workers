@@ -20,10 +20,10 @@ import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.material.FluidState;
 import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
-import net.minecraftforge.api.distmarker.Dist;
-import net.minecraftforge.api.distmarker.OnlyIn;
-import net.minecraftforge.common.Tags;
-import net.minecraftforge.registries.ForgeRegistries;
+import net.neoforged.api.distmarker.Dist;
+import net.neoforged.api.distmarker.OnlyIn;
+import net.neoforged.neoforge.common.Tags;
+import net.minecraft.core.registries.BuiltInRegistries;
 
 import java.util.Stack;
 import java.util.stream.Stream;
@@ -42,15 +42,15 @@ public class MiningArea extends AbstractWorkAreaEntity {
     public MiningArea(EntityType<?> type, Level level) {
         super(type, level);
     }
-    protected void defineSynchedData() {
-        super.defineSynchedData();
-        this.entityData.define(HEIGHT_OFFSET, 1);
-        this.entityData.define(CLOSE_FLOOR, false);
-        this.entityData.define(CLOSE_FLUIDS, true);
-        this.entityData.define(MINE_WALL_ORES, true);
-        this.entityData.define(FILL_ITEM, new ItemStack(Blocks.COBBLESTONE));
-        this.entityData.define(MODE, MiningMode.CUSTOM.getIndex());
-        this.entityData.define(KEEP_ON, false);
+    protected void defineSynchedData(SynchedEntityData.Builder builder) {
+        super.defineSynchedData(builder);
+        builder.define(HEIGHT_OFFSET, 1);
+        builder.define(CLOSE_FLOOR, false);
+        builder.define(CLOSE_FLUIDS, true);
+        builder.define(MINE_WALL_ORES, true);
+        builder.define(FILL_ITEM, new ItemStack(Blocks.COBBLESTONE));
+        builder.define(MODE, MiningMode.CUSTOM.getIndex());
+        builder.define(KEEP_ON, false);
     }
 
     @Override
@@ -60,7 +60,7 @@ public class MiningArea extends AbstractWorkAreaEntity {
         this.setCloseFluids(tag.getBoolean("closeFluids"));
         this.setMineWallOres(tag.getBoolean("mineWallOres"));
         if (tag.contains("fillItem")) {
-            this.setFillItem(ItemStack.of(tag.getCompound("fillItem")));
+            this.setFillItem(ItemStack.parseOptional(this.registryAccess(), tag.getCompound("fillItem")));
         }
         this.setMode(tag.getInt("miningMode"));
         this.setKeepOn(tag.getBoolean("keepOn"));
@@ -72,7 +72,7 @@ public class MiningArea extends AbstractWorkAreaEntity {
         tag.putBoolean("closeFloor", this.getCloseFloor());
         tag.putBoolean("closeFluids", this.getCloseFluids());
         tag.putBoolean("mineWallOres", this.getMineWallOres());
-        tag.put("fillItem", this.getFillItem().save(new CompoundTag()));
+        tag.put("fillItem", this.getFillItem().saveOptional(this.registryAccess()));
         tag.putInt("miningMode", this.getMode().getIndex());
         tag.putBoolean("keepOn", this.getKeepOn());
     }
@@ -114,12 +114,12 @@ public class MiningArea extends AbstractWorkAreaEntity {
             int yReach = (getMode() == MiningMode.STAIRS_UP) ? (height - 1) : -(height - 1);
             BlockPos start = (getMode() == MiningMode.STAIRS_UP) ? getOnPos().above() : getOnPos().above(3);
             BlockPos end = start.offset(fwdX * width + sideX * depth, yReach, fwdZ * width + sideZ * depth);
-            return new AABB(start, end);
+            return new AABB(Vec3.atLowerCornerOf(start), Vec3.atLowerCornerOf(end));
         }
 
         BlockPos start = this.getOnPos().offset(0, this.getHeightOffset(), 0);
         BlockPos end = start.offset(fwdX * width + sideX * depth, height, fwdZ * width + sideZ * depth);
-        return new AABB(start, end);
+        return new AABB(Vec3.atLowerCornerOf(start), Vec3.atLowerCornerOf(end));
     }
 
     public boolean isStairs() {
@@ -268,7 +268,7 @@ public class MiningArea extends AbstractWorkAreaEntity {
     }
 
     public boolean shouldIgnore(BlockState state){
-        ResourceLocation id = ForgeRegistries.BLOCKS.getKey(state.getBlock());
+        ResourceLocation id = BuiltInRegistries.BLOCK.getKey(state.getBlock());
         if(id == null) return false;
         return WorkersServerConfig.MinerIgnore.get().contains(id.toString());
     }
@@ -425,4 +425,4 @@ public class MiningArea extends AbstractWorkAreaEntity {
 
 
     }
-}
+}

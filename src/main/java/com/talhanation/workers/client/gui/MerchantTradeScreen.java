@@ -26,7 +26,7 @@ import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
-import net.minecraftforge.client.gui.widget.ExtendedButton;
+import net.neoforged.neoforge.client.gui.widget.ExtendedButton;
 
 import javax.annotation.Nullable;
 import java.util.List;
@@ -36,8 +36,8 @@ import java.util.UUID;
 
 public class MerchantTradeScreen extends ScreenBase<MerchantTradeContainer> {
 
-    private static final ResourceLocation RESOURCE_LOCATION = new ResourceLocation(WorkersMain.MOD_ID,"textures/gui/merchant.png" );
-    private static final ResourceLocation ARROW_IMAGE = new ResourceLocation(WorkersMain.MOD_ID, "textures/gui/arrow.png");
+    private static final ResourceLocation RESOURCE_LOCATION = ResourceLocation.fromNamespaceAndPath(WorkersMain.MOD_ID,"textures/gui/merchant.png" );
+    private static final ResourceLocation ARROW_IMAGE = ResourceLocation.fromNamespaceAndPath(WorkersMain.MOD_ID, "textures/gui/arrow.png");
     private static final MutableComponent BUTTON_ADD = Component.translatable("gui.workers.button.add");
     private static final MutableComponent BUTTON_EDIT = Component.translatable("gui.workers.button.edit");
     private static final MutableComponent BUTTON_REMOVE = Component.translatable("gui.workers.button.remove");
@@ -116,10 +116,7 @@ public class MerchantTradeScreen extends ScreenBase<MerchantTradeContainer> {
         int listBottom = listTop + LIST_H;
 
         this.tradeList = new TradeList(Minecraft.getInstance(), LIST_W, LIST_H, listTop, listBottom, LIST_ITEM_H, LIST_W);
-        this.tradeList.setLeftPos(listLeft);
-        this.tradeList.setRenderBackground(false);
-        this.tradeList.setRenderTopAndBottom(false);
-        this.tradeList.setRenderSelection(false);
+        this.tradeList.setX(listLeft);
 
         this.loadTrades();
         this.restoreScroll();
@@ -153,7 +150,7 @@ public class MerchantTradeScreen extends ScreenBase<MerchantTradeContainer> {
             copyTradeButton = new ExtendedButton(leftPos + 88, topPos + 77, 60, 18, BUTTON_COPY,
                     button -> {
                         WorkersMerchantTrade trade = selection == null ? new WorkersMerchantTrade() : selection.copy();
-                        WorkersMain.SIMPLE_CHANNEL.sendToServer(new MessageUpdateMerchantTrade(this.merchantEntity.getUUID(), trade, false));
+                        WorkersMain.SIMPLE_CHANNEL.sendToServer(new MessageUpdateMerchantTrade(this.merchantEntity.getUUID(), trade, false, this.merchantEntity.registryAccess()));
                         tradeList.addEntry(this.tradeList.new TradeEntry(trade));
                         this.selection = null;
                         tradeList.setSelected(null);
@@ -166,11 +163,11 @@ public class MerchantTradeScreen extends ScreenBase<MerchantTradeContainer> {
                         // Governor trades can not be removed, only switched on and off
                         if (selection.isGovernorTrade()) {
                             selection.enabled = !selection.enabled;
-                            WorkersMain.SIMPLE_CHANNEL.sendToServer(new MessageUpdateMerchantTrade(merchantEntity.getUUID(), selection, false));
+                            WorkersMain.SIMPLE_CHANNEL.sendToServer(new MessageUpdateMerchantTrade(merchantEntity.getUUID(), selection, false, this.merchantEntity.registryAccess()));
                             return;
                         }
                         tradeList.children().removeIf(tradeEntry -> tradeEntry.trade.uuid.equals(selection.uuid));
-                        WorkersMain.SIMPLE_CHANNEL.sendToServer(new MessageUpdateMerchantTrade(merchantEntity.getUUID(), selection, true));
+                        WorkersMain.SIMPLE_CHANNEL.sendToServer(new MessageUpdateMerchantTrade(merchantEntity.getUUID(), selection, true, this.merchantEntity.registryAccess()));
                         this.selection = null;
                         tradeList.setSelected(null);
                         updateButtonState();
@@ -442,8 +439,21 @@ public class MerchantTradeScreen extends ScreenBase<MerchantTradeContainer> {
         final int itemWidth;
 
         TradeList(Minecraft mc, int width, int height, int top, int bottom, int itemHeight, int itemWidth) {
-            super(mc, width, height, top, bottom, itemHeight);
+            super(mc, width, height, top, itemHeight);
             this.itemWidth = itemWidth;
+        }
+
+        // 1.20.1: setRenderBackground(false), setRenderTopAndBottom(false), setRenderSelection(false)
+        @Override
+        protected void renderListBackground(GuiGraphics guiGraphics) {
+        }
+
+        @Override
+        protected void renderListSeparators(GuiGraphics guiGraphics) {
+        }
+
+        @Override
+        protected void renderSelection(GuiGraphics guiGraphics, int top, int width, int height, int outerColor, int innerColor) {
         }
 
         @Override protected int addEntry(TradeList.TradeEntry entry) { return super.addEntry(entry); }
@@ -500,7 +510,8 @@ public class MerchantTradeScreen extends ScreenBase<MerchantTradeContainer> {
                 RenderSystem.enableBlend();
                 RenderSystem.enableDepthTest();
                 guiGraphics.setColor(1.0F, 1.0F, 1.0F, alpha);
-                guiGraphics.blitNineSliced(AbstractButton.WIDGETS_LOCATION, rowLeft, top, rowWidth, entryHeight, 20, 4, 200, 20, 0, textureY);
+                // 1.20.2+: widgets.png was split into sprites; 46/66/86 were the disabled/normal/highlighted button rows
+                guiGraphics.blitSprite(getButtonSprite(textureY), rowLeft, top, rowWidth, entryHeight);
 
                 // Vertically centre items in the compacted entry height (28px)
                 final int itemY = top + (entryHeight - 16) / 2;
@@ -594,6 +605,12 @@ public class MerchantTradeScreen extends ScreenBase<MerchantTradeContainer> {
                 return "1".equals(text) ? null : text;
             }
 
+            private net.minecraft.resources.ResourceLocation getButtonSprite(int textureY) {
+                if (textureY == 46) return net.minecraft.resources.ResourceLocation.withDefaultNamespace("widget/button_disabled");
+                if (textureY == 86) return net.minecraft.resources.ResourceLocation.withDefaultNamespace("widget/button_highlighted");
+                return net.minecraft.resources.ResourceLocation.withDefaultNamespace("widget/button");
+            }
+
             private int getButtonTextureY(boolean hovered, boolean selected, boolean out) {
                 final int BUTTON_Y_OUT     = 46;
                 final int BUTTON_Y_NORMAL  = 66;
@@ -609,10 +626,10 @@ public class MerchantTradeScreen extends ScreenBase<MerchantTradeContainer> {
     }
 
     @Override
-    public boolean mouseScrolled(double mouseX, double mouseY, double delta) {
+    public boolean mouseScrolled(double mouseX, double mouseY, double scrollX, double delta) {
         if (tradeList != null && tradeList.isMouseOver(mouseX, mouseY))
-            return tradeList.mouseScrolled(mouseX, mouseY, delta);
-        return super.mouseScrolled(mouseX, mouseY, delta);
+            return tradeList.mouseScrolled(mouseX, mouseY, 0, delta);
+        return super.mouseScrolled(mouseX, mouseY, scrollX, delta);
     }
 
     @Override

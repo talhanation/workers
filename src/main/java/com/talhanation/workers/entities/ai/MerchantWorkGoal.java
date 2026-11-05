@@ -441,7 +441,7 @@ public class MerchantWorkGoal extends Goal {
     /** The item the player set: with NBT (e.g. a specific enchanted book) it must match exactly. */
     private boolean matchesBuyItem(ItemStack stack, WorkersMerchantTrade trade) {
         if(stack.isEmpty()) return false;
-        if(trade.tradeItem.hasTag()) return ItemStack.isSameItemSameTags(stack, trade.tradeItem);
+        if(!trade.tradeItem.getComponentsPatch().isEmpty()) return ItemStack.isSameItemSameComponents(stack, trade.tradeItem);
         return stack.is(trade.tradeItem.getItem());
     }
 
@@ -862,7 +862,7 @@ public class MerchantWorkGoal extends Goal {
                     Container container = entry.getValue();
                     if(WorkshopArea.getSpaceFor(container, stack) <= 0) continue;
                     for(int j = 0; j < container.getContainerSize(); j++) {
-                        if(ItemStack.isSameItemSameTags(container.getItem(j), stack)) {
+                        if(ItemStack.isSameItemSameComponents(container.getItem(j), stack)) {
                             deliverStorage = storage;
                             deliverPos = entry.getKey();
                             return true;
@@ -1118,4 +1118,4 @@ public class MerchantWorkGoal extends Goal {
         STORE_FETCHED,
         DELIVER
     }
-}
+}

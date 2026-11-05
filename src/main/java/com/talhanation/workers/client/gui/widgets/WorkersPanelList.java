@@ -8,8 +8,8 @@ import net.minecraft.client.gui.components.ContainerObjectSelectionList;
 import net.minecraft.client.gui.components.events.GuiEventListener;
 import net.minecraft.client.gui.narration.NarratableEntry;
 import net.minecraft.util.FastColor;
-import net.minecraftforge.api.distmarker.Dist;
-import net.minecraftforge.api.distmarker.OnlyIn;
+import net.neoforged.api.distmarker.Dist;
+import net.neoforged.api.distmarker.OnlyIn;
 
 import javax.annotation.Nullable;
 import java.util.Collection;
@@ -52,13 +52,24 @@ public class WorkersPanelList<E extends WorkersPanelList.Entry<E>> extends Conta
     public WorkersPanelList(int left, int top, int rowWidth, int height, int itemHeight) {
         // AbstractSelectionList centres the rows in its width: width = rows + scrollbar, x0 so the rows start at left
         // (getRowLeft = x0 + width / 2 - rowWidth / 2 + 2), so x0 = left - 12 and the scrollbar lies inside x1
-        super(Minecraft.getInstance(), rowWidth + 2 * (SCROLLBAR_WIDTH + SCROLLBAR_GAP + 2), Minecraft.getInstance().getWindow().getGuiScaledHeight(),
-                top, top + height, itemHeight);
+        // 1.21: the list height is passed instead of the screen height and the bottom (y1)
+        super(Minecraft.getInstance(), rowWidth + 2 * (SCROLLBAR_WIDTH + SCROLLBAR_GAP + 2), height,
+                top, itemHeight);
         this.rowWidth = rowWidth;
-        this.setLeftPos(left - (SCROLLBAR_WIDTH + SCROLLBAR_GAP + 2) - 2);
-        this.setRenderBackground(false);
-        this.setRenderTopAndBottom(false);
-        this.setRenderSelection(false);
+        this.setX(left - (SCROLLBAR_WIDTH + SCROLLBAR_GAP + 2) - 2);
+    }
+
+    // 1.20.1: setRenderBackground(false), setRenderTopAndBottom(false), setRenderSelection(false)
+    @Override
+    protected void renderListBackground(GuiGraphics guiGraphics) {
+    }
+
+    @Override
+    protected void renderListSeparators(GuiGraphics guiGraphics) {
+    }
+
+    @Override
+    protected void renderSelection(GuiGraphics guiGraphics, int top, int width, int height, int outerColor, int innerColor) {
     }
 
     public void setAlpha(int alpha) {
@@ -98,11 +109,11 @@ public class WorkersPanelList<E extends WorkersPanelList.Entry<E>> extends Conta
     }
 
     public int getListTop() {
-        return this.y0;
+        return this.getY();
     }
 
     public int getListBottom() {
-        return this.y1;
+        return this.getBottom();
     }
 
     public boolean isEmpty() {
@@ -125,11 +136,11 @@ public class WorkersPanelList<E extends WorkersPanelList.Entry<E>> extends Conta
     }
 
     @Override
-    public void render(GuiGraphics guiGraphics, int mouseX, int mouseY, float partialTick) {
+    public void renderWidget(GuiGraphics guiGraphics, int mouseX, int mouseY, float partialTick) {
         if (backgroundColor != 0) {
-            guiGraphics.fill(getRowLeft() - 2, y0, getScrollbarPosition() + SCROLLBAR_WIDTH, y1, withAlpha(backgroundColor));
+            guiGraphics.fill(getRowLeft() - 2, getY(), getScrollbarPosition() + SCROLLBAR_WIDTH, getBottom(), withAlpha(backgroundColor));
         }
-        super.render(guiGraphics, mouseX, mouseY, partialTick);
+        super.renderWidget(guiGraphics, mouseX, mouseY, partialTick);
     }
 
     /** One row. Children (buttons etc.) are positioned every frame in {@link #renderContent}. */

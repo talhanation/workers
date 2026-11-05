@@ -29,7 +29,7 @@ import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
-import net.minecraftforge.registries.ForgeRegistries;
+import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.world.item.BlockItem;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
@@ -39,10 +39,10 @@ import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.block.state.properties.*;
-import net.minecraftforge.api.distmarker.Dist;
-import net.minecraftforge.api.distmarker.OnlyIn;
-import net.minecraftforge.common.MinecraftForge;
-import net.minecraftforge.network.PacketDistributor;
+import net.neoforged.api.distmarker.Dist;
+import net.neoforged.api.distmarker.OnlyIn;
+import net.neoforged.neoforge.common.NeoForge;
+import net.neoforged.neoforge.network.PacketDistributor;
 
 import javax.annotation.Nullable;
 import java.util.*;
@@ -91,18 +91,18 @@ public class BuildArea extends AbstractWorkAreaEntity {
         super(type, level);
     }
 
-    protected void defineSynchedData() {
-        super.defineSynchedData();
-        this.entityData.define(STRUCTURE, new CompoundTag());
-        this.entityData.define(ALWAYS_SHOW_PROJECTION, false);
-        this.entityData.define(CURRENCY_PRICE, 0);
-        this.entityData.define(FOUNDATION, true);
-        this.entityData.define(FILL_ITEM, ItemStack.EMPTY);
-        this.entityData.define(BUILD_STATUS, BuildStatus.NONE.ordinal());
-        this.entityData.define(BUILDER_NAME, "");
-        this.entityData.define(BLOCKS_PLACED, 0);
-        this.entityData.define(BLOCKS_TOTAL, 0);
-        this.entityData.define(MISSING_MATERIALS, new CompoundTag());
+    protected void defineSynchedData(SynchedEntityData.Builder builder) {
+        super.defineSynchedData(builder);
+        builder.define(STRUCTURE, new CompoundTag());
+        builder.define(ALWAYS_SHOW_PROJECTION, false);
+        builder.define(CURRENCY_PRICE, 0);
+        builder.define(FOUNDATION, true);
+        builder.define(FILL_ITEM, ItemStack.EMPTY);
+        builder.define(BUILD_STATUS, BuildStatus.NONE.ordinal());
+        builder.define(BUILDER_NAME, "");
+        builder.define(BLOCKS_PLACED, 0);
+        builder.define(BLOCKS_TOTAL, 0);
+        builder.define(MISSING_MATERIALS, new CompoundTag());
     }
     @Override
     public void readAdditionalSaveData(CompoundTag tag) {
@@ -117,7 +117,7 @@ public class BuildArea extends AbstractWorkAreaEntity {
         this.setFoundation(!tag.contains("foundation") || tag.getBoolean("foundation"));
         this.spawnWorkAreas = !tag.contains("spawnWorkAreas") || tag.getBoolean("spawnWorkAreas");
         this.governorClaim = tag.hasUUID("governorClaim") ? tag.getUUID("governorClaim") : null;
-        this.setFillItem(tag.contains("fillItem") ? ItemStack.of(tag.getCompound("fillItem")) : ItemStack.EMPTY);
+        this.setFillItem(tag.contains("fillItem") ? ItemStack.parseOptional(this.registryAccess(), tag.getCompound("fillItem")) : ItemStack.EMPTY);
     }
     @Override
     public void addAdditionalSaveData(CompoundTag tag) {
@@ -130,7 +130,7 @@ public class BuildArea extends AbstractWorkAreaEntity {
         tag.putBoolean("foundation", this.getFoundation());
         tag.putBoolean("spawnWorkAreas", this.spawnWorkAreas);
         if (this.governorClaim != null) tag.putUUID("governorClaim", this.governorClaim);
-        if (!this.getFillItem().isEmpty()) tag.put("fillItem", this.getFillItem().save(new CompoundTag()));
+        if (!this.getFillItem().isEmpty()) tag.put("fillItem", this.getFillItem().save(this.registryAccess()));
     }
 
     public int getCurrencyPrice() {
@@ -253,7 +253,7 @@ public class BuildArea extends AbstractWorkAreaEntity {
         }
         else {
             if (!this.getBuildStatus().isWorking()) this.setBuildStatus(BuildStatus.WAITING_FOR_BUILDER);
-            if (!this.getCommandSenderWorld().isClientSide()) MinecraftForge.EVENT_BUS.post(new BuildEvent.Started(this));
+            if (!this.getCommandSenderWorld().isClientSide()) NeoForge.EVENT_BUS.post(new BuildEvent.Started(this));
         }
     }
 
@@ -277,8 +277,8 @@ public class BuildArea extends AbstractWorkAreaEntity {
             int relZ = entityTag.getInt("z");
             int scanFacingVal = entityTag.getInt("facing");
 
-            ResourceLocation rl = new ResourceLocation(typeId);
-            EntityType<?> entityType = ForgeRegistries.ENTITY_TYPES.getValue(rl);
+            ResourceLocation rl = ResourceLocation.parse(typeId);
+            EntityType<?> entityType = BuiltInRegistries.ENTITY_TYPE.get(rl);
             if (entityType == null) continue;
 
             BlockPos worldPos = origin
@@ -743,7 +743,7 @@ public class BuildArea extends AbstractWorkAreaEntity {
         BuildStatus old = this.getBuildStatus();
         if (old == status) return;
         this.entityData.set(BUILD_STATUS, status.ordinal());
-        if (!this.getCommandSenderWorld().isClientSide()) MinecraftForge.EVENT_BUS.post(new BuildEvent.StatusChanged(this, old, status));
+        if (!this.getCommandSenderWorld().isClientSide()) NeoForge.EVENT_BUS.post(new BuildEvent.StatusChanged(this, old, status));
     }
 
     /** Server: the builder that works on this area, null = none. */
@@ -789,7 +789,7 @@ public class BuildArea extends AbstractWorkAreaEntity {
         List<ItemStack> items = new ArrayList<>();
         ListTag list = this.entityData.get(MISSING_MATERIALS).getList("items", Tag.TAG_STRING);
         for (int i = 0; i < list.size(); i++) {
-            Item item = ForgeRegistries.ITEMS.getValue(new ResourceLocation(list.getString(i)));
+            Item item = BuiltInRegistries.ITEM.get(ResourceLocation.parse(list.getString(i)));
             if (item != null && item != Items.AIR) items.add(new ItemStack(item));
         }
         return items;
@@ -798,7 +798,7 @@ public class BuildArea extends AbstractWorkAreaEntity {
     public void setMissingMaterials(Collection<Item> items) {
         ListTag list = new ListTag();
         for (Item item : items) {
-            ResourceLocation id = ForgeRegistries.ITEMS.getKey(item);
+            ResourceLocation id = BuiltInRegistries.ITEM.getKey(item);
             if (id != null) list.add(StringTag.valueOf(id.toString()));
         }
         CompoundTag tag = new CompoundTag();

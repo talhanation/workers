@@ -6,6 +6,8 @@ import com.talhanation.workers.entities.MerchantEntity;
 import com.talhanation.workers.world.WorkersMerchantTrade;
 import net.minecraft.core.BlockPos;
 import net.minecraft.nbt.CompoundTag;
+import net.minecraft.core.component.DataComponents;
+import net.minecraft.world.item.component.CustomData;
 import net.minecraft.world.InteractionResult;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EntityType;
@@ -27,12 +29,12 @@ public class WorkersSpawnEgg extends RecruitsSpawnEgg {
         } else {
             ItemStack stack = context.getItemInHand();
             BlockPos pos = context.getClickedPos();
-            EntityType<?> entitytype = this.getType(stack.getTag());
+            EntityType<?> entitytype = this.getType(stack);
             Entity entity = entitytype.create(world);
-            CompoundTag entityTag = stack.getTag();
+            CompoundTag entityTag = stack.getOrDefault(DataComponents.ENTITY_DATA, CustomData.EMPTY).copyTag();
             if (entity instanceof AbstractRecruitEntity) {
                 AbstractRecruitEntity recruit = (AbstractRecruitEntity)entity;
-                if (entityTag != null) {
+                if (entityTag != null && !entityTag.isEmpty()) { // 1.21: no ENTITY_DATA = empty tag (was null)
                     if(entity instanceof MerchantEntity merchant){
                         fillMerchant(merchant, entityTag, pos);
                     }
@@ -53,7 +55,7 @@ public class WorkersSpawnEgg extends RecruitsSpawnEgg {
     public void fillMerchant(MerchantEntity merchant, CompoundTag entityTag, BlockPos pos){
         fillRecruit(merchant, entityTag, pos);
 
-        entityTag.put("Trades", WorkersMerchantTrade.listToNbt(merchant.getTrades()));
+        entityTag.put("Trades", WorkersMerchantTrade.listToNbt(merchant.getTrades(), merchant.registryAccess()));
         entityTag.putBoolean("isCreative", merchant.isCreative());
         entityTag.putInt("TraderProgress", merchant.getTraderProgress());
         entityTag.putInt("TraderLevel", merchant.getTraderLevel());

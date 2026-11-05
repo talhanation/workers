@@ -19,8 +19,8 @@ import net.minecraft.world.level.block.*;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.material.Fluid;
 import net.minecraft.world.level.material.Fluids;
-import net.minecraftforge.api.distmarker.Dist;
-import net.minecraftforge.api.distmarker.OnlyIn;
+import net.neoforged.api.distmarker.Dist;
+import net.neoforged.api.distmarker.OnlyIn;
 
 import java.util.Stack;
 
@@ -38,16 +38,16 @@ public class CropArea extends AbstractWorkAreaEntity {
     public CropArea(EntityType<?> type, Level level) {
         super(type, level);
     }
-    protected void defineSynchedData() {
-        super.defineSynchedData();
-        this.entityData.define(SEED_STACK, ItemStack.EMPTY);
+    protected void defineSynchedData(SynchedEntityData.Builder builder) {
+        super.defineSynchedData(builder);
+        builder.define(SEED_STACK, ItemStack.EMPTY);
     }
 
     @Override
     public void readAdditionalSaveData(CompoundTag tag) {
         super.readAdditionalSaveData(tag);
         if(tag.contains("seedItem")){
-            ItemStack stack = ItemStack.of(tag.getCompound("seedItem"));
+            ItemStack stack = ItemStack.parseOptional(this.registryAccess(), tag.getCompound("seedItem"));
             this.setSeedStack(stack);
         }
         fieldType = FieldType.fromIndex(tag.getInt("fieldType"));
@@ -56,8 +56,7 @@ public class CropArea extends AbstractWorkAreaEntity {
     @Override
     public void addAdditionalSaveData(CompoundTag tag) {
         super.addAdditionalSaveData(tag);
-        CompoundTag nbt = new CompoundTag();
-        this.getSeedStack().save(nbt);
+        CompoundTag nbt = (CompoundTag) this.getSeedStack().saveOptional(this.registryAccess());
         tag.put("seedItem", nbt);
         if(fieldType != null) tag.putInt("fieldType", fieldType.getIndex());
     }
@@ -126,7 +125,7 @@ public class CropArea extends AbstractWorkAreaEntity {
                 }
             }
             else if(fieldType == FieldType.STEM){
-                if (state.getBlock() instanceof MelonBlock || state.getBlock() instanceof PumpkinBlock  || (isBush(state) && !isStem(state))) {
+                if (state.is(Blocks.MELON) || state.getBlock() instanceof PumpkinBlock  || (isBush(state) && !isStem(state))) {
                     stackToBreak.push(pos.immutable());
                 }
             }
@@ -269,7 +268,7 @@ public class CropArea extends AbstractWorkAreaEntity {
     }
 
     public boolean isStem(BlockState state){
-        return state.getBlock() instanceof StemBlock || state.getBlock() instanceof StemGrownBlock || state.getBlock() instanceof AttachedStemBlock;
+        return state.getBlock() instanceof StemBlock || state.is(Blocks.MELON) || state.getBlock() instanceof PumpkinBlock || state.getBlock() instanceof AttachedStemBlock;
     }
 
     public boolean isCropDone(BlockState state){
@@ -277,7 +276,7 @@ public class CropArea extends AbstractWorkAreaEntity {
     }
 
     public boolean isBoneMealable(BlockState state, Level level, BlockPos pos){
-        return state.getBlock() instanceof BonemealableBlock bonemealable && bonemealable.isValidBonemealTarget(level, pos, state, level.isClientSide());
+        return state.getBlock() instanceof BonemealableBlock bonemealable && bonemealable.isValidBonemealTarget(level, pos, state);
     }
 
     public void scanPickArea(){
@@ -378,4 +377,4 @@ public class CropArea extends AbstractWorkAreaEntity {
             throw new IllegalArgumentException("Invalid State index: " + index);
         }
     }
-}
+}

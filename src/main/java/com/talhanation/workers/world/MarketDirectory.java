@@ -1,5 +1,6 @@
 package com.talhanation.workers.world;
 
+import net.minecraft.core.HolderLookup;
 import com.talhanation.workers.entities.workarea.MarketArea;
 import net.minecraft.core.BlockPos;
 import net.minecraft.nbt.CompoundTag;
@@ -22,7 +23,7 @@ public class MarketDirectory extends SavedData {
     private final Map<UUID, Entry> markets = new HashMap<>();
 
     public static MarketDirectory get(MinecraftServer server) {
-        return server.overworld().getDataStorage().computeIfAbsent(MarketDirectory::load, MarketDirectory::new, DATA_NAME);
+        return server.overworld().getDataStorage().computeIfAbsent(new SavedData.Factory<>(MarketDirectory::new, MarketDirectory::load), DATA_NAME);
     }
 
     /** Called by the market regularly and on changes. */
@@ -49,14 +50,14 @@ public class MarketDirectory extends SavedData {
     }
 
     @Override
-    public CompoundTag save(CompoundTag tag) {
+    public CompoundTag save(CompoundTag tag, HolderLookup.Provider provider) {
         ListTag list = new ListTag();
         for (Entry entry : markets.values()) list.add(entry.toNbt());
         tag.put("Markets", list);
         return tag;
     }
 
-    public static MarketDirectory load(CompoundTag tag) {
+    public static MarketDirectory load(CompoundTag tag, HolderLookup.Provider provider) {
         MarketDirectory data = new MarketDirectory();
         ListTag list = tag.getList("Markets", Tag.TAG_COMPOUND);
         for (int i = 0; i < list.size(); i++) {

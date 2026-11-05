@@ -1,5 +1,6 @@
 package com.talhanation.workers.world;
 
+import net.minecraft.core.HolderLookup;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.ListTag;
 import net.minecraft.nbt.Tag;
@@ -75,11 +76,11 @@ public class WorkersMerchantTrade {
         return isVillagerTrade && villagerMode == VillagerTradeMode.BUY;
     }
 
-    public CompoundTag toNbt() {
+    public CompoundTag toNbt(HolderLookup.Provider provider) {
         CompoundTag tag = new CompoundTag();
         tag.putUUID("uuid", this.uuid);
-        tag.put("currencyItem", this.currencyItem.serializeNBT());
-        tag.put("tradeItem", this.tradeItem.serializeNBT());
+        tag.put("currencyItem", this.currencyItem.saveOptional(provider));
+        tag.put("tradeItem", this.tradeItem.saveOptional(provider));
         tag.putInt("maxTrades", maxTrades);
         tag.putInt("currentTrades", currentTrades);
         tag.putBoolean("allowDamagedCurrency", this.allowDamagedCurrency);
@@ -93,9 +94,9 @@ public class WorkersMerchantTrade {
         return tag;
     }
 
-    public static WorkersMerchantTrade fromNbt(CompoundTag tag) {
-        ItemStack currencyItem = ItemStack.of(tag.getCompound("currencyItem"));
-        ItemStack tradeItem = ItemStack.of(tag.getCompound("tradeItem"));
+    public static WorkersMerchantTrade fromNbt(CompoundTag tag, HolderLookup.Provider provider) {
+        ItemStack currencyItem = ItemStack.parseOptional(provider, tag.getCompound("currencyItem"));
+        ItemStack tradeItem = ItemStack.parseOptional(provider, tag.getCompound("tradeItem"));
         UUID uuid = tag.getUUID("uuid");
         int maxTrades = tag.getInt("maxTrades");
         int currentTrades = tag.getInt("currentTrades");
@@ -116,20 +117,20 @@ public class WorkersMerchantTrade {
         trade.sourceKey = tag.contains("sourceKey") ? tag.getString("sourceKey") : null;
         return trade;
     }
-    public static CompoundTag listToNbt(List<WorkersMerchantTrade> trades) {
+    public static CompoundTag listToNbt(List<WorkersMerchantTrade> trades, HolderLookup.Provider provider) {
         CompoundTag compound = new CompoundTag();
         if (trades == null) return compound;
 
         ListTag list = new ListTag();
         for (WorkersMerchantTrade t : trades) {
-            list.add(t.toNbt());
+            list.add(t.toNbt(provider));
         }
         compound.put("Trades", list);
         return compound;
     }
 
 
-    public static List<WorkersMerchantTrade> listFromNbt(CompoundTag compound) {
+    public static List<WorkersMerchantTrade> listFromNbt(CompoundTag compound, HolderLookup.Provider provider) {
         List<WorkersMerchantTrade> out = new ArrayList<>();
         if (compound == null || !compound.contains("Trades", Tag.TAG_LIST)) {
             return out;
@@ -138,7 +139,7 @@ public class WorkersMerchantTrade {
         ListTag list = compound.getList("Trades", Tag.TAG_COMPOUND);
         for (int i = 0; i < list.size(); i++) {
             CompoundTag entry = list.getCompound(i);
-            out.add(WorkersMerchantTrade.fromNbt(entry));
+            out.add(WorkersMerchantTrade.fromNbt(entry, provider));
         }
         return out;
     }

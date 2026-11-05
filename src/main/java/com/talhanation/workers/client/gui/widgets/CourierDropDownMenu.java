@@ -219,7 +219,7 @@ public class CourierDropDownMenu<T> extends AbstractWidget {
     }
 
     @Override
-    public boolean mouseScrolled(double mouseX, double mouseY, double delta) {
+    public boolean mouseScrolled(double mouseX, double mouseY, double scrollX, double delta) {
         if (!visible) return false;
         if (isOpen) {
             scrollOffset -= (int) delta;
@@ -290,4 +290,4 @@ public class CourierDropDownMenu<T> extends AbstractWidget {
     public void setBgFillSelected(int bgFillSelected) { this.bgFillSelected = bgFillSelected; }
     public void setDisplayColor(int displayColor) { this.displayColor = displayColor; }
     public void setOptionTextColor(int optionTextColor) { this.optionTextColor = optionTextColor; }
-}
+}

@@ -41,8 +41,8 @@ import net.minecraft.world.level.material.FluidState;
 import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
 import net.minecraft.world.phys.shapes.CollisionContext;
-import net.minecraftforge.common.MinecraftForge;
-import net.minecraftforge.registries.ForgeRegistries;
+import net.neoforged.neoforge.common.NeoForge;
+import net.minecraft.core.registries.BuiltInRegistries;
 import com.talhanation.workers.BuildEvent;
 
 import javax.annotation.Nullable;
@@ -437,7 +437,7 @@ public class BuilderWorkGoal extends Goal {
                     // Spawn any entities that were scanned with the structure (work areas, etc.)
                     BuildArea finished = builderEntity.currentBuildArea;
                     List<AbstractWorkAreaEntity> spawned = finished.spawnWorkAreas ? spawnScannedEntities(finished) : new ArrayList<>();
-                    MinecraftForge.EVENT_BUS.post(new BuildEvent.Finished(finished, builderEntity, spawned));
+                    NeoForge.EVENT_BUS.post(new BuildEvent.Finished(finished, builderEntity, spawned));
                     // the Governor's job is done, the builder picks his next area himself again
                     if (finished.getUUID().equals(builderEntity.getAssignedWorkArea())) builderEntity.setAssignedWorkArea(null);
 
@@ -777,8 +777,8 @@ public class BuilderWorkGoal extends Goal {
             int scanFacingVal = entityTag.getInt("facing");
 
             // Look up entity type
-            ResourceLocation rl = new ResourceLocation(typeId);
-            EntityType<?> entityType = ForgeRegistries.ENTITY_TYPES.getValue(rl);
+            ResourceLocation rl = ResourceLocation.parse(typeId);
+            EntityType<?> entityType = BuiltInRegistries.ENTITY_TYPE.get(rl);
             if (entityType == null) continue;
 
             // Compute world position using same formula as setStartBuild / WorkerAreaRenderer

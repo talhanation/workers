@@ -1,5 +1,6 @@
 package com.talhanation.workers.world;
 
+import net.minecraft.core.HolderLookup;
 import net.minecraft.core.NonNullList;
 import net.minecraft.core.RegistryAccess;
 import net.minecraft.nbt.CompoundTag;
@@ -14,7 +15,6 @@ import net.minecraft.world.inventory.TransientCraftingContainer;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.crafting.*;
 import net.minecraft.world.level.Level;
-import net.minecraftforge.common.crafting.IShapedRecipe;
 
 import javax.annotation.Nullable;
 import java.util.*;
@@ -108,8 +108,8 @@ public class CraftOrder {
         }
     }
 
-    public CraftOrder copy() {
-        return fromNbt(this.toNbt());
+    public CraftOrder copy(HolderLookup.Provider provider) {
+        return fromNbt(this.toNbt(provider), provider);
     }
 
     // ── Recipe helpers ────────────────────────────────────────────────────────
@@ -138,26 +138,26 @@ public class CraftOrder {
         return container;
     }
 
-    public static Optional<CraftingRecipe> findCraftingRecipe(Level level, ItemStack[] grid) {
+    public static Optional<RecipeHolder<CraftingRecipe>> findCraftingRecipe(Level level, ItemStack[] grid) {
         CraftingContainer container = createCraftingContainer(grid);
         if (container.isEmpty()) return Optional.empty();
-        return level.getRecipeManager().getRecipeFor(RecipeType.CRAFTING, container, level)
-                .filter(recipe -> !recipe.isSpecial());
+        return level.getRecipeManager().getRecipeFor(RecipeType.CRAFTING, container.asCraftInput(), level)
+                .filter(recipe -> !recipe.value().isSpecial());
     }
 
-    public static Optional<SmeltingRecipe> findSmeltingRecipe(Level level, ItemStack input) {
+    public static Optional<RecipeHolder<SmeltingRecipe>> findSmeltingRecipe(Level level, ItemStack input) {
         if (input == null || input.isEmpty()) return Optional.empty();
-        return level.getRecipeManager().getRecipeFor(RecipeType.SMELTING, new SimpleContainer(input.copyWithCount(1)), level);
+        return level.getRecipeManager().getRecipeFor(RecipeType.SMELTING, new SingleRecipeInput(input.copyWithCount(1)), level);
     }
 
     /** Result of the current grid, used for the live preview in the edit screen. */
     public static ItemStack previewResult(Level level, OrderType type, ItemStack[] grid) {
         RegistryAccess access = level.registryAccess();
         if (type == OrderType.SMELTING) {
-            return findSmeltingRecipe(level, grid[0]).map(r -> r.getResultItem(access).copy()).orElse(ItemStack.EMPTY);
+            return findSmeltingRecipe(level, grid[0]).map(r -> r.value().getResultItem(access).copy()).orElse(ItemStack.EMPTY);
         }
         CraftingContainer container = createCraftingContainer(grid);
-        return findCraftingRecipe(level, grid).map(r -> r.assemble(container, access)).orElse(ItemStack.EMPTY);
+        return findCraftingRecipe(level, grid).map(r -> r.value().assemble(container.asCraftInput(), access)).orElse(ItemStack.EMPTY);
     }
 
     /**
@@ -167,16 +167,16 @@ public class CraftOrder {
     public boolean resolveRecipe(Level level) {
         RegistryAccess access = level.registryAccess();
         if (type == OrderType.SMELTING) {
-            Optional<SmeltingRecipe> recipe = findSmeltingRecipe(level, grid[0]);
+            Optional<RecipeHolder<SmeltingRecipe>> recipe = findSmeltingRecipe(level, grid[0]);
             if (recipe.isEmpty()) return false;
-            this.recipeId = recipe.get().getId();
-            this.result = recipe.get().getResultItem(access).copy();
+            this.recipeId = recipe.get().id();
+            this.result = recipe.get().value().getResultItem(access).copy();
         }
         else {
-            Optional<CraftingRecipe> recipe = findCraftingRecipe(level, grid);
+            Optional<RecipeHolder<CraftingRecipe>> recipe = findCraftingRecipe(level, grid);
             if (recipe.isEmpty()) return false;
-            this.recipeId = recipe.get().getId();
-            this.result = recipe.get().assemble(createCraftingContainer(grid), access);
+            this.recipeId = recipe.get().id();
+            this.result = recipe.get().value().assemble(createCraftingContainer(grid).asCraftInput(), access);
         }
         return !result.isEmpty();
     }
@@ -184,7 +184,7 @@ public class CraftOrder {
     @Nullable
     public Recipe<?> getRecipe(Level level) {
         if (recipeId == null) return null;
-        Recipe<?> recipe = level.getRecipeManager().byKey(recipeId).orElse(null);
+        Recipe<?> recipe = level.getRecipeManager().byKey(recipeId).map(RecipeHolder::value).orElse(null);
         if (recipe == null) return null;
         if (type == OrderType.SMELTING) return recipe instanceof SmeltingRecipe ? recipe : null;
         return recipe instanceof CraftingRecipe ? recipe : null;
@@ -224,9 +224,9 @@ public class CraftOrder {
             return mapped;
         }
 
-        if (recipe instanceof IShapedRecipe<?> shaped) {
-            int w = shaped.getRecipeWidth();
-            int h = shaped.getRecipeHeight();
+        if (recipe instanceof ShapedRecipe shaped) {
+            int w = shaped.getWidth();
+            int h = shaped.getHeight();
             int minRow = 3, minCol = 3;
             for (int i = 0; i < GRID_SIZE; i++) {
                 if (grid[i].isEmpty()) continue;
@@ -269,11 +269,12 @@ public class CraftOrder {
      * Builds an order from a recipe (e.g. for the Governor, who only knows the item he wants).
      * The grid takes the first item of every ingredient and variants are allowed.
      */
-    public static CraftOrder fromRecipe(Recipe<?> recipe, RegistryAccess access) {
+    public static CraftOrder fromRecipe(RecipeHolder<?> holder, RegistryAccess access) {
+        Recipe<?> recipe = holder.value();
         CraftOrder order = new CraftOrder();
         NonNullList<Ingredient> ingredients = recipe.getIngredients();
         order.allowVariants = true;
-        order.recipeId = recipe.getId();
+        order.recipeId = holder.id();
         order.result = recipe.getResultItem(access).copy();
 
         if (recipe instanceof SmeltingRecipe) {
@@ -283,8 +284,8 @@ public class CraftOrder {
         }
 
         order.type = OrderType.CRAFTING;
-        if (recipe instanceof IShapedRecipe<?> shaped) {
-            int w = shaped.getRecipeWidth();
+        if (recipe instanceof ShapedRecipe shaped) {
+            int w = shaped.getWidth();
             for (int i = 0; i < ingredients.size(); i++) {
                 int row = i / w;
                 int col = i % w;
@@ -306,17 +307,17 @@ public class CraftOrder {
 
     // ── NBT ───────────────────────────────────────────────────────────────────
 
-    public CompoundTag toNbt() {
+    public CompoundTag toNbt(HolderLookup.Provider provider) {
         CompoundTag tag = new CompoundTag();
         tag.putUUID("uuid", uuid);
         ListTag gridList = new ListTag();
         for (ItemStack stack : grid) {
-            gridList.add(stack.serializeNBT());
+            gridList.add(stack.saveOptional(provider));
         }
         tag.put("grid", gridList);
         tag.putString("type", type.name());
         if (recipeId != null) tag.putString("recipeId", recipeId.toString());
-        tag.put("result", result.serializeNBT());
+        tag.put("result", result.saveOptional(provider));
         tag.putBoolean("allowVariants", allowVariants);
         tag.putInt("amount", amount);
         tag.putInt("produced", produced);
@@ -330,7 +331,7 @@ public class CraftOrder {
         ListTag missingList = new ListTag();
         for (ItemStack stack : missing) {
             CompoundTag entry = new CompoundTag();
-            entry.put("item", stack.copyWithCount(1).serializeNBT());
+            entry.put("item", stack.copyWithCount(1).saveOptional(provider));
             entry.putInt("count", stack.getCount());
             missingList.add(entry);
         }
@@ -338,15 +339,15 @@ public class CraftOrder {
         return tag;
     }
 
-    public static CraftOrder fromNbt(CompoundTag tag) {
+    public static CraftOrder fromNbt(CompoundTag tag, HolderLookup.Provider provider) {
         CraftOrder order = new CraftOrder(tag.hasUUID("uuid") ? tag.getUUID("uuid") : UUID.randomUUID());
         ListTag gridList = tag.getList("grid", Tag.TAG_COMPOUND);
         for (int i = 0; i < GRID_SIZE && i < gridList.size(); i++) {
-            order.grid[i] = ItemStack.of(gridList.getCompound(i));
+            order.grid[i] = ItemStack.parseOptional(provider, gridList.getCompound(i));
         }
         order.type = OrderType.fromString(tag.getString("type"));
         order.recipeId = tag.contains("recipeId") ? ResourceLocation.tryParse(tag.getString("recipeId")) : null;
-        order.result = ItemStack.of(tag.getCompound("result"));
+        order.result = ItemStack.parseOptional(provider, tag.getCompound("result"));
         order.allowVariants = tag.getBoolean("allowVariants");
         order.amount = tag.getInt("amount");
         order.produced = tag.getInt("produced");
@@ -362,7 +363,7 @@ public class CraftOrder {
         ListTag missingList = tag.getList("missing", Tag.TAG_COMPOUND);
         for (int i = 0; i < missingList.size(); i++) {
             CompoundTag entry = missingList.getCompound(i);
-            ItemStack stack = ItemStack.of(entry.getCompound("item"));
+            ItemStack stack = ItemStack.parseOptional(provider, entry.getCompound("item"));
             if (stack.isEmpty()) continue;
             stack.setCount(entry.getInt("count"));
             order.missing.add(stack);
@@ -370,25 +371,25 @@ public class CraftOrder {
         return order;
     }
 
-    public static CompoundTag listToNbt(List<CraftOrder> orders) {
+    public static CompoundTag listToNbt(List<CraftOrder> orders, HolderLookup.Provider provider) {
         CompoundTag compound = new CompoundTag();
         ListTag list = new ListTag();
         if (orders != null) {
             for (CraftOrder order : orders) {
-                list.add(order.toNbt());
+                list.add(order.toNbt(provider));
             }
         }
         compound.put("Orders", list);
         return compound;
     }
 
-    public static List<CraftOrder> listFromNbt(CompoundTag compound) {
+    public static List<CraftOrder> listFromNbt(CompoundTag compound, HolderLookup.Provider provider) {
         List<CraftOrder> out = new ArrayList<>();
         if (compound == null || !compound.contains("Orders", Tag.TAG_LIST)) return out;
 
         ListTag list = compound.getList("Orders", Tag.TAG_COMPOUND);
         for (int i = 0; i < list.size(); i++) {
-            out.add(CraftOrder.fromNbt(list.getCompound(i)));
+            out.add(CraftOrder.fromNbt(list.getCompound(i), provider));
         }
         return out;
     }
@@ -422,13 +423,13 @@ public class CraftOrder {
 
         public boolean test(ItemStack stack) {
             if (stack == null || stack.isEmpty()) return false;
-            if (exact != null) return ItemStack.isSameItemSameTags(exact, stack);
+            if (exact != null) return ItemStack.isSameItemSameComponents(exact, stack);
             return ingredient != null && ingredient.test(stack);
         }
 
         public boolean isSame(SlotMatcher other) {
             if (other == null) return false;
-            if (exact != null && other.exact != null) return ItemStack.isSameItemSameTags(exact, other.exact);
+            if (exact != null && other.exact != null) return ItemStack.isSameItemSameComponents(exact, other.exact);
             return ingredient != null && ingredient == other.ingredient;
         }
     }

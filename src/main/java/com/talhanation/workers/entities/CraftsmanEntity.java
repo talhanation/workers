@@ -26,8 +26,8 @@ import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.ServerLevelAccessor;
-import net.minecraftforge.common.ForgeMod;
-import net.minecraftforge.network.PacketDistributor;
+import net.neoforged.neoforge.common.NeoForgeMod;
+import net.neoforged.neoforge.network.PacketDistributor;
 import org.jetbrains.annotations.NotNull;
 
 import javax.annotation.Nullable;
@@ -81,7 +81,7 @@ public class CraftsmanEntity extends AbstractWorkerEntity {
     public @NotNull InteractionResult mobInteract(@NotNull Player player, @NotNull InteractionHand hand) {
         if (!this.getCommandSenderWorld().isClientSide() && !player.isCrouching() && player instanceof ServerPlayer serverPlayer
                 && currentWorkshopArea != null && !currentWorkshopArea.isRemoved() && currentWorkshopArea.canPlayerSee(player)) {
-            WorkersMain.SIMPLE_CHANNEL.send(PacketDistributor.PLAYER.with(() -> serverPlayer), new MessageToClientOpenWorkshopOrders(currentWorkshopArea.getUUID()));
+            PacketDistributor.sendToPlayer(serverPlayer, new MessageToClientOpenWorkshopOrders(currentWorkshopArea.getUUID()));
             return InteractionResult.SUCCESS;
         }
         return super.mobInteract(player, hand);
@@ -91,20 +91,20 @@ public class CraftsmanEntity extends AbstractWorkerEntity {
         return Mob.createMobAttributes()
                 .add(Attributes.MAX_HEALTH, 40.0D)
                 .add(Attributes.MOVEMENT_SPEED, 0.3D)
-                .add(ForgeMod.SWIM_SPEED.get(), 0.3D)
+                .add(NeoForgeMod.SWIM_SPEED, 0.3D)
                 .add(Attributes.KNOCKBACK_RESISTANCE, 0.1D)
                 .add(Attributes.ATTACK_DAMAGE, 0.5D)
                 .add(Attributes.FOLLOW_RANGE, 32.0D)
-                .add(ForgeMod.ENTITY_REACH.get(), 0D)
+                .add(Attributes.ENTITY_INTERACTION_RANGE, 0D)
                 .add(Attributes.ATTACK_SPEED);
     }
 
     @Nullable
-    public SpawnGroupData finalizeSpawn(ServerLevelAccessor world, DifficultyInstance difficultyInstance, MobSpawnType reason, @Nullable SpawnGroupData data, @Nullable CompoundTag nbt) {
+    public SpawnGroupData finalizeSpawn(ServerLevelAccessor world, DifficultyInstance difficultyInstance, MobSpawnType reason, @Nullable SpawnGroupData data) {
         RandomSource randomsource = world.getRandom();
-        SpawnGroupData ilivingentitydata = super.finalizeSpawn(world, difficultyInstance, reason, data, nbt);
+        SpawnGroupData ilivingentitydata = super.finalizeSpawn(world, difficultyInstance, reason, data);
         ((WorkersGroundPathNavigation) this.getNavigation()).setCanOpenDoors(true);
-        this.populateDefaultEquipmentEnchantments(randomsource, difficultyInstance);
+        this.populateDefaultEquipmentEnchantments(world, randomsource, difficultyInstance);
         this.initSpawn();
         return ilivingentitydata;
     }

@@ -1,5 +1,6 @@
 package com.talhanation.workers.world;
 
+import net.minecraft.core.HolderLookup;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.world.item.ItemStack;
 
@@ -141,13 +142,13 @@ public class CourierAction {
     }
 
     // NBT
-    public CompoundTag toNBT() {
+    public CompoundTag toNBT(HolderLookup.Provider provider) {
         CompoundTag nbt = new CompoundTag();
         nbt.putString("ActionType", actionType.name());
         if (sourceType != null) nbt.putString("SourceType", sourceType.name());
         if (itemStack != null && !itemStack.isEmpty()) {
             // ItemStack stores its count as a byte, so amounts > 127 are saved separately as int.
-            nbt.put("Item", itemStack.copyWithCount(1).serializeNBT());
+            nbt.put("Item", itemStack.copyWithCount(1).saveOptional(provider));
             nbt.putInt("Amount", itemStack.getCount());
         }
         nbt.putInt("WaitSeconds", waitSeconds);
@@ -159,14 +160,14 @@ public class CourierAction {
     }
 
     @Nullable
-    public static CourierAction fromNBT(CompoundTag nbt) {
+    public static CourierAction fromNBT(CompoundTag nbt, HolderLookup.Provider provider) {
         if (nbt == null || nbt.isEmpty()) return null;
         String raw = nbt.getString("ActionType");
         // Backward compatibility: the old single "FILL" action behaved like PUT_FILL.
         ActionType type = "FILL".equals(raw) ? ActionType.PUT_FILL : ActionType.fromString(raw);
         if (type == ActionType.WAIT) return wait(nbt.getInt("WaitSeconds"));
         SourceType source = SourceType.fromString(nbt.getString("SourceType"));
-        ItemStack  item   = nbt.contains("Item") ? ItemStack.of(nbt.getCompound("Item")) : ItemStack.EMPTY;
+        ItemStack  item   = nbt.contains("Item") ? ItemStack.parseOptional(provider, nbt.getCompound("Item")) : ItemStack.EMPTY;
         if (!item.isEmpty() && nbt.contains("Amount")) item.setCount(Math.max(1, nbt.getInt("Amount")));
 
         CourierAction action = switch (type) {
@@ -186,4 +187,4 @@ public class CourierAction {
         }
         return action;
     }
-}
+}

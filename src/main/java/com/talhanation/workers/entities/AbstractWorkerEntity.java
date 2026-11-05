@@ -1,5 +1,6 @@
 package com.talhanation.workers.entities;
 
+import net.minecraft.network.syncher.SynchedEntityData;
 import com.google.common.collect.ImmutableSet;
 import com.mojang.authlib.GameProfile;
 import com.talhanation.recruits.config.RecruitsClientConfig;
@@ -39,8 +40,8 @@ import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.material.Fluid;
 import net.minecraft.world.level.material.Fluids;
 import net.minecraft.world.phys.Vec3;
-import net.minecraftforge.api.distmarker.Dist;
-import net.minecraftforge.api.distmarker.OnlyIn;
+import net.neoforged.api.distmarker.Dist;
+import net.neoforged.api.distmarker.OnlyIn;
 import org.jetbrains.annotations.NotNull;
 
 import javax.annotation.Nullable;
@@ -138,7 +139,7 @@ public abstract class AbstractWorkerEntity extends AbstractChunkLoaderEntity {
         }
 
         for(ItemStack itemstack : inventorySlots) {
-            if (itemstack.isEmpty() || ItemStack.isSameItemSameTags(itemstack, itemToAdd) && itemstack.getCount() < itemstack.getMaxStackSize()) {
+            if (itemstack.isEmpty() || ItemStack.isSameItemSameComponents(itemstack, itemToAdd) && itemstack.getCount() < itemstack.getMaxStackSize()) {
                 flag = true;
                 break;
             }
@@ -147,7 +148,7 @@ public abstract class AbstractWorkerEntity extends AbstractChunkLoaderEntity {
         return flag;
     }
     public boolean wantsToKeep(ItemStack itemStack) {
-        return (itemStack.isEdible() && itemStack.getFoodProperties(this).getNutrition() > 4);
+        return (itemStack.has(net.minecraft.core.component.DataComponents.FOOD) && itemStack.getFoodProperties(this).nutrition() > 4);
     }
     @Override
     public boolean wantsToPickUp(ItemStack itemStack) {
@@ -202,7 +203,7 @@ public abstract class AbstractWorkerEntity extends AbstractChunkLoaderEntity {
     private void moveItemToOccupiedSlotsWithSameType(ItemStack itemStackToMove) {
         for(int i = 6; i < this.getInventory().getContainerSize(); ++i) {
             ItemStack itemstack = this.getInventory().getItem(i);
-            if (ItemStack.isSameItemSameTags(itemstack, itemStackToMove)) {
+            if (ItemStack.isSameItemSameComponents(itemstack, itemStackToMove)) {
                 this.moveItemsBetweenStacks(itemStackToMove, itemstack);
                 if (itemStackToMove.isEmpty()) {
                     return;
@@ -233,7 +234,7 @@ public abstract class AbstractWorkerEntity extends AbstractChunkLoaderEntity {
     }
 
     @Nullable
-    public SpawnGroupData finalizeSpawn(@NotNull ServerLevelAccessor world, @NotNull DifficultyInstance diff, @NotNull MobSpawnType reason, @Nullable SpawnGroupData spawnData, @Nullable CompoundTag nbt) {
+    public SpawnGroupData finalizeSpawn(@NotNull ServerLevelAccessor world, @NotNull DifficultyInstance diff, @NotNull MobSpawnType reason, @Nullable SpawnGroupData spawnData) {
         return spawnData;
     }
     public void setDropEquipment()  {
@@ -243,8 +244,8 @@ public abstract class AbstractWorkerEntity extends AbstractChunkLoaderEntity {
 
     //////////////////////////////////// REGISTER////////////////////////////////////
 
-    protected void defineSynchedData() {
-        super.defineSynchedData();
+    protected void defineSynchedData(SynchedEntityData.Builder builder) {
+        super.defineSynchedData(builder);
     }
 
     public void addAdditionalSaveData(@NotNull CompoundTag nbt) {
@@ -680,4 +681,4 @@ public abstract class AbstractWorkerEntity extends AbstractChunkLoaderEntity {
     public boolean shouldWork() {
         return this.isOwned() && (this.getFollowState() == 0 || this.getFollowState() == 6);
     }
-}
+}
